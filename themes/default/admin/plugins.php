@@ -56,8 +56,8 @@
     </thead>
     <tbody>
         <?php foreach ($plugins as $plugin): ?>
-        <tr style="background: <?= $plugin['is_active'] ? '#f6fcf8' : '#fff' ?>">
-            <td>
+        <tr style="background: <?= $plugin['is_active'] ? '#f0f6fc' : '#fff' ?>; box-shadow: <?= $plugin['is_active'] ? 'inset 4px 0 0 0 #00a32a' : 'none' ?>;">
+            <td style="padding-left: 15px;">
                 <strong><?= htmlspecialchars($plugin['name']) ?></strong> 
                 <span class="badge">v<?= htmlspecialchars($plugin['version']) ?></span>
                 <br>
