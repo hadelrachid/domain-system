@@ -46,6 +46,9 @@ class AuthController
         $user = $db->table('users')->where('email', '=', $email)->first();
 
         if ($user && password_verify($password, $user['password'])) {
+            // Previne falha de segurança de fixação de sessão (Session Fixation)
+            session_regenerate_id(true);
+            
             // Sucesso! Cria a sessão
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];

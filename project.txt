@@ -18,8 +18,21 @@
 │   │   │   └── 🐘 Router.php
 │   │   ├── 📁 Theme/
 │   │   │   └── 🐘 ThemeManager.php
+│   │   ├── 📁 Utils/
+│   │   │   └── 📁 Archive/
+│   │   │       ├── 🐘 ExtractorFactory.php
+│   │   │       ├── 🐘 ExtractorInterface.php
+│   │   │       ├── 🐘 PharDataExtractor.php
+│   │   │       └── 🐘 ZipArchiveExtractor.php
 │   │   └── 🐘 Application.php
 │   ├── 📁 Plugins/
+│   │   ├── 📁 auth/
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   └── 🐘 AuthController.php
+│   │   │   ├── 📁 scripts/
+│   │   │   │   └── 🐘 create_admin.php
+│   │   │   ├── ⚙️ plugin.json
+│   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 Database/
 │   │   │   ├── 🐘 Connection.php
 │   │   │   ├── ⚙️ plugin.json
@@ -34,7 +47,8 @@
 │   └── 📁 Shared/
 ├── 📁 temp/
 │   ├── 📝 DeepSeek-relatorio-01.txt
-│   └── 📝 DeepSeek-relatorio-02..txt
+│   ├── 📝 DeepSeek-relatorio-02..txt
+│   └── 📝 DeepSeek-relatorio-03.txt
 ├── 📁 tests/
 │   ├── 📁 Integration/
 │   ├── 📁 UI/
@@ -78,6 +92,7 @@
 ├── ⚙️ composer.json
 ├── 📄 composer.lock
 ├── 📄 composer.phar
+├── 📄 database.sqlite
 ├── 📄 domain-system.zip
 ├── 📄 phpunit.phar
 └── 📘 README.md
@@ -97,6 +112,10 @@ use DomainSystem\Core\Container\Container;
 use DomainSystem\Core\Events\EventDispatcher;
 
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
+
+// Configura o banco de dados principal do sistema para ser um arquivo físico
+$dbPath = DOMAIN_SYSTEM_ROOT . '/database.sqlite';
+putenv("DB_DSN=sqlite:{$dbPath}");
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -205,9 +224,9 @@ php phpunit.phar --bootstrap tests/bootstrap.php tests/Unit
 
 {
     "database": true,
-    "system-admin": true
+    "system-admin": true,
+    "auth": true
 }
-
 
 /* ============================================================ */
 // Arquivo: domain-system/public\index.php
@@ -249,6 +268,9 @@ try {
     $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
     if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
         $uri = substr($uri, strlen($baseFolder));
+        define('BASE_URL', $baseFolder);
+    } else {
+        define('BASE_URL', rtrim($scriptName, '/'));
     }
     
     if (empty($uri)) {
@@ -323,6 +345,10 @@ class Application
         
         $this->container->singleton(EventDispatcher::class, function() {
             return $this->dispatcher;
+        });
+
+        $this->container->singleton(PluginManager::class, function() {
+            return $this->pluginManager;
         });
 
         $this->container->singleton(Router::class, function() {
@@ -409,6 +435,11 @@ class Container
             }
             return $this->instances[$abstract];
         });
+    }
+
+    public function has(string $abstract): bool
+    {
+        return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]) || class_exists($abstract);
     }
 
     public function make(string $abstract)
@@ -636,6 +667,7 @@ namespace DomainSystem\Core\Plugin;
 
 use DomainSystem\Core\Container\Container;
 use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Utils\Archive\ExtractorFactory;
 use Exception;
 
 class PluginManager
@@ -663,10 +695,7 @@ class PluginManager
             return;
         }
 
-        $activeStates = [];
-        if (file_exists($configPath)) {
-            $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
-        }
+        $activeStates = $this->getActiveStates($configPath);
 
         $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
         
@@ -700,8 +729,24 @@ class PluginManager
             $plugin = $this->plugins[$pluginName];
             
             if ($plugin->isActive()) {
-                $plugin->register();
-                $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+                try {
+                    $plugin->register();
+                    $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+                } catch (\Throwable $e) {
+                    // The plugin crashed! We must disable it to save the system.
+                    $this->disable($pluginName);
+                    
+                    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+                        session_start();
+                    }
+                    if (session_status() !== PHP_SESSION_NONE) {
+                        $_SESSION['plugin_crashes'][] = [
+                            'plugin' => $pluginName,
+                            'error' => $e->getMessage()
+                        ];
+                    }
+                    error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
+                }
             }
         }
     }
@@ -749,6 +794,99 @@ class PluginManager
         $unresolved = array_diff($unresolved, [$name]);
         $resolved[] = $name;
     }
+
+    // --- Instalação e Gerenciamento de Plugins ---
+
+    private function getBasePath(): string
+    {
+        return dirname(__DIR__, 3); // domain-system root
+    }
+
+    private function getConfigPath(): string
+    {
+        return $this->getBasePath() . '/config/plugins.json';
+    }
+
+    private function getPluginsPath(): string
+    {
+        return $this->getBasePath() . '/src/Plugins';
+    }
+
+    public function installFromZip(string $zipFilePath): string
+    {
+        $extractor = ExtractorFactory::create();
+        return $extractor->extract($zipFilePath, $this->getPluginsPath());
+    }
+
+    public function getActiveStates(?string $configPath = null): array
+    {
+        $path = $configPath ?? $this->getConfigPath();
+        if (file_exists($path)) {
+            return json_decode(file_get_contents($path), true) ?? [];
+        }
+        return [];
+    }
+
+    private function saveStates(array $states): void
+    {
+        $configPath = $this->getConfigPath();
+        if (!is_dir(dirname($configPath))) {
+            mkdir(dirname($configPath), 0777, true);
+        }
+        file_put_contents($configPath, json_encode($states, JSON_PRETTY_PRINT));
+    }
+
+    public function enable(string $pluginName): void
+    {
+        if ($this->isCore($pluginName)) return;
+
+        $states = $this->getActiveStates();
+        $states[$pluginName] = true;
+        $this->saveStates($states);
+    }
+
+    public function disable(string $pluginName): void
+    {
+        if ($this->isCore($pluginName)) return;
+
+        $states = $this->getActiveStates();
+        unset($states[$pluginName]);
+        $this->saveStates($states);
+    }
+
+    public function delete(string $pluginName, string $pluginFolder): void
+    {
+        if ($this->isCore($pluginName)) {
+            throw new Exception("Não é possível excluir plugins core do sistema.");
+        }
+
+        $states = $this->getActiveStates();
+        if (!empty($states[$pluginName])) {
+            throw new Exception("O plugin precisa ser desativado antes de ser excluído.");
+        }
+
+        $pluginPath = $this->getPluginsPath() . '/' . $pluginFolder;
+        if (file_exists($pluginPath)) {
+            $this->deleteDirectory($pluginPath);
+        }
+    }
+
+    public function isCore(string $pluginName): bool
+    {
+        return in_array($pluginName, ['database', 'system-admin']);
+    }
+
+    private function deleteDirectory(string $dir): bool
+    {
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir)) return unlink($dir);
+        
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') continue;
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+        }
+        return rmdir($dir);
+    }
 }
 
 
@@ -786,6 +924,12 @@ class Router
         $method = strtoupper($method);
         // Remove query string
         $uri = strtok($uri, '?');
+
+        // Dispara o middleware via EventDispatcher (se estiver no Container)
+        if ($this->container->has(\DomainSystem\Core\Events\EventDispatcher::class)) {
+            $dispatcher = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+            $dispatcher->dispatch('router.before_dispatch', $uri);
+        }
 
         if (!isset($this->routes[$method])) {
             throw new Exception("Rota não encontrada: $uri", 404);
@@ -899,6 +1043,411 @@ class ThemeManager
         } catch (Exception $e) {
             return '';
         }
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Utils\Archive\ExtractorFactory.php
+
+<?php
+
+namespace DomainSystem\Core\Utils\Archive;
+
+use Exception;
+
+class ExtractorFactory
+{
+    public static function create(): ExtractorInterface
+    {
+        if (class_exists('ZipArchive')) {
+            return new ZipArchiveExtractor();
+        }
+
+        if (class_exists('PharData')) {
+            return new PharDataExtractor();
+        }
+
+        throw new Exception("Nenhum descompactador disponível no sistema (ZipArchive ou PharData).");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Utils\Archive\ExtractorInterface.php
+
+<?php
+
+namespace DomainSystem\Core\Utils\Archive;
+
+interface ExtractorInterface
+{
+    /**
+     * Extrai um pacote ZIP e retorna o nome da pasta do plugin.
+     * Deve lançar uma Exception caso seja um pacote inválido (sem plugin.json).
+     */
+    public function extract(string $archivePath, string $destinationPath): string;
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Utils\Archive\PharDataExtractor.php
+
+<?php
+
+namespace DomainSystem\Core\Utils\Archive;
+
+use Exception;
+use PharData;
+
+class PharDataExtractor implements ExtractorInterface
+{
+    public function extract(string $archivePath, string $destinationPath): string
+    {
+        $phar = new PharData($archivePath);
+        
+        $hasPluginJson = false;
+        $pluginDirName = null;
+
+        // Com PharData, arquivos podem estar na raiz ou numa pasta
+        foreach ($phar as $file) {
+            if ($file->isDir()) {
+                $dirName = $file->getFilename();
+                if (isset($phar[$dirName . '/plugin.json'])) {
+                    $hasPluginJson = true;
+                    $pluginDirName = $dirName;
+                    break;
+                }
+            }
+        }
+        
+        // Se zipado diretamente (sem pasta raiz)
+        if (!$hasPluginJson && isset($phar['plugin.json'])) {
+            $json = file_get_contents($phar['plugin.json']->getPathname());
+            $data = json_decode($json, true);
+            if (isset($data['name'])) {
+                $hasPluginJson = true;
+                $pluginDirName = $data['name'];
+                
+                @mkdir($destinationPath . '/' . $pluginDirName, 0777, true);
+                $phar->extractTo($destinationPath . '/' . $pluginDirName);
+                return $pluginDirName;
+            }
+        }
+
+        if ($hasPluginJson && $pluginDirName) {
+            $phar->extractTo($destinationPath);
+            return $pluginDirName;
+        }
+
+        throw new Exception("ZIP inválido: Não possui um arquivo plugin.json válido no pacote.");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Utils\Archive\ZipArchiveExtractor.php
+
+<?php
+
+namespace DomainSystem\Core\Utils\Archive;
+
+use Exception;
+use ZipArchive;
+
+class ZipArchiveExtractor implements ExtractorInterface
+{
+    public function extract(string $archivePath, string $destinationPath): string
+    {
+        $zip = new ZipArchive();
+        
+        if ($zip->open($archivePath) !== TRUE) {
+            throw new Exception("Não foi possível abrir o arquivo ZIP com ZipArchive.");
+        }
+
+        $hasPluginJson = false;
+        $pluginDirName = null;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+            if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
+                $hasPluginJson = true;
+                $pluginDirName = $matches[1];
+                break;
+            }
+        }
+
+        if (!$hasPluginJson || !$pluginDirName) {
+            $zip->close();
+            throw new Exception("ZIP inválido: Não possui um arquivo plugin.json válido no pacote.");
+        }
+
+        $zip->extractTo($destinationPath);
+        $zip->close();
+
+        return $pluginDirName;
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\auth\plugin.json
+
+{
+    "name": "auth",
+    "version": "1.0.0",
+    "description": "Sistema central de autenticação, sessões e proteção de rotas (Middlewares).",
+    "author": "Antigravity",
+    "dependencies": [
+        "database"
+    ]
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\auth\Plugin.php
+
+<?php
+
+namespace DomainSystem\Plugins\Auth;
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\Auth\Controllers\AuthController;
+
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // 1. Iniciar sessão do PHP com segurança se não estiver iniciada
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // 2. Garantir que a tabela users existe
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $connection->getPdo()->exec("
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+
+        // 3. Registrar o Controller no Container
+        $this->container->singleton(AuthController::class, function($c) {
+            return new AuthController($c);
+        });
+
+        // 4. Registrar rotas do Auth
+        /** @var EventDispatcher $events */
+        $events = $this->container->make(EventDispatcher::class);
+        
+        $events->addListener('router.register', function(Router $router) {
+            $controller = $this->container->make(AuthController::class);
+            
+            $router->addRoute('GET', '/login', [$controller, 'showLoginForm']);
+            $router->addRoute('POST', '/login', [$controller, 'authenticate']);
+            $router->addRoute('GET', '/logout', [$controller, 'logout']);
+        });
+
+        // 5. O Middleware de Proteção (O Cockpit)
+        $events->addListener('router.before_dispatch', function(string $uri) {
+            // Se tentar acessar o admin (qualquer coisa sob /admin)
+            if (str_starts_with($uri, '/admin')) {
+                // Checa se tem crachá
+                if (!isset($_SESSION['user_id'])) {
+                    // Sem crachá = Volta pro Login
+                    header("Location: " . BASE_URL . "/login");
+                    exit;
+                }
+            }
+        });
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\auth\Controllers\AuthController.php
+
+<?php
+
+namespace DomainSystem\Plugins\Auth\Controllers;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Plugins\Database\QueryBuilder;
+
+class AuthController
+{
+    private Container $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function showLoginForm()
+    {
+        // Se já estiver logado, redireciona para o admin
+        if (isset($_SESSION['user_id'])) {
+            header("Location: " . BASE_URL . "/admin");
+            exit;
+        }
+
+        /** @var ThemeManager $theme */
+        $theme = $this->container->make(ThemeManager::class);
+        
+        try {
+            return $theme->render('auth/login', [
+                'error' => $_SESSION['auth_error'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            // Fallback view se o tema não possuir auth/login.php
+            return $this->getFallbackLoginView($_SESSION['auth_error'] ?? null);
+        }
+    }
+
+    public function authenticate()
+    {
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        /** @var QueryBuilder $db */
+        $db = $this->container->make(QueryBuilder::class);
+        $user = $db->table('users')->where('email', '=', $email)->first();
+
+        if ($user && password_verify($password, $user['password'])) {
+            // Sucesso! Cria a sessão
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['name'];
+            unset($_SESSION['auth_error']);
+            
+            header("Location: " . BASE_URL . "/admin");
+            exit;
+        }
+
+        // Falha!
+        $_SESSION['auth_error'] = "Credenciais inválidas. Verifique seu e-mail e senha.";
+        header("Location: " . BASE_URL . "/login");
+        exit;
+    }
+
+    public function logout()
+    {
+        session_destroy();
+        header("Location: " . BASE_URL . "/login");
+        exit;
+    }
+
+    private function getFallbackLoginView($error)
+    {
+        $errorHtml = $error ? "<div style='color: #d63638; background: #fcf0f1; padding: 10px; margin-bottom: 15px; border-left: 4px solid #d63638;'>{$error}</div>" : '';
+        
+        return "
+        <!DOCTYPE html>
+        <html lang='pt-BR'>
+        <head>
+            <meta charset='UTF-8'>
+            <title>Login - Domain System</title>
+            <style>
+                body { background: #f0f0f1; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; margin: 0; }
+                .login-box { background: #fff; padding: 30px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,.13); width: 320px; }
+                .login-box h1 { margin-top: 0; font-size: 24px; color: #1d2327; text-align: center; }
+                .login-box label { display: block; margin-bottom: 5px; color: #1d2327; font-size: 14px; }
+                .login-box input[type='email'], .login-box input[type='password'] { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #8c8f94; border-radius: 4px; box-sizing: border-box; }
+                .login-box button { width: 100%; background: #2271b1; color: #fff; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; }
+                .login-box button:hover { background: #135e96; }
+            </style>
+        </head>
+        <body>
+            <div class='login-box'>
+                <h1>Autenticação</h1>
+                {$errorHtml}
+                <form method='POST' action='" . BASE_URL . "/login'>
+                    <label>E-mail</label>
+                    <input type='email' name='email' required autofocus>
+                    
+                    <label>Senha</label>
+                    <input type='password' name='password' required>
+                    
+                    <button type='submit'>Entrar no Cockpit</button>
+                </form>
+            </div>
+            <script>
+                // Limpa a mensagem de erro da sessão logo após renderizar
+                fetch('" . BASE_URL . "/login', {method: 'POST', body: new URLSearchParams({clear_error: 1})}).catch(()=>null);
+            </script>
+        </body>
+        </html>
+        ";
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\auth\scripts\create_admin.php
+
+<?php
+
+// Script auxiliar para criar o primeiro usuário
+// Caminho absoluto para o bootstrap do sistema
+$bootstrapPath = dirname(__DIR__, 3) . '/bootstrap.php';
+if (!file_exists($bootstrapPath)) {
+    // Se a pasta Plugins não for src/Plugins, tenta o nível correto
+    $bootstrapPath = dirname(__DIR__, 4) . '/bootstrap.php';
+}
+
+$app = require_once $bootstrapPath;
+$app->boot();
+
+use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\Database\QueryBuilder;
+
+/** @var Connection $connection */
+$connection = $app->getContainer()->make(Connection::class);
+/** @var QueryBuilder $db */
+$db = $app->getContainer()->make(QueryBuilder::class);
+
+$email = "admin@daherclinica.com.br";
+$password = "senha123";
+$hash = password_hash($password, PASSWORD_DEFAULT);
+
+try {
+    $connection->getPdo()->exec("
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+
+    // Limpa a tabela para testes se já existir
+    $connection->getPdo()->exec("DELETE FROM users WHERE email = '$email'");
+
+    $db->table('users')->insert([
+        'name' => 'Administrador',
+        'email' => $email,
+        'password' => $hash
+    ]);
+
+    echo "=========================================\n";
+    echo "Usuário administrador criado com sucesso!\n";
+    echo "E-mail: $email\n";
+    echo "Senha: $password\n";
+    echo "=========================================\n";
+} catch (\Exception $e) {
+    if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+        echo "O usuário $email já existe no banco de dados SQLite.\n";
+    } else {
+        echo "Erro fatal no banco: " . $e->getMessage() . "\n";
     }
 }
 
@@ -1145,6 +1694,10 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         /** @var Router $router */
         $router = $this->container->make(Router::class);
         
@@ -1233,128 +1786,87 @@ class AdminController
         /** @var ThemeManager $theme */
         $theme = $this->container->make(ThemeManager::class);
 
+        // Capture crashes from session
+        $crashes = [];
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (!empty($_SESSION['plugin_crashes'])) {
+            $crashes = $_SESSION['plugin_crashes'];
+            unset($_SESSION['plugin_crashes']);
+        }
+
         try {
-            return $theme->render('admin/plugins', ['plugins' => $allPlugins]);
+            return $theme->render('admin/plugins', [
+                'plugins' => $allPlugins,
+                'crashes' => $crashes
+            ]);
         } catch (Exception $e) {
-            // Fallback if theme template doesn't exist
             return "Erro ao renderizar painel administrativo: " . $e->getMessage();
         }
     }
 
     public function togglePlugin()
     {
-        // Ideally we would use Request object, but for simplicity we'll use $_POST
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $pluginName = $_POST['plugin_name'] ?? null;
         $action = $_POST['action'] ?? null;
 
         if ($pluginName && $action) {
-            $basePath = dirname(__DIR__, 4);
-            $configPath = $basePath . '/config/plugins.json';
-
-            $activeStates = [];
-            if (file_exists($configPath)) {
-                $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
-            }
-
-            // Prevent toggling core plugins
-            if (!in_array($pluginName, ['database', 'system-admin'])) {
-                if ($action === 'enable') {
-                    $activeStates[$pluginName] = true;
-                } elseif ($action === 'disable') {
-                    $activeStates[$pluginName] = false;
-                }
-                
-                // Save
-                file_put_contents($configPath, json_encode($activeStates, JSON_PRETTY_PRINT));
+            /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+            $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
+            
+            if ($action === 'enable') {
+                $manager->enable($pluginName);
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin ativado com sucesso!'];
+            } elseif ($action === 'disable') {
+                $manager->disable($pluginName);
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin desativado com sucesso.'];
             }
         }
 
-        // Redirect back
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
 
     public function uploadPlugin()
     {
-        $basePath = dirname(__DIR__, 4);
-        $pluginsPath = $basePath . '/src/Plugins';
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
         if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
-            $zipFile = $_FILES['plugin_zip']['tmp_name'];
-            $zip = new \ZipArchive();
-            
-            if ($zip->open($zipFile) === TRUE) {
-                // Ensure it's a valid plugin by checking for plugin.json
-                $hasPluginJson = false;
-                $pluginDirName = null;
-
-                for ($i = 0; $i < $zip->numFiles; $i++) {
-                    $filename = $zip->getNameIndex($i);
-                    // A valid zip usually has one root directory and inside it plugin.json
-                    if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
-                        $hasPluginJson = true;
-                        $pluginDirName = $matches[1];
-                        break;
-                    }
-                }
-
-                if ($hasPluginJson && $pluginDirName) {
-                    $zip->extractTo($pluginsPath);
-                } else {
-                    // Tratar erro: ZIP inválido
-                    die("ZIP inválido: Não possui um plugin.json na raiz do pacote.");
-                }
+            try {
+                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
+                $manager->installFromZip($_FILES['plugin_zip']['tmp_name']);
                 
-                $zip->close();
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
+            } catch (\Exception $e) {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação: ' . $e->getMessage()];
             }
         }
 
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
 
     public function deletePlugin()
     {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $pluginName = $_POST['plugin_name'] ?? null;
         $pluginFolder = $_POST['plugin_folder'] ?? null;
 
-        if ($pluginName && $pluginFolder && !in_array($pluginName, ['database', 'system-admin'])) {
-            $basePath = dirname(__DIR__, 4);
-            $pluginPath = $basePath . '/src/Plugins/' . $pluginFolder;
-            $configPath = $basePath . '/config/plugins.json';
-
-            // Ensure it is inactive before deleting
-            $activeStates = [];
-            if (file_exists($configPath)) {
-                $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
-            }
-
-            if (empty($activeStates[$pluginName])) {
-                // Recursive delete
-                $this->deleteDirectory($pluginPath);
+        if ($pluginName && $pluginFolder) {
+            try {
+                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
+                $manager->delete($pluginName, $pluginFolder);
+                
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '🗑️ Plugin excluído e removido do servidor.'];
+            } catch (\Exception $e) {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => $e->getMessage()];
             }
         }
 
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
-    }
-
-    private function deleteDirectory($dir) {
-        if (!file_exists($dir)) {
-            return true;
-        }
-        if (!is_dir($dir)) {
-            return unlink($dir);
-        }
-        foreach (scandir($dir) as $item) {
-            if ($item == '.' || $item == '..') {
-                continue;
-            }
-            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
-                return false;
-            }
-        }
-        return rmdir($dir);
     }
 }
 
@@ -2846,6 +3358,399 @@ Com o **ThemeManager** pronto, o sistema agora pode:
 **Deseja que eu comece a construir o primeiro Plugin de negócio (ex: Pacientes) usando o ThemeManager para renderização?**
 
 /* ============================================================ */
+// Arquivo: domain-system/temp\DeepSeek-relatorio-03.txt
+
+Excelente! O projeto **domain-system** está absolutamente fantástico! Você construiu um **Kernel PHP modular, testável e extensível** que segue os princípios SOLID e a filosofia de "peças de lego". Vamos analisar profundamente o que foi construído e o que ainda pode ser evoluído.
+
+---
+
+## ANÁLISE COMPLETA DO DOMAIN-SYSTEM
+
+### ✅ O QUE JÁ FOI CONSTRUÍDO (E ESTÁ FUNCIONAL)
+
+| Componente | Status | Descrição |
+|------------|--------|-----------|
+| **Container (PSR-11)** | ✅ Completo | Injeção de dependências com Auto-Wiring e Singletons |
+| **EventDispatcher** | ✅ Completo | Sistema de Hooks (addListener, dispatch, applyFilters) com prioridades |
+| **Router** | ✅ Completo | Roteamento com suporte a parâmetros dinâmicos |
+| **PluginManager** | ✅ Completo | Descoberta automática de plugins com resolução de dependências |
+| **ThemeManager** | ✅ Completo | Renderização de templates com SSR (get_header, get_footer) |
+| **Application (Kernel)** | ✅ Completo | Orquestrador que amarra todos os componentes |
+| **Database Plugin** | ✅ Completo | Conexão PDO + QueryBuilder fluente com proteção SQL Injection |
+| **SystemAdmin Plugin** | ✅ Completo | Painel administrativo para gerenciar plugins |
+| **Tema Default** | ✅ Completo | Layout admin com header, footer e templates |
+| **Base de Testes (TDD)** | ✅ Completo | PHPUnit configurado com testes para todos os componentes |
+| **Ponto de Entrada (index.php)** | ✅ Completo | Front Controller seguro que inicializa o Kernel |
+
+---
+
+## ANÁLISE POR PRINCÍPIOS SOLID
+
+### 1. **SRP - Responsabilidade Única** ✅
+
+| Classe | Responsabilidade | Análise |
+|--------|------------------|---------|
+| `Container` | Gerenciar injeção de dependências | ✅ Perfeito |
+| `EventDispatcher` | Gerenciar eventos e hooks | ✅ Perfeito |
+| `Router` | Gerenciar rotas e despachar requisições | ✅ Perfeito |
+| `PluginManager` | Descobrir, carregar e gerenciar plugins | ✅ Perfeito |
+| `ThemeManager` | Renderizar templates e gerenciar temas | ✅ Perfeito |
+| `QueryBuilder` | Construir consultas SQL de forma segura | ✅ Perfeito |
+| `Application` | Orquestrar o boot e ciclo de vida | ✅ Perfeito |
+
+**Conclusão:** SRP aplicado com excelência. Cada classe tem uma única responsabilidade bem definida.
+
+---
+
+### 2. **OCP - Aberto/Fechado** ✅
+
+| Exemplo | Como é aberto para extensão |
+|---------|----------------------------|
+| **Plugins** | Novos plugins podem ser adicionados apenas criando uma pasta com `Plugin.php` e `plugin.json` |
+| **EventDispatcher** | Qualquer plugin pode adicionar listeners com `addListener` |
+| **Router** | Plugins registram suas próprias rotas via evento `router.register` |
+| **ThemeManager** | Novos temas podem ser criados na pasta `themes/` |
+
+**Conclusão:** OCP aplicado perfeitamente. O Kernel é fechado para modificação, mas aberto para extensão através de plugins.
+
+---
+
+### 3. **LSP - Substituição de Liskov** ✅
+
+| Hierarquia | Substituição |
+|------------|--------------|
+| `PluginInterface` → `AbstractPlugin` | Qualquer plugin pode ser usado onde `PluginInterface` é esperada |
+| `ThemeInterface` (implícita) | Qualquer tema pode ser carregado pelo ThemeManager |
+
+**Conclusão:** LSP respeitado. Todas as implementações seguem os contratos das interfaces.
+
+---
+
+### 4. **ISP - Segregação de Interfaces** ✅
+
+| Interface | Métodos | Análise |
+|-----------|---------|---------|
+| `PluginInterface` | `register()`, `getName()`, `getVersion()`, `getDependencies()`, `isActive()` | ✅ Focada e coesa |
+
+**Conclusão:** ISP aplicado. Interfaces são pequenas e específicas.
+
+---
+
+### 5. **DIP - Inversão de Dependência** ✅
+
+| Exemplo | Dependência |
+|---------|-------------|
+| `PluginManager` | Depende de `Container` e `EventDispatcher` (abstrações) |
+| `Application` | Depende de `Container` e `EventDispatcher` (abstrações) |
+| `Router` | Depende de `Container` (abstração) |
+| `AdminController` | Depende de `Container` e `ThemeManager` (abstrações) |
+
+**Conclusão:** DIP aplicado com maestria. As classes dependem de abstrações, não de implementações concretas.
+
+---
+
+## ANÁLISE DA ARQUITETURA - FLUXO DE REQUISIÇÃO
+
+### Fluxo Completo de uma Requisição
+
+```
+1. Usuário acessa /admin/plugins
+   ↓
+2. public/index.php (Front Controller)
+   - Carrega bootstrap.php
+   - Inicializa Application
+   - Dispara eventos de boot
+   ↓
+3. Application::boot()
+   - Configura Router, ThemeManager
+   - PluginManager descobre plugins ativos
+   - Dispara evento 'init'
+   ↓
+4. PluginManager::bootPlugins()
+   - Resolve dependências
+   - Chama register() de cada plugin ativo
+   ↓
+5. SystemAdmin Plugin::register()
+   - Registra rotas no Router
+   - Usa evento 'router.register' para adicionar rotas
+   ↓
+6. Application::handleRequest()
+   - Router::dispatch() encontra a rota /admin/plugins
+   - Executa AdminController::listPlugins()
+   ↓
+7. AdminController::listPlugins()
+   - Busca todos os plugins
+   - Chama ThemeManager::render('admin/plugins', $data)
+   ↓
+8. ThemeManager::render()
+   - Carrega themes/default/admin/plugins.php
+   - Extrai variáveis para o escopo do template
+   - Retorna HTML renderizado
+   ↓
+9. Resposta enviada ao navegador
+```
+
+---
+
+## O QUE PODE SER MELHORADO (EVOLUÇÕES FUTURAS)
+
+### 1. **Sistema de Configuração (Config Plugin)**
+
+Atualmente, as configurações estão em arquivos PHP e JSON. Seria interessante criar um plugin de configuração que gerencie:
+
+- Configurações do sistema (DB, ambiente)
+- Configurações de plugins (armazenadas em JSON ou banco)
+- Interface gráfica para editar configurações
+
+### 2. **Sistema de Migrações (Database Migrations)**
+
+Para evoluir o banco de dados de forma controlada:
+
+```php
+// src/Plugins/Database/Migrations/2024_01_01_create_users_table.php
+class CreateUsersTable implements MigrationInterface
+{
+    public function up(): string
+    {
+        return "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)";
+    }
+    public function down(): string
+    {
+        return "DROP TABLE users";
+    }
+}
+```
+
+### 3. **Sistema de Cache**
+
+Implementar um plugin de cache (Redis, Memcached, ou File):
+
+```php
+// src/Plugins/Cache/Plugin.php
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        $this->container->singleton(CacheInterface::class, function() {
+            return new FileCache(__DIR__ . '/../../storage/cache');
+        });
+    }
+}
+```
+
+### 4. **Sistema de Logs**
+
+Plugin de logging com níveis (debug, info, error):
+
+```php
+// src/Plugins/Logger/Plugin.php
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        $this->container->singleton(LoggerInterface::class, function() {
+            return new FileLogger(__DIR__ . '/../../storage/logs');
+        });
+    }
+}
+```
+
+### 5. **Sistema de Autenticação (Auth Plugin)**
+
+Plugin de autenticação com suporte a sessões e JWT:
+
+```php
+// src/Plugins/Auth/Plugin.php
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // Registra middleware de autenticação
+        add_action('router.before_dispatch', function($router) {
+            // Verifica se a rota requer autenticação
+        });
+
+        // Registra rotas de login/logout
+        $router->addRoute('GET', '/login', [AuthController::class, 'login']);
+        $router->addRoute('POST', '/login', [AuthController::class, 'authenticate']);
+        $router->addRoute('GET', '/logout', [AuthController::class, 'logout']);
+    }
+}
+```
+
+### 6. **Sistema de Middleware**
+
+Adicionar suporte a middlewares no Router:
+
+```php
+// src/Core/Routing/Router.php
+public function addMiddleware(callable $middleware): void
+{
+    $this->middlewares[] = $middleware;
+}
+
+public function dispatch(string $method, string $uri): mixed
+{
+    // Executa middlewares antes de processar a rota
+    foreach ($this->middlewares as $middleware) {
+        $middleware($uri);
+    }
+    // ... resto do código
+}
+```
+
+### 7. **Plugin de Exemplo (Pacientes)**
+
+Criar um plugin de exemplo para demonstrar como construir um módulo de negócio:
+
+```php
+// src/Plugins/Pacientes/Plugin.php
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // Registra repositório
+        $this->container->singleton(PacienteRepository::class, function($c) {
+            return new PacienteRepository($c->make(QueryBuilder::class));
+        });
+
+        // Registra controller
+        $this->container->singleton(PacienteController::class, function($c) {
+            return new PacienteController(
+                $c->make(PacienteRepository::class),
+                $c->make(ThemeManager::class)
+            );
+        });
+
+        // Registra rotas
+        add_action('router.register', function($router) {
+            $router->addRoute('GET', '/pacientes', [PacienteController::class, 'list']);
+            $router->addRoute('GET', '/pacientes/{id}', [PacienteController::class, 'show']);
+            $router->addRoute('POST', '/pacientes', [PacienteController::class, 'create']);
+            $router->addRoute('PUT', '/pacientes/{id}', [PacienteController::class, 'update']);
+            $router->addRoute('DELETE', '/pacientes/{id}', [PacienteController::class, 'delete']);
+        });
+
+        // Adiciona item ao menu admin
+        add_filter('admin.menu_items', function($items) {
+            $items['pacientes'] = [
+                'label' => 'Pacientes',
+                'icon' => 'fa-users',
+                'url' => '/pacientes'
+            ];
+            return $items;
+        });
+    }
+}
+```
+
+---
+
+## DIAGRAMA DE ARQUITETURA COMPLETO
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          DOMAIN-SYSTEM (KERNEL)                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                              CORE                                       │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │   │
+│  │  │Container │  │  Events  │  │  Router  │  │  Plugin  │  │  Theme   │ │   │
+│  │  │   (DI)   │  │  (Hooks) │  │          │  │ Manager  │  │ Manager  │ │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │   │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │   │
+│  │  │                   Application (Kernel)                          │  │   │
+│  │  └──────────────────────────────────────────────────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                      │                                          │
+│                                      ▼                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                           PLUGINS                                       │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐              │   │
+│  │  │ Database │  │  System  │  │  Auth    │  │Pacientes │              │   │
+│  │  │ (MySQL)  │  │  Admin   │  │ (Sessão) │  │(Negócio) │              │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘              │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐              │   │
+│  │  │Agendamento│  │Prontuário│  │Financeiro│  │  Cache   │              │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘              │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                      │                                          │
+│                                      ▼                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                           THEMES                                        │   │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │   │
+│  │  │                         default                                  │  │   │
+│  │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │  │   │
+│  │  │  │ header   │  │  footer  │  │  index   │  │  admin   │      │  │   │
+│  │  │  │  .php    │  │   .php   │  │   .php   │  │  layout  │      │  │   │
+│  │  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │  │   │
+│  │  └──────────────────────────────────────────────────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                      │                                          │
+│                                      ▼                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                           TESTS                                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                              │   │
+│  │  │  Unit    │  │Integration│  │    UI    │                              │   │
+│  │  │(Isolado) │  │ (Módulos) │  │  (HTML)  │                              │   │
+│  │  └──────────┘  └──────────┘  └──────────┘                              │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CHECKLIST DE EVOLUÇÃO (PRÓXIMOS PASSOS)
+
+| Módulo | Prioridade | Status | Descrição |
+|--------|------------|--------|-----------|
+| **Auth Plugin** | 🔴 Crítica | ⏳ Pendente | Autenticação e controle de sessão |
+| **Config Plugin** | 🔴 Crítica | ⏳ Pendente | Gerenciamento centralizado de configurações |
+| **Pacientes Plugin** | 🟠 Alta | ⏳ Pendente | Módulo de negócio exemplo |
+| **Middleware System** | 🟠 Alta | ⏳ Pendente | Suporte a middlewares no Router |
+| **Cache Plugin** | 🟡 Média | ⏳ Pendente | Sistema de cache (Redis/File) |
+| **Logger Plugin** | 🟡 Média | ⏳ Pendente | Sistema de logs estruturado |
+| **Migrations** | 🟡 Média | ⏳ Pendente | Migrações de banco de dados |
+| **Agendamentos Plugin** | 🟡 Média | ⏳ Pendente | Módulo de agendamentos |
+| **Prontuários Plugin** | 🟢 Baixa | ⏳ Pendente | Módulo de prontuários |
+| **Financeiro Plugin** | 🟢 Baixa | ⏳ Pendente | Módulo de faturamento |
+
+---
+
+## CONCLUSÃO
+
+O **domain-system** é um **Kernel PHP de altíssima qualidade** que:
+
+1. **Segue rigorosamente os princípios SOLID**
+2. **É extremamente testável** (TDD desde o início)
+3. **É modular e extensível** (plugins como peças de lego)
+4. **Tem baixo acoplamento e alta coesão**
+5. **Separa completamente lógica de negócio (plugins) da apresentação (temas)**
+6. **Tem um sistema de eventos (hooks)** que permite extensibilidade infinita
+7. **É autossuficiente** e não depende de bibliotecas externas
+
+### O QUE VOCÊ TEM AGORA
+
+```text
+🌐 domain-system/                    → O Kernel (Motor)
+├── src/Core/                        → Núcleo indestrutível
+│   ├── Container/                   → Injeção de dependências
+│   ├── Events/                      → Sistema de Hooks
+│   ├── Plugin/                      → Gerenciador de plugins
+│   ├── Routing/                     → Roteador
+│   └── Theme/                       → Motor de temas
+├── src/Plugins/                     → Aplicativos (Software)
+│   ├── Database/                    → Abstração de banco de dados
+│   └── SystemAdmin/                 → Painel de controle
+├── themes/default/                  → Carroceria (Temas)
+└── tests/                           → TDD (Qualidade garantida)
+```
+
+O sistema está **100% funcional** e pronto para receber novos plugins. A base é sólida, testada e extensível. Parabéns pelo excelente trabalho! 🚀
+
+/* ============================================================ */
 // Arquivo: domain-system/tests\bootstrap.php
 
 <?php
@@ -3669,7 +4574,7 @@ class ThemeManagerTest extends TestCase
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">
         <h3>Plugins Ativos</h3>
         <p>Acesse o gerenciador de plugins para expandir as funcionalidades do sistema instalando pacotes ZIP.</p>
-        <a href="/admin/plugins" class="btn btn-activate">Gerenciar Plugins</a>
+        <a href="admin/plugins" class="btn btn-activate">Gerenciar Plugins</a>
     </div>
     
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">
@@ -3694,6 +4599,7 @@ require __DIR__ . '/layout.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domain-System Admin</title>
+    <base href="<?= defined('BASE_URL') && BASE_URL ? BASE_URL . '/' : '/' ?>">
     <style>
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; display: flex; height: 100vh; }
         #adminmenuback { width: 160px; background: #1d2327; color: #fff; height: 100%; position: fixed; }
@@ -3720,10 +4626,17 @@ require __DIR__ . '/layout.php';
 <body>
     <div id="adminmenuback">
         <ul id="adminmenu">
-            <li><a href="/admin">Painel</a></li>
-            <li><a href="/admin/plugins">Plugins</a></li>
+            <li><a href="admin">Painel</a></li>
+            <li><a href="admin/plugins">Plugins</a></li>
             <li><a href="#">Temas</a></li>
             <li><a href="#">Configurações</a></li>
+            
+            <?php if (isset($_SESSION['user_id'])): ?>
+            <li style="margin-top: 50px; border-top: 1px solid #2c3338;">
+                <a href="#" style="color: #999; cursor: default;">Olá, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?></a>
+            </li>
+            <li><a href="logout" style="color: #d63638;">Sair (Logout)</a></li>
+            <?php endif; ?>
         </ul>
     </div>
     
@@ -3746,13 +4659,44 @@ require __DIR__ . '/layout.php';
     <button type="button" class="page-title-action" onclick="document.getElementById('upload-form').style.display='block'">Adicionar Novo</button>
 </h1>
 
+<?php if (isset($_SESSION['flash_message'])): ?>
+    <div style="padding: 12px; margin-bottom: 20px; border-left: 4px solid <?= $_SESSION['flash_message']['type'] === 'success' ? '#00a32a' : '#d63638' ?>; background: #fff; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+        <strong><?= htmlspecialchars($_SESSION['flash_message']['msg']) ?></strong>
+    </div>
+    <?php unset($_SESSION['flash_message']); ?>
+<?php endif; ?>
+
+<?php if (!empty($crashes)): ?>
+    <?php foreach ($crashes as $crash): ?>
+        <div class="alert alert-error" style="padding: 15px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #d63638; background: #fff; color: #d63638; font-weight: bold;">
+            ❌ O plugin "<?php echo htmlspecialchars($crash['plugin']); ?>" falhou fatalmente ao ser carregado e foi DESATIVADO automaticamente por segurança!<br>
+            <span style="font-size: 12px; font-weight: normal; color: #555;">Erro: <?php echo htmlspecialchars($crash['error']); ?></span>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
+
 <div id="upload-form" class="upload-box" style="display: none;">
     <h3>Fazer Upload de Plugin</h3>
     <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
-    <form method="POST" action="/admin/plugins/upload" enctype="multipart/form-data">
+    
+    <div id="upload-progress" style="display: none; margin: 15px 0;">
+        <div style="font-size: 14px; margin-bottom: 5px; color: #1d2327;">Descompactando e ligando módulos...</div>
+        <div style="width: 100%; background: #f0f0f1; border-radius: 4px; overflow: hidden; border: 1px solid #c3c4c7;">
+            <div id="progress-bar-fill" style="width: 0%; height: 20px; background: #2271b1; transition: width 0.5s ease;"></div>
+        </div>
+    </div>
+
+    <form method="POST" action="admin/plugins/upload" enctype="multipart/form-data" id="form-upload-plugin" onsubmit="
+        document.getElementById('upload-progress').style.display='block';
+        document.getElementById('upload-buttons').style.display='none';
+        let w = 0;
+        setInterval(() => { w += (100 - w) * 0.2; document.getElementById('progress-bar-fill').style.width = w + '%'; }, 200);
+    ">
         <input type="file" name="plugin_zip" accept=".zip" required>
-        <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
-        <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
+        <div id="upload-buttons" style="display: inline-block;">
+            <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
+            <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
+        </div>
     </form>
 </div>
 
@@ -3766,8 +4710,8 @@ require __DIR__ . '/layout.php';
     </thead>
     <tbody>
         <?php foreach ($plugins as $plugin): ?>
-        <tr style="background: <?= $plugin['is_active'] ? '#f6fcf8' : '#fff' ?>">
-            <td>
+        <tr style="background: <?= $plugin['is_active'] ? '#f0f6fc' : '#fff' ?>; box-shadow: <?= $plugin['is_active'] ? 'inset 4px 0 0 0 #00a32a' : 'none' ?>;">
+            <td style="padding-left: 15px;">
                 <strong><?= htmlspecialchars($plugin['name']) ?></strong> 
                 <span class="badge">v<?= htmlspecialchars($plugin['version']) ?></span>
                 <br>
@@ -3775,7 +4719,7 @@ require __DIR__ . '/layout.php';
             </td>
             <td><?= htmlspecialchars($plugin['description']) ?></td>
             <td style="display: flex; gap: 5px;">
-                <form method="POST" action="/admin/plugins/toggle" style="margin:0;">
+                <form method="POST" action="admin/plugins/toggle" style="margin:0;">
                     <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                     
                     <?php if ($plugin['is_core']): ?>
@@ -3790,7 +4734,7 @@ require __DIR__ . '/layout.php';
                 </form>
 
                 <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                <form method="POST" action="/admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
                     <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                     <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
                     <button type="submit" class="btn btn-deactivate" style="border-color: #d63638; color: #d63638; background: transparent;">Excluir</button>
