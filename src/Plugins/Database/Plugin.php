@@ -2,37 +2,12 @@
 
 namespace DomainSystem\Plugins\Database;
 
-use DomainSystem\Core\Plugin\PluginInterface;
+use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Container\Container;
 
-class Plugin implements PluginInterface
+class Plugin extends AbstractPlugin
 {
-    private Container $container;
 
-    public function __construct(Container $container)
-    {
-        $this->container = $container;
-    }
-
-    public function getName(): string
-    {
-        return 'database';
-    }
-
-    public function getVersion(): string
-    {
-        return '1.0.0';
-    }
-
-    public function getDependencies(): array
-    {
-        return [];
-    }
-
-    public function isActive(): bool
-    {
-        return true;
-    }
 
     public function register(): void
     {

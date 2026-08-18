@@ -25,6 +25,41 @@ class PluginManager
         $this->plugins[$plugin->getName()] = $plugin;
     }
 
+    public function discoverPlugins(string $pluginsPath, string $configPath): void
+    {
+        if (!is_dir($pluginsPath)) {
+            return;
+        }
+
+        $activeStates = [];
+        if (file_exists($configPath)) {
+            $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+        }
+
+        $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
+        
+        foreach ($directories as $dir) {
+            $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
+            
+            if (class_exists($pluginClass)) {
+                // If it extends AbstractPlugin, it needs path
+                if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
+                    /** @var AbstractPlugin $plugin */
+                    $plugin = new $pluginClass($this->container, $dir);
+                    $pluginName = $plugin->getName();
+                    $isActive = $activeStates[$pluginName] ?? false;
+                    $plugin->setActive($isActive);
+                    $this->addPlugin($plugin);
+                } else {
+                    // For legacy tests or hardcoded plugins that just take container
+                    /** @var PluginInterface $plugin */
+                    $plugin = new $pluginClass($this->container);
+                    $this->addPlugin($plugin);
+                }
+            }
+        }
+    }
+
     public function bootPlugins(): void
     {
         $orderedPlugins = $this->resolveDependencies();
@@ -37,6 +72,11 @@ class PluginManager
                 $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
             }
         }
+    }
+
+    public function getPlugins(): array
+    {
+        return $this->plugins;
     }
 
     private function resolveDependencies(): array

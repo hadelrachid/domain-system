@@ -1,0 +1,64 @@
+<?php
+
+namespace DomainSystem\Core\Plugin;
+
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+abstract class AbstractPlugin implements PluginInterface
+{
+    protected Container $container;
+    protected string $path;
+    protected array $metadata = [];
+    protected bool $isActive = false;
+
+    public function __construct(Container $container, string $path)
+    {
+        $this->container = $container;
+        $this->path = rtrim($path, '/\\');
+        $this->loadMetadata();
+    }
+
+    private function loadMetadata(): void
+    {
+        $jsonPath = $this->path . '/plugin.json';
+        if (!file_exists($jsonPath)) {
+            throw new Exception("Missing plugin.json at {$this->path}");
+        }
+
+        $content = file_get_contents($jsonPath);
+        $this->metadata = json_decode($content, true) ?? [];
+    }
+
+    public function getName(): string
+    {
+        return $this->metadata['name'] ?? 'unknown';
+    }
+
+    public function getVersion(): string
+    {
+        return $this->metadata['version'] ?? '1.0.0';
+    }
+    
+    public function getDescription(): string
+    {
+        return $this->metadata['description'] ?? '';
+    }
+
+    public function getDependencies(): array
+    {
+        return $this->metadata['dependencies'] ?? [];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+    
+    public function setActive(bool $active): void
+    {
+        $this->isActive = $active;
+    }
+
+    abstract public function register(): void;
+}

@@ -1,0 +1,6 @@
+{
+    "name": "system-admin",
+    "version": "1.0.0",
+    "description": "Painel de controle central para gerenciar plugins e configurações do Kernel.",
+    "author": "Kernel"
+}

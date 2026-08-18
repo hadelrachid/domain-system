@@ -1,0 +1,6 @@
+{
+    "name": "database",
+    "version": "1.0.0",
+    "description": "Fornece a conexão segura (PDO) e o construtor fluente de Queries.",
+    "author": "Kernel"
+}

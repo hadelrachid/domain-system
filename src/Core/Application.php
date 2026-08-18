@@ -17,11 +17,13 @@ class Application
     private PluginManager $pluginManager;
     private Router $router;
     private ThemeManager $themeManager;
+    private string $basePath;
 
     public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
+        $this->basePath = $basePath;
         $this->pluginManager = new PluginManager($container, $dispatcher);
         $this->router = new Router($container);
         
@@ -85,6 +87,11 @@ class Application
 
     public function boot(): void
     {
+        $pluginsPath = $this->basePath . '/src/Plugins';
+        $configPath = $this->basePath . '/config/plugins.json';
+        
+        $this->pluginManager->discoverPlugins($pluginsPath, $configPath);
+        
         // Load plugins
         $this->pluginManager->bootPlugins();
         
