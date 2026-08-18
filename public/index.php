@@ -21,7 +21,25 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 // Dispatch the request
 try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    
+    // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
     $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
+    $scriptName = str_replace('\\', '/', $scriptName);
+    
+    // Remove o scriptName da URI se existir
+    if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
+        $uri = substr($uri, strlen($scriptName));
+    }
+    // Caso tenham acessado /domain-system/admin diretamente pela regra raiz
+    $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
+    if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
+        $uri = substr($uri, strlen($baseFolder));
+    }
+    
+    if (empty($uri)) {
+        $uri = '/';
+    }
     
     $response = $app->getRouter()->dispatch($method, $uri);
     
