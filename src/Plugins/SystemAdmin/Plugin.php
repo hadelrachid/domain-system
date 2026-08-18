@@ -11,6 +11,10 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         /** @var Router $router */
         $router = $this->container->make(Router::class);
         

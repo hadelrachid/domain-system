@@ -95,6 +95,17 @@ class AdminController
 
     public function uploadPlugin()
     {
+        // Iniciar sessão para mensagens flash se necessário
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!class_exists('ZipArchive')) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A extensão ZipArchive do PHP não está ativada no seu XAMPP. Ative-a no php.ini.'];
+            header("Location: " . BASE_URL . "/admin/plugins");
+            exit;
+        }
+
         $basePath = dirname(__DIR__, 4);
         $pluginsPath = $basePath . '/src/Plugins';
         
@@ -119,12 +130,14 @@ class AdminController
 
                 if ($hasPluginJson && $pluginDirName) {
                     $zip->extractTo($pluginsPath);
+                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso!'];
                 } else {
-                    // Tratar erro: ZIP inválido
-                    die("ZIP inválido: Não possui um plugin.json na raiz do pacote.");
+                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ ZIP inválido: Não possui um arquivo plugin.json na raiz do pacote.'];
                 }
                 
                 $zip->close();
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não foi possível abrir o arquivo ZIP.'];
             }
         }
 

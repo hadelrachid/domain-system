@@ -5,6 +5,13 @@
     <button type="button" class="page-title-action" onclick="document.getElementById('upload-form').style.display='block'">Adicionar Novo</button>
 </h1>
 
+<?php if (isset($_SESSION['flash_message'])): ?>
+    <div style="padding: 12px; margin-bottom: 20px; border-left: 4px solid <?= $_SESSION['flash_message']['type'] === 'success' ? '#00a32a' : '#d63638' ?>; background: #fff; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+        <strong><?= htmlspecialchars($_SESSION['flash_message']['msg']) ?></strong>
+    </div>
+    <?php unset($_SESSION['flash_message']); ?>
+<?php endif; ?>
+
 <div id="upload-form" class="upload-box" style="display: none;">
     <h3>Fazer Upload de Plugin</h3>
     <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
