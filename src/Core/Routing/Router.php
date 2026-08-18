@@ -30,6 +30,12 @@ class Router
         // Remove query string
         $uri = strtok($uri, '?');
 
+        // Dispara o middleware via EventDispatcher (se estiver no Container)
+        if ($this->container->has(\DomainSystem\Core\Events\EventDispatcher::class)) {
+            $dispatcher = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+            $dispatcher->dispatch('router.before_dispatch', $uri);
+        }
+
         if (!isset($this->routes[$method])) {
             throw new Exception("Rota não encontrada: $uri", 404);
         }

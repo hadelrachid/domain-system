@@ -2,6 +2,7 @@
 ├── 📁 config/
 │   └── ⚙️ plugins.json
 ├── 📁 public/
+│   ├── 📄 .htaccess
 │   └── 🐘 index.php
 ├── 📁 src/
 │   ├── 📁 Core/
@@ -26,7 +27,8 @@
 │   │   │   └── 🐘 QueryBuilder.php
 │   │   └── 📁 SystemAdmin/
 │   │       ├── 📁 Controllers/
-│   │       │   └── 🐘 AdminController.php
+│   │       │   ├── 🐘 AdminController.php
+│   │       │   └── 🐘 DashboardController.php
 │   │       ├── ⚙️ plugin.json
 │   │       └── 🐘 Plugin.php
 │   └── 📁 Shared/
@@ -56,6 +58,8 @@
 ├── 📁 themes/
 │   └── 📁 default/
 │       └── 📁 admin/
+│           ├── 🐘 dashboard.php
+│           ├── 🐘 layout.php
 │           └── 🐘 plugins.php
 ├── 📁 vendor/
 │   ├── 📁 composer/
@@ -68,6 +72,7 @@
 │   │   ├── 📄 LICENSE
 │   │   └── 🐘 platform_check.php
 │   └── 🐘 autoload.php
+├── 📄 .htaccess
 ├── 📄 .phpunit.result.cache
 ├── 🐘 bootstrap.php
 ├── ⚙️ composer.json
@@ -230,7 +235,25 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 // Dispatch the request
 try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    
+    // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
     $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
+    $scriptName = str_replace('\\', '/', $scriptName);
+    
+    // Remove o scriptName da URI se existir
+    if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
+        $uri = substr($uri, strlen($scriptName));
+    }
+    // Caso tenham acessado /domain-system/admin diretamente pela regra raiz
+    $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
+    if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
+        $uri = substr($uri, strlen($baseFolder));
+    }
+    
+    if (empty($uri)) {
+        $uri = '/';
+    }
     
     $response = $app->getRouter()->dispatch($method, $uri);
     
@@ -1116,6 +1139,7 @@ namespace DomainSystem\Plugins\SystemAdmin;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
+use DomainSystem\Plugins\SystemAdmin\Controllers\DashboardController;
 
 class Plugin extends AbstractPlugin
 {
@@ -1124,15 +1148,29 @@ class Plugin extends AbstractPlugin
         /** @var Router $router */
         $router = $this->container->make(Router::class);
         
-        $controller = new AdminController($this->container);
+        $adminController = new AdminController($this->container);
+        $dashboardController = new DashboardController($this->container);
 
-        // Registrar rotas administrativas
-        $router->add('GET', '/admin/plugins', function() use ($controller) {
-            return $controller->listPlugins();
+        // Dashboard base
+        $router->addRoute('GET', '/admin', function() use ($dashboardController) {
+            return $dashboardController->index();
         });
 
-        $router->add('POST', '/admin/plugins/toggle', function() use ($controller) {
-            return $controller->togglePlugin();
+        // Rotas de Plugins
+        $router->addRoute('GET', '/admin/plugins', function() use ($adminController) {
+            return $adminController->listPlugins();
+        });
+
+        $router->addRoute('POST', '/admin/plugins/toggle', function() use ($adminController) {
+            return $adminController->togglePlugin();
+        });
+
+        $router->addRoute('POST', '/admin/plugins/upload', function() use ($adminController) {
+            return $adminController->uploadPlugin();
+        });
+
+        $router->addRoute('POST', '/admin/plugins/delete', function() use ($adminController) {
+            return $adminController->deletePlugin();
         });
     }
 }
@@ -1234,6 +1272,123 @@ class AdminController
         // Redirect back
         header("Location: /admin/plugins");
         exit;
+    }
+
+    public function uploadPlugin()
+    {
+        $basePath = dirname(__DIR__, 4);
+        $pluginsPath = $basePath . '/src/Plugins';
+        
+        if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
+            $zipFile = $_FILES['plugin_zip']['tmp_name'];
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($zipFile) === TRUE) {
+                // Ensure it's a valid plugin by checking for plugin.json
+                $hasPluginJson = false;
+                $pluginDirName = null;
+
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $filename = $zip->getNameIndex($i);
+                    // A valid zip usually has one root directory and inside it plugin.json
+                    if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
+                        $hasPluginJson = true;
+                        $pluginDirName = $matches[1];
+                        break;
+                    }
+                }
+
+                if ($hasPluginJson && $pluginDirName) {
+                    $zip->extractTo($pluginsPath);
+                } else {
+                    // Tratar erro: ZIP inválido
+                    die("ZIP inválido: Não possui um plugin.json na raiz do pacote.");
+                }
+                
+                $zip->close();
+            }
+        }
+
+        header("Location: /admin/plugins");
+        exit;
+    }
+
+    public function deletePlugin()
+    {
+        $pluginName = $_POST['plugin_name'] ?? null;
+        $pluginFolder = $_POST['plugin_folder'] ?? null;
+
+        if ($pluginName && $pluginFolder && !in_array($pluginName, ['database', 'system-admin'])) {
+            $basePath = dirname(__DIR__, 4);
+            $pluginPath = $basePath . '/src/Plugins/' . $pluginFolder;
+            $configPath = $basePath . '/config/plugins.json';
+
+            // Ensure it is inactive before deleting
+            $activeStates = [];
+            if (file_exists($configPath)) {
+                $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+            }
+
+            if (empty($activeStates[$pluginName])) {
+                // Recursive delete
+                $this->deleteDirectory($pluginPath);
+            }
+        }
+
+        header("Location: /admin/plugins");
+        exit;
+    }
+
+    private function deleteDirectory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+        return rmdir($dir);
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\SystemAdmin\Controllers\DashboardController.php
+
+<?php
+
+namespace DomainSystem\Plugins\SystemAdmin\Controllers;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Theme\ThemeManager;
+use Exception;
+
+class DashboardController
+{
+    private Container $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function index()
+    {
+        /** @var ThemeManager $theme */
+        $theme = $this->container->make(ThemeManager::class);
+
+        try {
+            return $theme->render('admin/dashboard');
+        } catch (Exception $e) {
+            return "Erro ao renderizar dashboard: " . $e->getMessage();
+        }
     }
 }
 
@@ -2727,6 +2882,7 @@ namespace DomainSystem\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use DomainSystem\Core\Container\Container;
 use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
+use DomainSystem\Plugins\SystemAdmin\Controllers\DashboardController;
 use DomainSystem\Core\Theme\ThemeManager;
 
 class AdminControllerTest extends TestCase
@@ -2739,15 +2895,26 @@ class AdminControllerTest extends TestCase
         mkdir($this->tempThemesPath);
         mkdir($this->tempThemesPath . '/admin');
         
-        // Mock a simple admin template
+        file_put_contents(
+            $this->tempThemesPath . '/admin/layout.php', 
+            '<html><?= $content ?? "" ?></html>'
+        );
+
+        file_put_contents(
+            $this->tempThemesPath . '/admin/dashboard.php', 
+            '<?php ob_start(); ?><h1>Dashboard</h1><?php $content = ob_get_clean(); require __DIR__ . "/layout.php"; ?>'
+        );
+
         file_put_contents(
             $this->tempThemesPath . '/admin/plugins.php', 
-            '<?php foreach($plugins as $p) { echo $p["name"] . ":" . ($p["is_active"] ? "1" : "0") . ";"; } ?>'
+            '<?php ob_start(); foreach($plugins as $p) { echo $p["name"] . ":" . ($p["is_active"] ? "1" : "0") . ";"; } $content = ob_get_clean(); require __DIR__ . "/layout.php"; ?>'
         );
     }
 
     protected function tearDown(): void
     {
+        unlink($this->tempThemesPath . '/admin/layout.php');
+        unlink($this->tempThemesPath . '/admin/dashboard.php');
         unlink($this->tempThemesPath . '/admin/plugins.php');
         rmdir($this->tempThemesPath . '/admin');
         rmdir($this->tempThemesPath);
@@ -2763,13 +2930,25 @@ class AdminControllerTest extends TestCase
 
         $controller = new AdminController($container);
         $html = $controller->listPlugins();
-
-        // The exact output depends on what plugins exist in the actual src/Plugins directory,
-        // because AdminController reads from dirname(__DIR__, 4). 
-        // We know at least 'database' and 'system-admin' exist.
         
         $this->assertStringContainsString('database', $html);
         $this->assertStringContainsString('system-admin', $html);
+        $this->assertStringContainsString('<html>', $html); // via layout
+    }
+
+    public function testDashboard()
+    {
+        $container = new Container();
+        $themeManager = new ThemeManager($this->tempThemesPath);
+        $container->singleton(ThemeManager::class, function() use ($themeManager) {
+            return $themeManager;
+        });
+
+        $controller = new DashboardController($container);
+        $html = $controller->index();
+        
+        $this->assertStringContainsString('Dashboard', $html);
+        $this->assertStringContainsString('<html>', $html);
     }
 }
 
@@ -3479,79 +3658,153 @@ class ThemeManagerTest extends TestCase
 
 
 /* ============================================================ */
-// Arquivo: domain-system/themes\default\admin\plugins.php
+// Arquivo: domain-system/themes\default\admin\dashboard.php
 
-<?php
-// Layout Header
-$title = "Gerenciador de Plugins";
-// We don't have getHeader() implemented in ThemeManager completely in index.php yet (the dummy one had it).
-// Let's use simple HTML for now to not depend on default theme structure.
+<?php ob_start(); ?>
+
+<h1>Bem-vindo ao Domain-System</h1>
+<p>Este é o seu painel de controle central. A partir daqui você pode gerenciar a arquitetura do seu SaaS.</p>
+
+<div style="display: flex; gap: 20px; margin-top: 30px;">
+    <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">
+        <h3>Plugins Ativos</h3>
+        <p>Acesse o gerenciador de plugins para expandir as funcionalidades do sistema instalando pacotes ZIP.</p>
+        <a href="/admin/plugins" class="btn btn-activate">Gerenciar Plugins</a>
+    </div>
+    
+    <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">
+        <h3>Temas</h3>
+        <p>Em breve: Gerenciamento visual da sua casca de apresentação.</p>
+        <button class="btn btn-core" disabled>Em breve</button>
+    </div>
+</div>
+
+<?php 
+$content = ob_get_clean();
+require __DIR__ . '/layout.php';
 ?>
+
+
+/* ============================================================ */
+// Arquivo: domain-system/themes\default\admin\layout.php
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System Admin | Plugins</title>
+    <title>Domain-System Admin</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; margin: 0; padding: 20px; color: #3c434a; }
-        .wrap { max-width: 1000px; margin: 0 auto; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04); padding: 20px; }
-        h1 { font-size: 23px; font-weight: 400; margin: 0 0 20px; }
-        table { width: 100%; border-collapse: collapse; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; display: flex; height: 100vh; }
+        #adminmenuback { width: 160px; background: #1d2327; color: #fff; height: 100%; position: fixed; }
+        #adminmenu { padding: 0; margin: 0; list-style: none; margin-top: 20px; }
+        #adminmenu li a { display: block; padding: 10px 15px; color: #fff; text-decoration: none; font-size: 14px; }
+        #adminmenu li a:hover { background: #2c3338; color: #72aee6; }
+        #adminmenu li.current a { background: #2271b1; font-weight: 600; }
+        #wpcontent { margin-left: 160px; padding: 20px; width: calc(100% - 160px); overflow-y: auto; }
+        h1 { font-size: 23px; font-weight: 400; margin: 0 0 20px; color: #1d2327; }
+        .wrap { max-width: 1000px; }
+        /* Forms & Tables */
+        table.wp-list-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #c3c4c7; }
         th { font-weight: 600; background: #f6f7f7; }
-        .plugin-active { background: #f6fcf8; }
-        .plugin-inactive { background: #fff; }
-        .btn { padding: 4px 8px; border: 1px solid; border-radius: 3px; cursor: pointer; text-decoration: none; font-size: 13px; }
+        .btn { padding: 4px 8px; border: 1px solid; border-radius: 3px; cursor: pointer; text-decoration: none; font-size: 13px; display: inline-block; }
         .btn-activate { background: #f6f7f7; border-color: #2271b1; color: #2271b1; }
         .btn-deactivate { background: #f6f7f7; border-color: #d63638; color: #d63638; }
         .btn-core { background: #e0e0e0; border-color: #ccc; color: #666; cursor: not-allowed; }
         .badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; background: #000; color: #fff; margin-left: 5px; }
+        .upload-box { background: #fff; padding: 20px; border: 1px dashed #c3c4c7; margin-bottom: 20px; }
+        .page-title-action { display: inline-block; margin-left: 10px; padding: 4px 8px; font-size: 13px; text-decoration: none; border: 1px solid #2271b1; color: #2271b1; border-radius: 3px; }
     </style>
 </head>
 <body>
-    <div class="wrap">
-        <h1>Gerenciador de Plugins</h1>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Plugin</th>
-                    <th>Descrição</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($plugins as $plugin): ?>
-                <tr class="<?= $plugin['is_active'] ? 'plugin-active' : 'plugin-inactive' ?>">
-                    <td>
-                        <strong><?= htmlspecialchars($plugin['name']) ?></strong> 
-                        <span class="badge">v<?= htmlspecialchars($plugin['version']) ?></span>
-                        <br>
-                        <small style="color:#666;">/<?= htmlspecialchars($plugin['folder']) ?></small>
-                    </td>
-                    <td><?= htmlspecialchars($plugin['description']) ?></td>
-                    <td>
-                        <form method="POST" action="/admin/plugins/toggle" style="margin:0;">
-                            <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
-                            
-                            <?php if ($plugin['is_core']): ?>
-                                <button type="button" class="btn btn-core" disabled>Core (Bloqueado)</button>
-                            <?php elseif ($plugin['is_active']): ?>
-                                <input type="hidden" name="action" value="disable">
-                                <button type="submit" class="btn btn-deactivate">Desativar</button>
-                            <?php else: ?>
-                                <input type="hidden" name="action" value="enable">
-                                <button type="submit" class="btn btn-activate">Ativar</button>
-                            <?php endif; ?>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    <div id="adminmenuback">
+        <ul id="adminmenu">
+            <li><a href="/admin">Painel</a></li>
+            <li><a href="/admin/plugins">Plugins</a></li>
+            <li><a href="#">Temas</a></li>
+            <li><a href="#">Configurações</a></li>
+        </ul>
+    </div>
+    
+    <div id="wpcontent">
+        <div class="wrap">
+            <?= $content ?? '' ?>
+        </div>
     </div>
 </body>
 </html>
+
+
+/* ============================================================ */
+// Arquivo: domain-system/themes\default\admin\plugins.php
+
+<?php ob_start(); ?>
+
+<h1>
+    Plugins
+    <button type="button" class="page-title-action" onclick="document.getElementById('upload-form').style.display='block'">Adicionar Novo</button>
+</h1>
+
+<div id="upload-form" class="upload-box" style="display: none;">
+    <h3>Fazer Upload de Plugin</h3>
+    <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
+    <form method="POST" action="/admin/plugins/upload" enctype="multipart/form-data">
+        <input type="file" name="plugin_zip" accept=".zip" required>
+        <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
+        <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
+    </form>
+</div>
+
+<table class="wp-list-table">
+    <thead>
+        <tr>
+            <th>Plugin</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($plugins as $plugin): ?>
+        <tr style="background: <?= $plugin['is_active'] ? '#f6fcf8' : '#fff' ?>">
+            <td>
+                <strong><?= htmlspecialchars($plugin['name']) ?></strong> 
+                <span class="badge">v<?= htmlspecialchars($plugin['version']) ?></span>
+                <br>
+                <small style="color:#666;">/<?= htmlspecialchars($plugin['folder']) ?></small>
+            </td>
+            <td><?= htmlspecialchars($plugin['description']) ?></td>
+            <td style="display: flex; gap: 5px;">
+                <form method="POST" action="/admin/plugins/toggle" style="margin:0;">
+                    <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
+                    
+                    <?php if ($plugin['is_core']): ?>
+                        <button type="button" class="btn btn-core" disabled>Core (Bloqueado)</button>
+                    <?php elseif ($plugin['is_active']): ?>
+                        <input type="hidden" name="action" value="disable">
+                        <button type="submit" class="btn btn-deactivate">Desativar</button>
+                    <?php else: ?>
+                        <input type="hidden" name="action" value="enable">
+                        <button type="submit" class="btn btn-activate">Ativar</button>
+                    <?php endif; ?>
+                </form>
+
+                <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
+                <form method="POST" action="/admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                    <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
+                    <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
+                    <button type="submit" class="btn btn-deactivate" style="border-color: #d63638; color: #d63638; background: transparent;">Excluir</button>
+                </form>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
+
+<?php 
+$content = ob_get_clean();
+require __DIR__ . '/layout.php';
+?>
 
 

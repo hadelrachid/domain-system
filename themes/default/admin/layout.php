@@ -34,6 +34,13 @@
             <li><a href="/admin/plugins">Plugins</a></li>
             <li><a href="#">Temas</a></li>
             <li><a href="#">Configurações</a></li>
+            
+            <?php if (isset($_SESSION['user_id'])): ?>
+            <li style="margin-top: 50px; border-top: 1px solid #2c3338;">
+                <a href="#" style="color: #999; cursor: default;">Olá, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?></a>
+            </li>
+            <li><a href="/logout" style="color: #d63638;">Sair (Logout)</a></li>
+            <?php endif; ?>
         </ul>
     </div>
     
