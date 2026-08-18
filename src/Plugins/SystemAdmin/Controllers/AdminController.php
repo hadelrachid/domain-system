@@ -92,4 +92,87 @@ class AdminController
         header("Location: /admin/plugins");
         exit;
     }
+
+    public function uploadPlugin()
+    {
+        $basePath = dirname(__DIR__, 4);
+        $pluginsPath = $basePath . '/src/Plugins';
+        
+        if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
+            $zipFile = $_FILES['plugin_zip']['tmp_name'];
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($zipFile) === TRUE) {
+                // Ensure it's a valid plugin by checking for plugin.json
+                $hasPluginJson = false;
+                $pluginDirName = null;
+
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $filename = $zip->getNameIndex($i);
+                    // A valid zip usually has one root directory and inside it plugin.json
+                    if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
+                        $hasPluginJson = true;
+                        $pluginDirName = $matches[1];
+                        break;
+                    }
+                }
+
+                if ($hasPluginJson && $pluginDirName) {
+                    $zip->extractTo($pluginsPath);
+                } else {
+                    // Tratar erro: ZIP inválido
+                    die("ZIP inválido: Não possui um plugin.json na raiz do pacote.");
+                }
+                
+                $zip->close();
+            }
+        }
+
+        header("Location: /admin/plugins");
+        exit;
+    }
+
+    public function deletePlugin()
+    {
+        $pluginName = $_POST['plugin_name'] ?? null;
+        $pluginFolder = $_POST['plugin_folder'] ?? null;
+
+        if ($pluginName && $pluginFolder && !in_array($pluginName, ['database', 'system-admin'])) {
+            $basePath = dirname(__DIR__, 4);
+            $pluginPath = $basePath . '/src/Plugins/' . $pluginFolder;
+            $configPath = $basePath . '/config/plugins.json';
+
+            // Ensure it is inactive before deleting
+            $activeStates = [];
+            if (file_exists($configPath)) {
+                $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+            }
+
+            if (empty($activeStates[$pluginName])) {
+                // Recursive delete
+                $this->deleteDirectory($pluginPath);
+            }
+        }
+
+        header("Location: /admin/plugins");
+        exit;
+    }
+
+    private function deleteDirectory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+        return rmdir($dir);
+    }
 }

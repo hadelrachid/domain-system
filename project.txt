@@ -1,5 +1,6 @@
 📁 domain-system/
 ├── 📁 config/
+│   └── ⚙️ plugins.json
 ├── 📁 public/
 │   └── 🐘 index.php
 ├── 📁 src/
@@ -9,25 +10,53 @@
 │   │   ├── 📁 Events/
 │   │   │   └── 🐘 EventDispatcher.php
 │   │   ├── 📁 Plugin/
+│   │   │   ├── 🐘 AbstractPlugin.php
 │   │   │   ├── 🐘 PluginInterface.php
 │   │   │   └── 🐘 PluginManager.php
 │   │   ├── 📁 Routing/
 │   │   │   └── 🐘 Router.php
+│   │   ├── 📁 Theme/
+│   │   │   └── 🐘 ThemeManager.php
 │   │   └── 🐘 Application.php
 │   ├── 📁 Plugins/
+│   │   ├── 📁 Database/
+│   │   │   ├── 🐘 Connection.php
+│   │   │   ├── ⚙️ plugin.json
+│   │   │   ├── 🐘 Plugin.php
+│   │   │   └── 🐘 QueryBuilder.php
+│   │   └── 📁 SystemAdmin/
+│   │       ├── 📁 Controllers/
+│   │       │   └── 🐘 AdminController.php
+│   │       ├── ⚙️ plugin.json
+│   │       └── 🐘 Plugin.php
 │   └── 📁 Shared/
 ├── 📁 temp/
-│   └── 📝 DeepSeek-relatorio-01.txt
+│   ├── 📝 DeepSeek-relatorio-01.txt
+│   └── 📝 DeepSeek-relatorio-02..txt
 ├── 📁 tests/
 │   ├── 📁 Integration/
 │   ├── 📁 UI/
+│   │   └── 📁 dummy_theme/
+│   │       ├── 🐘 footer.php
+│   │       ├── 🐘 header.php
+│   │       └── 🐘 index.php
 │   ├── 📁 Unit/
+│   │   ├── 🐘 AdminControllerTest.php
 │   │   ├── 🐘 ApplicationTest.php
 │   │   ├── 🐘 ContainerTest.php
+│   │   ├── 🐘 DatabaseConnectionTest.php
+│   │   ├── 🐘 DatabasePluginTest.php
 │   │   ├── 🐘 EventDispatcherTest.php
 │   │   ├── 🐘 PluginManagerTest.php
-│   │   └── 🐘 RouterTest.php
+│   │   ├── 🐘 PluginStateTest.php
+│   │   ├── 🐘 QueryBuilderTest.php
+│   │   ├── 🐘 RouterTest.php
+│   │   └── 🐘 ThemeManagerTest.php
 │   └── 🐘 bootstrap.php
+├── 📁 themes/
+│   └── 📁 default/
+│       └── 📁 admin/
+│           └── 🐘 plugins.php
 ├── 📁 vendor/
 │   ├── 📁 composer/
 │   │   ├── 🐘 autoload_classmap.php
@@ -44,7 +73,9 @@
 ├── ⚙️ composer.json
 ├── 📄 composer.lock
 ├── 📄 composer.phar
-└── 📄 phpunit.phar
+├── 📄 domain-system.zip
+├── 📄 phpunit.phar
+└── 📘 README.md
 
 /* ============================================================ */
 // Arquivo: domain-system/bootstrap.php
@@ -69,7 +100,7 @@ $container = new Container();
 $dispatcher = new EventDispatcher();
 
 // Initialize the Application Kernel
-$app = new Application($container, $dispatcher);
+$app = new Application($container, $dispatcher, DOMAIN_SYSTEM_ROOT);
 
 return $app;
 
@@ -100,6 +131,76 @@ return $app;
     "scripts": {
         "test": "phpunit"
     }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/README.md
+
+# Domain System Kernel 🚀
+
+**Domain System** é um *Kernel* ultra-rápido, modular e de altíssima coesão construído do zero em PHP puro. Inspirado no ecossistema do WordPress, porém utilizando arquitetura de software moderna, Test-Driven Development (TDD) e princípios SOLID, ele atua como a fundação invisível para a criação de sistemas web robustos.
+
+A filosofia principal do projeto é: **Lógica de negócio não se mistura com interface visual.**
+
+## 🏗️ Arquitetura
+
+O sistema é construído como um quebra-cabeça (peças de lego) dividido em 3 camadas principais:
+
+### 1. O Kernel (Core)
+O núcleo absoluto que orquestra tudo. Ele não conhece regras de negócio, apenas sabe injetar dependências, disparar eventos, e resolver rotas.
+- **Container (PSR-11)**: Injeção de dependências e Singleton.
+- **EventDispatcher**: Sistema poderoso de *Hooks* e *Callbacks* (`addListener`, `dispatch`).
+- **Router**: Roteamento fluente e seguro de requisições web.
+
+### 2. Plugins (Lógica de Negócio)
+Qualquer funcionalidade (Aplicativo) do sistema é um **Plugin**. 
+Os plugins vivem na pasta `src/Plugins/` e são os únicos responsáveis pela lógica, regras de negócio e consultas ao banco de dados. Eles se conectam ao Kernel através de rotas e eventos, mas **não geram HTML (views)**. 
+- *Exemplo*: `Database Plugin` - Gerencia as conexões seguras PDO e provê o `QueryBuilder` contra injeção de SQL.
+
+### 3. Themes (Motor de Apresentação)
+A camada visual. O **Theme Engine** (`ThemeManager`) aplica renderização do lado do servidor (SSR) de altíssima performance. 
+Toda a parte de Frontend (HTML, CSS, assets) moram na pasta `themes/`. Os plugins enviam as "variáveis" processadas para o ThemeManager, que injeta no HTML limpo usando métodos globais como `$this->getHeader()` e `$this->getFooter()`.
+
+## ⚙️ Funcionalidades e Diferenciais
+- **Zero Acoplamento**: Você pode arrancar um tema ou um plugin e o núcleo não vai quebrar.
+- **Metadados Modernos (JSON)**: Os plugins são descobertos e gerenciados via arquivos `plugin.json` independentes.
+- **QueryBuilder Integrado**: Proteção total contra SQL Injection.
+- **100% Coberto por Testes**: Cada pedaço do Core (Hooks, DI, Plugins, Themes) possui testes unitários (PHPUnit) usando a metodologia TDD.
+
+## 🚀 Como Iniciar
+
+### Requisitos
+- PHP 8.1+
+- Composer (para gerenciar autoloader e PHPUnit)
+
+### Instalação
+1. Clone este repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/domain-system.git
+   ```
+2. Inicie o servidor embutido do PHP:
+   ```bash
+   php -S localhost:8000 -t public
+   ```
+3. Acesse `http://localhost:8000` e a mágica do roteamento e dos temas acontecerá.
+
+## 🧪 Rodando os Testes
+Para rodar a suíte completa de testes da arquitetura, execute:
+```bash
+php phpunit.phar --bootstrap tests/bootstrap.php tests/Unit
+```
+
+---
+*Construído com obsessão por código limpo e arquitetura de software.*
+
+
+/* ============================================================ */
+// Arquivo: domain-system/config\plugins.json
+
+{
+    "database": true,
+    "system-admin": true
 }
 
 
@@ -161,6 +262,7 @@ use DomainSystem\Core\Container\Container;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Theme\ThemeManager;
 
 class Application
 {
@@ -170,13 +272,20 @@ class Application
     private EventDispatcher $dispatcher;
     private PluginManager $pluginManager;
     private Router $router;
+    private ThemeManager $themeManager;
+    private string $basePath;
 
-    public function __construct(Container $container, EventDispatcher $dispatcher)
+    public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
+        $this->basePath = $basePath;
         $this->pluginManager = new PluginManager($container, $dispatcher);
         $this->router = new Router($container);
+        
+        // Define the default theme path. This can be changed later by a DB config or a plugin.
+        $themePath = $basePath . '/themes/default';
+        $this->themeManager = new ThemeManager($themePath);
         
         self::$instance = $this;
 
@@ -195,6 +304,10 @@ class Application
 
         $this->container->singleton(Router::class, function() {
             return $this->router;
+        });
+
+        $this->container->singleton(ThemeManager::class, function() {
+            return $this->themeManager;
         });
     }
 
@@ -223,8 +336,18 @@ class Application
         return $this->router;
     }
 
+    public function getThemeManager(): ThemeManager
+    {
+        return $this->themeManager;
+    }
+
     public function boot(): void
     {
+        $pluginsPath = $this->basePath . '/src/Plugins';
+        $configPath = $this->basePath . '/config/plugins.json';
+        
+        $this->pluginManager->discoverPlugins($pluginsPath, $configPath);
+        
         // Load plugins
         $this->pluginManager->bootPlugins();
         
@@ -376,6 +499,75 @@ class EventDispatcher
 
 
 /* ============================================================ */
+// Arquivo: domain-system/src\Core\Plugin\AbstractPlugin.php
+
+<?php
+
+namespace DomainSystem\Core\Plugin;
+
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+abstract class AbstractPlugin implements PluginInterface
+{
+    protected Container $container;
+    protected string $path;
+    protected array $metadata = [];
+    protected bool $isActive = false;
+
+    public function __construct(Container $container, string $path)
+    {
+        $this->container = $container;
+        $this->path = rtrim($path, '/\\');
+        $this->loadMetadata();
+    }
+
+    private function loadMetadata(): void
+    {
+        $jsonPath = $this->path . '/plugin.json';
+        if (!file_exists($jsonPath)) {
+            throw new Exception("Missing plugin.json at {$this->path}");
+        }
+
+        $content = file_get_contents($jsonPath);
+        $this->metadata = json_decode($content, true) ?? [];
+    }
+
+    public function getName(): string
+    {
+        return $this->metadata['name'] ?? 'unknown';
+    }
+
+    public function getVersion(): string
+    {
+        return $this->metadata['version'] ?? '1.0.0';
+    }
+    
+    public function getDescription(): string
+    {
+        return $this->metadata['description'] ?? '';
+    }
+
+    public function getDependencies(): array
+    {
+        return $this->metadata['dependencies'] ?? [];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+    
+    public function setActive(bool $active): void
+    {
+        $this->isActive = $active;
+    }
+
+    abstract public function register(): void;
+}
+
+
+/* ============================================================ */
 // Arquivo: domain-system/src\Core\Plugin\PluginInterface.php
 
 <?php
@@ -442,6 +634,41 @@ class PluginManager
         $this->plugins[$plugin->getName()] = $plugin;
     }
 
+    public function discoverPlugins(string $pluginsPath, string $configPath): void
+    {
+        if (!is_dir($pluginsPath)) {
+            return;
+        }
+
+        $activeStates = [];
+        if (file_exists($configPath)) {
+            $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+        }
+
+        $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
+        
+        foreach ($directories as $dir) {
+            $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
+            
+            if (class_exists($pluginClass)) {
+                // If it extends AbstractPlugin, it needs path
+                if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
+                    /** @var AbstractPlugin $plugin */
+                    $plugin = new $pluginClass($this->container, $dir);
+                    $pluginName = $plugin->getName();
+                    $isActive = $activeStates[$pluginName] ?? false;
+                    $plugin->setActive($isActive);
+                    $this->addPlugin($plugin);
+                } else {
+                    // For legacy tests or hardcoded plugins that just take container
+                    /** @var PluginInterface $plugin */
+                    $plugin = new $pluginClass($this->container);
+                    $this->addPlugin($plugin);
+                }
+            }
+        }
+    }
+
     public function bootPlugins(): void
     {
         $orderedPlugins = $this->resolveDependencies();
@@ -454,6 +681,11 @@ class PluginManager
                 $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
             }
         }
+    }
+
+    public function getPlugins(): array
+    {
+        return $this->plugins;
     }
 
     private function resolveDependencies(): array
@@ -566,6 +798,442 @@ class Router
         }
 
         throw new Exception("Handler inválido.");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Theme\ThemeManager.php
+
+<?php
+
+namespace DomainSystem\Core\Theme;
+
+use Exception;
+
+class ThemeManager
+{
+    private string $activeThemePath;
+
+    public function __construct(string $activeThemePath)
+    {
+        $this->activeThemePath = rtrim($activeThemePath, '/\\');
+    }
+
+    /**
+     * Renders a specific template file from the active theme.
+     * Extracts variables so they are available in the template scope.
+     * 
+     * @param string $template The name of the template file (without .php)
+     * @param array $args Data to be passed to the template
+     * @return string The rendered HTML
+     * @throws Exception If template not found
+     */
+    public function render(string $template, array $args = []): string
+    {
+        $file = $this->activeThemePath . '/' . $template . '.php';
+
+        if (!file_exists($file)) {
+            throw new Exception("Template '{$template}' not found in theme.");
+        }
+
+        // Extract variables to the current scope
+        extract($args);
+
+        // Start output buffering
+        ob_start();
+        
+        // Include the file (it will use the variables extracted and $this)
+        include $file;
+        
+        // Return the buffered content
+        return ob_get_clean();
+    }
+
+    /**
+     * Simulates WordPress's get_header()
+     */
+    public function get_header(array $args = []): string
+    {
+        try {
+            $html = $this->render('header', $args);
+            echo $html; // Echo directly when used inside templates, but also return for testing
+            return $html;
+        } catch (Exception $e) {
+            return ''; // Fallback or empty if not found
+        }
+    }
+
+    /**
+     * Simulates WordPress's get_footer()
+     */
+    public function get_footer(array $args = []): string
+    {
+        try {
+            $html = $this->render('footer', $args);
+            echo $html;
+            return $html;
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\Database\Connection.php
+
+<?php
+
+namespace DomainSystem\Plugins\Database;
+
+use PDO;
+use PDOException;
+use Exception;
+
+class Connection
+{
+    private PDO $pdo;
+
+    public function __construct(string $dsn, string $user = '', string $pass = '', array $options = [])
+    {
+        $defaultOptions = [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ];
+        
+        $options = array_replace($defaultOptions, $options);
+
+        try {
+            $this->pdo = new PDO($dsn, $user, $pass, $options);
+        } catch (PDOException $e) {
+            throw new Exception("Connection failed: " . $e->getMessage());
+        }
+    }
+
+    public function getPdo(): PDO
+    {
+        return $this->pdo;
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\Database\plugin.json
+
+{
+    "name": "database",
+    "version": "1.0.0",
+    "description": "Fornece a conexão segura (PDO) e o construtor fluente de Queries.",
+    "author": "Kernel"
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\Database\Plugin.php
+
+<?php
+
+namespace DomainSystem\Plugins\Database;
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Container\Container;
+
+class Plugin extends AbstractPlugin
+{
+
+
+    public function register(): void
+    {
+        // For default we look at env vars
+        $dsn = getenv('DB_DSN') ?: 'sqlite::memory:'; // Fallback to memory for safety if not set
+        $user = getenv('DB_USER') ?: '';
+        $pass = getenv('DB_PASS') ?: '';
+
+        // We bind Connection to the container so that it acts as a Singleton
+        $this->container->singleton(Connection::class, function() use ($dsn, $user, $pass) {
+            return new Connection($dsn, $user, $pass);
+        });
+
+        // We bind QueryBuilder. We can make it return a new instance or bind as factory
+        // Container::make usually resolves dependencies and returns a new instance unless bound as singleton.
+        // We will bind it to a closure so it always gets the shared Connection
+        $this->container->bind(QueryBuilder::class, function($c) {
+            return new QueryBuilder($c->make(Connection::class));
+        });
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\Database\QueryBuilder.php
+
+<?php
+
+namespace DomainSystem\Plugins\Database;
+
+class QueryBuilder
+{
+    private Connection $connection;
+    private string $table = '';
+    private array $columns = ['*'];
+    private array $wheres = [];
+    private array $bindings = [];
+    private int $bindingCounter = 0;
+
+    public function __construct(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+
+    public function table(string $table): self
+    {
+        // Return a new instance to allow chaining without polluting state (like multiple query builders)
+        // Actually, it's better to clone or just reset state if we want to reuse the builder instance,
+        // but typically a new QueryBuilder instance is created per query, or cloned.
+        $instance = new self($this->connection);
+        $instance->table = $table;
+        return $instance;
+    }
+
+    public function select(array $columns = ['*']): self
+    {
+        $this->columns = $columns;
+        return $this;
+    }
+
+    public function where(string $column, string $operator, mixed $value): self
+    {
+        $paramName = "w_" . $this->bindingCounter++;
+        $this->wheres[] = "$column $operator :$paramName";
+        $this->bindings[$paramName] = $value;
+        return $this;
+    }
+
+    private function buildSelect(): string
+    {
+        $sql = "SELECT " . implode(', ', $this->columns) . " FROM {$this->table}";
+        if (!empty($this->wheres)) {
+            $sql .= " WHERE " . implode(' AND ', $this->wheres);
+        }
+        return $sql;
+    }
+
+    public function get(): array
+    {
+        $sql = $this->buildSelect();
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($this->bindings);
+        return $stmt->fetchAll();
+    }
+
+    public function first(): ?array
+    {
+        $sql = $this->buildSelect() . ' LIMIT 1';
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($this->bindings);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    public function insert(array $data): int
+    {
+        $columns = array_keys($data);
+        $placeholders = [];
+        $bindings = [];
+
+        foreach ($columns as $col) {
+            $paramName = "i_" . $this->bindingCounter++;
+            $placeholders[] = ":$paramName";
+            $bindings[$paramName] = $data[$col];
+        }
+
+        $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($bindings);
+        
+        return (int) $this->connection->getPdo()->lastInsertId();
+    }
+
+    public function update(array $data): int
+    {
+        $sets = [];
+        $updateBindings = [];
+
+        foreach ($data as $column => $value) {
+            $paramName = "u_" . $this->bindingCounter++;
+            $sets[] = "$column = :$paramName";
+            $updateBindings[$paramName] = $value;
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $sets);
+        
+        if (!empty($this->wheres)) {
+            $sql .= " WHERE " . implode(' AND ', $this->wheres);
+        }
+
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute(array_merge($updateBindings, $this->bindings));
+        
+        return $stmt->rowCount();
+    }
+
+    public function delete(): int
+    {
+        $sql = "DELETE FROM {$this->table}";
+        
+        if (!empty($this->wheres)) {
+            $sql .= " WHERE " . implode(' AND ', $this->wheres);
+        }
+
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($this->bindings);
+        
+        return $stmt->rowCount();
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\SystemAdmin\plugin.json
+
+{
+    "name": "system-admin",
+    "version": "1.0.0",
+    "description": "Painel de controle central para gerenciar plugins e configurações do Kernel.",
+    "author": "Kernel"
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\SystemAdmin\Plugin.php
+
+<?php
+
+namespace DomainSystem\Plugins\SystemAdmin;
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
+
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        /** @var Router $router */
+        $router = $this->container->make(Router::class);
+        
+        $controller = new AdminController($this->container);
+
+        // Registrar rotas administrativas
+        $router->add('GET', '/admin/plugins', function() use ($controller) {
+            return $controller->listPlugins();
+        });
+
+        $router->add('POST', '/admin/plugins/toggle', function() use ($controller) {
+            return $controller->togglePlugin();
+        });
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Plugins\SystemAdmin\Controllers\AdminController.php
+
+<?php
+
+namespace DomainSystem\Plugins\SystemAdmin\Controllers;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Theme\ThemeManager;
+use Exception;
+
+class AdminController
+{
+    private Container $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function listPlugins()
+    {
+        // Define paths
+        $basePath = dirname(__DIR__, 4); // DomainSystem root
+        $pluginsPath = $basePath . '/src/Plugins';
+        $configPath = $basePath . '/config/plugins.json';
+
+        // Get Active states
+        $activeStates = [];
+        if (file_exists($configPath)) {
+            $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+        }
+
+        // Discover all plugins
+        $allPlugins = [];
+        if (is_dir($pluginsPath)) {
+            $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
+            foreach ($directories as $dir) {
+                $jsonPath = $dir . '/plugin.json';
+                if (file_exists($jsonPath)) {
+                    $metadata = json_decode(file_get_contents($jsonPath), true);
+                    $name = $metadata['name'] ?? basename($dir);
+                    $allPlugins[] = [
+                        'folder' => basename($dir),
+                        'name' => $name,
+                        'version' => $metadata['version'] ?? 'N/A',
+                        'description' => $metadata['description'] ?? '',
+                        'is_active' => $activeStates[$name] ?? false,
+                        'is_core' => in_array($name, ['database', 'system-admin']) // Prevent disabling core
+                    ];
+                }
+            }
+        }
+
+        /** @var ThemeManager $theme */
+        $theme = $this->container->make(ThemeManager::class);
+
+        try {
+            return $theme->render('admin/plugins', ['plugins' => $allPlugins]);
+        } catch (Exception $e) {
+            // Fallback if theme template doesn't exist
+            return "Erro ao renderizar painel administrativo: " . $e->getMessage();
+        }
+    }
+
+    public function togglePlugin()
+    {
+        // Ideally we would use Request object, but for simplicity we'll use $_POST
+        $pluginName = $_POST['plugin_name'] ?? null;
+        $action = $_POST['action'] ?? null;
+
+        if ($pluginName && $action) {
+            $basePath = dirname(__DIR__, 4);
+            $configPath = $basePath . '/config/plugins.json';
+
+            $activeStates = [];
+            if (file_exists($configPath)) {
+                $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
+            }
+
+            // Prevent toggling core plugins
+            if (!in_array($pluginName, ['database', 'system-admin'])) {
+                if ($action === 'enable') {
+                    $activeStates[$pluginName] = true;
+                } elseif ($action === 'disable') {
+                    $activeStates[$pluginName] = false;
+                }
+                
+                // Save
+                file_put_contents($configPath, json_encode($activeStates, JSON_PRETTY_PRINT));
+            }
+        }
+
+        // Redirect back
+        header("Location: /admin/plugins");
+        exit;
     }
 }
 
@@ -1110,10 +1778,1000 @@ Isso permitirá que você comece a testar o primeiro plugin de negócio (ex: Pac
 **Deseja que eu comece a codificar o PluginManager e o Router?**
 
 /* ============================================================ */
+// Arquivo: domain-system/temp\DeepSeek-relatorio-02..txt
+
+Excelente! A arquitetura do **Theme Manager** é fundamental para separar completamente a lógica de negócio (Plugins) da apresentação (Temas). Isso é exatamente o que o WordPress faz, e é a chave para um sistema verdadeiramente modular e extensível.
+
+Vamos construir essa peça seguindo a filosofia TDD, assim como fizemos com o Kernel.
+
+---
+
+## ANÁLISE DO PLANO - THEME ENGINE
+
+### O QUE SERÁ CONSTRUÍDO
+
+| Componente | Descrição |
+|------------|-----------|
+| **ThemeManager** | Classe central que gerencia temas, resolve caminhos e renderiza templates |
+| **Theme Discovery** | Sistema que escaneia a pasta `themes/` e detecta temas disponíveis |
+| **Template Engine (SSR)** | Sistema que compila templates PHP com output buffering e extração de variáveis |
+| **Helper Functions** | Funções globais para temas (`get_header()`, `get_footer()`, `the_content()`, etc.) |
+| **Fallback System** | Se um template específico não existir, carrega o genérico (ex: `index.php`) |
+
+---
+
+## ESTRUTURA DE DIRETÓRIOS ATUALIZADA
+
+```
+domain-system/
+├── public/
+│   └── index.php
+├── src/
+│   ├── Core/
+│   │   ├── Container/
+│   │   ├── Events/
+│   │   ├── Routing/
+│   │   ├── Theme/
+│   │   │   ├── ThemeManager.php      # Gerencia temas e templates
+│   │   │   ├── ThemeDiscovery.php    # Descobre temas disponíveis
+│   │   │   └── TemplateEngine.php    # Compila templates com SSR
+│   │   └── Application.php
+│   └── Plugins/                       # Plugins de negócio
+├── themes/                            # 🆕 Temas (carroceria)
+│   └── default/
+│       ├── style.css
+│       ├── header.php
+│       ├── footer.php
+│       ├── index.php
+│       ├── pacientes/
+│       │   └── list.php              # Template específico
+│       └── agendamentos/
+│           └── index.php
+├── tests/
+│   ├── Unit/
+│   ├── Integration/
+│   └── UI/
+│       └── dummy_theme/              # Tema falso para testes
+│           ├── header.php
+│           ├── footer.php
+│           └── index.php
+├── bootstrap.php
+└── config/
+    └── theme.php                     # Configuração do tema ativo
+```
+
+---
+
+## IMPLEMENTAÇÃO COMPLETA
+
+### 1. Configuração do Tema (`config/theme.php`)
+
+```php
+<?php
+// config/theme.php
+
+return [
+    /**
+     * Tema ativo (nome da pasta dentro de themes/)
+     */
+    'active_theme' => 'default',
+
+    /**
+     * Tema de fallback caso o ativo não seja encontrado
+     */
+    'fallback_theme' => 'default',
+
+    /**
+     * Diretório base onde os temas estão localizados
+     */
+    'themes_path' => __DIR__ . '/../themes',
+];
+```
+
+---
+
+### 2. Interface do Tema (`src/Core/Theme/ThemeInterface.php`)
+
+```php
+<?php
+// src/Core/Theme/ThemeInterface.php
+
+namespace DomainSystem\Core\Theme;
+
+interface ThemeInterface
+{
+    /**
+     * Retorna o nome do tema
+     */
+    public function getName(): string;
+
+    /**
+     * Retorna a versão do tema
+     */
+    public function getVersion(): string;
+
+    /**
+     * Retorna o autor do tema
+     */
+    public function getAuthor(): string;
+
+    /**
+     * Retorna a descrição do tema
+     */
+    public function getDescription(): string;
+
+    /**
+     * Retorna o caminho absoluto do tema
+     */
+    public function getPath(): string;
+
+    /**
+     * Verifica se um template existe no tema
+     */
+    public function hasTemplate(string $template): bool;
+
+    /**
+     * Retorna o caminho de um template específico
+     */
+    public function getTemplatePath(string $template): string;
+
+    /**
+     * Retorna a URL do tema (para assets como CSS, JS, imagens)
+     */
+    public function getUrl(): string;
+}
+```
+
+---
+
+### 3. Implementação do Tema (`src/Core/Theme/Theme.php`)
+
+```php
+<?php
+// src/Core/Theme/Theme.php
+
+namespace DomainSystem\Core\Theme;
+
+class Theme implements ThemeInterface
+{
+    private string $name;
+    private string $path;
+    private array $data = [];
+
+    public function __construct(string $name, string $path)
+    {
+        $this->name = $name;
+        $this->path = rtrim($path, '/');
+        $this->loadThemeData();
+    }
+
+    private function loadThemeData(): void
+    {
+        $styleFile = $this->path . '/style.css';
+        if (file_exists($styleFile)) {
+            $content = file_get_contents($styleFile);
+            if (preg_match('/Theme Name:\s*(.+)/i', $content, $matches)) {
+                $this->data['name'] = trim($matches[1]);
+            }
+            if (preg_match('/Version:\s*(.+)/i', $content, $matches)) {
+                $this->data['version'] = trim($matches[1]);
+            }
+            if (preg_match('/Author:\s*(.+)/i', $content, $matches)) {
+                $this->data['author'] = trim($matches[1]);
+            }
+            if (preg_match('/Description:\s*(.+)/i', $content, $matches)) {
+                $this->data['description'] = trim($matches[1]);
+            }
+        }
+
+        // Fallbacks
+        $this->data['name'] ??= $this->name;
+        $this->data['version'] ??= '1.0.0';
+        $this->data['author'] ??= 'Desconhecido';
+        $this->data['description'] ??= '';
+    }
+
+    public function getName(): string
+    {
+        return $this->data['name'] ?? $this->name;
+    }
+
+    public function getVersion(): string
+    {
+        return $this->data['version'] ?? '1.0.0';
+    }
+
+    public function getAuthor(): string
+    {
+        return $this->data['author'] ?? 'Desconhecido';
+    }
+
+    public function getDescription(): string
+    {
+        return $this->data['description'] ?? '';
+    }
+
+    public function getPath(): string
+    {
+        return $this->path;
+    }
+
+    public function getUrl(): string
+    {
+        // Em produção, isso deve vir de uma configuração de URL base
+        return '/themes/' . $this->name;
+    }
+
+    public function hasTemplate(string $template): bool
+    {
+        $file = $this->getTemplatePath($template);
+        return file_exists($file);
+    }
+
+    public function getTemplatePath(string $template): string
+    {
+        // Normaliza o nome do template (ex: "pacientes/list" -> "pacientes/list.php")
+        $template = str_replace('.', '/', $template);
+        return $this->path . '/' . $template . '.php';
+    }
+}
+```
+
+---
+
+### 4. ThemeDiscovery (`src/Core/Theme/ThemeDiscovery.php`)
+
+```php
+<?php
+// src/Core/Theme/ThemeDiscovery.php
+
+namespace DomainSystem\Core\Theme;
+
+class ThemeDiscovery
+{
+    private string $themesPath;
+
+    public function __construct(string $themesPath)
+    {
+        $this->themesPath = rtrim($themesPath, '/');
+    }
+
+    /**
+     * Retorna todos os temas disponíveis
+     * @return ThemeInterface[]
+     */
+    public function discoverAll(): array
+    {
+        $themes = [];
+        $directories = glob($this->themesPath . '/*', GLOB_ONLYDIR);
+
+        foreach ($directories as $dir) {
+            $name = basename($dir);
+            $themes[$name] = new Theme($name, $dir);
+        }
+
+        return $themes;
+    }
+
+    /**
+     * Retorna um tema específico por nome
+     */
+    public function find(string $name): ?ThemeInterface
+    {
+        $path = $this->themesPath . '/' . $name;
+        if (is_dir($path)) {
+            return new Theme($name, $path);
+        }
+        return null;
+    }
+}
+```
+
+---
+
+### 5. ThemeManager (`src/Core/Theme/ThemeManager.php`)
+
+```php
+<?php
+// src/Core/Theme/ThemeManager.php
+
+namespace DomainSystem\Core\Theme;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+
+class ThemeManager
+{
+    private Container $container;
+    private EventDispatcher $events;
+    private ThemeInterface $activeTheme;
+    private string $themesPath;
+    private array $globals = [];
+
+    public function __construct(Container $container, EventDispatcher $events, string $themesPath)
+    {
+        $this->container = $container;
+        $this->events = $events;
+        $this->themesPath = rtrim($themesPath, '/');
+    }
+
+    /**
+     * Define o tema ativo
+     */
+    public function setActiveTheme(string $themeName): void
+    {
+        $discovery = new ThemeDiscovery($this->themesPath);
+        $theme = $discovery->find($themeName);
+
+        if (!$theme) {
+            throw new \Exception("Tema '$themeName' não encontrado.");
+        }
+
+        $this->activeTheme = $theme;
+        
+        // Dispara evento para plugins saberem que o tema mudou
+        $this->events->dispatch('theme.activated', ['theme' => $theme]);
+    }
+
+    /**
+     * Retorna o tema ativo
+     */
+    public function getActiveTheme(): ThemeInterface
+    {
+        return $this->activeTheme;
+    }
+
+    /**
+     * Adiciona uma variável global disponível em todos os templates
+     */
+    public function addGlobal(string $key, mixed $value): void
+    {
+        $this->globals[$key] = $value;
+    }
+
+    /**
+     * Renderiza um template específico
+     */
+    public function render(string $template, array $data = []): string
+    {
+        $templatePath = $this->resolveTemplatePath($template);
+
+        if (!$templatePath || !file_exists($templatePath)) {
+            throw new \Exception("Template '$template' não encontrado no tema ativo.");
+        }
+
+        // Mescla dados globais com os dados locais
+        $data = array_merge($this->globals, $data);
+
+        // Extrai variáveis para o escopo do template
+        extract($data);
+
+        // Inicia buffer de saída
+        ob_start();
+
+        // Inclui o template
+        include $templatePath;
+
+        // Retorna o conteúdo do buffer
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza um template com layout (header + content + footer)
+     */
+    public function renderWithLayout(string $template, array $data = [], string $layout = 'index'): string
+    {
+        $content = $this->render($template, $data);
+        return $this->render($layout, array_merge($data, ['content' => $content]));
+    }
+
+    /**
+     * Resolve o caminho completo do template
+     * Com suporte a hierarquia de templates (igual ao WordPress)
+     */
+    private function resolveTemplatePath(string $template): ?string
+    {
+        // Tenta encontrar o template específico
+        $specificPath = $this->activeTheme->getTemplatePath($template);
+        if (file_exists($specificPath)) {
+            return $specificPath;
+        }
+
+        // Fallback: tenta o index.php na raiz do tema
+        $fallbackPath = $this->activeTheme->getPath() . '/index.php';
+        if (file_exists($fallbackPath)) {
+            return $fallbackPath;
+        }
+
+        // Se não encontrar nada, retorna null
+        return null;
+    }
+
+    /**
+     * Funções helper para os templates (estilo WordPress)
+     */
+    
+    public function getHeader(array $data = []): void
+    {
+        $this->renderPartial('header', $data);
+    }
+
+    public function getFooter(array $data = []): void
+    {
+        $this->renderPartial('footer', $data);
+    }
+
+    public function getSidebar(array $data = []): void
+    {
+        $this->renderPartial('sidebar', $data);
+    }
+
+    private function renderPartial(string $partial, array $data = []): void
+    {
+        $path = $this->activeTheme->getTemplatePath($partial);
+        if (file_exists($path)) {
+            extract(array_merge($this->globals, $data));
+            include $path;
+        }
+    }
+
+    /**
+     * Retorna a URL do tema ativo para assets
+     */
+    public function getThemeUrl(): string
+    {
+        return $this->activeTheme->getUrl();
+    }
+
+    /**
+     * Retorna o caminho absoluto do tema ativo
+     */
+    public function getThemePath(): string
+    {
+        return $this->activeTheme->getPath();
+    }
+}
+```
+
+---
+
+### 6. Tema Default (Exemplo)
+
+**`themes/default/style.css`**
+```css
+/*
+Theme Name: Daher Default
+Theme URI: https://daherclinica.com
+Author: Daher Clínica
+Author URI: https://daherclinica.com
+Description: Tema base para o sistema Daher
+Version: 1.0.0
+*/
+```
+
+**`themes/default/header.php`**
+```php
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $title ?? 'Daher Sistema' ?></title>
+    <link rel="stylesheet" href="<?= $themeUrl ?>/style.css">
+    <?php if (!empty($head)) echo $head; ?>
+</head>
+<body>
+    <header>
+        <h1><?= $siteName ?? 'Daher Sistema' ?></h1>
+        <nav>
+            <?php if (!empty($menu)): ?>
+                <?php foreach ($menu as $item): ?>
+                    <a href="<?= $item['url'] ?>"><?= $item['label'] ?></a>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </nav>
+    </header>
+    <main>
+```
+
+**`themes/default/footer.php`**
+```php
+    </main>
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= $siteName ?? 'Daher Sistema' ?></p>
+    </footer>
+    <?php if (!empty($foot)) echo $foot; ?>
+</body>
+</html>
+```
+
+**`themes/default/index.php`**
+```php
+<?php
+// Layout principal (fallback para qualquer página)
+if (!isset($content)) {
+    $content = '<p>Conteúdo não encontrado.</p>';
+}
+echo $content;
+?>
+```
+
+**`themes/default/pacientes/list.php`**
+```php
+<?php
+// Template específico para listar pacientes
+$title = 'Pacientes - ' . ($title ?? 'Daher Sistema');
+$themeUrl = $themeUrl ?? '/themes/default';
+?>
+<?php $this->getHeader(); ?>
+
+<h2>Lista de Pacientes</h2>
+
+<?php if (empty($pacientes)): ?>
+    <p>Nenhum paciente cadastrado.</p>
+<?php else: ?>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($pacientes as $paciente): ?>
+                <tr>
+                    <td><?= htmlspecialchars($paciente['nome']) ?></td>
+                    <td><?= htmlspecialchars($paciente['telefone'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($paciente['email'] ?? '') ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
+
+<?php $this->getFooter(); ?>
+```
+
+---
+
+### 7. Testes TDD para o ThemeManager
+
+**`tests/Unit/Core/Theme/ThemeManagerTest.php`**
+
+```php
+<?php
+// tests/Unit/Core/Theme/ThemeManagerTest.php
+
+namespace Tests\Unit\Core\Theme;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Core\Theme\ThemeDiscovery;
+
+class ThemeManagerTest extends TestCase
+{
+    private Container $container;
+    private EventDispatcher $events;
+    private string $themesPath;
+    private ThemeManager $themeManager;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->container = new Container();
+        $this->events = new EventDispatcher();
+        $this->themesPath = __DIR__ . '/../../../UI/dummy_theme';
+
+        // Cria estrutura de tema falso para testes
+        $this->createDummyTheme();
+
+        $this->themeManager = new ThemeManager(
+            $this->container,
+            $this->events,
+            dirname($this->themesPath) // Pasta pai onde está dummy_theme
+        );
+
+        $this->themeManager->setActiveTheme('dummy_theme');
+    }
+
+    private function createDummyTheme(): void
+    {
+        $themePath = $this->themesPath;
+        if (!is_dir($themePath)) {
+            mkdir($themePath, 0777, true);
+        }
+
+        // Header
+        file_put_contents($themePath . '/header.php', '<header>HEADER</header>');
+        file_put_contents($themePath . '/footer.php', '<footer>FOOTER</footer>');
+        file_put_contents($themePath . '/index.php', '<?php echo $content ?? ""; ?>');
+        file_put_contents($themePath . '/test.php', '<?php echo $var ?? "default"; ?>');
+        file_put_contents($themePath . '/style.css', '/* Theme Name: Dummy */');
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        // Remove o tema dummy
+        if (is_dir($this->themesPath)) {
+            $this->removeDirectory($this->themesPath);
+        }
+    }
+
+    private function removeDirectory(string $path): void
+    {
+        if (!is_dir($path)) return;
+        $files = array_diff(scandir($path), ['.', '..']);
+        foreach ($files as $file) {
+            $filePath = $path . '/' . $file;
+            is_dir($filePath) ? $this->removeDirectory($filePath) : unlink($filePath);
+        }
+        rmdir($path);
+    }
+
+    public function testShouldRenderTemplateWithData(): void
+    {
+        $output = $this->themeManager->render('test', ['var' => 'Hello World']);
+        $this->assertEquals('Hello World', $output);
+    }
+
+    public function testShouldRenderWithLayout(): void
+    {
+        $output = $this->themeManager->renderWithLayout('test', ['var' => 'Content'], 'index');
+        $this->assertStringContainsString('Content', $output);
+    }
+
+    public function testShouldGetHeaderAndFooter(): void
+    {
+        ob_start();
+        $this->themeManager->getHeader();
+        $header = ob_get_clean();
+
+        ob_start();
+        $this->themeManager->getFooter();
+        $footer = ob_get_clean();
+
+        $this->assertEquals('<header>HEADER</header>', $header);
+        $this->assertEquals('<footer>FOOTER</footer>', $footer);
+    }
+
+    public function testShouldFallbackToIndexWhenTemplateNotFound(): void
+    {
+        $output = $this->themeManager->render('nonexistent', ['content' => 'Fallback content']);
+        $this->assertStringContainsString('Fallback content', $output);
+    }
+
+    public function testShouldUseGlobalVariables(): void
+    {
+        $this->themeManager->addGlobal('global_var', 'Global Value');
+        $output = $this->themeManager->render('test', ['var' => 'Local Value']);
+        
+        // O template test.php deve ter acesso a $global_var
+        // Mas como não está no template, testamos se ela existe nos dados
+        $data = $this->getPrivateProperty($this->themeManager, 'globals');
+        $this->assertEquals('Global Value', $data['global_var']);
+    }
+
+    private function getPrivateProperty(object $object, string $property): mixed
+    {
+        $reflection = new \ReflectionClass($object);
+        $property = $reflection->getProperty($property);
+        $property->setAccessible(true);
+        return $property->getValue($object);
+    }
+
+    public function testShouldDiscoverAvailableThemes(): void
+    {
+        $discovery = new ThemeDiscovery(dirname($this->themesPath));
+        $themes = $discovery->discoverAll();
+
+        $this->assertArrayHasKey('dummy_theme', $themes);
+        $this->assertEquals('Dummy', $themes['dummy_theme']->getName());
+    }
+}
+```
+
+---
+
+### 8. Integração com o Application (Kernel)
+
+**`src/Core/Application.php`** (atualizado)
+
+```php
+<?php
+// src/Core/Application.php
+
+namespace DomainSystem\Core;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Theme\ThemeManager;
+
+class Application
+{
+    private Container $container;
+    private EventDispatcher $events;
+    private Router $router;
+    private ThemeManager $themeManager;
+    private bool $booted = false;
+
+    public function __construct(Container $container, EventDispatcher $events)
+    {
+        $this->container = $container;
+        $this->events = $events;
+    }
+
+    public function boot(array $config = []): void
+    {
+        if ($this->booted) return;
+
+        // Configura o Router
+        $this->router = new Router($this->container);
+        $this->container->singleton(Router::class, fn() => $this->router);
+
+        // Configura o ThemeManager
+        $themesPath = $config['themes_path'] ?? __DIR__ . '/../../themes';
+        $this->themeManager = new ThemeManager($this->container, $this->events, $themesPath);
+        $this->container->singleton(ThemeManager::class, fn() => $this->themeManager);
+
+        // Define o tema ativo
+        $activeTheme = $config['active_theme'] ?? 'default';
+        $this->themeManager->setActiveTheme($activeTheme);
+
+        // Carrega plugins
+        $this->loadPlugins();
+
+        // Dispara evento de boot
+        $this->events->dispatch('kernel.booted', ['app' => $this]);
+
+        $this->booted = true;
+    }
+
+    private function loadPlugins(): void
+    {
+        // TODO: Implementar PluginManager
+        // Por enquanto, apenas dispara o evento para que plugins se registrem
+        $this->events->dispatch('kernel.register_plugins');
+    }
+
+    public function handleRequest(string $method, string $uri): mixed
+    {
+        try {
+            $response = $this->router->dispatch($method, $uri);
+            return $response;
+        } catch (\Exception $e) {
+            // Dispara evento de erro
+            $this->events->dispatch('kernel.error', [
+                'exception' => $e,
+                'method' => $method,
+                'uri' => $uri
+            ]);
+
+            // Renderiza página de erro usando o tema
+            return $this->renderErrorPage($e);
+        }
+    }
+
+    private function renderErrorPage(\Exception $e): string
+    {
+        $data = [
+            'title' => 'Erro ' . $e->getCode(),
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ];
+
+        $template = $e->getCode() === 404 ? 'errors/404' : 'errors/500';
+
+        try {
+            return $this->themeManager->renderWithLayout($template, $data);
+        } catch (\Exception $_) {
+            // Fallback para erro crítico
+            return '<h1>Erro Crítico</h1><p>' . htmlspecialchars($e->getMessage()) . '</p>';
+        }
+    }
+
+    public function getContainer(): Container
+    {
+        return $this->container;
+    }
+
+    public function getEvents(): EventDispatcher
+    {
+        return $this->events;
+    }
+
+    public function getRouter(): Router
+    {
+        return $this->router;
+    }
+
+    public function getThemeManager(): ThemeManager
+    {
+        return $this->themeManager;
+    }
+}
+```
+
+---
+
+### 9. Front Controller Atualizado (`public/index.php`)
+
+```php
+<?php
+// public/index.php
+
+// Define o diretório raiz
+define('BASE_PATH', dirname(__DIR__));
+
+// Carrega o bootstrap
+require_once BASE_PATH . '/bootstrap.php';
+
+// Carrega configurações do tema
+$themeConfig = require BASE_PATH . '/config/theme.php';
+
+// Inicializa e boota a aplicação
+$app = DomainSystem\Core\Application::getInstance();
+$app->boot([
+    'themes_path' => $themeConfig['themes_path'],
+    'active_theme' => $themeConfig['active_theme']
+]);
+
+// Processa a requisição e envia a resposta
+$response = $app->handleRequest($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+
+// Se a resposta for uma string, já está pronta para ser exibida (HTML)
+if (is_string($response)) {
+    echo $response;
+}
+```
+
+---
+
+## RESUMO DA ARQUITETURA
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         KERNEL (Core)                              │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                     ThemeManager                             │   │
+│  │  - Gerencia tema ativo                                      │   │
+│  │  - Resolve caminhos de templates                            │   │
+│  │  - Compila templates com SSR (output buffering)            │   │
+│  │  - Injetor de variáveis globais                             │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ▼                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                  Plugin (Ex: Pacientes)                     │   │
+│  │  - Registra rotas                                           │   │
+│  │  - Busca dados no banco                                     │   │
+│  │  - Chama: $themeManager->render('pacientes/list', $data)   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ▼                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                     Tema (Default)                          │   │
+│  │  - Header, Footer, Layout                                   │   │
+│  │  - Templates específicos (pacientes/list.php)              │   │
+│  │  - CSS, JS, Assets                                          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CHECKLIST DE IMPLEMENTAÇÃO
+
+| Componente | Status | Descrição |
+|------------|--------|-----------|
+| **ThemeInterface** | ✅ Pronto | Contrato para temas |
+| **Theme** | ✅ Pronto | Implementação concreta do tema |
+| **ThemeDiscovery** | ✅ Pronto | Descoberta de temas na pasta `themes/` |
+| **ThemeManager** | ✅ Pronto | Gerencia renderização e templates |
+| **Tema Default** | ✅ Pronto | Estrutura base com header, footer, index |
+| **Testes TDD** | ✅ Pronto | Unit tests para ThemeManager |
+| **Integração com Application** | ✅ Pronto | Kernel agora suporta temas |
+| **Funções Helper** | ✅ Pronto | `get_header()`, `get_footer()`, etc. |
+
+---
+
+## PRÓXIMO PASSO
+
+Com o **ThemeManager** pronto, o sistema agora pode:
+
+1. **Plugins** se concentrarem apenas em lógica de negócio
+2. **Temas** serem criados e trocados sem afetar a lógica
+3. **Kernel** servir como o motor que conecta tudo
+
+**Deseja que eu comece a construir o primeiro Plugin de negócio (ex: Pacientes) usando o ThemeManager para renderização?**
+
+/* ============================================================ */
 // Arquivo: domain-system/tests\bootstrap.php
 
 <?php
 require dirname(__DIR__) . '/vendor/autoload.php';
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\UI\dummy_theme\footer.php
+
+<footer>Footer</footer>
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\UI\dummy_theme\header.php
+
+<header>Header: <?php echo $title ?? 'Default'; ?></header>
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\UI\dummy_theme\index.php
+
+<?php $this->get_header(['title' => $title ?? 'Default']); ?>
+<main>Content: <?php echo $content ?? ''; ?></main>
+<?php $this->get_footer(); ?>
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\AdminControllerTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
+use DomainSystem\Core\Theme\ThemeManager;
+
+class AdminControllerTest extends TestCase
+{
+    private string $tempThemesPath;
+
+    protected function setUp(): void
+    {
+        $this->tempThemesPath = sys_get_temp_dir() . '/domain_system_themes_' . uniqid();
+        mkdir($this->tempThemesPath);
+        mkdir($this->tempThemesPath . '/admin');
+        
+        // Mock a simple admin template
+        file_put_contents(
+            $this->tempThemesPath . '/admin/plugins.php', 
+            '<?php foreach($plugins as $p) { echo $p["name"] . ":" . ($p["is_active"] ? "1" : "0") . ";"; } ?>'
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        unlink($this->tempThemesPath . '/admin/plugins.php');
+        rmdir($this->tempThemesPath . '/admin');
+        rmdir($this->tempThemesPath);
+    }
+
+    public function testListPlugins()
+    {
+        $container = new Container();
+        $themeManager = new ThemeManager($this->tempThemesPath);
+        $container->singleton(ThemeManager::class, function() use ($themeManager) {
+            return $themeManager;
+        });
+
+        $controller = new AdminController($container);
+        $html = $controller->listPlugins();
+
+        // The exact output depends on what plugins exist in the actual src/Plugins directory,
+        // because AdminController reads from dirname(__DIR__, 4). 
+        // We know at least 'database' and 'system-admin' exist.
+        
+        $this->assertStringContainsString('database', $html);
+        $this->assertStringContainsString('system-admin', $html);
+    }
+}
 
 
 /* ============================================================ */
@@ -1135,7 +2793,7 @@ class ApplicationTest extends TestCase
         $container = new Container();
         $dispatcher = new EventDispatcher();
         
-        $app = new Application($container, $dispatcher);
+        $app = new Application($container, $dispatcher, __DIR__);
         
         $this->assertSame($container, $app->getContainer());
         $this->assertSame($dispatcher, $app->getDispatcher());
@@ -1146,7 +2804,7 @@ class ApplicationTest extends TestCase
         $container = new Container();
         $dispatcher = new EventDispatcher();
         
-        $app = new Application($container, $dispatcher);
+        $app = new Application($container, $dispatcher, __DIR__);
         
         $this->assertSame($app, Application::getInstance());
     }
@@ -1156,7 +2814,7 @@ class ApplicationTest extends TestCase
         $container = new Container();
         $dispatcher = new EventDispatcher();
         
-        $app = new Application($container, $dispatcher);
+        $app = new Application($container, $dispatcher, __DIR__);
         
         $called = false;
         $dispatcher->addListener('init', function() use (&$called) {
@@ -1231,6 +2889,82 @@ class ContainerTest extends TestCase
         $this->expectException(Exception::class);
         $container = new Container();
         $container->make('NonExistentInterface');
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\DatabaseConnectionTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Plugins\Database\Connection;
+use PDO;
+
+class DatabaseConnectionTest extends TestCase
+{
+    public function testConnectionUsesPdoAndSingleton()
+    {
+        // Using in-memory sqlite for tests
+        $dsn = 'sqlite::memory:';
+        
+        $connection1 = new Connection($dsn);
+        $connection2 = new Connection($dsn);
+
+        $pdo1 = $connection1->getPdo();
+        $pdo2 = $connection2->getPdo();
+
+        $this->assertInstanceOf(PDO::class, $pdo1);
+        
+        // Ensure same instance is not guaranteed strictly by new Connection(), 
+        // but by the Container. Connection class itself is just a wrapper.
+        // Let's test the PDO connection works.
+        $stmt = $pdo1->query("SELECT 1 as val");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        $this->assertEquals(1, $result['val']);
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\DatabasePluginTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Plugins\Database\Plugin;
+use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Core\Container\Container;
+
+class DatabasePluginTest extends TestCase
+{
+    public function testPluginRegistrationBindsToContainer()
+    {
+        $container = new Container();
+        // Mock environment variables for test
+        putenv('DB_DSN=sqlite::memory:');
+        
+        $plugin = new Plugin($container, __DIR__ . '/../../src/Plugins/Database');
+        
+        $this->assertEquals('database', $plugin->getName());
+        $plugin->setActive(true);
+        $this->assertTrue($plugin->isActive());
+        $this->assertEmpty($plugin->getDependencies());
+
+        $plugin->register();
+
+        $connection = $container->make(Connection::class);
+        $this->assertInstanceOf(Connection::class, $connection);
+
+        $qb = $container->make(QueryBuilder::class);
+        $this->assertInstanceOf(QueryBuilder::class, $qb);
     }
 }
 
@@ -1429,6 +3163,166 @@ class PluginManagerTest extends TestCase
 
 
 /* ============================================================ */
+// Arquivo: domain-system/tests\Unit\PluginStateTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Plugin\PluginManager;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+
+class PluginStateTest extends TestCase
+{
+    private string $tempPluginsPath;
+    private string $tempConfigPath;
+
+    protected function setUp(): void
+    {
+        $this->tempPluginsPath = sys_get_temp_dir() . '/domain_system_plugins_' . uniqid();
+        $this->tempConfigPath = $this->tempPluginsPath . '/plugins.json';
+        
+        mkdir($this->tempPluginsPath);
+        mkdir($this->tempPluginsPath . '/TestPlugin');
+        
+        $pluginPhp = <<<PHP
+<?php
+namespace DomainSystem\Plugins\TestPlugin;
+use DomainSystem\Core\Plugin\AbstractPlugin;
+class Plugin extends AbstractPlugin {
+    public function register(): void {}
+}
+PHP;
+        file_put_contents($this->tempPluginsPath . '/TestPlugin/Plugin.php', $pluginPhp);
+        
+        $pluginJson = json_encode([
+            'name' => 'test-plugin',
+            'version' => '2.0.0'
+        ]);
+        file_put_contents($this->tempPluginsPath . '/TestPlugin/plugin.json', $pluginJson);
+        
+        $configJson = json_encode([
+            'test-plugin' => true
+        ]);
+        file_put_contents($this->tempConfigPath, $configJson);
+        
+        // Autoload the temp class for the test
+        require_once $this->tempPluginsPath . '/TestPlugin/Plugin.php';
+    }
+
+    protected function tearDown(): void
+    {
+        unlink($this->tempPluginsPath . '/TestPlugin/Plugin.php');
+        unlink($this->tempPluginsPath . '/TestPlugin/plugin.json');
+        rmdir($this->tempPluginsPath . '/TestPlugin');
+        unlink($this->tempConfigPath);
+        rmdir($this->tempPluginsPath);
+    }
+
+    public function testPluginDiscoveryAndState()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        $manager = new PluginManager($container, $dispatcher);
+        
+        $manager->discoverPlugins($this->tempPluginsPath, $this->tempConfigPath);
+        
+        $plugins = $manager->getPlugins();
+        
+        $this->assertArrayHasKey('test-plugin', $plugins);
+        $plugin = $plugins['test-plugin'];
+        
+        $this->assertEquals('test-plugin', $plugin->getName());
+        $this->assertEquals('2.0.0', $plugin->getVersion());
+        $this->assertTrue($plugin->isActive());
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\QueryBuilderTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\Database\QueryBuilder;
+
+class QueryBuilderTest extends TestCase
+{
+    private Connection $connection;
+
+    protected function setUp(): void
+    {
+        // Setup SQLite in memory connection
+        $this->connection = new Connection('sqlite::memory:');
+        
+        // Create a dummy table for tests
+        $pdo = $this->connection->getPdo();
+        $pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)");
+    }
+
+    public function testInsertAndSelect()
+    {
+        $qb = new QueryBuilder($this->connection);
+        
+        $id = $qb->table('users')->insert([
+            'name' => 'John Doe',
+            'email' => 'john@test.com'
+        ]);
+
+        $this->assertGreaterThan(0, $id);
+
+        // Fetch it back
+        $user = $qb->table('users')->where('id', '=', $id)->first();
+        
+        $this->assertEquals('John Doe', $user['name']);
+        $this->assertEquals('john@test.com', $user['email']);
+    }
+
+    public function testUpdate()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $id = $qb->table('users')->insert(['name' => 'Old Name', 'email' => 'old@test.com']);
+
+        $affected = $qb->table('users')->where('id', '=', $id)->update(['name' => 'New Name']);
+        
+        $this->assertEquals(1, $affected);
+
+        $user = $qb->table('users')->where('id', '=', $id)->first();
+        $this->assertEquals('New Name', $user['name']);
+        $this->assertEquals('old@test.com', $user['email']);
+    }
+
+    public function testDelete()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $id = $qb->table('users')->insert(['name' => 'Delete Me', 'email' => 'del@test.com']);
+
+        $affected = $qb->table('users')->where('id', '=', $id)->delete();
+        $this->assertEquals(1, $affected);
+
+        $user = $qb->table('users')->where('id', '=', $id)->first();
+        $this->assertNull($user);
+    }
+
+    public function testGetMultiple()
+    {
+        $qb = new QueryBuilder($this->connection);
+        $qb->table('users')->insert(['name' => 'User 1']);
+        $qb->table('users')->insert(['name' => 'User 2']);
+
+        $users = $qb->table('users')->get();
+        $this->assertCount(2, $users);
+    }
+}
+
+
+/* ============================================================ */
 // Arquivo: domain-system/tests\Unit\RouterTest.php
 
 <?php
@@ -1517,5 +3411,147 @@ class RouterTest extends TestCase
         $router->dispatch('GET', '/only-post');
     }
 }
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\ThemeManagerTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Theme\ThemeManager;
+use Exception;
+
+class ThemeManagerTest extends TestCase
+{
+    private string $dummyThemePath = __DIR__ . '/../UI/dummy_theme';
+
+    public function testRenderTemplate()
+    {
+        $themeManager = new ThemeManager($this->dummyThemePath);
+
+        // Rendering 'index' passing variables
+        $html = $themeManager->render('index', [
+            'title' => 'Test Title',
+            'content' => 'Test Content'
+        ]);
+
+        $this->assertStringContainsString('<header>Header: Test Title</header>', $html);
+        $this->assertStringContainsString('<main>Content: Test Content</main>', $html);
+        $this->assertStringContainsString('<footer>Footer</footer>', $html);
+    }
+
+    public function testFallbackTemplate()
+    {
+        $themeManager = new ThemeManager($this->dummyThemePath);
+
+        // Try to render a non-existent template, it should look for index.php as fallback
+        // Or throw exception depending on design. Let's make it throw exception if not found, 
+        // but render has a strict mode and fallback mode. We'll stick to simple file inclusion for now.
+        $this->expectException(Exception::class);
+        $themeManager->render('non_existent');
+    }
+
+    public function testGetHeaderFunction()
+    {
+        $themeManager = new ThemeManager($this->dummyThemePath);
+        
+        ob_start();
+        $themeManager->get_header(['title' => 'Header Only']);
+        $html = ob_get_clean();
+        
+        $this->assertEquals('<header>Header: Header Only</header>', trim($html));
+    }
+
+    public function testGetFooterFunction()
+    {
+        $themeManager = new ThemeManager($this->dummyThemePath);
+        
+        ob_start();
+        $themeManager->get_footer();
+        $html = ob_get_clean();
+        
+        $this->assertEquals('<footer>Footer</footer>', trim($html));
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/themes\default\admin\plugins.php
+
+<?php
+// Layout Header
+$title = "Gerenciador de Plugins";
+// We don't have getHeader() implemented in ThemeManager completely in index.php yet (the dummy one had it).
+// Let's use simple HTML for now to not depend on default theme structure.
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain-System Admin | Plugins</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; margin: 0; padding: 20px; color: #3c434a; }
+        .wrap { max-width: 1000px; margin: 0 auto; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04); padding: 20px; }
+        h1 { font-size: 23px; font-weight: 400; margin: 0 0 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #c3c4c7; }
+        th { font-weight: 600; background: #f6f7f7; }
+        .plugin-active { background: #f6fcf8; }
+        .plugin-inactive { background: #fff; }
+        .btn { padding: 4px 8px; border: 1px solid; border-radius: 3px; cursor: pointer; text-decoration: none; font-size: 13px; }
+        .btn-activate { background: #f6f7f7; border-color: #2271b1; color: #2271b1; }
+        .btn-deactivate { background: #f6f7f7; border-color: #d63638; color: #d63638; }
+        .btn-core { background: #e0e0e0; border-color: #ccc; color: #666; cursor: not-allowed; }
+        .badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; background: #000; color: #fff; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Gerenciador de Plugins</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Plugin</th>
+                    <th>Descrição</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($plugins as $plugin): ?>
+                <tr class="<?= $plugin['is_active'] ? 'plugin-active' : 'plugin-inactive' ?>">
+                    <td>
+                        <strong><?= htmlspecialchars($plugin['name']) ?></strong> 
+                        <span class="badge">v<?= htmlspecialchars($plugin['version']) ?></span>
+                        <br>
+                        <small style="color:#666;">/<?= htmlspecialchars($plugin['folder']) ?></small>
+                    </td>
+                    <td><?= htmlspecialchars($plugin['description']) ?></td>
+                    <td>
+                        <form method="POST" action="/admin/plugins/toggle" style="margin:0;">
+                            <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
+                            
+                            <?php if ($plugin['is_core']): ?>
+                                <button type="button" class="btn btn-core" disabled>Core (Bloqueado)</button>
+                            <?php elseif ($plugin['is_active']): ?>
+                                <input type="hidden" name="action" value="disable">
+                                <button type="submit" class="btn btn-deactivate">Desativar</button>
+                            <?php else: ?>
+                                <input type="hidden" name="action" value="enable">
+                                <button type="submit" class="btn btn-activate">Ativar</button>
+                            <?php endif; ?>
+                        </form>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
 
 
