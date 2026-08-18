@@ -12,6 +12,15 @@
     <?php unset($_SESSION['flash_message']); ?>
 <?php endif; ?>
 
+<?php if (!empty($crashes)): ?>
+    <?php foreach ($crashes as $crash): ?>
+        <div class="alert alert-error" style="padding: 15px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #d63638; background: #fff; color: #d63638; font-weight: bold;">
+            ❌ O plugin "<?php echo htmlspecialchars($crash['plugin']); ?>" falhou fatalmente ao ser carregado e foi DESATIVADO automaticamente por segurança!<br>
+            <span style="font-size: 12px; font-weight: normal; color: #555;">Erro: <?php echo htmlspecialchars($crash['error']); ?></span>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
+
 <div id="upload-form" class="upload-box" style="display: none;">
     <h3>Fazer Upload de Plugin</h3>
     <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>

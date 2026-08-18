@@ -52,10 +52,20 @@ class AdminController
         /** @var ThemeManager $theme */
         $theme = $this->container->make(ThemeManager::class);
 
+        // Capture crashes from session
+        $crashes = [];
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (!empty($_SESSION['plugin_crashes'])) {
+            $crashes = $_SESSION['plugin_crashes'];
+            unset($_SESSION['plugin_crashes']);
+        }
+
         try {
-            return $theme->render('admin/plugins', ['plugins' => $allPlugins]);
+            return $theme->render('admin/plugins', [
+                'plugins' => $allPlugins,
+                'crashes' => $crashes
+            ]);
         } catch (Exception $e) {
-            // Fallback if theme template doesn't exist
             return "Erro ao renderizar painel administrativo: " . $e->getMessage();
         }
     }

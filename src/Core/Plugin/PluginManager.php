@@ -66,8 +66,24 @@ class PluginManager
             $plugin = $this->plugins[$pluginName];
             
             if ($plugin->isActive()) {
-                $plugin->register();
-                $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+                try {
+                    $plugin->register();
+                    $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+                } catch (\Throwable $e) {
+                    // The plugin crashed! We must disable it to save the system.
+                    $this->disable($pluginName);
+                    
+                    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+                        session_start();
+                    }
+                    if (session_status() !== PHP_SESSION_NONE) {
+                        $_SESSION['plugin_crashes'][] = [
+                            'plugin' => $pluginName,
+                            'error' => $e->getMessage()
+                        ];
+                    }
+                    error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
+                }
             }
         }
     }
