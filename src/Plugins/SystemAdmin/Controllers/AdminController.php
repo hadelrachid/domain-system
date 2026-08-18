@@ -95,15 +95,8 @@ class AdminController
 
     public function uploadPlugin()
     {
-        // Iniciar sessão para mensagens flash se necessário
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
-        }
-
-        if (!class_exists('ZipArchive')) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A extensão ZipArchive do PHP não está ativada no seu XAMPP. Ative-a no php.ini.'];
-            header("Location: " . BASE_URL . "/admin/plugins");
-            exit;
         }
 
         $basePath = dirname(__DIR__, 4);
@@ -111,33 +104,80 @@ class AdminController
         
         if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
             $zipFile = $_FILES['plugin_zip']['tmp_name'];
-            $zip = new \ZipArchive();
-            
-            if ($zip->open($zipFile) === TRUE) {
-                // Ensure it's a valid plugin by checking for plugin.json
-                $hasPluginJson = false;
-                $pluginDirName = null;
+            $hasPluginJson = false;
+            $pluginDirName = null;
+            $extracted = false;
 
-                for ($i = 0; $i < $zip->numFiles; $i++) {
-                    $filename = $zip->getNameIndex($i);
-                    // A valid zip usually has one root directory and inside it plugin.json
-                    if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
-                        $hasPluginJson = true;
-                        $pluginDirName = $matches[1];
-                        break;
+            try {
+                if (class_exists('ZipArchive')) {
+                    $zip = new \ZipArchive();
+                    if ($zip->open($zipFile) === TRUE) {
+                        for ($i = 0; $i < $zip->numFiles; $i++) {
+                            $filename = $zip->getNameIndex($i);
+                            if (preg_match('#^([^/]+)/plugin\.json$#', $filename, $matches)) {
+                                $hasPluginJson = true;
+                                $pluginDirName = $matches[1];
+                                break;
+                            }
+                        }
+                        if ($hasPluginJson) {
+                            $zip->extractTo($pluginsPath);
+                            $extracted = true;
+                        }
+                        $zip->close();
                     }
+                } else if (class_exists('PharData')) {
+                    // Fallback nativo maravilhoso usando PharData
+                    $phar = new \PharData($zipFile);
+                    
+                    // Com PharData (dependendo de como foi zipado), os arquivos podem estar na raiz ou numa pasta
+                    foreach ($phar as $file) {
+                        if ($file->isDir()) {
+                            // Verifica se dentro do dir tem o plugin.json
+                            $dirName = $file->getFilename();
+                            if (isset($phar[$dirName . '/plugin.json'])) {
+                                $hasPluginJson = true;
+                                $pluginDirName = $dirName;
+                                break;
+                            }
+                        } else if ($file->getFilename() === 'plugin.json') {
+                            // O zip foi feito sem pasta raiz. Precisamos criar a pasta com o nome do plugin
+                            // Mas nosso sistema requer que o zip tenha uma pasta raiz.
+                            // Vamos assumir que a pessoa zipou com a pasta raiz.
+                        }
+                    }
+                    
+                    // Se o Powershell zipou o conteúdo da pasta ao invés da pasta em si:
+                    if (isset($phar['plugin.json'])) {
+                        // Zipado sem pasta raiz (conteúdo direto)
+                        // Vamos ler o plugin.json para pegar o nome
+                        $json = file_get_contents($phar['plugin.json']->getPathname());
+                        $data = json_decode($json, true);
+                        if (isset($data['name'])) {
+                            $hasPluginJson = true;
+                            $pluginDirName = $data['name'];
+                            // Extrair para uma subpasta
+                            @mkdir($pluginsPath . '/' . $pluginDirName, 0777, true);
+                            $phar->extractTo($pluginsPath . '/' . $pluginDirName);
+                            $extracted = true;
+                        }
+                    } else if ($hasPluginJson) {
+                        // Zipado com pasta raiz
+                        $phar->extractTo($pluginsPath);
+                        $extracted = true;
+                    }
+                } else {
+                    throw new \Exception("Nenhum descompactador disponível (ZipArchive ou PharData).");
                 }
 
-                if ($hasPluginJson && $pluginDirName) {
-                    $zip->extractTo($pluginsPath);
-                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso!'];
+                if ($extracted) {
+                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
                 } else {
-                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ ZIP inválido: Não possui um arquivo plugin.json na raiz do pacote.'];
+                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ ZIP inválido: Não possui um arquivo plugin.json válido no pacote.'];
                 }
                 
-                $zip->close();
-            } else {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não foi possível abrir o arquivo ZIP.'];
+            } catch (\Exception $e) {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na descompactação: ' . $e->getMessage()];
             }
         }
 

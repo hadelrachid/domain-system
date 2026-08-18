@@ -15,10 +15,25 @@
 <div id="upload-form" class="upload-box" style="display: none;">
     <h3>Fazer Upload de Plugin</h3>
     <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
-    <form method="POST" action="admin/plugins/upload" enctype="multipart/form-data">
+    
+    <div id="upload-progress" style="display: none; margin: 15px 0;">
+        <div style="font-size: 14px; margin-bottom: 5px; color: #1d2327;">Descompactando e ligando módulos...</div>
+        <div style="width: 100%; background: #f0f0f1; border-radius: 4px; overflow: hidden; border: 1px solid #c3c4c7;">
+            <div id="progress-bar-fill" style="width: 0%; height: 20px; background: #2271b1; transition: width 0.5s ease;"></div>
+        </div>
+    </div>
+
+    <form method="POST" action="admin/plugins/upload" enctype="multipart/form-data" id="form-upload-plugin" onsubmit="
+        document.getElementById('upload-progress').style.display='block';
+        document.getElementById('upload-buttons').style.display='none';
+        let w = 0;
+        setInterval(() => { w += (100 - w) * 0.2; document.getElementById('progress-bar-fill').style.width = w + '%'; }, 200);
+    ">
         <input type="file" name="plugin_zip" accept=".zip" required>
-        <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
-        <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
+        <div id="upload-buttons" style="display: inline-block;">
+            <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
+            <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
+        </div>
     </form>
 </div>
 
