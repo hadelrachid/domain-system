@@ -11,6 +11,10 @@ use DomainSystem\Core\Events\EventDispatcher;
 
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
 
+// Configura o banco de dados principal do sistema para ser um arquivo físico
+$dbPath = DOMAIN_SYSTEM_ROOT . '/database.sqlite';
+putenv("DB_DSN=sqlite:{$dbPath}");
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Initialize Core Components
