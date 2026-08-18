@@ -92,7 +92,7 @@ class AuthController
             <div class='login-box'>
                 <h1>Autenticação</h1>
                 {$errorHtml}
-                <form method='POST' action='<?= BASE_URL ?>/login'>
+                <form method='POST' action='" . BASE_URL . "/login'>
                     <label>E-mail</label>
                     <input type='email' name='email' required autofocus>
                     
@@ -104,7 +104,7 @@ class AuthController
             </div>
             <script>
                 // Limpa a mensagem de erro da sessão logo após renderizar
-                fetch('<?= BASE_URL ?>/login', {method: 'POST', body: new URLSearchParams({clear_error: 1})}).catch(()=>null);
+                fetch('" . BASE_URL . "/login', {method: 'POST', body: new URLSearchParams({clear_error: 1})}).catch(()=>null);
             </script>
         </body>
         </html>
