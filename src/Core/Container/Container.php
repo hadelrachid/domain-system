@@ -26,6 +26,11 @@ class Container
         });
     }
 
+    public function has(string $abstract): bool
+    {
+        return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]) || class_exists($abstract);
+    }
+
     public function make(string $abstract)
     {
         if (isset($this->instances[$abstract])) {
