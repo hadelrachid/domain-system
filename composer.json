@@ -1,0 +1,24 @@
+{
+    "name": "dahersistema/domain-system",
+    "description": "Kernel base para aplicações plugáveis",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DomainSystem\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DomainSystem\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}

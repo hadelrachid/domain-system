@@ -1,0 +1,1521 @@
+📁 domain-system/
+├── 📁 config/
+├── 📁 public/
+│   └── 🐘 index.php
+├── 📁 src/
+│   ├── 📁 Core/
+│   │   ├── 📁 Container/
+│   │   │   └── 🐘 Container.php
+│   │   ├── 📁 Events/
+│   │   │   └── 🐘 EventDispatcher.php
+│   │   ├── 📁 Plugin/
+│   │   │   ├── 🐘 PluginInterface.php
+│   │   │   └── 🐘 PluginManager.php
+│   │   ├── 📁 Routing/
+│   │   │   └── 🐘 Router.php
+│   │   └── 🐘 Application.php
+│   ├── 📁 Plugins/
+│   └── 📁 Shared/
+├── 📁 temp/
+│   └── 📝 DeepSeek-relatorio-01.txt
+├── 📁 tests/
+│   ├── 📁 Integration/
+│   ├── 📁 UI/
+│   ├── 📁 Unit/
+│   │   ├── 🐘 ApplicationTest.php
+│   │   ├── 🐘 ContainerTest.php
+│   │   ├── 🐘 EventDispatcherTest.php
+│   │   ├── 🐘 PluginManagerTest.php
+│   │   └── 🐘 RouterTest.php
+│   └── 🐘 bootstrap.php
+├── 📁 vendor/
+│   ├── 📁 composer/
+│   │   ├── 🐘 autoload_classmap.php
+│   │   ├── 🐘 autoload_namespaces.php
+│   │   ├── 🐘 autoload_psr4.php
+│   │   ├── 🐘 autoload_real.php
+│   │   ├── 🐘 autoload_static.php
+│   │   ├── 🐘 ClassLoader.php
+│   │   ├── 📄 LICENSE
+│   │   └── 🐘 platform_check.php
+│   └── 🐘 autoload.php
+├── 📄 .phpunit.result.cache
+├── 🐘 bootstrap.php
+├── ⚙️ composer.json
+├── 📄 composer.lock
+├── 📄 composer.phar
+└── 📄 phpunit.phar
+
+/* ============================================================ */
+// Arquivo: domain-system/bootstrap.php
+
+<?php
+
+/**
+ * Domain-System Bootstrap
+ * Initializes the Kernel
+ */
+
+use DomainSystem\Core\Application;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+
+define('DOMAIN_SYSTEM_ROOT', __DIR__);
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Initialize Core Components
+$container = new Container();
+$dispatcher = new EventDispatcher();
+
+// Initialize the Application Kernel
+$app = new Application($container, $dispatcher);
+
+return $app;
+
+
+/* ============================================================ */
+// Arquivo: domain-system/composer.json
+
+{
+    "name": "dahersistema/domain-system",
+    "description": "Kernel base para aplicações plugáveis",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DomainSystem\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DomainSystem\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/public\index.php
+
+<?php
+
+/**
+ * Domain-System Front Controller
+ */
+
+$app = require_once dirname(__DIR__) . '/bootstrap.php';
+
+// Dispatch a pre-boot event
+$app->getDispatcher()->dispatch('kernel_pre_boot');
+
+// Boot the Kernel
+$app->boot();
+
+// Dispatch a post-boot event
+$app->getDispatcher()->dispatch('kernel_post_boot');
+
+// Allow plugins to register their routes
+$app->getDispatcher()->dispatch('router.register', $app->getRouter());
+
+// Dispatch the request
+try {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    
+    $response = $app->getRouter()->dispatch($method, $uri);
+    
+    if (is_array($response) || is_object($response)) {
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    } else {
+        echo $response;
+    }
+} catch (Exception $e) {
+    if ($e->getCode() == 404) {
+        http_response_code(404);
+        echo "404 Not Found: " . $e->getMessage();
+    } else {
+        http_response_code(500);
+        echo "500 Internal Server Error: " . $e->getMessage();
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Application.php
+
+<?php
+
+namespace DomainSystem\Core;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Plugin\PluginManager;
+use DomainSystem\Core\Routing\Router;
+
+class Application
+{
+    private static ?Application $instance = null;
+    
+    private Container $container;
+    private EventDispatcher $dispatcher;
+    private PluginManager $pluginManager;
+    private Router $router;
+
+    public function __construct(Container $container, EventDispatcher $dispatcher)
+    {
+        $this->container = $container;
+        $this->dispatcher = $dispatcher;
+        $this->pluginManager = new PluginManager($container, $dispatcher);
+        $this->router = new Router($container);
+        
+        self::$instance = $this;
+
+        // Automatically bind itself to the container
+        $this->container->singleton(Application::class, function() {
+            return $this;
+        });
+        
+        $this->container->singleton(Container::class, function() {
+            return $this->container;
+        });
+        
+        $this->container->singleton(EventDispatcher::class, function() {
+            return $this->dispatcher;
+        });
+
+        $this->container->singleton(Router::class, function() {
+            return $this->router;
+        });
+    }
+
+    public static function getInstance(): ?Application
+    {
+        return self::$instance;
+    }
+
+    public function getContainer(): Container
+    {
+        return $this->container;
+    }
+
+    public function getDispatcher(): EventDispatcher
+    {
+        return $this->dispatcher;
+    }
+
+    public function getPluginManager(): PluginManager
+    {
+        return $this->pluginManager;
+    }
+
+    public function getRouter(): Router
+    {
+        return $this->router;
+    }
+
+    public function boot(): void
+    {
+        // Load plugins
+        $this->pluginManager->bootPlugins();
+        
+        // Dispatch the init hook, giving plugins a chance to register their components
+        $this->dispatcher->dispatch('init');
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Container\Container.php
+
+<?php
+
+namespace DomainSystem\Core\Container;
+
+use Exception;
+use ReflectionClass;
+use ReflectionMethod;
+
+class Container
+{
+    private array $bindings = [];
+    private array $instances = [];
+
+    public function bind(string $abstract, callable|string $concrete): void
+    {
+        $this->bindings[$abstract] = $concrete;
+    }
+
+    public function singleton(string $abstract, callable|string $concrete): void
+    {
+        $this->bind($abstract, function () use ($concrete, $abstract) {
+            if (!isset($this->instances[$abstract])) {
+                $this->instances[$abstract] = is_callable($concrete) ? $concrete($this) : $this->make($concrete);
+            }
+            return $this->instances[$abstract];
+        });
+    }
+
+    public function make(string $abstract)
+    {
+        if (isset($this->instances[$abstract])) {
+            return $this->instances[$abstract];
+        }
+
+        if (isset($this->bindings[$abstract])) {
+            $concrete = $this->bindings[$abstract];
+            if (is_callable($concrete)) {
+                return $concrete($this);
+            }
+            return $this->make($concrete);
+        }
+
+        return $this->autowire($abstract);
+    }
+
+    private function autowire(string $abstract)
+    {
+        if (!class_exists($abstract)) {
+            throw new Exception("Target class [$abstract] does not exist.");
+        }
+
+        $reflector = new ReflectionClass($abstract);
+
+        if (!$reflector->isInstantiable()) {
+            throw new Exception("Target [$abstract] is not instantiable.");
+        }
+
+        $constructor = $reflector->getConstructor();
+
+        if (is_null($constructor)) {
+            return new $abstract;
+        }
+
+        $parameters = $constructor->getParameters();
+        $dependencies = [];
+
+        foreach ($parameters as $parameter) {
+            $type = $parameter->getType();
+
+            if (!$type || $type->isBuiltin()) {
+                if ($parameter->isDefaultValueAvailable()) {
+                    $dependencies[] = $parameter->getDefaultValue();
+                } else {
+                    throw new Exception("Cannot resolve parameter [{$parameter->name}] in class [$abstract].");
+                }
+            } else {
+                $dependencies[] = $this->make($type->getName());
+            }
+        }
+
+        return $reflector->newInstanceArgs($dependencies);
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Events\EventDispatcher.php
+
+<?php
+
+namespace DomainSystem\Core\Events;
+
+class EventDispatcher
+{
+    private array $listeners = [];
+
+    public function addListener(string $eventName, callable $listener, int $priority = 10): void
+    {
+        $this->listeners[$eventName][$priority][] = $listener;
+    }
+
+    public function dispatch(string $eventName, ...$args): void
+    {
+        if (!isset($this->listeners[$eventName])) {
+            return;
+        }
+
+        // Sort by priority (lower number = higher priority, or vice-versa)
+        // Let's use lower number = executes first, but we'll sort ascending
+        ksort($this->listeners[$eventName]);
+
+        foreach ($this->listeners[$eventName] as $priority => $listenersGroup) {
+            foreach ($listenersGroup as $listener) {
+                call_user_func_array($listener, $args);
+            }
+        }
+    }
+
+    public function applyFilters(string $filterName, mixed $value, ...$args): mixed
+    {
+        if (!isset($this->listeners[$filterName])) {
+            return $value;
+        }
+
+        ksort($this->listeners[$filterName]);
+
+        foreach ($this->listeners[$filterName] as $priority => $listenersGroup) {
+            foreach ($listenersGroup as $listener) {
+                $argsToPass = array_merge([$value], $args);
+                $value = call_user_func_array($listener, $argsToPass);
+            }
+        }
+
+        return $value;
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Plugin\PluginInterface.php
+
+<?php
+
+namespace DomainSystem\Core\Plugin;
+
+interface PluginInterface
+{
+    /**
+     * Registra os hooks, rotas e serviços do plugin.
+     * Chamado durante o boot do Kernel.
+     */
+    public function register(): void;
+
+    /**
+     * Retorna o nome do plugin (para identificação).
+     */
+    public function getName(): string;
+
+    /**
+     * Retorna a versão do plugin.
+     */
+    public function getVersion(): string;
+
+    /**
+     * Retorna as dependências (nomes de outros plugins) que este plugin precisa.
+     */
+    public function getDependencies(): array;
+
+    /**
+     * Define se o plugin está ativo.
+     */
+    public function isActive(): bool;
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Plugin\PluginManager.php
+
+<?php
+
+namespace DomainSystem\Core\Plugin;
+
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+use Exception;
+
+class PluginManager
+{
+    private Container $container;
+    private EventDispatcher $dispatcher;
+    
+    /** @var PluginInterface[] */
+    private array $plugins = [];
+
+    public function __construct(Container $container, EventDispatcher $dispatcher)
+    {
+        $this->container = $container;
+        $this->dispatcher = $dispatcher;
+    }
+
+    public function addPlugin(PluginInterface $plugin): void
+    {
+        $this->plugins[$plugin->getName()] = $plugin;
+    }
+
+    public function bootPlugins(): void
+    {
+        $orderedPlugins = $this->resolveDependencies();
+
+        foreach ($orderedPlugins as $pluginName) {
+            $plugin = $this->plugins[$pluginName];
+            
+            if ($plugin->isActive()) {
+                $plugin->register();
+                $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+            }
+        }
+    }
+
+    private function resolveDependencies(): array
+    {
+        $resolved = [];
+        $unresolved = [];
+
+        foreach ($this->plugins as $plugin) {
+            if ($plugin->isActive()) {
+                $this->resolveNode($plugin, $resolved, $unresolved);
+            }
+        }
+
+        return $resolved;
+    }
+
+    private function resolveNode(PluginInterface $plugin, array &$resolved, array &$unresolved): void
+    {
+        $name = $plugin->getName();
+
+        if (in_array($name, $resolved)) {
+            return;
+        }
+
+        if (in_array($name, $unresolved)) {
+            throw new Exception("Circular dependency detected for plugin '{$name}'.");
+        }
+
+        $unresolved[] = $name;
+
+        foreach ($plugin->getDependencies() as $dependencyName) {
+            if (!isset($this->plugins[$dependencyName]) || !$this->plugins[$dependencyName]->isActive()) {
+                throw new Exception("Dependency '{$dependencyName}' for plugin '{$name}' not found.");
+            }
+            $this->resolveNode($this->plugins[$dependencyName], $resolved, $unresolved);
+        }
+
+        $unresolved = array_diff($unresolved, [$name]);
+        $resolved[] = $name;
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/src\Core\Routing\Router.php
+
+<?php
+
+namespace DomainSystem\Core\Routing;
+
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+class Router
+{
+    private array $routes = [];
+    private Container $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = ''): void
+    {
+        $method = strtoupper($method);
+        $this->routes[$method][$path] = [
+            'handler' => $handler,
+            'plugin' => $plugin
+        ];
+    }
+
+    public function dispatch(string $method, string $uri): mixed
+    {
+        $method = strtoupper($method);
+        // Remove query string
+        $uri = strtok($uri, '?');
+
+        if (!isset($this->routes[$method])) {
+            throw new Exception("Rota não encontrada: $uri", 404);
+        }
+
+        // Busca rota exata
+        if (isset($this->routes[$method][$uri])) {
+            return $this->executeHandler($this->routes[$method][$uri]['handler']);
+        }
+
+        // Busca rota com parâmetros (ex: /pacientes/{id})
+        foreach ($this->routes[$method] as $route => $config) {
+            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $route);
+            if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
+                array_shift($matches);
+                return $this->executeHandler($config['handler'], $matches);
+            }
+        }
+
+        throw new Exception("Rota não encontrada: $uri", 404);
+    }
+
+    private function executeHandler(callable|array $handler, array $params = []): mixed
+    {
+        if (is_callable($handler)) {
+            return call_user_func_array($handler, $params);
+        }
+
+        if (is_array($handler) && count($handler) === 2) {
+            [$class, $method] = $handler;
+            $instance = $this->container->make($class);
+            return call_user_func_array([$instance, $method], $params);
+        }
+
+        throw new Exception("Handler inválido.");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/temp\DeepSeek-relatorio-01.txt
+
+Excelente! Essa visão de construir um **Kernel** inspirado no Linux e no WordPress é arquiteturalmente brilhante. Vamos analisar profundamente o que foi construído e como podemos evoluir para um sistema verdadeiramente modular e extensível.
+
+---
+
+## ANÁLISE DO KERNEL - DOMAIN-SYSTEM
+
+### O QUE JÁ FOI CONSTRUÍDO (E ESTÁ FUNCIONAL)
+
+| Componente | Status | Descrição |
+|------------|--------|-----------|
+| **EventDispatcher** | ✅ Completo | Sistema de Hooks (addListener, dispatch, applyFilters) com prioridades |
+| **Container (PSR-11)** | ✅ Completo | Injeção de dependências com Auto-Wiring e suporte a Singletons |
+| **Application (Kernel)** | ✅ Completo | Orquestrador que amarra Container + EventDispatcher |
+| **Base de Testes (TDD)** | ✅ Completo | PHPUnit configurado com testes para todos os componentes |
+| **Ponto de Entrada (index.php)** | ✅ Completo | Front Controller seguro que inicializa o Kernel |
+
+---
+
+## O QUE FALTA PARA TER UM SISTEMA COMPLETO
+
+### 1. **Sistema de Plugins (Descoberta Automática)**
+
+O Kernel precisa descobrir e carregar plugins automaticamente.
+
+**Estrutura Proposta:**
+
+```
+domain-system/
+├── src/
+│   ├── Core/
+│   │   ├── Plugin/
+│   │   │   ├── PluginManager.php      # Gerencia descoberta e carregamento
+│   │   │   ├── PluginInterface.php    # Contrato que todo plugin deve seguir
+│   │   │   └── PluginDiscovery.php    # Scanear diretório de plugins
+│   │   └── ...
+│   └── Plugins/                        # Diretório onde os plugins viverão
+│       ├── Database/
+│       │   ├── Plugin.php              # Arquivo principal do plugin
+│       │   └── ...
+│       ├── Routing/
+│       │   ├── Plugin.php
+│       │   └── ...
+│       └── UI/
+│           ├── Plugin.php
+│           └── ...
+```
+
+**Interface do Plugin:**
+```php
+<?php
+// src/Core/Plugin/PluginInterface.php
+
+namespace DomainSystem\Core\Plugin;
+
+interface PluginInterface
+{
+    /**
+     * Registra os hooks, rotas e serviços do plugin.
+     * Chamado durante o boot do Kernel.
+     */
+    public function register(): void;
+
+    /**
+     * Retorna o nome do plugin (para identificação).
+     */
+    public function getName(): string;
+
+    /**
+     * Retorna a versão do plugin.
+     */
+    public function getVersion(): string;
+
+    /**
+     * Retorna as dependências (nomes de outros plugins) que este plugin precisa.
+     */
+    public function getDependencies(): array;
+
+    /**
+     * Define se o plugin está ativo.
+     */
+    public function isActive(): bool;
+}
+```
+
+---
+
+### 2. **Sistema de Rotas (Router)**
+
+Os plugins precisam registrar suas próprias rotas.
+
+**Estrutura Proposta:**
+
+```php
+// src/Core/Routing/Router.php
+
+namespace DomainSystem\Core\Routing;
+
+class Router
+{
+    private array $routes = [];
+
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = ''): void
+    {
+        $this->routes[$method][$path] = [
+            'handler' => $handler,
+            'plugin' => $plugin
+        ];
+    }
+
+    public function dispatch(string $method, string $uri): mixed
+    {
+        // Remove query string
+        $uri = strtok($uri, '?');
+
+        // Busca rota exata
+        if (isset($this->routes[$method][$uri])) {
+            return $this->executeHandler($this->routes[$method][$uri]['handler']);
+        }
+
+        // Busca rota com parâmetros (ex: /pacientes/{id})
+        foreach ($this->routes[$method] as $route => $config) {
+            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $route);
+            if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
+                array_shift($matches);
+                return $this->executeHandler($config['handler'], $matches);
+            }
+        }
+
+        throw new \Exception("Rota não encontrada: $uri", 404);
+    }
+
+    private function executeHandler(callable|array $handler, array $params = []): mixed
+    {
+        if (is_callable($handler)) {
+            return call_user_func_array($handler, $params);
+        }
+
+        if (is_array($handler) && count($handler) === 2) {
+            [$class, $method] = $handler;
+            $instance = $this->container->make($class);
+            return call_user_func_array([$instance, $method], $params);
+        }
+
+        throw new \Exception("Handler inválido.");
+    }
+}
+```
+
+---
+
+### 3. **Abstração de Banco de Dados (Database Plugin)**
+
+O plugin de banco de dados deve ser o primeiro a ser carregado, pois será dependência de todos os outros.
+
+**Estrutura Proposta:**
+
+```php
+// src/Plugins/Database/Plugin.php
+
+namespace DomainSystem\Plugins\Database;
+
+use DomainSystem\Core\Plugin\PluginInterface;
+use DomainSystem\Core\Container\Container;
+
+class Plugin implements PluginInterface
+{
+    public function getName(): string { return 'database'; }
+    public function getVersion(): string { return '1.0.0'; }
+    public function getDependencies(): array { return []; }
+    public function isActive(): bool { return true; }
+
+    public function register(): void
+    {
+        // Registra o serviço de conexão no Container
+        $container = Container::getInstance();
+        
+        $container->singleton(Connection::class, function($c) {
+            return new Connection(
+                getenv('DB_HOST'),
+                getenv('DB_NAME'),
+                getenv('DB_USER'),
+                getenv('DB_PASS')
+            );
+        });
+
+        $container->singleton(QueryBuilder::class, function($c) {
+            return new QueryBuilder($c->make(Connection::class));
+        });
+
+        // Adiciona hooks para outros plugins
+        add_action('database.connected', function() {
+            // Disparado quando o banco é conectado
+        });
+    }
+}
+```
+
+**Abstração do QueryBuilder (Motor de Consultas):**
+
+```php
+// src/Plugins/Database/QueryBuilder.php
+
+namespace DomainSystem\Plugins\Database;
+
+class QueryBuilder
+{
+    private Connection $connection;
+
+    public function __construct(Connection $connection)
+    {
+        $this->connection = $connection;
+    }
+
+    public function table(string $table): QueryBuilder
+    {
+        $this->table = $table;
+        return $this;
+    }
+
+    public function select(array $columns = ['*']): QueryBuilder
+    {
+        $this->columns = $columns;
+        return $this;
+    }
+
+    public function where(string $column, string $operator, mixed $value): QueryBuilder
+    {
+        $this->wheres[] = [$column, $operator, $value];
+        return $this;
+    }
+
+    public function get(): array
+    {
+        $sql = $this->buildSelect();
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($this->bindings);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function first(): ?array
+    {
+        $sql = $this->buildSelect() . ' LIMIT 1';
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($this->bindings);
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function insert(array $data): int
+    {
+        $columns = array_keys($data);
+        $placeholders = array_map(fn($col) => ":$col", $columns);
+        $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($data);
+        return (int) $this->connection->getPdo()->lastInsertId();
+    }
+
+    public function update(array $data): int
+    {
+        $sets = [];
+        foreach ($data as $column => $value) {
+            $sets[] = "$column = :$column";
+        }
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $sets) . " WHERE 1=1";
+        // Adicionar wheres...
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute(array_merge($data, $this->bindings));
+        return $stmt->rowCount();
+    }
+
+    // ... métodos delete, join, orderBy, groupBy, etc.
+}
+```
+
+---
+
+### 4. **Sistema de Templates (UI Plugin)**
+
+O plugin de UI será responsável por renderizar as views (HTML) e gerenciar temas.
+
+**Estrutura Proposta:**
+
+```php
+// src/Plugins/UI/Plugin.php
+
+namespace DomainSystem\Plugins\UI;
+
+use DomainSystem\Core\Plugin\PluginInterface;
+
+class Plugin implements PluginInterface
+{
+    public function getName(): string { return 'ui'; }
+    public function getVersion(): string { return '1.0.0'; }
+    public function getDependencies(): array { return ['database']; }
+    public function isActive(): bool { return true; }
+
+    public function register(): void
+    {
+        $container = Container::getInstance();
+        
+        $container->singleton(TemplateEngine::class, function($c) {
+            return new TemplateEngine(
+                $c->make(ViewFinder::class)
+            );
+        });
+
+        // Registra um hook para renderizar a página
+        add_action('kernel.render', function($router) {
+            $templateEngine = Container::getInstance()->make(TemplateEngine::class);
+            echo $templateEngine->render('layout', [
+                'content' => $router->getCurrentContent()
+            ]);
+        });
+    }
+}
+```
+
+**Motor de Templates (SSR):**
+
+```php
+// src/Plugins/UI/TemplateEngine.php
+
+namespace DomainSystem\Plugins\UI;
+
+class TemplateEngine
+{
+    private ViewFinder $finder;
+    private array $globals = [];
+
+    public function __construct(ViewFinder $finder)
+    {
+        $this->finder = $finder;
+    }
+
+    public function render(string $template, array $data = []): string
+    {
+        $data = array_merge($this->globals, $data);
+        extract($data);
+
+        $templatePath = $this->finder->find($template);
+
+        ob_start();
+        include $templatePath;
+        return ob_get_clean();
+    }
+
+    public function addGlobal(string $key, mixed $value): void
+    {
+        $this->globals[$key] = $value;
+    }
+}
+```
+
+---
+
+### 5. **Sistema de Views (Temas)**
+
+Os plugins podem fornecer suas próprias views.
+
+**Estrutura Proposta:**
+
+```php
+// src/Plugins/UI/ViewFinder.php
+
+namespace DomainSystem\Plugins\UI;
+
+class ViewFinder
+{
+    private array $paths = [];
+
+    public function addPath(string $path, string $namespace = ''): void
+    {
+        if ($namespace) {
+            $this->paths[$namespace] = $path;
+        } else {
+            $this->paths[] = $path;
+        }
+    }
+
+    public function find(string $template): string
+    {
+        // Se tiver namespace (ex: "dashboard::index")
+        if (strpos($template, '::') !== false) {
+            [$namespace, $name] = explode('::', $template);
+            if (isset($this->paths[$namespace])) {
+                return $this->paths[$namespace] . '/' . str_replace('.', '/', $name) . '.php';
+            }
+        }
+
+        // Busca nos caminhos padrão
+        foreach ($this->paths as $path) {
+            $file = $path . '/' . str_replace('.', '/', $template) . '.php';
+            if (file_exists($file)) {
+                return $file;
+            }
+        }
+
+        throw new \Exception("Template '$template' não encontrado.");
+    }
+}
+```
+
+---
+
+### 6. **Exemplo de Plugin de Negócio (Pacientes)**
+
+Agora, um plugin de negócio (como Pacientes) pode ser construído de forma completamente desacoplada.
+
+```php
+// src/Plugins/Pacientes/Plugin.php
+
+namespace DomainSystem\Plugins\Pacientes;
+
+use DomainSystem\Core\Plugin\PluginInterface;
+
+class Plugin implements PluginInterface
+{
+    public function getName(): string { return 'pacientes'; }
+    public function getVersion(): string { return '1.0.0'; }
+    public function getDependencies(): array { return ['database', 'ui', 'routing']; }
+    public function isActive(): bool { return true; }
+
+    public function register(): void
+    {
+        $container = Container::getInstance();
+        
+        // Registra o repositório
+        $container->singleton(PacienteRepository::class, function($c) {
+            return new PacienteRepository(
+                $c->make(QueryBuilder::class)
+            );
+        });
+
+        // Registra o controller
+        $container->singleton(PacienteController::class, function($c) {
+            return new PacienteController(
+                $c->make(PacienteRepository::class)
+            );
+        });
+
+        // Registra as rotas
+        add_action('router.register', function($router) {
+            $router->addRoute('GET', '/pacientes', [PacienteController::class, 'list'], 'pacientes');
+            $router->addRoute('POST', '/pacientes', [PacienteController::class, 'create'], 'pacientes');
+            $router->addRoute('GET', '/pacientes/{id}', [PacienteController::class, 'show'], 'pacientes');
+            $router->addRoute('PUT', '/pacientes/{id}', [PacienteController::class, 'update'], 'pacientes');
+            $router->addRoute('DELETE', '/pacientes/{id}', [PacienteController::class, 'delete'], 'pacientes');
+        });
+
+        // Registra hooks para modificar o HTML
+        add_filter('ui.menu_items', function($items) {
+            $items['pacientes'] = [
+                'label' => 'Pacientes',
+                'icon' => 'fa-users',
+                'url' => '/pacientes'
+            ];
+            return $items;
+        });
+    }
+}
+```
+
+---
+
+## ARQUITETURA FINAL (VISÃO COMPLETA)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DOMAIN-SYSTEM (KERNEL)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         CORE (Núcleo)                              │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐         │   │
+│  │  │Container │  │  Events  │  │  Router  │  │Application│         │   │
+│  │  │   (DI)   │  │  (Hooks) │  │          │  │ (Kernel) │         │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      PLUGINS (Aplicativos)                         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐         │   │
+│  │  │ Database │  │  Routing │  │    UI    │  │Pacientes │         │   │
+│  │  │ (MySQL)  │  │  (URLs)  │  │(Templates)│  │(Negócio) │         │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐         │   │
+│  │  │Agendamento│  │Prontuário│  │Financeiro│  │  Auth    │         │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                       TESTS (Sandbox)                              │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                         │   │
+│  │  │  Unit    │  │Integration│  │    UI    │                         │   │
+│  │  │(Isolado) │  │ (Módulos) │  │  (HTML)  │                         │   │
+│  │  └──────────┘  └──────────┘  └──────────┘                         │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CHECKLIST DE IMPLEMENTAÇÃO
+
+| Módulo | Prioridade | Status | Descrição |
+|--------|------------|--------|-----------|
+| **EventDispatcher** | 🔴 Crítica | ✅ Pronto | Sistema de Hooks (add_action, do_action) |
+| **Container (DI)** | 🔴 Crítica | ✅ Pronto | Injeção de dependências com Auto-Wiring |
+| **Application (Kernel)** | 🔴 Crítica | ✅ Pronto | Orquestrador principal |
+| **PluginManager** | 🔴 Crítica | ⏳ Pendente | Descoberta e carregamento de plugins |
+| **Router** | 🔴 Crítica | ⏳ Pendente | Sistema de rotas para plugins |
+| **Database Plugin** | 🔴 Crítica | ⏳ Pendente | Abstração do MySQL (QueryBuilder) |
+| **UI Plugin** | 🔴 Crítica | ⏳ Pendente | Sistema de templates (SSR) |
+| **Auth Plugin** | 🟠 Alta | ⏳ Pendente | Autenticação e sessão |
+| **Pacientes Plugin** | 🟠 Alta | ⏳ Pendente | Módulo de negócio exemplo |
+| **Agendamentos Plugin** | 🟡 Média | ⏳ Pendente | Módulo de agendamentos |
+| **Prontuários Plugin** | 🟡 Média | ⏳ Pendente | Módulo de prontuários |
+| **Financeiro Plugin** | 🟢 Baixa | ⏳ Pendente | Módulo de faturamento |
+
+---
+
+## PRÓXIMO PASSO SUGERIDO
+
+**Construir o PluginManager e o Router** como próximas peças do Kernel. Com eles, o sistema poderá:
+
+1. Descobrir automaticamente plugins na pasta `src/Plugins/`
+2. Carregar plugins ativos e registrar suas rotas
+3. Responder a requisições HTTP com base nas rotas registradas
+
+Isso permitirá que você comece a testar o primeiro plugin de negócio (ex: Pacientes) rodando em cima do Kernel.
+
+**Deseja que eu comece a codificar o PluginManager e o Router?**
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\bootstrap.php
+
+<?php
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\ApplicationTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Application;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+
+class ApplicationTest extends TestCase
+{
+    public function testApplicationInitialization()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        
+        $app = new Application($container, $dispatcher);
+        
+        $this->assertSame($container, $app->getContainer());
+        $this->assertSame($dispatcher, $app->getDispatcher());
+    }
+
+    public function testApplicationSingleton()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        
+        $app = new Application($container, $dispatcher);
+        
+        $this->assertSame($app, Application::getInstance());
+    }
+
+    public function testPluginInitializationHooks()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        
+        $app = new Application($container, $dispatcher);
+        
+        $called = false;
+        $dispatcher->addListener('init', function() use (&$called) {
+            $called = true;
+        });
+
+        // Simulating the kernel boot process
+        $app->boot();
+
+        $this->assertTrue($called, "The 'init' hook should be dispatched during application boot.");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\ContainerTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+class DummyDependency {}
+class DummyService {
+    public DummyDependency $dep;
+    public function __construct(DummyDependency $dep) {
+        $this->dep = $dep;
+    }
+}
+
+class ContainerTest extends TestCase
+{
+    public function testBindAndMake()
+    {
+        $container = new Container();
+        $container->bind('foo', function() {
+            return 'bar';
+        });
+
+        $this->assertEquals('bar', $container->make('foo'));
+    }
+
+    public function testSingleton()
+    {
+        $container = new Container();
+        $container->singleton('random', function() {
+            return rand(1, 1000);
+        });
+
+        $val1 = $container->make('random');
+        $val2 = $container->make('random');
+
+        $this->assertEquals($val1, $val2, "Singleton should return the exact same instance/value.");
+    }
+
+    public function testAutoWiring()
+    {
+        $container = new Container();
+        
+        // Should automatically instantiate DummyDependency and inject it into DummyService
+        $service = $container->make(DummyService::class);
+
+        $this->assertInstanceOf(DummyService::class, $service);
+        $this->assertInstanceOf(DummyDependency::class, $service->dep);
+    }
+
+    public function testThrowsExceptionOnUnresolvable()
+    {
+        $this->expectException(Exception::class);
+        $container = new Container();
+        $container->make('NonExistentInterface');
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\EventDispatcherTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Events\EventDispatcher;
+
+class EventDispatcherTest extends TestCase
+{
+    public function testAddListenerAndDispatch()
+    {
+        $dispatcher = new EventDispatcher();
+        
+        $called = false;
+        $dispatcher->addListener('test_event', function() use (&$called) {
+            $called = true;
+        });
+
+        $dispatcher->dispatch('test_event');
+
+        $this->assertTrue($called, "The listener should have been executed.");
+    }
+
+    public function testDispatchWithArguments()
+    {
+        $dispatcher = new EventDispatcher();
+        
+        $result = 0;
+        $dispatcher->addListener('add_numbers', function($a, $b) use (&$result) {
+            $result = $a + $b;
+        });
+
+        $dispatcher->dispatch('add_numbers', 5, 10);
+
+        $this->assertEquals(15, $result, "The listener should receive arguments correctly.");
+    }
+
+    public function testPrioritySorting()
+    {
+        $dispatcher = new EventDispatcher();
+        $order = [];
+
+        $dispatcher->addListener('priority_test', function() use (&$order) {
+            $order[] = 'third';
+        }, 30);
+
+        $dispatcher->addListener('priority_test', function() use (&$order) {
+            $order[] = 'first';
+        }, 10);
+
+        $dispatcher->addListener('priority_test', function() use (&$order) {
+            $order[] = 'second';
+        }, 20);
+
+        $dispatcher->dispatch('priority_test');
+
+        $this->assertEquals(['first', 'second', 'third'], $order, "Listeners should execute in priority order (lowest first).");
+    }
+
+    public function testApplyFilters()
+    {
+        $dispatcher = new EventDispatcher();
+
+        $dispatcher->addListener('modify_string', function($value) {
+            return $value . ' World';
+        }, 10);
+
+        $dispatcher->addListener('modify_string', function($value) {
+            return strtoupper($value);
+        }, 20);
+
+        $result = $dispatcher->applyFilters('modify_string', 'Hello');
+
+        $this->assertEquals('HELLO WORLD', $result, "Filters should modify and return the value sequentially.");
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\PluginManagerTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Plugin\PluginManager;
+use DomainSystem\Core\Plugin\PluginInterface;
+use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
+
+class DummyPlugin implements PluginInterface
+{
+    private string $name;
+    private array $dependencies;
+    public bool $registered = false;
+
+    public function __construct(string $name = 'dummy', array $dependencies = [])
+    {
+        $this->name = $name;
+        $this->dependencies = $dependencies;
+    }
+
+    public function register(): void
+    {
+        $this->registered = true;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getVersion(): string
+    {
+        return '1.0.0';
+    }
+
+    public function getDependencies(): array
+    {
+        return $this->dependencies;
+    }
+
+    public function isActive(): bool
+    {
+        return true;
+    }
+}
+
+class PluginManagerTest extends TestCase
+{
+    public function testRegisterPlugins()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        $manager = new PluginManager($container, $dispatcher);
+
+        $plugin1 = new DummyPlugin('plugin1');
+        $plugin2 = new DummyPlugin('plugin2');
+
+        $manager->addPlugin($plugin1);
+        $manager->addPlugin($plugin2);
+
+        $manager->bootPlugins();
+
+        $this->assertTrue($plugin1->registered);
+        $this->assertTrue($plugin2->registered);
+    }
+
+    public function testDependencyResolution()
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        $manager = new PluginManager($container, $dispatcher);
+
+        $pluginA = new DummyPlugin('pluginA', ['pluginB']);
+        $pluginB = new DummyPlugin('pluginB');
+
+        // Added in reverse order of dependency
+        $manager->addPlugin($pluginA);
+        $manager->addPlugin($pluginB);
+
+        $order = [];
+        $dispatcher->addListener('plugin.registered', function($pluginName) use (&$order) {
+            $order[] = $pluginName;
+        });
+
+        $manager->bootPlugins();
+
+        // B should be registered before A because A depends on B
+        $this->assertEquals(['pluginB', 'pluginA'], $order);
+    }
+
+    public function testMissingDependencyThrowsException()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Dependency 'plugin_missing' for plugin 'pluginA' not found.");
+
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        $manager = new PluginManager($container, $dispatcher);
+
+        $pluginA = new DummyPlugin('pluginA', ['plugin_missing']);
+        $manager->addPlugin($pluginA);
+
+        $manager->bootPlugins();
+    }
+}
+
+
+/* ============================================================ */
+// Arquivo: domain-system/tests\Unit\RouterTest.php
+
+<?php
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+class DummyController {
+    public function index() {
+        return "Hello World";
+    }
+
+    public function show($id) {
+        return "Showing " . $id;
+    }
+}
+
+class RouterTest extends TestCase
+{
+    public function testAddAndDispatchStaticRoute()
+    {
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->addRoute('GET', '/test', function() {
+            return 'Static Route OK';
+        });
+
+        $result = $router->dispatch('GET', '/test');
+        $this->assertEquals('Static Route OK', $result);
+    }
+
+    public function testAddAndDispatchDynamicRoute()
+    {
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->addRoute('GET', '/users/{id}', function($id) {
+            return "User: " . $id;
+        });
+
+        $result = $router->dispatch('GET', '/users/123');
+        $this->assertEquals('User: 123', $result);
+    }
+
+    public function testRouteToController()
+    {
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->addRoute('GET', '/ctrl', [DummyController::class, 'index']);
+        $router->addRoute('GET', '/ctrl/{id}', [DummyController::class, 'show']);
+
+        $result1 = $router->dispatch('GET', '/ctrl');
+        $result2 = $router->dispatch('GET', '/ctrl/999');
+
+        $this->assertEquals('Hello World', $result1);
+        $this->assertEquals('Showing 999', $result2);
+    }
+
+    public function testRouteNotFound()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionCode(404);
+
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->dispatch('GET', '/does-not-exist');
+    }
+
+    public function testMethodNotAllowedButRouteExistsIsConsideredNotFoundForNow()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionCode(404);
+
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->addRoute('POST', '/only-post', function() { return 'OK'; });
+
+        $router->dispatch('GET', '/only-post');
+    }
+}
+
+
