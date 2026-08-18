@@ -22,7 +22,7 @@ class Plugin extends AbstractPlugin
         $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
         $connection->getPdo()->exec("
             CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
