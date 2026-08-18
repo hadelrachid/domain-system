@@ -43,7 +43,7 @@ class AuthController
 
         /** @var QueryBuilder $db */
         $db = $this->container->make(QueryBuilder::class);
-        $user = $db->table('users')->where('email', $email)->first();
+        $user = $db->table('users')->where('email', '=', $email)->first();
 
         if ($user && password_verify($password, $user['password'])) {
             // Sucesso! Cria a sessão

@@ -1,5 +1,4 @@
 {
     "database": true,
-    "system-admin": true,
-    "auth": true
+    "system-admin": true
 }

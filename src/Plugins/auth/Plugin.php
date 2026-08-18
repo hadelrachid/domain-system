@@ -18,9 +18,9 @@ class Plugin extends AbstractPlugin
         }
 
         // 2. Garantir que a tabela users existe
-        /** @var QueryBuilder $db */
-        $db = $this->container->make(QueryBuilder::class);
-        $db->getPdo()->exec("
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $connection->getPdo()->exec("
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
