@@ -62,6 +62,7 @@ class AdminController
 
     public function togglePlugin()
     {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
         // Ideally we would use Request object, but for simplicity we'll use $_POST
         $pluginName = $_POST['plugin_name'] ?? null;
         $action = $_POST['action'] ?? null;
@@ -79,8 +80,10 @@ class AdminController
             if (!in_array($pluginName, ['database', 'system-admin'])) {
                 if ($action === 'enable') {
                     $activeStates[$pluginName] = true;
+                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin ativado com sucesso!'];
                 } elseif ($action === 'disable') {
                     $activeStates[$pluginName] = false;
+                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin desativado com sucesso.'];
                 }
                 
                 // Save
@@ -187,6 +190,7 @@ class AdminController
 
     public function deletePlugin()
     {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $pluginName = $_POST['plugin_name'] ?? null;
         $pluginFolder = $_POST['plugin_folder'] ?? null;
 
@@ -204,7 +208,12 @@ class AdminController
             if (empty($activeStates[$pluginName])) {
                 // Recursive delete
                 $this->deleteDirectory($pluginPath);
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '🗑️ Plugin excluído e removido do servidor.'];
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ O plugin precisa ser desativado antes de ser excluído.'];
             }
+        } else {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é possível excluir plugins core do sistema.'];
         }
 
         header("Location: " . BASE_URL . "/admin/plugins");
