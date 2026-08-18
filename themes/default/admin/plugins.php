@@ -8,7 +8,7 @@
 <div id="upload-form" class="upload-box" style="display: none;">
     <h3>Fazer Upload de Plugin</h3>
     <p>Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
-    <form method="POST" action="/admin/plugins/upload" enctype="multipart/form-data">
+    <form method="POST" action="admin/plugins/upload" enctype="multipart/form-data">
         <input type="file" name="plugin_zip" accept=".zip" required>
         <button type="submit" class="btn btn-activate" style="margin-left: 10px;">Instalar Agora</button>
         <button type="button" class="btn" style="margin-left: 5px; color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
@@ -34,7 +34,7 @@
             </td>
             <td><?= htmlspecialchars($plugin['description']) ?></td>
             <td style="display: flex; gap: 5px;">
-                <form method="POST" action="/admin/plugins/toggle" style="margin:0;">
+                <form method="POST" action="admin/plugins/toggle" style="margin:0;">
                     <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                     
                     <?php if ($plugin['is_core']): ?>
@@ -49,7 +49,7 @@
                 </form>
 
                 <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                <form method="POST" action="/admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
                     <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                     <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
                     <button type="submit" class="btn btn-deactivate" style="border-color: #d63638; color: #d63638; background: transparent;">Excluir</button>

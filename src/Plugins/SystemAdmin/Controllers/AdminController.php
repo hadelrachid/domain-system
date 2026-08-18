@@ -89,7 +89,7 @@ class AdminController
         }
 
         // Redirect back
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
 
@@ -128,7 +128,7 @@ class AdminController
             }
         }
 
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
 
@@ -154,7 +154,7 @@ class AdminController
             }
         }
 
-        header("Location: /admin/plugins");
+        header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
 

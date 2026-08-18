@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domain-System Admin</title>
+    <base href="<?= defined('BASE_URL') && BASE_URL ? BASE_URL . '/' : '/' ?>">
     <style>
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; display: flex; height: 100vh; }
         #adminmenuback { width: 160px; background: #1d2327; color: #fff; height: 100%; position: fixed; }
@@ -30,8 +31,8 @@
 <body>
     <div id="adminmenuback">
         <ul id="adminmenu">
-            <li><a href="/admin">Painel</a></li>
-            <li><a href="/admin/plugins">Plugins</a></li>
+            <li><a href="admin">Painel</a></li>
+            <li><a href="admin/plugins">Plugins</a></li>
             <li><a href="#">Temas</a></li>
             <li><a href="#">Configurações</a></li>
             
@@ -39,7 +40,7 @@
             <li style="margin-top: 50px; border-top: 1px solid #2c3338;">
                 <a href="#" style="color: #999; cursor: default;">Olá, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?></a>
             </li>
-            <li><a href="/logout" style="color: #d63638;">Sair (Logout)</a></li>
+            <li><a href="logout" style="color: #d63638;">Sair (Logout)</a></li>
             <?php endif; ?>
         </ul>
     </div>

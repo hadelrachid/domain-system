@@ -7,7 +7,7 @@
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">
         <h3>Plugins Ativos</h3>
         <p>Acesse o gerenciador de plugins para expandir as funcionalidades do sistema instalando pacotes ZIP.</p>
-        <a href="/admin/plugins" class="btn btn-activate">Gerenciar Plugins</a>
+        <a href="admin/plugins" class="btn btn-activate">Gerenciar Plugins</a>
     </div>
     
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; flex: 1;">

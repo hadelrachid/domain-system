@@ -35,6 +35,9 @@ try {
     $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
     if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
         $uri = substr($uri, strlen($baseFolder));
+        define('BASE_URL', $baseFolder);
+    } else {
+        define('BASE_URL', rtrim($scriptName, '/'));
     }
     
     if (empty($uri)) {
