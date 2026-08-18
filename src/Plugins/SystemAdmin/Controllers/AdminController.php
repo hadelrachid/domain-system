@@ -67,7 +67,9 @@ class AdminController
         $action = $_POST['action'] ?? null;
 
         if ($pluginName && $action) {
-            $manager = new \DomainSystem\Core\Plugin\PluginManager(dirname(__DIR__, 4));
+            /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+            $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
+            
             if ($action === 'enable') {
                 $manager->enable($pluginName);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin ativado com sucesso!'];
@@ -87,8 +89,10 @@ class AdminController
         
         if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
             try {
-                $manager = new \DomainSystem\Core\Plugin\PluginManager(dirname(__DIR__, 4));
+                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
                 $manager->installFromZip($_FILES['plugin_zip']['tmp_name']);
+                
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação: ' . $e->getMessage()];
@@ -107,8 +111,10 @@ class AdminController
 
         if ($pluginName && $pluginFolder) {
             try {
-                $manager = new \DomainSystem\Core\Plugin\PluginManager(dirname(__DIR__, 4));
+                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
+                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
                 $manager->delete($pluginName, $pluginFolder);
+                
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '🗑️ Plugin excluído e removido do servidor.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => $e->getMessage()];

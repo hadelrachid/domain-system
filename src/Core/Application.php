@@ -46,6 +46,10 @@ class Application
             return $this->dispatcher;
         });
 
+        $this->container->singleton(PluginManager::class, function() {
+            return $this->pluginManager;
+        });
+
         $this->container->singleton(Router::class, function() {
             return $this->router;
         });
