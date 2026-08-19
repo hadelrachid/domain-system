@@ -26,9 +26,29 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
         
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/login', [AuthController::class, 'showLoginForm']);
-            $router->addRoute('POST', '/login', [AuthController::class, 'authenticate']);
-            $router->addRoute('GET', '/logout', [AuthController::class, 'logout']);
+            $router->addRoute('GET', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'showLoginForm']);
+            $router->addRoute('POST', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'authenticate']);
+            $router->addRoute('GET', '/logout', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'logout']);
+
+            // Usuários e 2FA
+            $router->addRoute('GET', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'index']);
+            $router->addRoute('POST', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'store']);
+            $router->addRoute('GET', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'generate2fa']);
+            $router->addRoute('POST', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'confirm2fa']);
+            $router->addRoute('GET', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa']);
+        });
+
+        // Adicionar ao Menu (Apenas se for admin)
+        $events->addListener('admin.menu', function($menu) {
+            $role = strtolower($_SESSION['user_role'] ?? '');
+            if ($role === 'admin') {
+                $menu[] = [
+                    'title' => 'Usuários',
+                    'url' => '/admin/users',
+                    'icon' => '👥'
+                ];
+            }
+            return $menu;
         });
 
         // 5. O Middleware de Proteção (O Cockpit)

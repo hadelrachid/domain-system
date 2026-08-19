@@ -36,10 +36,31 @@ class AuthController
         
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $twofa_code = $_POST['twofa_code'] ?? '';
 
         $user = $this->db->table('users')->where('email', '=', $email)->first();
 
         if ($user && password_verify($password, $user['password'])) {
+            
+            // Verifica 2FA
+            if (!empty($user['two_factor_secret'])) {
+                if (empty($twofa_code)) {
+                    $_SESSION['auth_error'] = "Esta conta possui 2FA. Digite o código do seu aplicativo.";
+                    $_SESSION['pending_2fa_email'] = $email;
+                    header("Location: " . BASE_URL . "/login");
+                    exit;
+                }
+
+                require_once __DIR__ . '/../GoogleAuthenticator.php';
+                $ga = new \PHPGangsta_GoogleAuthenticator();
+                if (!$ga->verifyCode($user['two_factor_secret'], $twofa_code, 2)) {
+                    $_SESSION['auth_error'] = "Código 2FA inválido.";
+                    $_SESSION['pending_2fa_email'] = $email;
+                    header("Location: " . BASE_URL . "/login");
+                    exit;
+                }
+            }
+
             // Previne falha de segurança de fixação de sessão (Session Fixation)
             session_regenerate_id(true);
             
@@ -50,6 +71,7 @@ class AuthController
             $_SESSION['linked_doctor_id'] = $user['linked_doctor_id'] ?? null;
             
             unset($_SESSION['auth_error']);
+            unset($_SESSION['pending_2fa_email']);
             
             header("Location: " . BASE_URL . "/admin");
             exit;
