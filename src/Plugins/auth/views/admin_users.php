@@ -73,6 +73,15 @@
                             elseif ($u['role'] === 'doctor') echo '🩺 Médico';
                             else echo '📞 Recepcionista';
                             ?>
+                            
+                            <!-- Redefinir Senha -->
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 5px;">
+                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                    <input type="password" name="new_password" placeholder="Nova senha" required style="font-size: 11px; padding: 3px; width: 90px; border: 1px solid #ccc;">
+                                    <button type="submit" class="btn" style="font-size: 10px; padding: 3px 6px;">Mudar</button>
+                                </form>
+                            </div>
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
                             <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa-type" style="margin-bottom: 5px;">

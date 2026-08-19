@@ -158,4 +158,22 @@ class UserController
         header("Location: " . BASE_URL . "/admin/users");
         exit;
     }
+
+    public function resetPassword()
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+        $user_id = $_POST['user_id'] ?? null;
+        $new_password = $_POST['new_password'] ?? '';
+
+        if ($user_id && !empty($new_password)) {
+            $this->db->table('users')->where('id', '=', $user_id)->update([
+                'password' => password_hash($new_password, PASSWORD_DEFAULT)
+            ]);
+            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Senha do usuário redefinida com sucesso!'];
+        }
+
+        header("Location: " . BASE_URL . "/admin/users");
+        exit;
+    }
 }
