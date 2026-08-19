@@ -115,28 +115,49 @@ class AppointmentController
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        $search = $_GET['s'] ?? '';
+        $search = strtolower($_GET['s'] ?? '');
         
-        $pdo = $this->db->table('appointments')->getPdo();
-        $query = "
-            SELECT a.*, p.name as patient_name, p.phone as patient_phone, d.name as doctor_name 
-            FROM appointments a
-            JOIN patients p ON a.patient_id = p.id
-            JOIN doctors d ON a.doctor_id = d.id
-            WHERE a.status IN ('Atendido', 'Cancelado')
-        ";
-        
-        $params = [];
-        if (!empty($search)) {
-            $query .= " AND (p.name LIKE :search OR p.phone LIKE :search OR a.appointment_date LIKE :search)";
-            $params['search'] = "%$search%";
+        $appointmentsRaw = $this->db->table('appointments')->get();
+        $patients = $this->db->table('patients')->get();
+        $doctors = $this->db->table('doctors')->get();
+
+        $patientsMap = [];
+        foreach ($patients as $p) $patientsMap[$p['id']] = $p;
+
+        $doctorsMap = [];
+        foreach ($doctors as $d) $doctorsMap[$d['id']] = $d;
+
+        $appointments = [];
+        foreach ($appointmentsRaw as $a) {
+            if ($a['status'] !== 'Atendido' && $a['status'] !== 'Cancelado') {
+                continue;
+            }
+
+            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
+            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
+            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
+
+            // Filter by search
+            if (!empty($search)) {
+                $matchName = str_contains(strtolower($a['patient_name']), $search);
+                $matchPhone = str_contains(strtolower($a['patient_phone']), $search);
+                $matchDate = str_contains($a['appointment_date'], $search);
+                
+                if (!$matchName && !$matchPhone && !$matchDate) {
+                    continue;
+                }
+            }
+
+            $appointments[] = $a;
         }
 
-        $query .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 20";
-        
-        $stmt = $pdo->prepare($query);
-        $stmt->execute($params);
-        $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        // Ordenar por data mais recente
+        usort($appointments, function($a, $b) {
+            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
+        });
+
+        // Limite de 20
+        $appointments = array_slice($appointments, 0, 20);
 
         $theme = $this->theme;
         
