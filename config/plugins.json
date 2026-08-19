@@ -3,5 +3,6 @@
     "system-admin": true,
     "auth": true,
     "patients": true,
-    "doctors": true
+    "doctors": true,
+    "appointments": true
 }
