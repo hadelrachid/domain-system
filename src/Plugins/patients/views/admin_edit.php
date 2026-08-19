@@ -73,6 +73,10 @@
                     <label style="display:block; margin-bottom: 5px;">Nº</label>
                     <input type="text" name="address_number" id="address_number" value="<?= htmlspecialchars($patient['address_number'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
                 </div>
+                <div style="flex:2;">
+                    <label style="display:block; margin-bottom: 5px;">Complemento</label>
+                    <input type="text" name="address_complement" id="address_complement" value="<?= htmlspecialchars($patient['address_complement'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                </div>
             </div>
 
             <div style="text-align:right;">

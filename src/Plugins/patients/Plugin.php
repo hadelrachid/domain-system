@@ -50,6 +50,7 @@ class Plugin extends AbstractPlugin
                 zip_code VARCHAR(10) NULL,
                 address VARCHAR(255) NULL,
                 address_number VARCHAR(20) NULL,
+                address_complement VARCHAR(100) NULL,
                 city VARCHAR(100) NULL,
                 state VARCHAR(50) NULL,
                 insurance_number VARCHAR(100) NULL,

@@ -72,6 +72,9 @@
                     </div>
                 </div>
 
+                <label style="display:block; margin-bottom: 5px;">Complemento (Apto, Bloco, etc)</label>
+                <input type="text" name="address_complement" id="address_complement" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+
                 <button type="submit" class="btn btn-activate" style="width: 100%; text-align: center;">Salvar Paciente</button>
             </form>
         </div>
