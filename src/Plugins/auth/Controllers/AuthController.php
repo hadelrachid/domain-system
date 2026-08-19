@@ -46,6 +46,9 @@ class AuthController
             // Sucesso! Cria a sessão
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
+            $_SESSION['user_role'] = $user['role'] ?? 'admin';
+            $_SESSION['linked_doctor_id'] = $user['linked_doctor_id'] ?? null;
+            
             unset($_SESSION['auth_error']);
             
             header("Location: " . BASE_URL . "/admin");

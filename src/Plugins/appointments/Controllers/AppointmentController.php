@@ -20,6 +20,9 @@ class AppointmentController
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
+        $role = strtolower($_SESSION['user_role'] ?? 'admin');
+        $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
+        
         $appointmentsRaw = $this->db->table('appointments')->get();
         $patients = $this->db->table('patients')->get();
         $doctors = $this->db->table('doctors')->get();
@@ -34,6 +37,10 @@ class AppointmentController
         foreach ($appointmentsRaw as $a) {
             if ($a['status'] === 'Atendido' || $a['status'] === 'Cancelado') {
                 continue; // Fica só na fila do Histórico
+            }
+
+            if ($role === 'doctor' && (string)$a['doctor_id'] !== (string)$doctor_id) {
+                continue; // Médico só vê seus próprios pacientes
             }
 
             $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
@@ -115,6 +122,9 @@ class AppointmentController
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
+        $role = strtolower($_SESSION['user_role'] ?? 'admin');
+        $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
+
         $search = strtolower($_GET['s'] ?? '');
         
         $appointmentsRaw = $this->db->table('appointments')->get();
@@ -131,6 +141,10 @@ class AppointmentController
         foreach ($appointmentsRaw as $a) {
             if ($a['status'] !== 'Atendido' && $a['status'] !== 'Cancelado') {
                 continue;
+            }
+
+            if ($role === 'doctor' && (string)$a['doctor_id'] !== (string)$doctor_id) {
+                continue; // Médico só vê seus próprios pacientes no histórico
             }
 
             $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
