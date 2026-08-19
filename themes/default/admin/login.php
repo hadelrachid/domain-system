@@ -73,6 +73,10 @@
                     </script>
                 <?php endif; ?>
 
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="<?= BASE_URL ?>/logout" style="font-size: 13px; color: #999; text-decoration: none;">&larr; Voltar e acessar com outra conta</a>
+                </div>
+
             <?php else: ?>
                 <label>E-mail</label>
                 <input type='email' name='email' required autofocus>
