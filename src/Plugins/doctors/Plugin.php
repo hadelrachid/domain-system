@@ -13,18 +13,21 @@ class Plugin extends AbstractPlugin
     {
         $this->runMigrations();
 
+        /** @var EventDispatcher $events */
+        $events = $this->container->make(EventDispatcher::class);
+
         // Registrar item no menu lateral
-        $this->getEventDispatcher()->addListener('admin.menu', function($menu) {
+        $events->addListener('admin.menu', function($menu) {
             $menu[] = [
                 'title' => 'Médicos',
-                'url' => BASE_URL . '/admin/doctors',
-                'icon' => 'dashicons-businessman'
+                'url' => '/admin/doctors',
+                'icon' => '👨‍⚕️'
             ];
             return $menu;
         });
 
         // Registrar rotas
-        $this->getEventDispatcher()->addListener('router.register', function(Router $router) {
+        $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/doctors', [DoctorController::class, 'index']);
             $router->addRoute('POST', '/admin/doctors', [DoctorController::class, 'store']);
             $router->addRoute('GET', '/admin/doctors/edit', [DoctorController::class, 'edit']);
@@ -36,7 +39,9 @@ class Plugin extends AbstractPlugin
 
     private function runMigrations(): void
     {
-        $db = $this->getContainer()->get(\DomainSystem\Plugins\Database\Database::class)->getPdo();
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $db = $connection->getPdo();
         
         $db->exec("
             CREATE TABLE IF NOT EXISTS doctors (
