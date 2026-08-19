@@ -17,30 +17,14 @@ class Plugin extends AbstractPlugin
 
         /** @var Router $router */
         $router = $this->container->make(Router::class);
-        
-        $adminController = new AdminController($this->container);
-        $dashboardController = new DashboardController($this->container);
 
         // Dashboard base
-        $router->addRoute('GET', '/admin', function() use ($dashboardController) {
-            return $dashboardController->index();
-        });
+        $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
 
         // Rotas de Plugins
-        $router->addRoute('GET', '/admin/plugins', function() use ($adminController) {
-            return $adminController->listPlugins();
-        });
-
-        $router->addRoute('POST', '/admin/plugins/toggle', function() use ($adminController) {
-            return $adminController->togglePlugin();
-        });
-
-        $router->addRoute('POST', '/admin/plugins/upload', function() use ($adminController) {
-            return $adminController->uploadPlugin();
-        });
-
-        $router->addRoute('POST', '/admin/plugins/delete', function() use ($adminController) {
-            return $adminController->deletePlugin();
-        });
+        $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);
+        $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin']);
+        $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin']);
+        $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin']);
     }
 }

@@ -19,22 +19,16 @@ class Plugin extends AbstractPlugin
         // 2. Garantir que a tabela users existe
         $this->runMigrations();
 
-        // 3. Registrar o Controller no Container
-        $this->container->singleton(AuthController::class, function($c) {
-            // Nota: DIP (O Container resolve as dependências automaticamente)
-            return $c->make(AuthController::class);
-        });
+        // 3. O Container vai fazer o auto-wiring do AuthController automaticamente na hora do router!
 
         // 4. Registrar rotas do Auth
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
         
         $events->addListener('router.register', function(Router $router) {
-            $controller = clone $this->container->make(AuthController::class);
-            
-            $router->addRoute('GET', '/login', [$controller, 'showLoginForm']);
-            $router->addRoute('POST', '/login', [$controller, 'authenticate']);
-            $router->addRoute('GET', '/logout', [$controller, 'logout']);
+            $router->addRoute('GET', '/login', [AuthController::class, 'showLoginForm']);
+            $router->addRoute('POST', '/login', [AuthController::class, 'authenticate']);
+            $router->addRoute('GET', '/logout', [AuthController::class, 'logout']);
         });
 
         // 5. O Middleware de Proteção (O Cockpit)
