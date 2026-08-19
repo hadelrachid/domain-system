@@ -1,0 +1,7 @@
+{
+    "name": "patients",
+    "version": "1.0.0",
+    "description": "Módulo de Gerenciamento de Pacientes (Prontuário Eletrônico).",
+    "dependencies": ["database", "auth", "system-admin"],
+    "namespace": "DomainSystem\\Plugins\\patients\\"
+}

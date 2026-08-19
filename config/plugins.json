@@ -1,5 +1,6 @@
 {
     "database": true,
     "system-admin": true,
-    "auth": true
+    "auth": true,
+    "patients": true
 }
