@@ -1,0 +1,7 @@
+{
+    "name": "doctors",
+    "description": "Módulo de Profissionais e Médicos com sincronização WP",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "main": "Plugin.php"
+}
