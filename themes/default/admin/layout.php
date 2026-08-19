@@ -32,6 +32,16 @@
     <div id="adminmenuback">
         <ul id="adminmenu">
             <li><a href="admin">Painel</a></li>
+            <?php 
+                $app = \DomainSystem\Core\Application::getInstance();
+                if ($app) {
+                    $menus = $app->getDispatcher()->applyFilters('admin.menu', []);
+                    foreach ($menus as $menu) {
+                        $icon = $menu['icon'] ?? '';
+                        echo '<li><a href="' . htmlspecialchars(ltrim($menu['url'], '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a></li>';
+                    }
+                }
+            ?>
             <li><a href="admin/plugins">Plugins</a></li>
             <li><a href="#">Temas</a></li>
             <li><a href="#">Configurações</a></li>
