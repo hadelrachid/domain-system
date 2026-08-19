@@ -74,7 +74,7 @@
                 <?php endif; ?>
 
                 <div style="text-align: center; margin-top: 15px;">
-                    <a href="<?= BASE_URL ?>/logout" style="font-size: 13px; color: #999; text-decoration: none;">&larr; Voltar e acessar com outra conta</a>
+                    <a href="<?= BASE_URL ?>/logout" style="display: block; padding: 10px; background-color: #f1f1f1; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold; border: 1px solid #ccc;">&larr; Voltar (Acessar com outra conta)</a>
                 </div>
 
             <?php else: ?>
