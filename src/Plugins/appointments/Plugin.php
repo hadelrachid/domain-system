@@ -6,6 +6,7 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\appointments\Controllers\AppointmentController;
+use DomainSystem\Plugins\appointments\Controllers\ApiController;
 
 class Plugin extends AbstractPlugin
 {
@@ -41,6 +42,10 @@ class Plugin extends AbstractPlugin
             // Rota para o Prontuário Médico
             $router->addRoute('GET', '/admin/appointments/record', [AppointmentController::class, 'record']);
             $router->addRoute('POST', '/admin/appointments/record', [AppointmentController::class, 'saveRecord']);
+
+            // API Routes
+            $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking']);
+            $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection']);
         });
     }
 
