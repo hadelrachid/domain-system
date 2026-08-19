@@ -40,7 +40,7 @@ class Plugin extends AbstractPlugin
 
         // Adicionar ao Menu (Apenas se for admin)
         $events->addListener('admin.menu', function($menu) {
-            $role = strtolower($_SESSION['user_role'] ?? '');
+            $role = strtolower($_SESSION['user_role'] ?? 'admin');
             if ($role === 'admin') {
                 $menu[] = [
                     'title' => 'Usuários',
