@@ -19,6 +19,8 @@ class Plugin extends AbstractPlugin
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/patients', [PatientController::class, 'index']);
             $router->addRoute('POST', '/admin/patients', [PatientController::class, 'store']);
+            $router->addRoute('GET', '/admin/patients/edit', [PatientController::class, 'edit']);
+            $router->addRoute('POST', '/admin/patients/update', [PatientController::class, 'update']);
             $router->addRoute('POST', '/admin/patients/delete', [PatientController::class, 'delete']);
         });
 

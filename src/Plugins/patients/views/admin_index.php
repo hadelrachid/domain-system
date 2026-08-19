@@ -9,10 +9,20 @@
         </div>
     <?php endif; ?>
 
-    <div style="display: flex; gap: 20px; align-items: flex-start;">
+    <style>
+        .flex-container { display: flex; gap: 20px; align-items: flex-start; }
+        .table-responsive { overflow-x: auto; flex: 2; }
+        .form-panel { flex: 1; min-width: 300px; }
+        @media (max-width: 768px) {
+            .flex-container { flex-direction: column; }
+            .table-responsive, .form-panel { width: 100%; flex: none; }
+        }
+    </style>
+
+    <div class="flex-container">
         
         <!-- Formulário de Cadastro -->
-        <div class="upload-box" style="flex: 1; max-width: 300px;">
+        <div class="upload-box form-panel">
             <h2 style="margin-top: 0;">Novo Paciente</h2>
             <form method="POST" action="<?= BASE_URL ?>/admin/patients">
                 <label style="display:block; margin-bottom: 5px;">Nome Completo</label>
@@ -40,26 +50,26 @@
                 <div style="display:flex; gap:10px;">
                     <div style="flex:1;">
                         <label style="display:block; margin-bottom: 5px;">CEP</label>
-                        <input type="text" name="zip_code" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                        <input type="text" name="zip_code" id="zip_code" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
                     </div>
                     <div style="flex:2;">
                         <label style="display:block; margin-bottom: 5px;">Estado (UF)</label>
-                        <input type="text" name="state" maxlength="2" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                        <input type="text" name="state" id="state" maxlength="2" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
                     </div>
                 </div>
 
                 <label style="display:block; margin-bottom: 5px;">Cidade</label>
-                <input type="text" name="city" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                <input type="text" name="city" id="city" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 
                 <label style="display:block; margin-bottom: 5px;">Endereço Completo</label>
-                <input type="text" name="address" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                <input type="text" name="address" id="address" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 
                 <button type="submit" class="btn btn-activate" style="width: 100%; text-align: center;">Salvar Paciente</button>
             </form>
         </div>
 
         <!-- Tabela de Pacientes -->
-        <div style="flex: 2;">
+        <div class="table-responsive">
             <table class="wp-list-table">
                 <thead>
                     <tr>
@@ -67,7 +77,7 @@
                         <th>CPF</th>
                         <th>Nascimento</th>
                         <th>Contato</th>
-                        <th style="width: 80px;">Ações</th>
+                        <th style="width: 150px;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -84,10 +94,13 @@
                                     <small style="color: #666;"><?= htmlspecialchars($p['phone'] ?? '') ?></small>
                                 </td>
                                 <td>
-                                    <form method="POST" action="<?= BASE_URL ?>/admin/patients/delete" onsubmit="return confirm('Tem certeza que deseja excluir o paciente <?= htmlspecialchars($p['name']) ?>?');">
-                                        <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                                        <button type="submit" class="btn btn-deactivate">Excluir</button>
-                                    </form>
+                                    <div style="display:flex; gap:5px;">
+                                        <a href="<?= BASE_URL ?>/admin/patients/edit?id=<?= $p['id'] ?>" class="btn btn-activate" style="text-decoration:none;">Editar</a>
+                                        <form method="POST" action="<?= BASE_URL ?>/admin/patients/delete" onsubmit="return confirm('Tem certeza que deseja excluir o paciente <?= htmlspecialchars($p['name']) ?>?');">
+                                            <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                            <button type="submit" class="btn btn-deactivate">Excluir</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -99,7 +112,7 @@
     </div>
 
     <script>
-    // Máscaras simples com Vanilla JS
+    // Máscaras e CEP
     document.addEventListener('DOMContentLoaded', function() {
         const masks = {
             cpf: function(value) {
@@ -137,6 +150,22 @@
 
         document.querySelectorAll('input[name="zip_code"]').forEach(el => {
             el.addEventListener('input', e => { e.target.value = masks.zip_code(e.target.value); });
+            
+            // Busca ViaCEP
+            el.addEventListener('blur', function(e) {
+                let cep = e.target.value.replace(/\D/g, '');
+                if (cep.length === 8) {
+                    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data.erro) {
+                                document.getElementById('address').value = data.logradouro + (data.bairro ? ', ' + data.bairro : '');
+                                document.getElementById('city').value = data.localidade;
+                                document.getElementById('state').value = data.uf;
+                            }
+                        });
+                }
+            });
         });
     });
     </script>
