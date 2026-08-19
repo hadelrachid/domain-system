@@ -61,8 +61,16 @@
                 <label style="display:block; margin-bottom: 5px;">Cidade</label>
                 <input type="text" name="city" id="city" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 
-                <label style="display:block; margin-bottom: 5px;">Endereço Completo</label>
-                <input type="text" name="address" id="address" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                    <div style="flex:3;">
+                        <label style="display:block; margin-bottom: 5px;">Endereço</label>
+                        <input type="text" name="address" id="address" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom: 5px;">Nº</label>
+                        <input type="text" name="address_number" id="address_number" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    </div>
+                </div>
 
                 <button type="submit" class="btn btn-activate" style="width: 100%; text-align: center;">Salvar Paciente</button>
             </form>
@@ -162,6 +170,7 @@
                                 document.getElementById('address').value = data.logradouro + (data.bairro ? ', ' + data.bairro : '');
                                 document.getElementById('city').value = data.localidade;
                                 document.getElementById('state').value = data.uf;
+                                document.getElementById('address_number').focus();
                             }
                         });
                 }

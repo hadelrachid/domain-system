@@ -64,8 +64,16 @@
                 </div>
             </div>
 
-            <label style="display:block; margin-bottom: 5px;">Endereço Completo</label>
-            <input type="text" name="address" id="address" value="<?= htmlspecialchars($patient['address'] ?? '') ?>" style="width: 100%; padding: 8px; margin-bottom: 20px; box-sizing: border-box;">
+            <div style="display:flex; gap:15px; margin-bottom: 20px;">
+                <div style="flex:3;">
+                    <label style="display:block; margin-bottom: 5px;">Endereço</label>
+                    <input type="text" name="address" id="address" value="<?= htmlspecialchars($patient['address'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; margin-bottom: 5px;">Nº</label>
+                    <input type="text" name="address_number" id="address_number" value="<?= htmlspecialchars($patient['address_number'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                </div>
+            </div>
 
             <div style="text-align:right;">
                 <button type="submit" class="btn btn-activate" style="padding: 6px 14px; font-size: 14px;">Salvar Alterações</button>
@@ -131,6 +139,7 @@
                                 document.getElementById('address').value = data.logradouro + (data.bairro ? ', ' + data.bairro : '');
                                 document.getElementById('city').value = data.localidade;
                                 document.getElementById('state').value = data.uf;
+                                document.getElementById('address_number').focus();
                             }
                         });
                 }

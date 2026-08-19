@@ -40,6 +40,7 @@ class PatientController
         
         $zip_code = $_POST['zip_code'] ?? null;
         $address = $_POST['address'] ?? null;
+        $address_number = $_POST['address_number'] ?? null;
         $city = $_POST['city'] ?? null;
         $state = $_POST['state'] ?? null;
         $insurance_number = $_POST['insurance_number'] ?? null;
@@ -56,6 +57,7 @@ class PatientController
                     'birthdate' => $birthdate,
                     'zip_code' => $zip_code,
                     'address' => $address,
+                    'address_number' => $address_number,
                     'city' => $city,
                     'state' => $state,
                     'insurance_number' => $insurance_number
@@ -111,6 +113,7 @@ class PatientController
         
         $zip_code = $_POST['zip_code'] ?? null;
         $address = $_POST['address'] ?? null;
+        $address_number = $_POST['address_number'] ?? null;
         $city = $_POST['city'] ?? null;
         $state = $_POST['state'] ?? null;
         $insurance_number = $_POST['insurance_number'] ?? null;
@@ -130,6 +133,7 @@ class PatientController
                 'birthdate' => $birthdate,
                 'zip_code' => $zip_code,
                 'address' => $address,
+                'address_number' => $address_number,
                 'city' => $city,
                 'state' => $state,
                 'insurance_number' => $insurance_number
