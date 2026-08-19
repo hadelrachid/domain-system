@@ -5,9 +5,8 @@
         
         <!-- Botão de Sincronização com o Site Principal -->
         <form method="POST" action="<?= BASE_URL ?>/admin/doctors/sync-wp" style="margin:0;" onsubmit="return confirm('Isso fará o download dos médicos cadastrados no site principal (WordPress). Deseja continuar?');">
-            <button type="submit" class="btn btn-activate" style="background-color: #0073aa; border-color: #0073aa;">
-                <span class="dashicons dashicons-update" style="vertical-align: middle; margin-right: 5px;"></span>
-                Sincronizar com o Site (WP)
+            <button type="submit" class="page-title-action" style="background: none; cursor: pointer; padding: 4px 8px; text-decoration: none;">
+                Sincronizar via WordPress
             </button>
         </form>
     </div>
