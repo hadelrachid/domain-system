@@ -121,6 +121,11 @@
                                     <strong><?= htmlspecialchars($a['patient_name']) ?></strong><br>
                                     <small style="color:#0073aa; font-weight:bold;"><?= htmlspecialchars($attendance) ?></small><br>
                                     <small style="color:#666;"><?= htmlspecialchars($a['reception_notes']) ?></small>
+                                    <?php if (!empty($a['patient_phone'])): ?>
+                                        <div style="margin-top: 5px;">
+                                            <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $a['patient_phone']) ?>" target="_blank" class="btn" style="background: #25D366; color: white; border: none; font-size: 11px; padding: 2px 6px;">💬 WhatsApp</a>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($a['doctor_name']) ?></td>
                                 <td>

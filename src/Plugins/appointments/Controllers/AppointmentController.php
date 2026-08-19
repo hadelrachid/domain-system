@@ -32,14 +32,19 @@ class AppointmentController
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
+            if ($a['status'] === 'Atendido' || $a['status'] === 'Cancelado') {
+                continue; // Fica só na fila do Histórico
+            }
+
             $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
+            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
             $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
             $appointments[] = $a;
         }
 
-        // Ordenar os agendamentos pela data e hora
+        // Ordenar os agendamentos pela data e hora (os mais próximos primeiro)
         usort($appointments, function($a, $b) {
-            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
+            return strtotime($a['appointment_date'] . ' ' . $a['appointment_time']) <=> strtotime($b['appointment_date'] . ' ' . $b['appointment_time']);
         });
 
         $theme = $this->theme;
@@ -73,7 +78,7 @@ class AppointmentController
                     'attendance_type' => $attendance_type,
                     'health_insurance' => $health_insurance,
                     'reception_notes' => $reception_notes,
-                    'status' => 'Pendente'
+                    'status' => 'Confirmado' // Agendamento manual da recepção já entra como Confirmado
                 ]);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Agendamento criado com sucesso!'];
             } catch (\Exception $e) {
@@ -106,6 +111,40 @@ class AppointmentController
         exit;
     }
 
+    public function history()
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        
+        $search = $_GET['s'] ?? '';
+        
+        $pdo = $this->db->table('appointments')->getPdo();
+        $query = "
+            SELECT a.*, p.name as patient_name, p.phone as patient_phone, d.name as doctor_name 
+            FROM appointments a
+            JOIN patients p ON a.patient_id = p.id
+            JOIN doctors d ON a.doctor_id = d.id
+            WHERE a.status IN ('Atendido', 'Cancelado')
+        ";
+        
+        $params = [];
+        if (!empty($search)) {
+            $query .= " AND (p.name LIKE :search OR p.phone LIKE :search OR a.appointment_date LIKE :search)";
+            $params['search'] = "%$search%";
+        }
+
+        $query .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 20";
+        
+        $stmt = $pdo->prepare($query);
+        $stmt->execute($params);
+        $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $theme = $this->theme;
+        
+        ob_start();
+        include __DIR__ . '/../views/admin_history.php';
+        return ob_get_clean();
+    }
+
     public function record()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
@@ -124,6 +163,8 @@ class AppointmentController
 
         $patient = $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->first();
         $doctor = $this->db->table('doctors')->where('id', '=', $appointment['doctor_id'])->first();
+
+        $patient_data = $patient; // para usar na view
 
         $appointment['patient_name'] = $patient['name'] ?? 'Desconhecido';
         $appointment['patient_cpf'] = $patient['cpf'] ?? 'Desconhecido';
@@ -154,16 +195,33 @@ class AppointmentController
     public function saveRecord()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-
+        
         $id = $_POST['id'] ?? null;
         $medical_record = $_POST['medical_record'] ?? '';
 
         if ($id) {
+            // Salvar evolução e mudar status para Atendido
             $this->db->table('appointments')->where('id', '=', $id)->update([
                 'medical_record' => $medical_record,
-                'status' => 'Atendido' // Automaticamente muda para Atendido
+                'status' => 'Atendido'
             ]);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Prontuário salvo e consulta marcada como Atendida!'];
+
+            // Atualizar dados do paciente se fornecidos
+            $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
+            if (!empty($appointment)) {
+                $patientData = [];
+                if (!empty($_POST['patient_cpf'])) $patientData['cpf'] = $_POST['patient_cpf'];
+                if (!empty($_POST['patient_birthdate'])) $patientData['birthdate'] = $_POST['patient_birthdate'];
+                if (!empty($_POST['insurance_number'])) $patientData['insurance_number'] = $_POST['insurance_number'];
+                if (!empty($_POST['zip_code'])) $patientData['zip_code'] = $_POST['zip_code'];
+                if (!empty($_POST['address'])) $patientData['address'] = $_POST['address'];
+
+                if (!empty($patientData)) {
+                    $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->update($patientData);
+                }
+            }
+
+            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Prontuário salvo e atendimento finalizado com sucesso!'];
         }
 
         header("Location: " . BASE_URL . "/admin/appointments");

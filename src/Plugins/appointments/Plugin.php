@@ -17,13 +17,18 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
 
         // Registrar item no menu lateral
-        $events->addListener('admin.menu', function($menu) {
-            $menu[] = [
+        $events->addListener('admin.menu', function($menus) {
+            $menus[] = [
                 'title' => 'Agendamentos',
                 'url' => '/admin/appointments',
                 'icon' => '📅'
             ];
-            return $menu;
+            $menus[] = [
+                'title' => 'Histórico',
+                'url' => '/admin/appointments/history',
+                'icon' => '🗄️'
+            ];
+            return $menus;
         });
 
         // Registrar rotas
@@ -32,6 +37,7 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store']);
             $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus']);
             
+            $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history']);
             // Rota para o Prontuário Médico
             $router->addRoute('GET', '/admin/appointments/record', [AppointmentController::class, 'record']);
             $router->addRoute('POST', '/admin/appointments/record', [AppointmentController::class, 'saveRecord']);

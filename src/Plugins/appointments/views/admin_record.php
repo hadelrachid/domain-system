@@ -30,6 +30,35 @@ $age = $birthObj->diff(new DateTime('today'))->y;
             <form method="POST" action="<?= BASE_URL ?>/admin/appointments/record">
                 <input type="hidden" name="id" value="<?= $appointment['id'] ?>">
 
+                <div style="background: #f0f6fc; padding: 15px; border-radius: 4px; border: 1px solid #c3c4c7; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; font-size: 14px;">Atualização Cadastral do Paciente (Opcional)</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display:block; font-size: 12px; margin-bottom: 2px;">CPF</label>
+                            <input type="text" name="patient_cpf" value="<?= htmlspecialchars($appointment['patient_cpf']) ?>" style="width: 100%; padding: 6px; box-sizing: border-box; font-size: 13px;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display:block; font-size: 12px; margin-bottom: 2px;">Data Nascimento</label>
+                            <input type="date" name="patient_birthdate" value="<?= htmlspecialchars($appointment['patient_birthdate'] ?? '') ?>" style="width: 100%; padding: 6px; box-sizing: border-box; font-size: 13px;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display:block; font-size: 12px; margin-bottom: 2px;">Nº do Plano (Carteirinha)</label>
+                            <input type="text" name="insurance_number" value="<?= htmlspecialchars($patient_data['insurance_number'] ?? '') ?>" style="width: 100%; padding: 6px; box-sizing: border-box; font-size: 13px;" placeholder="Ex: 123456789">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                        <div style="flex: 1; min-width: 100px;">
+                            <label style="display:block; font-size: 12px; margin-bottom: 2px;">CEP</label>
+                            <input type="text" name="zip_code" value="<?= htmlspecialchars($patient_data['zip_code'] ?? '') ?>" style="width: 100%; padding: 6px; box-sizing: border-box; font-size: 13px;">
+                        </div>
+                        <div style="flex: 2; min-width: 200px;">
+                            <label style="display:block; font-size: 12px; margin-bottom: 2px;">Endereço Completo</label>
+                            <input type="text" name="address" value="<?= htmlspecialchars($patient_data['address'] ?? '') ?>" style="width: 100%; padding: 6px; box-sizing: border-box; font-size: 13px;" placeholder="Rua, Número, Bairro, Cidade - Estado">
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 0;">Evolução Clínica</h3>
                 <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
                     Preencha os sintomas, exames físicos, diagnósticos e prescrições do paciente. Ao salvar, a consulta será marcada automaticamente como <strong>Atendida</strong>.
                 </p>
