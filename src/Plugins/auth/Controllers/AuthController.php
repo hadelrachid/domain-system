@@ -26,6 +26,22 @@ class AuthController
             exit;
         }
 
+        // --- MODO DESENVOLVIMENTO (XAMPP SIMULADO) ---
+        // Se o usuário está preso na tela de 2FA, gera o código no arquivo txt
+        if (isset($_SESSION['pending_2fa_email'])) {
+            $user = $this->db->table('users')->where('email', '=', $_SESSION['pending_2fa_email'])->first();
+            if ($user && !empty($user['two_factor_secret'])) {
+                require_once __DIR__ . '/../GoogleAuthenticator.php';
+                $ga = new \PHPGangsta_GoogleAuthenticator();
+                $currentCode = $ga->getCode($user['two_factor_secret']);
+                
+                $tempDir = __DIR__ . '/../../../../temp';
+                if (!is_dir($tempDir)) { mkdir($tempDir, 0777, true); }
+                file_put_contents($tempDir . '/auth-2fa.txt', "Usuário: {$user['email']}\nCódigo Válido Agora: {$currentCode}\n(Este código expira em 30 segundos)");
+            }
+        }
+        // ---------------------------------------------
+
         $error = $_SESSION['auth_error'] ?? null;
         return $this->theme->render('admin/login', ['error' => $error]);
     }

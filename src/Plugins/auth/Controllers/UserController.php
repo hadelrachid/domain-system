@@ -83,6 +83,14 @@ class UserController
         $secret = $ga->createSecret();
         $qrCodeUrl = $ga->getQRCodeGoogleUrl('DaherClinica', $secret);
 
+        // --- MODO DESENVOLVIMENTO (XAMPP SIMULADO) ---
+        // Salva o código de 6 dígitos atual em temp/auth-2fa.txt para facilitar os testes sem celular
+        $currentCode = $ga->getCode($secret);
+        $tempDir = __DIR__ . '/../../../../temp';
+        if (!is_dir($tempDir)) { mkdir($tempDir, 0777, true); }
+        file_put_contents($tempDir . '/auth-2fa.txt', "Usuário: {$user['email']}\nSecret: {$secret}\nCódigo Válido Agora: {$currentCode}\n(Este código expira em 30 segundos)");
+        // ---------------------------------------------
+
         $theme = $this->theme;
         ob_start();
         include __DIR__ . '/../views/admin_2fa.php';
