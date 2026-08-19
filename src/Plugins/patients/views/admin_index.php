@@ -98,6 +98,49 @@
         
     </div>
 
+    <script>
+    // Máscaras simples com Vanilla JS
+    document.addEventListener('DOMContentLoaded', function() {
+        const masks = {
+            cpf: function(value) {
+                return value.replace(/\D/g, '')
+                            .replace(/(\d{3})(\d)/, '$1.$2')
+                            .replace(/(\d{3})(\d)/, '$1.$2')
+                            .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                            .replace(/(-\d{2})\d+?$/, '$1');
+            },
+            phone: function(value) {
+                value = value.replace(/\D/g, '');
+                if (value.length > 10) {
+                    return value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+                } else if (value.length > 6) {
+                    return value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+                } else if (value.length > 2) {
+                    return value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                }
+                return value;
+            },
+            zip_code: function(value) {
+                return value.replace(/\D/g, '')
+                            .replace(/(\d{5})(\d)/, '$1-$2')
+                            .replace(/(-\d{3})\d+?$/, '$1');
+            }
+        };
+
+        document.querySelectorAll('input[name="cpf"]').forEach(el => {
+            el.addEventListener('input', e => { e.target.value = masks.cpf(e.target.value); });
+        });
+
+        document.querySelectorAll('input[name="phone"]').forEach(el => {
+            el.addEventListener('input', e => { e.target.value = masks.phone(e.target.value); });
+        });
+
+        document.querySelectorAll('input[name="zip_code"]').forEach(el => {
+            el.addEventListener('input', e => { e.target.value = masks.zip_code(e.target.value); });
+        });
+    });
+    </script>
+
 <?php 
 $content = ob_get_clean();
 echo $theme->render('admin/layout', ['content' => $content]);
