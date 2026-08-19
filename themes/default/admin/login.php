@@ -44,29 +44,30 @@
                 <input type="text" name="twofa_code" id="twofa_code" maxlength="6" required autofocus placeholder="000000" style="font-size: 24px; text-align: center; letter-spacing: 5px; border: 2px solid #3b82f6;">
 
                 <?php if (($_SESSION['pending_2fa_type'] ?? '') === 'email'): ?>
-                    <div id="resend_container" style="display: none; text-align: center; margin-bottom: 20px;">
-                        <a href="#" onclick="document.getElementById('twofa_code').removeAttribute('required'); document.getElementById('twofa_code').value=''; document.forms[0].submit(); return false;" style="font-size: 13px; color: #3b82f6; text-decoration: none;">Reenviar Código por E-mail</a>
+                    <div id="resend_container" style="text-align: center; margin-bottom: 20px;">
+                        <a href="#" onclick="document.getElementById('twofa_code').removeAttribute('required'); document.getElementById('twofa_code').value=''; document.forms[0].submit(); return false;" style="font-size: 13px; color: #3b82f6; text-decoration: none; font-weight: bold;">🔄 Reenviar Código por E-mail</a>
                     </div>
                     <script>
+                        // O PHP diz se expirou no servidor. O JS cuida apenas de travar a tela se ficar 5 min aberta.
                         var timeLeft = 300; // 5 minutos
                         var timerEl = document.getElementById('timer');
                         var codeInput = document.getElementById('twofa_code');
-                        var resendCont = document.getElementById('resend_container');
                         var btnSubmit = document.getElementById('btn_submit');
                         
                         var countdown = setInterval(function() {
                             timeLeft--;
+                            if (timeLeft < 0) return;
+                            
                             var m = Math.floor(timeLeft / 60);
                             var s = timeLeft % 60;
                             timerEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
                             
-                            if (timeLeft <= 0) {
+                            if (timeLeft === 0) {
                                 clearInterval(countdown);
-                                timerEl.innerText = "Expirado!";
+                                timerEl.innerText = "Expirado! Solicite um novo.";
                                 codeInput.disabled = true;
                                 btnSubmit.disabled = true;
                                 btnSubmit.style.opacity = '0.5';
-                                resendCont.style.display = 'block';
                             }
                         }, 1000);
                     </script>
