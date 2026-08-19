@@ -75,12 +75,25 @@
                             ?>
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            <?php if (!empty($u['two_factor_secret'])): ?>
-                                <span style="color: green; font-weight: bold;">✅ Ativado</span><br>
-                                <a href="<?= BASE_URL ?>/admin/users/2fa-disable?id=<?= $u['id'] ?>" onclick="return confirm('Desativar o 2FA deste usuário?')" style="color: red; font-size: 11px; text-decoration: none;">Remover 2FA</a>
-                            <?php else: ?>
-                                <span style="color: #666;">Desativado</span><br>
-                                <a href="<?= BASE_URL ?>/admin/users/2fa?id=<?= $u['id'] ?>" class="btn" style="font-size: 10px; padding: 2px 6px;">Configurar 2FA</a>
+                            <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa-type" style="margin-bottom: 5px;">
+                                <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                <select name="two_factor_type" onchange="this.form.submit()" style="font-size: 11px; padding: 2px;">
+                                    <option value="none" <?= ($u['two_factor_type'] ?? 'none') === 'none' ? 'selected' : '' ?>>Desativado</option>
+                                    <option value="app" <?= ($u['two_factor_type'] ?? 'none') === 'app' ? 'selected' : '' ?>>App (Google Auth)</option>
+                                    <option value="email" <?= ($u['two_factor_type'] ?? 'none') === 'email' ? 'selected' : '' ?>>E-mail (Código)</option>
+                                </select>
+                            </form>
+                            
+                            <?php if (($u['two_factor_type'] ?? 'none') === 'app'): ?>
+                                <?php if (!empty($u['two_factor_secret'])): ?>
+                                    <span style="color: green; font-size: 11px;">✅ App Sincronizado</span><br>
+                                    <a href="<?= BASE_URL ?>/admin/users/2fa-disable?id=<?= $u['id'] ?>" onclick="return confirm('Remover sincronização?')" style="color: red; font-size: 11px; text-decoration: none;">Refazer QR Code</a>
+                                <?php else: ?>
+                                    <span style="color: #d63638; font-size: 11px;">⚠️ Pendente</span><br>
+                                    <a href="<?= BASE_URL ?>/admin/users/2fa?id=<?= $u['id'] ?>" class="btn" style="font-size: 10px; padding: 2px 6px;">Configurar QR Code</a>
+                                <?php endif; ?>
+                            <?php elseif (($u['two_factor_type'] ?? 'none') === 'email'): ?>
+                                <span style="color: green; font-size: 11px;">✅ Envio por E-mail</span>
                             <?php endif; ?>
                         </td>
                     </tr>

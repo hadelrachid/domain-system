@@ -140,4 +140,22 @@ class UserController
         header("Location: " . BASE_URL . "/admin/users");
         exit;
     }
+    public function change2faType()
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
+        $user_id = $_POST['user_id'] ?? null;
+        $two_factor_type = $_POST['two_factor_type'] ?? 'none';
+
+        if ($user_id) {
+            $this->db->table('users')->where('id', '=', $user_id)->update([
+                'two_factor_type' => $two_factor_type,
+                'two_factor_secret' => null // reseta o secret do google auth se mudar
+            ]);
+            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Método de 2FA atualizado!'];
+        }
+
+        header("Location: " . BASE_URL . "/admin/users");
+        exit;
+    }
 }
