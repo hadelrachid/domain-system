@@ -1,0 +1,6 @@
+--- SIMULAÇÃO DE E-MAIL ---
+Para: admin@daherclinica.com.br
+Assunto: Seu código de acesso
+
+Seu código é: 744338
+Expira em 5 minutos.
