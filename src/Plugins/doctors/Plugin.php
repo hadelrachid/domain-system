@@ -1,42 +1,44 @@
 <?php
 
-namespace Plugins\doctors;
+namespace DomainSystem\Plugins\doctors;
 
-use Core\PluginInterface;
-use Core\Database;
-use Core\Router;
-use Core\EventDispatcher;
-use Plugins\doctors\Controllers\DoctorController;
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Plugins\doctors\Controllers\DoctorController;
 
-class Plugin implements PluginInterface
+class Plugin extends AbstractPlugin
 {
-    public function register(EventDispatcher $events): void
+    public function register(): void
     {
+        $this->runMigrations();
+
         // Registrar item no menu lateral
-        $events->addListener('admin.menu', function($menu) {
+        $this->getEventDispatcher()->addListener('admin.menu', function($menu) {
             $menu[] = [
                 'title' => 'Médicos',
                 'url' => BASE_URL . '/admin/doctors',
-                'icon' => 'dashicons-businessman' // Ícone do WordPress para usuário/profissional
+                'icon' => 'dashicons-businessman'
             ];
             return $menu;
         });
 
-        // Registrar rotas do CRUD de médicos e Sync WP
-        $events->addListener('router.register', function(Router $router) {
+        // Registrar rotas
+        $this->getEventDispatcher()->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/doctors', [DoctorController::class, 'index']);
             $router->addRoute('POST', '/admin/doctors', [DoctorController::class, 'store']);
             $router->addRoute('GET', '/admin/doctors/edit', [DoctorController::class, 'edit']);
             $router->addRoute('POST', '/admin/doctors/update', [DoctorController::class, 'update']);
             $router->addRoute('POST', '/admin/doctors/delete', [DoctorController::class, 'delete']);
-            $router->addRoute('POST', '/admin/doctors/sync-wp', [DoctorController::class, 'syncWp']); // Rota de Sincronização
+            $router->addRoute('POST', '/admin/doctors/sync-wp', [DoctorController::class, 'syncWp']);
         });
     }
 
-    public function activate(Database $db): void
+    private function runMigrations(): void
     {
-        // Criar tabela de médicos
-        $db->getPdo()->exec("
+        $db = $this->getContainer()->get(\DomainSystem\Plugins\Database\Database::class)->getPdo();
+        
+        $db->exec("
             CREATE TABLE IF NOT EXISTS doctors (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 wp_id INTEGER NULL,
@@ -48,10 +50,5 @@ class Plugin implements PluginInterface
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");
-    }
-
-    public function deactivate(Database $db): void
-    {
-        // Opcional: não dropar dados ao desativar para evitar perda de médicos
     }
 }
