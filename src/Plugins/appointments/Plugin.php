@@ -59,5 +59,8 @@ class Plugin extends AbstractPlugin
                 FOREIGN KEY(doctor_id) REFERENCES doctors(id)
             )
         ");
+
+        try { $db->exec("ALTER TABLE appointments ADD COLUMN attendance_type VARCHAR(50) DEFAULT 'particular'"); } catch (\Exception $e) {}
+        try { $db->exec("ALTER TABLE appointments ADD COLUMN health_insurance VARCHAR(100) NULL"); } catch (\Exception $e) {}
     }
 }

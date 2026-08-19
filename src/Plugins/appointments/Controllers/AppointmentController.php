@@ -57,6 +57,8 @@ class AppointmentController
         $doctor_id = $_POST['doctor_id'] ?? null;
         $appointment_date = $_POST['appointment_date'] ?? null;
         $appointment_time = $_POST['appointment_time'] ?? null;
+        $attendance_type = $_POST['attendance_type'] ?? 'particular';
+        $health_insurance = $_POST['health_insurance'] ?? '';
         $reception_notes = $_POST['reception_notes'] ?? '';
 
         if (empty($patient_id) || empty($doctor_id) || empty($appointment_date) || empty($appointment_time)) {
@@ -68,6 +70,8 @@ class AppointmentController
                     'doctor_id' => $doctor_id,
                     'appointment_date' => $appointment_date,
                     'appointment_time' => $appointment_time,
+                    'attendance_type' => $attendance_type,
+                    'health_insurance' => $health_insurance,
                     'reception_notes' => $reception_notes,
                     'status' => 'Pendente'
                 ]);

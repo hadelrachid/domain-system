@@ -60,10 +60,33 @@
                     </div>
                 </div>
 
-                <label style="display:block; margin-bottom: 5px;">Observações (Opcional)</label>
-                <textarea name="reception_notes" rows="3" style="width: 100%; padding: 8px; margin-bottom: 20px; box-sizing: border-box;"></textarea>
+                <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom: 5px;">Tipo de Atendimento</label>
+                        <select name="attendance_type" id="attendance_type" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+                            <option value="particular">Particular</option>
+                            <option value="conveniado">Conveniado</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;" id="health_insurance_group" style="display:none;">
+                        <label style="display:block; margin-bottom: 5px;">Qual Convênio?</label>
+                        <select name="health_insurance" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                            <option value="">-- Opcional --</option>
+                            <option value="Unimed">Unimed</option>
+                            <option value="Porto Seguro">Porto Seguro</option>
+                            <option value="Cassi">Cassi</option>
+                            <option value="Petrobras">Petrobrás</option>
+                            <option value="Amil Fácil">Amil Fácil</option>
+                            <option value="Amil Saúde">Amil Saúde</option>
+                            <option value="Amil One">Amil One</option>
+                        </select>
+                    </div>
+                </div>
 
-                <button type="submit" class="btn btn-activate" style="width: 100%; text-align: center;">Agendar Consulta</button>
+                <label style="display:block; margin-bottom: 5px;">Motivo da Consulta / Sintomas (Observações)</label>
+                <textarea name="reception_notes" rows="3" style="width: 100%; padding: 8px; margin-bottom: 20px; box-sizing: border-box;" placeholder="Sintomas, retorno, primeira vez..."></textarea>
+
+                <button type="submit" class="btn btn-activate" style="width: 100%; text-align: center;">Confirmar Agendamento</button>
             </form>
         </div>
 
@@ -73,7 +96,7 @@
                 <thead>
                     <tr>
                         <th>Data/Hora</th>
-                        <th>Paciente</th>
+                        <th>Paciente / Atendimento</th>
                         <th>Médico</th>
                         <th>Status</th>
                         <th style="width: 200px;">Ações</th>
@@ -87,6 +110,7 @@
                             <?php 
                                 $statusClass = 'status-' . strtolower($a['status']);
                                 $dateObj = new DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
+                                $attendance = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
                             ?>
                             <tr>
                                 <td>
@@ -95,6 +119,7 @@
                                 </td>
                                 <td>
                                     <strong><?= htmlspecialchars($a['patient_name']) ?></strong><br>
+                                    <small style="color:#0073aa; font-weight:bold;"><?= htmlspecialchars($attendance) ?></small><br>
                                     <small style="color:#666;"><?= htmlspecialchars($a['reception_notes']) ?></small>
                                 </td>
                                 <td><?= htmlspecialchars($a['doctor_name']) ?></td>
@@ -127,6 +152,24 @@
         </div>
         
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var attType = document.getElementById('attendance_type');
+            var healthInsGroup = document.getElementById('health_insurance_group');
+            
+            function toggleInsurance() {
+                if (attType.value === 'conveniado') {
+                    healthInsGroup.style.display = 'block';
+                } else {
+                    healthInsGroup.style.display = 'none';
+                }
+            }
+            
+            attType.addEventListener('change', toggleInsurance);
+            toggleInsurance();
+        });
+    </script>
 
 <?php 
 $content = ob_get_clean();
