@@ -2,17 +2,19 @@
 
 namespace DomainSystem\Plugins\SystemAdmin\Controllers;
 
-use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Theme\ThemeManager;
 use Exception;
 
 class AdminController
 {
-    private Container $container;
+    private PluginManager $manager;
+    private ThemeManager $theme;
 
-    public function __construct(Container $container)
+    public function __construct(PluginManager $manager, ThemeManager $theme)
     {
-        $this->container = $container;
+        $this->manager = $manager;
+        $this->theme = $theme;
     }
 
     public function listPlugins()
@@ -43,14 +45,11 @@ class AdminController
                         'version' => $metadata['version'] ?? 'N/A',
                         'description' => $metadata['description'] ?? '',
                         'is_active' => $activeStates[$name] ?? false,
-                        'is_core' => in_array($name, ['database', 'system-admin']) // Prevent disabling core
+                        'is_core' => $this->manager->isCore($name)
                     ];
                 }
             }
         }
-
-        /** @var ThemeManager $theme */
-        $theme = $this->container->make(ThemeManager::class);
 
         // Capture crashes from session
         $crashes = [];
@@ -61,7 +60,7 @@ class AdminController
         }
 
         try {
-            return $theme->render('admin/plugins', [
+            return $this->theme->render('admin/plugins', [
                 'plugins' => $allPlugins,
                 'crashes' => $crashes
             ]);
@@ -77,14 +76,11 @@ class AdminController
         $action = $_POST['action'] ?? null;
 
         if ($pluginName && $action) {
-            /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
-            $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
-            
             if ($action === 'enable') {
-                $manager->enable($pluginName);
+                $this->manager->enable($pluginName);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin ativado com sucesso!'];
             } elseif ($action === 'disable') {
-                $manager->disable($pluginName);
+                $this->manager->disable($pluginName);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin desativado com sucesso.'];
             }
         }
@@ -99,10 +95,7 @@ class AdminController
         
         if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
             try {
-                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
-                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
-                $manager->installFromZip($_FILES['plugin_zip']['tmp_name']);
-                
+                $this->manager->installFromZip($_FILES['plugin_zip']['tmp_name']);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação: ' . $e->getMessage()];
@@ -121,10 +114,7 @@ class AdminController
 
         if ($pluginName && $pluginFolder) {
             try {
-                /** @var \DomainSystem\Core\Plugin\PluginManager $manager */
-                $manager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
-                $manager->delete($pluginName, $pluginFolder);
-                
+                $this->manager->delete($pluginName, $pluginFolder);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '🗑️ Plugin excluído e removido do servidor.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => $e->getMessage()];

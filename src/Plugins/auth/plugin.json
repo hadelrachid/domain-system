@@ -6,4 +6,4 @@
     "dependencies": [
         "database"
     ]
-}
+,"core": true}

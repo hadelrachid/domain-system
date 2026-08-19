@@ -2,26 +2,22 @@
 
 namespace DomainSystem\Plugins\SystemAdmin\Controllers;
 
-use DomainSystem\Core\Container\Container;
 use DomainSystem\Core\Theme\ThemeManager;
 use Exception;
 
 class DashboardController
 {
-    private Container $container;
+    private ThemeManager $theme;
 
-    public function __construct(Container $container)
+    public function __construct(ThemeManager $theme)
     {
-        $this->container = $container;
+        $this->theme = $theme;
     }
 
     public function index()
     {
-        /** @var ThemeManager $theme */
-        $theme = $this->container->make(ThemeManager::class);
-
         try {
-            return $theme->render('admin/dashboard');
+            return $this->theme->render('admin/dashboard');
         } catch (Exception $e) {
             return "Erro ao renderizar dashboard: " . $e->getMessage();
         }

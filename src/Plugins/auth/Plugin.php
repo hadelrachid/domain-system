@@ -1,12 +1,11 @@
 <?php
 
-namespace DomainSystem\Plugins\Auth;
+namespace DomainSystem\Plugins\auth;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
-use DomainSystem\Plugins\Database\QueryBuilder;
-use DomainSystem\Plugins\Auth\Controllers\AuthController;
+use DomainSystem\Plugins\auth\Controllers\AuthController;
 
 class Plugin extends AbstractPlugin
 {
@@ -18,21 +17,12 @@ class Plugin extends AbstractPlugin
         }
 
         // 2. Garantir que a tabela users existe
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
-        $connection->getPdo()->exec("
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        $this->runMigrations();
 
         // 3. Registrar o Controller no Container
         $this->container->singleton(AuthController::class, function($c) {
-            return new AuthController($c);
+            // Nota: DIP (O Container resolve as dependências automaticamente)
+            return $c->make(AuthController::class);
         });
 
         // 4. Registrar rotas do Auth
@@ -40,7 +30,7 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
         
         $events->addListener('router.register', function(Router $router) {
-            $controller = $this->container->make(AuthController::class);
+            $controller = clone $this->container->make(AuthController::class);
             
             $router->addRoute('GET', '/login', [$controller, 'showLoginForm']);
             $router->addRoute('POST', '/login', [$controller, 'authenticate']);
@@ -59,5 +49,20 @@ class Plugin extends AbstractPlugin
                 }
             }
         });
+    }
+
+    private function runMigrations(): void
+    {
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $connection->getPdo()->exec("
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
     }
 }

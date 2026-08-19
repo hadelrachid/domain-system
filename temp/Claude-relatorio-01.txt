@@ -1,0 +1,45 @@
+Interesting — there's also a "temp/DeepSeek-relatorio" set of files, suggesting a previous analysis by another AI already exists. Let me look at the core architecture files that matter most for a SOLID analysis.Agora vou olhar os plugins concretos (Auth, Database, SystemAdmin) para ver onde SRP/DIP costumam quebrar na prática.Analisei o núcleo (`Container`, `EventDispatcher`, `PluginManager`, `Router`, `Application`), o sistema de plugins (`AbstractPlugin`, `PluginInterface`, extratores de ZIP) e os plugins de negócio (`auth`, `Database`, `SystemAdmin` com seus controllers). O README afirma "10/10 em auditorias estruturais" — na prática o projeto está **razoavelmente alinhado em partes, mas tem violações reais e recorrentes**, não é um 10/10.
+
+**S — Single Responsibility**
+
+Aqui estão as violações mais claras:
+
+- `AuthController::getFallbackLoginView()` monta um HTML completo (estilos inline, form, script) dentro do controller — contradiz a própria filosofia do README ("lógica de negócio não se mistura com interface visual").
+- `Plugins\auth\Plugin::register()` faz `CREATE TABLE IF NOT EXISTS users` diretamente — mistura registro de rotas/hooks com migração de schema de banco. Isso devia estar em algo como um `Migrator`/`Installer`.
+- `AdminController::listPlugins()` reimplementa manualmente a descoberta de plugins (ler diretórios, ler `plugin.json`, checar `plugins.json`) — a mesma lógica já existe em `PluginManager::discoverPlugins()`/`getActiveStates()`. É duplicação de responsabilidade, não reuso.
+- `PluginManager` acumula responsabilidades demais: orquestração em runtime (discover/boot/resolveDependencies) **e** gestão de ciclo de vida administrativo (installFromZip, enable/disable/delete, apagar diretórios). Duas razões distintas para mudar — vale a pena separar em algo como `PluginRegistry` (runtime) vs `PluginInstaller` (admin).
+
+**O — Open/Closed**
+
+- `PluginManager::isCore()` tem os nomes `['database', 'system-admin']` **hardcoded no código-fonte**. Pior: `AdminController::listPlugins()` repete esse mesmo array hardcoded numa segunda linha. Para marcar um novo plugin como "core" você precisa editar código-fonte em dois lugares — o correto seria um campo `"core": true` no `plugin.json`, tornando isso configurável (fechado para modificação, aberto para extensão).
+- `ExtractorFactory::create()` decide entre `ZipArchiveExtractor`/`PharDataExtractor` com `if/class_exists` — para adicionar um terceiro formato de arquivo é preciso editar a factory. Pragmático para 2 opções, mas tecnicamente fecha a extensão.
+- Em contrapartida, o `EventDispatcher` (hooks/filters) é o ponto mais forte do projeto em termos de OCP: plugins se estendem via `addListener`/`dispatch` sem tocar no Kernel. Isso funciona bem.
+
+**L — Liskov Substitution**
+
+- Ponto frágil real: `PluginManager::discoverPlugins()` tem um `if (is_subclass_of($pluginClass, AbstractPlugin::class))` com dois caminhos de instanciação diferentes — um construtor recebe `(Container, path)`, o outro recebe só `(Container)`. Isso significa que nem todo `PluginInterface` é substituível da mesma forma; o `PluginManager` precisa "conhecer" qual tipo concreto está lidando, o que é sintoma clássico de violação de LSP (a interface promete um contrato que as implementações não cumprem uniformemente).
+- Já os `ExtractorInterface` (Zip/PharData) são bons exemplos de LSP respeitada — qualquer um pode substituir o outro sem quebrar o `ExtractorFactory` ou quem o consome.
+
+**I — Interface Segregation**
+
+- Não há violações graves aqui. `PluginInterface` e `ExtractorInterface` são enxutas. Único ponto discutível: `PluginInterface` mistura metadados (`getName`, `getVersion`, `getDependencies`) com comportamento (`register`) — não é grave, mas dá pra separar em `PluginMetadataInterface` + `PluginInterface` se o sistema crescer.
+
+**D — Dependency Inversion**
+
+Este é o princípio mais comprometido no projeto:
+
+- Todos os controllers (`AuthController`, `AdminController`, `DashboardController`) recebem o `Container` inteiro no construtor e chamam `$this->container->make(...)` internamente. Isso é o padrão **Service Locator**, não injeção de dependência de verdade — o controller depende de uma abstração genérica ("me dê qualquer coisa") em vez de declarar suas dependências reais (`QueryBuilder`, `ThemeManager`) no construtor. Isso esconde acoplamento e dificulta testes unitários isolados.
+- `AuthController` depende diretamente da classe concreta `QueryBuilder` do plugin `Database` — não existe uma abstração tipo `UserRepositoryInterface`. Mesmo entre plugins que deveriam ser "isolados", há acoplamento direto a implementações concretas de outro plugin.
+- Uso disseminado de `$_SESSION`, `$_POST`, `$_FILES` e `header()`/`exit` diretamente nos controllers (em vez de um objeto `Request`/`Response`/`Session` abstrato) — não é DIP no sentido estrito de classes, mas é o mesmo problema de fundo: acoplamento direto a estado global do PHP em vez de a uma abstração injetável, o que também prejudica testabilidade.
+
+**Resumo**
+
+| Princípio | Situação |
+|---|---|
+| SRP | Violado em vários pontos (controllers fazendo HTML+lógica+infra) |
+| OCP | Parcial — hooks são ótimos, mas "core plugin" é hardcoded e duplicado |
+| LSP | Frágil — dois contratos de construtor sob a mesma interface |
+| ISP | OK, sem problemas graves |
+| DIP | O ponto mais fraco — Service Locator nos controllers, dependência em concretos entre plugins |
+
+O núcleo (Container, EventDispatcher, Router, sistema de Extractors) está genuinamente bem desenhado. O problema está principalmente na camada de Plugins/Controllers, onde a disciplina arquitetural do Core não é seguida à risca. Se quiser, posso sugerir refatorações concretas para os pontos de DIP e SRP (ex.: extrair um `Request`/`Session` abstrato, mover a lógica de "is_core" para `plugin.json`, separar `PluginInstaller` de `PluginManager`).

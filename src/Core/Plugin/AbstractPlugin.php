@@ -54,6 +54,11 @@ abstract class AbstractPlugin implements PluginInterface
     {
         return $this->isActive;
     }
+
+    public function isCore(): bool
+    {
+        return isset($this->metadata['core']) && $this->metadata['core'] === true;
+    }
     
     public function setActive(bool $active): void
     {

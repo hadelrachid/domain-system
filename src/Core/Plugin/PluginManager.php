@@ -210,7 +210,19 @@ class PluginManager
 
     public function isCore(string $pluginName): bool
     {
-        return in_array($pluginName, ['database', 'system-admin']);
+        // Se o plugin já está instanciado/descoberto, podemos perguntar a ele
+        if (isset($this->plugins[$pluginName])) {
+            return $this->plugins[$pluginName]->isCore();
+        }
+
+        // Caso contrário, tentamos ler do plugin.json diretamente
+        $jsonPath = $this->getPluginsPath() . '/' . $pluginName . '/plugin.json';
+        if (file_exists($jsonPath)) {
+            $metadata = json_decode(file_get_contents($jsonPath), true);
+            return isset($metadata['core']) && $metadata['core'] === true;
+        }
+
+        return false;
     }
 
     private function deleteDirectory(string $dir): bool
