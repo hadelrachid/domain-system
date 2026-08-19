@@ -20,20 +20,27 @@ class AppointmentController
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        // Fetch appointments with patient and doctor names
-        // Since QueryBuilder might not support advanced JOINs easily, we fetch via raw PDO or map them in PHP
-        $pdo = $this->db->table('appointments')->getPdo();
-        $stmt = $pdo->query("
-            SELECT a.*, p.name as patient_name, d.name as doctor_name 
-            FROM appointments a
-            LEFT JOIN patients p ON a.patient_id = p.id
-            LEFT JOIN doctors d ON a.doctor_id = d.id
-            ORDER BY a.appointment_date DESC, a.appointment_time ASC
-        ");
-        $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
+        $appointmentsRaw = $this->db->table('appointments')->get();
         $patients = $this->db->table('patients')->get();
         $doctors = $this->db->table('doctors')->get();
+
+        $patientsMap = [];
+        foreach ($patients as $p) $patientsMap[$p['id']] = $p;
+
+        $doctorsMap = [];
+        foreach ($doctors as $d) $doctorsMap[$d['id']] = $d;
+
+        $appointments = [];
+        foreach ($appointmentsRaw as $a) {
+            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
+            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
+            $appointments[] = $a;
+        }
+
+        // Ordenar os agendamentos pela data e hora
+        usort($appointments, function($a, $b) {
+            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
+        });
 
         $theme = $this->theme;
         
@@ -105,36 +112,33 @@ class AppointmentController
             exit;
         }
 
-        $pdo = $this->db->table('appointments')->getPdo();
-        $stmt = $pdo->prepare("
-            SELECT a.*, p.name as patient_name, p.cpf as patient_cpf, p.birthdate as patient_birthdate, 
-                   d.name as doctor_name 
-            FROM appointments a
-            LEFT JOIN patients p ON a.patient_id = p.id
-            LEFT JOIN doctors d ON a.doctor_id = d.id
-            WHERE a.id = :id
-        ");
-        $stmt->execute(['id' => $id]);
-        $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
-
+        $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
         if (empty($appointment)) {
             header("Location: " . BASE_URL . "/admin/appointments");
             exit;
         }
 
-        // Buscar histórico do paciente
-        $stmtHistory = $pdo->prepare("
-            SELECT a.appointment_date, a.appointment_time, a.status, a.medical_record, d.name as doctor_name
-            FROM appointments a
-            LEFT JOIN doctors d ON a.doctor_id = d.id
-            WHERE a.patient_id = :patient_id AND a.id != :current_id
-            ORDER BY a.appointment_date DESC
-        ");
-        $stmtHistory->execute([
-            'patient_id' => $appointment['patient_id'],
-            'current_id' => $id
-        ]);
-        $history = $stmtHistory->fetchAll(\PDO::FETCH_ASSOC);
+        $patient = $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->first();
+        $doctor = $this->db->table('doctors')->where('id', '=', $appointment['doctor_id'])->first();
+
+        $appointment['patient_name'] = $patient['name'] ?? 'Desconhecido';
+        $appointment['patient_cpf'] = $patient['cpf'] ?? 'Desconhecido';
+        $appointment['patient_birthdate'] = $patient['birthdate'] ?? '1900-01-01';
+        $appointment['doctor_name'] = $doctor['name'] ?? 'Desconhecido';
+
+        $historyRaw = $this->db->table('appointments')->where('patient_id', '=', $appointment['patient_id'])->get();
+        $history = [];
+        foreach ($historyRaw as $h) {
+            if ((string)$h['id'] !== (string)$id) {
+                $doc = $this->db->table('doctors')->where('id', '=', $h['doctor_id'])->first();
+                $h['doctor_name'] = $doc['name'] ?? 'Desconhecido';
+                $history[] = $h;
+            }
+        }
+
+        usort($history, function($a, $b) {
+            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
+        });
 
         $theme = $this->theme;
         
