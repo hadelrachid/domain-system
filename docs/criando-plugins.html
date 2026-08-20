@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Como Criar Plugins - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Guia: Como Construir um Plugin</h1>
+    </header>
+
+    <div class="content">
+        <h2>Passo 1: Crie a Estrutura de Pastas</h2>
+        <p>Acesse o diretório <code>src/Plugins/</code> e crie uma pasta (ex: <code>meu_plugin</code>).</p>
+        
+        <h2>Passo 2: Arquivo de Manifesto (plugin.json)</h2>
+        <p>Crie um arquivo <code>plugin.json</code>. Ele diz ao motor quem você é.</p>
+        <pre><code>{
+    "name": "meu_plugin",
+    "version": "1.0.0",
+    "description": "Meu primeiro plugin customizado",
+    "namespace": "DomainSystem\\Plugins\\meu_plugin\\",
+    "entrypoint": "Plugin"
+}</code></pre>
+
+        <h2>Passo 3: A Classe Principal (Plugin.php)</h2>
+        <p>Crie o arquivo <code>Plugin.php</code>. Ele é o coração do seu sistema.</p>
+        <pre><code>&lt;?php
+namespace DomainSystem\Plugins\meu_plugin;
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Routing\Router;
+
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // 1. Ouvir evento para registrar rotas
+        $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+        
+        $events->addListener('router.register', function(Router $router) {
+            $router->addRoute('GET', '/admin/meu-plugin', function() {
+                echo "<h1>Olá do Meu Plugin!</h1>";
+            });
+        });
+
+        // 2. Colocar botão no Menu do Painel
+        $events->addListener('admin.menu', function($menu) {
+            $menu[] = [
+                'title' => 'Meu Plugin',
+                'url' => '/admin/meu-plugin',
+                'icon' => '⭐'
+            ];
+            return $menu;
+        });
+    }
+}
+</code></pre>
+
+        <h2>Passo 4: Ativando via Sistema</h2>
+        <p>Vá até o painel Admin do Domain-System > <strong>Plugins</strong>, encontre seu Plugin na lista e clique em <strong>Ligar</strong>.</p>
+        <p>E pronto! O ecossistema fará a auto-descoberta e aplicará sua injeção no núcleo perfeitamente.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Arquitetura - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="contratos.html">Contratos &rarr;</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Arquitetura do Motor</h1>
+    </header>
+
+    <div class="content">
+        <h2>Como funciona o Kernel?</h2>
+        <p>O <strong>Domain-System</strong> é inicializado via <code>bootstrap.php</code>. Nesse momento, o <strong>Container de Injeção de Dependência</strong> é montado. O Container é o cérebro que gerencia a criação de todas as classes importantes, garantindo que ninguém crie objetos do jeito errado com "new" espalhados pelo código.</p>
+
+        <h2>Componentes Core</h2>
+        <ul>
+            <li><strong>Router (Roteador):</strong> Mapeia URLs para Controllers (ex: <code>/admin/settings</code> chama o método <code>SettingsController::index</code>).</li>
+            <li><strong>EventDispatcher (Gatilhos):</strong> Gerencia Ações (Hooks) e Filtros. Se um plugin quer alterar o menu, ele "escuta" o evento <code>admin.menu</code>.</li>
+            <li><strong>PluginManager:</strong> Lê a pasta <code>src/Plugins/</code>, valida o <code>plugin.json</code> e chama o método <code>register()</code> de cada plugin ativo.</li>
+            <li><strong>ThemeManager:</strong> Gerencia o Front-end. Intercepta as requisições que não são da API ou do Painel, e entrega visual usando Server-Side Rendering (SSR).</li>
+        </ul>
+
+        <h2>Fluxo de Requisição (Life-cycle)</h2>
+        <pre>
+1. Usuário acessa o navegador.
+2. public/index.php recebe o pedido.
+3. bootstrap.php carrega o Container e os Serviços (Database, EventDispatcher).
+4. PluginManager ativa os Plugins (cada plugin injeta suas Rotas).
+5. Router avalia a URL.
+6. Controller específico é executado.
+7. O banco é acessado via PDO seguro (QueryBuilder).
+8. A resposta (HTML ou JSON) é devolvida ao usuário.</pre>
+
+    </div>
+</body>
+</html>

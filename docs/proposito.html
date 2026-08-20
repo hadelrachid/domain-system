@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Propósito e Visão - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="arquitetura.html">Arquitetura &rarr;</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Visão, Propósito e Público-Alvo</h1>
+    </header>
+
+    <div class="content">
+        <h2>Por que criar este projeto?</h2>
+        <p>A web atual sofre com dois extremos: de um lado, sistemas monolíticos pesados e lentos (como versões legadas e infladas de CMS tradicionais) repletos de "gambiarras"; do outro lado, frameworks modernos e complexos que exigem uma curva de aprendizado altíssima e dependências infinitas via Composer.</p>
+        <p>O <strong>Domain-System</strong> nasceu da necessidade de encontrar o <em>meio-termo perfeito</em>: um sistema <strong>simples em sua essência</strong> (PHP puro), mas <strong>extremamente robusto em sua arquitetura</strong> (100% focado nos princípios SOLID e Padrões de Projeto).</p>
+
+        <h2>Qual é o propósito?</h2>
+        <p>Criar um <strong>Kernel (Núcleo)</strong> ultraleve, seguro e agnóstico, cujo único trabalho seja <em>orquestrar</em> aplicativos menores (Plugins) e Exibições (Temas). O núcleo não sabe o que é um "Paciente" ou um "Agendamento". Ele apenas fornece Ferramentas (Injeção de Dependência, Roteador, Banco de Dados Seguro) para que os Plugins façam o trabalho duro.</p>
+        <p>Dessa forma, criamos um <strong>SaaS White-label (Software as a Service)</strong> escalável. Se amanhã quisermos criar um sistema para Advogados em vez de Clínicas, o núcleo continua o mesmo, bastando apenas conectar novos Plugins.</p>
+
+        <h2>Para quem é este projeto?</h2>
+        <p>Para clínicas médicas, consultórios e desenvolvedores corporativos que precisam de um ecossistema <strong>flexível, rápido e próprio</strong>, sem pagar licenças milionárias ou ficar refém do código espaguete de terceiros. A estrutura é feita para desenvolvedores sérios que apreciam Clean Architecture e TDD (Test-Driven Development).</p>
+
+        <h2>Como poderá ser estendido?</h2>
+        <p>A escalabilidade é infinita. Graças à arquitetura <em>Event-Driven</em> (Orientada a Eventos), desenvolvedores futuros podem injetar comportamentos (via Filtros e Ações) sem nunca tocar no código original (Open/Closed Principle).</p>
+        <p>Você pode adicionar um Plugin de Gateway de Pagamento, um Plugin de WhatsApp Inteligente (Z-API), ou conectar o frontend via APIs REST, tudo isso respeitando o fluxo natural de rotas do sistema.</p>
+    </div>
+</body>
+</html>

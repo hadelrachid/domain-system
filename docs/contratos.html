@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contratos de Interface - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="criando-plugins.html">Criando Plugins &rarr;</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Contratos e Interfaces</h1>
+    </header>
+
+    <div class="content">
+        <h2>A Importância das Interfaces (SOLID)</h2>
+        <p>No Domain-System, aplicamos estritamente a "Letra I" do SOLID (Interface Segregation Principle). Classes não dependem umas das outras, elas dependem de <strong>Contratos (Interfaces)</strong>.</p>
+        <p>Se o sistema espera que você extraia arquivos ZIP, ele não depende da biblioteca nativa do ZIP, ele pede um <code>ExtractorInterface</code>. Isso significa que amanhã você pode trocar o método de extração sem quebrar o sistema inteiro.</p>
+
+        <h2>PluginInterface</h2>
+        <p>Todo plugin DEVE assinar este contrato indiretamente (ao estender a classe abstrata <code>AbstractPlugin</code>). Ele dita as regras do ciclo de vida:</p>
+        <pre><code>interface PluginInterface
+{
+    public function register(): void;
+    public function boot(): void;
+    public function activate(): void;
+    public function deactivate(): void;
+    public function uninstall(): void;
+}</code></pre>
+
+        <h3>Explicação dos Métodos:</h3>
+        <ul>
+            <li><strong>register():</strong> O lugar certo para registrar Rotas, Listeners de Eventos, e Menus no painel. Executado a cada requisição.</li>
+            <li><strong>boot():</strong> Executado após todos os plugins terminarem de se registrar.</li>
+            <li><strong>activate():</strong> Rodado <strong>apenas uma vez</strong> quando você liga o Plugin no Painel (Ideal para Migrations e criação de tabelas).</li>
+            <li><strong>deactivate() / uninstall():</strong> Usados para limpar os rastros que o plugin deixou quando for desativado ou deletado.</li>
+        </ul>
+
+    </div>
+</body>
+</html>
