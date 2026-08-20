@@ -35,7 +35,7 @@ class AppointmentController
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
-            if ($a['status'] === 'Atendido' || $a['status'] === 'Cancelado') {
+            if (in_array($a['status'], ['Atendido', 'Finalizado', 'Cancelado'])) {
                 continue; // Fica só na fila do Histórico
             }
 
@@ -139,7 +139,7 @@ class AppointmentController
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
-            if ($a['status'] !== 'Atendido' && $a['status'] !== 'Cancelado') {
+            if (!in_array($a['status'], ['Atendido', 'Finalizado', 'Cancelado'])) {
                 continue;
             }
 
