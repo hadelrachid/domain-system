@@ -145,7 +145,7 @@
                                                     </select>
                                                 </form>
                                             </div>
-                                            <a href="<?= BASE_URL ?>/admin/appointments/record?id=<?= $a['id'] ?>" class="btn btn-activate" style="text-decoration:none; text-align:center; font-size: 11px; padding: 3px 8px;">Prontuário Médico</a>
+                                            <a href="<?= BASE_URL ?>/admin/appointments/record/<?= $a['id'] ?>" class="btn btn-activate" style="text-decoration:none; text-align:center; font-size: 11px; padding: 3px 8px;">Prontuário Médico</a>
                                         </div>
                                     <?php endif; ?>
                                 </td>

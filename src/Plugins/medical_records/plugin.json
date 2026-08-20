@@ -1,0 +1,1 @@
+{ "name": "Medical Records", "version": "1.0.0", "namespace": "DomainSystem\\Plugins\\medical_records\\", "entrypoint": "Plugin" }

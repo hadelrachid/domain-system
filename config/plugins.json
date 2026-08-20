@@ -1,8 +1,9 @@
 {
-    "database": true,
-    "system-admin": true,
-    "auth": true,
-    "patients": true,
-    "doctors": true,
-    "appointments": true
+  "database": true,
+  "system-admin": true,
+  "auth": true,
+  "patients": true,
+  "doctors": true,
+  "appointments": true,
+  "medical_records": true
 }
