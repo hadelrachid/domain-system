@@ -52,7 +52,7 @@
                             <span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($a['status']) ?></span>
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
-                            <a href="<?= BASE_URL ?>/admin/appointments/record?id=<?= $a['id'] ?>" class="btn" style="text-decoration:none; font-size: 11px;">Ver Prontuário</a>
+                            <a href="<?= BASE_URL ?>/admin/appointments/record/<?= $a['id'] ?>" class="btn" style="text-decoration:none; font-size: 11px;">Ver Prontuário</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
