@@ -116,6 +116,14 @@ class RecordController
 
         $prescricao = $record ? $record['prescricao'] : '';
 
+        // Buscar configuracoes globais (Settings)
+        $stmt = $pdo->query("SELECT * FROM settings");
+        $settingsRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $settings = [];
+        foreach ($settingsRows as $row) {
+            $settings[$row['key_name']] = $row['key_value'];
+        }
+
         require __DIR__ . '/../views/print.php';
     }
 }

@@ -5,5 +5,6 @@
   "patients": true,
   "doctors": true,
   "appointments": true,
-  "medical_records": true
+  "medical_records": true,
+  "settings": true
 }

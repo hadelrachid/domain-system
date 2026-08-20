@@ -64,8 +64,11 @@
     </div>
 
     <div class="header">
-        <h1>Clínica Daher</h1>
-        <p>Excelência em Saúde e Bem-Estar</p>
+        <h1><?= htmlspecialchars($settings['clinic_name'] ?? 'Clínica Padrão') ?></h1>
+        <p><?= htmlspecialchars($settings['clinic_slogan'] ?? '') ?></p>
+        <?php if(!empty($settings['clinic_address'])): ?>
+            <p style="font-size: 12px; margin-top: 2px;"><?= htmlspecialchars($settings['clinic_address']) ?></p>
+        <?php endif; ?>
     </div>
 
     <div class="patient-info">
