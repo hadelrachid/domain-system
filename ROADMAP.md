@@ -37,10 +37,10 @@ Este documento registra os próximos passos e plugins planejados para a evoluç�
   - O paciente agenda sozinho e o sistema apenas notifica a clínica.
 
 
-## 🟣 Fase Final (A Vitrine)
+## 🟣 Fase Final (A Grande Interface)
 
-- [ ] **7. Motor de Temas Front-end (Estilo WordPress)**
-  - Integrar o front-end público (o site da clínica) consumindo os dados do Kernel.
-  - Criar o sistema de injeção de tags (ex: `<?= get_header() ?>`, `<?= the_content() ?>`).
-  - Permitir troca de temas dinâmica pela pasta `themes/`.
+- [ ] **7. Motor de Temas do Sistema (A "Cara" do SaaS)**
+  - Construir um Tema de Interface (UI/UX) focado na **experiência da Secretária e dos Médicos**.
+  - O Tema será a "Casca" moderna e amigável que orquestrará todos os Plugins Pensantes.
+  - Transformar o painel atual em uma verdadeira aplicação Web (SPA ou visual de alta performance), onde a equipe da clínica vai passar o dia todo trabalhando.
 
