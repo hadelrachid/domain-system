@@ -97,4 +97,25 @@ class RecordController
         }
         exit;
     }
+
+    public function printPdf($appointmentId)
+    {
+        if (!$appointmentId) die("ID Inválido");
+
+        $pdo = $this->db->getPdo();
+        
+        $stmt = $pdo->prepare("SELECT a.*, p.name as patient_name, p.cpf, d.name as doctor_name FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ?");
+        $stmt->execute([$appointmentId]);
+        $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$appointment) die("Agendamento não encontrado.");
+
+        $stmt = $pdo->prepare("SELECT prescricao FROM medical_records WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+        $record = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        $prescricao = $record ? $record['prescricao'] : '';
+
+        require __DIR__ . '/../views/print.php';
+    }
 }

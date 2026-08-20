@@ -87,8 +87,11 @@ $pageTitle = "Pronturio Eletrnico: " . htmlspecialchars($appointment['patient_na
                     </div>
 
                     <div class="pt-6 border-t flex justify-end space-x-3">
+                        <a href="<?= BASE_URL ?>/admin/appointments/record/<?= $appointment['id'] ?>/print" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded shadow-sm flex items-center">
+                            🖨️ Imprimir Receita
+                        </a>
                         <button type="submit" name="salvar" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded shadow-sm">
-                            Salvar (Continuar Atendendo)
+                            Salvar (Continuar)
                         </button>
                         <button type="submit" name="finalizar" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded shadow-sm">
                             Finalizar Atendimento
