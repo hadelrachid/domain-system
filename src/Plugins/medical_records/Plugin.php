@@ -45,7 +45,7 @@ class Plugin extends AbstractPlugin
                 doctor_id INTEGER NOT NULL,
                 anamnese TEXT NULL,
                 exame_fisico TEXT NULL,
-                cid_10 VARCHAR(50) NULL,
+                cid_10 TEXT NULL,
                 prescricao TEXT NULL,
                 evolucao TEXT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

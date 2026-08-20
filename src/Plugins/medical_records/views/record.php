@@ -77,8 +77,8 @@ $pageTitle = "Pronturio Eletrnico: " . htmlspecialchars($appointment['patient_na
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Hiptese Diagnstica (CID-10)</label>
-                        <input type="text" name="cid_10" value="<?= htmlspecialchars($record['cid_10']) ?>" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ex: J03.9 - Amigdalite aguda no especificada">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Hipótese Diagnóstica (CID-10)</label>
+                        <textarea name="cid_10" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ex: J03.9 - Amigdalite aguda não especificada..."><?= htmlspecialchars($record['cid_10']) ?></textarea>
                     </div>
 
                     <div>
