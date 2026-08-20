@@ -27,11 +27,11 @@ php src/Plugins/auth/scripts/create_admin.php
 
 ### 📚 Documentação Oficial
 
-Consulte a pasta `docs/` no projeto ou acesse os manuais em HTML:
-- [Propósito e Visão](docs/proposito.html)
-- [Arquitetura](docs/arquitetura.html)
-- [Contratos SOLID](docs/contratos.html)
-- [Criando Plugins](docs/criando-plugins.html)
+Consulte a nossa **[Documentação Online Completa](https://hadelrachid.github.io/domain-system/)** para explorar os seguintes manuais:
+- [Propósito e Visão](https://hadelrachid.github.io/domain-system/proposito.html)
+- [Arquitetura](https://hadelrachid.github.io/domain-system/arquitetura.html)
+- [Contratos SOLID](https://hadelrachid.github.io/domain-system/contratos.html)
+- [Criando Plugins](https://hadelrachid.github.io/domain-system/criando-plugins.html)
 
 ### 📊 Status do Projeto
 
@@ -62,7 +62,11 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 
 ### 📚 Official Documentation
 
-Check the `docs/` folder in the project for detailed HTML manuals covering Architecture, SOLID Contracts, and Plugin Development.
+Check our **[Complete Online Documentation](https://hadelrachid.github.io/domain-system/)** for detailed manuals covering:
+- [Vision & Purpose](https://hadelrachid.github.io/domain-system/proposito_en.html)
+- [Architecture](https://hadelrachid.github.io/domain-system/arquitetura_en.html)
+- [SOLID Contracts](https://hadelrachid.github.io/domain-system/contratos_en.html)
+- [Building Plugins](https://hadelrachid.github.io/domain-system/criando-plugins_en.html)
 
 ### ⚖️ License
 
