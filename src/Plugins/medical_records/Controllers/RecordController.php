@@ -13,10 +13,9 @@ class RecordController
         $this->db = $db;
     }
 
-    public function view(array $params = [])
+    public function view($appointmentId)
     {
-        $appointmentId = $params['id'] ?? null;
-        if (!$appointmentId) die("ID Invlido");
+        if (!$appointmentId) die("ID Inválido");
 
         // Buscar dados do agendamento
         $pdo = $this->db->getPdo();
@@ -46,9 +45,8 @@ class RecordController
         require __DIR__ . '/../views/record.php';
     }
 
-    public function save(array $params = [])
+    public function save($appointmentId)
     {
-        $appointmentId = $params['id'] ?? null;
         if (!$appointmentId) {
             header("Location: /admin/appointments?error=ID_INVALIDO");
             exit;
