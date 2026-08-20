@@ -16,7 +16,7 @@ $pageTitle = "Pronturio Eletrnico: " . htmlspecialchars($appointment['patient_na
         <header class="bg-blue-900 text-white shadow-md p-4">
             <div class="container mx-auto flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <a href="/admin/appointments" class="text-blue-200 hover:text-white">&larr; Voltar  Fila</a>
+                    <a href="<?= BASE_URL ?>/admin/appointments" class="text-blue-200 hover:text-white">&larr; Voltar à Fila</a>
                     <h1 class="text-xl font-bold">Pronturio Clnico</h1>
                 </div>
                 <div class="text-sm">
@@ -64,7 +64,7 @@ $pageTitle = "Pronturio Eletrnico: " . htmlspecialchars($appointment['patient_na
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="/admin/appointments/record/<?= $appointment['id'] ?>" class="space-y-6">
+                <form method="POST" action="<?= BASE_URL ?>/admin/appointments/record/<?= $appointment['id'] ?>" class="space-y-6">
                     
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Anamnese (Histria Clnica)</label>

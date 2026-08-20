@@ -48,7 +48,7 @@ class RecordController
     public function save($appointmentId)
     {
         if (!$appointmentId) {
-            header("Location: /admin/appointments?error=ID_INVALIDO");
+            header("Location: " . BASE_URL . "/admin/appointments?error=ID_INVALIDO");
             exit;
         }
 
@@ -60,7 +60,7 @@ class RecordController
         $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$appointment) {
-             header("Location: /admin/appointments?error=AGENDAMENTO_INEXISTENTE");
+             header("Location: " . BASE_URL . "/admin/appointments?error=AGENDAMENTO_INEXISTENTE");
              exit;
         }
 
@@ -89,11 +89,11 @@ class RecordController
         if (isset($_POST['finalizar'])) {
              $stmt = $pdo->prepare("UPDATE appointments SET status = 'Finalizado' WHERE id = ?");
              $stmt->execute([$appointmentId]);
-             header("Location: /admin/appointments?success=Atendimento Finalizado");
+             header("Location: " . BASE_URL . "/admin/appointments?success=Atendimento Finalizado");
         } else {
              $stmt = $pdo->prepare("UPDATE appointments SET status = 'Em Atendimento' WHERE id = ?");
              $stmt->execute([$appointmentId]);
-             header("Location: /admin/appointments/record/" . $appointmentId . "?success=Salvo");
+             header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Salvo");
         }
         exit;
     }
