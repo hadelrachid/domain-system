@@ -18,6 +18,9 @@ class Plugin extends AbstractPlugin
         /** @var Router $router */
         $router = $this->container->make(Router::class);
 
+        // Redireciona a raiz para o admin
+        $router->addRoute('GET', '/', function() { header("Location: " . BASE_URL . "/admin"); exit; });
+
         // Dashboard base
         $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
 

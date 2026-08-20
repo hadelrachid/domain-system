@@ -64,10 +64,29 @@
     </div>
 
     <div class="header">
+        <?php if(!empty($settings['clinic_logo'])): ?>
+            <img src="<?= htmlspecialchars($settings['clinic_logo']) ?>" alt="Logo" style="max-height: 80px; margin-bottom: 10px;">
+        <?php endif; ?>
+        
         <h1><?= htmlspecialchars($settings['clinic_name'] ?? 'Clínica Padrão') ?></h1>
-        <p><?= htmlspecialchars($settings['clinic_slogan'] ?? '') ?></p>
+        
+        <?php if(!empty($settings['clinic_slogan'])): ?>
+            <p><?= htmlspecialchars($settings['clinic_slogan']) ?></p>
+        <?php endif; ?>
+        
+        <?php if(!empty($settings['clinic_cnpj'])): ?>
+            <p style="font-size: 12px; margin-top: 5px; color:#555;">CNPJ: <?= htmlspecialchars($settings['clinic_cnpj']) ?></p>
+        <?php endif; ?>
+        
         <?php if(!empty($settings['clinic_address'])): ?>
-            <p style="font-size: 12px; margin-top: 2px;"><?= htmlspecialchars($settings['clinic_address']) ?></p>
+            <p style="font-size: 12px; margin-top: 2px; color:#555;"><?= htmlspecialchars($settings['clinic_address']) ?></p>
+        <?php endif; ?>
+        
+        <?php if(!empty($settings['clinic_phone']) || !empty($settings['clinic_whatsapp'])): ?>
+            <p style="font-size: 12px; margin-top: 2px; color:#555;">
+                <?= htmlspecialchars($settings['clinic_phone']) ?> 
+                <?= !empty($settings['clinic_whatsapp']) ? ' | WA: ' . htmlspecialchars($settings['clinic_whatsapp']) : '' ?>
+            </p>
         <?php endif; ?>
     </div>
 
