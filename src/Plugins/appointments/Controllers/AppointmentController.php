@@ -139,7 +139,8 @@ class AppointmentController
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
-            if (!in_array($a['status'], ['Atendido', 'Finalizado', 'Cancelado'])) {
+            // Histórico clínico só exibe o que realmente foi ou está sendo atendido.
+            if (!in_array($a['status'], ['Atendido', 'Finalizado'])) {
                 continue;
             }
 
