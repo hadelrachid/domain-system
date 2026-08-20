@@ -19,7 +19,7 @@ class RecordController
 
         // Buscar dados do agendamento
         $pdo = $this->db->getPdo();
-        $stmt = $pdo->prepare("SELECT a.*, p.name as patient_name, p.dob as patient_dob, p.cpf, d.name as doctor_name FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ?");
+        $stmt = $pdo->prepare("SELECT a.*, p.name as patient_name, p.birthdate as patient_dob, p.cpf, d.name as doctor_name FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ?");
         $stmt->execute([$appointmentId]);
         $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
 
