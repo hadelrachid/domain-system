@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Architecture - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="contratos_en.html">Contracts &rarr;</a></li>
+            <li style="margin-left:auto"><a href="arquitetura.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Engine Architecture</h1>
+    </header>
+
+    <div class="content">
+        <h2>How does the Kernel work?</h2>
+        <p>The <strong>Domain-System</strong> is initialized via <code>bootstrap.php</code>. At this moment, the <strong>Dependency Injection Container</strong> is assembled. The Container is the brain that manages the creation of all important classes, ensuring no one creates objects the wrong way with "new" scattered throughout the code.</p>
+
+        <h2>Core Components</h2>
+        <ul>
+            <li><strong>Router:</strong> Maps URLs to Controllers (e.g., <code>/admin/settings</code> calls the <code>SettingsController::index</code> method).</li>
+            <li><strong>EventDispatcher (Triggers):</strong> Manages Actions (Hooks) and Filters. If a plugin wants to change the menu, it "listens" to the <code>admin.menu</code> event.</li>
+            <li><strong>PluginManager:</strong> Reads the <code>src/Plugins/</code> folder, validates <code>plugin.json</code>, and calls the <code>register()</code> method of each active plugin.</li>
+            <li><strong>ThemeManager:</strong> Manages the Front-end. Intercepts requests that are not from the API or Dashboard, and delivers visuals using Server-Side Rendering (SSR).</li>
+        </ul>
+
+        <h2>Request Flow (Life-cycle)</h2>
+        <pre>
+1. User accesses the browser.
+2. public/index.php receives the request.
+3. bootstrap.php loads the Container and Services (Database, EventDispatcher).
+4. PluginManager activates the Plugins (each plugin injects its Routes).
+5. Router evaluates the URL.
+6. Specific Controller is executed.
+7. The database is accessed via secure PDO (QueryBuilder).
+8. The response (HTML or JSON) is returned to the user.</pre>
+
+    </div>
+</body>
+</html>

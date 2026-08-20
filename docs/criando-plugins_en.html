@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>How to Build Plugins - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li style="margin-left:auto"><a href="criando-plugins.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Guide: How to Build a Plugin</h1>
+    </header>
+
+    <div class="content">
+        <h2>Step 1: Create the Folder Structure</h2>
+        <p>Access the <code>src/Plugins/</code> directory and create a folder (e.g., <code>my_plugin</code>).</p>
+        
+        <h2>Step 2: Manifest File (plugin.json)</h2>
+        <p>Create a <code>plugin.json</code> file. It tells the engine who you are.</p>
+        <pre><code>{
+    "name": "my_plugin",
+    "version": "1.0.0",
+    "description": "My first custom plugin",
+    "namespace": "DomainSystem\\Plugins\\my_plugin\\",
+    "entrypoint": "Plugin"
+}</code></pre>
+
+        <h2>Step 3: The Main Class (Plugin.php)</h2>
+        <p>Create the <code>Plugin.php</code> file. It is the heart of your system.</p>
+        <pre><code>&lt;?php
+namespace DomainSystem\Plugins\my_plugin;
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Routing\Router;
+
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // 1. Listen to event to register routes
+        $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+        
+        $events->addListener('router.register', function(Router $router) {
+            $router->addRoute('GET', '/admin/my-plugin', function() {
+                echo "<h1>Hello from My Plugin!</h1>";
+            });
+        });
+
+        // 2. Put button in the Dashboard Menu
+        $events->addListener('admin.menu', function($menu) {
+            $menu[] = [
+                'title' => 'My Plugin',
+                'url' => '/admin/my-plugin',
+                'icon' => '⭐'
+            ];
+            return $menu;
+        });
+    }
+}
+</code></pre>
+
+        <h2>Step 4: Activating via System</h2>
+        <p>Go to the Domain-System Admin panel > <strong>Plugins</strong>, find your Plugin in the list and click <strong>Turn On</strong>.</p>
+        <p>And that's it! The ecosystem will auto-discover and perfectly apply your injection to the core.</p>
+    </div>
+</body>
+</html>
