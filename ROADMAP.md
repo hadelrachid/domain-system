@@ -36,3 +36,11 @@ Este documento registra os próximos passos e plugins planejados para a evoluç�
   - Página pública onde o paciente escolhe o horário disponível do médico.
   - O paciente agenda sozinho e o sistema apenas notifica a clínica.
 
+
+## 🟣 Fase Final (A Vitrine)
+
+- [ ] **7. Motor de Temas Front-end (Estilo WordPress)**
+  - Integrar o front-end público (o site da clínica) consumindo os dados do Kernel.
+  - Criar o sistema de injeção de tags (ex: `<?= get_header() ?>`, `<?= the_content() ?>`).
+  - Permitir troca de temas dinâmica pela pasta `themes/`.
+
