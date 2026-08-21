@@ -30,6 +30,13 @@ class AdminController
             $activeStates = json_decode(file_get_contents($configPath), true) ?? [];
         }
 
+        // Get Disarmed states
+        $disarmedStates = [];
+        $disarmedPath = $basePath . '/temp/disarmed.json';
+        if (file_exists($disarmedPath)) {
+            $disarmedStates = json_decode(file_get_contents($disarmedPath), true) ?? [];
+        }
+
         // Discover all plugins
         $allPlugins = [];
         if (is_dir($pluginsPath)) {
@@ -45,7 +52,8 @@ class AdminController
                         'version' => $metadata['version'] ?? 'N/A',
                         'description' => $metadata['description'] ?? '',
                         'is_active' => $activeStates[$name] ?? false,
-                        'is_core' => $this->manager->isCore($name)
+                        'is_core' => $this->manager->isCore($name),
+                        'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false)
                     ];
                 }
             }
@@ -78,7 +86,18 @@ class AdminController
         if ($pluginName && $action) {
             if ($action === 'enable') {
                 $this->manager->enable($pluginName);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin ativado com sucesso!'];
+                
+                // Remove from disarmed if exists
+                $disarmedPath = dirname(__DIR__, 4) . '/temp/disarmed.json';
+                if (file_exists($disarmedPath)) {
+                    $disarmed = json_decode(file_get_contents($disarmedPath), true) ?: [];
+                    if (isset($disarmed[$pluginName])) {
+                        unset($disarmed[$pluginName]);
+                        file_put_contents($disarmedPath, json_encode($disarmed));
+                    }
+                }
+
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Plugin ativado com sucesso!'];
             } elseif ($action === 'disable') {
                 $this->manager->disable($pluginName);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin desativado com sucesso.'];

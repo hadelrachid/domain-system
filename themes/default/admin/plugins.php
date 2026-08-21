@@ -53,6 +53,7 @@
     .plugin-table tr:last-child td { border-bottom: none; }
     .plugin-row-active td { background-color: #f0f6fc; }
     .plugin-row-active td:first-child { border-left: 4px solid #72aee6; }
+    .plugin-row-disarmed td { background-color: #fffafb; }
 </style>
 
 <table class="plugin-table">
@@ -65,8 +66,8 @@
     </thead>
     <tbody>
         <?php foreach ($plugins as $plugin): ?>
-        <tr class="<?= $plugin['is_active'] ? 'plugin-row-active' : '' ?>">
-            <td>
+        <tr class="<?= $plugin['is_active'] ? 'plugin-row-active' : ($plugin['is_disarmed'] ? 'plugin-row-disarmed' : '') ?>">
+            <td style="<?= $plugin['is_disarmed'] ? 'border-left: 4px solid #d63638;' : '' ?>">
                 <strong style="font-size: 14px; color: #1d2327;"><?= htmlspecialchars($plugin['name']) ?></strong> 
                 <span class="badge" style="background: #e0e0e0; color: #2c3338; margin-left: 8px;">v<?= htmlspecialchars($plugin['version']) ?></span>
                 <br>
@@ -74,6 +75,13 @@
             </td>
             <td style="color: #3c434a; line-height: 1.5;">
                 <?= htmlspecialchars($plugin['description']) ?>
+                
+                <?php if ($plugin['is_disarmed']): ?>
+                <div style="margin-top: 10px; padding: 10px; background: #fbeaea; color: #d63638; border-radius: 4px; border: 1px solid #ffc9c9; font-size: 13px;">
+                    <strong>⚠️ Plugin Danificado:</strong> Este plugin causou um erro fatal e foi desconectado pelo Disjuntor.<br>
+                    <a href="admin/monitor" style="color: #d63638; font-weight: bold; text-decoration: underline;">Verificar Monitor de Erros</a>
+                </div>
+                <?php endif; ?>
             </td>
             <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">

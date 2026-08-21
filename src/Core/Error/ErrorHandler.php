@@ -97,6 +97,13 @@ class ErrorHandler
                 if (isset($states[$pluginName]) && $states[$pluginName] === true) {
                     $states[$pluginName] = false; // Desarma o disjuntor (desativa plugin)
                     file_put_contents($this->configPath, json_encode($states, JSON_PRETTY_PRINT));
+                    
+                    // Grava no arquivo disarmed.json para exibir alerta no painel de plugins
+                    $disarmedPath = dirname($this->logPath) . '/disarmed.json';
+                    $disarmed = file_exists($disarmedPath) ? (json_decode(file_get_contents($disarmedPath), true) ?: []) : [];
+                    $disarmed[$pluginName] = date('Y-m-d H:i:s');
+                    file_put_contents($disarmedPath, json_encode($disarmed));
+
                     return $pluginName;
                 }
             }
