@@ -33,7 +33,8 @@ class AppointmentController
         return $this->theme->render('admin_appointments', [
             'appointments' => $appointments,
             'patients' => $patients,
-            'doctors' => $doctors
+            'doctors' => $doctors,
+            'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
 
@@ -105,7 +106,8 @@ class AppointmentController
         $appointments = $this->repo->getHistory($role, $doctor_id, $search);
 
         return $this->theme->render('admin_history', [
-            'appointments' => $appointments
+            'appointments' => $appointments,
+            'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
 
@@ -130,7 +132,8 @@ class AppointmentController
         return $this->theme->render('admin_record', [
             'appointment' => $appointment,
             'patient_data' => $appointment['patient_data'],
-            'history' => $history
+            'history' => $history,
+            'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
 
