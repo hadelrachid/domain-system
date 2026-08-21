@@ -4,16 +4,19 @@ namespace DomainSystem\Plugins\appointments\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\appointments\Repositories\AppointmentRepository;
 
 class AppointmentController
 {
     private ThemeManager $theme;
     private QueryBuilder $db;
+    private AppointmentRepository $repo;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db)
+    public function __construct(ThemeManager $theme, QueryBuilder $db, AppointmentRepository $repo)
     {
         $this->theme = $theme;
         $this->db = $db;
+        $this->repo = $repo;
     }
 
     public function index()
@@ -23,53 +26,26 @@ class AppointmentController
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         
-        $appointmentsRaw = $this->db->table('appointments')->get();
+        $appointments = $this->repo->getPendingQueue($role, $doctor_id);
         $patients = $this->db->table('patients')->get();
         $doctors = $this->db->table('doctors')->get();
 
-        $patientsMap = [];
-        foreach ($patients as $p) $patientsMap[$p['id']] = $p;
-
-        $doctorsMap = [];
-        foreach ($doctors as $d) $doctorsMap[$d['id']] = $d;
-
-        $appointments = [];
-        foreach ($appointmentsRaw as $a) {
-            if (in_array($a['status'], ['Atendido', 'Finalizado', 'Cancelado'])) {
-                continue; // Fica só na fila do Histórico
-            }
-
-            if ($role === 'doctor' && (string)$a['doctor_id'] !== (string)$doctor_id) {
-                continue; // Médico só vê seus próprios pacientes
-            }
-
-            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
-            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
-            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
-            $appointments[] = $a;
-        }
-
-        // Ordenar os agendamentos pela data e hora (os mais próximos primeiro)
-        usort($appointments, function($a, $b) {
-            return strtotime($a['appointment_date'] . ' ' . $a['appointment_time']) <=> strtotime($b['appointment_date'] . ' ' . $b['appointment_time']);
-        });
-
-        $theme = $this->theme;
-        
-        ob_start();
-        include __DIR__ . '/../views/admin_index.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_appointments', [
+            'appointments' => $appointments,
+            'patients' => $patients,
+            'doctors' => $doctors
+        ], __DIR__ . '/../views');
     }
 
     public function store()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-        $patient_id = $_POST['patient_id'] ?? null;
-        $doctor_id = $_POST['doctor_id'] ?? null;
-        $appointment_date = $_POST['appointment_date'] ?? null;
-        $appointment_time = $_POST['appointment_time'] ?? null;
-        $attendance_type = $_POST['attendance_type'] ?? 'particular';
+        $patient_id = $_POST['patient_id'] ?? '';
+        $doctor_id = $_POST['doctor_id'] ?? '';
+        $appointment_date = $_POST['appointment_date'] ?? '';
+        $appointment_time = $_POST['appointment_time'] ?? '';
+        $attendance_type = $_POST['attendance_type'] ?? 'Consulta';
         $health_insurance = $_POST['health_insurance'] ?? '';
         $reception_notes = $_POST['reception_notes'] ?? '';
 
@@ -85,7 +61,7 @@ class AppointmentController
                     'attendance_type' => $attendance_type,
                     'health_insurance' => $health_insurance,
                     'reception_notes' => $reception_notes,
-                    'status' => 'Confirmado' // Agendamento manual da recepção já entra como Confirmado
+                    'status' => 'Confirmado'
                 ]);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Agendamento criado com sucesso!'];
             } catch (\Exception $e) {
@@ -124,61 +100,13 @@ class AppointmentController
         
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
-
         $search = strtolower($_GET['s'] ?? '');
         
-        $appointmentsRaw = $this->db->table('appointments')->get();
-        $patients = $this->db->table('patients')->get();
-        $doctors = $this->db->table('doctors')->get();
+        $appointments = $this->repo->getHistory($role, $doctor_id, $search);
 
-        $patientsMap = [];
-        foreach ($patients as $p) $patientsMap[$p['id']] = $p;
-
-        $doctorsMap = [];
-        foreach ($doctors as $d) $doctorsMap[$d['id']] = $d;
-
-        $appointments = [];
-        foreach ($appointmentsRaw as $a) {
-            // Histórico clínico só exibe o que realmente foi ou está sendo atendido.
-            if (!in_array($a['status'], ['Atendido', 'Finalizado'])) {
-                continue;
-            }
-
-            if ($role === 'doctor' && (string)$a['doctor_id'] !== (string)$doctor_id) {
-                continue; // Médico só vê seus próprios pacientes no histórico
-            }
-
-            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
-            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
-            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
-
-            // Filter by search
-            if (!empty($search)) {
-                $matchName = str_contains(strtolower($a['patient_name']), $search);
-                $matchPhone = str_contains(strtolower($a['patient_phone']), $search);
-                $matchDate = str_contains($a['appointment_date'], $search);
-                
-                if (!$matchName && !$matchPhone && !$matchDate) {
-                    continue;
-                }
-            }
-
-            $appointments[] = $a;
-        }
-
-        // Ordenar por data mais recente
-        usort($appointments, function($a, $b) {
-            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
-        });
-
-        // Limite de 20
-        $appointments = array_slice($appointments, 0, 20);
-
-        $theme = $this->theme;
-        
-        ob_start();
-        include __DIR__ . '/../views/admin_history.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_history', [
+            'appointments' => $appointments
+        ], __DIR__ . '/../views');
     }
 
     public function record()
@@ -191,41 +119,19 @@ class AppointmentController
             exit;
         }
 
-        $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
+        $appointment = $this->repo->getRecordDetails($id);
         if (empty($appointment)) {
             header("Location: " . BASE_URL . "/admin/appointments");
             exit;
         }
 
-        $patient = $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->first();
-        $doctor = $this->db->table('doctors')->where('id', '=', $appointment['doctor_id'])->first();
+        $history = $this->repo->getPatientClinicalHistory($appointment['patient_id'], $id);
 
-        $patient_data = $patient; // para usar na view
-
-        $appointment['patient_name'] = $patient['name'] ?? 'Desconhecido';
-        $appointment['patient_cpf'] = $patient['cpf'] ?? 'Desconhecido';
-        $appointment['patient_birthdate'] = $patient['birthdate'] ?? '1900-01-01';
-        $appointment['doctor_name'] = $doctor['name'] ?? 'Desconhecido';
-
-        $historyRaw = $this->db->table('appointments')->where('patient_id', '=', $appointment['patient_id'])->get();
-        $history = [];
-        foreach ($historyRaw as $h) {
-            if ((string)$h['id'] !== (string)$id) {
-                $doc = $this->db->table('doctors')->where('id', '=', $h['doctor_id'])->first();
-                $h['doctor_name'] = $doc['name'] ?? 'Desconhecido';
-                $history[] = $h;
-            }
-        }
-
-        usort($history, function($a, $b) {
-            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
-        });
-
-        $theme = $this->theme;
-        
-        ob_start();
-        include __DIR__ . '/../views/admin_record.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_record', [
+            'appointment' => $appointment,
+            'patient_data' => $appointment['patient_data'],
+            'history' => $history
+        ], __DIR__ . '/../views');
     }
 
     public function saveRecord()
@@ -236,13 +142,11 @@ class AppointmentController
         $medical_record = $_POST['medical_record'] ?? '';
 
         if ($id) {
-            // Salvar evolução e mudar status para Atendido
             $this->db->table('appointments')->where('id', '=', $id)->update([
                 'medical_record' => $medical_record,
                 'status' => 'Atendido'
             ]);
 
-            // Atualizar dados do paciente se fornecidos
             $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
             if (!empty($appointment)) {
                 $patientData = [];
