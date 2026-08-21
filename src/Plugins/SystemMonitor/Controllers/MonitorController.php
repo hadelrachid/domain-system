@@ -1,14 +1,16 @@
 <?php
 namespace DomainSystem\Plugins\SystemMonitor\Controllers;
 
-use DomainSystem\Core\Application;
+use DomainSystem\Core\Theme\ThemeManager;
 
 class MonitorController
 {
     private string $logPath;
+    private ThemeManager $theme;
 
-    public function __construct()
+    public function __construct(ThemeManager $theme)
     {
+        $this->theme = $theme;
         $this->logPath = dirname(__DIR__, 4) . '/temp/error_logs.json';
     }
 
@@ -26,14 +28,11 @@ class MonitorController
             $logs = json_decode($content, true) ?: [];
         }
 
-        $app = Application::getInstance();
-        $theme = $app->getThemeManager();
-
         ob_start();
         require dirname(__DIR__) . '/views/admin_monitor.php';
         $content = ob_get_clean();
 
-        return $theme->render('admin/layout', ['content' => $content]);
+        return $this->theme->render('admin/layout', ['content' => $content]);
     }
 
     public function clear()
