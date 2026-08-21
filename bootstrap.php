@@ -17,6 +17,11 @@ putenv("DB_DSN=sqlite:{$dbPath}");
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Initialize Error Handler
+$errorLogPath = DOMAIN_SYSTEM_ROOT . '/temp/error_logs.json';
+$errorHandler = new \DomainSystem\Core\Error\ErrorHandler($errorLogPath);
+$errorHandler->register();
+
 // Initialize Core Components
 $container = new Container();
 $dispatcher = new EventDispatcher();

@@ -6,5 +6,6 @@
   "doctors": true,
   "appointments": true,
   "medical_records": true,
-  "settings": true
+  "settings": true,
+  "SystemMonitor": true
 }
