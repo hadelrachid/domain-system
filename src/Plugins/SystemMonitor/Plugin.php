@@ -23,6 +23,6 @@ class Plugin extends AbstractPlugin
                 'icon' => '🚨'
             ];
             return $menu;
-        });
+        }, 99);
     }
 }
