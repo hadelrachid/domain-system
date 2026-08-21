@@ -92,6 +92,45 @@ class ErrorHandler
         $file = htmlspecialchars($e->getFile());
         $line = $e->getLine();
         
+        $errorHtml = <<<HTML
+        <div style="max-width: 800px; width: 100%; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid #d63638; margin: 40px auto;">
+            <h1 style="color: #d63638; margin-top: 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Erro Crítico Rastreável
+            </h1>
+            <p style="font-size: 16px; color: #50575e; margin-bottom: 25px; line-height: 1.5;">O motor <strong>Domain-System</strong> interceptou uma falha fatal que impediu a execução desta tela. O erro foi rastreado e isolado para não afetar o restante do sistema.</p>
+            
+            <div style="background: #f6f7f7; padding: 20px; border-radius: 6px; font-family: Consolas, monospace; overflow-x: auto; font-size: 14px; line-height: 1.6; border: 1px solid #dcdcde;">
+                <div style="margin-bottom: 8px;"><span style="color: #2271b1; font-weight: 600;">Ocorrência:</span> {$message}</div>
+                <div style="margin-bottom: 8px;"><span style="color: #2271b1; font-weight: 600;">Arquivo:</span> {$file}</div>
+                <div><span style="color: #2271b1; font-weight: 600;">Linha:</span> {$line}</div>
+            </div>
+            
+            <a href="javascript:history.back()" style="display:inline-block; margin-top:20px; padding:10px 24px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px; font-weight: 500;">&larr; Voltar com Segurança</a>
+            
+            <div style="margin-top:30px; font-size:13px; color:#8c8f94; border-top: 1px solid #dcdcde; padding-top: 20px;">
+                Este erro foi gravado no Log de Supervisão. Apenas desenvolvedores ou administradores podem visualizar o diagnóstico completo no Painel Admin.
+            </div>
+        </div>
+        HTML;
+
+        // Tentar renderizar dentro do layout do admin se a aplicação já estiver inicializada
+        try {
+            if (class_exists('\DomainSystem\Core\Application')) {
+                $app = \DomainSystem\Core\Application::getInstance();
+                if ($app) {
+                    $theme = $app->getThemeManager();
+                    if ($theme) {
+                        echo $theme->render('admin/layout', ['content' => $errorHtml]);
+                        exit;
+                    }
+                }
+            }
+        } catch (\Throwable $t) {
+            // Se falhar ao tentar renderizar o layout (ex: erro dentro do próprio layout), silencia e cai pro HTML puro abaixo.
+        }
+
+        // Fallback: HTML Puro caso a aplicação ainda não tenha inicializado o ThemeManager
         echo <<<HTML
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -100,37 +139,11 @@ class ErrorHandler
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Erro Crítico - DomainSystem</title>
             <style>
-                body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; color: #1d2327; margin:0; padding: 40px 20px; display: flex; justify-content: center; }
-                .container { max-width: 800px; width: 100%; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid #d63638; }
-                h1 { color: #d63638; margin-top: 0; font-size: 24px; display: flex; align-items: center; gap: 10px; }
-                .description { font-size: 16px; color: #50575e; margin-bottom: 25px; line-height: 1.5; }
-                .details { background: #f6f7f7; padding: 20px; border-radius: 6px; font-family: Consolas, monospace; overflow-x: auto; font-size: 14px; line-height: 1.6; border: 1px solid #dcdcde; }
-                .highlight { color: #2271b1; font-weight: 600; }
-                .footer { margin-top:30px; font-size:13px; color:#8c8f94; border-top: 1px solid #dcdcde; padding-top: 20px; }
-                .btn { display:inline-block; margin-top:20px; padding:10px 24px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px; font-weight: 500; transition: background 0.2s; }
-                .btn:hover { background: #135e96; }
+                body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; color: #1d2327; margin:0; padding: 20px; }
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    Erro Crítico Rastreável
-                </h1>
-                <p class="description">O motor <strong>Domain-System</strong> interceptou uma falha fatal que impediu a execução desta tela. O erro foi rastreado e isolado para não afetar o restante do sistema.</p>
-                
-                <div class="details">
-                    <div style="margin-bottom: 8px;"><span class="highlight">Ocorrência:</span> {$message}</div>
-                    <div style="margin-bottom: 8px;"><span class="highlight">Arquivo:</span> {$file}</div>
-                    <div><span class="highlight">Linha:</span> {$line}</div>
-                </div>
-                
-                <a href="javascript:history.back()" class="btn">&larr; Voltar com Segurança</a>
-                
-                <div class="footer">
-                    Este erro foi gravado no Log de Supervisão. Apenas desenvolvedores ou administradores podem visualizar o diagnóstico completo no Painel Admin.
-                </div>
-            </div>
+            {$errorHtml}
         </body>
         </html>
         HTML;
