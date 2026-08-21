@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Resiliência e Circuit Breaker - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="back-link">&larr; Voltar ao Índice</a>
+        <a href="circuit-breaker_en.html" class="lang-toggle">🇺🇸 English</a>
+        <h1>⚡ Resiliência e Circuit Breaker</h1>
+        <p>Como o Domain-System se protege sozinho de plugins fatais e erros críticos.</p>
+    </header>
+    <div class="content">
+        <h2>O Problema Clássico (Tela Branca da Morte)</h2>
+        <p>Nos sistemas monolíticos ou baseados em plugins tradicionais (como o WordPress antigo), um simples erro de digitação de um desenvolvedor — como esquecer um ponto-e-vírgula em um plugin recém-instalado — pode causar a famosa "Tela Branca da Morte". O PHP interrompe abruptamente toda a execução, e o site inteiro fica inacessível para todos (inclusive para os administradores).</p>
+        <h2>A Solução: Circuit Breaker (Disjuntor)</h2>
+        <p>O <strong>Domain-System</strong> foi desenhado com um conceito avançado de arquitetura focado na alta resiliência: o <a href="https://martinfowler.com/bliki/CircuitBreaker.html" target="_blank">Circuit Breaker</a> (Disjuntor).</p>
+        <p>Funciona de maneira muito semelhante a um disjuntor de energia em uma casa. Quando ocorre uma "sobrecarga" (um erro fatal) em um dos cômodos (plugins), o disjuntor "desarma" apenas aquela linha, protegendo o núcleo geral de queimar.</p>
+        <h3>Como Funciona nos Bastidores</h3>
+        <ol>
+            <li><strong>Interceptação Global (ErrorHandler):</strong> Uma camada de defesa, conectada diretamente ao <code>register_shutdown_function</code> do PHP, vigia todos os eventos fatais em nível de hardware e compilação (Erros de Sintaxe, Parse Errors, etc).</li>
+            <li><strong>Rastreamento Isolado:</strong> Quando uma exceção fatal explode, o Vigia captura o <em>Stack Trace</em> para descobrir a origem exata do erro.</li>
+            <li><strong>Desarme Automático:</strong> Se o sistema identifica que a falha veio de um arquivo pertencente à pasta de um Plugin específico, ele intercepta o arquivo <code>config/plugins.json</code> e <strong>desconecta / desativa o plugin em milissegundos</strong>.</li>
+            <li><strong>Proteção do Painel:</strong> O sistema limpa os buffers pela metade e renderiza uma tela limpa de "Sobrecarga de Núcleo" <strong>apenas para o autor da requisição afetada</strong>. Na mesma tela, exibe um botão para Recarregar o Sistema Seguro.</li>
+            <li><strong>Log e Alerta Visuais:</strong> O sistema adiciona um registro da queda ao arquivo temporário de <code>disarmed.json</code>. Assim que o administrador acessa a tela nativa de Plugins (via <em>SystemAdmin</em>), ele vê um alerta brilhante apontando o plugin desarmado, com o atalho para a tela de relatórios detalhados (<em>SystemMonitor</em>).</li>
+        </ol>
+    </div>
+</body>
+</html>

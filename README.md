@@ -10,11 +10,12 @@
 
 **Nota: 10/10 em auditorias estruturais!**
 
-### 🏗️ Arquitetura
+### 🏛️ Arquitetura e Defesas
 
 - **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
 - **Plugins**: Lógica de negócio (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings...)
 - **Themes**: Apresentação (Tema default com layout admin SSR)
+- 🛡️ **Circuit Breaker (Disjuntor)**: Sistema nativo que intercepta erros fatais de compilação e desativa automaticamente plugins defeituosos para proteger o núcleo de quedas (evita a Tela Branca da Morte).
 
 ### 🚀 Como Iniciar
 
@@ -54,11 +55,12 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 
 **Score: 10/10 in structural audits!**
 
-### 🏗️ Architecture
+### 🏛️ Architecture & Defenses
 
 - **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
 - **Plugins**: Business Logic (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings...)
 - **Themes**: Presentation Layer (Default theme with SSR admin layout)
+- 🛡️ **Circuit Breaker**: Native system that intercepts fatal compilation errors and automatically disables faulty plugins to protect the system core (prevents the White Screen of Death).
 
 ### 📚 Official Documentation
 
