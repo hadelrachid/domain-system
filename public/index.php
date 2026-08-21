@@ -57,7 +57,7 @@ try {
         http_response_code(404);
         echo "404 Not Found: " . $e->getMessage();
     } else {
-        http_response_code(500);
-        echo "500 Internal Server Error: " . $e->getMessage();
+        // Re-joga a exceção para que o ErrorHandler oficial capture e crie a tela bonita
+        throw $e;
     }
 }
