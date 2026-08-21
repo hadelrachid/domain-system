@@ -30,6 +30,10 @@
 </head>
 <body>
     <div id="adminmenuback">
+        <div style="padding: 20px 15px; background: #111; text-align: center; font-weight: bold; font-size: 14px; border-bottom: 1px solid #2c3338; letter-spacing: 0.5px;">
+            <span style="color: #72aee6;">Cockpit</span> <br>
+            <span style="font-size: 11px; color: #999; font-weight: normal;">do Domain System</span>
+        </div>
         <ul id="adminmenu">
             <li><a href="admin">Painel</a></li>
             <?php 
