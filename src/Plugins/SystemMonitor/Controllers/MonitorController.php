@@ -46,6 +46,11 @@ class MonitorController
             unlink($this->logPath);
         }
 
+        $disarmedPath = dirname(__DIR__, 4) . '/temp/disarmed.json';
+        if (file_exists($disarmedPath)) {
+            unlink($disarmedPath);
+        }
+
         header("Location: " . BASE_URL . "/admin/monitor?cleared=1");
         exit;
     }
