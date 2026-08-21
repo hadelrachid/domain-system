@@ -25,7 +25,12 @@
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; font-weight: bold; margin-bottom: 5px;">Senha</label>
-                <input type="password" name="password" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <div style="position: relative;">
+                    <input type="password" name="password" id="new_user_pwd" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; padding-right: 35px; box-sizing: border-box;">
+                    <button type="button" onclick="togglePasswordVisibility('new_user_pwd', this)" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: transparent; border: none; color: #666; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; font-weight: bold; margin-bottom: 5px;">Perfil de Acesso</label>
@@ -76,9 +81,14 @@
                             
                             <!-- Redefinir Senha -->
                             <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">
-                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 5px;">
+                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 5px; align-items: center;">
                                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                    <input type="password" name="new_password" placeholder="Nova senha" required style="font-size: 11px; padding: 3px; width: 90px; border: 1px solid #ccc;">
+                                    <div style="position: relative;">
+                                        <input type="password" name="new_password" id="reset_pwd_<?= $u['id'] ?>" placeholder="Nova senha" required style="font-size: 11px; padding: 3px; padding-right: 22px; width: 90px; border: 1px solid #ccc; box-sizing: border-box;">
+                                        <button type="button" onclick="togglePasswordVisibility('reset_pwd_<?= $u['id'] ?>', this)" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; background: transparent; border: none; color: #666; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        </button>
+                                    </div>
                                     <button type="submit" class="btn" style="font-size: 10px; padding: 3px 6px;">Mudar</button>
                                 </form>
                             </div>
@@ -116,3 +126,17 @@
 $content = ob_get_clean();
 echo $theme->render('admin/layout', ['content' => $content]);
 ?>
+
+<script>
+function togglePasswordVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var svg = btn.querySelector('svg');
+    if (input.type === 'password') {
+        input.type = 'text';
+        svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+    } else {
+        input.type = 'password';
+        svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    }
+}
+</script>
