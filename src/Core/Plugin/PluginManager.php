@@ -37,22 +37,36 @@ class PluginManager
         $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
         
         foreach ($directories as $dir) {
-            $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
-            
-            if (class_exists($pluginClass)) {
-                // If it extends AbstractPlugin, it needs path
-                if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
-                    /** @var AbstractPlugin $plugin */
-                    $plugin = new $pluginClass($this->container, $dir);
-                    $pluginName = $plugin->getName();
-                    $isActive = $activeStates[$pluginName] ?? false;
-                    $plugin->setActive($isActive);
-                    $this->addPlugin($plugin);
-                } else {
-                    // For legacy tests or hardcoded plugins that just take container
-                    /** @var PluginInterface $plugin */
-                    $plugin = new $pluginClass($this->container);
-                    $this->addPlugin($plugin);
+            $jsonPath = $dir . '/plugin.json';
+            $pluginName = basename($dir);
+            if (file_exists($jsonPath)) {
+                $metadata = json_decode(file_get_contents($jsonPath), true);
+                if (isset($metadata['name'])) {
+                    $pluginName = $metadata['name'];
+                }
+            }
+
+            // Apenas tentamos instanciar o plugin se ele estiver ATIVO ou se for CORE
+            // Isso evita que plugins desativados com erro de sintaxe derrubem o sistema ao usar class_exists()
+            $isActive = $activeStates[$pluginName] ?? false;
+            $isCore = isset($metadata['core']) && $metadata['core'] === true;
+
+            if ($isActive || $isCore) {
+                $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
+                
+                if (class_exists($pluginClass)) {
+                    // If it extends AbstractPlugin, it needs path
+                    if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
+                        /** @var AbstractPlugin $plugin */
+                        $plugin = new $pluginClass($this->container, $dir);
+                        $plugin->setActive(true); // se chegou aqui é porque está ativo ou é core
+                        $this->addPlugin($plugin);
+                    } else {
+                        // For legacy tests or hardcoded plugins that just take container
+                        /** @var PluginInterface $plugin */
+                        $plugin = new $pluginClass($this->container);
+                        $this->addPlugin($plugin);
+                    }
                 }
             }
         }
