@@ -132,9 +132,11 @@ class AdminController
         $pluginFolder = $_POST['plugin_folder'] ?? null;
 
         if ($pluginName && $pluginFolder) {
+            // Seguranca: sanitizar pasta para evitar directory traversal
+            $pluginFolder = basename($pluginFolder);
             try {
                 $this->manager->delete($pluginName, $pluginFolder);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '🗑️ Plugin excluído e removido do servidor.'];
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Plugin excluído e removido do servidor.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => $e->getMessage()];
             }

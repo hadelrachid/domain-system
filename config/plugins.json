@@ -1,11 +1,12 @@
 {
-  "database": true,
-  "system-admin": true,
-  "auth": true,
-  "patients": true,
-  "doctors": true,
-  "appointments": true,
-  "medical_records": true,
-  "settings": true,
-  "SystemMonitor": true
+    "database": true,
+    "system-admin": true,
+    "auth": true,
+    "patients": true,
+    "doctors": true,
+    "appointments": true,
+    "medical_records": true,
+    "settings": true,
+    "SystemMonitor": true,
+    "hello_plugin": false
 }
