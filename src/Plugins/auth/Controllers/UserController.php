@@ -4,16 +4,19 @@ namespace DomainSystem\Plugins\auth\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\auth\Services\TwoFactorService;
 
 class UserController
 {
     private ThemeManager $theme;
     private QueryBuilder $db;
+    private TwoFactorService $twoFactor;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db)
+    public function __construct(ThemeManager $theme, QueryBuilder $db, TwoFactorService $twoFactor)
     {
         $this->theme = $theme;
         $this->db = $db;
+        $this->twoFactor = $twoFactor;
     }
 
     public function index()
@@ -23,11 +26,11 @@ class UserController
         $users = $this->db->table('users')->get();
         $doctors = $this->db->table('doctors')->get();
         
-        $theme = $this->theme;
-        
-        ob_start();
-        include __DIR__ . '/../views/admin_users.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_users', [
+            'users' => $users,
+            'doctors' => $doctors,
+            'theme' => $this->theme
+        ], __DIR__ . '/../views');
     }
 
     public function store()
@@ -77,24 +80,18 @@ class UserController
             exit;
         }
 
-        require_once __DIR__ . '/../GoogleAuthenticator.php';
-        $ga = new \PHPGangsta_GoogleAuthenticator();
+        $appSecret = $this->twoFactor->generateAppSecret('DaherClinica');
         
-        $secret = $ga->createSecret();
-        $qrCodeUrl = $ga->getQRCodeGoogleUrl('DaherClinica', $secret);
+        // Simulação p/ Dev Mode
+        $user['two_factor_secret'] = $appSecret['secret'];
+        $this->twoFactor->simulateAppCodeGeneration($user);
 
-        // --- MODO DESENVOLVIMENTO (XAMPP SIMULADO) ---
-        // Salva o código de 6 dígitos atual em temp/auth-2fa.txt para facilitar os testes sem celular
-        $currentCode = $ga->getCode($secret);
-        $tempDir = __DIR__ . '/../../../../temp';
-        if (!is_dir($tempDir)) { mkdir($tempDir, 0777, true); }
-        file_put_contents($tempDir . '/auth-2fa.txt', "Usuário: {$user['email']}\nSecret: {$secret}\nCódigo Válido Agora: {$currentCode}\n(Este código expira em 30 segundos)");
-        // ---------------------------------------------
-
-        $theme = $this->theme;
-        ob_start();
-        include __DIR__ . '/../views/admin_2fa.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_2fa', [
+            'user' => $user,
+            'secret' => $appSecret['secret'],
+            'qrCodeUrl' => $appSecret['qrCodeUrl'],
+            'theme' => $this->theme
+        ], __DIR__ . '/../views');
     }
 
     public function confirm2fa()
@@ -106,12 +103,7 @@ class UserController
         $code = $_POST['code'] ?? null;
 
         if ($user_id && $secret && $code) {
-            require_once __DIR__ . '/../GoogleAuthenticator.php';
-            $ga = new \PHPGangsta_GoogleAuthenticator();
-            
-            $checkResult = $ga->verifyCode($secret, $code, 2); // 2 = 2*30sec clock tolerance
-            
-            if ($checkResult) {
+            if ($this->twoFactor->verifyAppCode($secret, $code)) {
                 $this->db->table('users')->where('id', '=', $user_id)->update([
                     'two_factor_secret' => $secret
                 ]);
@@ -140,6 +132,7 @@ class UserController
         header("Location: " . BASE_URL . "/admin/users");
         exit;
     }
+
     public function change2faType()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
@@ -150,7 +143,7 @@ class UserController
         if ($user_id) {
             $this->db->table('users')->where('id', '=', $user_id)->update([
                 'two_factor_type' => $two_factor_type,
-                'two_factor_secret' => null // reseta o secret do google auth se mudar
+                'two_factor_secret' => null
             ]);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Método de 2FA atualizado!'];
         }

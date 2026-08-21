@@ -14,32 +14,34 @@ class ThemeManager
     }
 
     /**
-     * Renders a specific template file from the active theme.
-     * Extracts variables so they are available in the template scope.
-     * 
-     * @param string $template The name of the template file (without .php)
-     * @param array $args Data to be passed to the template
+     * Renders a template file
+     *
+     * @param string $template The template name (e.g., 'admin/dashboard')
+     * @param array $args Data to extract into the view
+     * @param string|null $pluginViewsDir Optional fallback directory for plugin views
      * @return string The rendered HTML
      * @throws Exception If template not found
      */
-    public function render(string $template, array $args = []): string
+    public function render(string $template, array $args = [], ?string $pluginViewsDir = null): string
     {
         $file = $this->activeThemePath . '/' . $template . '.php';
 
+        // Tenta achar na pasta do tema primeiro
         if (!file_exists($file)) {
-            throw new Exception("Template '{$template}' not found in theme.");
+            // Fallback para a pasta da view do plugin (se fornecida)
+            if ($pluginViewsDir !== null) {
+                $file = $pluginViewsDir . '/' . basename($template) . '.php';
+            }
+            
+            if (!file_exists($file)) {
+                throw new Exception("Template '{$template}' not found in theme or plugin.");
+            }
         }
 
-        // Extract variables to the current scope
         extract($args);
-
-        // Start output buffering
+        
         ob_start();
-        
-        // Include the file (it will use the variables extracted and $this)
         include $file;
-        
-        // Return the buffered content
         return ob_get_clean();
     }
 
