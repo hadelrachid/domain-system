@@ -7,11 +7,11 @@
     <base href="<?= defined('BASE_URL') && BASE_URL ? BASE_URL . '/' : '/' ?>">
     <style>
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; display: flex; height: 100vh; }
-        #adminmenuback { width: 160px; background: #1d2327; color: #fff; height: 100%; position: fixed; }
-        #adminmenu { padding: 0; margin: 0; list-style: none; margin-top: 20px; }
-        #adminmenu li a { display: block; padding: 10px 15px; color: #fff; text-decoration: none; font-size: 14px; }
-        #adminmenu li a:hover { background: #2c3338; color: #72aee6; }
-        #adminmenu li.current a { background: #2271b1; font-weight: 600; }
+        #adminmenuback { width: 160px; background: #111; color: #fff; height: 100%; position: fixed; border-right: 1px solid #2c3338; }
+        #adminmenu { padding: 0; margin: 0; list-style: none; }
+        #adminmenu li a { display: flex; align-items: center; gap: 8px; padding: 12px 15px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        #adminmenu li a:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
+        #adminmenu li.current a { background: #2271b1; color: #fff; font-weight: 600; }
         #wpcontent { margin-left: 160px; padding: 20px; width: calc(100% - 160px); overflow-y: auto; }
         h1 { font-size: 23px; font-weight: 400; margin: 0 0 20px; color: #1d2327; }
         .wrap { max-width: 1000px; }
@@ -34,7 +34,7 @@
             <img src="<?= BASE_URL ?>/assets/img/logo.svg" alt="Cockpit Logo" style="max-width: 130px; height: auto;">
         </div>
         <ul id="adminmenu">
-            <li><a href="admin">Painel</a></li>
+            <li><a href="admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Painel</a></li>
             <?php 
                 $app = \DomainSystem\Core\Application::getInstance();
                 if ($app) {
@@ -45,7 +45,7 @@
                     }
                 }
             ?>
-            <li><a href="admin/plugins">Plugins</a></li>
+            <li><a href="admin/plugins"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Plugins</a></li>
             
             <?php if (isset($_SESSION['user_id'])): ?>
             <li style="margin-top: 50px; border-top: 1px solid #2c3338;">
