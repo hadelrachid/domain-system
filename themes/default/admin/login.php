@@ -14,7 +14,7 @@
         .btn-submit { width: 100%; padding: 12px; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); margin-top: 10px; }
         .btn-submit:hover { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5); transform: translateY(-1px); }
         .btn-icon { background: transparent !important; border: none !important; box-shadow: none !important; color: #94a3b8; transition: color 0.2s; padding: 0; }
-        .btn-icon:hover { color: #f8fafc; transform: none !important; }
+        .btn-icon:hover { color: #f8fafc; }
         .timer-box { font-weight: bold; color: #fca5a5; }
     </style>
 </head>
@@ -87,8 +87,8 @@
                 <input type='email' name='email' required autofocus>
                 
                 <label>Senha</label>
-                <div style="position: relative;">
-                    <input type='password' name='password' id='login_password' required style="padding-right: 40px;">
+                <div style="position: relative; margin-bottom: 20px;">
+                    <input type='password' name='password' id='login_password' required style="padding-right: 40px; margin-bottom: 0;">
                     <button type="button" class="btn-icon" onclick="togglePassword('login_password', this)" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
