@@ -64,6 +64,26 @@ class AppointmentController
                     'reception_notes' => $reception_notes,
                     'status' => 'Confirmado'
                 ]);
+
+                // Dispara o evento de "Agendamento Criado" para o sistema
+                try {
+                    $patient = $this->db->table('patients')->where('id', '=', $patient_id)->first();
+                    $doctor = $this->db->table('doctors')->where('id', '=', $doctor_id)->first();
+                    
+                    if ($patient) {
+                        \DomainSystem\Core\Application::getInstance()->getDispatcher()->dispatch('appointment.created', [
+                            'patient_name' => $patient['name'] ?? 'Paciente',
+                            'patient_phone' => $patient['phone'] ?? '',
+                            'doctor_name' => $doctor['name'] ?? 'Médico',
+                            'appointment_date' => $appointment_date,
+                            'appointment_time' => $appointment_time
+                        ]);
+                    }
+                } catch (\Exception $evtEx) {
+                    // Protege o agendamento caso algum plugin falhe ao processar o evento
+                    error_log("Erro ao disparar evento de agendamento: " . $evtEx->getMessage());
+                }
+
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Agendamento criado com sucesso!'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $e->getMessage()];
