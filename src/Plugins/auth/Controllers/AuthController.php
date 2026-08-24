@@ -102,11 +102,25 @@ class AuthController
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_role'] = $user['role'] ?? 'admin';
-            $_SESSION['linked_doctor_id'] = $user['linked_doctor_id'] ?? null;
+            
+            // Se for médico, busca e salva o ID do médico na sessão
+            if ($_SESSION['user_role'] === 'doctor') {
+                $doctor = $this->db->table('doctors')->where('user_id', '=', $user['id'])->first();
+                $_SESSION['doctor_id'] = $doctor ? $doctor['id'] : null;
+            } else {
+                $_SESSION['doctor_id'] = null;
+            }
             
             unset($_SESSION['auth_error'], $_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);
             
-            header("Location: " . BASE_URL . "/admin");
+            // Roteamento inteligente baseado no papel
+            if ($_SESSION['user_role'] === 'doctor') {
+                header("Location: " . BASE_URL . "/admin/appointments/history"); // Temporário, depois criamos o dashboard próprio
+            } elseif ($_SESSION['user_role'] === 'receptionist') {
+                header("Location: " . BASE_URL . "/admin/appointments"); // Recepção vai direto para a fila
+            } else {
+                header("Location: " . BASE_URL . "/admin"); // Admin vai para o dashboard principal
+            }
             exit;
         }
 

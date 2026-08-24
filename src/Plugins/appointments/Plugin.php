@@ -18,12 +18,15 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
 
         // Registrar item no menu lateral
-        $events->addListener('admin.menu', function($menus) {
-            $menus[] = [
-                'title' => 'Agendamentos',
-                'url' => '/admin/appointments',
-                'icon' => '📅'
-            ];
+        $events->addListener('admin.menu', function($menus, $role = 'admin') {
+            if ($role === 'admin' || $role === 'receptionist') {
+                $menus[] = [
+                    'title' => 'Agendamentos',
+                    'url' => '/admin/appointments',
+                    'icon' => '📅'
+                ];
+            }
+            // Histórico (médicos, admin, recepção)
             $menus[] = [
                 'title' => 'Histórico',
                 'url' => '/admin/appointments/history',

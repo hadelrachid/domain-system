@@ -34,18 +34,26 @@
             <img src="<?= BASE_URL ?>/assets/img/logo.svg" alt="Cockpit Logo" style="max-width: 130px; height: auto;">
         </div>
         <ul id="adminmenu">
-            <li><a href="admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Painel</a></li>
             <?php 
                 $app = \DomainSystem\Core\Application::getInstance();
+                $userRole = $_SESSION['user_role'] ?? 'admin';
+                
+                if ($userRole === 'admin' || $userRole === 'receptionist') {
+                    echo '<li><a href="admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Painel</a></li>';
+                }
+
                 if ($app) {
-                    $menus = $app->getDispatcher()->applyFilters('admin.menu', []);
+                    $menus = $app->getDispatcher()->applyFilters('admin.menu', [], $userRole);
                     foreach ($menus as $menu) {
                         $icon = $menu['icon'] ?? '';
                         echo '<li><a href="' . htmlspecialchars(ltrim($menu['url'], '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a></li>';
                     }
                 }
+
+                if ($userRole === 'admin') {
+                    echo '<li><a href="admin/plugins"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg> Plugins</a></li>';
+                }
             ?>
-            <li><a href="admin/plugins"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg> Plugins</a></li>
             
             <?php if (isset($_SESSION['user_id'])): ?>
             <li style="margin-top: 50px; border-top: 1px solid #2c3338;">
