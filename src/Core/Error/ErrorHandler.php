@@ -48,8 +48,11 @@ class ErrorHandler
 
     private function logError(Throwable $e): void
     {
-        if (!is_dir(dirname($this->logPath))) {
-            mkdir(dirname($this->logPath), 0777, true);
+        $dir = dirname($this->logPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+            // Protege a pasta contra acesso via navegador web
+            file_put_contents($dir . '/.htaccess', "Deny from all\n");
         }
         
         $errorData = [
