@@ -13,9 +13,9 @@
 ### 🏛️ Arquitetura e Defesas
 
 - **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
-- **Plugins**: Lógica de negócio (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings...)
-- **Themes**: Apresentação (Tema default com layout admin SSR)
-- 🛡️ **Circuit Breaker (Disjuntor)**: Sistema nativo que intercepta erros fatais de compilação e desativa automaticamente plugins defeituosos para proteger o núcleo de quedas (evita a Tela Branca da Morte).
+- **Plugins**: Lógica de negócio (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings, WhatsApp Z-API...)
+- **Themes (Workspaces)**: Apresentação multi-perfil (Roteamento Inteligente injetando Layouts isolados para Doctor, Receptionist e Admin)
+- 🛡️ **Circuit Breaker (Disjuntor V2)**: Sistema inteligente com Regex Avançada que intercepta falhas e erros de dependência, desativando silenciosamente o plugin culpado para salvar o núcleo da "Tela Branca da Morte".
 
 ### 🚀 Como Iniciar
 
@@ -58,9 +58,9 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 ### 🏛️ Architecture & Defenses
 
 - **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
-- **Plugins**: Business Logic (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings...)
-- **Themes**: Presentation Layer (Default theme with SSR admin layout)
-- 🛡️ **Circuit Breaker**: Native system that intercepts fatal compilation errors and automatically disables faulty plugins to protect the system core (prevents the White Screen of Death).
+- **Plugins**: Business Logic (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings, WhatsApp Z-API...)
+- **Themes (Workspaces)**: Multi-profile Presentation Layer (Smart routing injecting isolated layouts for Doctors, Receptionists, and Admins)
+- 🛡️ **Circuit Breaker V2**: Advanced native system with smart Regex that intercepts fatal errors and missing dependencies, automatically isolating faulty plugins to protect the system core.
 
 ### 📚 Official Documentation
 
