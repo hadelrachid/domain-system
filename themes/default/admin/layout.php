@@ -1,3 +1,15 @@
+<?php
+$userRole = $_SESSION['user_role'] ?? 'admin';
+
+if ($userRole === 'doctor') {
+    include dirname(__DIR__) . '/doctor/layout.php';
+    return;
+}
+if ($userRole === 'receptionist') {
+    include dirname(__DIR__) . '/reception/layout.php';
+    return;
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
