@@ -84,12 +84,15 @@ class ErrorHandler
     {
         $file = $e->getFile();
         $trace = $e->getTraceAsString();
+        $message = $e->getMessage();
         $pluginName = null;
 
-        // Tenta achar a pasta do plugin causador
+        // Tenta achar a pasta do plugin causador no arquivo, trace ou mensagem
         if (preg_match("/src[\/\\\\]Plugins[\/\\\\]([a-zA-Z0-9_-]+)/i", $file, $matches)) {
             $pluginName = $matches[1];
         } elseif (preg_match("/src[\/\\\\]Plugins[\/\\\\]([a-zA-Z0-9_-]+)/i", $trace, $matches)) {
+            $pluginName = $matches[1];
+        } elseif (preg_match("/src[\/\\\\]Plugins[\/\\\\]([a-zA-Z0-9_-]+)/i", $message, $matches)) {
             $pluginName = $matches[1];
         }
 
