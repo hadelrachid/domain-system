@@ -3,14 +3,17 @@
 namespace DomainSystem\Plugins\medical_records\Controllers;
 
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Core\Theme\ThemeManager;
 
 class RecordController
 {
     private Connection $db;
+    private ThemeManager $theme;
 
-    public function __construct(Connection $db)
+    public function __construct(Connection $db, ThemeManager $theme)
     {
         $this->db = $db;
+        $this->theme = $theme;
     }
 
     public function view($appointmentId)
@@ -23,14 +26,14 @@ class RecordController
         $stmt->execute([$appointmentId]);
         $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!$appointment) die("Agendamento no encontrado.");
+        if (!$appointment) die("Agendamento não encontrado.");
 
-        // Buscar registro mdico (se j existir)
+        // Buscar registro médico (se já existir)
         $stmt = $pdo->prepare("SELECT * FROM medical_records WHERE appointment_id = ?");
         $stmt->execute([$appointmentId]);
         $record = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        // Se no existir, preparamos vazio
+        // Se não existir, preparamos vazio
         if (!$record) {
             $record = [
                 'id' => null,
@@ -42,7 +45,24 @@ class RecordController
             ];
         }
 
-        require __DIR__ . '/../views/record.php';
+        // Buscar histórico anterior do paciente (para o médico ver)
+        $stmtHistory = $pdo->prepare("
+            SELECT mr.*, a.appointment_date 
+            FROM medical_records mr
+            JOIN appointments a ON mr.appointment_id = a.id
+            WHERE mr.patient_id = ? AND mr.appointment_id != ?
+            ORDER BY a.appointment_date DESC
+        ");
+        $stmtHistory->execute([$appointment['patient_id'], $appointmentId]);
+        $pastRecords = $stmtHistory->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Renderiza a view do plugin e depois injeta no layout do SO
+        $content = $this->theme->render('record', [
+            'appointment' => $appointment, 
+            'record' => $record,
+            'pastRecords' => $pastRecords
+        ], __DIR__ . '/../views');
+        echo $this->theme->render('admin/layout', ['content' => $content]);
     }
 
     public function save($appointmentId)
@@ -70,7 +90,7 @@ class RecordController
         $prescricao = $_POST['prescricao'] ?? '';
         $evolucao = $_POST['evolucao'] ?? '';
 
-        // Checar se j existe
+        // Checar se já existe
         $stmt = $pdo->prepare("SELECT id FROM medical_records WHERE appointment_id = ?");
         $stmt->execute([$appointmentId]);
         $exists = $stmt->fetchColumn();
@@ -89,7 +109,7 @@ class RecordController
         if (isset($_POST['finalizar'])) {
              $stmt = $pdo->prepare("UPDATE appointments SET status = 'Finalizado' WHERE id = ?");
              $stmt->execute([$appointmentId]);
-             header("Location: " . BASE_URL . "/admin/appointments?success=Atendimento Finalizado");
+             header("Location: " . BASE_URL . "/admin/appointments/history?success=Atendimento Finalizado");
         } else {
              $stmt = $pdo->prepare("UPDATE appointments SET status = 'Em Atendimento' WHERE id = ?");
              $stmt->execute([$appointmentId]);
@@ -124,6 +144,8 @@ class RecordController
             $settings[$row['key_name']] = $row['key_value'];
         }
 
+        // Não vamos usar layout do SO para a impressão, ela é uma pág em branco pro papel
         require __DIR__ . '/../views/print.php';
     }
 }
+
