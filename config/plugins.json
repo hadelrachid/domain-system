@@ -8,6 +8,5 @@
     "medical_records": true,
     "settings": true,
     "SystemMonitor": true,
-    "hello_plugin": false,
     "whatsapp": true
 }

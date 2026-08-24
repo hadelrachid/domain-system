@@ -10,8 +10,11 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        /** @var \DomainSystem\Core\Events\EventDispatcher $events */
+        $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+
         // Add plugin to admin menu
-        $this->dispatcher->addFilter('admin.menu', function($menus) {
+        $events->addListener('admin.menu', function($menus) {
             $menus[] = [
                 'title' => 'WhatsApp Z-API',
                 'url' => 'admin/whatsapp',
@@ -21,14 +24,14 @@ class Plugin extends AbstractPlugin
         });
 
         // Register router dynamically when needed
-        $this->dispatcher->addListener('router.register', function(Router $router) {
+        $events->addListener('router.register', function(Router $router) {
             $router->get('/admin/whatsapp', [WhatsAppSettingsController::class, 'index']);
             $router->post('/admin/whatsapp/save', [WhatsAppSettingsController::class, 'save']);
             $router->post('/admin/whatsapp/test', [WhatsAppSettingsController::class, 'testMessage']);
         });
 
         // Hook into appointment creation
-        $this->dispatcher->addListener('appointment.created', function(array $data) {
+        $events->addListener('appointment.created', function(array $data) {
             // Placeholder: When an appointment is created, send a message
             // Wait, we need to resolve ZApiService from the container
             try {
