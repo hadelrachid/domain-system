@@ -6,7 +6,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
-
+[ 🇺🇸 Read in English ](CHANGELOG-en.md)
 ## [1.1.0] - A Era da Resiliência Arquitetural - 2026-08-24
 
 Esta atualização introduz proteções críticas no núcleo do sistema, além de resolver débitos técnicos identificados por auditoria profunda.

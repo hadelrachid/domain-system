@@ -3,6 +3,7 @@
 
 [ 📄 Documentação Principal ](README.md) | [ 📜 Histórico de Versões (Changelog) ](CHANGELOG.md) | [ 🕵️ Relatório de Auditoria ](auditoria.md)
 ---
+[ 🇺🇸 Read in English ](README-en.md)
 
 Um sistema de gestão de clínicas desenvolvido com uma arquitetura monolítica modular, desenhado para ser hiper-resiliente, altamente expansível e seguro.
 
