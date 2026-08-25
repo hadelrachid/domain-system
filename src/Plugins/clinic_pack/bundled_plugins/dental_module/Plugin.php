@@ -9,7 +9,7 @@ class Plugin extends AbstractPlugin
     public function register(): void
     {
         // Apenas provando que ele é carregado
-        $this->container->get(\DomainSystem\Core\Events\EventDispatcher::class)->addListener('init', function() {
+        $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class)->addListener('init', function() {
             if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
                 session_start();
             }
