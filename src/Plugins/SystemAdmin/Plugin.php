@@ -32,6 +32,8 @@ class Plugin extends AbstractPlugin
             // Rotas de Plugins
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);
             $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes']);
+            $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme']);
+            $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme']);
             $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin']);
             $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin']);
             $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin']);

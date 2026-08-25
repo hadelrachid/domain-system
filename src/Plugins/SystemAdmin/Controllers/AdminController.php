@@ -155,9 +155,33 @@ class AdminController
         if (is_dir($themesPath)) {
             $directories = glob($themesPath . '/*', GLOB_ONLYDIR);
             foreach ($directories as $dir) {
+                $folder = basename($dir);
+                $jsonPath = $dir . '/theme.json';
+                
+                $name = ucfirst($folder);
+                $description = '';
+                $version = '1.0.0';
+                $author = '';
+                $screenshot = '';
+                $isCore = in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default']);
+                
+                if (file_exists($jsonPath)) {
+                    $meta = json_decode(file_get_contents($jsonPath), true);
+                    $name = $meta['name'] ?? $name;
+                    $description = $meta['description'] ?? '';
+                    $version = $meta['version'] ?? '1.0.0';
+                    $author = $meta['author'] ?? '';
+                    $screenshot = $meta['screenshot'] ?? '';
+                }
+                
                 $themes[] = [
-                    'folder' => basename($dir),
-                    'name' => ucfirst(basename($dir)),
+                    'folder' => $folder,
+                    'name' => $name,
+                    'description' => $description,
+                    'version' => $version,
+                    'author' => $author,
+                    'screenshot' => $screenshot,
+                    'is_core' => $isCore
                 ];
             }
         }
@@ -169,5 +193,90 @@ class AdminController
         } catch (Exception $e) {
             return "Erro ao renderizar painel de temas: " . $e->getMessage();
         }
+    }
+
+    public function createTheme()
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        
+        $name = $_POST['theme_name'] ?? '';
+        $description = $_POST['theme_description'] ?? '';
+        $author = $_POST['theme_author'] ?? '';
+        
+        if (empty($name)) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome do tema é obrigatório.'];
+            header("Location: " . \BASE_URL . "/admin/themes");
+            exit;
+        }
+        
+        $folder = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
+        $folder = trim($folder, '-');
+        
+        $basePath = dirname(__DIR__, 4);
+        $themeDir = $basePath . '/themes/' . $folder;
+        
+        if (is_dir($themeDir)) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Já existe um tema com esse nome/pasta.'];
+            header("Location: " . \BASE_URL . "/admin/themes");
+            exit;
+        }
+        
+        mkdir($themeDir, 0777, true);
+        
+        $json = [
+            'name' => $name,
+            'description' => $description,
+            'version' => '1.0.0',
+            'author' => $author,
+            'screenshot' => ''
+        ];
+        
+        file_put_contents($themeDir . '/theme.json', json_encode($json, JSON_PRETTY_PRINT));
+        
+        $layoutHtml = "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>$name</title>\n</head>\n<body>\n    <h1>$name</h1>\n    <?= \$content ?? '' ?>\n</body>\n</html>";
+        file_put_contents($themeDir . '/layout.php', $layoutHtml);
+        
+        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Tema scaffolding criado com sucesso!'];
+        header("Location: " . \BASE_URL . "/admin/themes");
+        exit;
+    }
+
+    public function deleteTheme()
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        
+        $folder = $_POST['theme_folder'] ?? '';
+        $folder = basename($folder);
+        
+        if (empty($folder) || in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default'])) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é permitido excluir temas core vitais do sistema.'];
+            header("Location: " . \BASE_URL . "/admin/themes");
+            exit;
+        }
+        
+        $basePath = dirname(__DIR__, 4);
+        $themeDir = $basePath . '/themes/' . $folder;
+        
+        if (is_dir($themeDir)) {
+            $this->deleteDirectory($themeDir);
+            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema excluído com segurança e apagado do disco.'];
+        } else {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado.'];
+        }
+        
+        header("Location: " . \BASE_URL . "/admin/themes");
+        exit;
+    }
+
+    private function deleteDirectory(string $dir): bool
+    {
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir)) return unlink($dir);
+        
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') continue;
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+        }
+        return rmdir($dir);
     }
 }
