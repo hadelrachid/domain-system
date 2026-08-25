@@ -42,3 +42,13 @@ O sistema isola perfis:
 
 ---
 *Este sistema é um organismo vivo, programado para sobreviver a si mesmo e se expandir organicamente.*
+
+## 📖 Versionamento e Histórico
+Atualmente o projeto encontra-se na versão **[1.1.0]**.
+Para acompanhar toda a evolução e correções, consulte o nosso [CHANGELOG.md](CHANGELOG.md).
+
+## 🤝 Colaboradores Principais
+Este sistema é construído por uma equipe mista de inteligência humana e artificial:
+
+- **Rachid** - Engenheiro de Software (Criador, Idealizador da Arquitetura e Product Owner)
+- **Antigravity (Google DeepMind)** - Arquiteto I.A. (Co-desenvolvedor e Auditor de Código)
