@@ -1,7 +1,7 @@
 # 🏥 Domain System Clínica (Modular)
 > **Versão Atual:** `[v1.1.0]`
 
-[ 📄 Documentação Principal ](README.md) | [ 📜 Histórico de Versões (Changelog) ](docs/CHANGELOG.md) | [ 🕵️ Relatório de Auditoria ](docs/auditoria.md)
+[ 🌐 Site Oficial (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentação ](README.md) | [ 📜 Changelog ](docs/CHANGELOG.md) | [ 🕵️ Auditoria ](docs/auditoria.md)
 ---
 [ 🇺🇸 Read in English ](README-en.md)
 
