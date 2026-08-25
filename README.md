@@ -1,11 +1,12 @@
-# 🏥 Domain System Clínica (Modular)
+# 🚀 Domain System (Universal Modular Framework)
 > **Versão Atual:** `[v1.1.0]`
 
 [ 🌐 Site Oficial (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentação ](README.md) | [ 📜 Changelog ](docs/CHANGELOG.md) | [ 🕵️ Auditoria ](docs/auditoria.md)
 ---
 [ 🇺🇸 Read in English ](README-en.md)
 
-Um sistema de gestão de clínicas desenvolvido com uma arquitetura monolítica modular, desenhado para ser hiper-resiliente, altamente expansível e seguro.
+Um motor (framework) arquitetural hiper-resiliente, desenhado para ser infinitamente expansível. Semelhante ao conceito do WordPress, o Domain System não é apenas um software específico — ele se transforma em **qualquer coisa** dependendo dos plugins ativados.
+Pode ser um **Sistema de Clínica Médica**, um **ERP Financeiro** ou um **Sistema Jurídico para Escritórios de Advocacia**. Tudo depende do pacote de plugins conectados ao núcleo.
 
 ## 🏗️ Arquitetura do Sistema
 
