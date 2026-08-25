@@ -145,4 +145,29 @@ class AdminController
         header("Location: " . BASE_URL . "/admin/plugins");
         exit;
     }
+
+    public function listThemes()
+    {
+        $basePath = dirname(__DIR__, 4);
+        $themesPath = $basePath . '/themes';
+        
+        $themes = [];
+        if (is_dir($themesPath)) {
+            $directories = glob($themesPath . '/*', GLOB_ONLYDIR);
+            foreach ($directories as $dir) {
+                $themes[] = [
+                    'folder' => basename($dir),
+                    'name' => ucfirst(basename($dir)),
+                ];
+            }
+        }
+        
+        try {
+            return $this->theme->render('themes_panel', [
+                'themes' => $themes
+            ]);
+        } catch (Exception $e) {
+            return "Erro ao renderizar painel de temas: " . $e->getMessage();
+        }
+    }
 }
