@@ -51,7 +51,7 @@ The system isolates profiles:
 
 ## 📖 Versioning and History
 The project is currently at version **[1.1.0]**.
-To track all evolution and fixes, check our [CHANGELOG-en.md](CHANGELOG-en.md).
+To track all evolution and fixes, check our [CHANGELOG-en.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
 
 ## 🤝 Main Collaborators
 This system is built by a mixed team of human and artificial intelligence:
