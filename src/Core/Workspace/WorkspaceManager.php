@@ -42,7 +42,8 @@ class WorkspaceManager
         }
 
         // Troca automaticamente a fiação do motor de renderização para o CockPIT atual!
-        $this->theme->setActiveThemePath(BASE_PATH . '/themes/' . $workspace->getThemeName());
+        $basePath = dirname(__DIR__, 3);
+        $this->theme->setActiveThemePath($basePath . '/themes/' . $workspace->getThemeName());
 
         return $workspace;
     }
