@@ -19,13 +19,12 @@ class AuthController
         $this->twoFactor = $twoFactor;
     }
 
-    public function showLoginForm()
+    public function showLoginForm(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
         if (isset($_SESSION['user_id'])) {
-            header("Location: " . BASE_URL . "/admin");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
         }
 
         // --- MODO DESENVOLVIMENTO (XAMPP SIMULADO) ---
@@ -42,16 +41,16 @@ class AuthController
         // ---------------------------------------------
 
         $error = $_SESSION['auth_error'] ?? null;
-        return $this->theme->render('login', ['error' => $error]);
+        return new \DomainSystem\Core\Http\Response($this->theme->render('login', ['error' => $error]));
     }
 
-    public function authenticate()
+    public function authenticate(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $twofa_code = $_POST['twofa_code'] ?? '';
+        $email = $request->input('email', '');
+        $password = $request->input('password', '');
+        $twofa_code = $request->input('twofa_code', '');
 
         $user = $this->db->table('users')->where('email', '=', $email)->first();
         
@@ -77,8 +76,7 @@ class AuthController
                         $_SESSION['pending_2fa_email'] = $email;
                         $_SESSION['pending_2fa_type'] = $two_factor_type;
                         $_SESSION['pending_2fa_password_ok'] = true;
-                        header("Location: " . BASE_URL . "/login");
-                        exit;
+                        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
                     }
 
                     // Passo 2: Validação
@@ -86,8 +84,7 @@ class AuthController
                         $_SESSION['auth_error'] = "Código inválido ou expirado. Tente novamente.";
                         $_SESSION['pending_2fa_email'] = $email;
                         $_SESSION['pending_2fa_type'] = $two_factor_type;
-                        header("Location: " . BASE_URL . "/login");
-                        exit;
+                        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
                     }
                 }
             }
@@ -110,25 +107,22 @@ class AuthController
             
             // Roteamento inteligente baseado no papel
             if ($_SESSION['user_role'] === 'lawyer') {
-                header("Location: " . BASE_URL . "/admin/legal");
+                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/legal");
             } else {
-                header("Location: " . BASE_URL . "/admin");
+                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
             }
-            exit;
         }
 
         unset($_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);
         $_SESSION['auth_error'] = "Credenciais inválidas. Verifique seu e-mail e senha.";
-        header("Location: " . BASE_URL . "/login");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
     }
 
-    public function logout()
+    public function logout(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         session_destroy();
-        header("Location: " . BASE_URL . "/login");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
     }
 }
 

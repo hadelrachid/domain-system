@@ -17,7 +17,7 @@ class AdminController
         $this->theme = $theme;
     }
 
-    public function listPlugins()
+    public function listPlugins(\DomainSystem\Core\Http\Request $request)
     {
         // Define paths
         $basePath = dirname(__DIR__, 4); // DomainSystem root
@@ -77,11 +77,11 @@ class AdminController
         }
     }
 
-    public function togglePlugin()
+    public function togglePlugin(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        $pluginName = $_POST['plugin_name'] ?? null;
-        $action = $_POST['action'] ?? null;
+        $pluginName = $request->input('plugin_name');
+        $action = $request->input('action');
 
         if ($pluginName && $action) {
             if ($action === 'enable') {
@@ -104,32 +104,31 @@ class AdminController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/plugins");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/plugins");
     }
 
-    public function uploadPlugin()
+    public function uploadPlugin(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        if (isset($_FILES['plugin_zip']) && $_FILES['plugin_zip']['error'] === UPLOAD_ERR_OK) {
+        $file = $request->file('plugin_zip');
+        if ($file && $file['error'] === UPLOAD_ERR_OK) {
             try {
-                $this->manager->installFromZip($_FILES['plugin_zip']['tmp_name']);
+                $this->manager->installFromZip($file['tmp_name']);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação: ' . $e->getMessage()];
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/plugins");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/plugins");
     }
 
-    public function deletePlugin()
+    public function deletePlugin(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        $pluginName = $_POST['plugin_name'] ?? null;
-        $pluginFolder = $_POST['plugin_folder'] ?? null;
+        $pluginName = $request->input('plugin_name');
+        $pluginFolder = $request->input('plugin_folder');
 
         if ($pluginName && $pluginFolder) {
             // Seguranca: sanitizar pasta para evitar directory traversal
@@ -142,11 +141,10 @@ class AdminController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/plugins");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/plugins");
     }
 
-    public function listThemes()
+    public function listThemes(\DomainSystem\Core\Http\Request $request)
     {
         $basePath = dirname(__DIR__, 4);
         $themesPath = $basePath . '/themes';
@@ -195,18 +193,17 @@ class AdminController
         }
     }
 
-    public function createTheme()
+    public function createTheme(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        $name = $_POST['theme_name'] ?? '';
-        $description = $_POST['theme_description'] ?? '';
-        $author = $_POST['theme_author'] ?? '';
+        $name = $request->input('theme_name', '');
+        $description = $request->input('theme_description', '');
+        $author = $request->input('theme_author', '');
         
         if (empty($name)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome do tema é obrigatório.'];
-            header("Location: " . \BASE_URL . "/admin/themes");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
         $folder = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
@@ -217,8 +214,7 @@ class AdminController
         
         if (is_dir($themeDir)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Já existe um tema com esse nome/pasta.'];
-            header("Location: " . \BASE_URL . "/admin/themes");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
         mkdir($themeDir, 0777, true);
@@ -237,21 +233,19 @@ class AdminController
         file_put_contents($themeDir . '/layout.php', $layoutHtml);
         
         $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Tema scaffolding criado com sucesso!'];
-        header("Location: " . \BASE_URL . "/admin/themes");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
     }
 
-    public function deleteTheme()
+    public function deleteTheme(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        $folder = $_POST['theme_folder'] ?? '';
+        $folder = $request->input('theme_folder', '');
         $folder = basename($folder);
         
         if (empty($folder) || in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default'])) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é permitido excluir temas core vitais do sistema.'];
-            header("Location: " . \BASE_URL . "/admin/themes");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
         $basePath = dirname(__DIR__, 4);
@@ -264,8 +258,7 @@ class AdminController
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado.'];
         }
         
-        header("Location: " . \BASE_URL . "/admin/themes");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
     }
 
     private function deleteDirectory(string $dir): bool

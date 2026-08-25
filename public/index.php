@@ -20,10 +20,10 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 
 // Dispatch the request
 try {
-    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $request = \DomainSystem\Core\Http\Request::capture();
     
     // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
-    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $uri = $request->uri();
     $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
     $scriptName = str_replace('\\', '/', $scriptName);
     
@@ -35,35 +35,45 @@ try {
     $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
     if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
         $uri = substr($uri, strlen($baseFolder));
-        define('BASE_URL', $baseFolder);
+        if (!defined('BASE_URL')) define('BASE_URL', $baseFolder);
     } else {
-        define('BASE_URL', rtrim($scriptName, '/'));
+        if (!defined('BASE_URL')) define('BASE_URL', rtrim($scriptName, '/'));
     }
     
     if (empty($uri)) {
         $uri = '/';
     }
     
-    $response = $app->getRouter()->dispatch($method, $uri);
+    // Atualiza o Request com a URI limpa para o Router
+    $request->server['REQUEST_URI'] = $uri;
+    
+    $response = $app->getRouter()->dispatch($request);
+    
+    // Se o controller retornou string em vez de objeto Response, nós o convertemos automaticamente
+    if (!$response instanceof \DomainSystem\Core\Http\Response) {
+        if (is_array($response) || is_object($response)) {
+            $response = \DomainSystem\Core\Http\Response::json($response);
+        } else {
+            $response = new \DomainSystem\Core\Http\Response((string)$response);
+        }
+    }
     
     // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-    if (is_string($response) && strpos($uri, '/admin') === 0 && !isset($_GET['raw'])) {
+    if (strpos($uri, '/admin') === 0 && !isset($_GET['raw'])) {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $role = $_SESSION['user_role'] ?? 'admin';
         $workspace = $app->getWorkspaceManager()->getWorkspace($role);
-        $response = $workspace->wrap($response);
+        // O Workspace envolve a string HTML de dentro do Response
+        $wrappedContent = $workspace->wrap($response->getContent());
+        $response->setContent($wrappedContent);
     }
 
-    if (is_array($response) || is_object($response)) {
-        header('Content-Type: application/json');
-        echo json_encode($response);
-    } else {
-        echo $response;
-    }
+    $response->send();
+    
 } catch (Exception $e) {
     if ($e->getCode() == 404) {
-        http_response_code(404);
-        echo "404 Not Found: " . $e->getMessage();
+        $errorResponse = new \DomainSystem\Core\Http\Response("404 Not Found: " . $e->getMessage(), 404);
+        $errorResponse->send();
     } else {
         // Re-joga a exceção para que o ErrorHandler oficial capture e crie a tela bonita
         throw $e;

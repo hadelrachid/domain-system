@@ -17,7 +17,7 @@ class DashboardController
         $this->db = $db;
     }
 
-    public function index()
+    public function index(\DomainSystem\Core\Http\Request $request)
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
