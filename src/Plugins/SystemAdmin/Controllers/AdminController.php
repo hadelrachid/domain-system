@@ -68,7 +68,7 @@ class AdminController
         }
 
         try {
-            return $this->theme->render('admin/plugins', [
+            return $this->theme->render('plugins', [
                 'plugins' => $allPlugins,
                 'crashes' => $crashes
             ]);

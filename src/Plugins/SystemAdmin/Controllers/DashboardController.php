@@ -44,7 +44,7 @@ class DashboardController
                         ELSE 3 END, a.appointment_time ASC
                 ")->fetchAll(PDO::FETCH_ASSOC);
 
-                return $this->theme->render('admin/dashboard_doctor', [
+                return $this->theme->render('dashboard_doctor', [
                     'appointmentsToday' => $appointmentsToday,
                     'patientsServed' => $patientsServed,
                     'pendingQueue' => $pendingQueue,
@@ -78,7 +78,7 @@ class DashboardController
                         ELSE 4 END, a.appointment_date ASC, a.appointment_time ASC
                 ")->fetchAll(PDO::FETCH_ASSOC);
 
-                return $this->theme->render('admin/dashboard', [
+                return $this->theme->render('dashboard', [
                     'theme' => $this->theme,
                     'totalPatients' => $totalPatients,
                     'totalDoctors' => $totalDoctors,

@@ -42,7 +42,7 @@ class AuthController
         // ---------------------------------------------
 
         $error = $_SESSION['auth_error'] ?? null;
-        return $this->theme->render('admin/login', ['error' => $error]);
+        return $this->theme->render('login', ['error' => $error]);
     }
 
     public function authenticate()
