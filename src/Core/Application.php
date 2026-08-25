@@ -30,7 +30,7 @@ class Application
         $this->router = new Router($container);
         
         // Define the default theme path. This can be changed later by a DB config or a plugin.
-        $themePath = $basePath . '/themes/default';
+        $themePath = $basePath . '/themes/admin';
         $this->themeManager = new ThemeManager($themePath);
         $this->themeManager->setDispatcher($dispatcher);
         $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
