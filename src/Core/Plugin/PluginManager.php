@@ -54,8 +54,9 @@ class PluginManager
                 }
             }
 
-            // Apenas tentamos instanciar o plugin se ele estiver ATIVO ou se for CORE
-            $isActive = $forceActive || ($activeStates[$pluginName] ?? false);
+            // Se estiver explicitamente definido como 'false' no json, bloqueia até o forceActive!
+            $isExplicitlyDisabled = isset($activeStates[$pluginName]) && $activeStates[$pluginName] === false;
+            $isActive = (!$isExplicitlyDisabled && $forceActive) || (!empty($activeStates[$pluginName]));
             $isCore = isset($metadata['core']) && $metadata['core'] === true;
 
             if ($isActive || $isCore) {
@@ -238,7 +239,7 @@ class PluginManager
         if ($this->isCore($pluginName)) return;
 
         $states = $this->getActiveStates();
-        unset($states[$pluginName]);
+        $states[$pluginName] = false;
         $this->saveStates($states);
     }
 
