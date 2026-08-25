@@ -32,7 +32,6 @@ class ApiController
 
         if (!$data) {
             return ['success' => false, 'message' => 'Nenhum dado recebido ou JSON inválido.'];
-            exit;
         }
 
         $nome = $data['paciente_nome'] ?? '';
@@ -44,9 +43,8 @@ class ApiController
         // O theme envia medico_id, vamos usar ou mapear
         $medico_id = !empty($data['medico_id']) ? $data['medico_id'] : null;
 
-        if (empty($nome) || empty($telefone) || empty($data_consulta) || empty($horario)) {
-            return ['success' => false, 'message' => 'Campos obrigatórios: Nome, Celular, Data e Horário.'];
-            exit;
+        if (empty($nome) || empty($telefone) || empty($data_consulta) || empty($horario) || empty($medico_id)) {
+            return ['success' => false, 'message' => 'Campos obrigatórios: Nome, Celular, Data, Horário e Médico.'];
         }
 
         // Tenta achar paciente pelo telefone (simplificado)
@@ -64,7 +62,7 @@ class ApiController
         try {
             $this->db->table('appointments')->insert([
                 'patient_id' => $patientId,
-                'doctor_id' => $medico_id ?: 1, // fallback provisório
+                'doctor_id' => $medico_id,
                 'appointment_date' => $data_consulta,
                 'appointment_time' => $horario,
                 'status' => 'Pendente',
@@ -75,7 +73,6 @@ class ApiController
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Erro ao salvar agendamento: ' . $e->getMessage()];
         }
-        exit;
     }
 
     public function testConnection()
@@ -83,7 +80,6 @@ class ApiController
         header('Content-Type: application/json');
         header("Access-Control-Allow-Origin: *");
         return ['success' => true, 'message' => 'Conexão com o Domain System estabelecida com sucesso!'];
-        exit;
     }
 }
 

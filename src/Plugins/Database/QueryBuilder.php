@@ -85,6 +85,33 @@ class QueryBuilder
         return (int) $this->connection->getPdo()->lastInsertId();
     }
 
+    public function upsert(array $data, array $conflictColumns, array $updateColumns): int
+    {
+        $columns = array_keys($data);
+        $placeholders = [];
+        $bindings = [];
+
+        foreach ($columns as $col) {
+            $paramName = "i_" . $this->bindingCounter++;
+            $placeholders[] = ":$paramName";
+            $bindings[$paramName] = $data[$col];
+        }
+
+        $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        
+        $sql .= " ON CONFLICT(" . implode(', ', $conflictColumns) . ") DO UPDATE SET ";
+        $sets = [];
+        foreach ($updateColumns as $uCol) {
+            $sets[] = "$uCol = excluded.$uCol";
+        }
+        $sql .= implode(', ', $sets);
+
+        $stmt = $this->connection->getPdo()->prepare($sql);
+        $stmt->execute($bindings);
+        
+        return $stmt->rowCount();
+    }
+
     public function update(array $data): int
     {
         $sets = [];

@@ -136,49 +136,12 @@ class DoctorController
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
         try {
-            // Simulando um JSON recebido do WordPress
-            $mockApiResponse = [
-                [
-                    'wp_id' => 101,
-                    'name' => 'Dr. House (Via WP)',
-                    'crm' => 'CRM/SP 123456',
-                    'specialty' => 'Diagnóstico',
-                    'photo_url' => 'https://randomuser.me/api/portraits/men/32.jpg'
-                ],
-                [
-                    'wp_id' => 102,
-                    'name' => 'Dra. Meredith Grey (Via WP)',
-                    'crm' => 'CRM/SP 654321',
-                    'specialty' => 'Cirurgia Geral',
-                    'photo_url' => 'https://randomuser.me/api/portraits/women/44.jpg'
-                ]
-            ];
-
+            // TODO: Implementar busca real na API do WordPress para sincronizar médicos
+            // Ex: $apiResponse = $this->httpClient->get('https://daherclinica.com/wp-json/daher/v1/doctors');
+            // $doctorsData = json_decode($apiResponse, true);
+            
             $syncedCount = 0;
-
-            foreach ($mockApiResponse as $docData) {
-                $exists = $this->db->table('doctors')->where('wp_id', '=', $docData['wp_id'])->get();
-                
-                if (empty($exists)) {
-                    $this->db->table('doctors')->insert([
-                        'wp_id' => $docData['wp_id'],
-                        'name' => $docData['name'],
-                        'crm' => $docData['crm'],
-                        'specialty' => $docData['specialty'],
-                        'consultation_time' => 30,
-                        'photo_url' => $docData['photo_url']
-                    ]);
-                    $syncedCount++;
-                } else {
-                    $this->db->table('doctors')->where('id', '=', $exists[0]['id'])->update([
-                        'name' => $docData['name'],
-                        'crm' => $docData['crm'],
-                        'specialty' => $docData['specialty'],
-                        'photo_url' => $docData['photo_url']
-                    ]);
-                    $syncedCount++;
-                }
-            }
+            // foreach ($doctorsData as $docData) { ... }
 
             $_SESSION['flash_message'] = [
                 'type' => 'success', 
