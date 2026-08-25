@@ -46,6 +46,14 @@ try {
     
     $response = $app->getRouter()->dispatch($method, $uri);
     
+    // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
+    if (is_string($response) && strpos($uri, '/admin') === 0 && !isset($_GET['raw'])) {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        $role = $_SESSION['user_role'] ?? 'admin';
+        $workspace = $app->getWorkspaceManager()->getWorkspace($role);
+        $response = $workspace->wrap($response);
+    }
+
     if (is_array($response) || is_object($response)) {
         header('Content-Type: application/json');
         echo json_encode($response);

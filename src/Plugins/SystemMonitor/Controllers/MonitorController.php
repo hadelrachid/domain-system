@@ -28,11 +28,7 @@ class MonitorController
             $logs = json_decode($content, true) ?: [];
         }
 
-        ob_start();
-        require dirname(__DIR__) . '/views/admin_monitor.php';
-        $content = ob_get_clean();
-
-        return $this->theme->render('admin/layout', ['content' => $content]);
+        return $this->theme->render('admin_monitor', ['logs' => $logs], dirname(__DIR__) . '/views');
     }
 
     public function clear()
@@ -55,3 +51,4 @@ class MonitorController
         exit;
     }
 }
+

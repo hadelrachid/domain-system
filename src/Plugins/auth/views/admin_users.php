@@ -1,5 +1,3 @@
-<?php ob_start(); ?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h1 style="margin: 0;">Usuários e Permissões</h1>
 </div>
@@ -11,7 +9,7 @@
     <?php unset($_SESSION['flash_message']); ?>
 <?php endif; ?>
 
-<div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+<div style="display: flex; flex-direction: column; gap: 20px;">
     <div style="flex: 1; min-width: 300px; background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px;">
         <h2 style="margin-top: 0; font-size: 16px;">Adicionar Novo Usuário</h2>
         <form method="POST" action="<?= BASE_URL ?>/admin/users">
@@ -122,11 +120,6 @@
     </div>
 </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
-
 <script>
 function togglePasswordVisibility(inputId, btn) {
     var input = document.getElementById(inputId);
@@ -140,3 +133,5 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 </script>
+
+

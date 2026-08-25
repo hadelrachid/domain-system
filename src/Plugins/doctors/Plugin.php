@@ -16,6 +16,11 @@ class Plugin extends AbstractPlugin
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
 
+        $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
+            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+            $wm->registerWorkspace('doctor', new \DomainSystem\Plugins\doctors\Workspace\DoctorWorkspace($theme));
+        });
+
         // Registrar item no menu lateral
         $events->addListener('admin.menu', function($menu) {
             $menu[] = [
@@ -57,3 +62,4 @@ class Plugin extends AbstractPlugin
         ");
     }
 }
+

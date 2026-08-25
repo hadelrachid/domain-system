@@ -1,5 +1,3 @@
-<?php ob_start(); ?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h1 style="margin: 0;">Configurar 2FA para: <?= htmlspecialchars($user['name']) ?></h1>
     <a href="<?= BASE_URL ?>/admin/users" class="page-title-action">&larr; Voltar para Usuários</a>
@@ -30,7 +28,4 @@
     </form>
 </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

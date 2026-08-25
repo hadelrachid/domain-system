@@ -1,6 +1,4 @@
-<?php ob_start(); ?>
-
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
         <h1>Editar Médico</h1>
         <a href="<?= BASE_URL ?>/admin/doctors" class="page-title-action">&larr; Voltar para a lista</a>
     </div>
@@ -47,7 +45,4 @@
         </form>
     </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

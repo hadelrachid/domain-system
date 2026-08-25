@@ -1,6 +1,4 @@
-<?php ob_start(); ?>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h1 style="margin: 0;">Profissionais / Médicos</h1>
         
         <!-- Botão de Sincronização com o Site Principal -->
@@ -19,9 +17,9 @@
     <?php endif; ?>
 
     <style>
-        .flex-container { display: flex; gap: 20px; align-items: flex-start; }
-        .table-responsive { overflow-x: auto; flex: 2; }
-        .form-panel { flex: 1; min-width: 300px; }
+        .flex-container { display: flex; flex-direction: column; gap: 20px; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .form-panel { width: 100%; max-width: 800px; margin-bottom: 20px; }
         @media (max-width: 768px) {
             .flex-container { flex-direction: column; }
             .table-responsive, .form-panel { width: 100%; flex: none; }
@@ -104,7 +102,4 @@
         
     </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

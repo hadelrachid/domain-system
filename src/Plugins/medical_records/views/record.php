@@ -119,5 +119,36 @@ $pageTitle = "Prontuário: " . htmlspecialchars($appointment['patient_name']);
                 <button type="submit" name="finalizar" class="btn btn-finish">Finalizar Atendimento</button>
             </div>
         </form>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="font-size: 16px; margin: 0 0 15px 0; color: #38bdf8;">Exames Anexados</h2>
+            
+            <?php if (!empty($exams)): ?>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <?php foreach($exams as $ex): ?>
+                        <div style="background: rgba(15,23,42,0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); position: relative;">
+                            <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($ex['file_name']) ?>">
+                                <?= htmlspecialchars($ex['file_name']) ?>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <a href="<?= BASE_URL . $ex['file_path'] ?>" target="_blank" class="btn" style="background: #38bdf8; color: #0f172a; padding: 4px 8px; font-size: 11px;">Visualizar</a>
+                                <form method="POST" action="<?= BASE_URL ?>/admin/appointments/record/<?= $appointment['id'] ?>/delete-exam" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja apagar este exame?')">
+                                    <input type="hidden" name="exam_id" value="<?= $ex['id'] ?>">
+                                    <button type="submit" class="btn" style="background: #ef4444; color: #fff; padding: 4px 8px; font-size: 11px;">Excluir</button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p style="color: #94a3b8; font-size: 13px;">Nenhum exame anexado a este atendimento.</p>
+            <?php endif; ?>
+
+            <form method="POST" action="<?= BASE_URL ?>/admin/appointments/record/<?= $appointment['id'] ?>/upload-exam" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; background: rgba(15,23,42,0.3); padding: 15px; border-radius: 8px;">
+                <input type="file" name="exam_file" required style="color: #cbd5e1; font-size: 13px;">
+                <button type="submit" class="btn" style="background: #10b981; color: #fff; border: none; padding: 8px 15px;">⬆️ Enviar Arquivo</button>
+            </form>
+        </div>
     </div>
 </div>
+

@@ -1,6 +1,4 @@
-<?php ob_start(); ?>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h1 style="margin: 0;">Agenda de Consultas</h1>
     </div>
 
@@ -12,9 +10,9 @@
     <?php endif; ?>
 
     <style>
-        .flex-container { display: flex; gap: 20px; align-items: flex-start; }
-        .table-responsive { overflow-x: auto; flex: 2; }
-        .form-panel { flex: 1; min-width: 300px; }
+        .flex-container { display: flex; flex-direction: column; gap: 20px; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .form-panel { width: 100%; max-width: 800px; margin-bottom: 20px; }
         @media (max-width: 768px) {
             .flex-container { flex-direction: column; }
             .table-responsive, .form-panel { width: 100%; flex: none; }
@@ -23,6 +21,9 @@
         .status-pendente { background: #fff3cd; color: #856404; }
         .status-confirmado { background: #d1ecf1; color: #0c5460; }
         .status-atendido { background: #d4edda; color: #155724; }
+        
+        .status-aguardando-triagem { background: #ffeeba; color: #856404; } .status-aguardando-médico { background: #cce5ff; color: #004085; } .status-aguardando { background: #ffeeba; color: #856404; } /* Aguardando Triagem */
+        .status-medico { background: #cce5ff; color: #004085; } /* Aguardando Médico */
         .status-cancelado { background: #f8d7da; color: #721c24; text-decoration: line-through; }
     </style>
 
@@ -108,7 +109,7 @@
                     <?php else: ?>
                         <?php foreach ($appointments as $a): ?>
                             <?php 
-                                $statusClass = 'status-' . strtolower($a['status']);
+                                $statusClass = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
                                 $dateObj = new DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
                                 $attendance = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
                             ?>
@@ -140,6 +141,7 @@
                                                     <select name="status" onchange="this.form.submit()" style="font-size: 11px; padding: 2px;">
                                                         <option value="">Alterar...</option>
                                                         <option value="Confirmado">Confirmar</option>
+                                                        <option value="Aguardando Triagem">Chegou (Aguardando Triagem)</option>
                                                         <option value="Pendente">Marcar Pendente</option>
                                                         <option value="Cancelado">Cancelar Consulta</option>
                                                     </select>
@@ -176,7 +178,4 @@
         });
     </script>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

@@ -1,5 +1,3 @@
-<?php ob_start(); ?>
-
 <h1>
     Plugins
     <button type="button" class="page-title-action" onclick="document.getElementById('upload-form').style.display='block'">Adicionar Novo</button>
@@ -113,7 +111,4 @@
     </tbody>
 </table>
 
-<?php 
-$content = ob_get_clean();
-require __DIR__ . '/layout.php';
-?>
+

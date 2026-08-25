@@ -31,7 +31,7 @@ class ApiController
         $data = json_decode($raw_data, true);
 
         if (!$data) {
-            echo json_encode(['success' => false, 'message' => 'Nenhum dado recebido ou JSON inválido.']);
+            return ['success' => false, 'message' => 'Nenhum dado recebido ou JSON inválido.'];
             exit;
         }
 
@@ -45,7 +45,7 @@ class ApiController
         $medico_id = !empty($data['medico_id']) ? $data['medico_id'] : null;
 
         if (empty($nome) || empty($telefone) || empty($data_consulta) || empty($horario)) {
-            echo json_encode(['success' => false, 'message' => 'Campos obrigatórios: Nome, Celular, Data e Horário.']);
+            return ['success' => false, 'message' => 'Campos obrigatórios: Nome, Celular, Data e Horário.'];
             exit;
         }
 
@@ -71,9 +71,9 @@ class ApiController
                 'reception_notes' => $queixa
             ]);
             
-            echo json_encode(['success' => true, 'message' => 'Agendamento salvo com sucesso no Domain System.']);
+            return ['success' => true, 'message' => 'Agendamento salvo com sucesso no Domain System.'];
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Erro ao salvar agendamento: ' . $e->getMessage()]);
+            return ['success' => false, 'message' => 'Erro ao salvar agendamento: ' . $e->getMessage()];
         }
         exit;
     }
@@ -82,7 +82,8 @@ class ApiController
     {
         header('Content-Type: application/json');
         header("Access-Control-Allow-Origin: *");
-        echo json_encode(['success' => true, 'message' => 'Conexão com o Domain System estabelecida com sucesso!']);
+        return ['success' => true, 'message' => 'Conexão com o Domain System estabelecida com sucesso!'];
         exit;
     }
 }
+

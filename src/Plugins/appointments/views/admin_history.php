@@ -1,5 +1,3 @@
-<?php ob_start(); ?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h1 style="margin: 0;">Histórico de Atendimentos</h1>
     <a href="<?= BASE_URL ?>/admin/appointments" class="page-title-action">&larr; Voltar para a Fila</a>
@@ -33,7 +31,7 @@
             <?php else: ?>
                 <?php foreach ($appointments as $a): ?>
                     <?php 
-                        $statusClass = 'status-' . strtolower($a['status']);
+                        $statusClass = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
                         $dateObj = new DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
                         $attendance = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
                     ?>
@@ -61,7 +59,4 @@
     </table>
 </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

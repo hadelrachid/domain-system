@@ -27,12 +27,7 @@ class WhatsAppSettingsController
     public function index()
     {
         $settings = $this->zapi->getSettings();
-        
-        ob_start();
-        require dirname(__DIR__) . '/views/admin_whatsapp.php';
-        $content = ob_get_clean();
-
-        return $this->theme->render('admin/layout', ['content' => $content]);
+        return $this->theme->render('admin_whatsapp', ['settings' => $settings], dirname(__DIR__) . '/views');
     }
 
     public function save()
@@ -82,3 +77,4 @@ class WhatsAppSettingsController
         exit;
     }
 }
+

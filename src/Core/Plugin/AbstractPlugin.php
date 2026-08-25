@@ -66,4 +66,10 @@ abstract class AbstractPlugin implements PluginInterface
     }
 
     abstract public function register(): void;
+    
+    // Lifecycle hooks defaults
+    public function boot(): void {}
+    public function activate(): void {}
+    public function deactivate(): void {}
+    public function uninstall(): void {}
 }

@@ -1,6 +1,4 @@
-<?php ob_start(); ?>
-
-    <h1>Módulo de Pacientes</h1>
+<h1>Módulo de Pacientes</h1>
     
     <?php if (isset($_SESSION['flash_message'])): ?>
         <?php $msg = $_SESSION['flash_message']; unset($_SESSION['flash_message']); ?>
@@ -10,9 +8,9 @@
     <?php endif; ?>
 
     <style>
-        .flex-container { display: flex; gap: 20px; align-items: flex-start; }
-        .table-responsive { overflow-x: auto; flex: 2; }
-        .form-panel { flex: 1; min-width: 300px; }
+        .flex-container { display: flex; flex-direction: column; gap: 20px; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .form-panel { width: 100%; max-width: 800px; margin-bottom: 20px; }
         @media (max-width: 768px) {
             .flex-container { flex-direction: column; }
             .table-responsive, .form-panel { width: 100%; flex: none; }
@@ -182,7 +180,4 @@
     });
     </script>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+

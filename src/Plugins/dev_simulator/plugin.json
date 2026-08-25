@@ -1,0 +1,6 @@
+{
+    "name": "dev_simulator",
+    "version": "1.0.0",
+    "description": "Simula envios (2FA) gravando em log txt para ambiente de desenvolvimento. Intercepta os provedores originais.",
+    "author": "DaherClinica Team"
+}

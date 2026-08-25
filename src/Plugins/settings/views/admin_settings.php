@@ -1,5 +1,3 @@
-<?php ob_start(); ?>
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h1 style="margin: 0;">Configuraes Globais (A Vitrine)</h1>
 </div>
@@ -57,7 +55,5 @@
     </form>
 </div>
 
-<?php 
-$content = ob_get_clean();
-echo $theme->render('admin/layout', ['content' => $content]);
-?>
+
+

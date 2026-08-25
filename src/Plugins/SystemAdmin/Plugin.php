@@ -15,8 +15,12 @@ class Plugin extends AbstractPlugin
             session_start();
         }
 
-        /** @var \DomainSystem\Core\Events\EventDispatcher $events */
         $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+
+        $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
+            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+            $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
+        });
 
         $events->addListener('router.register', function(Router $router) {
             // Redireciona a raiz para o admin

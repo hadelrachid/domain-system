@@ -3,14 +3,21 @@
 namespace DomainSystem\Core\Theme;
 
 use Exception;
+use DomainSystem\Core\Events\EventDispatcher;
 
 class ThemeManager
 {
     private string $activeThemePath;
+    public ?EventDispatcher $dispatcher = null;
 
     public function __construct(string $activeThemePath)
     {
         $this->activeThemePath = rtrim($activeThemePath, '/\\');
+    }
+
+    public function setDispatcher(EventDispatcher $dispatcher): void
+    {
+        $this->dispatcher = $dispatcher;
     }
 
     /**

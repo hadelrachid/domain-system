@@ -14,11 +14,17 @@ class PluginManager
     
     /** @var PluginInterface[] */
     private array $plugins = [];
+    
+    /** @var string|null Rastreia qual plugin está inicializando no exato momento (Para o QTA) */
+    private ?string $currentBootingPlugin = null;
 
     public function __construct(Container $container, EventDispatcher $dispatcher)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
+        
+        // Liga o QTA (Quadro de Transferência Automática) / Disjuntor V2 Extra
+        register_shutdown_function([$this, 'handleFatalCrash']);
     }
 
     public function addPlugin(PluginInterface $plugin): void
@@ -81,9 +87,15 @@ class PluginManager
             
             if ($plugin->isActive()) {
                 try {
+                    $this->currentBootingPlugin = $pluginName; // Anota no quadro
+                    
                     $plugin->register();
                     $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
+                    
+                    $this->currentBootingPlugin = null; // Apaga do quadro
                 } catch (\Throwable $e) {
+                    $this->currentBootingPlugin = null; // Apaga do quadro em caso de Exception capturada
+                    
                     // The plugin crashed! We must disable it to save the system.
                     $this->disable($pluginName);
                     
@@ -249,5 +261,39 @@ class PluginManager
             if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
         }
         return rmdir($dir);
+    }
+
+    /**
+     * O QTA (Automatic Transfer Switch).
+     * Roda no último milissegundo caso o servidor PHP desabe (ex: Out of Memory, Parse Error fatal).
+     */
+    public function handleFatalCrash(): void
+    {
+        $error = error_get_last();
+        
+        // Se houve erro e ele é um erro fatal imperdoável
+        if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            
+            // Se a queda de energia ocorreu enquanto um plugin tentava inicializar
+            if ($this->currentBootingPlugin !== null) {
+                
+                // Desativa o plugin na fiação rígida (JSON)
+                $this->disable($this->currentBootingPlugin);
+                
+                // Inicia sessão de emergência para deixar o bilhete de aviso
+                if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+                    session_start();
+                }
+                
+                if (session_status() !== PHP_SESSION_NONE) {
+                    $_SESSION['plugin_crashes'][] = [
+                        'plugin' => $this->currentBootingPlugin,
+                        'error' => "FATAL CRASH (QTA Acionado pelo Gerador): " . $error['message']
+                    ];
+                }
+                
+                error_log("QTA ACIONADO! Plugin '{$this->currentBootingPlugin}' sofreu um colapso fatal (Ex: Fim de Memória) e foi ejetado automaticamente. Erro: " . $error['message']);
+            }
+        }
     }
 }

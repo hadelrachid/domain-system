@@ -4,13 +4,17 @@ namespace DomainSystem\Plugins\settings\Controllers;
 
 use DomainSystem\Plugins\Database\Connection;
 
+use DomainSystem\Core\Theme\ThemeManager;
+
 class SettingsController
 {
     private Connection $db;
+    private ThemeManager $theme;
 
-    public function __construct(Connection $db)
+    public function __construct(Connection $db, ThemeManager $theme)
     {
         $this->db = $db;
+        $this->theme = $theme;
     }
 
     public function index()
@@ -29,11 +33,7 @@ class SettingsController
             $settings[$row['key_name']] = $row['key_value'];
         }
 
-        // Recupera o servio de tema
-        $app = \DomainSystem\Core\Application::getInstance();
-        $theme = $app->getThemeManager();
-
-        require __DIR__ . '/../views/admin_settings.php';
+        return $this->theme->render('admin_settings', ['settings' => $settings], __DIR__ . '/../views');
     }
 
     public function save()

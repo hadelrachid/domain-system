@@ -1,15 +1,3 @@
-<?php
-$userRole = $_SESSION['user_role'] ?? 'admin';
-
-if ($userRole === 'doctor') {
-    include dirname(__DIR__) . '/doctor/layout.php';
-    return;
-}
-if ($userRole === 'receptionist') {
-    include dirname(__DIR__) . '/reception/layout.php';
-    return;
-}
-?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -24,9 +12,9 @@ if ($userRole === 'receptionist') {
         #adminmenu li a { display: flex; align-items: center; gap: 8px; padding: 12px 15px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.2s; }
         #adminmenu li a:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
         #adminmenu li.current a { background: #2271b1; color: #fff; font-weight: 600; }
-        #wpcontent { margin-left: 160px; padding: 20px; width: calc(100% - 160px); overflow-y: auto; }
+        #wpcontent { margin-left: 160px; padding: 20px; width: calc(100% - 160px); box-sizing: border-box; overflow-y: auto; }
         h1 { font-size: 23px; font-weight: 400; margin: 0 0 20px; color: #1d2327; }
-        .wrap { max-width: 1000px; }
+        .wrap { max-width: 1400px; margin: 0 auto; }
         /* Forms & Tables */
         table.wp-list-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #c3c4c7; }
@@ -47,19 +35,18 @@ if ($userRole === 'receptionist') {
         </div>
         <ul id="adminmenu">
             <?php 
-                $app = \DomainSystem\Core\Application::getInstance();
                 $userRole = $_SESSION['user_role'] ?? 'admin';
                 
                 if ($userRole === 'admin' || $userRole === 'receptionist') {
-                    echo '<li><a href="admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Painel</a></li>';
+                    echo '<li><a href="' . BASE_URL . '/admin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Painel</a></li>';
                 }
 
-                if ($app) {
-                    $menus = $app->getDispatcher()->applyFilters('admin.menu', [], $userRole);
+                if (isset($this->dispatcher)) { 
+                    $menus = $this->dispatcher->applyFilters('admin.menu', [], $userRole);
                     foreach ($menus as $menu) {
                         $icon = $menu['icon'] ?? '';
                         echo '<li><a href="' . htmlspecialchars(ltrim($menu['url'], '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a></li>';
-                    }
+                    } 
                 }
 
                 if ($userRole === 'admin') {

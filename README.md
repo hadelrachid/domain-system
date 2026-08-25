@@ -1,75 +1,44 @@
-# Domain System Kernel 🚀
+# 🏥 Domain System Clínica (Modular)
 
-[🇧🇷 Versão em Português](#-português) | [🇺🇸 English Version](#-english)
+Um sistema de gestão de clínicas desenvolvido com uma arquitetura monolítica modular, desenhado para ser hiper-resiliente, altamente expansível e seguro.
 
----
+## 🏗️ Arquitetura do Sistema
 
-## 🇧🇷 Português
+Este projeto abandona a tradicional "sopa de espaguete" e adota o padrão de **Kernel e Plugins** (inspirado em arquiteturas corporativas e CMSs de ponta), com forte aderência aos princípios **SOLID**.
 
-**Domain System** é um *Kernel* ultra-rápido, modular e de altíssima coesão construído do zero em PHP puro. Inspirado na flexibilidade do ecossistema do WordPress, porém utilizando arquitetura de software moderna, Test-Driven Development (TDD) e princípios SOLID estritos.
+### 1. O Kernel e o PluginManager
+O núcleo do sistema (Kernel) apenas fornece a infraestrutura básica (Banco de Dados, Motor de Templates, Injeção de Dependências e Sistema de Rotas). Todo o restante (Autenticação, Pacientes, Prontuários) são **Plugins** independentes.
+- Os plugins se comunicam entre si exclusivamente via `EventDispatcher` (Hooks).
+- Se um plugin precisa adicionar um menu, ele não altera o painel, ele simplesmente escuta o evento `admin.menu` e injeta sua opção.
 
-**Nota: 10/10 em auditorias estruturais!**
+### 2. Disjuntor V2 (Circuit Breaker)
+Inspirado em microsserviços modernos, o sistema possui um **Circuit Breaker** nativo. 
+Se um plugin for ativado e seu código contiver erros (ex: Erros de Sintaxe, Chamadas Indevidas, Falha de Banco de Dados), o Kernel captura o erro, isola o módulo defeituoso e desliga-o do `plugins.json` automaticamente. O sistema inteiro sobrevive e continua operando sem a "tela branca da morte".
 
-### 🏛️ Arquitetura e Defesas
+### 3. O "QTA" (Automatic Transfer Switch)
+Mesmo contra as falhas mais catastróficas (como o esgotamento total da memória RAM por um loop infinito), o sistema está protegido.
+Uma função `register_shutdown_function` (O Último Suspiro) monitora a inicialização dos módulos. Se o servidor morrer repentinamente por asfixia de recursos (Fatal Error E_ERROR), o QTA ejetará cirurgicamente o plugin causador da fiação mestre nos últimos milissegundos de vida. Ao recarregar a página, o sistema ressuscitará e deixará um log de emergência.
 
-- **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
-- **Plugins**: Lógica de negócio (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings, WhatsApp Z-API...)
-- **Themes (Workspaces)**: Apresentação multi-perfil (Roteamento Inteligente injetando Layouts isolados para Doctor, Receptionist e Admin)
-- 🛡️ **Circuit Breaker (Disjuntor V2)**: Sistema inteligente com Regex Avançada que intercepta falhas e erros de dependência, desativando silenciosamente o plugin culpado para salvar o núcleo da "Tela Branca da Morte".
+### 4. Tomadas e Plugues (Inversão de Dependências)
+O sistema foi construído pensando na filosofia da "Tomada e do Plugue". 
+Por exemplo, no módulo de Autenticação, o processo de Verificação em 2 Etapas (2FA) não sabe como enviar e-mails ou como ler aplicativos. Ele apenas fornece uma interface (`TwoFactorProviderInterface`). Outros plugins (ou classes independentes) fornecem os plugues (`EmailProvider`, `AppProvider`).
+Isso permite que um desenvolvedor crie um plugin de "WhatsApp" amanhã e adicione a função 2FA ao sistema de Login sem alterar uma única linha do código central!
 
-### 🚀 Como Iniciar
+### 5. Ambiente de Desenvolvimento Seguro (Dev Simulator)
+Para evitar que e-mails falsos vazem em testes, o sistema possui um plugin `dev_simulator`. Quando ativado, ele intercepta as classes de comunicação (sequestrando a fiação via Injeção de Dependência) e redireciona os envios para um arquivo de texto local (`temp/auth-2fa.txt`). Em produção, basta desligar o plugin e a fiação volta ao estado natural.
 
-1. Instale as dependências caso existam, ou apenas rode via servidor PHP.
-2. Acesse o painel pelo navegador.
-3. Se precisar de um admin inicial via script:
-```bash
-php src/Plugins/auth/scripts/create_admin.php
-```
+## 🛠️ Tecnologias
+- **Linguagem:** PHP 8+ (Vanilla/OOP avançado)
+- **Banco de Dados:** SQLite (com PDO e QueryBuilder customizado)
+- **Frontend:** HTML5, CSS Nativo (Arquitetura limpa sem frameworks pesados)
+- **Design Patterns Utilizados:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton.
 
-### 📚 Documentação Oficial
-
-Consulte a nossa **[Documentação Online Completa](https://hadelrachid.github.io/domain-system/)** para explorar os seguintes manuais:
-- [Propósito e Visão](https://hadelrachid.github.io/domain-system/proposito.html)
-- [Arquitetura](https://hadelrachid.github.io/domain-system/arquitetura.html)
-- [Contratos SOLID](https://hadelrachid.github.io/domain-system/contratos.html)
-- [Criando Plugins](https://hadelrachid.github.io/domain-system/criando-plugins.html)
-
-### 📊 Status do Projeto
-
-| Métrica | Valor |
-|---------|-------|
-| SOLID | 10/10 |
-| Test Coverage | 100% (TDD) |
-| Plugins Core | 8 |
-| Dependências | 0 (PHP Puro) |
-
-### ⚖️ Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+## 👥 Controle de Acesso (ACL)
+O sistema isola perfis:
+- **Administrador:** Acesso mestre e global.
+- **Médico:** Acesso restrito apenas a agenda, consultas e prontuários médicos.
+- **Recepcionista:** Não pode visualizar prontuários (conforme LGPD), operando apenas agendamentos e triagem básica.
+- **Jurídico:** Workspace isolado com relatórios confidenciais.
 
 ---
-
-## 🇺🇸 English
-
-**Domain System** is an ultra-fast, highly cohesive, and modular *Kernel* built from scratch in pure PHP. Inspired by the WordPress ecosystem, but leveraging modern software architecture, TDD, and strict SOLID principles.
-
-**Score: 10/10 in structural audits!**
-
-### 🏛️ Architecture & Defenses
-
-- **Kernel (Core)**: Container, EventDispatcher, Router, PluginManager
-- **Plugins**: Business Logic (Database, Auth, SystemAdmin, Patients, Appointments, MedicalRecords, Settings, WhatsApp Z-API...)
-- **Themes (Workspaces)**: Multi-profile Presentation Layer (Smart routing injecting isolated layouts for Doctors, Receptionists, and Admins)
-- 🛡️ **Circuit Breaker V2**: Advanced native system with smart Regex that intercepts fatal errors and missing dependencies, automatically isolating faulty plugins to protect the system core.
-
-### 📚 Official Documentation
-
-Check our **[Complete Online Documentation](https://hadelrachid.github.io/domain-system/)** for detailed manuals covering:
-- [Vision & Purpose](https://hadelrachid.github.io/domain-system/proposito_en.html)
-- [Architecture](https://hadelrachid.github.io/domain-system/arquitetura_en.html)
-- [SOLID Contracts](https://hadelrachid.github.io/domain-system/contratos_en.html)
-- [Building Plugins](https://hadelrachid.github.io/domain-system/criando-plugins_en.html)
-
-### ⚖️ License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+*Este sistema é um organismo vivo, programado para sobreviver a si mesmo e se expandir organicamente.*

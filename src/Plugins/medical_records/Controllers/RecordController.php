@@ -28,6 +28,11 @@ class RecordController
 
         if (!$appointment) die("Agendamento não encontrado.");
 
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
+            die("Acesso Negado: Você não tem permissão para acessar este prontuário.");
+        }
+
         // Buscar registro médico (se já existir)
         $stmt = $pdo->prepare("SELECT * FROM medical_records WHERE appointment_id = ?");
         $stmt->execute([$appointmentId]);
@@ -57,12 +62,16 @@ class RecordController
         $pastRecords = $stmtHistory->fetchAll(\PDO::FETCH_ASSOC);
 
         // Renderiza a view do plugin e depois injeta no layout do SO
-        $content = $this->theme->render('record', [
+        $stmtExams = $pdo->prepare("SELECT * FROM medical_exams WHERE appointment_id = ? ORDER BY uploaded_at DESC");
+        $stmtExams->execute([$appointmentId]);
+        $exams = $stmtExams->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $this->theme->render('record', [
             'appointment' => $appointment, 
             'record' => $record,
-            'pastRecords' => $pastRecords
+            'pastRecords' => $pastRecords,
+            'exams' => $exams
         ], __DIR__ . '/../views');
-        echo $this->theme->render('admin/layout', ['content' => $content]);
     }
 
     public function save($appointmentId)
@@ -82,6 +91,11 @@ class RecordController
         if (!$appointment) {
              header("Location: " . BASE_URL . "/admin/appointments?error=AGENDAMENTO_INEXISTENTE");
              exit;
+        }
+
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
+            die("Acesso Negado: Você não tem permissão para editar este prontuário.");
         }
 
         $anamnese = $_POST['anamnese'] ?? '';
@@ -130,6 +144,11 @@ class RecordController
 
         if (!$appointment) die("Agendamento não encontrado.");
 
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
+            die("Acesso Negado: Você não tem permissão para imprimir este prontuário.");
+        }
+
         $stmt = $pdo->prepare("SELECT prescricao FROM medical_records WHERE appointment_id = ?");
         $stmt->execute([$appointmentId]);
         $record = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -146,6 +165,95 @@ class RecordController
 
         // Não vamos usar layout do SO para a impressão, ela é uma pág em branco pro papel
         require __DIR__ . '/../views/print.php';
+    }
+
+    public function uploadExam($appointmentId)
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        if (empty($_FILES['exam_file']['name'])) {
+            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Nenhum arquivo enviado");
+            exit;
+        }
+
+        $pdo = $this->db->getPdo();
+
+        $stmt = $pdo->prepare("SELECT doctor_id FROM appointments WHERE id = ?");
+        $stmt->execute([$appointmentId]);
+        $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if (!$appointment || (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null))) {
+            die("Acesso Negado: Permissão insuficiente.");
+        }
+        
+        $uploadDir = dirname(__DIR__, 4) . '/public/uploads/exams/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $originalName = preg_replace("/[^a-zA-Z0-9\._-]/", "", basename($_FILES['exam_file']['name']));
+        $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        
+        $allowedExts = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        if (!in_array($fileExt, $allowedExts)) {
+            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Extensao invalida");
+            exit;
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $_FILES['exam_file']['tmp_name']);
+        finfo_close($finfo);
+        
+        $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        if (!in_array($mime, $allowedMimes)) {
+            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Tipo de arquivo invalido");
+            exit;
+        }
+
+        $fileName = time() . '_' . $originalName;
+        $targetFile = $uploadDir . $fileName;
+
+        if (move_uploaded_file($_FILES['exam_file']['tmp_name'], $targetFile)) {
+            $stmt = $pdo->prepare("INSERT INTO medical_exams (appointment_id, file_name, file_path) VALUES (?, ?, ?)");
+            $stmt->execute([$appointmentId, $_FILES['exam_file']['name'], '/uploads/exams/' . $fileName]);
+            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame anexado com sucesso");
+        } else {
+            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Falha no upload");
+        }
+        exit;
+    }
+
+    public function deleteExam($appointmentId)
+    {
+        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        $examId = $_POST['exam_id'] ?? null;
+        
+        if ($examId) {
+            $pdo = $this->db->getPdo();
+
+            $stmtApp = $pdo->prepare("SELECT doctor_id FROM appointments WHERE id = ?");
+            $stmtApp->execute([$appointmentId]);
+            $appointment = $stmtApp->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$appointment || (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null))) {
+                die("Acesso Negado: Permissão insuficiente.");
+            }
+
+            $stmt = $pdo->prepare("SELECT file_path FROM medical_exams WHERE id = ? AND appointment_id = ?");
+            $stmt->execute([$examId, $appointmentId]);
+            $exam = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if ($exam) {
+                $filePath = dirname(__DIR__, 4) . '/public' . $exam['file_path'];
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+                $stmt = $pdo->prepare("DELETE FROM medical_exams WHERE id = ?");
+                $stmt->execute([$examId]);
+            }
+        }
+        
+        header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame removido");
+        exit;
     }
 }
 

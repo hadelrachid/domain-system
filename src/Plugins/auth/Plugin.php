@@ -20,6 +20,16 @@ class Plugin extends AbstractPlugin
         $this->runMigrations();
 
         // 3. O Container vai fazer o auto-wiring do AuthController automaticamente na hora do router!
+        $queryBuilder = $this->container->make(\DomainSystem\Plugins\Database\QueryBuilder::class);
+        
+        // A Tomada (TwoFactorService) precisa ser ÚNICA na memória para que os outros plugins encontrem os mesmos plugues
+        $this->container->singleton(\DomainSystem\Plugins\auth\Services\TwoFactorService::class, function() {
+            return new \DomainSystem\Plugins\auth\Services\TwoFactorService();
+        });
+        $twoFactorService = $this->container->make(\DomainSystem\Plugins\auth\Services\TwoFactorService::class);
+        
+        $twoFactorService->registerProvider('app', new \DomainSystem\Plugins\auth\Services\Providers\AppProvider());
+        $twoFactorService->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($queryBuilder));
 
         // 4. Registrar rotas do Auth
         /** @var EventDispatcher $events */
@@ -86,6 +96,12 @@ class Plugin extends AbstractPlugin
                         str_starts_with($uri, '/admin/patients') || 
                         str_starts_with($uri, '/admin/plugins')) {
                         die('<div style="padding:20px; font-family:sans-serif; text-align:center;"><h2>Acesso Negado 🛑</h2><p>Perfil de <b>Médico</b> não tem permissão para acessar o painel administrativo raiz.</p><a href="'.BASE_URL.'/admin/appointments">Voltar</a></div>');
+                    }
+                }
+                
+                if ($role === 'lawyer') {
+                    if (!str_starts_with($uri, '/admin/legal') && $uri !== '/admin/logout' && $uri !== '/admin') {
+                        die('<div style="padding:20px; font-family:sans-serif; text-align:center;"><h2>Acesso Negado ⚖️</h2><p>Advogados só podem acessar o Workspace Jurídico.</p><a href="'.BASE_URL.'/admin/legal">Acessar Processos</a></div>');
                     }
                 }
             }

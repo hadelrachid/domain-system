@@ -7,6 +7,7 @@ use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Core\Workspace\WorkspaceManager;
 
 class Application
 {
@@ -17,6 +18,7 @@ class Application
     private PluginManager $pluginManager;
     private Router $router;
     private ThemeManager $themeManager;
+    private WorkspaceManager $workspaceManager;
     private string $basePath;
 
     public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
@@ -30,6 +32,8 @@ class Application
         // Define the default theme path. This can be changed later by a DB config or a plugin.
         $themePath = $basePath . '/themes/default';
         $this->themeManager = new ThemeManager($themePath);
+        $this->themeManager->setDispatcher($dispatcher);
+        $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
         
         self::$instance = $this;
 
@@ -89,6 +93,11 @@ class Application
         return $this->themeManager;
     }
 
+    public function getWorkspaceManager(): WorkspaceManager
+    {
+        return $this->workspaceManager;
+    }
+
     public function boot(): void
     {
         $pluginsPath = $this->basePath . '/src/Plugins';
@@ -101,5 +110,8 @@ class Application
         
         // Dispatch the init hook, giving plugins a chance to register their components
         $this->dispatcher->dispatch('init');
+        
+        // Register workspaces from plugins
+        $this->dispatcher->dispatch('workspace.register', $this->workspaceManager);
     }
 }

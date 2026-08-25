@@ -1,0 +1,20 @@
+<?php
+namespace DomainSystem\Plugins\doctors\Workspace;
+
+use DomainSystem\Core\Workspace\WorkspaceInterface;
+use DomainSystem\Core\Theme\ThemeManager;
+
+class DoctorWorkspace implements WorkspaceInterface
+{
+    private ThemeManager $theme;
+
+    public function __construct(ThemeManager $theme)
+    {
+        $this->theme = $theme;
+    }
+
+    public function wrap(string $content): string
+    {
+        return $this->theme->render('doctor/layout', ['content' => $content]);
+    }
+}

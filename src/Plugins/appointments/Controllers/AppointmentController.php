@@ -6,17 +6,21 @@ use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\QueryBuilder;
 use DomainSystem\Plugins\appointments\Repositories\AppointmentRepository;
 
+use DomainSystem\Core\Events\EventDispatcher;
+
 class AppointmentController
 {
     private ThemeManager $theme;
     private QueryBuilder $db;
     private AppointmentRepository $repo;
+    private EventDispatcher $events;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db, AppointmentRepository $repo)
+    public function __construct(ThemeManager $theme, QueryBuilder $db, AppointmentRepository $repo, EventDispatcher $events)
     {
         $this->theme = $theme;
         $this->db = $db;
         $this->repo = $repo;
+        $this->events = $events;
     }
 
     public function index()
@@ -71,12 +75,12 @@ class AppointmentController
                     $doctor = $this->db->table('doctors')->where('id', '=', $doctor_id)->first();
                     
                     if ($patient) {
-                        \DomainSystem\Core\Application::getInstance()->getDispatcher()->dispatch('appointment.created', [
+                        $this->events->dispatch('appointment.created', [
                             'patient_name' => $patient['name'] ?? 'Paciente',
                             'patient_phone' => $patient['phone'] ?? '',
-                            'doctor_name' => $doctor['name'] ?? 'Médico',
                             'appointment_date' => $appointment_date,
-                            'appointment_time' => $appointment_time
+                            'appointment_time' => $appointment_time,
+                            'doctor_name' => $doctor['name'] ?? 'Médico'
                         ]);
                     }
                 } catch (\Exception $evtEx) {
@@ -102,7 +106,7 @@ class AppointmentController
         $status = $_POST['status'] ?? null;
 
         if ($id && $status) {
-            $allowed_statuses = ['Pendente', 'Confirmado', 'Atendido', 'Cancelado'];
+            $allowed_statuses = ['Pendente', 'Confirmado', 'Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento', 'Finalizado', 'Cancelado'];
             if (in_array($status, $allowed_statuses)) {
                 $this->db->table('appointments')->where('id', '=', $id)->update([
                     'status' => $status
@@ -191,3 +195,4 @@ class AppointmentController
         exit;
     }
 }
+

@@ -1,12 +1,16 @@
 {
     "database": true,
     "system-admin": true,
-    "auth": false,
+    "auth": true,
     "patients": true,
     "doctors": true,
     "appointments": true,
     "medical_records": true,
     "settings": true,
     "SystemMonitor": true,
-    "whatsapp": true
+    "whatsapp": true,
+    "legal_cases": true,
+    "triage": true,
+    "dev_simulator": true,
+    "bomb_plugin": false
 }

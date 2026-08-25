@@ -6,9 +6,29 @@ interface PluginInterface
 {
     /**
      * Registra os hooks, rotas e serviços do plugin.
-     * Chamado durante o boot do Kernel.
+     * Chamado durante o boot do Kernel. Somente para registro/composição.
      */
     public function register(): void;
+
+    /**
+     * Inicialização pós-registro (quando todos os plugins já foram registrados).
+     */
+    public function boot(): void;
+
+    /**
+     * Chamado quando o plugin é ativado no painel (para migrations, etc).
+     */
+    public function activate(): void;
+
+    /**
+     * Chamado quando o plugin é desativado no painel.
+     */
+    public function deactivate(): void;
+
+    /**
+     * Chamado quando o plugin é completamente removido.
+     */
+    public function uninstall(): void;
 
     /**
      * Retorna o nome do plugin (para identificação).

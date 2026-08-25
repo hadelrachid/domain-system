@@ -80,16 +80,17 @@ class UserController
             exit;
         }
 
-        $appSecret = $this->twoFactor->generateAppSecret('DaherClinica');
+        $appProvider = $this->twoFactor->getProvider('app');
+        $appSecret = $appProvider->generateSecret('DaherClinica');
         
         // Simulação p/ Dev Mode
         $user['two_factor_secret'] = $appSecret['secret'];
-        $this->twoFactor->simulateAppCodeGeneration($user);
+        $appProvider->challenge($user);
 
         return $this->theme->render('admin_2fa', [
             'user' => $user,
-            'secret' => $appSecret['secret'],
             'qrCodeUrl' => $appSecret['qrCodeUrl'],
+            'secret' => $appSecret['secret'],
             'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
@@ -103,7 +104,8 @@ class UserController
         $code = $_POST['code'] ?? null;
 
         if ($user_id && $secret && $code) {
-            if ($this->twoFactor->verifyAppCode($secret, $code)) {
+            $appProvider = $this->twoFactor->getProvider('app');
+            if ($appProvider->verify(['two_factor_secret' => $secret], $code)) {
                 $this->db->table('users')->where('id', '=', $user_id)->update([
                     'two_factor_secret' => $secret
                 ]);
@@ -170,3 +172,4 @@ class UserController
         exit;
     }
 }
+

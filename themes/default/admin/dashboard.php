@@ -1,12 +1,10 @@
-<?php ob_start(); ?>
-
 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
     <div>
         <h1 style="margin-bottom: 5px;">Dashboard</h1>
         <p style="color: #64748b; margin: 0;">Visão geral da clínica e atendimentos de hoje.</p>
     </div>
     <div>
-        <a href="admin/appointments" class="btn" style="background: #2563eb; color: #fff; border-color: #2563eb; padding: 8px 16px; border-radius: 6px; font-weight: bold;">+ Novo Agendamento</a>
+        <a href="<?= BASE_URL ?>/admin/appointments" class="btn" style="background: #2563eb; color: #fff; border-color: #2563eb; padding: 8px 16px; border-radius: 6px; font-weight: bold;">+ Novo Agendamento</a>
     </div>
 </div>
 
@@ -53,6 +51,8 @@
     </div>
 </div>
 
+
+
 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
     <!-- Fila de Atendimento -->
     <div class="panel-card" style="flex: 2; min-width: 400px;">
@@ -95,20 +95,24 @@
     <div class="panel-card" style="flex: 1; min-width: 250px;">
         <div class="panel-header">Ações Rápidas</div>
         <div style="padding: 25px;">
-            <a href="admin/patients" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+            <a href="<?= BASE_URL ?>/admin/patients" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
                 👥 Gerenciar Pacientes
             </a>
-            <a href="admin/users" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+            <a href="<?= BASE_URL ?>/admin/users" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
                 🔐 Controle de Usuários
             </a>
-            <a href="admin/plugins" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+            <a href="<?= BASE_URL ?>/admin/plugins" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
                 ⚙️ Configurar Sistema
             </a>
         </div>
     </div>
 </div>
 
-<?php 
-$content = ob_get_clean();
-require __DIR__ . '/layout.php';
-?>
+
+
+
+
+
+
+
+

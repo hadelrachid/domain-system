@@ -23,9 +23,7 @@ class PatientController
         // Passamos o $theme para a view para poder renderizar os headers
         $theme = $this->theme;
         
-        ob_start();
-        include __DIR__ . '/../views/admin_index.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
     }
 
     public function store()
@@ -92,9 +90,7 @@ class PatientController
         $patient = $patient[0];
         $theme = $this->theme;
         
-        ob_start();
-        include __DIR__ . '/../views/admin_edit.php';
-        return ob_get_clean();
+        return $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
     }
 
     public function update()
@@ -165,3 +161,6 @@ class PatientController
         exit;
     }
 }
+
+
+

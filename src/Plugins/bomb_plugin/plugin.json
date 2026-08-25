@@ -1,0 +1,6 @@
+{
+    "name": "bomb_plugin",
+    "version": "1.0.0",
+    "description": "Plugin projetado especificamente para esgotar a memória do servidor e testar a resiliência do QTA.",
+    "author": "Chaos Monkey"
+}
