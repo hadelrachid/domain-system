@@ -51,7 +51,7 @@ O sistema isola perfis:
 
 ## 📖 Versionamento e Histórico
 Atualmente o projeto encontra-se na versão **[1.1.0]**.
-Para acompanhar toda a evolução e correções, consulte o nosso [CHANGELOG.md](CHANGELOG.md).
+Para acompanhar toda a evolução e correções, consulte o nosso [CHANGELOG.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
 
 ## 🤝 Colaboradores Principais
 Este sistema é construído por uma equipe mista de inteligência humana e artificial:
