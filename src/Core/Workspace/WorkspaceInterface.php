@@ -11,4 +11,9 @@ interface WorkspaceInterface
      * Envelopa o conteúdo bruto no layout do workspace.
      */
     public function wrap(string $content): string;
+
+    /**
+     * Retorna o nome da pasta do tema (CockPIT) que este workspace utiliza.
+     */
+    public function getThemeName(): string;
 }

@@ -32,7 +32,7 @@ class PluginManager
         $this->plugins[$plugin->getName()] = $plugin;
     }
 
-    public function discoverPlugins(string $pluginsPath, string $configPath): void
+    public function discoverPlugins(string $pluginsPath, string $configPath, bool $forceActive = false): void
     {
         if (!is_dir($pluginsPath)) {
             return;
@@ -42,6 +42,8 @@ class PluginManager
 
         $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
         
+        $newlyDiscovered = [];
+
         foreach ($directories as $dir) {
             $jsonPath = $dir . '/plugin.json';
             $pluginName = basename($dir);
@@ -53,27 +55,50 @@ class PluginManager
             }
 
             // Apenas tentamos instanciar o plugin se ele estiver ATIVO ou se for CORE
-            // Isso evita que plugins desativados com erro de sintaxe derrubem o sistema ao usar class_exists()
-            $isActive = $activeStates[$pluginName] ?? false;
+            $isActive = $forceActive || ($activeStates[$pluginName] ?? false);
             $isCore = isset($metadata['core']) && $metadata['core'] === true;
 
             if ($isActive || $isCore) {
                 $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
                 
+                // Se for sub-plugin de um Hub, o namespace pode ser diferente, vamos tentar inferir ou usar autoloading padrão do composer
+                // Mas como não usamos composer para eles, vamos fazer require do arquivo Plugin.php manualmente!
+                if (!class_exists($pluginClass)) {
+                    $pluginFile = $dir . '/Plugin.php';
+                    if (file_exists($pluginFile)) {
+                        require_once $pluginFile;
+                        
+                        // Inferir o namespace real do arquivo, caso seja um sub-plugin aninhado
+                        $fileContent = file_get_contents($pluginFile);
+                        if (preg_match('/namespace\s+([^;]+);/', $fileContent, $matches)) {
+                            $pluginClass = $matches[1] . '\\Plugin';
+                        }
+                    }
+                }
+
                 if (class_exists($pluginClass)) {
-                    // If it extends AbstractPlugin, it needs path
                     if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
                         /** @var AbstractPlugin $plugin */
                         $plugin = new $pluginClass($this->container, $dir);
-                        $plugin->setActive(true); // se chegou aqui é porque está ativo ou é core
+                        $plugin->setActive(true);
                         $this->addPlugin($plugin);
+                        $newlyDiscovered[] = $plugin;
                     } else {
-                        // For legacy tests or hardcoded plugins that just take container
                         /** @var PluginInterface $plugin */
                         $plugin = new $pluginClass($this->container);
                         $this->addPlugin($plugin);
+                        $newlyDiscovered[] = $plugin;
                     }
                 }
+            }
+        }
+
+        // Descobre sub-plugins de Hubs recém descobertos
+        foreach ($newlyDiscovered as $plugin) {
+            $subPath = $plugin->getSubPluginsPath();
+            if ($subPath && is_dir($subPath)) {
+                // Se o Hub está ativo, forçamos os sub-plugins a ficarem ativos também!
+                $this->discoverPlugins($subPath, $configPath, true);
             }
         }
     }

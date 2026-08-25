@@ -49,4 +49,10 @@ interface PluginInterface
      * Define se o plugin está ativo.
      */
     public function isActive(): bool;
+
+    /**
+     * Retorna o caminho para sub-plugins (caso este plugin seja um Hub/Adapter).
+     * Se não for um Hub, deve retornar null.
+     */
+    public function getSubPluginsPath(): ?string;
 }

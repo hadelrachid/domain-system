@@ -12,5 +12,6 @@
     "legal_cases": true,
     "triage": true,
     "dev_simulator": true,
-    "bomb_plugin": false
+    "bomb_plugin": false,
+    "clinic_pack": true
 }

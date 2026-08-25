@@ -36,10 +36,14 @@ class WorkspaceManager
         $role = strtolower($role);
         
         if (isset($this->workspaces[$role])) {
-            return $this->workspaces[$role];
+            $workspace = $this->workspaces[$role];
+        } else {
+            $workspace = new DefaultWorkspace($this->theme);
         }
 
-        // Fallback genérico do Core (se nenhum plugin assumir)
-        return new DefaultWorkspace($this->theme);
+        // Troca automaticamente a fiação do motor de renderização para o CockPIT atual!
+        $this->theme->setActiveThemePath(BASE_PATH . '/themes/' . $workspace->getThemeName());
+
+        return $workspace;
     }
 }

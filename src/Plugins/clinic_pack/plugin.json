@@ -1,0 +1,6 @@
+{
+    "name": "clinic_pack",
+    "version": "1.0.0",
+    "description": "Hub Plugin que encapsula todos os módulos de uma Clínica (Módulo Dental de Exemplo).",
+    "author": "Antigravity & Rachid"
+}

@@ -72,4 +72,9 @@ abstract class AbstractPlugin implements PluginInterface
     public function activate(): void {}
     public function deactivate(): void {}
     public function uninstall(): void {}
+
+    public function getSubPluginsPath(): ?string
+    {
+        return null;
+    }
 }

@@ -15,6 +15,16 @@ class ThemeManager
         $this->activeThemePath = rtrim($activeThemePath, '/\\');
     }
 
+    public function setActiveThemePath(string $path): void
+    {
+        $this->activeThemePath = rtrim($path, '/\\');
+    }
+
+    public function getActiveThemePath(): string
+    {
+        return $this->activeThemePath;
+    }
+
     public function setDispatcher(EventDispatcher $dispatcher): void
     {
         $this->dispatcher = $dispatcher;

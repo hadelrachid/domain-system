@@ -15,6 +15,11 @@ class ReceptionWorkspace implements WorkspaceInterface
 
     public function wrap(string $content): string
     {
-        return $this->theme->render('reception/layout', ['content' => $content]);
+        return $this->theme->render('layout', ['content' => $content]);
+    }
+
+    public function getThemeName(): string
+    {
+        return 'secretary';
     }
 }
