@@ -9,10 +9,12 @@ class ThemeManager
 {
     private string $activeThemePath;
     public ?EventDispatcher $dispatcher = null;
+    private ?ShortcodeManager $shortcodeManager = null;
 
-    public function __construct(string $activeThemePath)
+    public function __construct(string $activeThemePath, ?ShortcodeManager $shortcodeManager = null)
     {
         $this->activeThemePath = rtrim($activeThemePath, '/\\');
+        $this->shortcodeManager = $shortcodeManager;
     }
 
     public function setActiveThemePath(string $path): void
@@ -59,7 +61,13 @@ class ThemeManager
         
         ob_start();
         include $file;
-        return ob_get_clean();
+        $content = ob_get_clean();
+        
+        if ($this->shortcodeManager !== null) {
+            $content = $this->shortcodeManager->parse($content);
+        }
+        
+        return $content;
     }
 
     /**

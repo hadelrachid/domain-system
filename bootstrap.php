@@ -17,6 +17,9 @@ putenv("DB_DSN=sqlite:{$dbPath}");
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Include global helper functions
+require_once __DIR__ . '/src/Core/helpers.php';
+
 // Initialize Error Handler
 $errorLogPath = DOMAIN_SYSTEM_ROOT . '/temp/error_logs.json';
 $errorHandler = new \DomainSystem\Core\Error\ErrorHandler($errorLogPath);

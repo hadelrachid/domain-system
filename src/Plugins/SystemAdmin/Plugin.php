@@ -22,6 +22,16 @@ class Plugin extends AbstractPlugin
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
 
+        // O Plugue (Macho) se conectando à Régua de Tomadas!
+        $events->addListener('init', function() {
+            add_shortcode('info_sistema', function($attr) {
+                $color = $attr['color'] ?? 'black';
+                return "<div style='padding: 10px; background-color: {$color}; color: white; border-radius: 5px;'>
+                            <strong>CockPIT Info:</strong> Versão PHP: " . phpversion() . "
+                        </div>";
+            }, 'Exibe as informações do sistema.', ['color' => 'Cor de fundo do widget']);
+        });
+
         $events->addListener('router.register', function(Router $router) {
             // Redireciona a raiz para o admin
             $router->addRoute('GET', '/', function() { header("Location: " . BASE_URL . "/admin"); exit; });

@@ -108,11 +108,7 @@
     </div>
 </div>
 
-
-
-
-
-
-
-
-
+<!-- Teste do ShortcodeManager -->
+<div style="margin-top: 30px;">
+    [info_sistema color="#1e293b"]
+</div>

@@ -18,6 +18,7 @@ class Application
     private PluginManager $pluginManager;
     private Router $router;
     private ThemeManager $themeManager;
+    private \DomainSystem\Core\Theme\ShortcodeManager $shortcodeManager;
     private WorkspaceManager $workspaceManager;
     private string $basePath;
 
@@ -29,10 +30,14 @@ class Application
         $this->pluginManager = new PluginManager($container, $dispatcher);
         $this->router = new Router($container);
         
+        // Instantiate ShortcodeManager
+        $this->shortcodeManager = new \DomainSystem\Core\Theme\ShortcodeManager();
+
         // Define the default theme path. This can be changed later by a DB config or a plugin.
         $themePath = $basePath . '/themes/admin';
-        $this->themeManager = new ThemeManager($themePath);
+        $this->themeManager = new ThemeManager($themePath, $this->shortcodeManager);
         $this->themeManager->setDispatcher($dispatcher);
+        
         $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
         
         self::$instance = $this;
@@ -60,6 +65,10 @@ class Application
 
         $this->container->singleton(ThemeManager::class, function() {
             return $this->themeManager;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function() {
+            return $this->shortcodeManager;
         });
     }
 
@@ -91,6 +100,11 @@ class Application
     public function getThemeManager(): ThemeManager
     {
         return $this->themeManager;
+    }
+    
+    public function getShortcodeManager(): \DomainSystem\Core\Theme\ShortcodeManager
+    {
+        return $this->shortcodeManager;
     }
 
     public function getWorkspaceManager(): WorkspaceManager
