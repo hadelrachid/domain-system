@@ -14,7 +14,8 @@
             <?php foreach ($shortcodes as $tag => $info): ?>
                 <div style="background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                     <div style="background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b; display: flex; align-items: center; justify-content: space-between;">
-                        <code>[<?= htmlspecialchars($tag) ?>]</code>
+                        <code>&#91;<?= htmlspecialchars($tag) ?>&#93;</code>
+                        <button onclick="copyShortcode('<?= htmlspecialchars($tag) ?>')" class="btn" style="background: #e2e8f0; color: #334155; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">📋 Copiar</button>
                     </div>
                     <div style="padding: 20px;">
                         <p style="color: #475569; margin-top: 0; margin-bottom: 15px; font-size: 14px; min-height: 40px;">
@@ -35,7 +36,7 @@
                         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e2e8f0;">
                             <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">EXEMPLO DE USO:</span>
                             <code style="background: #f1f5f9; padding: 8px; border-radius: 4px; display: block; font-size: 13px; color: #0f172a;">
-                                [<?= htmlspecialchars($tag) ?><?php if(!empty($info['attributes'])) { echo ' ' . key($info['attributes']) . '="valor"'; } ?>]
+                                &#91;<?= htmlspecialchars($tag) ?><?php if(!empty($info['attributes'])) { echo ' ' . key($info['attributes']) . '="valor"'; } ?>&#93;
                             </code>
                         </div>
                     </div>
@@ -44,3 +45,14 @@
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+function copyShortcode(tag) {
+    var text = '[' + tag + ']';
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Shortcode ' + text + ' copiado para a área de transferência!');
+    }, function(err) {
+        alert('Erro ao copiar shortcode.');
+    });
+}
+</script>
