@@ -40,13 +40,35 @@ class QueryBuilder
         return $this;
     }
 
+    private array $orders = [];
+    private ?int $limit = null;
+
     private function buildSelect(): string
     {
         $sql = "SELECT " . implode(', ', $this->columns) . " FROM {$this->table}";
         if (!empty($this->wheres)) {
             $sql .= " WHERE " . implode(' AND ', $this->wheres);
         }
+        if (!empty($this->orders)) {
+            $sql .= " ORDER BY " . implode(', ', $this->orders);
+        }
+        if ($this->limit !== null) {
+            $sql .= " LIMIT " . $this->limit;
+        }
         return $sql;
+    }
+
+    public function orderBy(string $column, string $direction = 'ASC'): self
+    {
+        $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+        $this->orders[] = "$column $direction";
+        return $this;
+    }
+
+    public function limit(int $limit): self
+    {
+        $this->limit = $limit;
+        return $this;
     }
 
     public function get(): array
