@@ -272,4 +272,18 @@ class AdminController
         }
         return rmdir($dir);
     }
+
+    public function listShortcodes(\DomainSystem\Core\Http\Request $request)
+    {
+        $app = \DomainSystem\Core\Application::getInstance();
+        $shortcodes = $app ? $app->getShortcodeManager()->getRegisteredShortcodes() : [];
+        
+        try {
+            return $this->theme->render('shortcodes', [
+                'shortcodes' => $shortcodes
+            ]);
+        } catch (Exception $e) {
+            return "Erro ao renderizar catálogo de shortcodes: " . $e->getMessage();
+        }
+    }
 }

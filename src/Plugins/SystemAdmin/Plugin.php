@@ -22,6 +22,17 @@ class Plugin extends AbstractPlugin
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
 
+        $events->addListener('admin.menu', function($menus, $role = 'admin') {
+            if ($role === 'admin') {
+                $menus[] = [
+                    'title' => 'Catálogo de Shortcodes',
+                    'url' => '/admin/shortcodes',
+                    'icon' => '🧩'
+                ];
+            }
+            return $menus;
+        });
+
         // O Plugue (Macho) se conectando à Régua de Tomadas!
         $events->addListener('init', function() {
             add_shortcode('info_sistema', function($attr) {
@@ -39,7 +50,7 @@ class Plugin extends AbstractPlugin
             // Dashboard base
             $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
 
-            // Rotas de Plugins
+            $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes']);
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);
             $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes']);
             $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme']);
