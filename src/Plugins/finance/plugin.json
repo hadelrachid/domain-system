@@ -1,0 +1,8 @@
+{
+    "name": "finance",
+    "description": "Módulo financeiro central. Gerencia Contas a Pagar, Contas a Receber e Fluxo de Caixa.",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "namespace": "DomainSystem\\Plugins\\finance\\",
+    "main": "Plugin.php"
+}
