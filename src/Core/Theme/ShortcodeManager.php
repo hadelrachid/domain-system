@@ -17,14 +17,9 @@ class ShortcodeManager
     private array $shortcodes = [];
 
     /**
-     * Registra um novo shortcode (A "Tomada" disponibiliza o encaixe).
-     *
-     * @param string $tag A tag do shortcode (ex: 'agendamento_form').
-     * @param callable $callback A função a ser executada quando a tag for encontrada.
-     * @param string $description Documentação sobre o shortcode (para o catálogo).
-     * @param array $attributes Documentação dos atributos aceitos pelo shortcode.
+     * Registra um novo shortcode.
      */
-    public function add(string $tag, callable $callback, string $description = '', array $attributes = []): void
+    public function add(string $tag, $callback, string $description = '', array $attributes = []): void
     {
         $this->shortcodes[$tag] = [
             'callback' => $callback,
@@ -77,6 +72,15 @@ class ShortcodeManager
 
         if (isset($this->shortcodes[$tag])) {
             $callback = $this->shortcodes[$tag]['callback'];
+            
+            // Suporte para resolução via DI Container para [Controller::class, 'method']
+            if (is_array($callback) && is_string($callback[0])) {
+                $app = \DomainSystem\Core\Application::getInstance();
+                if ($app) {
+                    $callback[0] = $app->getContainer()->make($callback[0]);
+                }
+            }
+
             // Executa o plugue (plugin) e retorna o HTML gerado!
             return call_user_func($callback, $attributes);
         }

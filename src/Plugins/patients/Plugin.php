@@ -24,6 +24,17 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/patients/delete', [PatientController::class, 'delete']);
         });
 
+        // Registrar Shortcodes
+        $events->addListener('init', function() {
+            if (function_exists('add_shortcode')) {
+                add_shortcode('paciente_form', [PatientController::class, 'renderShortcodeForm'], 'Formulário de cadastro de paciente.');
+                add_shortcode('paciente_lista', [PatientController::class, 'renderShortcodeList'], 'Tabela com a lista de pacientes.', [
+                    'limit' => 'Número máximo de pacientes exibidos',
+                    'actions' => 'Mostrar coluna de ações (true/false)'
+                ]);
+            }
+        });
+
         // Adiciona um link no menu lateral do admin
         $events->addListener('admin.menu', function(array $menu) {
             $menu[] = [

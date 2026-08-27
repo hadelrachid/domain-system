@@ -14,7 +14,7 @@ if (!function_exists('add_shortcode')) {
      * @param string $description Descrição do que o shortcode faz
      * @param array $attributes Atributos que ele aceita
      */
-    function add_shortcode(string $tag, callable $callback, string $description = '', array $attributes = []): void
+    function add_shortcode(string $tag, $callback, string $description = '', array $attributes = []): void
     {
         $app = \DomainSystem\Core\Application::getInstance();
         if ($app) {

@@ -160,6 +160,38 @@ class PatientController
         header("Location: " . BASE_URL . "/admin/patients");
         exit;
     }
+
+    /**
+     * Renderiza o formulário de pacientes via Shortcode.
+     */
+    public function renderShortcodeForm(array $attributes = []): string
+    {
+        ob_start();
+        include __DIR__ . '/../views/partials/form.php';
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza a lista de pacientes via Shortcode.
+     */
+    public function renderShortcodeList(array $attributes = []): string
+    {
+        $limit = isset($attributes['limit']) ? (int)$attributes['limit'] : 10;
+        $showActions = isset($attributes['actions']) ? filter_var($attributes['actions'], FILTER_VALIDATE_BOOLEAN) : true;
+        
+        // Pega os últimos X pacientes
+        // Nota: Um order by ideal exigiria 'ORDER BY id DESC', mas como o QueryBuilder base não tem, pegamos todos e filtramos.
+        // Se a DB for sqlite com a QueryBuilder simples atual, vamos apenas fazer array_slice.
+        $allPatients = $this->db->table('patients')->get();
+        
+        // Se tivesse order by na query: $this->db->table('patients')->orderBy('id', 'DESC')->limit($limit)->get();
+        // Fallback rápido para o array_reverse e slice:
+        $patients = array_slice(array_reverse($allPatients), 0, $limit);
+
+        ob_start();
+        include __DIR__ . '/../views/partials/list.php';
+        return ob_get_clean();
+    }
 }
 
 

@@ -194,5 +194,20 @@ class AppointmentController
         header("Location: " . BASE_URL . "/admin/appointments");
         exit;
     }
+
+    /**
+     * Renderiza o formulário de marcação de consulta via Shortcode.
+     */
+    public function renderShortcodeBooking(array $attributes = []): string
+    {
+        $preSelectedDoctorId = $attributes['doctor_id'] ?? null;
+        
+        $patients = $this->db->table('patients')->get();
+        $doctors = $this->db->table('doctors')->get();
+
+        ob_start();
+        include __DIR__ . '/../views/partials/booking_form.php';
+        return ob_get_clean();
+    }
 }
 

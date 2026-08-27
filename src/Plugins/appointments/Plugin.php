@@ -50,6 +50,15 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking']);
             $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection']);
         });
+
+        // Registrar Shortcodes
+        $events->addListener('init', function() {
+            if (function_exists('add_shortcode')) {
+                add_shortcode('agendamento_form', [AppointmentController::class, 'renderShortcodeBooking'], 'Formulário completo de agendamento.', [
+                    'doctor_id' => 'Pré-seleciona um médico (opcional)'
+                ]);
+            }
+        });
     }
 
     private function runMigrations(): void
