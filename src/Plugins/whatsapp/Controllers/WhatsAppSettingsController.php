@@ -45,7 +45,7 @@ class WhatsAppSettingsController
         // Helper para upsert manual no SQLite
         $stmt = $pdo->prepare("INSERT INTO settings (key_name, key_value) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET key_value = excluded.key_value");
         $stmt->execute(['zapi_instance', $instance]);
-        $stmt->execute(['zapi_token', $token]);
+        $stmt->execute(['zapi_token', encrypt_string($token)]);
 
         $_SESSION['success_msg'] = "Configurações da Z-API salvas com sucesso!";
         header("Location: " . BASE_URL . "/admin/whatsapp");

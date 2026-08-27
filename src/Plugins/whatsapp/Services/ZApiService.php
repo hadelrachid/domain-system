@@ -20,7 +20,7 @@ class ZApiService
         $settings = $pdo->query("SELECT key_name, key_value FROM settings WHERE key_name IN ('zapi_instance', 'zapi_token')")->fetchAll(\PDO::FETCH_KEY_PAIR);
         return [
             'instance' => $settings['zapi_instance'] ?? '',
-            'token' => $settings['zapi_token'] ?? ''
+            'token' => decrypt_string($settings['zapi_token'] ?? '')
         ];
     }
 
