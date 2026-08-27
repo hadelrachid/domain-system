@@ -108,7 +108,23 @@
     </div>
 </div>
 
-<!-- Teste do ShortcodeManager -->
+<!-- Teste do ShortcodeManager (O CockPIT Builder em ação) -->
+<div style="margin-top: 30px; display: flex; gap: 20px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+        <div class="panel-header" style="background: #fff; border: 1px solid #e2e8f0; border-bottom: none; border-radius: 10px 10px 0 0;">Shortcode Injetado: [paciente_lista]</div>
+        <div style="background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            [paciente_lista limit="3" actions="false"]
+        </div>
+    </div>
+    
+    <div style="flex: 1; min-width: 300px;">
+        <div class="panel-header" style="background: #fff; border: 1px solid #e2e8f0; border-bottom: none; border-radius: 10px 10px 0 0;">Shortcode Injetado: [agendamento_form]</div>
+        <div style="background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            [agendamento_form]
+        </div>
+    </div>
+</div>
+
 <div style="margin-top: 30px;">
     [info_sistema color="#1e293b"]
 </div>
