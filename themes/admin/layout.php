@@ -7,7 +7,7 @@
     <base href="<?= defined('BASE_URL') && BASE_URL ? BASE_URL . '/' : '/' ?>">
     <style>
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f0f1; display: flex; height: 100vh; }
-        #adminmenuback { width: 160px; background: #111; color: #fff; height: 100%; position: fixed; border-right: 1px solid #2c3338; }
+        #adminmenuback { width: 160px; background: #111; color: #fff; height: 100%; position: fixed; border-right: 1px solid #2c3338; overflow-y: auto; }
         #adminmenu { padding: 0; margin: 0; list-style: none; }
         #adminmenu li a { display: flex; align-items: center; gap: 8px; padding: 12px 15px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.2s; }
         #adminmenu li a:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
