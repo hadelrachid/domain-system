@@ -21,18 +21,18 @@ Este documento registra os próximos passos e plugins planejados para a evoluç�
   - Médicos só veem seus próprios pacientes e agenda.
   - Secretárias não podem alterar configurações globais.
 
-- [ ] **4. Prontuários Avançados (Upload de Exames)**
+- [x] **4. Prontuários Avançados (Upload de Exames)**
   - Adicionar suporte para upload de anexos (PDFs, imagens de exames) no prontuário do paciente.
   - Visualizador nativo de anexos.
 
 ## 🔵 Prioridade Baixa (Recursos Premium)
 
-- [ ] **5. Módulo Financeiro (Plugin `finance`)**
+- [x] **5. Módulo Financeiro (Plugin `finance`)**
   - Controle de Caixa (Entradas e Saídas).
   - Vincular um "Agendamento" a um "Pagamento" (Status: Pago, Pendente).
   - Relatório de faturamento mensal.
 
-- [ ] **6. Auto-Agendamento (Integração com o Tema/Site Front-end)**
+- [x] **6. Auto-Agendamento (Integração com o Tema/Site Front-end)**
   - Página pública onde o paciente escolhe o horário disponível do médico.
   - O paciente agenda sozinho e o sistema apenas notifica a clínica.
 

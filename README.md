@@ -25,19 +25,19 @@ Se um plugin for ativado e seu código contiver erros (ex: Erros de Sintaxe, Cha
 Mesmo contra as falhas mais catastróficas (como o esgotamento total da memória RAM por um loop infinito), o sistema está protegido.
 Uma função `register_shutdown_function` (O Último Suspiro) monitora a inicialização dos módulos. Se o servidor morrer repentinamente por asfixia de recursos (Fatal Error E_ERROR), o QTA ejetará cirurgicamente o plugin causador da fiação mestre nos últimos milissegundos de vida. Ao recarregar a página, o sistema ressuscitará e deixará um log de emergência.
 
-### 4. Tomadas e Plugues (Inversão de Dependências)
-O sistema foi construído pensando na filosofia da "Tomada e do Plugue". 
-Por exemplo, no módulo de Autenticação, o processo de Verificação em 2 Etapas (2FA) não sabe como enviar e-mails ou como ler aplicativos. Ele apenas fornece uma interface (`TwoFactorProviderInterface`). Outros plugins (ou classes independentes) fornecem os plugues (`EmailProvider`, `AppProvider`).
-Isso permite que um desenvolvedor crie um plugin de "WhatsApp" amanhã e adicione a função 2FA ao sistema de Login sem alterar uma única linha do código central!
+### 4. Tomadas, Plugues e Repositórios (DIP e Repository Pattern)
+O sistema foi construído pensando na filosofia da "Tomada e do Plugue" (SOLID).
+No Autenticador, por exemplo, o 2FA apenas define a interface (`TwoFactorProviderInterface`). Outros módulos fornecem a execução (E-mail, App).
+Mais profundo ainda, em nossa camada de acesso a dados, utilizamos fortemente o **Repository Pattern**. Controladores de módulos vitais (Pacientes, Médicos, Prontuários) ignoram a existência de um banco de dados e conversam apenas com interfaces de Repositórios. Isso elimina o Acoplamento Estrutural e os famosos "Fat Controllers", delegando a busca de dados a um injetor de dependência (DI Container).
 
 ### 5. Ambiente de Desenvolvimento Seguro (Dev Simulator)
 Para evitar que e-mails falsos vazem em testes, o sistema possui um plugin `dev_simulator`. Quando ativado, ele intercepta as classes de comunicação (sequestrando a fiação via Injeção de Dependência) e redireciona os envios para um arquivo de texto local (`temp/auth-2fa.txt`). Em produção, basta desligar o plugin e a fiação volta ao estado natural.
 
 ## 🛠️ Tecnologias
 - **Linguagem:** PHP 8+ (Vanilla/OOP avançado)
-- **Banco de Dados:** SQLite (com PDO e QueryBuilder customizado)
+- **Banco de Dados:** SQLite (com PDO e QueryBuilder customizado encapsulado em Repositórios)
 - **Frontend:** HTML5, CSS Nativo (Arquitetura limpa sem frameworks pesados)
-- **Design Patterns Utilizados:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton.
+- **Design Patterns Utilizados:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton, Repository Pattern.
 
 ## 👥 Controle de Acesso (ACL)
 O sistema isola perfis:

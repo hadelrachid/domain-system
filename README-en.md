@@ -25,19 +25,19 @@ If a plugin is activated and its code contains errors (e.g., Syntax Errors, Inva
 Even against the most catastrophic failures (such as total RAM exhaustion by an infinite loop), the system is protected.
 A `register_shutdown_function` (The Last Breath) monitors the modules' boot process. If the server suddenly dies from resource suffocation (Fatal Error E_ERROR), the ATS will surgically eject the plugin causing the crash in the last milliseconds of life. Upon refreshing the page, the system resurrects and leaves an emergency log.
 
-### 4. Sockets and Plugs (Dependency Inversion)
-The system was built with the "Socket and Plug" philosophy in mind. 
-For example, in the Authentication module, the 2-Step Verification (2FA) process doesn't know how to send emails or read authenticator apps. It merely provides an interface (`TwoFactorProviderInterface`). Other plugins (or independent classes) provide the plugs (`EmailProvider`, `AppProvider`).
-This allows a developer to create a "WhatsApp" plugin tomorrow and add the 2FA function to the Login system without changing a single line of the core code!
+### 4. Sockets, Plugs and Repositories (DIP and Repository Pattern)
+The system was built with the "Socket and Plug" philosophy in mind (SOLID). 
+For example, in the Authentication module, the 2-Step Verification (2FA) process merely provides an interface (`TwoFactorProviderInterface`). Other modules provide the execution (Email, App).
+Going deeper into the data access layer, we heavily rely on the **Repository Pattern**. Vital module controllers (Patients, Doctors, Medical Records) are completely unaware of the database and communicate only with Repository Interfaces. This eliminates Structural Coupling and "Fat Controllers", delegating data querying to a Dependency Injector (DI Container).
 
 ### 5. Secure Development Environment (Dev Simulator)
 To prevent fake emails from leaking during tests, the system has a `dev_simulator` plugin. When activated, it intercepts communication classes (hijacking the wiring via Dependency Injection) and redirects the emails to a local text file (`temp/auth-2fa.txt`). In production, simply disable the plugin and the wiring returns to its natural state.
 
 ## 🛠️ Technologies
 - **Language:** PHP 8+ (Vanilla / Advanced OOP)
-- **Database:** SQLite (with PDO and Custom QueryBuilder)
+- **Database:** SQLite (with PDO and Custom QueryBuilder encapsulated in Repositories)
 - **Frontend:** HTML5, Native CSS (Clean architecture without heavy frameworks)
-- **Design Patterns Used:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton.
+- **Design Patterns Used:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton, Repository Pattern.
 
 ## 👥 Access Control (ACL)
 The system isolates profiles:
