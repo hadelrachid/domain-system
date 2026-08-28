@@ -5,6 +5,8 @@ namespace DomainSystem\Plugins\appointments\Controllers;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\QueryBuilder;
 use DomainSystem\Plugins\appointments\Repositories\AppointmentRepository;
+use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
 
 use DomainSystem\Core\Events\EventDispatcher;
 
@@ -14,13 +16,23 @@ class AppointmentController
     private QueryBuilder $db;
     private AppointmentRepository $repo;
     private EventDispatcher $events;
+    private PatientReaderInterface $patientReader;
+    private DoctorReaderInterface $doctorReader;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db, AppointmentRepository $repo, EventDispatcher $events)
-    {
+    public function __construct(
+        ThemeManager $theme, 
+        QueryBuilder $db, 
+        AppointmentRepository $repo, 
+        EventDispatcher $events,
+        PatientReaderInterface $patientReader,
+        DoctorReaderInterface $doctorReader
+    ) {
         $this->theme = $theme;
         $this->db = $db;
         $this->repo = $repo;
         $this->events = $events;
+        $this->patientReader = $patientReader;
+        $this->doctorReader = $doctorReader;
     }
 
     public function index()
@@ -31,8 +43,9 @@ class AppointmentController
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         
         $appointments = $this->repo->getPendingQueue($role, $doctor_id);
-        $patients = $this->db->table('patients')->get();
-        $doctors = $this->db->table('doctors')->get();
+        
+        $patients = $this->patientReader->getAllPatients();
+        $doctors = $this->doctorReader->getAllDoctors();
 
         return $this->theme->render('admin_appointments', [
             'appointments' => $appointments,
@@ -69,10 +82,9 @@ class AppointmentController
                     'status' => 'Confirmado'
                 ]);
 
-                // Dispara o evento de "Agendamento Criado" para o sistema
                 try {
-                    $patient = $this->db->table('patients')->where('id', '=', $patient_id)->first();
-                    $doctor = $this->db->table('doctors')->where('id', '=', $doctor_id)->first();
+                    $patient = $this->patientReader->getPatientData((int)$patient_id);
+                    $doctorName = $this->doctorReader->getDoctorName((int)$doctor_id);
                     
                     if ($patient) {
                         $this->events->dispatch('appointment.created', [
@@ -80,11 +92,10 @@ class AppointmentController
                             'patient_phone' => $patient['phone'] ?? '',
                             'appointment_date' => $appointment_date,
                             'appointment_time' => $appointment_time,
-                            'doctor_name' => $doctor['name'] ?? 'Médico'
+                            'doctor_name' => $doctorName
                         ]);
                     }
                 } catch (\Exception $evtEx) {
-                    // Protege o agendamento caso algum plugin falhe ao processar o evento
                     error_log("Erro ao disparar evento de agendamento: " . $evtEx->getMessage());
                 }
 
@@ -184,7 +195,7 @@ class AppointmentController
                 if (!empty($_POST['address'])) $patientData['address'] = $_POST['address'];
 
                 if (!empty($patientData)) {
-                    $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->update($patientData);
+                    $this->patientReader->updatePatientData((int)$appointment['patient_id'], $patientData);
                 }
             }
 
@@ -195,15 +206,12 @@ class AppointmentController
         exit;
     }
 
-    /**
-     * Renderiza o formulário de marcação de consulta via Shortcode.
-     */
     public function renderShortcodeBooking(array $attributes = []): string
     {
         $preSelectedDoctorId = $attributes['doctor_id'] ?? null;
         
-        $patients = $this->db->table('patients')->get();
-        $doctors = $this->db->table('doctors')->get();
+        $patients = $this->patientReader->getAllPatients();
+        $doctors = $this->doctorReader->getAllDoctors();
 
         ob_start();
         include __DIR__ . '/../views/partials/booking_form.php';

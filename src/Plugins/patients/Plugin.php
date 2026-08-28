@@ -17,6 +17,14 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\patients\Repositories\SqlitePatientRepository::class
         );
 
+        // 2. Bind do Fornecedor para Agendamentos (DIP)
+        if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface::class)) {
+            $this->container->bind(
+                \DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface::class,
+                \DomainSystem\Plugins\patients\Providers\AppointmentPatientProvider::class
+            );
+        }
+
         $this->runMigrations();
 
         /** @var EventDispatcher $events */

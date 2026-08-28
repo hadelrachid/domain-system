@@ -11,6 +11,14 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        // Bind do Fornecedor para Agendamentos (DIP)
+        if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class)) {
+            $this->container->bind(
+                \DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class,
+                \DomainSystem\Plugins\doctors\Providers\AppointmentDoctorProvider::class
+            );
+        }
+
         $this->runMigrations();
 
         /** @var EventDispatcher $events */

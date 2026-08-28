@@ -3,24 +3,30 @@
 namespace DomainSystem\Plugins\appointments\Repositories;
 
 use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
 
 class AppointmentRepository
 {
     private QueryBuilder $db;
+    private PatientReaderInterface $patientReader;
+    private DoctorReaderInterface $doctorReader;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(QueryBuilder $db, PatientReaderInterface $patientReader, DoctorReaderInterface $doctorReader)
     {
         $this->db = $db;
+        $this->patientReader = $patientReader;
+        $this->doctorReader = $doctorReader;
     }
 
     /**
-     * Retorna os agendamentos pendentes (Fila de Hoje) com dados do paciente e médico injetados
+     * Retorna os agendamentos pendentes (Fila) com dados do paciente e médico injetados
      */
     public function getPendingQueue(string $userRole, ?string $doctorId): array
     {
         $appointmentsRaw = $this->db->table('appointments')->get();
-        $patientsMap = $this->getPatientsMap();
-        $doctorsMap = $this->getDoctorsMap();
+        $patientsMap = $this->patientReader->getPatientsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
@@ -40,7 +46,6 @@ class AppointmentRepository
             $appointments[] = $a;
         }
 
-        // Ordenar: mais antigos primeiro (fila de chegada)
         usort($appointments, function($a, $b) {
             return strtotime($a['appointment_date'] . ' ' . $a['appointment_time']) <=> strtotime($b['appointment_date'] . ' ' . $b['appointment_time']);
         });
@@ -54,8 +59,8 @@ class AppointmentRepository
     public function getHistory(string $userRole, ?string $doctorId, string $searchQuery = ''): array
     {
         $appointmentsRaw = $this->db->table('appointments')->get();
-        $patientsMap = $this->getPatientsMap();
-        $doctorsMap = $this->getDoctorsMap();
+        $patientsMap = $this->patientReader->getPatientsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
 
         $appointments = [];
         foreach ($appointmentsRaw as $a) {
@@ -84,12 +89,10 @@ class AppointmentRepository
             $appointments[] = $a;
         }
 
-        // Ordenar por data mais recente
         usort($appointments, function($a, $b) {
             return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
         });
 
-        // Limite de 20
         return array_slice($appointments, 0, 20);
     }
 
@@ -101,14 +104,14 @@ class AppointmentRepository
         $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
         if (empty($appointment)) return null;
 
-        $patient = $this->db->table('patients')->where('id', '=', $appointment['patient_id'])->first();
-        $doctor = $this->db->table('doctors')->where('id', '=', $appointment['doctor_id'])->first();
+        $patient = $this->patientReader->getPatientData((int)$appointment['patient_id']);
+        $doctorName = $this->doctorReader->getDoctorName((int)$appointment['doctor_id']);
 
-        $appointment['patient_data'] = $patient; // DTO completo
+        $appointment['patient_data'] = $patient; 
         $appointment['patient_name'] = $patient['name'] ?? 'Desconhecido';
         $appointment['patient_cpf'] = $patient['cpf'] ?? 'Desconhecido';
         $appointment['patient_birthdate'] = $patient['birthdate'] ?? '1900-01-01';
-        $appointment['doctor_name'] = $doctor['name'] ?? 'Desconhecido';
+        $appointment['doctor_name'] = $doctorName;
 
         return $appointment;
     }
@@ -119,7 +122,7 @@ class AppointmentRepository
     public function getPatientClinicalHistory(int|string $patientId, int|string $excludeAppointmentId): array
     {
         $historyRaw = $this->db->table('appointments')->where('patient_id', '=', $patientId)->get();
-        $doctorsMap = $this->getDoctorsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
 
         $history = [];
         foreach ($historyRaw as $h) {
@@ -134,23 +137,5 @@ class AppointmentRepository
         });
 
         return $history;
-    }
-
-    // --- Helpers Internos para não duplicar chamadas ---
-
-    private function getPatientsMap(): array
-    {
-        $patients = $this->db->table('patients')->get();
-        $map = [];
-        foreach ($patients as $p) $map[$p['id']] = $p;
-        return $map;
-    }
-
-    private function getDoctorsMap(): array
-    {
-        $doctors = $this->db->table('doctors')->get();
-        $map = [];
-        foreach ($doctors as $d) $map[$d['id']] = $d;
-        return $map;
     }
 }
