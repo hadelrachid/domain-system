@@ -24,7 +24,7 @@ class PageFrontController
         }
 
         // Tenta carregar o template do tema (se existir). Se não, usa um fallback.
-        $themeFile = \BASE_PATH . '/themes/public/page.php';
+        $themeFile = \DOMAIN_SYSTEM_ROOT . '/themes/public/page.php';
         
         if (file_exists($themeFile)) {
             // Se o tema tem um template page.php, usa ele
