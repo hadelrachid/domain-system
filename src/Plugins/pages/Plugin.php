@@ -36,6 +36,7 @@ class Plugin extends AbstractPlugin
             $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create']);
             $router->addRoute('GET', '/admin/pages/edit/{id}', [PageAdminController::class, 'edit']);
             $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store']);
+            $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete']);
             
             // Rota Pública (O site)
             $router->addRoute('GET', '/p/{slug}', [PageFrontController::class, 'show']);

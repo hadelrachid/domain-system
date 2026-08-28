@@ -76,4 +76,11 @@ class PageAdminController
 
         return Response::redirect(\BASE_URL . '/admin/pages');
     }
+
+    public function delete(string $id)
+    {
+        $this->db->table('pages')->where('id', '=', $id)->delete();
+        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página excluída com sucesso!'];
+        return Response::redirect(\BASE_URL . '/admin/pages');
+    }
 }

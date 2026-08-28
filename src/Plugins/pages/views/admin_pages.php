@@ -28,7 +28,10 @@
                     <td style="padding: 12px; color: #64748b;">/p/<?= htmlspecialchars($p['slug']) ?></td>
                     <td style="padding: 12px; text-align: center;">
                         <a href="<?= BASE_URL ?>/admin/pages/edit/<?= $p['id'] ?>" style="color: #2563eb; text-decoration: none; font-weight: bold; margin-right: 15px;">Editar</a>
-                        <a href="<?= BASE_URL ?>/p/<?= $p['slug'] ?>" target="_blank" style="color: #10b981; text-decoration: none; font-weight: bold;">Ver Página ↗</a>
+                        <a href="<?= BASE_URL ?>/p/<?= $p['slug'] ?>" target="_blank" style="color: #10b981; text-decoration: none; font-weight: bold; margin-right: 15px;">Ver Página ↗</a>
+                        <form action="<?= BASE_URL ?>/admin/pages/delete/<?= $p['id'] ?>" method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta página permanentemente?');">
+                            <button type="submit" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; text-decoration: underline;">Excluir</button>
+                        </form>
                     </td>
                 </tr>
             <?php endforeach; endif; ?>
