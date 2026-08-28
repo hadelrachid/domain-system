@@ -15,5 +15,6 @@
     "bomb_plugin": false,
     "clinic_pack": true,
     "dental_module": false,
-    "finance": true
+    "finance": true,
+    "health_insurances": true
 }

@@ -1,0 +1,8 @@
+{
+    "name": "health_insurances",
+    "description": "Módulo de Convênios e Faturamento. Demonstra o uso prático de Interfaces para integrar múltiplos convênios sem acoplamento.",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "namespace": "DomainSystem\\Plugins\\health_insurances\\",
+    "main": "Plugin.php"
+}
