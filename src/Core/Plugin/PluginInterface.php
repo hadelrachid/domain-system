@@ -55,4 +55,14 @@ interface PluginInterface
      * Se não for um Hub, deve retornar null.
      */
     public function getSubPluginsPath(): ?string;
+
+    /**
+     * Construtor padrão que o PluginManager usará.
+     */
+    public function __construct(\DomainSystem\Core\Container\Container $container, string $path);
+    
+    /**
+     * Define o estado de ativação em tempo de execução.
+     */
+    public function setActive(bool $active): void;
 }

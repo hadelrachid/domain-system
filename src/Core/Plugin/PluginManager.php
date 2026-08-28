@@ -78,18 +78,11 @@ class PluginManager
                 }
 
                 if (class_exists($pluginClass)) {
-                    if (is_subclass_of($pluginClass, AbstractPlugin::class)) {
-                        /** @var AbstractPlugin $plugin */
-                        $plugin = new $pluginClass($this->container, $dir);
-                        $plugin->setActive(true);
-                        $this->addPlugin($plugin);
-                        $newlyDiscovered[] = $plugin;
-                    } else {
-                        /** @var PluginInterface $plugin */
-                        $plugin = new $pluginClass($this->container);
-                        $this->addPlugin($plugin);
-                        $newlyDiscovered[] = $plugin;
-                    }
+                    /** @var PluginInterface $plugin */
+                    $plugin = new $pluginClass($this->container, $dir);
+                    $plugin->setActive(true);
+                    $this->addPlugin($plugin);
+                    $newlyDiscovered[] = $plugin;
                 }
             }
         }

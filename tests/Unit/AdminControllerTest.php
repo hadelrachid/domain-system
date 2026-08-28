@@ -47,12 +47,15 @@ class AdminControllerTest extends TestCase
     {
         $container = new Container();
         $themeManager = new ThemeManager($this->tempThemesPath);
-        $container->singleton(ThemeManager::class, function() use ($themeManager) {
-            return $themeManager;
-        });
+        
+        $events = new \DomainSystem\Core\Events\EventDispatcher();
+        $pluginManager = new \DomainSystem\Core\Plugin\PluginManager($container, $events);
+        
+        // Mock the Request object since listPlugins now takes a Request argument
+        $requestMock = $this->createMock(\DomainSystem\Core\Http\Request::class);
 
-        $controller = new AdminController($container);
-        $html = $controller->listPlugins();
+        $controller = new AdminController($pluginManager, $themeManager);
+        $html = $controller->listPlugins($requestMock);
         
         $this->assertStringContainsString('database', $html);
         $this->assertStringContainsString('system-admin', $html);
@@ -63,12 +66,18 @@ class AdminControllerTest extends TestCase
     {
         $container = new Container();
         $themeManager = new ThemeManager($this->tempThemesPath);
-        $container->singleton(ThemeManager::class, function() use ($themeManager) {
-            return $themeManager;
-        });
+        
+        // Mock DashboardRepositoryInterface
+        $repoMock = $this->createMock(\DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class);
+        $repoMock->method('getGlobalStats')->willReturn(['totalPatients' => 10, 'totalDoctors' => 5, 'appointmentsToday' => 2]);
+        $repoMock->method('getGlobalQueue')->willReturn([]);
+        $repoMock->method('getWaitingRoom')->willReturn([]);
+        $repoMock->method('getAppointmentsChartData')->willReturn([]);
 
-        $controller = new DashboardController($container);
-        $html = $controller->index();
+        $requestMock = $this->createMock(\DomainSystem\Core\Http\Request::class);
+
+        $controller = new DashboardController($themeManager, $repoMock);
+        $html = $controller->index($requestMock);
         
         $this->assertStringContainsString('Dashboard', $html);
         $this->assertStringContainsString('<html>', $html);
