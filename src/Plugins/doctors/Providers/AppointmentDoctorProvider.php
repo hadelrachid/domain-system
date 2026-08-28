@@ -3,22 +3,20 @@
 namespace DomainSystem\Plugins\doctors\Providers;
 
 use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface;
 
 class AppointmentDoctorProvider implements DoctorReaderInterface
 {
-    private QueryBuilder $db;
+    private DoctorRepositoryInterface $repository;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(DoctorRepositoryInterface $repository)
     {
-        // Nota: No futuro, Doctors também deve ter um Repository Pattern
-        // Por enquanto, resolvemos o DIP lendo via QueryBuilder internamente.
-        $this->db = $db;
+        $this->repository = $repository;
     }
 
     public function getAllDoctors(): array
     {
-        return $this->db->table('doctors')->get();
+        return $this->repository->findAll();
     }
 
     public function getDoctorsMap(): array
@@ -33,7 +31,7 @@ class AppointmentDoctorProvider implements DoctorReaderInterface
 
     public function getDoctorName(int $id): string
     {
-        $result = $this->db->table('doctors')->where('id', '=', $id)->get();
-        return !empty($result) ? $result[0]['name'] : 'Desconhecido';
+        $doctor = $this->repository->findById($id);
+        return $doctor ? $doctor['name'] : 'Desconhecido';
     }
 }

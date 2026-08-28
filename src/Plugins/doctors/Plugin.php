@@ -11,7 +11,13 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        // Bind do Fornecedor para Agendamentos (DIP)
+        // 1. Bind da Infraestrutura (Repositório)
+        $this->container->bind(
+            \DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface::class,
+            \DomainSystem\Plugins\doctors\Repositories\SqliteDoctorRepository::class
+        );
+
+        // 2. Bind do Fornecedor para Agendamentos (DIP)
         if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class)) {
             $this->container->bind(
                 \DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class,

@@ -3,23 +3,23 @@
 namespace DomainSystem\Plugins\doctors\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface;
 
 class DoctorController
 {
     private ThemeManager $theme;
-    private QueryBuilder $db;
+    private DoctorRepositoryInterface $repository;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db)
+    public function __construct(ThemeManager $theme, DoctorRepositoryInterface $repository)
     {
         $this->theme = $theme;
-        $this->db = $db;
+        $this->repository = $repository;
     }
 
     public function index()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        $doctors = $this->db->table('doctors')->get();
+        $doctors = $this->repository->findAll();
         $theme = $this->theme;
         
         return $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
@@ -39,7 +39,7 @@ class DoctorController
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O nome do médico é obrigatório!'];
         } else {
             try {
-                $this->db->table('doctors')->insert([
+                $this->repository->save([
                     'name' => $name,
                     'crm' => $crm,
                     'specialty' => $specialty,
@@ -66,15 +66,13 @@ class DoctorController
             exit;
         }
 
-        $doctor = $this->db->table('doctors')->where('id', '=', $id)->get();
-        if (empty($doctor)) {
+        $doctor = $this->repository->findById((int)$id);
+        if (!$doctor) {
             header("Location: " . BASE_URL . "/admin/doctors");
             exit;
         }
 
-        $doctor = $doctor[0];
         $theme = $this->theme;
-        
         return $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
     }
 
@@ -101,7 +99,7 @@ class DoctorController
         }
 
         try {
-            $this->db->table('doctors')->where('id', '=', $id)->update([
+            $this->repository->update((int)$id, [
                 'name' => $name,
                 'crm' => $crm,
                 'specialty' => $specialty,
@@ -123,7 +121,7 @@ class DoctorController
 
         $id = $_POST['id'] ?? null;
         if ($id) {
-            $this->db->table('doctors')->where('id', '=', $id)->delete();
+            $this->repository->delete((int)$id);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico excluído com sucesso!'];
         }
 
