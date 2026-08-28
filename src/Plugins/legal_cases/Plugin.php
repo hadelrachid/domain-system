@@ -10,7 +10,6 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        $this->runMigrations();
 
         $events = $this->container->make(EventDispatcher::class);
 
@@ -24,7 +23,7 @@ class Plugin extends AbstractPlugin
         });
     }
 
-    private function runMigrations(): void
+    public function activate(): void
     {
         $connection = $this->container->make(Connection::class);
         $db = $connection->getPdo();

@@ -107,6 +107,10 @@ class PluginManager
     public function bootPlugins(): void
     {
         $orderedPlugins = $this->resolveDependencies();
+        
+        $migrationsPath = $this->getBasePath() . '/temp/migrations.json';
+        $migrated = file_exists($migrationsPath) ? json_decode(file_get_contents($migrationsPath), true) ?? [] : [];
+        $needsSave = false;
 
         foreach ($orderedPlugins as $pluginName) {
             $plugin = $this->plugins[$pluginName];
@@ -114,6 +118,15 @@ class PluginManager
             if ($plugin->isActive()) {
                 try {
                     $this->currentBootingPlugin = $pluginName; // Anota no quadro
+                    
+                    // Executa a migração (activate) apenas uma vez na vida do plugin
+                    if (!isset($migrated[$pluginName])) {
+                        if (method_exists($plugin, 'activate')) {
+                            $plugin->activate();
+                        }
+                        $migrated[$pluginName] = true;
+                        $needsSave = true;
+                    }
                     
                     $plugin->register();
                     $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
@@ -137,6 +150,13 @@ class PluginManager
                     error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
                 }
             }
+        }
+        
+        if ($needsSave) {
+            if (!is_dir(dirname($migrationsPath))) {
+                mkdir(dirname($migrationsPath), 0777, true);
+            }
+            file_put_contents($migrationsPath, json_encode($migrated, JSON_PRETTY_PRINT));
         }
     }
 

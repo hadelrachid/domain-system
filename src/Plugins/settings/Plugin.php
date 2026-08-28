@@ -11,7 +11,6 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        $this->runMigrations();
 
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
@@ -35,7 +34,7 @@ class Plugin extends AbstractPlugin
         });
     }
 
-    private function runMigrations(): void
+    public function activate(): void
     {
         /** @var Connection $connection */
         $connection = $this->container->make(Connection::class);

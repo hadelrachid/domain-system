@@ -16,8 +16,6 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\medical_records\Repositories\SqliteRecordRepository::class
         );
 
-        $this->runMigrations();
-
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
 
@@ -38,7 +36,7 @@ class Plugin extends AbstractPlugin
         // mas por hora, se o cara for Médico, mudaremos a fila para apontar para /admin/appointments/record/{id}).
     }
 
-    private function runMigrations(): void
+    public function activate(): void
     {
         /** @var Connection $connection */
         $connection = $this->container->make(Connection::class);

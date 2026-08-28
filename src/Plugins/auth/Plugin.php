@@ -17,7 +17,6 @@ class Plugin extends AbstractPlugin
         }
 
         // 2. Garantir que a tabela users existe
-        $this->runMigrations();
 
         // 3. O Container vai fazer o auto-wiring do AuthController automaticamente na hora do router!
         $queryBuilder = $this->container->make(\DomainSystem\Plugins\Database\QueryBuilder::class);
@@ -108,7 +107,7 @@ class Plugin extends AbstractPlugin
         });
     }
 
-    private function runMigrations(): void
+    public function activate(): void
     {
         /** @var \DomainSystem\Plugins\Database\Connection $connection */
         $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);

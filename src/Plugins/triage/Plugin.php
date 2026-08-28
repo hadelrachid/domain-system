@@ -16,8 +16,6 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\triage\Repositories\SqliteTriageRepository::class
         );
 
-        $this->runMigrations();
-
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
 
@@ -39,7 +37,7 @@ class Plugin extends AbstractPlugin
         });
     }
 
-    private function runMigrations(): void
+    public function activate(): void
     {
         $connection = $this->container->make(Connection::class);
         $db = $connection->getPdo();
