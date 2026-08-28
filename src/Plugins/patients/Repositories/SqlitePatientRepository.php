@@ -34,9 +34,9 @@ class SqlitePatientRepository implements PatientRepositoryInterface
         return !empty($result) ? $result[0] : null;
     }
 
-    public function save(array $data): void
+    public function save(array $data): int
     {
-        $this->db->table($this->table)->insert($data);
+        return $this->db->table($this->table)->insert($data);
     }
 
     public function update(int $id, array $data): void

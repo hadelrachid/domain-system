@@ -5,8 +5,9 @@ namespace DomainSystem\Plugins\appointments\Repositories;
 use DomainSystem\Plugins\Database\QueryBuilder;
 use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
 use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 
-class AppointmentRepository
+class SqliteAppointmentRepository implements AppointmentRepositoryInterface
 {
     private QueryBuilder $db;
     private PatientReaderInterface $patientReader;
@@ -19,10 +20,7 @@ class AppointmentRepository
         $this->doctorReader = $doctorReader;
     }
 
-    /**
-     * Retorna os agendamentos pendentes (Fila) com dados do paciente e médico injetados
-     */
-    public function getPendingQueue(string $userRole, ?string $doctorId): array
+    public function getPendingQueue(?string $doctorId = null): array
     {
         $appointmentsRaw = $this->db->table('appointments')->get();
         $patientsMap = $this->patientReader->getPatientsMap();
@@ -34,7 +32,8 @@ class AppointmentRepository
                 continue;
             }
 
-            if ($userRole === 'doctor' && (string)$a['doctor_id'] !== (string)$doctorId) {
+            // O Controller envia doctorId se a regra de negócio exigir filtragem. O Repositório apenas obedece.
+            if ($doctorId !== null && (string)$a['doctor_id'] !== (string)$doctorId) {
                 continue;
             }
 
@@ -53,10 +52,7 @@ class AppointmentRepository
         return $appointments;
     }
 
-    /**
-     * Retorna o histórico de atendimentos com filtros
-     */
-    public function getHistory(string $userRole, ?string $doctorId, string $searchQuery = ''): array
+    public function getHistory(?string $doctorId = null, string $searchQuery = ''): array
     {
         $appointmentsRaw = $this->db->table('appointments')->get();
         $patientsMap = $this->patientReader->getPatientsMap();
@@ -68,7 +64,7 @@ class AppointmentRepository
                 continue;
             }
 
-            if ($userRole === 'doctor' && (string)$a['doctor_id'] !== (string)$doctorId) {
+            if ($doctorId !== null && (string)$a['doctor_id'] !== (string)$doctorId) {
                 continue;
             }
 
@@ -96,4 +92,15 @@ class AppointmentRepository
         return array_slice($appointments, 0, 20);
     }
 
+    public function createAppointment(array $data): void
+    {
+        $this->db->table('appointments')->insert($data);
+    }
+
+    public function updateStatus(int $id, string $status): void
+    {
+        $this->db->table('appointments')->where('id', '=', $id)->update([
+            'status' => $status
+        ]);
+    }
 }

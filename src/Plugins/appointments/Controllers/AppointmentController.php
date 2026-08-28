@@ -3,8 +3,7 @@
 namespace DomainSystem\Plugins\appointments\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
-use DomainSystem\Plugins\appointments\Repositories\AppointmentRepository;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
 use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
 
@@ -13,22 +12,19 @@ use DomainSystem\Core\Events\EventDispatcher;
 class AppointmentController
 {
     private ThemeManager $theme;
-    private QueryBuilder $db;
-    private AppointmentRepository $repo;
+    private AppointmentRepositoryInterface $repo;
     private EventDispatcher $events;
     private PatientReaderInterface $patientReader;
     private DoctorReaderInterface $doctorReader;
 
     public function __construct(
         ThemeManager $theme, 
-        QueryBuilder $db, 
-        AppointmentRepository $repo, 
+        AppointmentRepositoryInterface $repo, 
         EventDispatcher $events,
         PatientReaderInterface $patientReader,
         DoctorReaderInterface $doctorReader
     ) {
         $this->theme = $theme;
-        $this->db = $db;
         $this->repo = $repo;
         $this->events = $events;
         $this->patientReader = $patientReader;
@@ -42,7 +38,9 @@ class AppointmentController
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         
-        $appointments = $this->repo->getPendingQueue($role, $doctor_id);
+        // A lógica de negócio dita que médicos só vêem os próprios pacientes. O Repositório só executa o filtro.
+        $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
+        $appointments = $this->repo->getPendingQueue($filterDoctorId);
         
         $patients = $this->patientReader->getAllPatients();
         $doctors = $this->doctorReader->getAllDoctors();
@@ -71,7 +69,7 @@ class AppointmentController
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha todos os campos obrigatórios.'];
         } else {
             try {
-                $this->db->table('appointments')->insert([
+                $this->repo->createAppointment([
                     'patient_id' => $patient_id,
                     'doctor_id' => $doctor_id,
                     'appointment_date' => $appointment_date,
@@ -119,9 +117,7 @@ class AppointmentController
         if ($id && $status) {
             $allowed_statuses = ['Pendente', 'Confirmado', 'Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento', 'Finalizado', 'Cancelado'];
             if (in_array($status, $allowed_statuses)) {
-                $this->db->table('appointments')->where('id', '=', $id)->update([
-                    'status' => $status
-                ]);
+                $this->repo->updateStatus((int)$id, $status);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => "Status atualizado para $status."];
             }
         }
@@ -138,7 +134,8 @@ class AppointmentController
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         $search = strtolower($_GET['s'] ?? '');
         
-        $appointments = $this->repo->getHistory($role, $doctor_id, $search);
+        $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
+        $appointments = $this->repo->getHistory($filterDoctorId, $search);
 
         return $this->theme->render('admin_history', [
             'appointments' => $appointments,

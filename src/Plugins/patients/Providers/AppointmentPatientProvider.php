@@ -38,4 +38,24 @@ class AppointmentPatientProvider implements PatientReaderInterface
     {
         $this->repository->update($id, $data);
     }
+
+    public function findPatientByPhone(string $phone): ?array
+    {
+        $patients = $this->repository->findAll();
+        foreach ($patients as $p) {
+            if (($p['phone'] ?? '') === $phone) {
+                return $p;
+            }
+        }
+        return null;
+    }
+
+    public function createPatient(string $name, string $phone): int
+    {
+        return $this->repository->save([
+            'name' => $name,
+            'phone' => $phone,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+    }
 }

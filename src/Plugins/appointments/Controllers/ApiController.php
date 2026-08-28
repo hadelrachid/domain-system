@@ -2,15 +2,18 @@
 
 namespace DomainSystem\Plugins\appointments\Controllers;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
 
 class ApiController
 {
-    private QueryBuilder $db;
+    private AppointmentRepositoryInterface $repo;
+    private PatientReaderInterface $patientReader;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(AppointmentRepositoryInterface $repo, PatientReaderInterface $patientReader)
     {
-        $this->db = $db;
+        $this->repo = $repo;
+        $this->patientReader = $patientReader;
     }
 
     public function receiveBooking()
@@ -48,19 +51,15 @@ class ApiController
         }
 
         // Tenta achar paciente pelo telefone (simplificado)
-        $patient = $this->db->table('patients')->where('phone', '=', $telefone)->first();
+        $patient = $this->patientReader->findPatientByPhone($telefone);
         if (!$patient) {
-            $patientId = $this->db->table('patients')->insert([
-                'name' => $nome,
-                'phone' => $telefone,
-                'created_at' => date('Y-m-d H:i:s')
-            ]);
+            $patientId = $this->patientReader->createPatient($nome, $telefone);
         } else {
             $patientId = $patient['id'];
         }
 
         try {
-            $this->db->table('appointments')->insert([
+            $this->repo->createAppointment([
                 'patient_id' => $patientId,
                 'doctor_id' => $medico_id,
                 'appointment_date' => $data_consulta,

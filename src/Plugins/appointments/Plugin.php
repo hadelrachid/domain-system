@@ -16,6 +16,12 @@ class Plugin extends AbstractPlugin
         /** @var EventDispatcher $events */
         $events = $this->container->make(EventDispatcher::class);
 
+        // Registro de Contratos
+        $this->container->bind(
+            \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class,
+            \DomainSystem\Plugins\appointments\Repositories\SqliteAppointmentRepository::class
+        );
+
         // Registrar item no menu lateral
         $events->addListener('admin.menu', function($menus, $role = 'admin') {
             if ($role === 'admin' || $role === 'receptionist') {

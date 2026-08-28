@@ -23,7 +23,7 @@ interface PatientRepositoryInterface
     /**
      * Salva um novo paciente. Lança exceção em caso de CPF duplicado.
      */
-    public function save(array $data): void;
+    public function save(array $data): int;
 
     /**
      * Atualiza os dados de um paciente existente.

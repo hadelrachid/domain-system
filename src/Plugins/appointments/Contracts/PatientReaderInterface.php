@@ -26,4 +26,12 @@ interface PatientReaderInterface
      * Atualiza dados básicos de um paciente.
      */
     public function updatePatientData(int $id, array $data): void;
+    /**
+     * Busca um paciente pelo telefone.
+     */
+    public function findPatientByPhone(string $phone): ?array;
+    /**
+     * Cria um paciente rápido (nome e telefone)
+     */
+    public function createPatient(string $name, string $phone): int;
 }
