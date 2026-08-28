@@ -16,5 +16,6 @@
     "clinic_pack": true,
     "dental_module": false,
     "finance": true,
-    "health_insurances": true
+    "health_insurances": true,
+    "pages": true
 }
