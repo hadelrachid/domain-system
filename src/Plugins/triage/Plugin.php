@@ -10,6 +10,12 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        // Vincular Contrato à Implementação (SOLID: Injeção de Dependências)
+        $this->container->bind(
+            \DomainSystem\Plugins\triage\Contracts\TriageRepositoryInterface::class,
+            \DomainSystem\Plugins\triage\Repositories\SqliteTriageRepository::class
+        );
+
         $this->runMigrations();
 
         /** @var EventDispatcher $events */

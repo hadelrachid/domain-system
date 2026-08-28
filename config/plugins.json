@@ -1,7 +1,7 @@
 {
     "database": true,
     "system-admin": true,
-    "auth": false,
+    "auth": true,
     "patients": true,
     "doctors": true,
     "appointments": true,
