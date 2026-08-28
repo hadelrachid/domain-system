@@ -25,6 +25,10 @@ if (file_exists($envFile)) {
     }
 }
 
+// Configuração de Fuso Horário
+$timezone = getenv('APP_TIMEZONE') ?: 'America/Sao_Paulo';
+date_default_timezone_set($timezone);
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Include global helper functions
