@@ -11,7 +11,7 @@
     "whatsapp": true,
     "legal_cases": true,
     "triage": true,
-    "dev_simulator": false,
+    "dev_simulator": true,
     "bomb_plugin": false,
     "clinic_pack": true,
     "dental_module": false,

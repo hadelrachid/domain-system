@@ -59,7 +59,7 @@ try {
     }
     
     // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-    if (strpos($uri, '/admin') === 0 && !isset($_GET['raw'])) {
+    if (strpos($uri, '/admin') === 0 && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency')) {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         $role = $_SESSION['user_role'] ?? 'admin';
         $workspace = $app->getWorkspaceManager()->getWorkspace($role);

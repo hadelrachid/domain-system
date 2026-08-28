@@ -22,6 +22,19 @@ class Plugin extends AbstractPlugin
 
         $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
 
+        // --- THE EMERGENCY HATCH (REDE DE SEGURANÇA) ---
+        // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
+        // Se o plugin Auth estivesse vivo, ele já teria redirecionado e dado EXIT.
+        $events->addListener('router.before_dispatch', function(string $uri) {
+            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
+                if (session_status() === PHP_SESSION_NONE) { session_start(); }
+                if (!isset($_SESSION['user_id'])) {
+                    header("Location: " . BASE_URL . "/admin/emergency");
+                    exit;
+                }
+            }
+        }, 999);
+
         $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
             $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
@@ -51,6 +64,10 @@ class Plugin extends AbstractPlugin
         $events->addListener('router.register', function(Router $router) {
             // Redireciona a raiz para o admin
             $router->addRoute('GET', '/', function() { header("Location: " . BASE_URL . "/admin"); exit; });
+
+            // Rota de Emergência (Independente de Auth)
+            $router->addRoute('GET', '/admin/emergency', [\DomainSystem\Plugins\SystemAdmin\Controllers\EmergencyController::class, 'index']);
+            $router->addRoute('POST', '/admin/emergency', [\DomainSystem\Plugins\SystemAdmin\Controllers\EmergencyController::class, 'login']);
 
             // Dashboard base
             $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
