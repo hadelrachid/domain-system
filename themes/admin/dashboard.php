@@ -91,21 +91,95 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="panel-card" style="flex: 1; min-width: 250px;">
-        <div class="panel-header">Ações Rápidas</div>
-        <div style="padding: 25px;">
-            <a href="<?= BASE_URL ?>/admin/patients" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
-                👥 Gerenciar Pacientes
-            </a>
-            <a href="<?= BASE_URL ?>/admin/users" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
-                🔐 Controle de Usuários
-            </a>
-            <a href="<?= BASE_URL ?>/admin/plugins" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
-                ⚙️ Configurar Sistema
-            </a>
+    <!-- Sala de Espera -->
+    <div class="panel-card" style="flex: 2; min-width: 400px;">
+        <div class="panel-header">Sala de Espera 🕒</div>
+        <div style="padding: 0;">
+            <table class="wp-list-table" style="border: none; box-shadow: none;">
+                <thead>
+                    <tr>
+                        <th style="background: #fff; padding: 15px 25px; color: #64748b;">Horário</th>
+                        <th style="background: #fff; padding: 15px 25px; color: #64748b;">Paciente</th>
+                        <th style="background: #fff; padding: 15px 25px; color: #64748b;">Médico</th>
+                        <th style="background: #fff; padding: 15px 25px; color: #64748b;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($waitingRoom)): ?>
+                        <tr><td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">Nenhum paciente na sala de espera.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($waitingRoom as $app): 
+                            $statusClass = 'status-pendente';
+                            $st = strtolower($app['status']);
+                            if (str_contains($st, 'médico')) $statusClass = 'status-confirmado';
+                            if (str_contains($st, 'atendimento')) $statusClass = 'status-concluido';
+                        ?>
+                        <tr>
+                            <td style="padding: 15px 25px; font-weight: bold; color: #3b82f6;"><?= htmlspecialchars(substr($app['appointment_time'], 0, 5)) ?></td>
+                            <td style="padding: 15px 25px; font-weight: 500; color: #1e293b;"><?= htmlspecialchars($app['patient_name']) ?></td>
+                            <td style="padding: 15px 25px; color: #64748b;"><?= htmlspecialchars($app['doctor_name']) ?></td>
+                            <td style="padding: 15px 25px;"><span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($app['status']) ?></span></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Actions e Gráfico -->
+    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel-card">
+            <div class="panel-header">Performance (Últimos 7 dias) 📈</div>
+            <div style="padding: 20px;">
+                <canvas id="appointmentsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-header">Ações Rápidas</div>
+            <div style="padding: 25px;">
+                <a href="<?= BASE_URL ?>/admin/patients" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+                    👥 Gerenciar Pacientes
+                </a>
+                <a href="<?= BASE_URL ?>/admin/users" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; margin-bottom: 15px; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+                    🔐 Controle de Usuários
+                </a>
+                <a href="<?= BASE_URL ?>/admin/plugins" class="btn" style="display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: bold; transition: all 0.2s;">
+                    ⚙️ Configurar Sistema
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('appointmentsChart').getContext('2d');
+        const chartData = <?= $chartData ?? '{"labels":[],"data":[]}' ?>;
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Agendamentos',
+                    data: chartData.data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    });
+</script>

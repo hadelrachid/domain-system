@@ -89,6 +89,41 @@
             </table>
         </div>
     </div>
+
+    <!-- Gráfico de Produtividade -->
+    <div class="panel-card" style="flex: 1; min-width: 250px;">
+        <div class="panel-header">Minha Produtividade (7 dias) 📈</div>
+        <div style="padding: 20px;">
+            <canvas id="doctorChart"></canvas>
+        </div>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('doctorChart').getContext('2d');
+        const chartData = <?= $chartData ?? '{"labels":[],"data":[]}' ?>;
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Pacientes Atendidos',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    });
+</script>
 

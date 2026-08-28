@@ -11,6 +11,11 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        $this->container->bind(
+            \DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class,
+            \DomainSystem\Plugins\SystemAdmin\Repositories\SqliteDashboardRepository::class
+        );
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
