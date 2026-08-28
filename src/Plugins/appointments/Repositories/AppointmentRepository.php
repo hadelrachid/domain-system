@@ -96,46 +96,4 @@ class AppointmentRepository
         return array_slice($appointments, 0, 20);
     }
 
-    /**
-     * Retorna um único agendamento detalhado para Prontuário
-     */
-    public function getRecordDetails(int|string $id): ?array
-    {
-        $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
-        if (empty($appointment)) return null;
-
-        $patient = $this->patientReader->getPatientData((int)$appointment['patient_id']);
-        $doctorName = $this->doctorReader->getDoctorName((int)$appointment['doctor_id']);
-
-        $appointment['patient_data'] = $patient; 
-        $appointment['patient_name'] = $patient['name'] ?? 'Desconhecido';
-        $appointment['patient_cpf'] = $patient['cpf'] ?? 'Desconhecido';
-        $appointment['patient_birthdate'] = $patient['birthdate'] ?? '1900-01-01';
-        $appointment['doctor_name'] = $doctorName;
-
-        return $appointment;
-    }
-
-    /**
-     * Retorna histórico clínico de um paciente específico (excluindo o ID atual)
-     */
-    public function getPatientClinicalHistory(int|string $patientId, int|string $excludeAppointmentId): array
-    {
-        $historyRaw = $this->db->table('appointments')->where('patient_id', '=', $patientId)->get();
-        $doctorsMap = $this->doctorReader->getDoctorsMap();
-
-        $history = [];
-        foreach ($historyRaw as $h) {
-            if ((string)$h['id'] !== (string)$excludeAppointmentId) {
-                $h['doctor_name'] = $doctorsMap[$h['doctor_id']]['name'] ?? 'Desconhecido';
-                $history[] = $h;
-            }
-        }
-
-        usort($history, function($a, $b) {
-            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
-        });
-
-        return $history;
-    }
 }

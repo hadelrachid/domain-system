@@ -146,66 +146,6 @@ class AppointmentController
         ], __DIR__ . '/../views');
     }
 
-    public function record()
-    {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            header("Location: " . BASE_URL . "/admin/appointments");
-            exit;
-        }
-
-        $appointment = $this->repo->getRecordDetails($id);
-        if (empty($appointment)) {
-            header("Location: " . BASE_URL . "/admin/appointments");
-            exit;
-        }
-
-        $history = $this->repo->getPatientClinicalHistory($appointment['patient_id'], $id);
-
-        return $this->theme->render('admin_record', [
-            'appointment' => $appointment,
-            'patient_data' => $appointment['patient_data'],
-            'history' => $history,
-            'theme' => $this->theme
-        ], __DIR__ . '/../views');
-    }
-
-    public function saveRecord()
-    {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        $id = $_POST['id'] ?? null;
-        $medical_record = $_POST['medical_record'] ?? '';
-
-        if ($id) {
-            $this->db->table('appointments')->where('id', '=', $id)->update([
-                'medical_record' => $medical_record,
-                'status' => 'Atendido'
-            ]);
-
-            $appointment = $this->db->table('appointments')->where('id', '=', $id)->first();
-            if (!empty($appointment)) {
-                $patientData = [];
-                if (!empty($_POST['patient_cpf'])) $patientData['cpf'] = $_POST['patient_cpf'];
-                if (!empty($_POST['patient_birthdate'])) $patientData['birthdate'] = $_POST['patient_birthdate'];
-                if (!empty($_POST['insurance_number'])) $patientData['insurance_number'] = $_POST['insurance_number'];
-                if (!empty($_POST['zip_code'])) $patientData['zip_code'] = $_POST['zip_code'];
-                if (!empty($_POST['address'])) $patientData['address'] = $_POST['address'];
-
-                if (!empty($patientData)) {
-                    $this->patientReader->updatePatientData((int)$appointment['patient_id'], $patientData);
-                }
-            }
-
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Prontuário salvo e atendimento finalizado com sucesso!'];
-        }
-
-        header("Location: " . BASE_URL . "/admin/appointments");
-        exit;
-    }
-
     public function renderShortcodeBooking(array $attributes = []): string
     {
         $preSelectedDoctorId = $attributes['doctor_id'] ?? null;

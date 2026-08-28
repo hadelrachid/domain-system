@@ -42,10 +42,6 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus']);
             
             $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history']);
-            // Rota para o Prontuário Médico
-            $router->addRoute('GET', '/admin/appointments/record', [AppointmentController::class, 'record']);
-            $router->addRoute('POST', '/admin/appointments/record', [AppointmentController::class, 'saveRecord']);
-
             // API Routes
             $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking']);
             $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection']);
