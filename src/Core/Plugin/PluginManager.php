@@ -152,7 +152,15 @@ class PluginManager
 
         foreach ($this->plugins as $plugin) {
             if ($plugin->isActive()) {
-                $this->resolveNode($plugin, $resolved, $unresolved);
+                try {
+                    $this->resolveNode($plugin, $resolved, $unresolved);
+                } catch (Exception $e) {
+                    // Se o plugin exigia uma dependência que não existe ou está morta,
+                    // nós desativamos este plugin também (Efeito Cascata).
+                    $this->disable($plugin->getName());
+                    error_log("Cascata: Plugin '{$plugin->getName()}' desativado. Motivo: " . $e->getMessage());
+                    $unresolved = []; // Limpa o rastro da falha para não corromper os próximos plugins
+                }
             }
         }
 
@@ -175,7 +183,7 @@ class PluginManager
 
         foreach ($plugin->getDependencies() as $dependencyName) {
             if (!isset($this->plugins[$dependencyName]) || !$this->plugins[$dependencyName]->isActive()) {
-                throw new Exception("Dependency '{$dependencyName}' for plugin '{$name}' not found.");
+                throw new Exception("Dependency '{$dependencyName}' for plugin '{$name}' not found or inactive.");
             }
             $this->resolveNode($this->plugins[$dependencyName], $resolved, $unresolved);
         }
