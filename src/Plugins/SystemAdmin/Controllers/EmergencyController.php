@@ -22,7 +22,7 @@ class EmergencyController
     public function login(Request $request)
     {
         $appKey = getenv('APP_KEY');
-        $inputKey = $request->post('app_key');
+        $inputKey = $request->input('app_key');
 
         if ($appKey && $inputKey === $appKey) {
             if (session_status() === PHP_SESSION_NONE) {
