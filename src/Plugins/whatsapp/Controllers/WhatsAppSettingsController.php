@@ -3,21 +3,25 @@
 namespace DomainSystem\Plugins\whatsapp\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\Connection;
-use DomainSystem\Plugins\whatsapp\Services\ZApiService;
+use DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface;
+use DomainSystem\Plugins\whatsapp\Contracts\WhatsAppSettingsRepositoryInterface;
+use DomainSystem\Core\Http\Request;
 use Exception;
 
 class WhatsAppSettingsController
 {
     private ThemeManager $theme;
-    private Connection $db;
-    private ZApiService $zapi;
+    private WhatsAppProviderInterface $provider;
+    private WhatsAppSettingsRepositoryInterface $repository;
 
-    public function __construct(ThemeManager $theme, Connection $db, ZApiService $zapi)
-    {
+    public function __construct(
+        ThemeManager $theme, 
+        WhatsAppProviderInterface $provider, 
+        WhatsAppSettingsRepositoryInterface $repository
+    ) {
         $this->theme = $theme;
-        $this->db = $db;
-        $this->zapi = $zapi;
+        $this->provider = $provider;
+        $this->repository = $repository;
         
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -26,44 +30,44 @@ class WhatsAppSettingsController
 
     public function index()
     {
-        $settings = $this->zapi->getSettings();
+        $settings = $this->repository->getSettings();
         return $this->theme->render('admin_whatsapp', ['settings' => $settings], dirname(__DIR__) . '/views');
     }
 
-    public function save()
+    public function save(Request $request = null)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: " . BASE_URL . "/admin/whatsapp");
             exit;
         }
 
-        $instance = $_POST['zapi_instance'] ?? '';
-        $token = $_POST['zapi_token'] ?? '';
+        $input = $request ? $request->request : $_POST;
+        $instance = $input['zapi_instance'] ?? '';
+        $token = $input['zapi_token'] ?? '';
 
-        $pdo = $this->db->getPdo();
-        
-        // Helper para upsert manual no SQLite
-        $stmt = $pdo->prepare("INSERT INTO settings (key_name, key_value) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET key_value = excluded.key_value");
-        $stmt->execute(['zapi_instance', $instance]);
-        $stmt->execute(['zapi_token', encrypt_string($token)]);
+        $this->repository->saveSettings($instance, $token);
 
-        $_SESSION['success_msg'] = "Configurações da Z-API salvas com sucesso!";
+        $_SESSION['success_msg'] = "Configurações da API salvas com sucesso!";
         header("Location: " . BASE_URL . "/admin/whatsapp");
         exit;
     }
 
-    public function testMessage()
+    public function testMessage(Request $request = null)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: " . BASE_URL . "/admin/whatsapp");
             exit;
         }
 
-        $phone = $_POST['test_phone'] ?? '';
-        $message = "🤖 *Cockpit Domain System*\n\nSe você recebeu esta mensagem, sua integração com a Z-API foi configurada com sucesso!";
+        $input = $request ? $request->request : $_POST;
+        $phone = $input['test_phone'] ?? '';
+        $message = "🤖 *Cockpit Domain System*\n\nSe você recebeu esta mensagem, sua integração com a API foi configurada com sucesso!";
 
         try {
-            $result = $this->zapi->sendMessage($phone, $message);
+            // Garante que o provider receba as credenciais do banco antes de enviar
+            $this->provider->setConfig($this->repository->getSettings());
+            
+            $result = $this->provider->sendMessage($phone, $message);
             if ($result['success']) {
                 $_SESSION['success_msg'] = "Mensagem de teste enviada com sucesso!";
             } else {

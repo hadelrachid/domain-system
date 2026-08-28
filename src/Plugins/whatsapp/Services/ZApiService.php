@@ -2,37 +2,26 @@
 
 namespace DomainSystem\Plugins\whatsapp\Services;
 
-use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface;
 use Exception;
 
-class ZApiService
+class ZApiService implements WhatsAppProviderInterface
 {
-    private Connection $db;
+    private array $config = [];
 
-    public function __construct(Connection $db)
+    public function setConfig(array $config): void
     {
-        $this->db = $db;
-    }
-
-    public function getSettings(): array
-    {
-        $pdo = $this->db->getPdo();
-        $settings = $pdo->query("SELECT key_name, key_value FROM settings WHERE key_name IN ('zapi_instance', 'zapi_token')")->fetchAll(\PDO::FETCH_KEY_PAIR);
-        return [
-            'instance' => $settings['zapi_instance'] ?? '',
-            'token' => decrypt_string($settings['zapi_token'] ?? '')
-        ];
+        $this->config = $config;
     }
 
     public function sendMessage(string $phone, string $message): array
     {
-        $settings = $this->getSettings();
-        if (empty($settings['instance']) || empty($settings['token'])) {
+        if (empty($this->config['instance']) || empty($this->config['token'])) {
             throw new Exception("Z-API não configurada. Defina a Instância e o Token no painel.");
         }
 
         // Z-API Endpoint format
-        $url = "https://api.z-api.io/instances/{$settings['instance']}/token/{$settings['token']}/send-text";
+        $url = "https://api.z-api.io/instances/{$this->config['instance']}/token/{$this->config['token']}/send-text";
 
         // Remove non-numeric chars from phone
         $phone = preg_replace('/[^0-9]/', '', $phone);

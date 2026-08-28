@@ -10,6 +10,16 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        // SOLID: Inversão de Dependências
+        $this->container->bind(
+            \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppSettingsRepositoryInterface::class,
+            \DomainSystem\Plugins\whatsapp\Repositories\SqliteWhatsAppSettingsRepository::class
+        );
+        $this->container->bind(
+            \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface::class,
+            \DomainSystem\Plugins\whatsapp\Services\ZApiService::class
+        );
+
         /** @var \DomainSystem\Core\Events\EventDispatcher $events */
         $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
 
@@ -32,11 +42,14 @@ class Plugin extends AbstractPlugin
 
         // Hook into appointment creation
         $events->addListener('appointment.created', function(array $data) {
-            // Placeholder: When an appointment is created, send a message
-            // Wait, we need to resolve ZApiService from the container
             try {
-                /** @var \DomainSystem\Plugins\whatsapp\Services\ZApiService $zapi */
-                $zapi = $this->container->make(\DomainSystem\Plugins\whatsapp\Services\ZApiService::class);
+                /** @var \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface $provider */
+                $provider = $this->container->make(\DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface::class);
+                
+                /** @var \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppSettingsRepositoryInterface $repository */
+                $repository = $this->container->make(\DomainSystem\Plugins\whatsapp\Contracts\WhatsAppSettingsRepositoryInterface::class);
+                
+                $provider->setConfig($repository->getSettings());
                 
                 $phone = $data['patient_phone'] ?? '';
                 if (!empty($phone)) {
@@ -50,10 +63,9 @@ class Plugin extends AbstractPlugin
                     $msg = "Olá {$patientName},\n\nSua consulta foi agendada com sucesso para o dia *{$dateBr}* às *{$time}*.\n\nEquipe Domain-System.";
                     
                     // Send asynchronously or catch exceptions to not break the UI
-                    $zapi->sendMessage($phone, $msg);
+                    $provider->sendMessage($phone, $msg);
                 }
             } catch (\Exception $e) {
-                // Ignore exceptions to not break appointment creation, maybe log it
                 error_log("Falha ao enviar WhatsApp de confirmacao: " . $e->getMessage());
             }
         });
