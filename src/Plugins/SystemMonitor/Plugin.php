@@ -12,8 +12,8 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
 
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/monitor', [MonitorController::class, 'index']);
-            $router->addRoute('POST', '/admin/monitor/clear', [MonitorController::class, 'clear']);
+            $router->addRoute('GET', '/admin/monitor', [MonitorController::class, 'index'], 'SystemMonitor', ['admin']);
+            $router->addRoute('POST', '/admin/monitor/clear', [MonitorController::class, 'clear'], 'SystemMonitor', ['admin']);
         });
 
         $events->addListener('admin.menu', function($menu) {

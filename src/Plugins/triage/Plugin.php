@@ -22,9 +22,9 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
 
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/triage', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'index']);
-            $router->addRoute('GET', '/admin/triage/form/{id}', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'form']);
-            $router->addRoute('POST', '/admin/triage/save/{id}', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'save']);
+            $router->addRoute('GET', '/admin/triage', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'index'], 'triage', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/admin/triage/form/{id}', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'form'], 'triage', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/triage/save/{id}', [\DomainSystem\Plugins\triage\Controllers\TriageController::class, 'save'], 'triage', ['admin', 'receptionist', 'doctor']);
         });
 
         $events->addListener('admin.menu', function($menus, $role = 'admin') {

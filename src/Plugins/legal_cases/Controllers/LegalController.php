@@ -18,9 +18,6 @@ class LegalController
     public function index()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        if (strtolower($_SESSION['user_role'] ?? '') !== 'lawyer') {
-            die("Acesso Restrito: Apenas Advogados podem acessar este módulo.");
-        }
 
         $cases = $this->db->table('legal_cases')->get();
         

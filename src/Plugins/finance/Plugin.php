@@ -30,9 +30,9 @@ class Plugin extends AbstractPlugin
 
         // Rotas
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/finance', [FinanceController::class, 'index']);
-            $router->addRoute('POST', '/admin/finance/store', [FinanceController::class, 'store']);
-            $router->addRoute('POST', '/admin/finance/status', [FinanceController::class, 'updateStatus']);
+            $router->addRoute('GET', '/admin/finance', [FinanceController::class, 'index'], 'finance', ['admin']);
+            $router->addRoute('POST', '/admin/finance/store', [FinanceController::class, 'store'], 'finance', ['admin']);
+            $router->addRoute('POST', '/admin/finance/status', [FinanceController::class, 'updateStatus'], 'finance', ['admin']);
         });
 
         // Shortcodes

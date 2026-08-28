@@ -35,9 +35,9 @@ class Plugin extends AbstractPlugin
 
         // Register router dynamically when needed
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/whatsapp', [WhatsAppSettingsController::class, 'index']);
-            $router->addRoute('POST', '/admin/whatsapp/save', [WhatsAppSettingsController::class, 'save']);
-            $router->addRoute('POST', '/admin/whatsapp/test', [WhatsAppSettingsController::class, 'testMessage']);
+            $router->addRoute('GET', '/admin/whatsapp', [WhatsAppSettingsController::class, 'index'], 'whatsapp', ['admin']);
+            $router->addRoute('POST', '/admin/whatsapp/save', [WhatsAppSettingsController::class, 'save'], 'whatsapp', ['admin']);
+            $router->addRoute('POST', '/admin/whatsapp/test', [WhatsAppSettingsController::class, 'testMessage'], 'whatsapp', ['admin']);
         });
 
         // Hook into appointment creation

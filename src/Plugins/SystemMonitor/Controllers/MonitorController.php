@@ -18,9 +18,6 @@ class MonitorController
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         // Somente admin pode ver os erros
-        if (strtolower($_SESSION['user_role'] ?? '') !== 'admin') {
-            die("Acesso Negado. Apenas administradores/desenvolvedores podem acessar o Monitor.");
-        }
 
         $logs = [];
         if (file_exists($this->logPath)) {
@@ -34,9 +31,6 @@ class MonitorController
     public function clear()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        if (strtolower($_SESSION['user_role'] ?? '') !== 'admin') {
-            die("Acesso Negado.");
-        }
 
         if (file_exists($this->logPath)) {
             unlink($this->logPath);

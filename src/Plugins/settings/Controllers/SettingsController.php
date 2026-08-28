@@ -19,9 +19,6 @@ class SettingsController
     public function index()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        if (strtolower($_SESSION['user_role'] ?? '') !== 'admin') {
-            die("Acesso Negado.");
-        }
 
         $rows = $this->db->table('settings')->get();
         
@@ -36,9 +33,6 @@ class SettingsController
     public function save()
     {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        if (strtolower($_SESSION['user_role'] ?? '') !== 'admin') {
-            die("Acesso Negado.");
-        }
 
 
         $allowedKeys = ['clinic_name', 'clinic_cnpj', 'clinic_slogan', 'clinic_address', 'clinic_phone', 'clinic_whatsapp'];

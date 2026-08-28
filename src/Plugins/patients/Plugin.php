@@ -31,11 +31,11 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
         
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/patients', [PatientController::class, 'index']);
-            $router->addRoute('POST', '/admin/patients', [PatientController::class, 'store']);
-            $router->addRoute('GET', '/admin/patients/edit', [PatientController::class, 'edit']);
-            $router->addRoute('POST', '/admin/patients/update', [PatientController::class, 'update']);
-            $router->addRoute('POST', '/admin/patients/delete', [PatientController::class, 'delete']);
+            $router->addRoute('GET', '/admin/patients', [PatientController::class, 'index'], 'patients', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/patients', [PatientController::class, 'store'], 'patients', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/admin/patients/edit', [PatientController::class, 'edit'], 'patients', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/patients/update', [PatientController::class, 'update'], 'patients', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/patients/delete', [PatientController::class, 'delete'], 'patients', ['admin', 'receptionist', 'doctor']);
         });
 
         // Registrar Shortcodes

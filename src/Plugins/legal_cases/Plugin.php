@@ -20,7 +20,7 @@ class Plugin extends AbstractPlugin
         });
 
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/legal', [\DomainSystem\Plugins\legal_cases\Controllers\LegalController::class, 'index']);
+            $router->addRoute('GET', '/admin/legal', [\DomainSystem\Plugins\legal_cases\Controllers\LegalController::class, 'index'], 'legal_cases', ['admin', 'lawyer']);
         });
     }
 

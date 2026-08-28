@@ -47,12 +47,12 @@ class Plugin extends AbstractPlugin
 
         // Registrar rotas
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/doctors', [DoctorController::class, 'index']);
-            $router->addRoute('POST', '/admin/doctors', [DoctorController::class, 'store']);
-            $router->addRoute('GET', '/admin/doctors/edit', [DoctorController::class, 'edit']);
-            $router->addRoute('POST', '/admin/doctors/update', [DoctorController::class, 'update']);
-            $router->addRoute('POST', '/admin/doctors/delete', [DoctorController::class, 'delete']);
-            $router->addRoute('POST', '/admin/doctors/sync-wp', [DoctorController::class, 'syncWp']);
+            $router->addRoute('GET', '/admin/doctors', [DoctorController::class, 'index'], 'doctors', ['admin', 'receptionist']);
+            $router->addRoute('POST', '/admin/doctors', [DoctorController::class, 'store'], 'doctors', ['admin', 'receptionist']);
+            $router->addRoute('GET', '/admin/doctors/edit', [DoctorController::class, 'edit'], 'doctors', ['admin', 'receptionist']);
+            $router->addRoute('POST', '/admin/doctors/update', [DoctorController::class, 'update'], 'doctors', ['admin', 'receptionist']);
+            $router->addRoute('POST', '/admin/doctors/delete', [DoctorController::class, 'delete'], 'doctors', ['admin', 'receptionist']);
+            $router->addRoute('POST', '/admin/doctors/sync-wp', [DoctorController::class, 'syncWp'], 'doctors', ['admin', 'receptionist']);
         });
     }
 

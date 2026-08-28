@@ -69,7 +69,7 @@ class TriageController
         $userRole = $_SESSION['user_role'] ?? '';
         $doctorId = $_SESSION['doctor_id'] ?? null;
         
-        if (!in_array($userRole, ['admin', 'receptionist']) && !($userRole === 'doctor' && $appointmentDoctorId == $doctorId)) {
+        if ($userRole === 'doctor' && $appointmentDoctorId != $doctorId) {
             die('<div style="padding:20px; text-align:center; font-family:sans-serif;"><h2>Acesso Negado 🛑</h2><p>Você não tem permissão para triar este paciente.</p><a href="'.BASE_URL.'/admin/triage">Voltar</a></div>');
         }
     }

@@ -37,14 +37,14 @@ class Plugin extends AbstractPlugin
 
         // Registrar rotas
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/appointments', [AppointmentController::class, 'index']);
-            $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store']);
-            $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus']);
+            $router->addRoute('GET', '/admin/appointments', [AppointmentController::class, 'index'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus'], 'appointments', ['admin', 'receptionist', 'doctor']);
             
-            $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history']);
+            $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history'], 'appointments', ['admin', 'receptionist', 'doctor']);
             // API Routes
-            $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking']);
-            $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection']);
+            $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection'], 'appointments', ['admin', 'receptionist', 'doctor']);
         });
 
         // Registrar Shortcodes

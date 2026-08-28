@@ -15,12 +15,13 @@ class Router
         $this->container = $container;
     }
 
-    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = ''): void
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $roles = []): void
     {
         $method = strtoupper($method);
         $this->routes[$method][$path] = [
             'handler' => $handler,
-            'plugin' => $plugin
+            'plugin' => $plugin,
+            'roles' => $roles
         ];
     }
 
@@ -42,6 +43,7 @@ class Router
 
         // Busca rota exata
         if (isset($this->routes[$method][$uri])) {
+            $this->checkAuthorization($this->routes[$method][$uri]['roles']);
             return $this->executeHandler($this->routes[$method][$uri]['handler'], [], $request);
         }
 
@@ -50,11 +52,34 @@ class Router
             $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $route);
             if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
                 array_shift($matches);
+                $this->checkAuthorization($config['roles']);
                 return $this->executeHandler($config['handler'], $matches, $request);
             }
         }
 
         throw new Exception("Rota não encontrada: $uri", 404);
+    }
+
+    private function checkAuthorization(array $roles): void
+    {
+        if (empty($roles)) {
+            return; // Rota pública ou sem restrição declarada
+        }
+
+        if (session_status() === PHP_SESSION_NONE) { 
+            session_start(); 
+        }
+
+        $userRole = $_SESSION['user_role'] ?? '';
+
+        if (!in_array($userRole, $roles)) {
+            http_response_code(403);
+            die('<div style="padding:20px; text-align:center; font-family:sans-serif;">
+                <h2 style="color:#d63638;">Acesso Negado 🛑</h2>
+                <p>O seu perfil ('.htmlspecialchars($userRole).') não tem permissão para acessar esta área.</p>
+                <a href="javascript:history.back()">Voltar</a>
+            </div>');
+        }
     }
 
     private function executeHandler(callable|array $handler, array $params = [], \DomainSystem\Core\Http\Request $request = null): mixed

@@ -17,8 +17,8 @@ class Plugin extends AbstractPlugin
         $events = $this->container->make(EventDispatcher::class);
 
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'index']);
-            $router->addRoute('POST', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'save']);
+            $router->addRoute('GET', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'index'], 'settings', ['admin']);
+            $router->addRoute('POST', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'save'], 'settings', ['admin']);
         });
 
         // Adiciona ao Menu se for admin
