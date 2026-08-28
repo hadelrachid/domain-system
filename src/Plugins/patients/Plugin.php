@@ -11,6 +11,12 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        // 1. Bind da Infraestrutura (Repositório)
+        $this->container->bind(
+            \DomainSystem\Plugins\patients\Contracts\PatientRepositoryInterface::class,
+            \DomainSystem\Plugins\patients\Repositories\SqlitePatientRepository::class
+        );
+
         $this->runMigrations();
 
         /** @var EventDispatcher $events */
