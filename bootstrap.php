@@ -14,8 +14,14 @@ define('DOMAIN_SYSTEM_ROOT', __DIR__);
 // Configura o banco de dados principal do sistema para ser um arquivo físico
 $dbPath = DOMAIN_SYSTEM_ROOT . '/database.sqlite';
 putenv("DB_DSN=sqlite:{$dbPath}");
-putenv("APP_ENV=development"); // Em produção, o servidor vai injetar 'production'
-putenv("APP_KEY=d0m41n_sys73m_s3cr3t_k3y_256b1ts!"); // Chave de 32 caracteres para criptografia
+// Carrega variáveis de ambiente (Ignora erros se não existir, mas em prod o servidor deve prover)
+$envFile = DOMAIN_SYSTEM_ROOT . '/.env';
+if (file_exists($envFile)) {
+    $envVariables = parse_ini_file($envFile);
+    foreach ($envVariables as $key => $value) {
+        putenv("$key=$value");
+    }
+}
 
 require_once __DIR__ . '/vendor/autoload.php';
 

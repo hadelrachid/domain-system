@@ -13,38 +13,37 @@ use DomainSystem\Plugins\health_insurances\Providers\PrivateProvider;
  */
 class BillingService
 {
-    /**
-     * Esta é a verdadeira mágica (Factory Method simplificado).
-     * Dado uma string, ele devolve a Tomada (Interface) já conectada com o Plugue certo.
-     */
-    private function resolveProvider(string $providerName): HealthInsuranceInterface
+    /** @var HealthInsuranceInterface[] */
+    private array $providers;
+
+    public function __construct(array $providers = [])
     {
-        switch (strtolower($providerName)) {
-            case 'unimed':
-                return new UnimedProvider();
-            case 'particular':
-            default:
-                return new PrivateProvider();
-        }
+        $this->providers = $providers;
     }
 
-    /**
-     * Processa a consulta sem saber qual convênio é!
-     * 
-     * Observe que `$provider` é tipado como `HealthInsuranceInterface`.
-     * O PHP garante que qualquer objeto que chegue aqui terá os 3 métodos obrigatórios.
-     */
     public function processConsultation(string $providerName, string $patientId)
     {
-        // 1. Pluga o convênio correto na tomada
-        $provider = $this->resolveProvider($providerName);
+        // Padrão Strategy / Chain of Responsibility
+        $selectedProvider = null;
+
+        // Varrer a lista de plugues (Injetados via Construtor)
+        foreach ($this->providers as $provider) {
+            // Em uma arquitetura real, a interface teria um getId() ou supports()
+            // Vamos usar o nome para simular a correspondência
+            if (stripos($provider->getProviderName(), $providerName) !== false) {
+                $selectedProvider = $provider;
+                break;
+            }
+        }
+
+        if (!$selectedProvider) {
+            throw new \Exception("Nenhum plugue de convênio conectado para: " . $providerName);
+        }
 
         // 2. Chama os métodos usando a Interface genérica (Polimorfismo!)
-        $isAuthorized = $provider->authorize($patientId);
-        $price = $provider->getConsultationPrice();
-        $name = $provider->getProviderName();
-
-        // (No futuro, aqui é onde o BillingService gritaria 'finance.generate_income')
+        $isAuthorized = $selectedProvider->authorize($patientId);
+        $price = $selectedProvider->getConsultationPrice();
+        $name = $selectedProvider->getProviderName();
 
         return [
             'provider' => $name,
