@@ -45,7 +45,18 @@
                     $menus = $this->dispatcher->applyFilters('admin.menu', [], $userRole);
                     foreach ($menus as $menu) {
                         $icon = $menu['icon'] ?? '';
-                        echo '<li><a href="' . htmlspecialchars(ltrim($menu['url'], '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a></li>';
+                        $hasSub = isset($menu['submenu']) && is_array($menu['submenu']);
+                        $liClass = $hasSub ? 'class="has-submenu"' : '';
+                        echo '<li ' . $liClass . '><a href="' . htmlspecialchars(ltrim($menu['url'] ?? '#', '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a>';
+                        if ($hasSub) {
+                            echo '<ul style="list-style: none; padding-left: 20px; margin: 0; background: #1a1a1a; display: none;">';
+                            foreach ($menu['submenu'] as $sub) {
+                                $subIcon = $sub['icon'] ?? '';
+                                echo '<li><a href="' . htmlspecialchars(ltrim($sub['url'] ?? '#', '/')) . '">' . $subIcon . ' ' . htmlspecialchars($sub['title']) . '</a></li>';
+                            }
+                            echo '</ul>';
+                        }
+                        echo '</li>';
                     } 
                 }
 
@@ -69,5 +80,22 @@
             <?= $content ?? '' ?>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hasSubmenuLinks = document.querySelectorAll('.has-submenu > a');
+            hasSubmenuLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#' || this.getAttribute('href') === 'admin/clinic') {
+                        e.preventDefault();
+                        const parent = this.parentElement;
+                        const ul = parent.querySelector('ul');
+                        if (ul) {
+                            ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

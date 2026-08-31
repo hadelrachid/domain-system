@@ -1,0 +1,2 @@
+<!DOCTYPE html>
+<html><head><title>Cockpit - Mdico</title><style>body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }</style></head><body><h1>Bem-vindo, Dr(a). <?= $user_name ?></h1><div class='dashboard'><h2>Fila de Hoje</h2>[paciente_lista limit=5]</div></body></html>

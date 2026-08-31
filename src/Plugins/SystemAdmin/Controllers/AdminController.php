@@ -10,11 +10,13 @@ class AdminController
 {
     private PluginManager $manager;
     private ThemeManager $theme;
+    private \DomainSystem\Core\Theme\ShortcodeManager $shortcodes;
 
-    public function __construct(PluginManager $manager, ThemeManager $theme)
+    public function __construct(PluginManager $manager, ThemeManager $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes)
     {
         $this->manager = $manager;
         $this->theme = $theme;
+        $this->shortcodes = $shortcodes;
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
@@ -57,6 +59,11 @@ class AdminController
                     ];
                 }
             }
+        }
+        
+        $app = \DomainSystem\Core\Application::getInstance();
+        if ($app) {
+            $allPlugins = $app->getDispatcher()->applyFilters('admin.plugins.list', $allPlugins);
         }
 
         // Capture crashes from session
@@ -275,8 +282,7 @@ class AdminController
 
     public function listShortcodes(\DomainSystem\Core\Http\Request $request)
     {
-        $app = \DomainSystem\Core\Application::getInstance();
-        $shortcodes = $app ? $app->getShortcodeManager()->getRegisteredShortcodes() : [];
+        $shortcodes = $this->shortcodes->getRegisteredShortcodes();
         
         try {
             return $this->theme->render('shortcodes', [

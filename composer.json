@@ -1,6 +1,6 @@
 {
     "name": "dahersistema/domain-system",
-    "description": "Kernel base para aplicações plugáveis",
+    "description": "Kernel base para aplica\u00e7\u00f5es plug\u00e1veis",
     "type": "project",
     "require": {
         "php": ">=8.0"
@@ -10,7 +10,11 @@
     },
     "autoload": {
         "psr-4": {
-            "DomainSystem\\": "src/"
+            "DomainSystem\\": "src/",
+            "DomainSystem\\Plugins\\": [
+                "src/Plugins/",
+                "src/Plugins/clinic_pack/bundled_plugins/"
+            ]
         }
     },
     "autoload-dev": {

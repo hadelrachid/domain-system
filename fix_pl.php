@@ -1,0 +1,1 @@
+<?php \ = json_decode(file_get_contents('config/plugins.json'), true); \['auth'] = true; \['patients'] = true; \['appointments'] = true; \['dev_simulator'] = true; file_put_contents('config/plugins.json', json_encode(\, JSON_PRETTY_PRINT)); echo 'Fixed!';

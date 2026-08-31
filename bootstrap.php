@@ -36,7 +36,14 @@ require_once __DIR__ . '/src/Core/helpers.php';
 
 // Initialize Error Handler
 $errorLogPath = DOMAIN_SYSTEM_ROOT . '/temp/error_logs.json';
-$errorHandler = new \DomainSystem\Core\Error\ErrorHandler($errorLogPath);
+$configPath = DOMAIN_SYSTEM_ROOT . '/config/plugins.json';
+$disarmedPath = DOMAIN_SYSTEM_ROOT . '/temp/disarmed.json';
+
+$logger = new \DomainSystem\Core\Error\ErrorLogger($errorLogPath);
+$circuitBreaker = new \DomainSystem\Core\Error\CircuitBreaker($configPath, $disarmedPath);
+$renderer = new \DomainSystem\Core\Error\ErrorRenderer();
+
+$errorHandler = new \DomainSystem\Core\Error\ErrorHandler($logger, $circuitBreaker, $renderer);
 $errorHandler->register();
 
 // Initialize Core Components

@@ -14,7 +14,7 @@ class Plugin extends AbstractPlugin
     {
 
         /** @var EventDispatcher $events */
-        $events = $this->container->make(EventDispatcher::class);
+        $events = $this->events();
 
         // Adiciona ao Menu do Painel
         $events->addListener('admin.menu', function($menus, $role = 'admin') {
@@ -45,7 +45,7 @@ class Plugin extends AbstractPlugin
     public function activate(): void
     {
         /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $connection = $this->db();
         $db = $connection->getPdo();
         
         $db->exec("

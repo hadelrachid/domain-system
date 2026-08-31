@@ -3,14 +3,17 @@
 namespace DomainSystem\Plugins\pages\Controllers;
 
 use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Core\Theme\ShortcodeManager;
 
 class PageFrontController
 {
     private QueryBuilder $db;
+    private ShortcodeManager $shortcodes;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(QueryBuilder $db, ShortcodeManager $shortcodes)
     {
         $this->db = $db;
+        $this->shortcodes = $shortcodes;
     }
 
     public function show(string $slug)
@@ -43,9 +46,7 @@ class PageFrontController
         }
 
         // Aqui é o grande truque do CMS: Ele processa os shortcodes no HTML final!
-        if (function_exists('do_shortcode')) {
-            $html = do_shortcode($html);
-        }
+        $html = $this->shortcodes->parse($html);
 
         echo $html;
     }

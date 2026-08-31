@@ -9,7 +9,7 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+        $events = $this->events();
 
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/monitor', [MonitorController::class, 'index'], 'SystemMonitor', ['admin']);

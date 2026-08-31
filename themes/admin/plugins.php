@@ -74,6 +74,21 @@
             <td style="color: #3c434a; line-height: 1.5;">
                 <?= htmlspecialchars($plugin['description']) ?>
                 
+                <?php if (!empty($plugin['subplugins'])): ?>
+                <div style="margin-top: 15px;">
+                    <a href="#" onclick="event.preventDefault(); var el = document.getElementById('subplugins-<?= $plugin['folder'] ?>'); el.style.display = (el.style.display === 'none') ? 'block' : 'none';" style="text-decoration: none; color: #2271b1; font-weight: 600;">
+                        📦 Ver Micro-Módulos Acoplados (<?= count($plugin['subplugins']) ?>) ▾
+                    </a>
+                    <div id="subplugins-<?= $plugin['folder'] ?>" style="display: none; margin-top: 10px; padding: 10px; background: #f6f7f7; border-left: 3px solid #2271b1; border-radius: 0 4px 4px 0;">
+                        <ul style="margin: 0; padding-left: 20px;">
+                        <?php foreach($plugin['subplugins'] as $sub): ?>
+                            <li style="margin-bottom: 5px;"><strong><?= htmlspecialchars($sub['name']) ?></strong> <span style="color:#666;font-size:12px;">(v<?= htmlspecialchars($sub['version']) ?>)</span> - <?= htmlspecialchars($sub['description']) ?></li>
+                        <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <?php if ($plugin['is_disarmed']): ?>
                 <div style="margin-top: 10px; padding: 10px; background: #fbeaea; color: #d63638; border-radius: 4px; border: 1px solid #ffc9c9; font-size: 13px;">
                     <strong>⚠️ Plugin Danificado:</strong> Este plugin causou um erro fatal e foi desconectado pelo Disjuntor.<br>

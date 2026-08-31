@@ -1,5 +1,5 @@
 # 🚀 Domain System (Universal Modular Framework)
-> **Versão Atual:** `[v1.1.0]`
+> **Versão Atual:** `[v1.2.0]`
 
 [ 🌐 Site Oficial (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentação ](README.md) | [ 📜 Changelog ](docs/CHANGELOG.md) | [ 🕵️ Auditoria ](docs/auditoria.md)
 ---
@@ -33,6 +33,12 @@ Mais profundo ainda, em nossa camada de acesso a dados, utilizamos fortemente o 
 ### 5. Ambiente de Desenvolvimento Seguro (Dev Simulator)
 Para evitar que e-mails falsos vazem em testes, o sistema possui um plugin `dev_simulator`. Quando ativado, ele intercepta as classes de comunicação (sequestrando a fiação via Injeção de Dependência) e redireciona os envios para um arquivo de texto local (`temp/auth-2fa.txt`). Em produção, basta desligar o plugin e a fiação volta ao estado natural.
 
+### 6. Cérebro I.A. (AI Hub) e Construtor de Formulários
+Para facilitar a criação de novos recursos, o sistema traz um Plugin de Inteligência Artificial modular (`ai_hub`). Este "cérebro" não tem acesso livre ao banco de dados; ele se conecta às Interfaces disponíveis, recebendo permissão de agir de acordo com o que foi exposto. Com ele, o próprio usuário pode pedir a geração de novos Formulários e Lógicas de Plugins visualmente, os quais serão automaticamente escritos e empacotados, poupando a curva de aprendizado da criação de plugins do zero.
+
+### 7. Isolamento de Pacotes (Pack isolation)
+Módulos específicos de um nicho podem ser agrupados sob um "Pack". Por exemplo, o `clinic_pack` não cria tabelas ou executa lógicas de pacientes; ele simplesmente agrupa visualmente (interceptando o menu) outros micro-plugins (`patients`, `appointments`, `triage`) e injeta configurações padrão, isolando os módulos filhos. Assim, se uma parte queimar, as outras continuam operando.
+
 ## 🛠️ Tecnologias
 - **Linguagem:** PHP 8+ (Vanilla/OOP avançado)
 - **Banco de Dados:** SQLite (com PDO e QueryBuilder customizado encapsulado em Repositórios)
@@ -50,7 +56,7 @@ O sistema isola perfis:
 *Este sistema é um organismo vivo, programado para sobreviver a si mesmo e se expandir organicamente.*
 
 ## 📖 Versionamento e Histórico
-Atualmente o projeto encontra-se na versão **[1.1.0]**.
+Atualmente o projeto encontra-se na versão **[1.2.0]**.
 Para acompanhar toda a evolução e correções, consulte o nosso [CHANGELOG.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
 
 ## 🤝 Colaboradores Principais

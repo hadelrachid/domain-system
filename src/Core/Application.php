@@ -20,6 +20,7 @@ class Application
     private ThemeManager $themeManager;
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodeManager;
     private WorkspaceManager $workspaceManager;
+    private \DomainSystem\Core\Cockpit\CockpitRegistry $cockpitRegistry;
     private string $basePath;
 
     public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
@@ -31,7 +32,7 @@ class Application
         $this->router = new Router($container);
         
         // Instantiate ShortcodeManager
-        $this->shortcodeManager = new \DomainSystem\Core\Theme\ShortcodeManager();
+        $this->shortcodeManager = new \DomainSystem\Core\Theme\ShortcodeManager($this->container);
 
         // Define the default theme path. This can be changed later by a DB config or a plugin.
         $themePath = $basePath . '/themes/admin';
@@ -39,6 +40,8 @@ class Application
         $this->themeManager->setDispatcher($dispatcher);
         
         $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
+        
+        $this->cockpitRegistry = new \DomainSystem\Core\Cockpit\CockpitRegistry();
         
         self::$instance = $this;
 
@@ -69,6 +72,10 @@ class Application
         
         $this->container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function() {
             return $this->shortcodeManager;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class, function() {
+            return $this->cockpitRegistry;
         });
     }
 
@@ -124,6 +131,9 @@ class Application
         
         // Dispatch the init hook, giving plugins a chance to register their components
         $this->dispatcher->dispatch('init');
+        
+        // Dispatch the shortcodes registration hook
+        $this->dispatcher->dispatch('shortcodes.register', $this->shortcodeManager);
         
         // Register workspaces from plugins
         $this->dispatcher->dispatch('workspace.register', $this->workspaceManager);

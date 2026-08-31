@@ -20,7 +20,7 @@ class Plugin extends AbstractPlugin
             session_start();
         }
 
-        $events = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+        $events = $this->events();
 
         // --- THE EMERGENCY HATCH (REDE DE SEGURANÇA) ---
         // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
@@ -36,24 +36,15 @@ class Plugin extends AbstractPlugin
         }, 999);
 
         $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
-            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+            $theme = $this->theme();
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
 
-        $events->addListener('admin.menu', function($menus, $role = 'admin') {
-            if ($role === 'admin') {
-                $menus[] = [
-                    'title' => 'Catálogo de Shortcodes',
-                    'url' => '/admin/shortcodes',
-                    'icon' => '🧩'
-                ];
-            }
-            return $menus;
-        });
+        // Shortcodes menu removed as requested
 
         // O Plugue (Macho) se conectando à Régua de Tomadas!
-        $events->addListener('init', function() {
-            add_shortcode('info_sistema', function($attr) {
+        $events->addListener('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
+            $shortcodes->add('info_sistema', function($attr) {
                 $color = $attr['color'] ?? 'black';
                 return "<div style='padding: 10px; background-color: {$color}; color: white; border-radius: 5px;'>
                             <strong>CockPIT Info:</strong> Versão PHP: " . phpversion() . "

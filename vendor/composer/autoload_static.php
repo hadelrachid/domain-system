@@ -9,11 +9,17 @@ class ComposerStaticInit6cddca76268a7c688fca62dbd4d0e613
     public static $prefixLengthsPsr4 = array (
         'D' =>
         array (
+            'DomainSystem\\Plugins\\' => 21,
             'DomainSystem\\' => 13,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
+        'DomainSystem\\Plugins\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/src/Plugins',
+            1 => __DIR__ . '/../..' . '/src/Plugins/clinic_pack/bundled_plugins',
+        ),
         'DomainSystem\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',

@@ -65,6 +65,26 @@ abstract class AbstractPlugin implements PluginInterface
         $this->isActive = $active;
     }
 
+    protected function events(): \DomainSystem\Core\Events\EventDispatcher
+    {
+        return $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+    }
+
+    protected function db(): \DomainSystem\Plugins\Database\Connection
+    {
+        return $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+    }
+
+    protected function queryBuilder(): \DomainSystem\Plugins\Database\QueryBuilder
+    {
+        return $this->container->make(\DomainSystem\Plugins\Database\QueryBuilder::class);
+    }
+
+    protected function theme(): \DomainSystem\Core\Theme\ThemeManager
+    {
+        return $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+    }
+
     abstract public function register(): void;
     
     // Lifecycle hooks defaults

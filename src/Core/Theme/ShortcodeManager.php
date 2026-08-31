@@ -15,6 +15,12 @@ class ShortcodeManager
      * ]
      */
     private array $shortcodes = [];
+    private ?\DomainSystem\Core\Container\Container $container;
+
+    public function __construct(?\DomainSystem\Core\Container\Container $container = null)
+    {
+        $this->container = $container;
+    }
 
     /**
      * Registra um novo shortcode.
@@ -75,9 +81,8 @@ class ShortcodeManager
             
             // Suporte para resolução via DI Container para [Controller::class, 'method']
             if (is_array($callback) && is_string($callback[0])) {
-                $app = \DomainSystem\Core\Application::getInstance();
-                if ($app) {
-                    $callback[0] = $app->getContainer()->make($callback[0]);
+                if ($this->container) {
+                    $callback[0] = $this->container->make($callback[0]);
                 }
             }
 

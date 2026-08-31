@@ -50,6 +50,9 @@ class Container
 
     private function autowire(string $abstract)
     {
+        if (interface_exists($abstract)) {
+            throw new Exception("Interface [$abstract] cannot be instantiated directly. Please bind an implementation in a plugin.");
+        }
         if (!class_exists($abstract)) {
             throw new Exception("Target class [$abstract] does not exist.");
         }

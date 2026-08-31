@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
     {
 
         /** @var EventDispatcher $events */
-        $events = $this->container->make(EventDispatcher::class);
+        $events = $this->events();
 
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'index'], 'settings', ['admin']);
@@ -37,7 +37,7 @@ class Plugin extends AbstractPlugin
     public function activate(): void
     {
         /** @var Connection $connection */
-        $connection = $this->container->make(Connection::class);
+        $connection = $this->db();
         $db = $connection->getPdo();
         
         $db->exec("

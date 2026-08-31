@@ -1,5 +1,5 @@
 # 🚀 Domain System (Universal Modular Framework)
-> **Current Version:** `[v1.1.0]`
+> **Current Version:** `[v1.2.0]`
 
 [ 🌐 Official Site (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentation ](README-en.md) | [ 📜 Changelog ](docs/CHANGELOG-en.md) | [ 🕵️ Audit Report ](docs/auditoria-en.md)
 ---
@@ -33,6 +33,12 @@ Going deeper into the data access layer, we heavily rely on the **Repository Pat
 ### 5. Secure Development Environment (Dev Simulator)
 To prevent fake emails from leaking during tests, the system has a `dev_simulator` plugin. When activated, it intercepts communication classes (hijacking the wiring via Dependency Injection) and redirects the emails to a local text file (`temp/auth-2fa.txt`). In production, simply disable the plugin and the wiring returns to its natural state.
 
+### 6. AI Hub and Plugin Builder
+To facilitate the creation of new features, the system brings a modular Artificial Intelligence Plugin (`ai_hub`). This "brain" has no direct access to the database; it connects to available Interfaces, receiving permission to act according to what has been exposed. With it, the user themselves can request the generation of new Forms and Plugin Logics visually, which will be automatically written and packaged, eliminating the learning curve of creating plugins from scratch.
+
+### 7. Pack Isolation
+Niche-specific modules can be grouped under a "Pack". For instance, the `clinic_pack` does not create tables or execute patient logic; it simply visually groups (intercepting the menu) other micro-plugins (`patients`, `appointments`, `triage`) and injects default configurations, isolating the child modules. Thus, if one part crashes, the others keep operating.
+
 ## 🛠️ Technologies
 - **Language:** PHP 8+ (Vanilla / Advanced OOP)
 - **Database:** SQLite (with PDO and Custom QueryBuilder encapsulated in Repositories)
@@ -50,7 +56,7 @@ The system isolates profiles:
 *This system is a living organism, programmed to survive itself and expand organically.*
 
 ## 📖 Versioning and History
-The project is currently at version **[1.1.0]**.
+The project is currently at version **[1.2.0]**.
 To track all evolution and fixes, check our [CHANGELOG-en.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
 
 ## 🤝 Main Collaborators

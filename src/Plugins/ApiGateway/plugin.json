@@ -1,0 +1,10 @@
+{
+    "name": "ApiGateway",
+    "version": "1.0.0",
+    "description": "Porta de entrada segura (API) para robôs do WhatsApp e sistemas externos.",
+    "author": "Antigravity",
+    "dependencies": [
+        "appointments",
+        "patients"
+    ]
+}

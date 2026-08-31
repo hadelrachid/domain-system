@@ -1,15 +1,18 @@
 <?php
 namespace DomainSystem\Plugins\auth\Services\Providers;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface;
+use DomainSystem\Plugins\auth\Contracts\EmailSenderInterface;
 
 class EmailProvider implements TwoFactorProviderInterface
 {
-    protected QueryBuilder $db;
+    private TwoFactorCodeStoreInterface $store;
+    private EmailSenderInterface $sender;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(TwoFactorCodeStoreInterface $store, EmailSenderInterface $sender)
     {
-        $this->db = $db;
+        $this->store = $store;
+        $this->sender = $sender;
     }
 
     public function challenge(array $user): void
@@ -17,20 +20,11 @@ class EmailProvider implements TwoFactorProviderInterface
         $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $expiry = date('Y-m-d H:i:s', strtotime('+5 minutes'));
         
-        $this->db->table('users')->where('id', '=', $user['id'])->update([
-            'email_2fa_code' => $code,
-            'email_2fa_expiry' => $expiry
-        ]);
+        $this->store->storeCode($user['id'], $code, $expiry);
         
-        $this->sendEmail($user['email'], $code);
-    }
-
-    protected function sendEmail(string $email, string $code): void
-    {
         $subject = "Seu código de acesso";
         $message = "Seu código de acesso é: " . $code . "\n\nEste código expira em 5 minutos.";
-        $headers = "From: no-reply@daherclinica.com.br";
-        @mail($email, $subject, $message, $headers);
+        $this->sender->send($user['email'], $subject, $message);
     }
 
     public function verify(array $user, string $code): bool

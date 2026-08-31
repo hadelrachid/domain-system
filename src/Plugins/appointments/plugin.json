@@ -1,7 +1,0 @@
-{
-    "name": "appointments",
-    "description": "Módulo de Agendamentos e Prontuários",
-    "version": "1.0.0",
-    "author": "Antigravity",
-    "main": "Plugin.php"
-}

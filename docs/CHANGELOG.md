@@ -7,6 +7,15 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
+## [1.2.0] - 2026-08-30
+### Added
+- **Cérebro I.A. (AI Hub):** Novo plugin dedicado para gerenciamento de chaves de API (Gemini, ChatGPT, DeepSeek, Claude).
+- **Plugin Builder:** Construtor visual de plugins integrado ao Cérebro I.A. para gerar formulários baseados em IA.
+- **Gestão Clínica (`clinic_pack`):** Novo plugin isolado para organizar o menu "Gestão Clínica" sem interferir no Kernel.
+
+### Fixed
+- **PluginManager Circuit Breaker:** Corrigida falha silenciosa onde o método `boot()` de plugins não estava sendo chamado durante a inicialização, além de ajustes no salvamento do `ordered_plugins.json`.
+
 ## [1.1.0] - A Era da Resiliência Arquitetural - 2026-08-24
 
 Esta atualização introduz proteções críticas no núcleo do sistema, além de resolver débitos técnicos identificados por auditoria profunda.

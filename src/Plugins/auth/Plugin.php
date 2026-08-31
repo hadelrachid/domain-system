@@ -19,7 +19,7 @@ class Plugin extends AbstractPlugin
         // 2. Garantir que a tabela users existe
 
         // 3. O Container vai fazer o auto-wiring do AuthController automaticamente na hora do router!
-        $queryBuilder = $this->container->make(\DomainSystem\Plugins\Database\QueryBuilder::class);
+        $queryBuilder = $this->queryBuilder();
         
         // A Tomada (TwoFactorService) precisa ser ÚNICA na memória para que os outros plugins encontrem os mesmos plugues
         $this->container->singleton(\DomainSystem\Plugins\auth\Services\TwoFactorService::class, function() {
@@ -27,12 +27,16 @@ class Plugin extends AbstractPlugin
         });
         $twoFactorService = $this->container->make(\DomainSystem\Plugins\auth\Services\TwoFactorService::class);
         
-        $twoFactorService->registerProvider('app', new \DomainSystem\Plugins\auth\Services\Providers\AppProvider());
-        $twoFactorService->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($queryBuilder));
+        $authenticator = new \DomainSystem\Plugins\auth\Services\GoogleAuthenticatorAdapter();
+        $codeStore = new \DomainSystem\Plugins\auth\Repositories\SqliteTwoFactorCodeStore($queryBuilder);
+        $emailSender = new \DomainSystem\Plugins\auth\Services\PhpMailSender();
+
+        $twoFactorService->registerProvider('app', new \DomainSystem\Plugins\auth\Services\Providers\AppProvider($authenticator));
+        $twoFactorService->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($codeStore, $emailSender));
 
         // 4. Registrar rotas do Auth
         /** @var EventDispatcher $events */
-        $events = $this->container->make(EventDispatcher::class);
+        $events = $this->events();
         
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'showLoginForm']);
@@ -110,7 +114,7 @@ class Plugin extends AbstractPlugin
     public function activate(): void
     {
         /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        $connection = $this->db();
         $db = $connection->getPdo();
         
         $db->exec("

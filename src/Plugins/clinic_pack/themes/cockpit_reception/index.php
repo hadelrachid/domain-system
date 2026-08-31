@@ -1,0 +1,2 @@
+<!DOCTYPE html>
+<html><head><title>Cockpit - Recepo</title><style>body { font-family: sans-serif; background: #ecf0f1; color: #333; padding: 20px; }</style></head><body><h1>Bem-vinda, <?= $user_name ?></h1><div class='dashboard'><h2>Atendimento Rpido</h2>[paciente_form]</div></body></html>

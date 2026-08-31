@@ -6,5 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'DomainSystem\\Plugins\\' => array($baseDir . '/src/Plugins', $baseDir . '/src/Plugins/clinic_pack/bundled_plugins'),
     'DomainSystem\\' => array($baseDir . '/src'),
 );

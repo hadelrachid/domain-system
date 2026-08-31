@@ -5,18 +5,21 @@ namespace DomainSystem\Plugins\auth\Controllers;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\QueryBuilder;
 use DomainSystem\Plugins\auth\Services\TwoFactorService;
+use DomainSystem\Core\Contracts\CockpitRegistryInterface;
 
 class AuthController
 {
     private ThemeManager $theme;
     private QueryBuilder $db;
     private TwoFactorService $twoFactor;
+    private CockpitRegistryInterface $cockpitRegistry;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db, TwoFactorService $twoFactor)
+    public function __construct(ThemeManager $theme, QueryBuilder $db, TwoFactorService $twoFactor, CockpitRegistryInterface $cockpitRegistry)
     {
         $this->theme = $theme;
         $this->db = $db;
         $this->twoFactor = $twoFactor;
+        $this->cockpitRegistry = $cockpitRegistry;
     }
 
     public function showLoginForm(\DomainSystem\Core\Http\Request $request)
@@ -105,12 +108,14 @@ class AuthController
             
             unset($_SESSION['auth_error'], $_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);
             
-            // Roteamento inteligente baseado no papel
-            if ($_SESSION['user_role'] === 'lawyer') {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/legal");
-            } else {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
+            // Roteamento inteligente baseado no papel através do CockpitRegistry (SOLID)
+            $provider = $this->cockpitRegistry->getProviderForRole($_SESSION['user_role']);
+            if ($provider) {
+                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . $provider->getDashboardRoute());
             }
+
+            // Fallback para o Master Admin
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
         }
 
         unset($_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);

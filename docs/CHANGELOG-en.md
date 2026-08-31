@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
+## [1.2.0] - 2026-08-30
+### Added
+- **AI Hub:** New dedicated plugin for API keys management (Gemini, ChatGPT, DeepSeek, Claude).
+- **Plugin Builder:** Visual plugin builder integrated with AI Hub to generate AI-based forms.
+- **Clinic Pack (`clinic_pack`):** New isolated plugin to organize the "Clinical Management" menu without interfering with the Kernel.
+
+### Fixed
+- **PluginManager Circuit Breaker:** Fixed silent failure where plugin `boot()` method was not being called during initialization, plus fixes for `ordered_plugins.json` saving.
+
 ## [1.1.0] - The Era of Architectural Resilience - 2026-08-24
 
 This update introduces critical protections to the system's core, along with resolving technical debts identified by a deep audit.

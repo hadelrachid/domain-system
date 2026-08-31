@@ -1,0 +1,1 @@
+<?php require 'bootstrap.php';

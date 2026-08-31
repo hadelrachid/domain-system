@@ -61,6 +61,7 @@ class PluginManager
 
             if ($isActive || $isCore) {
                 $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
+
                 
                 // Se for sub-plugin de um Hub, o namespace pode ser diferente, vamos tentar inferir ou usar autoloading padrão do composer
                 // Mas como não usamos composer para eles, vamos fazer require do arquivo Plugin.php manualmente!
@@ -122,6 +123,7 @@ class PluginManager
                     }
                     
                     $plugin->register();
+                    $plugin->boot();
                     $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
                     
                     $this->currentBootingPlugin = null; // Apaga do quadro
@@ -141,6 +143,7 @@ class PluginManager
                         ];
                     }
                     error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
+                    file_put_contents(dirname(__DIR__, 3) . '/temp/boot_crashes.txt', date('Y-m-d H:i:s') . " - {$pluginName} crashed: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n\n", FILE_APPEND);
                 }
             }
         }
@@ -340,6 +343,7 @@ class PluginManager
                 }
                 
                 error_log("QTA ACIONADO! Plugin '{$this->currentBootingPlugin}' sofreu um colapso fatal (Ex: Fim de Memória) e foi ejetado automaticamente. Erro: " . $error['message']);
+                file_put_contents(dirname(__DIR__, 3) . '/temp/boot_crashes.txt', date('Y-m-d H:i:s') . " - {$this->currentBootingPlugin} FATAL CRASH: " . $error['message'] . "\n\n", FILE_APPEND);
             }
         }
     }
