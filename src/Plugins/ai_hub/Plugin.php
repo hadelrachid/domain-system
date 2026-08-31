@@ -21,6 +21,7 @@ class Plugin extends AbstractPlugin
         $router->addRoute('GET', '/admin/ai-hub', [SettingsController::class, 'index'], 'ai_hub', ['admin']);
         $router->addRoute('POST', '/admin/ai-hub/save', [SettingsController::class, 'save'], 'ai_hub', ['admin']);
         $router->addRoute('GET', '/admin/ai-hub/builder', [\DomainSystem\Plugins\ai_hub\Controllers\BuilderController::class, 'index'], 'ai_hub_builder', ['admin']);
+        $router->addRoute('POST', '/admin/ai-hub/builder/generate', [\DomainSystem\Plugins\ai_hub\Controllers\BuilderController::class, 'generate'], 'ai_hub_builder_generate', ['admin']);
 
         $events = $this->container->make(EventDispatcher::class);
         $events->addListener('admin.menu', function(array $menu) {

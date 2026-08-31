@@ -24,7 +24,8 @@
 
         <h2>Core Components</h2>
         <ul>
-            <li><strong>Router:</strong> Maps URLs to Controllers (e.g., <code>/admin/settings</code> calls the <code>SettingsController::index</code> method).</li>
+            <li><strong>SessionManager:</strong> The single authority over user memory storage (prevents loose superglobals like $_SESSION across the code).</li>
+            <li><strong>Router (Gatekeeper):</strong> Maps URLs to Controllers and acts as a Bouncer (ACL), validating roles even before instantiating controllers.</li>
             <li><strong>EventDispatcher (Triggers):</strong> Manages Actions (Hooks) and Filters. If a plugin wants to change the menu, it "listens" to the <code>admin.menu</code> event.</li>
             <li><strong>PluginManager:</strong> Reads the <code>src/Plugins/</code> folder, validates <code>plugin.json</code>, and calls the <code>register()</code> method of each active plugin.</li>
             <li><strong>ThemeManager:</strong> Manages the Front-end. Intercepts requests that are not from the API or Dashboard, and delivers visuals using Server-Side Rendering (SSR).</li>
@@ -34,12 +35,12 @@
         <pre>
 1. User accesses the browser.
 2. public/index.php receives the request.
-3. bootstrap.php loads the Container and Services (Database, EventDispatcher).
-4. PluginManager activates the Plugins (each plugin injects its Routes).
-5. Router evaluates the URL.
-6. Specific Controller is executed.
-7. The database is accessed via secure PDO (QueryBuilder).
-8. The response (HTML or JSON) is returned to the user.</pre>
+3. bootstrap.php loads the Container and Services (Database, EventDispatcher, SessionManager).
+4. PluginManager activates the Plugins (each plugin injects its Routes and Repositories).
+5. Router evaluates the URL and checks Access Rules (ACL).
+6. Specific Controller is instantiated via Dependency Injection.
+7. The Controller accesses the Repository Layer (Repository Pattern) which handles the DB via PDO.
+8. A purely HTTP Response is returned to the user.</pre>
 
     </div>
 </body>

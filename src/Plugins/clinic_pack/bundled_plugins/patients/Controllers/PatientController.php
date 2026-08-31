@@ -26,7 +26,7 @@ class PatientController
 
     public function store()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $name = $_POST['name'] ?? '';
         $cpf = preg_replace('/[^0-9]/', '', $_POST['cpf'] ?? '');
@@ -79,7 +79,7 @@ class PatientController
 
     public function update()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $id = $_POST['id'] ?? null;
         if (!$id) {
@@ -122,7 +122,7 @@ class PatientController
 
     public function delete()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $id = $_POST['id'] ?? null;
         if ($id) {

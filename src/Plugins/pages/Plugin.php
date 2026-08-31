@@ -12,6 +12,10 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        $this->container->bind(
+            \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,
+            \DomainSystem\Plugins\pages\Repositories\SqlitePageRepository::class
+        );
 
         /** @var EventDispatcher $events */
         $events = $this->events();

@@ -63,22 +63,25 @@ class Router
     private function checkAuthorization(array $roles): void
     {
         if (empty($roles)) {
-            return; // Rota pública ou sem restrição declarada
+            return;
         }
 
-        if (session_status() === PHP_SESSION_NONE) { 
-            session_start(); 
+        try {
+            $session  = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+            $userRole = $session->get('user_role', '');
+        } catch (\Throwable $e) {
+            $userRole = '';
         }
-
-        $userRole = $_SESSION['user_role'] ?? '';
 
         if (!in_array($userRole, $roles)) {
             http_response_code(403);
-            die('<div style="padding:20px; text-align:center; font-family:sans-serif;">
-                <h2 style="color:#d63638;">Acesso Negado 🛑</h2>
-                <p>O seu perfil ('.htmlspecialchars($userRole).') não tem permissão para acessar esta área.</p>
-                <a href="javascript:history.back()">Voltar</a>
-            </div>');
+            $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
+                  . '<h2 style="color:#d63638;">Acesso Negado 🛑</h2>'
+                  . '<p>O seu perfil (' . htmlspecialchars($userRole) . ') não tem permissão para acessar esta área.</p>'
+                  . '<a href="javascript:history.back()">Voltar</a>'
+                  . '</div>';
+            echo $html;
+            exit;
         }
     }
 

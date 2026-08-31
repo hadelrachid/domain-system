@@ -11,7 +11,7 @@ class Plugin extends AbstractPlugin
         // Apenas provando que ele é carregado
         $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class)->addListener('init', function() {
             if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-                session_start();
+
             }
             if (session_status() !== PHP_SESSION_NONE) {
                 $_SESSION['dental_module_loaded'] = true;

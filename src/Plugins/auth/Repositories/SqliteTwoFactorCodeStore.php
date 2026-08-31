@@ -2,23 +2,23 @@
 
 namespace DomainSystem\Plugins\auth\Repositories;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\Database\Connection;
 use DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface;
 
 class SqliteTwoFactorCodeStore implements TwoFactorCodeStoreInterface
 {
-    private QueryBuilder $db;
+    private \PDO $db;
 
-    public function __construct(QueryBuilder $db)
+    public function __construct(Connection $connection)
     {
-        $this->db = $db;
+        $this->db = $connection->getPdo();
     }
 
     public function storeCode(int $userId, string $code, string $expiry): void
     {
-        $this->db->table('users')->where('id', '=', $userId)->update([
-            'email_2fa_code' => $code,
-            'email_2fa_expiry' => $expiry
-        ]);
+        $stmt = $this->db->prepare(
+            "UPDATE users SET email_2fa_code = :code, email_2fa_expiry = :expiry WHERE id = :id"
+        );
+        $stmt->execute([':code' => $code, ':expiry' => $expiry, ':id' => $userId]);
     }
 }

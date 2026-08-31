@@ -36,4 +36,9 @@
 ---
 
 ## ✅ Resolution Status
-The majority of the critical, low, and medium technical debts listed above (items 1, 2, 6, 7, 8 medium and all low) were already resolved in the `1.1.0` commit. The major architectural items remain documented here for the upcoming sprints.
+Almost all of the critical and medium debts listed above have been resolved in versions `1.1.0` and `1.2.0`.
+- **Dependency Injection (Medium 1, 2, and 3):** Replaced by the Container (`$this->container->make()`).
+- **Direct Access to Superglobals (Critical 3):** Successfully removed. Web communication and memory now pass purely through abstractions like `Request`, `Response`, and `SessionManager`.
+- **Database Access by Controllers (Repository Pattern):** Repositories were introduced, isolating business rules and database queries.
+
+The code is strictly maintained adhering to SOLID and DIP principles.

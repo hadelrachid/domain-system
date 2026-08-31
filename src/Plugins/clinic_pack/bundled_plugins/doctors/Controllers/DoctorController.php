@@ -18,7 +18,7 @@ class DoctorController
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $doctors = $this->repository->findAll();
         $theme = $this->theme;
         
@@ -27,7 +27,7 @@ class DoctorController
 
     public function store()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $name = $_POST['name'] ?? '';
         $crm = $_POST['crm'] ?? '';
@@ -58,7 +58,7 @@ class DoctorController
 
     public function edit()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $id = $_GET['id'] ?? null;
         if (!$id) {
@@ -78,7 +78,7 @@ class DoctorController
 
     public function update()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $id = $_POST['id'] ?? null;
         if (!$id) {
@@ -117,7 +117,7 @@ class DoctorController
 
     public function delete()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $id = $_POST['id'] ?? null;
         if ($id) {
@@ -131,7 +131,7 @@ class DoctorController
 
     public function syncWp()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         try {
             // TODO: Implementar busca real na API do WordPress para sincronizar médicos

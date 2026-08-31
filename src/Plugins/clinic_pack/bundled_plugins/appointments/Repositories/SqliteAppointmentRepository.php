@@ -2,105 +2,78 @@
 
 namespace DomainSystem\Plugins\appointments\Repositories;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
-use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
-use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
+use DomainSystem\Plugins\Database\Connection;
 use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 
 class SqliteAppointmentRepository implements AppointmentRepositoryInterface
 {
-    private QueryBuilder $db;
-    private PatientReaderInterface $patientReader;
-    private DoctorReaderInterface $doctorReader;
+    private \PDO $db;
 
-    public function __construct(QueryBuilder $db, PatientReaderInterface $patientReader, DoctorReaderInterface $doctorReader)
+    public function __construct(Connection $connection)
     {
-        $this->db = $db;
-        $this->patientReader = $patientReader;
-        $this->doctorReader = $doctorReader;
+        $this->db = $connection->getPdo();
     }
 
     public function getPendingQueue(?string $doctorId = null): array
     {
-        $appointmentsRaw = $this->db->table('appointments')->get();
-        $patientsMap = $this->patientReader->getPatientsMap();
-        $doctorsMap = $this->doctorReader->getDoctorsMap();
+        $query = "SELECT * FROM appointments WHERE status NOT IN ('Atendido', 'Finalizado', 'Cancelado')";
+        $params = [];
 
-        $appointments = [];
-        foreach ($appointmentsRaw as $a) {
-            if (in_array($a['status'], ['Atendido', 'Finalizado', 'Cancelado'])) {
-                continue;
-            }
-
-            // O Controller envia doctorId se a regra de negócio exigir filtragem. O Repositório apenas obedece.
-            if ($doctorId !== null && (string)$a['doctor_id'] !== (string)$doctorId) {
-                continue;
-            }
-
-            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
-            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
-            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
-            $a['doctor_specialty'] = $doctorsMap[$a['doctor_id']]['specialty'] ?? '';
-
-            $appointments[] = $a;
+        if ($doctorId !== null) {
+            $query .= " AND doctor_id = :doctor_id";
+            $params[':doctor_id'] = $doctorId;
         }
 
-        usort($appointments, function($a, $b) {
-            return strtotime($a['appointment_date'] . ' ' . $a['appointment_time']) <=> strtotime($b['appointment_date'] . ' ' . $b['appointment_time']);
-        });
+        $query .= " ORDER BY appointment_date ASC, appointment_time ASC";
 
-        return $appointments;
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function getHistory(?string $doctorId = null, string $searchQuery = ''): array
     {
-        $appointmentsRaw = $this->db->table('appointments')->get();
-        $patientsMap = $this->patientReader->getPatientsMap();
-        $doctorsMap = $this->doctorReader->getDoctorsMap();
+        $query = "SELECT * FROM appointments WHERE status IN ('Atendido', 'Finalizado')";
+        $params = [];
 
-        $appointments = [];
-        foreach ($appointmentsRaw as $a) {
-            if (!in_array($a['status'], ['Atendido', 'Finalizado'])) {
-                continue;
-            }
-
-            if ($doctorId !== null && (string)$a['doctor_id'] !== (string)$doctorId) {
-                continue;
-            }
-
-            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
-            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
-            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
-
-            if (!empty($searchQuery)) {
-                $matchName = str_contains(strtolower($a['patient_name']), $searchQuery);
-                $matchPhone = str_contains(strtolower($a['patient_phone']), $searchQuery);
-                $matchDate = str_contains($a['appointment_date'], $searchQuery);
-                
-                if (!$matchName && !$matchPhone && !$matchDate) {
-                    continue;
-                }
-            }
-
-            $appointments[] = $a;
+        if ($doctorId !== null) {
+            $query .= " AND doctor_id = :doctor_id";
+            $params[':doctor_id'] = $doctorId;
         }
 
-        usort($appointments, function($a, $b) {
-            return strtotime($b['appointment_date'] . ' ' . $b['appointment_time']) <=> strtotime($a['appointment_date'] . ' ' . $a['appointment_time']);
-        });
+        $query .= " ORDER BY appointment_date DESC, appointment_time DESC";
 
-        return array_slice($appointments, 0, 20);
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($params);
+        $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // As filtering by patient name/phone requires joins or mapping, 
+        // the Controller or Service layer will handle the string searching for now, 
+        // OR we just return all matching appointments and let the layer above filter them.
+        // Returning all history for this doctor (or all), and letting Controller filter.
+        
+        return $appointments;
     }
 
     public function createAppointment(array $data): void
     {
-        $this->db->table('appointments')->insert($data);
+        $fields = implode(', ', array_keys($data));
+        $placeholders = ':' . implode(', :', array_keys($data));
+        
+        $query = "INSERT INTO appointments ($fields) VALUES ($placeholders)";
+        $stmt = $this->db->prepare($query);
+        
+        $params = [];
+        foreach ($data as $key => $val) {
+            $params[':' . $key] = $val;
+        }
+        
+        $stmt->execute($params);
     }
 
     public function updateStatus(int $id, string $status): void
     {
-        $this->db->table('appointments')->where('id', '=', $id)->update([
-            'status' => $status
-        ]);
+        $stmt = $this->db->prepare("UPDATE appointments SET status = :status WHERE id = :id");
+        $stmt->execute([':status' => $status, ':id' => $id]);
     }
 }

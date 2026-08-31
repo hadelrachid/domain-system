@@ -1,66 +1,100 @@
-# 🚀 Domain System (Universal Modular Framework)
-> **Versão Atual:** `[v1.2.0]`
+# 🚀 Domain System — O Motor de Negócios que não Morre
 
-[ 🌐 Site Oficial (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentação ](README.md) | [ 📜 Changelog ](docs/CHANGELOG.md) | [ 🕵️ Auditoria ](docs/auditoria.md)
----
-[ 🇺🇸 Read in English ](README-en.md)
+> **Versão Atual:** `v1.2.0` — *"A Era da Resiliência Arquitetural"*
 
-Um motor (framework) arquitetural hiper-resiliente, desenhado para ser infinitamente expansível. Semelhante ao conceito do WordPress, o Domain System não é apenas um software específico — ele se transforma em **qualquer coisa** dependendo dos plugins ativados.
-Pode ser um **Sistema de Clínica Médica**, um **ERP Financeiro** ou um **Sistema Jurídico para Escritórios de Advocacia**. Tudo depende do pacote de plugins conectados ao núcleo.
-
-## 🏗️ Arquitetura do Sistema
-
-Este projeto abandona a tradicional "sopa de espaguete" e adota o padrão de **Kernel e Plugins** (inspirado em arquiteturas corporativas e CMSs de ponta), com forte aderência aos princípios **SOLID**.
-
-### 1. O Kernel e o PluginManager
-O núcleo do sistema (Kernel) apenas fornece a infraestrutura básica (Banco de Dados, Motor de Templates, Injeção de Dependências e Sistema de Rotas). Todo o restante (Autenticação, Pacientes, Prontuários) são **Plugins** independentes.
-- Os plugins se comunicam entre si exclusivamente via `EventDispatcher` (Hooks).
-- Se um plugin precisa adicionar um menu, ele não altera o painel, ele simplesmente escuta o evento `admin.menu` e injeta sua opção.
-
-### 2. Disjuntor V2 (Circuit Breaker)
-Inspirado em microsserviços modernos, o sistema possui um **Circuit Breaker** nativo. 
-Se um plugin for ativado e seu código contiver erros (ex: Erros de Sintaxe, Chamadas Indevidas, Falha de Banco de Dados), o Kernel captura o erro, isola o módulo defeituoso e desliga-o do `plugins.json` automaticamente. O sistema inteiro sobrevive e continua operando sem a "tela branca da morte".
-
-### 3. O "QTA" (Automatic Transfer Switch)
-Mesmo contra as falhas mais catastróficas (como o esgotamento total da memória RAM por um loop infinito), o sistema está protegido.
-Uma função `register_shutdown_function` (O Último Suspiro) monitora a inicialização dos módulos. Se o servidor morrer repentinamente por asfixia de recursos (Fatal Error E_ERROR), o QTA ejetará cirurgicamente o plugin causador da fiação mestre nos últimos milissegundos de vida. Ao recarregar a página, o sistema ressuscitará e deixará um log de emergência.
-
-### 4. Tomadas, Plugues e Repositórios (DIP e Repository Pattern)
-O sistema foi construído pensando na filosofia da "Tomada e do Plugue" (SOLID).
-No Autenticador, por exemplo, o 2FA apenas define a interface (`TwoFactorProviderInterface`). Outros módulos fornecem a execução (E-mail, App).
-Mais profundo ainda, em nossa camada de acesso a dados, utilizamos fortemente o **Repository Pattern**. Controladores de módulos vitais (Pacientes, Médicos, Prontuários) ignoram a existência de um banco de dados e conversam apenas com interfaces de Repositórios. Isso elimina o Acoplamento Estrutural e os famosos "Fat Controllers", delegando a busca de dados a um injetor de dependência (DI Container).
-
-### 5. Ambiente de Desenvolvimento Seguro (Dev Simulator)
-Para evitar que e-mails falsos vazem em testes, o sistema possui um plugin `dev_simulator`. Quando ativado, ele intercepta as classes de comunicação (sequestrando a fiação via Injeção de Dependência) e redireciona os envios para um arquivo de texto local (`temp/auth-2fa.txt`). Em produção, basta desligar o plugin e a fiação volta ao estado natural.
-
-### 6. Cérebro I.A. (AI Hub) e Construtor de Formulários
-Para facilitar a criação de novos recursos, o sistema traz um Plugin de Inteligência Artificial modular (`ai_hub`). Este "cérebro" não tem acesso livre ao banco de dados; ele se conecta às Interfaces disponíveis, recebendo permissão de agir de acordo com o que foi exposto. Com ele, o próprio usuário pode pedir a geração de novos Formulários e Lógicas de Plugins visualmente, os quais serão automaticamente escritos e empacotados, poupando a curva de aprendizado da criação de plugins do zero.
-
-### 7. Isolamento de Pacotes (Pack isolation)
-Módulos específicos de um nicho podem ser agrupados sob um "Pack". Por exemplo, o `clinic_pack` não cria tabelas ou executa lógicas de pacientes; ele simplesmente agrupa visualmente (interceptando o menu) outros micro-plugins (`patients`, `appointments`, `triage`) e injeta configurações padrão, isolando os módulos filhos. Assim, se uma parte queimar, as outras continuam operando.
-
-## 🛠️ Tecnologias
-- **Linguagem:** PHP 8+ (Vanilla/OOP avançado)
-- **Banco de Dados:** SQLite (com PDO e QueryBuilder customizado encapsulado em Repositórios)
-- **Frontend:** HTML5, CSS Nativo (Arquitetura limpa sem frameworks pesados)
-- **Design Patterns Utilizados:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton, Repository Pattern.
-
-## 👥 Controle de Acesso (ACL)
-O sistema isola perfis:
-- **Administrador:** Acesso mestre e global.
-- **Médico:** Acesso restrito apenas a agenda, consultas e prontuários médicos.
-- **Recepcionista:** Não pode visualizar prontuários (conforme LGPD), operando apenas agendamentos e triagem básica.
-- **Jurídico:** Workspace isolado com relatórios confidenciais.
+[🌐 Site Oficial (Docs)](https://hadelrachid.github.io/domain-system/) | [📄 Documentação](README.md) | [📜 Changelog](docs/CHANGELOG.md) | [🕵️ Auditoria](docs/auditoria.md)
 
 ---
-*Este sistema é um organismo vivo, programado para sobreviver a si mesmo e se expandir organicamente.*
 
-## 📖 Versionamento e Histórico
-Atualmente o projeto encontra-se na versão **[1.2.0]**.
-Para acompanhar toda a evolução e correções, consulte o nosso [CHANGELOG.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
+[🇺🇸 Read in English](README-en.md)
 
-## 🤝 Colaboradores Principais
-Este sistema é construído por uma equipe mista de inteligência humana e artificial:
+## 💡 O Que é o Domain System?
 
-- **Rachid** - Engenheiro de Software (Criador, Idealizador da Arquitetura e Product Owner)
-- **Antigravity (Google DeepMind)** - Arquiteto I.A. (Co-desenvolvedor e Auditor de Código)
+O **Domain System** não é apenas mais um framework ou um sistema de gestão. É um **motor de negócios hiper-resiliente**, projetado para ser a base de qualquer aplicação empresarial, desde uma clínica médica até um escritório de advocacia ou um ERP financeiro.
+
+Ele funciona como um **sistema operacional para o seu negócio**: o núcleo (Kernel) fornece a infraestrutura essencial (banco de dados, segurança, rotas, injeção de dependências), e toda a lógica de negócio é encapsulada em **Plugins** independentes e intercambiáveis.
+
+Este é um projeto que une o melhor dos dois mundos: a **simplicidade e performance do PHP puro** com a **robustez e escalabilidade de arquiteturas enterprise** (como microsserviços e SOLID).
+
+---
+
+## 🏗️ Arquitetura: Uma Obra de Engenharia
+
+A arquitetura do Domain System foi construída para ser **imune ao caos**. Ela é baseada em três pilares fundamentais:
+
+### 1. O Kernel Imortal (Core)
+O coração do sistema é minimalista e não contém nenhuma regra de negócio. Sua única função é orquestrar plugins e fornecer ferramentas seguras (Container DI, Event Dispatcher, Router, Session Manager). O Kernel é a "tomada" universal onde qualquer plugin pode se conectar. Ele atua como **Gatekeeper Global**, gerenciando a memória e validando rotas de forma antecipada sem que os Controllers saibam como a segurança é feita.
+
+### 2. O Ecossistema de Plugins (Módulos)
+Cada funcionalidade — desde autenticação até faturamento — é um Plugin isolado. Plugins se comunicam **exclusivamente via eventos** (Event-Driven Architecture), garantindo que a quebra de um não comprometa o todo. Eles são a "carga útil" que transforma o Kernel em um sistema de clínica, jurídico ou financeiro. Tudo funciona através de injeção de dependência e desacoplamento forte (DIP e SRP).
+
+### 3. A Camada de Apresentação (Temas e Cockpits)
+A interface do usuário é totalmente desacoplada. Temas (frontend) consomem dados dos Plugins via **Shortcodes** e um sistema de **Workspaces** (perfis de usuário). Isso permite que designers e desenvolvedores frontend trabalhem de forma independente, sem nunca tocar na lógica de negócio.
+
+---
+
+## 🛡️ Resiliência: O Sistema que não Morre
+
+Falhas acontecem. No Domain System, elas são **contidas, registradas e corrigidas sem derrubar o sistema**.
+
+- **Circuit Breaker (Disjuntor V2):** Se um plugin causar um erro fatal (sintaxe, banco de dados, memória), o Kernel o desativa automaticamente e registra o incidente. O resto do sistema continua funcionando.
+- **Emergency Hatch (Escotilha de Emergência):** Se o módulo de autenticação falhar, os administradores ainda podem acessar o sistema via uma rota de emergência segura, usando a `APP_KEY` do servidor.
+- **Cascade Effect (Efeito Cascata):** Se um plugin A depende de um plugin B, e B é desativado pelo Circuit Breaker, A também é desativado para evitar falhas em cadeia.
+
+---
+
+## ✨ Principais Características
+
+- **100% PHP 8+** — Código moderno, limpo e orientado a objetos.
+- **Arquitetura SOLID** — Cada classe tem uma responsabilidade única e bem definida.
+- **Event-Driven** — Plugins se comunicam via eventos, garantindo baixo acoplamento.
+- **Dependency Injection** — Container de injeção de dependências com autowiring.
+- **Repository Pattern** — Controllers nunca tocam no banco de dados diretamente.
+- **Multi-Workspace** — Suporte nativo para múltiplos perfis de usuário (Admin, Médico, Recepcionista, Advogado).
+- **Auditoria e Monitoramento** — Painel de supervisão de erros com logs detalhados e botão de "copiar stack trace".
+- **AI Hub Integrado** — Gerador de plugins e formulários via Inteligência Artificial (Gemini, ChatGPT, etc.).
+- **Modular e Extensível** — Adicione ou remova funcionalidades sem afetar o núcleo.
+
+---
+
+## 🧩 Para Quem é este Projeto?
+
+- **Clínicas e Consultórios** — Gerencie pacientes, agendamentos, prontuários e faturamento.
+- **Escritórios de Advocacia** — Controle processos, prazos e clientes com um workspace dedicado.
+- **Desenvolvedores Corporativos** — Construa soluções white-label rapidamente, sem reinventar a roda.
+- **Arquitetos de Software** — Um laboratório vivo de boas práticas (SOLID, DDD, Event Sourcing).
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+| Camada          | Tecnologia                                  |
+|-----------------|---------------------------------------------|
+| **Backend**     | PHP 8+ (Vanilla, OOP Avançado)              |
+| **Database**    | SQLite (com suporte nativo para PostgreSQL) |
+| **Frontend**    | HTML5, CSS3, JavaScript (Vanilla)           |
+| **Design Patterns** | DI, Event Dispatcher, Repository, Strategy, Adapter, Factory, Circuit Breaker |
+
+---
+
+## 📖 Documentação e Recursos
+
+- **[Guia do Desenvolvedor](DEVELOPER_GUIDE.md)** — Aprenda a criar plugins e temas do zero.
+- **[Wiki do Projeto](wiki/Home.md)** — Conceitos avançados como Circuit Breaker, Emergency Hatch e ACL.
+- **[Changelog](docs/CHANGELOG.md)** — Histórico completo de versões e correções.
+- **[Roadmap](ROADMAP.md)** — O futuro do Domain System.
+
+---
+
+## 🤝 Colaboradores
+
+Este projeto é construído por uma equipe mista de inteligência humana e artificial:
+
+- **Rachid Hadel** — Engenheiro de Software, Arquiteto e Product Owner.
+- **Antigravity (Google DeepMind)** — Co-Desenvolvedor, Arquiteto de IA e Auditor de Código.
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a [MIT License](LICENSE).

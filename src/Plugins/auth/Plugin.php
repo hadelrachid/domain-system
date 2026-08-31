@@ -11,101 +11,68 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        // 1. Iniciar sessão do PHP com segurança se não estiver iniciada
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $this->container->bind(
+            \DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface::class,
+            \DomainSystem\Plugins\auth\Repositories\SqliteUserRepository::class
+        );
 
-        // 2. Garantir que a tabela users existe
+        $this->container->bind(
+            \DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface::class,
+            \DomainSystem\Plugins\auth\Repositories\SqliteTwoFactorCodeStore::class
+        );
 
-        // 3. O Container vai fazer o auto-wiring do AuthController automaticamente na hora do router!
-        $queryBuilder = $this->queryBuilder();
-        
-        // A Tomada (TwoFactorService) precisa ser ÚNICA na memória para que os outros plugins encontrem os mesmos plugues
-        $this->container->singleton(\DomainSystem\Plugins\auth\Services\TwoFactorService::class, function() {
-            return new \DomainSystem\Plugins\auth\Services\TwoFactorService();
-        });
-        $twoFactorService = $this->container->make(\DomainSystem\Plugins\auth\Services\TwoFactorService::class);
-        
-        $authenticator = new \DomainSystem\Plugins\auth\Services\GoogleAuthenticatorAdapter();
-        $codeStore = new \DomainSystem\Plugins\auth\Repositories\SqliteTwoFactorCodeStore($queryBuilder);
-        $emailSender = new \DomainSystem\Plugins\auth\Services\PhpMailSender();
+        $this->container->bind(
+            \DomainSystem\Plugins\auth\Contracts\AuthenticatorInterface::class,
+            \DomainSystem\Plugins\auth\Services\GoogleAuthenticatorAdapter::class
+        );
 
-        $twoFactorService->registerProvider('app', new \DomainSystem\Plugins\auth\Services\Providers\AppProvider($authenticator));
-        $twoFactorService->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($codeStore, $emailSender));
+        $this->container->bind(
+            \DomainSystem\Plugins\auth\Contracts\EmailSenderInterface::class,
+            \DomainSystem\Plugins\auth\Services\PhpMailSender::class
+        );
 
-        // 4. Registrar rotas do Auth
-        /** @var EventDispatcher $events */
+        $this->container->singleton(
+            \DomainSystem\Plugins\auth\Services\TwoFactorService::class,
+            function($container) {
+                $service = new \DomainSystem\Plugins\auth\Services\TwoFactorService();
+                $authenticator = $container->make(\DomainSystem\Plugins\auth\Contracts\AuthenticatorInterface::class);
+                $codeStore = $container->make(\DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface::class);
+                $emailSender = $container->make(\DomainSystem\Plugins\auth\Contracts\EmailSenderInterface::class);
+                $service->registerProvider('app', new \DomainSystem\Plugins\auth\Services\Providers\AppProvider($authenticator));
+                $service->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($codeStore, $emailSender));
+                return $service;
+            }
+        );
+
         $events = $this->events();
-        
-        $events->addListener('router.register', function(Router $router) {
+
+        $events->addListener('router.register', function(\DomainSystem\Core\Routing\Router $router) {
             $router->addRoute('GET', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'showLoginForm']);
             $router->addRoute('POST', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'authenticate']);
             $router->addRoute('GET', '/logout', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'logout']);
-
-            // Usuários e 2FA
-            $router->addRoute('GET', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'index']);
-            $router->addRoute('POST', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'store']);
-            $router->addRoute('GET', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'generate2fa']);
-            $router->addRoute('POST', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'confirm2fa']);
-            $router->addRoute('GET', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa']);
-            $router->addRoute('POST', '/admin/users/2fa-type', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'change2faType']);
-            $router->addRoute('POST', '/admin/users/reset-password', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'resetPassword']);
+            $router->addRoute('GET', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'index'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'store'], 'auth', ['admin']);
+            $router->addRoute('GET', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'generate2fa'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'confirm2fa'], 'auth', ['admin']);
+            $router->addRoute('GET', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/2fa-type', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'change2faType'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/reset-password', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'resetPassword'], 'auth', ['admin']);
         });
 
-        // Adicionar ao Menu (Apenas se for admin)
-        $events->addListener('admin.menu', function($menu) {
-            $role = strtolower($_SESSION['user_role'] ?? 'admin');
+        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+        $events->addListener('admin.menu', function($menu) use ($sessionManager) {
+            $role = strtolower($sessionManager->get('user_role', 'admin'));
             if ($role === 'admin') {
-                $menu[] = [
-                    'title' => 'Usuários',
-                    'url' => '/admin/users',
-                    'icon' => '👥'
-                ];
+                $menu[] = ['title' => 'Usuários', 'url' => '/admin/users', 'icon' => '👥'];
             }
             return $menu;
         });
 
-        // 5. O Middleware de Proteção (O Cockpit)
-        $events->addListener('router.before_dispatch', function(string $uri) {
-            // Se tentar acessar o admin (qualquer coisa sob /admin)
-            if (str_starts_with($uri, '/admin')) {
-                // Checa se tem crachá
-                if (!isset($_SESSION['user_id'])) {
-                    // Sem crachá = Volta pro Login
+        $events->addListener('router.before_dispatch', function(string $uri) use ($sessionManager) {
+            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
+                if (!$sessionManager->has('user_id')) {
                     header("Location: " . BASE_URL . "/login");
                     exit;
-                }
-                
-                // ACL Rules (Controle de Acesso)
-                $role = strtolower($_SESSION['user_role'] ?? 'admin');
-                
-                if ($role === 'receptionist') {
-                    // Recepcionista NÃO pode acessar:
-                    // Médicos, Usuários, Plugins e o Prontuário Médico
-                    if (str_starts_with($uri, '/admin/doctors') || 
-                        str_starts_with($uri, '/admin/users') || 
-                        str_starts_with($uri, '/admin/plugins') || 
-                        str_starts_with($uri, '/admin/appointments/record')) {
-                        die('<div style="padding:20px; font-family:sans-serif; text-align:center;"><h2>Acesso Negado 🛑</h2><p>Perfil de <b>Recepcionista</b> não tem permissão para acessar esta área, como o Prontuário Médico, por respeito à LGPD.</p><a href="'.BASE_URL.'/admin">Voltar</a></div>');
-                    }
-                }
-                
-                if ($role === 'doctor') {
-                    // Médico NÃO pode acessar:
-                    // Médicos (cadastro), Usuários, Plugins e Pacientes (cadastro mestre, ele acessa via prontuário)
-                    if (str_starts_with($uri, '/admin/doctors') || 
-                        str_starts_with($uri, '/admin/users') || 
-                        str_starts_with($uri, '/admin/patients') || 
-                        str_starts_with($uri, '/admin/plugins')) {
-                        die('<div style="padding:20px; font-family:sans-serif; text-align:center;"><h2>Acesso Negado 🛑</h2><p>Perfil de <b>Médico</b> não tem permissão para acessar o painel administrativo raiz.</p><a href="'.BASE_URL.'/admin/appointments">Voltar</a></div>');
-                    }
-                }
-                
-                if ($role === 'lawyer') {
-                    if (!str_starts_with($uri, '/admin/legal') && $uri !== '/admin/logout' && $uri !== '/admin') {
-                        die('<div style="padding:20px; font-family:sans-serif; text-align:center;"><h2>Acesso Negado ⚖️</h2><p>Advogados só podem acessar o Workspace Jurídico.</p><a href="'.BASE_URL.'/admin/legal">Acessar Processos</a></div>');
-                    }
                 }
             }
         });

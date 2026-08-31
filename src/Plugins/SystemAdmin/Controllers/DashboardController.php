@@ -18,7 +18,7 @@ class DashboardController
 
     public function index(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctorId = $_SESSION['linked_doctor_id'] ?? null;
         

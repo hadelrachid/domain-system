@@ -25,7 +25,7 @@ class RecordController
 
         if (!$appointment) die("Agendamento não encontrado.");
 
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
             die("Acesso Negado: Você não tem permissão para acessar este prontuário.");
         }
@@ -73,7 +73,7 @@ class RecordController
              exit;
         }
 
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
             die("Acesso Negado: Você não tem permissão para editar este prontuário.");
         }
@@ -107,7 +107,7 @@ class RecordController
 
         if (!$appointment) die("Agendamento não encontrado.");
 
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
             die("Acesso Negado: Você não tem permissão para imprimir este prontuário.");
         }
@@ -124,7 +124,7 @@ class RecordController
 
     public function uploadExam($appointmentId)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         if (empty($_FILES['exam_file']['name'])) {
             header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Nenhum arquivo enviado");
             exit;
@@ -174,7 +174,7 @@ class RecordController
 
     public function deleteExam($appointmentId)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $examId = $_POST['exam_id'] ?? null;
         
         if ($examId) {

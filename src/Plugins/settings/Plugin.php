@@ -11,6 +11,10 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
+        $this->container->bind(
+            \DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface::class,
+            \DomainSystem\Plugins\settings\Repositories\SqliteSettingRepository::class
+        );
 
         /** @var EventDispatcher $events */
         $events = $this->events();
@@ -21,8 +25,9 @@ class Plugin extends AbstractPlugin
         });
 
         // Adiciona ao Menu se for admin
-        $events->addListener('admin.menu', function($menu) {
-            $role = strtolower($_SESSION['user_role'] ?? 'admin');
+        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+        $events->addListener('admin.menu', function($menu) use ($sessionManager) {
+            $role = strtolower($sessionManager->get('user_role', 'admin'));
             if ($role === 'admin') {
                 $menu[] = [
                     'title' => 'Configuraes',

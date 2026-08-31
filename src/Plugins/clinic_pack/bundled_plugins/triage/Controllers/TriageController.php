@@ -65,7 +65,7 @@ class TriageController
      */
     private function checkAuthorization($appointmentDoctorId): void
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $userRole = $_SESSION['user_role'] ?? '';
         $doctorId = $_SESSION['doctor_id'] ?? null;
         

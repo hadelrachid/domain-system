@@ -75,10 +75,6 @@ abstract class AbstractPlugin implements PluginInterface
         return $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
     }
 
-    protected function queryBuilder(): \DomainSystem\Plugins\Database\QueryBuilder
-    {
-        return $this->container->make(\DomainSystem\Plugins\Database\QueryBuilder::class);
-    }
 
     protected function theme(): \DomainSystem\Core\Theme\ThemeManager
     {

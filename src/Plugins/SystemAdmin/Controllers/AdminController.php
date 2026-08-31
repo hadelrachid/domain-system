@@ -68,7 +68,7 @@ class AdminController
 
         // Capture crashes from session
         $crashes = [];
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         if (!empty($_SESSION['plugin_crashes'])) {
             $crashes = $_SESSION['plugin_crashes'];
             unset($_SESSION['plugin_crashes']);
@@ -86,7 +86,7 @@ class AdminController
 
     public function togglePlugin(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $pluginName = $request->input('plugin_name');
         $action = $request->input('action');
 
@@ -116,7 +116,7 @@ class AdminController
 
     public function uploadPlugin(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $file = $request->file('plugin_zip');
         if ($file && $file['error'] === UPLOAD_ERR_OK) {
@@ -133,7 +133,7 @@ class AdminController
 
     public function deletePlugin(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         $pluginName = $request->input('plugin_name');
         $pluginFolder = $request->input('plugin_folder');
 
@@ -202,7 +202,7 @@ class AdminController
 
     public function createTheme(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $name = $request->input('theme_name', '');
         $description = $request->input('theme_description', '');
@@ -245,7 +245,7 @@ class AdminController
 
     public function deleteTheme(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $folder = $request->input('theme_folder', '');
         $folder = basename($folder);

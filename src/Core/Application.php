@@ -20,6 +20,7 @@ class Application
     private ThemeManager $themeManager;
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodeManager;
     private WorkspaceManager $workspaceManager;
+    private \DomainSystem\Core\Http\SessionManager $sessionManager;
     private \DomainSystem\Core\Cockpit\CockpitRegistry $cockpitRegistry;
     private string $basePath;
 
@@ -28,6 +29,10 @@ class Application
         $this->container = $container;
         $this->dispatcher = $dispatcher;
         $this->basePath = $basePath;
+        
+        $this->sessionManager = new \DomainSystem\Core\Http\SessionManager();
+        $this->sessionManager->start(); // Start session securely on boot if HTTP context
+
         $this->pluginManager = new PluginManager($container, $dispatcher);
         $this->router = new Router($container);
         
@@ -48,6 +53,10 @@ class Application
         // Automatically bind itself to the container
         $this->container->singleton(Application::class, function() {
             return $this;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Http\SessionManager::class, function() {
+            return $this->sessionManager;
         });
         
         $this->container->singleton(Container::class, function() {

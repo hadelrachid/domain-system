@@ -16,7 +16,7 @@ class MonitorController
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         // Somente admin pode ver os erros
 
         $logs = [];
@@ -30,7 +30,7 @@ class MonitorController
 
     public function clear()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         if (file_exists($this->logPath)) {
             unlink($this->logPath);

@@ -3,37 +3,41 @@
 namespace DomainSystem\Plugins\auth\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Core\Http\SessionManager;
+use DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\Plugins\auth\Services\TwoFactorService;
 use DomainSystem\Core\Contracts\CockpitRegistryInterface;
 
 class AuthController
 {
     private ThemeManager $theme;
-    private QueryBuilder $db;
+    private UserRepositoryInterface $userRepo;
     private TwoFactorService $twoFactor;
     private CockpitRegistryInterface $cockpitRegistry;
+    private SessionManager $session;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db, TwoFactorService $twoFactor, CockpitRegistryInterface $cockpitRegistry)
-    {
-        $this->theme = $theme;
-        $this->db = $db;
-        $this->twoFactor = $twoFactor;
+    public function __construct(
+        ThemeManager $theme,
+        UserRepositoryInterface $userRepo,
+        TwoFactorService $twoFactor,
+        CockpitRegistryInterface $cockpitRegistry,
+        SessionManager $session
+    ) {
+        $this->theme           = $theme;
+        $this->userRepo        = $userRepo;
+        $this->twoFactor       = $twoFactor;
         $this->cockpitRegistry = $cockpitRegistry;
+        $this->session         = $session;
     }
 
     public function showLoginForm(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        if (isset($_SESSION['user_id'])) {
+        if ($this->session->has('user_id')) {
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
         }
 
-        // --- MODO DESENVOLVIMENTO (XAMPP SIMULADO) ---
-        // A simulação agora ocorre silenciosamente dentro do 'challenge' se configurado
-        if (isset($_SESSION['pending_2fa_email'])) {
-            $user = $this->db->table('users')->where('email', '=', $_SESSION['pending_2fa_email'])->first();
+        if ($this->session->has('pending_2fa_email')) {
+            $user = $this->userRepo->findByEmail($this->session->get('pending_2fa_email'));
             if ($user && !empty($user['two_factor_secret'])) {
                 $provider = $this->twoFactor->getProvider('app');
                 if ($provider) {
@@ -41,93 +45,81 @@ class AuthController
                 }
             }
         }
-        // ---------------------------------------------
 
-        $error = $_SESSION['auth_error'] ?? null;
+        $error = $this->session->get('auth_error');
         return new \DomainSystem\Core\Http\Response($this->theme->render('login', ['error' => $error]));
     }
 
     public function authenticate(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        $email = $request->input('email', '');
-        $password = $request->input('password', '');
+        $email      = $request->input('email', '');
+        $password   = $request->input('password', '');
         $twofa_code = $request->input('twofa_code', '');
 
-        $user = $this->db->table('users')->where('email', '=', $email)->first();
-        
-        $passwordOk = isset($_SESSION['pending_2fa_password_ok']) && $_SESSION['pending_2fa_password_ok'] === true;
+        $user       = $this->userRepo->findByEmail($email);
+        $passwordOk = $this->session->get('pending_2fa_password_ok') === true;
 
         if ($user && ($passwordOk || password_verify($password, $user['password']))) {
-            
+
             $two_factor_type = $user['two_factor_type'] ?? 'none';
-            
-            // Abstração limpa: Encontramos o provedor que o usuário escolheu
+
             if ($two_factor_type !== 'none') {
                 $provider = $this->twoFactor->getProvider($two_factor_type);
-                
                 if ($provider) {
-                    // Passo 1: Desafio (Envia o e-mail, ou apenas levanta o erro de falta de código no app)
                     if (empty($twofa_code)) {
                         $provider->challenge($user);
-                        
-                        $_SESSION['auth_error'] = ($two_factor_type === 'email') 
+                        $this->session->set('auth_error', ($two_factor_type === 'email')
                             ? "Enviamos um código de 6 dígitos para o seu e-mail. Ele expira em 5 minutos."
-                            : "Esta conta exige o Google Authenticator. Digite o código.";
-                            
-                        $_SESSION['pending_2fa_email'] = $email;
-                        $_SESSION['pending_2fa_type'] = $two_factor_type;
-                        $_SESSION['pending_2fa_password_ok'] = true;
+                            : "Esta conta exige o Google Authenticator. Digite o código.");
+                        $this->session->set('pending_2fa_email', $email);
+                        $this->session->set('pending_2fa_type', $two_factor_type);
+                        $this->session->set('pending_2fa_password_ok', true);
                         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
                     }
-
-                    // Passo 2: Validação
                     if (!$provider->verify($user, $twofa_code)) {
-                        $_SESSION['auth_error'] = "Código inválido ou expirado. Tente novamente.";
-                        $_SESSION['pending_2fa_email'] = $email;
-                        $_SESSION['pending_2fa_type'] = $two_factor_type;
+                        $this->session->set('auth_error', "Código inválido ou expirado. Tente novamente.");
+                        $this->session->set('pending_2fa_email', $email);
+                        $this->session->set('pending_2fa_type', $two_factor_type);
                         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
                     }
                 }
             }
 
-            session_regenerate_id(true);
-            
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_role'] = $user['role'] ?? 'admin';
-            
-            // Se for médico, busca e salva o ID do médico na sessão
-            if ($_SESSION['user_role'] === 'doctor') {
-                $doctor = $this->db->table('doctors')->where('user_id', '=', $user['id'])->first();
-                $_SESSION['doctor_id'] = $doctor ? $doctor['id'] : null;
+            $this->session->regenerate();
+            $this->session->set('user_id',   $user['id']);
+            $this->session->set('user_name', $user['name']);
+            $this->session->set('user_role', $user['role'] ?? 'admin');
+
+            if ($this->session->get('user_role') === 'doctor') {
+                $doctor = $this->userRepo->findDoctorByUserId($user['id']);
+                $this->session->set('doctor_id', $doctor ? $doctor['id'] : null);
             } else {
-                $_SESSION['doctor_id'] = null;
+                $this->session->set('doctor_id', null);
             }
-            
-            unset($_SESSION['auth_error'], $_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);
-            
-            // Roteamento inteligente baseado no papel através do CockpitRegistry (SOLID)
-            $provider = $this->cockpitRegistry->getProviderForRole($_SESSION['user_role']);
+
+            $this->session->remove('auth_error');
+            $this->session->remove('pending_2fa_email');
+            $this->session->remove('pending_2fa_type');
+            $this->session->remove('pending_2fa_password_ok');
+
+            $provider = $this->cockpitRegistry->getProviderForRole($this->session->get('user_role'));
             if ($provider) {
                 return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . $provider->getDashboardRoute());
             }
 
-            // Fallback para o Master Admin
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
         }
 
-        unset($_SESSION['pending_2fa_email'], $_SESSION['pending_2fa_type'], $_SESSION['pending_2fa_password_ok']);
-        $_SESSION['auth_error'] = "Credenciais inválidas. Verifique seu e-mail e senha.";
+        $this->session->remove('pending_2fa_email');
+        $this->session->remove('pending_2fa_type');
+        $this->session->remove('pending_2fa_password_ok');
+        $this->session->set('auth_error', "Credenciais inválidas. Verifique seu e-mail e senha.");
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
     }
 
     public function logout(\DomainSystem\Core\Http\Request $request)
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        session_destroy();
+        $this->session->destroy();
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/login");
     }
 }
-

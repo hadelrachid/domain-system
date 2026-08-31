@@ -16,19 +16,16 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\SystemAdmin\Repositories\SqliteDashboardRepository::class
         );
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
 
         $events = $this->events();
 
         // --- THE EMERGENCY HATCH (REDE DE SEGURANÇA) ---
         // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
         // Se o plugin Auth estivesse vivo, ele já teria redirecionado e dado EXIT.
-        $events->addListener('router.before_dispatch', function(string $uri) {
+        $events->addListener('router.before_dispatch', function(string $uri) use ($sessionManager) {
             if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
-                if (session_status() === PHP_SESSION_NONE) { session_start(); }
-                if (!isset($_SESSION['user_id'])) {
+                if (!$sessionManager->has('user_id')) {
                     header("Location: " . BASE_URL . "/admin/emergency");
                     exit;
                 }

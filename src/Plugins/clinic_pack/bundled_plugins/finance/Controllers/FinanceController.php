@@ -18,7 +18,7 @@ class FinanceController
         $this->repo = $repo;
         
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+
         }
     }
 

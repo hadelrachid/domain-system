@@ -33,15 +33,40 @@ class AppointmentController
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         
         // A lógica de negócio dita que médicos só vêem os próprios pacientes. O Repositório só executa o filtro.
         $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
-        $appointments = $this->repo->getPendingQueue($filterDoctorId);
+        $appointmentsRaw = $this->repo->getPendingQueue($filterDoctorId);
         
+        $patientsMap = $this->patientReader->getPatientsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
+
+        $appointments = [];
+        foreach ($appointmentsRaw as $a) {
+            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
+            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
+            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
+            $a['doctor_specialty'] = $doctorsMap[$a['doctor_id']]['specialty'] ?? '';
+            
+            // Lógica movida da View para o Controller
+            $a['status_class'] = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
+            try {
+                $dateObj = new \DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
+                $a['formatted_date'] = $dateObj->format('d/m/Y');
+                $a['formatted_time'] = $dateObj->format('H:i');
+            } catch (\Exception $e) {
+                $a['formatted_date'] = $a['appointment_date'];
+                $a['formatted_time'] = $a['appointment_time'];
+            }
+            $a['formatted_attendance'] = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
+
+            $appointments[] = $a;
+        }
+
         $patients = $this->patientReader->getAllPatients();
         $doctors = $this->doctorReader->getAllDoctors();
 
@@ -55,7 +80,7 @@ class AppointmentController
 
     public function store()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $patient_id = $_POST['patient_id'] ?? '';
         $doctor_id = $_POST['doctor_id'] ?? '';
@@ -109,7 +134,7 @@ class AppointmentController
 
     public function updateStatus()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $id = $_POST['id'] ?? null;
         $status = $_POST['status'] ?? null;
@@ -128,14 +153,51 @@ class AppointmentController
 
     public function history()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         $search = strtolower($_GET['s'] ?? '');
         
         $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
-        $appointments = $this->repo->getHistory($filterDoctorId, $search);
+        $appointmentsRaw = $this->repo->getHistory($filterDoctorId, $search);
+
+        $patientsMap = $this->patientReader->getPatientsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
+
+        $appointments = [];
+        foreach ($appointmentsRaw as $a) {
+            $a['patient_name'] = $patientsMap[$a['patient_id']]['name'] ?? 'Desconhecido';
+            $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
+            $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
+
+            if (!empty($search)) {
+                $matchName = str_contains(strtolower($a['patient_name']), $search);
+                $matchPhone = str_contains(strtolower($a['patient_phone']), $search);
+                $matchDate = str_contains($a['appointment_date'], $search);
+                
+                if (!$matchName && !$matchPhone && !$matchDate) {
+                    continue; // Skip this one since it didn't match the search
+                }
+            }
+            
+            // Lógica movida da View para o Controller
+            $a['status_class'] = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
+            try {
+                $dateObj = new \DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
+                $a['formatted_date'] = $dateObj->format('d/m/Y');
+                $a['formatted_time'] = $dateObj->format('H:i');
+            } catch (\Exception $e) {
+                $a['formatted_date'] = $a['appointment_date'];
+                $a['formatted_time'] = $a['appointment_time'];
+            }
+            $a['formatted_attendance'] = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
+
+            $appointments[] = $a;
+        }
+
+        // Limit to 20 like before
+        $appointments = array_slice($appointments, 0, 20);
 
         return $this->theme->render('admin_history', [
             'appointments' => $appointments,

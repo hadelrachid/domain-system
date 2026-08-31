@@ -2,25 +2,25 @@
 
 namespace DomainSystem\Plugins\settings\Controllers;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;
 use DomainSystem\Core\Theme\ThemeManager;
 
 class SettingsController
 {
-    private QueryBuilder $db;
+    private SettingRepositoryInterface $settingRepo;
     private ThemeManager $theme;
 
-    public function __construct(QueryBuilder $db, ThemeManager $theme)
+    public function __construct(SettingRepositoryInterface $settingRepo, ThemeManager $theme)
     {
-        $this->db = $db;
+        $this->settingRepo = $settingRepo;
         $this->theme = $theme;
     }
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-        $rows = $this->db->table('settings')->get();
+
+        $rows = $this->settingRepo->getAll();
         
         $settings = [];
         foreach ($rows as $row) {
@@ -32,18 +32,13 @@ class SettingsController
 
     public function save()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 
         $allowedKeys = ['clinic_name', 'clinic_cnpj', 'clinic_slogan', 'clinic_address', 'clinic_phone', 'clinic_whatsapp'];
 
         foreach ($allowedKeys as $key) {
             if (isset($_POST[$key])) {
-                $this->db->table('settings')->upsert(
-                    ['key_name' => $key, 'key_value' => $_POST[$key]],
-                    ['key_name'],
-                    ['key_value']
-                );
+                $this->settingRepo->upsert($key, $_POST[$key]);
             }
         }
 
@@ -58,11 +53,7 @@ class SettingsController
                 $destPath = $uploadDir . '/logo.png';
                 if (move_uploaded_file($tmpName, $destPath)) {
                     $logoUrl = BASE_URL . '/uploads/logo.png?' . time(); // cache buster
-                    $this->db->table('settings')->upsert(
-                        ['key_name' => 'clinic_logo', 'key_value' => $logoUrl],
-                        ['key_name'],
-                        ['key_value']
-                    );
+                    $this->settingRepo->upsert('clinic_logo', $logoUrl);
                 }
             }
         }

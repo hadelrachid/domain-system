@@ -50,14 +50,13 @@
                 <?php else: ?>
                     <?php foreach ($appointments as $a): ?>
                         <?php 
-                            $statusClass = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
-                            $dateObj = new DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
-                            $attendance = $a['attendance_type'] === 'conveniado' ? 'Conveniado (' . ($a['health_insurance'] ?: 'Não Informado') . ')' : 'Particular';
+                            $statusClass = $a['status_class'] ?? 'status-pendente';
+                            $attendance = $a['formatted_attendance'] ?? 'Particular';
                         ?>
                         <tr>
                             <td>
-                                <strong><?= $dateObj->format('d/m/Y') ?></strong><br>
-                                <small><?= $dateObj->format('H:i') ?></small>
+                                <strong><?= htmlspecialchars($a['formatted_date']) ?></strong><br>
+                                <small><?= htmlspecialchars($a['formatted_time']) ?></small>
                             </td>
                             <td>
                                 <strong><?= htmlspecialchars($a['patient_name']) ?></strong><br>

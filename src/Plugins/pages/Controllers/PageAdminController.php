@@ -3,25 +3,25 @@
 namespace DomainSystem\Plugins\pages\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 
 class PageAdminController
 {
     private ThemeManager $theme;
-    private QueryBuilder $db;
+    private PageRepositoryInterface $pageRepo;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db)
+    public function __construct(ThemeManager $theme, PageRepositoryInterface $pageRepo)
     {
         $this->theme = $theme;
-        $this->db = $db;
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        $this->pageRepo = $pageRepo;
+
     }
 
     public function index()
     {
-        $pages = $this->db->table('pages')->orderBy('created_at', 'DESC')->get();
+        $pages = $this->pageRepo->getAll();
         return $this->theme->render('admin_pages', ['pages' => $pages], dirname(__DIR__) . '/views');
     }
 
@@ -32,7 +32,7 @@ class PageAdminController
 
     public function edit(string $id)
     {
-        $page = $this->db->table('pages')->where('id', '=', $id)->first();
+        $page = $this->pageRepo->findById((int)$id);
         if (!$page) {
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
@@ -54,19 +54,19 @@ class PageAdminController
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
 
         if ($id) {
-            $this->db->table('pages')->where('id', '=', $id)->update([
+            $this->pageRepo->update((int)$id, [
                 'title' => $title,
                 'content' => $content
             ]);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página atualizada!'];
         } else {
             // Check slug exists
-            $exists = $this->db->table('pages')->where('slug', '=', $slug)->first();
+            $exists = $this->pageRepo->findBySlug($slug);
             if ($exists) {
                 $slug = $slug . '-' . time();
             }
 
-            $this->db->table('pages')->insert([
+            $this->pageRepo->create([
                 'title' => $title,
                 'slug' => $slug,
                 'content' => $content
@@ -79,7 +79,7 @@ class PageAdminController
 
     public function delete(string $id)
     {
-        $this->db->table('pages')->where('id', '=', $id)->delete();
+        $this->pageRepo->delete((int)$id);
         $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página excluída com sucesso!'];
         return Response::redirect(\BASE_URL . '/admin/pages');
     }

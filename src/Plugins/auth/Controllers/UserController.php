@@ -3,28 +3,28 @@
 namespace DomainSystem\Plugins\auth\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\Plugins\auth\Services\TwoFactorService;
 
 class UserController
 {
     private ThemeManager $theme;
-    private QueryBuilder $db;
+    private UserRepositoryInterface $userRepo;
     private TwoFactorService $twoFactor;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db, TwoFactorService $twoFactor)
+    public function __construct(ThemeManager $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor)
     {
         $this->theme = $theme;
-        $this->db = $db;
+        $this->userRepo = $userRepo;
         $this->twoFactor = $twoFactor;
     }
 
     public function index()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
-        $users = $this->db->table('users')->get();
-        $doctors = $this->db->table('doctors')->get();
+        $users = $this->userRepo->getAllUsers();
+        $doctors = $this->userRepo->getAllDoctors();
         
         return $this->theme->render('admin_users', [
             'users' => $users,
@@ -35,7 +35,7 @@ class UserController
 
     public function store()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
@@ -47,7 +47,7 @@ class UserController
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha nome, email e senha.'];
         } else {
             try {
-                $this->db->table('users')->insert([
+                $this->userRepo->createUser([
                     'name' => $name,
                     'email' => $email,
                     'password' => password_hash($password, PASSWORD_DEFAULT),
@@ -66,7 +66,7 @@ class UserController
 
     public function generate2fa()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
         
         $user_id = $_GET['id'] ?? null;
         if (!$user_id) {
@@ -74,7 +74,7 @@ class UserController
             exit;
         }
 
-        $user = $this->db->table('users')->where('id', '=', $user_id)->first();
+        $user = $this->userRepo->findById($user_id);
         if (!$user) {
             header("Location: " . BASE_URL . "/admin/users");
             exit;
@@ -97,7 +97,7 @@ class UserController
 
     public function confirm2fa()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $user_id = $_POST['user_id'] ?? null;
         $secret = $_POST['secret'] ?? null;
@@ -106,9 +106,7 @@ class UserController
         if ($user_id && $secret && $code) {
             $appProvider = $this->twoFactor->getProvider('app');
             if ($appProvider->verify(['two_factor_secret' => $secret], $code)) {
-                $this->db->table('users')->where('id', '=', $user_id)->update([
-                    'two_factor_secret' => $secret
-                ]);
+                $this->userRepo->updateTwoFactorSecret($user_id, $secret);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '2FA ativado com sucesso!'];
             } else {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Código inválido. Tente novamente.'];
@@ -121,13 +119,11 @@ class UserController
 
     public function disable2fa()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $user_id = $_GET['id'] ?? null;
         if ($user_id) {
-            $this->db->table('users')->where('id', '=', $user_id)->update([
-                'two_factor_secret' => null
-            ]);
+            $this->userRepo->updateTwoFactorSecret($user_id, null);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '2FA desativado.'];
         }
 
@@ -137,16 +133,13 @@ class UserController
 
     public function change2faType()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $user_id = $_POST['user_id'] ?? null;
         $two_factor_type = $_POST['two_factor_type'] ?? 'none';
 
         if ($user_id) {
-            $this->db->table('users')->where('id', '=', $user_id)->update([
-                'two_factor_type' => $two_factor_type,
-                'two_factor_secret' => null
-            ]);
+            $this->userRepo->updateTwoFactor($user_id, $two_factor_type, null);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Método de 2FA atualizado!'];
         }
 
@@ -156,15 +149,13 @@ class UserController
 
     public function resetPassword()
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+
 
         $user_id = $_POST['user_id'] ?? null;
         $new_password = $_POST['new_password'] ?? '';
 
         if ($user_id && !empty($new_password)) {
-            $this->db->table('users')->where('id', '=', $user_id)->update([
-                'password' => password_hash($new_password, PASSWORD_DEFAULT)
-            ]);
+            $this->userRepo->updatePassword($user_id, password_hash($new_password, PASSWORD_DEFAULT));
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Senha do usuário redefinida com sucesso!'];
         }
 
@@ -172,4 +163,3 @@ class UserController
         exit;
     }
 }
-

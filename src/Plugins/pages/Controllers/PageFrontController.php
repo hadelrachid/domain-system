@@ -2,23 +2,23 @@
 
 namespace DomainSystem\Plugins\pages\Controllers;
 
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Theme\ShortcodeManager;
 
 class PageFrontController
 {
-    private QueryBuilder $db;
+    private PageRepositoryInterface $pageRepo;
     private ShortcodeManager $shortcodes;
 
-    public function __construct(QueryBuilder $db, ShortcodeManager $shortcodes)
+    public function __construct(PageRepositoryInterface $pageRepo, ShortcodeManager $shortcodes)
     {
-        $this->db = $db;
+        $this->pageRepo = $pageRepo;
         $this->shortcodes = $shortcodes;
     }
 
     public function show(string $slug)
     {
-        $page = $this->db->table('pages')->where('slug', '=', escapeshellcmd($slug))->first();
+        $page = $this->pageRepo->findBySlug(escapeshellcmd($slug));
 
         if (!$page) {
             header("HTTP/1.0 404 Not Found");

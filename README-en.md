@@ -1,66 +1,100 @@
-# 🚀 Domain System (Universal Modular Framework)
-> **Current Version:** `[v1.2.0]`
+# 🚀 Domain System — The Business Engine That Never Dies
 
-[ 🌐 Official Site (Docs) ](https://hadelrachid.github.io/domain-system/) | [ 📄 Documentation ](README-en.md) | [ 📜 Changelog ](docs/CHANGELOG-en.md) | [ 🕵️ Audit Report ](docs/auditoria-en.md)
----
-[ 🇧🇷 Ler em Português ](README.md)
+> **Current Version:** `v1.2.0` — *"The Era of Architectural Resilience"*
 
-A hyper-resilient architectural engine (framework) designed to be infinitely expandable. Similar to the WordPress concept, the Domain System is not just specific software — it transforms into **anything** depending on the active plugins.
-It can be a **Medical Clinic System**, a **Financial ERP**, or a **Law Firm Management System**. It all depends on the plugin package connected to the core.
-
-## 🏗️ System Architecture
-
-This project moves away from traditional "spaghetti code" and adopts the **Kernel and Plugins** pattern (inspired by enterprise architectures and modern CMSs), with strict adherence to **SOLID** principles.
-
-### 1. The Kernel and PluginManager
-The system's core (Kernel) only provides the basic infrastructure (Database, Template Engine, Dependency Injection, and Routing System). Everything else (Authentication, Patients, Medical Records) are independent **Plugins**.
-- Plugins communicate with each other exclusively via `EventDispatcher` (Hooks).
-- If a plugin needs to add a menu, it doesn't modify the dashboard directly; it simply listens to the `admin.menu` event and injects its option.
-
-### 2. Circuit Breaker V2
-Inspired by modern microservices, the system has a native **Circuit Breaker**. 
-If a plugin is activated and its code contains errors (e.g., Syntax Errors, Invalid Calls, Database Failures), the Kernel catches the error, isolates the defective module, and automatically disables it in `plugins.json`. The entire system survives and continues operating without the "white screen of death".
-
-### 3. The "ATS" (Automatic Transfer Switch)
-Even against the most catastrophic failures (such as total RAM exhaustion by an infinite loop), the system is protected.
-A `register_shutdown_function` (The Last Breath) monitors the modules' boot process. If the server suddenly dies from resource suffocation (Fatal Error E_ERROR), the ATS will surgically eject the plugin causing the crash in the last milliseconds of life. Upon refreshing the page, the system resurrects and leaves an emergency log.
-
-### 4. Sockets, Plugs and Repositories (DIP and Repository Pattern)
-The system was built with the "Socket and Plug" philosophy in mind (SOLID). 
-For example, in the Authentication module, the 2-Step Verification (2FA) process merely provides an interface (`TwoFactorProviderInterface`). Other modules provide the execution (Email, App).
-Going deeper into the data access layer, we heavily rely on the **Repository Pattern**. Vital module controllers (Patients, Doctors, Medical Records) are completely unaware of the database and communicate only with Repository Interfaces. This eliminates Structural Coupling and "Fat Controllers", delegating data querying to a Dependency Injector (DI Container).
-
-### 5. Secure Development Environment (Dev Simulator)
-To prevent fake emails from leaking during tests, the system has a `dev_simulator` plugin. When activated, it intercepts communication classes (hijacking the wiring via Dependency Injection) and redirects the emails to a local text file (`temp/auth-2fa.txt`). In production, simply disable the plugin and the wiring returns to its natural state.
-
-### 6. AI Hub and Plugin Builder
-To facilitate the creation of new features, the system brings a modular Artificial Intelligence Plugin (`ai_hub`). This "brain" has no direct access to the database; it connects to available Interfaces, receiving permission to act according to what has been exposed. With it, the user themselves can request the generation of new Forms and Plugin Logics visually, which will be automatically written and packaged, eliminating the learning curve of creating plugins from scratch.
-
-### 7. Pack Isolation
-Niche-specific modules can be grouped under a "Pack". For instance, the `clinic_pack` does not create tables or execute patient logic; it simply visually groups (intercepting the menu) other micro-plugins (`patients`, `appointments`, `triage`) and injects default configurations, isolating the child modules. Thus, if one part crashes, the others keep operating.
-
-## 🛠️ Technologies
-- **Language:** PHP 8+ (Vanilla / Advanced OOP)
-- **Database:** SQLite (with PDO and Custom QueryBuilder encapsulated in Repositories)
-- **Frontend:** HTML5, Native CSS (Clean architecture without heavy frameworks)
-- **Design Patterns Used:** Dependency Injection, Event Dispatcher, Circuit Breaker, Strategy, Adapter, Singleton, Repository Pattern.
-
-## 👥 Access Control (ACL)
-The system isolates profiles:
-- **Administrator:** Master and global access.
-- **Doctor:** Restricted access only to schedule, appointments, and medical records.
-- **Receptionist:** Cannot view medical records (as per privacy laws), operating only scheduling and basic triage.
-- **Legal:** Isolated workspace with confidential reports.
+[🌐 Official Site (Docs)](https://hadelrachid.github.io/domain-system/) | [📄 Documentation](README-en.md) | [📜 Changelog](docs/CHANGELOG-en.md) | [🕵️ Audit](docs/auditoria-en.md)
 
 ---
-*This system is a living organism, programmed to survive itself and expand organically.*
 
-## 📖 Versioning and History
-The project is currently at version **[1.2.0]**.
-To track all evolution and fixes, check our [CHANGELOG-en.md](https://github.com/hadelrachid/domain-system/blob/main/docs/CHANGELOG.md).
+[🇧🇷 Leia em Português](README.md)
 
-## 🤝 Main Collaborators
-This system is built by a mixed team of human and artificial intelligence:
+## 💡 What is Domain System?
 
-- **Rachid** - Software Engineer (Creator, Architecture Visionary, and Product Owner)
-- **Antigravity (Google DeepMind)** - AI Architect (Co-developer and Code Auditor)
+**Domain System** is not just another framework or management system. It is a **hyper-resilient business engine**, designed to be the foundation of any enterprise application, from a medical clinic to a law firm or a financial ERP.
+
+It works like an **operating system for your business**: the core (Kernel) provides the essential infrastructure (database, security, routing, dependency injection), while all business logic is encapsulated in independent, interchangeable **Plugins**.
+
+This project combines the best of both worlds: the **simplicity and performance of pure PHP** with the **robustness and scalability of enterprise architectures** (like microservices and SOLID principles).
+
+---
+
+## 🏗️ Architecture: An Engineering Masterpiece
+
+The Domain System architecture was built to be **immune to chaos**. It is based on three fundamental pillars:
+
+### 1. The Immortal Kernel (Core)
+The heart of the system is minimalist and contains no business logic. Its only function is to orchestrate plugins and provide secure tools (DI Container, Event Dispatcher, Router, Session Manager). The Kernel is the universal "socket" where any plugin can connect. It acts as a **Global Gatekeeper**, managing memory and validating routes preemptively so Controllers never have to worry about security implementations.
+
+### 2. The Plugin Ecosystem (Modules)
+Every feature — from authentication to billing — is an isolated Plugin. Plugins communicate **exclusively via events** (Event-Driven Architecture), ensuring that the failure of one does not compromise the whole. They are the "payload" that transforms the Kernel into a clinic, legal, or financial system. Everything works through Dependency Injection and strong decoupling (DIP and SRP).
+
+### 3. The Presentation Layer (Themes & Cockpits)
+The user interface is fully decoupled. Themes (frontend) consume data from Plugins via **Shortcodes** and a **Workspace** system (user profiles). This allows designers and frontend developers to work independently, without ever touching business logic.
+
+---
+
+## 🛡️ Resilience: The System That Never Dies
+
+Failures happen. In Domain System, they are **contained, logged, and fixed without taking down the system**.
+
+- **Circuit Breaker V2:** If a plugin causes a fatal error (syntax, database, memory), the Kernel automatically deactivates it and logs the incident. The rest of the system keeps running.
+- **Emergency Hatch:** If the authentication module fails, administrators can still access the system via a secure emergency route, using the server's `APP_KEY`.
+- **Cascade Effect:** If Plugin A depends on Plugin B, and B is deactivated by the Circuit Breaker, A is also deactivated to prevent chain failures.
+
+---
+
+## ✨ Key Features
+
+- **100% PHP 8+** — Modern, clean, and object-oriented code.
+- **SOLID Architecture** — Every class has a single, well-defined responsibility.
+- **Event-Driven** — Plugins communicate via events, ensuring low coupling.
+- **Dependency Injection** — DI Container with autowiring.
+- **Repository Pattern** — Controllers never touch the database directly.
+- **Multi-Workspace** — Native support for multiple user profiles (Admin, Doctor, Receptionist, Lawyer).
+- **Audit & Monitoring** — Error supervision panel with detailed logs and "copy stack trace" button.
+- **AI Hub Integrated** — Plugin and form generator powered by Artificial Intelligence (Gemini, ChatGPT, etc.).
+- **Modular & Extensible** — Add or remove features without affecting the core.
+
+---
+
+## 🧩 Who Is This Project For?
+
+- **Clinics & Medical Offices** — Manage patients, appointments, medical records, and billing.
+- **Law Firms** — Track cases, deadlines, and clients with a dedicated workspace.
+- **Enterprise Developers** — Build white-label solutions quickly without reinventing the wheel.
+- **Software Architects** — A living laboratory of best practices (SOLID, DDD, Event Sourcing).
+
+---
+
+## 🛠️ Technologies Used
+
+| Layer           | Technology                                  |
+|-----------------|---------------------------------------------|
+| **Backend**     | PHP 8+ (Vanilla, Advanced OOP)              |
+| **Database**    | SQLite (with native PostgreSQL support)     |
+| **Frontend**    | HTML5, CSS3, JavaScript (Vanilla)           |
+| **Design Patterns** | DI, Event Dispatcher, Repository, Strategy, Adapter, Factory, Circuit Breaker |
+
+---
+
+## 📖 Documentation & Resources
+
+- **[Developer Guide](DEVELOPER_GUIDE.md)** — Learn how to create plugins and themes from scratch.
+- **[Project Wiki](wiki/Home.md)** — Advanced concepts like Circuit Breaker, Emergency Hatch, and ACL.
+- **[Changelog](docs/CHANGELOG-en.md)** — Complete version history and fixes.
+- **[Roadmap](ROADMAP.md)** — The future of Domain System.
+
+---
+
+## 🤝 Collaborators
+
+This project is built by a mixed team of human and artificial intelligence:
+
+- **Rachid Hadel** — Software Engineer, Architect, and Product Owner.
+- **Antigravity (Google DeepMind)** — Co-Developer, AI Architect, and Code Auditor.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

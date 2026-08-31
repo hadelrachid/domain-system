@@ -36,4 +36,9 @@
 ---
 
 ## ✅ Status de Correção
-Grande parte dos débitos críticos, baixos e médios listados acima (itens 1, 2, 6, 7, 8 médios e todos os baixos) já foram resolvidos no commit da versão `1.1.0`. Os itens arquiteturais maiores permanecem documentados aqui para as próximas sprints.
+Quase a totalidade dos débitos críticos e médios listados acima já foi resolvida nas versões `1.1.0` e `1.2.0`.
+- **Injeção de Dependências (Médios 1, 2 e 3):** Substituídos pelo Container (`$this->container->make()`).
+- **Acesso direto a Superglobais (Crítico 3):** Removidos com sucesso. A comunicação web e a memória agora passam puramente por abstrações como `Request`, `Response` e `SessionManager`.
+- **Acesso a banco por Controllers (Repository Pattern):** Repositórios foram introduzidos, isolando regras de negócio e consultas ao banco.
+
+O código é mantido rigorosamente aderente aos princípios SOLID e DIP.

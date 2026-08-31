@@ -39,7 +39,7 @@ class EmergencyController
         // Mitigação contra Timing Attack usando hash_equals
         if (hash_equals($emergencyKey, $inputKey)) {
             if (session_status() === PHP_SESSION_NONE) {
-                session_start();
+
             }
             $_SESSION['user_id'] = 9999;
             $_SESSION['user_role'] = 'admin';

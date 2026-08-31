@@ -24,7 +24,7 @@ class WhatsAppSettingsController
         $this->repository = $repository;
         
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+
         }
     }
 

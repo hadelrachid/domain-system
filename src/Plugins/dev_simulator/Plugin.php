@@ -13,14 +13,10 @@ class Plugin extends AbstractPlugin
             throw new \Exception("SECURITY ALERT: O plugin 'dev_simulator' JAMAIS deve rodar em produção. Desabilite-o no plugins.json.");
         }
 
-        // Pega a Tomada e o DB (que já foram iniciados pelo plugin 'auth')
+        // Pega a Tomada e a Memória (já resolvidos pelo container no plugin auth)
         $twoFactorService = $this->container->make(\DomainSystem\Plugins\auth\Services\TwoFactorService::class);
-        $queryBuilder = $this->queryBuilder();
-        
-        $authenticator = new \DomainSystem\Plugins\auth\Services\GoogleAuthenticatorAdapter();
-        $codeStore = new \DomainSystem\Plugins\auth\Repositories\SqliteTwoFactorCodeStore($queryBuilder);
-        
-        // Em vez de herdar o banco, o simulador usa a composição limpa e passa um Sender de E-mail Fake
+        $authenticator = $this->container->make(\DomainSystem\Plugins\auth\Contracts\AuthenticatorInterface::class);
+        $codeStore = $this->container->make(\DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface::class);
         $fakeSender = new \DomainSystem\Plugins\dev_simulator\Providers\SimulatedEmailSender();
         $twoFactorService->registerProvider('email', new \DomainSystem\Plugins\auth\Services\Providers\EmailProvider($codeStore, $fakeSender));
         

@@ -133,14 +133,16 @@ class PluginManager
                     // The plugin crashed! We must disable it to save the system.
                     $this->disable($pluginName);
                     
-                    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-                        session_start();
-                    }
-                    if (session_status() !== PHP_SESSION_NONE) {
-                        $_SESSION['plugin_crashes'][] = [
+                    try {
+                        $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+                        $crashes = $session->get('plugin_crashes', []);
+                        $crashes[] = [
                             'plugin' => $pluginName,
                             'error' => $e->getMessage()
                         ];
+                        $session->set('plugin_crashes', $crashes);
+                    } catch (\Throwable $ignored) {
+                        // O container pode não ter a sessão se rodando em CLI cru, ignoramos
                     }
                     error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
                     file_put_contents(dirname(__DIR__, 3) . '/temp/boot_crashes.txt', date('Y-m-d H:i:s') . " - {$pluginName} crashed: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n\n", FILE_APPEND);
@@ -330,16 +332,16 @@ class PluginManager
                 // Desativa o plugin na fiação rígida (JSON)
                 $this->disable($this->currentBootingPlugin);
                 
-                // Inicia sessão de emergência para deixar o bilhete de aviso
-                if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-                    session_start();
-                }
-                
-                if (session_status() !== PHP_SESSION_NONE) {
-                    $_SESSION['plugin_crashes'][] = [
+                try {
+                    $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+                    $crashes = $session->get('plugin_crashes', []);
+                    $crashes[] = [
                         'plugin' => $this->currentBootingPlugin,
                         'error' => "FATAL CRASH (QTA Acionado pelo Gerador): " . $error['message']
                     ];
+                    $session->set('plugin_crashes', $crashes);
+                } catch (\Throwable $ignored) {
+                    // Ignora se não houver container de sessão montado
                 }
                 
                 error_log("QTA ACIONADO! Plugin '{$this->currentBootingPlugin}' sofreu um colapso fatal (Ex: Fim de Memória) e foi ejetado automaticamente. Erro: " . $error['message']);

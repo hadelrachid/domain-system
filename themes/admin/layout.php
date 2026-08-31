@@ -85,7 +85,7 @@
             const hasSubmenuLinks = document.querySelectorAll('.has-submenu > a');
             hasSubmenuLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
-                    if (this.getAttribute('href') === '#' || this.getAttribute('href') === 'admin/clinic') {
+                    if (this.getAttribute('href') === '#' || this.getAttribute('href') === 'admin/clinic' || this.getAttribute('href') === 'admin/ai-hub') {
                         e.preventDefault();
                         const parent = this.parentElement;
                         const ul = parent.querySelector('ul');
