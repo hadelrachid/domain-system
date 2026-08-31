@@ -55,24 +55,26 @@
                             <?= $t['is_core'] ? 'SYSTEM CORE' : ($t['is_bundled'] ? 'EMPACOTADO (PLUGIN)' : 'ATIVO E ISOLADO') ?>
                         </span>
 
-                        <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="display: flex; gap: 20px; align-items: center;">
                             <?php if ($t['is_bundled'] && !empty($t['preview_url'])): ?>
-                                <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" title="Visualizar Cockpit" style="color: #2271b1; text-decoration: none; display: flex; align-items: center;">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" title="Visualizar Cockpit" style="color: #2271b1; text-decoration: none; display: flex; align-items: center; padding: 4px 8px; border: 1px solid #2271b1; border-radius: 4px; background: #f6f7f7;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
+                                    <span style="font-size: 12px; font-weight: 600;">Ver</span>
                                 </a>
                             <?php elseif (!$t['is_core'] && !$t['is_bundled']): ?>
-                                <a href="<?= BASE_URL ?>/admin/themes/preview?theme=<?= htmlspecialchars($t['folder']) ?>" target="_blank" title="Visualizar Tema" style="color: #2271b1; text-decoration: none; display: flex; align-items: center;">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <a href="<?= BASE_URL ?>/admin/themes/preview?theme=<?= htmlspecialchars($t['folder']) ?>" target="_blank" title="Visualizar Tema" style="color: #2271b1; text-decoration: none; display: flex; align-items: center; padding: 4px 8px; border: 1px solid #2271b1; border-radius: 4px; background: #f6f7f7;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
+                                    <span style="font-size: 12px; font-weight: 600;">Ver</span>
                                 </a>
-                                <form method="POST" action="<?= BASE_URL ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0;">
+                                <form method="POST" action="<?= BASE_URL ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0; margin-left: auto;">
                                     <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                    <button type="submit" class="btn btn-deactivate" style="border: none; background: transparent; cursor: pointer; color: #d63638; text-decoration: underline; font-size: 12px; padding: 0;">Excluir</button>
+                                    <button type="submit" class="btn btn-deactivate" style="border: 1px solid #d63638; border-radius: 4px; background: transparent; cursor: pointer; color: #d63638; text-decoration: none; font-size: 12px; font-weight: 600; padding: 4px 8px; transition: all 0.2s;" onmouseover="this.style.background='#d63638'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#d63638';">Excluir</button>
                                 </form>
                             <?php endif; ?>
                         </div>
