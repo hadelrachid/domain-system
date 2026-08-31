@@ -282,7 +282,7 @@ class AdminController
                 $themesPath = $basePath . '/themes';
                 
                 $extractor = \DomainSystem\Core\Utils\Archive\ExtractorFactory::create();
-                $extractor->extract($file['tmp_name'], $themesPath);
+                $extractor->extract($file['tmp_name'], $themesPath, 'theme.json');
                 
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema instalado com sucesso! A descompactação foi concluída.'];
             } catch (\Exception $e) {
