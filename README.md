@@ -98,3 +98,5 @@ Este projeto é construído por uma equipe mista de inteligência humana e artif
 ## 📄 Licença
 
 Este projeto está licenciado sob a [MIT License](LICENSE).
+## 🌌 O Multiverso de Temas
+O CockPit vive em um autêntico multiverso. Leia sobre a nossa arquitetura Multi-Theme e como hospedamos inúmeros visuais (Mundo Público, Médico, Kiosk) rodando isolados e simultaneamente na mesma aplicação acessando [docs/multiverse.md](docs/multiverse.md).

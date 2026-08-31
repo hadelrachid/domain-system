@@ -98,3 +98,5 @@ This project is built by a mixed team of human and artificial intelligence:
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+## 🌌 The Theme Multiverse
+The CockPit lives in an authentic multiverse. Read about our Multi-Theme architecture and how we host countless visuals (Public World, Doctor, Kiosk) running isolated and simultaneously in the same application by accessing [docs/multiverse.md](docs/multiverse.md).
