@@ -1,6 +1,7 @@
 <div class="wrap">
     <h1 class="wp-heading-inline">Painel de Temas</h1>
     <a href="#" class="page-title-action" onclick="document.getElementById('createThemeModal').style.display='block'; return false;">Criar Novo Tema</a>
+    <a href="#" class="page-title-action" onclick="document.getElementById('uploadThemeModal').style.display='block'; return false;">Instalar Tema (.zip)</a>
     <p>Aqui você pode ver e criar interfaces dinâmicas (CockPITs) instaladas no sistema. Cada tema isola a interface de um perfil de usuário.</p>
 
     <?php if (isset($_SESSION['flash_message'])): ?>
@@ -99,6 +100,25 @@
             <div style="display: flex; justify-content: space-between;">
                 <button type="button" class="btn" onclick="document.getElementById('createThemeModal').style.display='none';">Cancelar</button>
                 <button type="submit" class="btn btn-activate" style="background: #2271b1; color: #fff;">Gerar Scaffold</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Instalar Tema via ZIP -->
+<div id="uploadThemeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999;">
+    <div style="background: #fff; width: 400px; margin: 100px auto; padding: 20px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <h2 style="margin-top: 0;">Fazer Upload de Tema</h2>
+        <p style="font-size: 13px; color: #646970;">Se você tem um tema em um formato .zip, você pode instalá-lo fazendo o upload aqui.</p>
+        
+        <form method="POST" action="<?= BASE_URL ?>/admin/themes/upload" enctype="multipart/form-data">
+            <div style="margin-bottom: 20px; padding: 20px; border: 2px dashed #c3c4c7; text-align: center; border-radius: 4px;">
+                <input type="file" name="theme_zip" accept=".zip" required id="theme_zip_input">
+            </div>
+            
+            <div style="display: flex; justify-content: space-between;">
+                <button type="button" class="btn" onclick="document.getElementById('uploadThemeModal').style.display='none';">Cancelar</button>
+                <button type="submit" class="btn btn-activate" style="background: #2271b1; color: #fff;">Instalar Agora</button>
             </div>
         </form>
     </div>
