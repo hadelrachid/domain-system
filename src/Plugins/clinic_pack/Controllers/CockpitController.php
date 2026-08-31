@@ -9,21 +9,32 @@ use DomainSystem\Core\Http\Response;
 class CockpitController
 {
     private ThemeManager $theme;
+    private \DomainSystem\Core\Http\SessionManager $session;
 
-    public function __construct(ThemeManager $theme)
+    public function __construct(ThemeManager $theme, \DomainSystem\Core\Http\SessionManager $session)
     {
         $this->theme = $theme;
+        $this->session = $session;
     }
 
     public function renderDoctor(Request $request): Response
     {
-        $html = $this->theme->renderTheme('cockpit_doctor', 'index', ['user_name' => $_SESSION['user_name'] ?? 'Mdico']);
+        $this->theme->setActiveThemePath(__DIR__ . '/../themes/cockpit_doctor');
+        $html = $this->theme->render('index', ['user_name' => $this->session->get('user_name', 'Médico')]);
         return new Response($html);
     }
 
-    public function renderReception(Request $request): Response
+    public function renderSecretary(Request $request): Response
     {
-        $html = $this->theme->renderTheme('cockpit_reception', 'index', ['user_name' => $_SESSION['user_name'] ?? 'Secretaria']);
+        $this->theme->setActiveThemePath(__DIR__ . '/../themes/cockpit_secretary');
+        $html = $this->theme->render('index', ['user_name' => $this->session->get('user_name', 'Secretária')]);
+        return new Response($html);
+    }
+
+    public function renderNursing(Request $request): Response
+    {
+        $this->theme->setActiveThemePath(__DIR__ . '/../themes/cockpit_nursing');
+        $html = $this->theme->render('index', ['user_name' => $this->session->get('user_name', 'Enfermeiro')]);
         return new Response($html);
     }
 

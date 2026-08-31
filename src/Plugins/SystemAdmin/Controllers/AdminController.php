@@ -157,6 +157,7 @@ class AdminController
         $themesPath = $basePath . '/themes';
         
         $themes = [];
+        // 1. Temas Globais
         if (is_dir($themesPath)) {
             $directories = glob($themesPath . '/*', GLOB_ONLYDIR);
             foreach ($directories as $dir) {
@@ -186,8 +187,59 @@ class AdminController
                     'version' => $version,
                     'author' => $author,
                     'screenshot' => $screenshot,
-                    'is_core' => $isCore
+                    'is_core' => $isCore,
+                    'is_bundled' => false,
+                    'plugin' => null,
+                    'preview_url' => \BASE_URL . '/admin' // Ajustar depois para prever
                 ];
+            }
+        }
+        
+        // 2. Temas empacotados dentro de Plugins Ativos (Bundled Themes)
+        $pluginsPath = $basePath . '/src/Plugins';
+        $configPath = $basePath . '/config/plugins.json';
+        $activeStates = file_exists($configPath) ? (json_decode(file_get_contents($configPath), true) ?? []) : [];
+
+        if (is_dir($pluginsPath)) {
+            foreach (glob($pluginsPath . '/*', GLOB_ONLYDIR) as $pluginDir) {
+                $pluginName = basename($pluginDir);
+                if (isset($activeStates[$pluginName]) && $activeStates[$pluginName] === true) {
+                    $pluginThemesPath = $pluginDir . '/themes';
+                    if (is_dir($pluginThemesPath)) {
+                        foreach (glob($pluginThemesPath . '/*', GLOB_ONLYDIR) as $themeDir) {
+                            $folder = basename($themeDir);
+                            $jsonPath = $themeDir . '/theme.json';
+                            
+                            $name = ucfirst($folder);
+                            $description = "Tema integrado ao pacote {$pluginName}.";
+                            $version = '1.0.0';
+                            $author = '';
+                            $screenshot = '';
+                            
+                            if (file_exists($jsonPath)) {
+                                $meta = json_decode(file_get_contents($jsonPath), true);
+                                $name = $meta['name'] ?? $name;
+                                $description = $meta['description'] ?? $description;
+                                $version = $meta['version'] ?? '1.0.0';
+                                $author = $meta['author'] ?? '';
+                                $screenshot = $meta['screenshot'] ?? '';
+                            }
+                            
+                            $themes[] = [
+                                'folder' => $folder,
+                                'name' => $name,
+                                'description' => $description,
+                                'version' => $version,
+                                'author' => $author,
+                                'screenshot' => $screenshot,
+                                'is_core' => false,
+                                'is_bundled' => true,
+                                'plugin' => $pluginName,
+                                'preview_url' => \BASE_URL . '/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder)) // ex: /doctor
+                            ];
+                        }
+                    }
+                }
             }
         }
         

@@ -9,7 +9,8 @@ use DomainSystem\Core\Contracts\CockpitRegistryInterface;
 use DomainSystem\Plugins\clinic_pack\Controllers\CockpitController;
 use DomainSystem\Plugins\clinic_pack\Controllers\SettingsController;
 use DomainSystem\Plugins\clinic_pack\Providers\DoctorCockpitProvider;
-use DomainSystem\Plugins\clinic_pack\Providers\ReceptionCockpitProvider;
+use DomainSystem\Plugins\clinic_pack\Providers\SecretaryCockpitProvider;
+use DomainSystem\Plugins\clinic_pack\Providers\NursingCockpitProvider;
 
 class Plugin extends AbstractPlugin
 {
@@ -23,7 +24,8 @@ class Plugin extends AbstractPlugin
             /** @var CockpitRegistryInterface $registry */
             $registry = $this->container->make(CockpitRegistryInterface::class);
             $registry->registerProvider(new DoctorCockpitProvider());
-            $registry->registerProvider(new ReceptionCockpitProvider());
+            $registry->registerProvider(new SecretaryCockpitProvider());
+            $registry->registerProvider(new NursingCockpitProvider());
         }
 
         // 2. Roteamento do Cockpit e Admin Dashboard
@@ -31,7 +33,8 @@ class Plugin extends AbstractPlugin
             $router->addRoute('GET', '/admin/clinic/settings', [SettingsController::class, 'index'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/save', [SettingsController::class, 'save'], 'clinic_admin', ['admin']);
             $router->addRoute('GET', '/cockpit/doctor', [CockpitController::class, 'renderDoctor'], 'cockpit', ['doctor']);
-            $router->addRoute('GET', '/cockpit/reception', [CockpitController::class, 'renderReception'], 'cockpit', ['receptionist']);
+            $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['receptionist']);
+            $router->addRoute('GET', '/cockpit/nursing', [CockpitController::class, 'renderNursing'], 'cockpit', ['nurse', 'admin']);
             $router->addRoute('GET', '/admin/clinic', [CockpitController::class, 'renderAdminDashboard'], 'clinic_admin', ['admin']);
             $router->addRoute('GET', '/admin/clinic/shortcodes', [CockpitController::class, 'renderShortcodesCatalog'], 'clinic_admin', ['admin']);
         });
