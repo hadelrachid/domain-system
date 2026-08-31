@@ -1,6 +1,6 @@
 <?php
 // Prevents direct access
-if (!defined('BASE_PATH')) exit;
+if (!defined('DOMAIN_SYSTEM_ROOT')) exit;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
