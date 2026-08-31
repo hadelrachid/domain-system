@@ -12,9 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Hub:** New dedicated plugin for API keys management (Gemini, ChatGPT, DeepSeek, Claude).
 - **Plugin Builder:** Visual plugin builder integrated with AI Hub to generate AI-based forms.
 - **Clinic Pack (`clinic_pack`):** New isolated plugin to organize the "Clinical Management" menu without interfering with the Kernel.
+- **SessionManager:** New central class for abstract, object-oriented management of user memory state (Session).
+
+### Changed
+- **Centralized ACL (Global Gatekeeper):** All permission verification was moved from business Controllers to the routes (`Router`), using role declarations.
+- **Database Repositories:** Complete isolation of database access via the Repository Pattern for Controllers. `QueryBuilder` dependency was fully removed from the base Plugin class (`AbstractPlugin`).
 
 ### Fixed
 - **PluginManager Circuit Breaker:** Fixed silent failure where plugin `boot()` method was not being called during initialization, plus fixes for `ordered_plugins.json` saving.
+- Fixed dirty dependency injection and architectural coupling in the `dev_simulator` plugin after removing `queryBuilder()`.
+
+### Removed
+- **Direct Access to Superglobals:** The `$_SESSION` superglobal (and impure functions like `session_start()`) has been completely banned from Controllers.
 
 ## [1.1.0] - The Era of Architectural Resilience - 2026-08-24
 
