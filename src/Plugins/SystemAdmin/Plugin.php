@@ -63,6 +63,7 @@ class Plugin extends AbstractPlugin
             $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes']);
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);
             $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes']);
+            $router->addRoute('GET', '/admin/themes/preview', [AdminController::class, 'previewTheme']);
             $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme']);
             $router->addRoute('POST', '/admin/themes/upload', [AdminController::class, 'uploadTheme']);
             $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme']);

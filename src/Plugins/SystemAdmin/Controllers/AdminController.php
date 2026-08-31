@@ -295,6 +295,36 @@ class AdminController
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
     }
 
+    public function previewTheme(\DomainSystem\Core\Http\Request $request)
+    {
+        $themeFolder = $request->input('theme', '');
+        if (empty($themeFolder)) {
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
+        }
+        
+        $basePath = dirname(__DIR__, 4);
+        $themeDir = $basePath . '/themes/' . basename($themeFolder);
+        
+        if (!is_dir($themeDir)) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado para preview.'];
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
+        }
+        
+        // Temporarily set active theme to the requested preview theme
+        $this->theme->setActiveThemePath($themeDir);
+        
+        try {
+            // Render index if it exists, otherwise layout
+            if (file_exists($themeDir . '/index.php')) {
+                return $this->theme->render('index', []);
+            } else {
+                return $this->theme->render('layout', ['content' => '<div style="padding: 50px; text-align: center; font-family: sans-serif;"><h1>Preview do Tema: ' . htmlspecialchars($themeFolder) . '</h1><p>Nenhuma view index.php foi encontrada para este tema.</p></div>']);
+            }
+        } catch (\Exception $e) {
+            return "Erro ao renderizar preview do tema: " . $e->getMessage();
+        }
+    }
+
     public function createTheme(\DomainSystem\Core\Http\Request $request)
     {
 
