@@ -180,6 +180,10 @@ class AdminController
                     $screenshot = $meta['screenshot'] ?? '';
                 }
                 
+                if ($isCore) {
+                    continue; // Oculta temas Core (como admin) da interface
+                }
+                
                 $themes[] = [
                     'folder' => $folder,
                     'name' => $name,
@@ -189,6 +193,7 @@ class AdminController
                     'screenshot' => $screenshot,
                     'is_core' => $isCore,
                     'is_bundled' => false,
+                    'is_add_new' => false,
                     'plugin' => null,
                     'preview_url' => \BASE_URL . '/admin' // Ajustar depois para prever
                 ];
@@ -234,14 +239,30 @@ class AdminController
                                 'screenshot' => $screenshot,
                                 'is_core' => false,
                                 'is_bundled' => true,
+                                'is_add_new' => false,
                                 'plugin' => $pluginName,
-                                'preview_url' => \BASE_URL . '/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder)) // ex: /doctor
+                                'preview_url' => \BASE_URL . '/cockpit/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder))
                             ];
                         }
                     }
                 }
             }
         }
+        
+        // 3. Pseudo-theme "Add New"
+        $themes[] = [
+            'folder' => '',
+            'name' => 'Criar Novo Tema',
+            'description' => 'Crie uma nova interface pública ou isolada do zero.',
+            'version' => '',
+            'author' => '',
+            'screenshot' => '',
+            'is_core' => false,
+            'is_bundled' => false,
+            'is_add_new' => true,
+            'plugin' => null,
+            'preview_url' => '#'
+        ];
         
         try {
             return $this->theme->render('themes_panel', [
