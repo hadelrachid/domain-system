@@ -75,8 +75,8 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 
 | Item | Prioridade | Status |
 |------|------------|--------|
-| Eliminar Service Locator de Plugins | P0 (Crítico) | 🟢 Concluído |
-| Decompor `ErrorHandler` | P1 (Alta) | 🔴 Pendente |
+| Eliminar Service Locator (`$this->db()`, `$this->events()`) do `AbstractPlugin` | P0 (Crítico) | 🕒 Pendente (v2.0) |
+| Decompor `ErrorHandler` | P1 (Alta) | 🕒 Pendente |
 | Migrar Migrations para `activate()` | P1 (Alta) | 🟡 Em Progresso |
 | Centralizar Eventos em Constantes | P2 (Média) | 🟡 Em Progresso |
 | Padronizar Respostas HTTP (Request/Response) | P2 (Média) | 🟢 Concluído |
