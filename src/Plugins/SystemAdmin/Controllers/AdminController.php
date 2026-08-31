@@ -278,19 +278,13 @@ class AdminController
         $file = $request->file('theme_zip');
         if ($file && $file['error'] === UPLOAD_ERR_OK) {
             try {
-                $zip = new \ZipArchive();
-                if ($zip->open($file['tmp_name']) === true) {
-                    $basePath = dirname(__DIR__, 4);
-                    $themesPath = $basePath . '/themes';
-                    
-                    // Extrai na pasta themes
-                    $zip->extractTo($themesPath);
-                    $zip->close();
-                    
-                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema instalado com sucesso! A descompactação foi concluída.'];
-                } else {
-                    throw new \Exception('Falha ao abrir o arquivo ZIP.');
-                }
+                $basePath = dirname(__DIR__, 4);
+                $themesPath = $basePath . '/themes';
+                
+                $extractor = \DomainSystem\Core\Utils\Archive\ExtractorFactory::create();
+                $extractor->extract($file['tmp_name'], $themesPath);
+                
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema instalado com sucesso! A descompactação foi concluída.'];
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação do tema: ' . $e->getMessage()];
             }
