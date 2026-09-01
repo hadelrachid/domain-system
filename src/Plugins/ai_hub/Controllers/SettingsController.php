@@ -68,7 +68,7 @@ class SettingsController
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $apiKey;
                 $data = [
                     'contents' => [
-                        ['parts' => [['text' => 'Diga apenas: "Conexão estabelecida com sucesso! Eu sou o Gemini e estou pronto para operar o CockPit."' ]]]
+                        ['parts' => [['text' => 'Diga apenas: "Conexao estabelecida com sucesso! Eu sou o Gemini e estou pronto para operar o CockPit."' ]]]
                     ]
                 ];
                 
@@ -81,7 +81,7 @@ class SettingsController
                 ]);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
                 
-                // Em ambiente local Windows (XAMPP), ignoramos a verificação SSL rígida se não houver cacert configurado
+                // Em ambiente local Windows (XAMPP), ignoramos a verificacao SSL rigida se nao houver cacert configurado
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
                 
@@ -103,9 +103,9 @@ class SettingsController
                 return Response::json(['success' => true, 'message' => trim($text)]);
             }
             
-            return Response::json(['success' => false, 'message' => "Teste de conexão automático implementado apenas para Gemini no momento."]);
+            return Response::json(['success' => false, 'message' => "Teste de conexao automatico implementado apenas para Gemini no momento."]);
         } catch (\Exception $e) {
-            return Response::json(['success' => false, 'message' => 'Exceção: ' . $e->getMessage()]);
+            return Response::json(['success' => false, 'message' => 'Excecao: ' . $e->getMessage()]);
         }
     }
 }
