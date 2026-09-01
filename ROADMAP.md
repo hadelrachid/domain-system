@@ -31,6 +31,15 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 - [ ] **Histórico do Paciente:** Timeline visual com todas as consultas, exames e prescrições.
 - [ ] **Receituário Digital:** Geração de receitas com assinatura digital e QR Code.
 
+### 2.4. Instalador Visual (Estilo WordPress)
+- [ ] **Wizard de Instalação:** Interface web de 5 minutos para primeira configuração.
+- [ ] **Setup de Banco de Dados:** Combobox para escolha entre SQLite (Local) e MySQL/MariaDB (Hostinger/XAMPP).
+- [ ] **Criação de Super Admin:** Configuração da senha e e-mail no primeiro acesso.
+
+### 2.5. Schema Builder e Abstração de BD
+- [ ] **Migrações Agnósticas:** Tradutor de SQL para gerar tabelas em dialetos corretos (SQLite vs MySQL).
+- [ ] **Auto-detecção:** O sistema adapta as queries de acordo com o driver do `.env`.
+
 ---
 
 ## 🔵 Fase 3: Escalabilidade e Integrações (3 a 6 Meses)
