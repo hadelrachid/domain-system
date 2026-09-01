@@ -21,27 +21,13 @@ class Plugin extends AbstractPlugin
         $router->addRoute('GET', '/admin/ai-hub', [SettingsController::class, 'index'], 'ai_hub', ['admin']);
         $router->addRoute('POST', '/admin/ai-hub/save', [SettingsController::class, 'save'], 'ai_hub', ['admin']);
         $router->addRoute('POST', '/admin/ai-hub/test', [SettingsController::class, 'testConnection'], 'ai_hub_test', ['admin']);
-        $router->addRoute('GET', '/admin/ai-hub/builder', [\DomainSystem\Plugins\ai_hub\Controllers\BuilderController::class, 'index'], 'ai_hub_builder', ['admin']);
-        $router->addRoute('POST', '/admin/ai-hub/builder/generate', [\DomainSystem\Plugins\ai_hub\Controllers\BuilderController::class, 'generate'], 'ai_hub_builder_generate', ['admin']);
 
         $events = $this->container->make(EventDispatcher::class);
         $events->addListener('admin.menu', function(array $menu) {
             $menu[] = [
                 'title' => 'Cérebro I.A.',
-                'icon' => '🤖',
-                'url' => '/admin/ai-hub',
-                'submenu' => [
-                    [
-                        'title' => 'Conexões Neurais',
-                        'url' => '/admin/ai-hub',
-                        'icon' => '🔌'
-                    ],
-                    [
-                        'title' => 'Plugin Builder (Forms)',
-                        'url' => '/admin/ai-hub/builder',
-                        'icon' => '🏗️'
-                    ]
-                ]
+                'icon' => '🧠',
+                'url' => '/admin/ai-hub'
             ];
             return $menu;
         }, 900);
