@@ -7,6 +7,8 @@ class SessionManager
     public function start(): void
     {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            // Isola a sessão por pasta para evitar que diferentes cópias do sistema no mesmo XAMPP compartilhem login
+            session_name('DS_SESS_' . substr(md5(__DIR__), 0, 8));
             session_start();
         }
     }
