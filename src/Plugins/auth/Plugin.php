@@ -78,7 +78,7 @@ class Plugin extends AbstractPlugin
         });
 
         // Garante que o usuario admin padrao sempre exista para fins de estudo/teste
-        $events->addListener('app.booted', function() {
+        $events->addListener('kernel_post_boot', function() {
             /** @var \DomainSystem\Plugins\Database\Connection $connection */
             $connection = $this->db();
             $db = $connection->getPdo();
