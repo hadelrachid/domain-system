@@ -65,7 +65,7 @@ class SettingsController
 
         try {
             if ($activeModel === 'gemini') {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" . $apiKey;
                 $data = [
                     'contents' => [
                         ['parts' => [['text' => 'Diga apenas: "Conexão estabelecida com sucesso! Eu sou o Gemini e estou pronto para operar o CockPit."' ]]]
