@@ -4,7 +4,7 @@
 
 # 🇧🇷 Bem-vindo ao Domain-System (Cockpit) 🚀
 
-O **Domain-System** não é apenas mais um sistema de gestão de clínicas. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
+O **Domain-System** não é apenas um sistema de clínica. Ele é um autêntico **Sistema Operacional Web** (CMS / Framework Universal). O "pacote de clínica médica" é apenas um exemplo do que ele pode rodar. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
 
 Inspirado nas engrenagens de grandes ecossistemas (como o WordPress e sistemas operacionais de missão crítica), o projeto foi concebido para ser altamente escalável, permitindo que componentes sejam conectados ou desconectados em tempo real sem afetar o núcleo do sistema.
 
@@ -53,7 +53,7 @@ Para manter os princípios **SOLID** (Single Responsibility Principle) e evitar 
 - **2. Entendendo o Injetor de Dependências.**
 - **3. Como conectar uma IA via API (Hooks e Eventos).**
 
-The **Domain-System** is not just another clinic management system. It is a highly modular, resilient, **Event-Driven** platform designed under strict **SOLID** architecture principles.
+The **Domain-System** is not just a clinic management system. It is a genuine **Web Operating System** (Universal CMS / Framework). The "clinic pack" is just one example of what it can run. It is a highly modular, resilient, **Event-Driven** platform designed under strict **SOLID** architecture principles.
 
 Inspired by the gears of large ecosystems (such as WordPress and mission-critical operating systems), the project was designed to be highly scalable, allowing components to be plugged in or unplugged in real-time without affecting the system's core.
 

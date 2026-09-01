@@ -10,9 +10,9 @@
 
 ## 💡 O Que é o Domain System?
 
-O **Domain System** não é apenas mais um framework ou um sistema de gestão. É um **motor de negócios hiper-resiliente**, projetado para ser a base de qualquer aplicação empresarial, desde uma clínica médica até um escritório de advocacia ou um ERP financeiro.
+O **Domain System** (também conhecido como **CockPit**) é um **CMS, Framework e Plataforma Universal** nativo em PHP (semelhante ao núcleo do WordPress ou Laravel). Ele foi projetado para rodar absolutamente qualquer aplicação empresarial: desde uma clínica médica (através do `clinic_pack` incluído) até lojas virtuais, sistemas educacionais ou ERPs. O limite é a sua imaginação.
 
-Ele funciona como um **sistema operacional para o seu negócio**: o núcleo (Kernel) fornece a infraestrutura essencial (banco de dados, segurança, rotas, injeção de dependências), e toda a lógica de negócio é encapsulada em **Plugins** independentes e intercambiáveis.
+Ele funciona como um **verdadeiro Sistema Operacional Web** para o seu negócio: o núcleo (Kernel) fornece a infraestrutura essencial (banco de dados, segurança, rotas, injeção de dependências), e toda a lógica de negócio é encapsulada em **Plugins** independentes e intercambiáveis.
 
 Este é um projeto que une o melhor dos dois mundos: a **simplicidade e performance do PHP puro** com a **robustez e escalabilidade de arquiteturas enterprise** (como microsserviços e SOLID).
 
@@ -57,12 +57,11 @@ Falhas acontecem. No Domain System, elas são **contidas, registradas e corrigid
 
 ---
 
-## 🧩 Para Quem é este Projeto?
+## 🎯 Para Quem É este Projeto?
 
-- **Clínicas e Consultórios** — Gerencie pacientes, agendamentos, prontuários e faturamento.
-- **Escritórios de Advocacia** — Controle processos, prazos e clientes com um workspace dedicado.
-- **Desenvolvedores Corporativos** — Construa soluções white-label rapidamente, sem reinventar a roda.
-- **Arquitetos de Software** — Um laboratório vivo de boas práticas (SOLID, DDD, Event Sourcing).
+- **Desenvolvedores e Agências** - Construa soluções white-label rapidamente para qualquer nicho de mercado, sem reinventar a roda.
+- **Arquitetos de Software** - Um laboratório vivo de boas práticas (SOLID, Padrões de Projeto, Arquitetura Orientada a Eventos).
+- **Qualquer Nicho de Mercado** - O sistema base acompanha módulos de exemplo (como o *Clinic Pack* para consultórios médicos), mas a arquitetura de plugins permite transformá-lo num ERP para advocacias, comércio, logística, etc.
 
 ---
 

@@ -1,8 +1,10 @@
 # Guia do Desenvolvedor: Como criar Plugins e Temas
 
-O **Domain System** foi desenhado para ser infinitamente extensível, mantendo uma clara separação entre **Lógica (Plugins)** e **Apresentação (Temas)**.
+O **Domain System** é um Framework Universal (CMS) onde tudo é extensível. O sistema de clínica médica incluído por padrão é apenas um exemplo do que a plataforma pode rodar. 
 
-Este guia prático ensinará você a construir aplicações robustas sem nunca precisar tocar no Kernel (Core) do sistema.
+Ele foi desenhado para ser infinitamente extensível, mantendo uma clara separação entre **Lógica (Plugins)** e **Apresentação (Temas)**.
+
+Este guia prático ensinará você a construir aplicações robustas, de qualquer nicho de mercado, sem nunca precisar tocar no Kernel (Core) do sistema.
 
 ---
 

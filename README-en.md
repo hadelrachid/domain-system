@@ -8,11 +8,11 @@
 
 [🇧🇷 Leia em Português](README.md)
 
-## 💡 What is Domain System?
+## 💡 What is the Domain System?
 
-**Domain System** is not just another framework or management system. It is a **hyper-resilient business engine**, designed to be the foundation of any enterprise application, from a medical clinic to a law firm or a financial ERP.
+The **Domain System** (also known as **CockPit**) is a **Universal CMS, Framework, and Platform** built in native PHP (similar to the core of WordPress or Laravel). It is designed to run absolutely any enterprise application: from a medical clinic (via the default `clinic_pack`) to e-commerce, educational systems, or ERPs. The only limit is your imagination.
 
-It works like an **operating system for your business**: the core (Kernel) provides the essential infrastructure (database, security, routing, dependency injection), while all business logic is encapsulated in independent, interchangeable **Plugins**.
+It acts as a **true Web Operating System** for your business: the core (Kernel) provides the essential infrastructure (database, security, routing, dependency injection), and all business logic is encapsulated in independent and interchangeable **Plugins**.
 
 This project combines the best of both worlds: the **simplicity and performance of pure PHP** with the **robustness and scalability of enterprise architectures** (like microservices and SOLID principles).
 
@@ -57,12 +57,11 @@ Failures happen. In Domain System, they are **contained, logged, and fixed witho
 
 ---
 
-## 🧩 Who Is This Project For?
+## 🎯 Who is this Project For?
 
-- **Clinics & Medical Offices** — Manage patients, appointments, medical records, and billing.
-- **Law Firms** — Track cases, deadlines, and clients with a dedicated workspace.
-- **Enterprise Developers** — Build white-label solutions quickly without reinventing the wheel.
-- **Software Architects** — A living laboratory of best practices (SOLID, DDD, Event Sourcing).
+- **Developers and Agencies** - Build white-label solutions quickly for any market niche without reinventing the wheel.
+- **Software Architects** - A living laboratory of best practices (SOLID, Design Patterns, Event-Driven Architecture).
+- **Any Market Niche** - The base system comes with example modules (like the *Clinic Pack* for medical practices), but the plugin architecture allows transforming it into an ERP for law firms, retail, logistics, etc.
 
 ---
 
