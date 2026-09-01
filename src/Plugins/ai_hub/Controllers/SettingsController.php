@@ -35,7 +35,7 @@ class SettingsController
 
     public function save(Request $request): Response
     {
-        $data = $request->getParsedBody();
+        $data = $request->all();
         $config = [
             'active_model' => $data['active_model'] ?? 'gemini',
             'api_keys' => [
