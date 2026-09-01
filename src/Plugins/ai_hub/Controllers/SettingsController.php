@@ -72,21 +72,25 @@ class SettingsController
                     ]
                 ];
                 
-                $options = [
-                    'http' => [
-                        'header'  => "Content-type: application/json\r\n",
-                        'method'  => 'POST',
-                        'content' => json_encode($data),
-                        'ignore_errors' => true, // Permite ler o corpo do erro HTTP 400
-                        'timeout' => 30 // Aumentado para 30s pois a API está lenta
-                    ]
-                ];
-                $context  = stream_context_create($options);
-                // O @ evita que o ErrorHandler global intercepte erros HTTP 5xx
-                $result = @file_get_contents($url, false, $context);
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json'
+                ]);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
                 
-                if ($result === FALSE) {
-                    return Response::json(['success' => false, 'message' => 'Falha ao conectar com a API do Google Gemini. Verifique sua chave ou conexão de rede.']);
+                // Em ambiente local Windows (XAMPP), ignoramos a verificação SSL rígida se não houver cacert configurado
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                
+                $result = curl_exec($ch);
+                $error = curl_error($ch);
+                curl_close($ch);
+                
+                if ($result === false || empty($result)) {
+                    return Response::json(['success' => false, 'message' => 'Falha de rede (cURL): ' . $error]);
                 }
                 
                 $response = json_decode($result, true);
