@@ -1,0 +1,145 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Domain-System CockPit CLI
+ * Interface de linha de comando para administração e I.A.
+ */
+
+if (php_sapi_name() !== 'cli') {
+    die("O CockPit CLI só pode ser executado via terminal.\n");
+}
+
+// Inicializa o Kernel da Aplicação silenciosamente
+$app = require_once __DIR__ . '/bootstrap.php';
+
+// Dispara eventos de boot se necessário (igual ao index.php)
+$app->getDispatcher()->dispatch('kernel_pre_boot');
+$app->boot();
+$app->getDispatcher()->dispatch('kernel_post_boot');
+
+$command = $argv[1] ?? 'help';
+
+switch ($command) {
+    case 'help':
+    case 'list':
+        echo "\n🚀 Domain-System CockPit CLI v1.2.0\n";
+        echo str_repeat("-", 40) . "\n";
+        echo "Uso: php cockpit [comando] [argumentos]\n\n";
+        echo "Comandos Disponíveis:\n";
+        echo "  db:query \"SQL\"       Executa uma query SQL direta no banco de dados.\n";
+        echo "  plugin:make <nome>   Gera a estrutura base de um novo plugin.\n";
+        echo "  theme:make <nome>    Gera a estrutura base de um novo tema.\n";
+        echo "  clear:temp           Limpa arquivos temporários da pasta temp/.\n";
+        echo "\n";
+        break;
+
+    case 'db:query':
+        $sql = $argv[2] ?? '';
+        if (empty($sql)) {
+            echo "Erro: Forneça a query SQL. Exemplo: php cockpit db:query \"SELECT * FROM users\"\n";
+            exit(1);
+        }
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class);
+        $db = $connection->getPdo();
+        try {
+            $stmt = $db->query($sql);
+            if ($stmt) {
+                $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo json_encode($results, JSON_PRETTY_PRINT) . "\n";
+            } else {
+                echo "Query executada com sucesso. (Nenhum dado retornado)\n";
+            }
+        } catch (Exception $e) {
+            echo "Erro no Banco de Dados: " . $e->getMessage() . "\n";
+        }
+        break;
+
+    case 'plugin:make':
+        $pluginName = $argv[2] ?? '';
+        if (empty($pluginName)) {
+            echo "Erro: Forneça o nome do plugin. Exemplo: php cockpit plugin:make financeiro\n";
+            exit(1);
+        }
+        $pluginDir = __DIR__ . '/src/Plugins/' . $pluginName;
+        if (is_dir($pluginDir)) {
+            echo "Erro: O plugin '$pluginName' já existe.\n";
+            exit(1);
+        }
+        mkdir($pluginDir, 0777, true);
+        mkdir($pluginDir . '/Controllers', 0777, true);
+        mkdir($pluginDir . '/views', 0777, true);
+        
+        $pluginClass = <<<PHP
+<?php
+
+namespace DomainSystem\Plugins\\{$pluginName};
+
+use DomainSystem\Core\Plugin\AbstractPlugin;
+
+class Plugin extends AbstractPlugin
+{
+    public function register(): void
+    {
+        // Registre dependências no container
+    }
+
+    public function boot(): void
+    {
+        // Adicione rotas ou listeners de eventos
+    }
+
+    public function activate(): void
+    {
+        // Criação de tabelas no banco de dados
+    }
+}
+PHP;
+        file_put_contents($pluginDir . '/Plugin.php', $pluginClass);
+        echo "✅ Plugin '$pluginName' criado com sucesso em src/Plugins/$pluginName\n";
+        break;
+
+    case 'theme:make':
+        $themeName = $argv[2] ?? '';
+        if (empty($themeName)) {
+            echo "Erro: Forneça o nome do tema. Exemplo: php cockpit theme:make natal\n";
+            exit(1);
+        }
+        $themeDir = __DIR__ . '/themes/' . $themeName;
+        if (is_dir($themeDir)) {
+            echo "Erro: O tema '$themeName' já existe.\n";
+            exit(1);
+        }
+        mkdir($themeDir, 0777, true);
+        
+        $themeConfig = <<<JSON
+{
+    "name": "{$themeName}",
+    "description": "Tema personalizado gerado pelo CockPit CLI.",
+    "version": "1.0.0"
+}
+JSON;
+        file_put_contents($themeDir . '/theme.json', $themeConfig);
+        file_put_contents($themeDir . '/layout.php', "<html><body><h1>Tema {$themeName}</h1>\n<?= \$content ?>\n</body></html>");
+        
+        echo "✅ Tema '$themeName' criado com sucesso em themes/$themeName\n";
+        break;
+
+    case 'clear:temp':
+        $files = glob(__DIR__ . '/temp/*');
+        $count = 0;
+        foreach ($files as $file) {
+            if (is_file($file) && basename($file) !== '.gitkeep') {
+                unlink($file);
+                $count++;
+            }
+        }
+        echo "✅ Limpeza concluída. $count arquivos removidos de temp/.\n";
+        break;
+
+    default:
+        echo "Comando desconhecido: '$command'\n";
+        echo "Digite 'php cockpit help' para ver a lista de comandos disponíveis.\n";
+        exit(1);
+}
