@@ -56,5 +56,42 @@
         <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
 
         <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; padding: 6px 16px; font-size: 14px;">Salvar Conexões Neurais</button>
+        <button type="button" class="btn" id="btnTest" style="background: #00a32a; color: #fff; border-color: #00a32a; padding: 6px 16px; font-size: 14px; margin-left: 10px;">Testar Motor Ativo</button>
+        <div id="testResult" style="margin-top: 15px; font-weight: bold; font-size: 14px; padding: 10px; display: none; border-radius: 4px;"></div>
     </form>
 </div>
+
+<script>
+document.getElementById('btnTest').addEventListener('click', function() {
+    var resultDiv = document.getElementById('testResult');
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#f6f7f7';
+    resultDiv.style.color = '#555';
+    resultDiv.style.border = '1px solid #ccc';
+    resultDiv.innerText = 'Testando conexão com a I.A... (aguarde)';
+    
+    fetch('<?= BASE_URL ?>/admin/ai-hub/test', {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.style.background = '#d4edda';
+            resultDiv.style.color = '#155724';
+            resultDiv.style.border = '1px solid #c3e6cb';
+            resultDiv.innerText = '✅ Sucesso! A I.A. respondeu: "' + data.message + '"';
+        } else {
+            resultDiv.style.background = '#f8d7da';
+            resultDiv.style.color = '#721c24';
+            resultDiv.style.border = '1px solid #f5c6cb';
+            resultDiv.innerText = '❌ Falha: ' + data.message;
+        }
+    })
+    .catch(e => {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.style.border = '1px solid #f5c6cb';
+        resultDiv.innerText = '❌ Erro de rede ao testar.';
+    });
+});
+</script>

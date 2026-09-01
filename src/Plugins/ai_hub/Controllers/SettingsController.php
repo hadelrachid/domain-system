@@ -51,4 +51,55 @@ class SettingsController
         header("Location: " . BASE_URL . "/admin/ai-hub?saved=1");
         exit;
     }
+
+    public function testConnection(Request $request): Response
+    {
+        $config = file_exists($this->configPath) ? json_decode(file_get_contents($this->configPath), true) : [];
+        $activeModel = $config['active_model'] ?? 'gemini';
+        $apiKeys = $config['api_keys'] ?? [];
+        $apiKey = $apiKeys[$activeModel] ?? '';
+
+        if (empty($apiKey)) {
+            return Response::json(['success' => false, 'message' => "Chave de API do motor '$activeModel' não configurada."]);
+        }
+
+        try {
+            if ($activeModel === 'gemini') {
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+                $data = [
+                    'contents' => [
+                        ['parts' => [['text' => 'Diga apenas: "Conexão estabelecida com sucesso! Eu sou o Gemini e estou pronto para operar o CockPit."' ]]]
+                    ]
+                ];
+                
+                $options = [
+                    'http' => [
+                        'header'  => "Content-type: application/json\r\n",
+                        'method'  => 'POST',
+                        'content' => json_encode($data),
+                        'ignore_errors' => true // Permite ler o corpo do erro HTTP 400
+                    ]
+                ];
+                $context  = stream_context_create($options);
+                $result = file_get_contents($url, false, $context);
+                
+                if ($result === FALSE) {
+                    return Response::json(['success' => false, 'message' => 'Falha ao conectar com a API do Google Gemini. Verifique sua chave ou conexão de rede.']);
+                }
+                
+                $response = json_decode($result, true);
+                
+                if (isset($response['error'])) {
+                     return Response::json(['success' => false, 'message' => 'Erro da API: ' . ($response['error']['message'] ?? 'Desconhecido')]);
+                }
+                
+                $text = $response['candidates'][0]['content']['parts'][0]['text'] ?? 'Resposta vazia da IA.';
+                return Response::json(['success' => true, 'message' => trim($text)]);
+            }
+            
+            return Response::json(['success' => false, 'message' => "Teste de conexão automático implementado apenas para Gemini no momento."]);
+        } catch (\Exception $e) {
+            return Response::json(['success' => false, 'message' => 'Exceção: ' . $e->getMessage()]);
+        }
+    }
 }
