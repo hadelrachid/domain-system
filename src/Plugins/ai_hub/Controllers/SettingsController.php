@@ -82,7 +82,8 @@ class SettingsController
                     ]
                 ];
                 $context  = stream_context_create($options);
-                $result = file_get_contents($url, false, $context);
+                // O @ evita que o ErrorHandler global intercepte o HTTP 503 como erro fatal
+                $result = @file_get_contents($url, false, $context);
                 
                 if ($result === FALSE) {
                     return Response::json(['success' => false, 'message' => 'Falha ao conectar com a API do Google Gemini. Verifique sua chave ou conexão de rede.']);
