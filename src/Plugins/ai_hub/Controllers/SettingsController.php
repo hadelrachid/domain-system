@@ -78,11 +78,11 @@ class SettingsController
                         'method'  => 'POST',
                         'content' => json_encode($data),
                         'ignore_errors' => true, // Permite ler o corpo do erro HTTP 400
-                        'timeout' => 10 // Tempo maximo de espera em segundos
+                        'timeout' => 30 // Aumentado para 30s pois a API está lenta
                     ]
                 ];
                 $context  = stream_context_create($options);
-                // O @ evita que o ErrorHandler global intercepte o HTTP 503 como erro fatal
+                // O @ evita que o ErrorHandler global intercepte erros HTTP 5xx
                 $result = @file_get_contents($url, false, $context);
                 
                 if ($result === FALSE) {
