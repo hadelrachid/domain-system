@@ -24,10 +24,32 @@ class TerminalController
     public function execute(Request $request): Response
     {
         $data = $request->all();
-        $command = $data['command'] ?? '';
-
-        if (empty(trim($command))) {
+        $command = trim($data['command'] ?? '');
+        
+        if (empty($command)) {
             return Response::json(['output' => '']);
+        }
+
+        // --- Alias Engine (Tradutor de Comandos Amigáveis) ---
+        // Exemplo: create dir:financeiro -> mkdir financeiro
+        if (preg_match('/^create\s*dir:(.+)$/i', $command, $matches)) {
+            $command = (DIRECTORY_SEPARATOR === '\\' ? 'mkdir ' : 'mkdir -p ') . escapeshellarg(trim($matches[1]));
+        }
+        elseif (preg_match('/^delete\s*dir:(.+)$/i', $command, $matches)) {
+            $command = (DIRECTORY_SEPARATOR === '\\' ? 'rmdir /S /Q ' : 'rm -rf ') . escapeshellarg(trim($matches[1]));
+        }
+        elseif (preg_match('/^create\s*file:(.+)$/i', $command, $matches)) {
+            $command = (DIRECTORY_SEPARATOR === '\\' ? 'type nul > ' : 'touch ') . escapeshellarg(trim($matches[1]));
+        }
+        elseif (preg_match('/^delete\s*file:(.+)$/i', $command, $matches)) {
+            $command = (DIRECTORY_SEPARATOR === '\\' ? 'del /F /Q ' : 'rm -f ') . escapeshellarg(trim($matches[1]));
+        }
+        elseif (preg_match('/^open\s*file:(.+)$/i', $command, $matches)) {
+            $command = (DIRECTORY_SEPARATOR === '\\' ? 'type ' : 'cat ') . escapeshellarg(trim($matches[1]));
+        }
+        // Atalhos do CockPit CLI
+        elseif (str_starts_with($command, 'plugin:make') || str_starts_with($command, 'theme:make') || str_starts_with($command, 'db:query') || str_starts_with($command, 'clear:temp')) {
+            $command = "php cockpit " . $command;
         }
 
         // Change directory to the project root (where the cockpit file is)
