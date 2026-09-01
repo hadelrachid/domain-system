@@ -100,5 +100,12 @@ class Plugin extends AbstractPlugin
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_code VARCHAR(6) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_expiry DATETIME NULL"); } catch (\Exception $e) {}
+
+        // Se a tabela estiver vazia, cria o usurio padro admin@admin.com / admin
+        $stmt = $db->query("SELECT COUNT(*) FROM users");
+        if ($stmt && $stmt->fetchColumn() == 0) {
+            $pass = password_hash('admin', PASSWORD_DEFAULT);
+            $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
+        }
     }
 }

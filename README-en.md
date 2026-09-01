@@ -77,6 +77,18 @@ Failures happen. In Domain System, they are **contained, logged, and fixed witho
 
 ---
 
+## 🚀 Installation & First Login
+
+To run the project locally:
+1. Clone the repository (`git clone https://github.com/hadelrachid/domain-system.git`)
+2. Access the project folder in your local server (Apache/XAMPP, Nginx, or PHP built-in server)
+3. Upon running the system for the first time, the database will be generated automatically.
+4. **Default Admin Login:**
+   - **Email:** `admin@admin.com`
+   - **Password:** `admin`
+
+---
+
 ## 📖 Documentation & Resources
 
 - **[Developer Guide](DEVELOPER_GUIDE.md)** — Learn how to create plugins and themes from scratch.

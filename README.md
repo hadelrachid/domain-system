@@ -77,6 +77,18 @@ Falhas acontecem. No Domain System, elas são **contidas, registradas e corrigid
 
 ---
 
+## 🚀 Instalação e Primeiro Login
+
+Para testar o projeto localmente:
+1. Clone o repositório (`git clone https://github.com/hadelrachid/domain-system.git`)
+2. Acesse a pasta do projeto no seu servidor local (Apache/XAMPP, Nginx ou embutido do PHP)
+3. Ao rodar o sistema pela primeira vez, o banco de dados será gerado automaticamente.
+4. **Login Padrão de Fábrica:**
+   - **E-mail:** `admin@admin.com`
+   - **Senha:** `admin`
+
+---
+
 ## 📖 Documentação e Recursos
 
 - **[Guia do Desenvolvedor](DEVELOPER_GUIDE.md)** — Aprenda a criar plugins e temas do zero.
