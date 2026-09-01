@@ -76,6 +76,20 @@ class Plugin extends AbstractPlugin
                 }
             }
         });
+
+        // Garante que o usuario admin padrao sempre exista para fins de estudo/teste
+        $events->addListener('app.booted', function() {
+            /** @var \DomainSystem\Plugins\Database\Connection $connection */
+            $connection = $this->db();
+            $db = $connection->getPdo();
+            try {
+                $stmt = $db->query("SELECT COUNT(*) FROM users WHERE email = 'admin@admin.com'");
+                if ($stmt && $stmt->fetchColumn() == 0) {
+                    $pass = password_hash('admin', PASSWORD_DEFAULT);
+                    $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
+                }
+            } catch (\Exception $e) {}
+        });
     }
 
     public function activate(): void
@@ -100,12 +114,5 @@ class Plugin extends AbstractPlugin
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_code VARCHAR(6) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_expiry DATETIME NULL"); } catch (\Exception $e) {}
-
-        // Se a tabela estiver vazia, cria o usurio padro admin@admin.com / admin
-        $stmt = $db->query("SELECT COUNT(*) FROM users");
-        if ($stmt && $stmt->fetchColumn() == 0) {
-            $pass = password_hash('admin', PASSWORD_DEFAULT);
-            $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
-        }
     }
 }
