@@ -77,7 +77,8 @@ class SettingsController
                         'header'  => "Content-type: application/json\r\n",
                         'method'  => 'POST',
                         'content' => json_encode($data),
-                        'ignore_errors' => true // Permite ler o corpo do erro HTTP 400
+                        'ignore_errors' => true, // Permite ler o corpo do erro HTTP 400
+                        'timeout' => 10 // Tempo maximo de espera em segundos
                     ]
                 ];
                 $context  = stream_context_create($options);
