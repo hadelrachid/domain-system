@@ -24,22 +24,34 @@
         <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Chaves de API (API Keys)</h3>
 
         <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 5px;">Google Gemini API Key: <a href="#" onclick="document.getElementById('key_gemini').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a></label>
+            <label style="display:block; font-weight: 600; margin-bottom: 5px;">Google Gemini API Key: 
+                <a href="#" onclick="var e=document.getElementById('key_gemini'); if(e.type==='password'){e.type='text';this.innerText='[Ocultar]';}else{e.type='password';this.innerText='[Mostrar]';} return false;" style="font-size: 11px; font-weight: normal; color: #2271b1; text-decoration: none; margin-right: 5px;">[Mostrar]</a>
+                <a href="#" onclick="document.getElementById('key_gemini').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a>
+            </label>
             <input type="password" id="key_gemini" name="api_keys[gemini]" value="<?= htmlspecialchars($config['api_keys']['gemini'] ?? '') ?>" style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 4px;">
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 5px;">OpenAI API Key: <a href="#" onclick="document.getElementById('key_openai').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a></label>
+            <label style="display:block; font-weight: 600; margin-bottom: 5px;">OpenAI API Key: 
+                <a href="#" onclick="var e=document.getElementById('key_openai'); if(e.type==='password'){e.type='text';this.innerText='[Ocultar]';}else{e.type='password';this.innerText='[Mostrar]';} return false;" style="font-size: 11px; font-weight: normal; color: #2271b1; text-decoration: none; margin-right: 5px;">[Mostrar]</a>
+                <a href="#" onclick="document.getElementById('key_openai').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a>
+            </label>
             <input type="password" id="key_openai" name="api_keys[openai]" value="<?= htmlspecialchars($config['api_keys']['openai'] ?? '') ?>" style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 4px;">
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 5px;">DeepSeek API Key: <a href="#" onclick="document.getElementById('key_deepseek').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a></label>
+            <label style="display:block; font-weight: 600; margin-bottom: 5px;">DeepSeek API Key: 
+                <a href="#" onclick="var e=document.getElementById('key_deepseek'); if(e.type==='password'){e.type='text';this.innerText='[Ocultar]';}else{e.type='password';this.innerText='[Mostrar]';} return false;" style="font-size: 11px; font-weight: normal; color: #2271b1; text-decoration: none; margin-right: 5px;">[Mostrar]</a>
+                <a href="#" onclick="document.getElementById('key_deepseek').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a>
+            </label>
             <input type="password" id="key_deepseek" name="api_keys[deepseek]" value="<?= htmlspecialchars($config['api_keys']['deepseek'] ?? '') ?>" style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 4px;">
         </div>
 
         <div style="margin-bottom: 25px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 5px;">Anthropic Claude API Key: <a href="#" onclick="document.getElementById('key_claude').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a></label>
+            <label style="display:block; font-weight: 600; margin-bottom: 5px;">Anthropic Claude API Key: 
+                <a href="#" onclick="var e=document.getElementById('key_claude'); if(e.type==='password'){e.type='text';this.innerText='[Ocultar]';}else{e.type='password';this.innerText='[Mostrar]';} return false;" style="font-size: 11px; font-weight: normal; color: #2271b1; text-decoration: none; margin-right: 5px;">[Mostrar]</a>
+                <a href="#" onclick="document.getElementById('key_claude').value=''; return false;" style="font-size: 11px; font-weight: normal; color: #d63638; text-decoration: none;">[Limpar]</a>
+            </label>
             <input type="password" id="key_claude" name="api_keys[claude]" value="<?= htmlspecialchars($config['api_keys']['claude'] ?? '') ?>" style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 4px;">
         </div>
 
