@@ -6,6 +6,7 @@
 
     <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
         <form action="<?= BASE_URL ?>/admin/pages/store" method="POST">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <?php if($page): ?>
                 <input type="hidden" name="id" value="<?= $page['id'] ?>">
             <?php endif; ?>

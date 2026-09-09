@@ -94,20 +94,23 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
-        
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('users', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->string('role', 50)->default('admin');
+            $table->integer('linked_doctor_id')->nullable();
+            $table->string('two_factor_secret')->nullable();
+            $table->string('two_factor_type', 20)->default('none');
+            $table->string('email_2fa_code', 6)->nullable();
+            $table->datetime('email_2fa_expiry')->nullable();
+            $table->timestamps();
+        });
 
+        // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
+        $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
         try { $db->exec("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'admin'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN linked_doctor_id INTEGER NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL"); } catch (\Exception $e) {}

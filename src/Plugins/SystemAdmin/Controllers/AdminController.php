@@ -48,6 +48,29 @@ class AdminController
                 if (file_exists($jsonPath)) {
                     $metadata = json_decode(file_get_contents($jsonPath), true);
                     $name = $metadata['name'] ?? basename($dir);
+
+                    $subplugins = [];
+                    if (is_dir($dir . '/bundled_plugins')) {
+                        $subDirs = glob($dir . '/bundled_plugins/*', GLOB_ONLYDIR);
+                        foreach ($subDirs as $subDir) {
+                            $subJson = $subDir . '/plugin.json';
+                            if (file_exists($subJson)) {
+                                $subMeta = json_decode(file_get_contents($subJson), true);
+                                $subplugins[] = [
+                                    'name' => $subMeta['name'] ?? basename($subDir),
+                                    'version' => $subMeta['version'] ?? '1.0.0',
+                                    'description' => $subMeta['description'] ?? 'Módulo interno integrado.'
+                                ];
+                            } else {
+                                $subplugins[] = [
+                                    'name' => ucfirst(basename($subDir)),
+                                    'version' => '1.0.0',
+                                    'description' => 'Módulo interno integrado.'
+                                ];
+                            }
+                        }
+                    }
+
                     $allPlugins[] = [
                         'folder' => basename($dir),
                         'name' => $name,
@@ -55,7 +78,8 @@ class AdminController
                         'description' => $metadata['description'] ?? '',
                         'is_active' => $activeStates[$name] ?? false,
                         'is_core' => $this->manager->isCore($name),
-                        'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false)
+                        'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false),
+                        'subplugins' => $subplugins
                     ];
                 }
             }
@@ -230,6 +254,11 @@ class AdminController
                                 $screenshot = $meta['screenshot'] ?? '';
                             }
                             
+                            $previewUrl = \BASE_URL . '/cockpit/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder));
+                            if ($folder === 'public_booking') {
+                                $previewUrl = \BASE_URL . '/agendamento';
+                            }
+
                             $themes[] = [
                                 'folder' => $folder,
                                 'name' => $name,
@@ -241,7 +270,7 @@ class AdminController
                                 'is_bundled' => true,
                                 'is_add_new' => false,
                                 'plugin' => $pluginName,
-                                'preview_url' => \BASE_URL . '/cockpit/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder))
+                                'preview_url' => $previewUrl
                             ];
                         }
                     }

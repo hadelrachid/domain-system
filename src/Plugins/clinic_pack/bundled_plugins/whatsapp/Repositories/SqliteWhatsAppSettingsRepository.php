@@ -25,7 +25,7 @@ class SqliteWhatsAppSettingsRepository implements WhatsAppSettingsRepositoryInte
 
     public function saveSettings(string $instance, string $token): void
     {
-        $stmt = $this->pdo->prepare("INSERT INTO settings (key_name, key_value) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET key_value = excluded.key_value");
+        $stmt = $this->pdo->prepare("INSERT INTO settings (key_name, key_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE key_value = VALUES(key_value)");
         $stmt->execute(['zapi_instance', $instance]);
         $stmt->execute(['zapi_token', encrypt_string($token)]);
     }

@@ -1,113 +1,85 @@
-# 🚀 Domain System — O Motor de Negócios que não Morre
-
-> **Versão Atual:** `v1.2.0` — *"A Era da Resiliência Arquitetural"*
-
-[🌐 Site Oficial (Docs)](https://hadelrachid.github.io/domain-system/) | [📄 Documentação](README.md) | [📜 Changelog](docs/CHANGELOG.md) | [🕵️ Auditoria](docs/auditoria.md)
-
----
-
-[🇺🇸 Read in English](README-en.md)
-
-## 💡 O Que é o Domain System?
-
-O **Domain System** (também conhecido como **CockPit**) é um **CMS, Framework e Plataforma Universal** nativo em PHP (semelhante ao núcleo do WordPress ou Laravel). Ele foi projetado para rodar absolutamente qualquer aplicação empresarial: desde uma clínica médica (através do `clinic_pack` incluído) até lojas virtuais, sistemas educacionais ou ERPs. O limite é a sua imaginação.
-
-Ele funciona como um **verdadeiro Sistema Operacional Web** para o seu negócio: o núcleo (Kernel) fornece a infraestrutura essencial (banco de dados, segurança, rotas, injeção de dependências), e toda a lógica de negócio é encapsulada em **Plugins** independentes e intercambiáveis.
-
-Este é um projeto que une o melhor dos dois mundos: a **simplicidade e performance do PHP puro** com a **robustez e escalabilidade de arquiteturas enterprise** (como microsserviços e SOLID).
+<div align="center">
+  <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
+  <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
+  <br><br>
+  <h1>🚀 Domain System (CockPit)</h1>
+  <p><strong>O Motor de Negócios que não Morre. Um framework modular, hiper-resiliente e extensível.</strong></p>
+</div>
 
 ---
 
-## 🏗️ Arquitetura: Uma Obra de Engenharia
+[🇺🇸 Read in English](README-en.md) | [📚 Documentação & Tutoriais](docs/index.html) | [🛡️ Auditoria Arquitetural](docs/auditoria.md)
 
-A arquitetura do Domain System foi construída para ser **imune ao caos**. Ela é baseada em três pilares fundamentais:
+## 🌐 O Que é o Domain System?
 
-### 1. O Kernel Imortal (Core)
-O coração do sistema é minimalista e não contém nenhuma regra de negócio. Sua única função é orquestrar plugins e fornecer ferramentas seguras (Container DI, Event Dispatcher, Router, Session Manager). O Kernel é a "tomada" universal onde qualquer plugin pode se conectar. Ele atua como **Gatekeeper Global**, gerenciando a memória e validando rotas de forma antecipada sem que os Controllers saibam como a segurança é feita.
+O **Domain System** (também conhecido como **CockPit**) é um **CMS, Framework e Plataforma Universal** escrito puramente em PHP (semelhante à filosofia do WordPress, porém utilizando conceitos arquiteturais modernos como SOLID e Injeção de Dependência).
 
-### 2. O Ecossistema de Plugins (Módulos)
-Cada funcionalidade — desde autenticação até faturamento — é um Plugin isolado. Plugins se comunicam **exclusivamente via eventos** (Event-Driven Architecture), garantindo que a quebra de um não comprometa o todo. Eles são a "carga útil" que transforma o Kernel em um sistema de clínica, jurídico ou financeiro. Tudo funciona através de injeção de dependência e desacoplamento forte (DIP e SRP).
+Ele foi projetado para rodar **absolutamente qualquer aplicação empresarial**. O limite é a sua imaginação! Ele funciona como um **verdadeiro Sistema Operacional Web** para o seu negócio:
+- O **Núcleo (Kernel)** fornece a infraestrutura essencial de baixo nível: Banco de Dados, Segurança CSRF Global, Roteamento, Sessão e Despachante de Eventos.
+- Toda a **lógica de negócio** é encapsulada em **Plugins** independentes, plugáveis e intercambiáveis (como o `clinic_pack` incluso, que transforma o sistema em um poderoso ERP Médico).
 
-### 3. A Camada de Apresentação (Temas e Cockpits)
-A interface do usuário é totalmente desacoplada. Temas (frontend) consomem dados dos Plugins via **Shortcodes** e um sistema de **Workspaces** (perfis de usuário). Isso permite que designers e desenvolvedores frontend trabalhem de forma independente, sem nunca tocar na lógica de negócio.
+## ✨ Principais Diferenciais
 
----
+### ⚡ 1. Instalação Zero-Friction (Wizard Instalador)
+Diga adeus às edições manuais de arquivos de configuração! O sistema conta com um **Wizard de Instalação Automático**. 
+Basta abrir o projeto no navegador, e uma interface amigável vai guiar você pela configuração do Banco de Dados, criação do administrador e ajuste de URL em segundos.
 
-## 🛡️ Resiliência: O Sistema que não Morre
+### 🛡️ 2. No-Break Shield (O Disjuntor Imortal)
+Erros fatais (como um erro de sintaxe) derrubam sistemas tradicionais. **Não o Domain System**.
+Graças ao nosso exclusivo *Quadro de Transferência Automática (Circuit Breaker)*, se um módulo ou plugin tentar causar uma pane fatal (Fatal Error), o sistema intercepta a queda de energia, isola e desativa o plugin defeituoso, e mantém o sistema inteiro no ar. O administrador é notificado de forma segura.
 
-Falhas acontecem. No Domain System, elas são **contidas, registradas e corrigidas sem derrubar o sistema**.
+### 🔒 3. Blindagem CSRF Global
+Segurança nativa e invisível. O núcleo injeta automaticamente proteções contra ataques de falsificação de solicitações em todos os formulários do sistema.
 
-- **Circuit Breaker (Disjuntor V2):** Se um plugin causar um erro fatal (sintaxe, banco de dados, memória), o Kernel o desativa automaticamente e registra o incidente. O resto do sistema continua funcionando.
-- **Emergency Hatch (Escotilha de Emergência):** Se o módulo de autenticação falhar, os administradores ainda podem acessar o sistema via uma rota de emergência segura, usando a `APP_KEY` do servidor.
-- **Cascade Effect (Efeito Cascata):** Se um plugin A depende de um plugin B, e B é desativado pelo Circuit Breaker, A também é desativado para evitar falhas em cadeia.
-
----
-
-## ✨ Principais Características
-
-- **100% PHP 8+** — Código moderno, limpo e orientado a objetos.
-- **Arquitetura SOLID** — Cada classe tem uma responsabilidade única e bem definida.
-- **Event-Driven** — Plugins se comunicam via eventos, garantindo baixo acoplamento.
-- **Dependency Injection** — Container de injeção de dependências com autowiring.
-- **Repository Pattern** — Controllers nunca tocam no banco de dados diretamente.
-- **Multi-Workspace** — Suporte nativo para múltiplos perfis de usuário (Admin, Médico, Recepcionista, Advogado).
-- **Auditoria e Monitoramento** — Painel de supervisão de erros com logs detalhados e botão de "copiar stack trace".
-- **AI Hub Integrado** — Gerador de plugins e formulários via Inteligência Artificial (Gemini, ChatGPT, etc.).
-- **Modular e Extensível** — Adicione ou remova funcionalidades sem afetar o núcleo.
+### 🎨 4. Motor de Temas "CockPit" (Extensibilidade)
+Interfaces separadas da lógica! Crie temas (CockPits) para médicos, secretárias ou pacientes sem tocar no código back-end. 
+Em breve, lançaremos na **[Wiki / Documentação](docs/)** tutoriais completos ensinando:
+- *Como desenvolver o seu próprio Tema*
+- *Como construir um Plugin do zero*
 
 ---
 
-## 🎯 Para Quem É este Projeto?
+## 🚀 Como Instalar
 
-- **Desenvolvedores e Agências** - Construa soluções white-label rapidamente para qualquer nicho de mercado, sem reinventar a roda.
-- **Arquitetos de Software** - Um laboratório vivo de boas práticas (SOLID, Padrões de Projeto, Arquitetura Orientada a Eventos).
-- **Qualquer Nicho de Mercado** - O sistema base acompanha módulos de exemplo (como o *Clinic Pack* para consultórios médicos), mas a arquitetura de plugins permite transformá-lo num ERP para advocacias, comércio, logística, etc.
+1. **Clone o repositório** para a pasta pública do seu servidor Apache/Nginx (ex: `htdocs` ou `www`):
+   ```bash
+   git clone https://github.com/hadelrachid/domain-system.git
+   ```
 
----
+2. **Permissões (Linux/Mac):** Certifique-se de que a pasta tenha permissões de escrita para o servidor web.
+   ```bash
+   chmod -R 777 domain-system/storage
+   chmod -R 777 domain-system/config
+   ```
 
-## 🛠️ Tecnologias Utilizadas
+3. **Abra no Navegador:**
+   Acesse `http://localhost/domain-system` (ou o seu domínio).
 
-| Camada          | Tecnologia                                  |
-|-----------------|---------------------------------------------|
-| **Backend**     | PHP 8+ (Vanilla, OOP Avançado)              |
-| **Database**    | SQLite (com suporte nativo para PostgreSQL) |
-| **Frontend**    | HTML5, CSS3, JavaScript (Vanilla)           |
-| **Design Patterns** | DI, Event Dispatcher, Repository, Strategy, Adapter, Factory, Circuit Breaker |
-
----
-
-## 🚀 Instalação e Primeiro Login
-
-Para testar o projeto localmente:
-1. Clone o repositório (`git clone https://github.com/hadelrachid/domain-system.git`)
-2. Acesse a pasta do projeto no seu servidor local (Apache/XAMPP, Nginx ou embutido do PHP)
-3. Ao rodar o sistema pela primeira vez, o banco de dados será gerado automaticamente.
-4. **Login Padrão de Fábrica:**
-   - **E-mail:** `admin@admin.com`
-   - **Senha:** `admin`
+4. **Instalador Wizard:**
+   O sistema detectará que não está configurado e redirecionará você para o **Assistente de Instalação**. Siga os passos simples na tela (banco de dados, usuário admin), e pronto!
 
 ---
 
-## 📖 Documentação e Recursos
+## 📂 Arquitetura (Visão Geral)
 
-- **[Guia do Desenvolvedor](DEVELOPER_GUIDE.md)** — Aprenda a criar plugins e temas do zero.
-- **[Wiki do Projeto](wiki/Home.md)** — Conceitos avançados como Circuit Breaker, Emergency Hatch e ACL.
-- **[Changelog](docs/CHANGELOG.md)** — Histórico completo de versões e correções.
-- **[Roadmap](ROADMAP.md)** — O futuro do Domain System.
+```text
+/
+├── config/              # Configurações dinâmicas geradas pelo painel (plugins, DB)
+├── public/              # Diretório público (assets, index.php)
+├── storage/             # Arquivos gerados (logs de erro, cache)
+└── src/
+    ├── Core/            # O Cérebro do OS (Router, Eventos, Container, Exceptions)
+    └── Plugins/         # Onde a mágica acontece.
+        ├── auth/        # Sistema base de Autenticação e 2FA
+        ├── clinic_pack/ # Super-pacote que transforma o sistema numa Clínica Médica!
+        └── installer/   # O assistente de instalação (Auto-desativa após o uso)
+```
 
----
+## 🛠️ Contribuindo e Tutoriais
 
-## 🤝 Colaboradores
+Nosso objetivo é transformar este projeto em um ecossistema. 
+Você já pode acessar nosso **[Guia do Desenvolvedor (DEVELOPER_GUIDE.md)](DEVELOPER_GUIDE.md)** para aprender os fundamentos técnicos de como estender o sistema. A pasta `docs/` e a aba Wiki no GitHub receberão em breve tutoriais ainda mais avançados para programadores.
 
-Este projeto é construído por uma equipe mista de inteligência humana e artificial:
+Feito com ☕ e focado na resiliência arquitetural.
 
-- **Rachid Hadel** — Engenheiro de Software, Arquiteto e Product Owner.
-- **Antigravity (Google DeepMind)** — Co-Desenvolvedor, Arquiteto de IA e Auditor de Código.
-
----
-
-## 📄 Licença
-
-Este projeto está licenciado sob a [MIT License](LICENSE).
-## 🌌 O Multiverso de Temas
-O CockPit vive em um autêntico multiverso. Leia sobre a nossa arquitetura Multi-Theme e como hospedamos inúmeros visuais (Mundo Público, Médico, Kiosk) rodando isolados e simultaneamente na mesma aplicação acessando [docs/multiverse.md](docs/multiverse.md).

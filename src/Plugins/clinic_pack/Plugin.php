@@ -32,8 +32,16 @@ class Plugin extends AbstractPlugin
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/clinic/settings', [SettingsController::class, 'index'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/save', [SettingsController::class, 'save'], 'clinic_admin', ['admin']);
+            $router->addRoute('POST', '/admin/clinic/settings/insurance/add', [SettingsController::class, 'addInsurance'], 'clinic_admin', ['admin']);
+            $router->addRoute('POST', '/admin/clinic/settings/insurance/delete', [SettingsController::class, 'deleteInsurance'], 'clinic_admin', ['admin']);
+            $router->addRoute('POST', '/admin/clinic/settings/doctor/add', [SettingsController::class, 'addDoctor'], 'clinic_admin', ['admin']);
+            $router->addRoute('POST', '/admin/clinic/settings/doctor/delete', [SettingsController::class, 'deleteDoctor'], 'clinic_admin', ['admin']);
+            
             $router->addRoute('GET', '/cockpit/doctor', [CockpitController::class, 'renderDoctor'], 'cockpit', ['doctor', 'admin']);
             $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/profile', [CockpitController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('GET', '/cockpit/profile/2fa', [CockpitController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('POST', '/cockpit/profile/2fa', [CockpitController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
             $router->addRoute('GET', '/cockpit/nursing', [CockpitController::class, 'renderNursing'], 'cockpit', ['nurse', 'admin']);
             $router->addRoute('GET', '/admin/clinic', [CockpitController::class, 'renderAdminDashboard'], 'clinic_admin', ['admin']);
             $router->addRoute('GET', '/admin/clinic/shortcodes', [CockpitController::class, 'renderShortcodesCatalog'], 'clinic_admin', ['admin']);
@@ -99,3 +107,5 @@ class Plugin extends AbstractPlugin
         return __DIR__ . '/bundled_plugins';
     }
 }
+
+

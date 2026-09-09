@@ -1,113 +1,85 @@
-# 🚀 Domain System — The Business Engine That Never Dies
-
-> **Current Version:** `v1.2.0` — *"The Era of Architectural Resilience"*
-
-[🌐 Official Site (Docs)](https://hadelrachid.github.io/domain-system/) | [📄 Documentation](README-en.md) | [📜 Changelog](docs/CHANGELOG-en.md) | [🕵️ Audit](docs/auditoria-en.md)
-
----
-
-[🇧🇷 Leia em Português](README.md)
-
-## 💡 What is the Domain System?
-
-The **Domain System** (also known as **CockPit**) is a **Universal CMS, Framework, and Platform** built in native PHP (similar to the core of WordPress or Laravel). It is designed to run absolutely any enterprise application: from a medical clinic (via the default `clinic_pack`) to e-commerce, educational systems, or ERPs. The only limit is your imagination.
-
-It acts as a **true Web Operating System** for your business: the core (Kernel) provides the essential infrastructure (database, security, routing, dependency injection), and all business logic is encapsulated in independent and interchangeable **Plugins**.
-
-This project combines the best of both worlds: the **simplicity and performance of pure PHP** with the **robustness and scalability of enterprise architectures** (like microservices and SOLID principles).
+<div align="center">
+  <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
+  <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
+  <br><br>
+  <h1>🚀 Domain System (CockPit)</h1>
+  <p><strong>The Business Engine that Refuses to Die. A modular, hyper-resilient, and extensible framework.</strong></p>
+</div>
 
 ---
 
-## 🏗️ Architecture: An Engineering Masterpiece
+[🇧🇷 Leia em Português](README.md) | [📚 Documentation & Tutorials](docs/index_en.html) | [🛡️ Architecture Audit](docs/auditoria-en.md)
 
-The Domain System architecture was built to be **immune to chaos**. It is based on three fundamental pillars:
+## 🌐 What is the Domain System?
 
-### 1. The Immortal Kernel (Core)
-The heart of the system is minimalist and contains no business logic. Its only function is to orchestrate plugins and provide secure tools (DI Container, Event Dispatcher, Router, Session Manager). The Kernel is the universal "socket" where any plugin can connect. It acts as a **Global Gatekeeper**, managing memory and validating routes preemptively so Controllers never have to worry about security implementations.
+The **Domain System** (also known as **CockPit**) is a **CMS, Framework, and Universal Platform** written purely in PHP (following a philosophy similar to WordPress, but utilizing modern architectural concepts such as SOLID and Dependency Injection).
 
-### 2. The Plugin Ecosystem (Modules)
-Every feature — from authentication to billing — is an isolated Plugin. Plugins communicate **exclusively via events** (Event-Driven Architecture), ensuring that the failure of one does not compromise the whole. They are the "payload" that transforms the Kernel into a clinic, legal, or financial system. Everything works through Dependency Injection and strong decoupling (DIP and SRP).
+It was designed to run **absolutely any business application**. The limit is your imagination! It acts as a **true Web Operating System** for your business:
+- The **Core (Kernel)** provides essential low-level infrastructure: Database, Global CSRF Security, Routing, Sessions, and Event Dispatching.
+- All **business logic** is encapsulated in independent, pluggable, and interchangeable **Plugins** (such as the included `clinic_pack`, which transforms the system into a powerful Medical ERP).
 
-### 3. The Presentation Layer (Themes & Cockpits)
-The user interface is fully decoupled. Themes (frontend) consume data from Plugins via **Shortcodes** and a **Workspace** system (user profiles). This allows designers and frontend developers to work independently, without ever touching business logic.
+## ✨ Key Differentiators
 
----
+### ⚡ 1. Zero-Friction Installation (Wizard)
+Say goodbye to manual configuration files! The system features an **Automatic Installation Wizard**.
+Just open the project in your browser, and a user-friendly interface will guide you through database configuration, admin creation, and URL setup in seconds.
 
-## 🛡️ Resilience: The System That Never Dies
+### 🛡️ 2. No-Break Shield (The Immortal Circuit Breaker)
+Fatal errors (like a syntax error) bring traditional systems down. **Not the Domain System**.
+Thanks to our exclusive *Automatic Transfer Switch (Circuit Breaker)*, if a module or plugin attempts to cause a fatal crash, the system intercepts the power failure, isolates and deactivates the defective plugin, and keeps the entire system running. The administrator is safely notified.
 
-Failures happen. In Domain System, they are **contained, logged, and fixed without taking down the system**.
+### 🔒 3. Global CSRF Shielding
+Native and invisible security. The core automatically injects Cross-Site Request Forgery protections into all system forms dynamically.
 
-- **Circuit Breaker V2:** If a plugin causes a fatal error (syntax, database, memory), the Kernel automatically deactivates it and logs the incident. The rest of the system keeps running.
-- **Emergency Hatch:** If the authentication module fails, administrators can still access the system via a secure emergency route, using the server's `APP_KEY`.
-- **Cascade Effect:** If Plugin A depends on Plugin B, and B is deactivated by the Circuit Breaker, A is also deactivated to prevent chain failures.
-
----
-
-## ✨ Key Features
-
-- **100% PHP 8+** — Modern, clean, and object-oriented code.
-- **SOLID Architecture** — Every class has a single, well-defined responsibility.
-- **Event-Driven** — Plugins communicate via events, ensuring low coupling.
-- **Dependency Injection** — DI Container with autowiring.
-- **Repository Pattern** — Controllers never touch the database directly.
-- **Multi-Workspace** — Native support for multiple user profiles (Admin, Doctor, Receptionist, Lawyer).
-- **Audit & Monitoring** — Error supervision panel with detailed logs and "copy stack trace" button.
-- **AI Hub Integrated** — Plugin and form generator powered by Artificial Intelligence (Gemini, ChatGPT, etc.).
-- **Modular & Extensible** — Add or remove features without affecting the core.
+### 🎨 4. Theme Engine "CockPit" (Extensibility)
+Interfaces separated from logic! Create themes (CockPits) for doctors, secretaries, or patients without touching the back-end code.
+Soon, we will launch complete tutorials in our **[Wiki / Documentation](docs/)** teaching:
+- *How to develop your own Theme*
+- *How to build a Plugin from scratch*
 
 ---
 
-## 🎯 Who is this Project For?
+## 🚀 How to Install
 
-- **Developers and Agencies** - Build white-label solutions quickly for any market niche without reinventing the wheel.
-- **Software Architects** - A living laboratory of best practices (SOLID, Design Patterns, Event-Driven Architecture).
-- **Any Market Niche** - The base system comes with example modules (like the *Clinic Pack* for medical practices), but the plugin architecture allows transforming it into an ERP for law firms, retail, logistics, etc.
+1. **Clone the repository** to the public folder of your Apache/Nginx server (e.g., `htdocs` or `www`):
+   ```bash
+   git clone https://github.com/hadelrachid/domain-system.git
+   ```
 
----
+2. **Permissions (Linux/Mac):** Ensure the folder has write permissions for the web server.
+   ```bash
+   chmod -R 777 domain-system/storage
+   chmod -R 777 domain-system/config
+   ```
 
-## 🛠️ Technologies Used
+3. **Open in Browser:**
+   Go to `http://localhost/domain-system` (or your domain).
 
-| Layer           | Technology                                  |
-|-----------------|---------------------------------------------|
-| **Backend**     | PHP 8+ (Vanilla, Advanced OOP)              |
-| **Database**    | SQLite (with native PostgreSQL support)     |
-| **Frontend**    | HTML5, CSS3, JavaScript (Vanilla)           |
-| **Design Patterns** | DI, Event Dispatcher, Repository, Strategy, Adapter, Factory, Circuit Breaker |
-
----
-
-## 🚀 Installation & First Login
-
-To run the project locally:
-1. Clone the repository (`git clone https://github.com/hadelrachid/domain-system.git`)
-2. Access the project folder in your local server (Apache/XAMPP, Nginx, or PHP built-in server)
-3. Upon running the system for the first time, the database will be generated automatically.
-4. **Default Admin Login:**
-   - **Email:** `admin@admin.com`
-   - **Password:** `admin`
+4. **Installation Wizard:**
+   The system will detect that it is not configured and redirect you to the **Installation Wizard**. Follow the simple steps on the screen (database, admin user), and you're done!
 
 ---
 
-## 📖 Documentation & Resources
+## 📂 Architecture (Overview)
 
-- **[Developer Guide](DEVELOPER_GUIDE.md)** — Learn how to create plugins and themes from scratch.
-- **[Project Wiki](wiki/Home.md)** — Advanced concepts like Circuit Breaker, Emergency Hatch, and ACL.
-- **[Changelog](docs/CHANGELOG-en.md)** — Complete version history and fixes.
-- **[Roadmap](ROADMAP.md)** — The future of Domain System.
+```text
+/
+├── config/              # Dynamic settings generated by the panel (plugins, DB)
+├── public/              # Public directory (assets, index.php)
+├── storage/             # Generated files (error logs, cache)
+└── src/
+    ├── Core/            # The OS Brain (Router, Events, Container, Exceptions)
+    └── Plugins/         # Where the magic happens.
+        ├── auth/        # Core Authentication and 2FA System
+        ├── clinic_pack/ # Super-package that turns the system into a Medical Clinic!
+        └── installer/   # The setup wizard (Auto-disables after use)
+```
 
----
+## 🛠️ Contributing and Tutorials
 
-## 🤝 Collaborators
+Our goal is to turn this project into an ecosystem.
+You can already access our **[Developer Guide (DEVELOPER_GUIDE.md)](DEVELOPER_GUIDE.md)** to learn the technical fundamentals of how to extend the system. The `docs/` folder and the GitHub Wiki tab will soon receive even more advanced tutorials for programmers.
 
-This project is built by a mixed team of human and artificial intelligence:
+Built with ☕ and focused on architectural resilience.
 
-- **Rachid Hadel** — Software Engineer, Architect, and Product Owner.
-- **Antigravity (Google DeepMind)** — Co-Developer, AI Architect, and Code Auditor.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-## 🌌 The Theme Multiverse
-The CockPit lives in an authentic multiverse. Read about our Multi-Theme architecture and how we host countless visuals (Public World, Doctor, Kiosk) running isolated and simultaneously in the same application by accessing [docs/multiverse.md](docs/multiverse.md).

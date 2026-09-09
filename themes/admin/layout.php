@@ -83,14 +83,55 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const hasSubmenuLinks = document.querySelectorAll('.has-submenu > a');
+            const currentPath = window.location.pathname.replace(/\/$/, "");
+            
+            // 1. Encontra e marca o link ativo
+            let activeLinkFound = false;
+            document.querySelectorAll('#adminmenu a').forEach(link => {
+                let href = link.getAttribute('href');
+                if (!href.startsWith('http')) {
+                    href = '<?= BASE_URL ?>/' + href;
+                }
+                
+                // Limpa trailing slashes
+                let linkPath = new URL(href, window.location.origin).pathname.replace(/\/$/, "");
+                
+                if (linkPath === currentPath) {
+                    link.parentElement.classList.add('current');
+                    // Se for um link de submenu, abre o ul pai
+                    let parentUl = link.closest('ul[style*="none"]');
+                    if(parentUl) {
+                        parentUl.style.display = 'block';
+                        // Salva no localStorage para não perder ao clicar no header do pai
+                        localStorage.setItem('openMenu_' + parentUl.previousElementSibling.textContent.trim(), 'open');
+                        activeLinkFound = true;
+                    }
+                }
+            });
+
+            // 2. Comportamento do Accordion
             hasSubmenuLinks.forEach(link => {
+                const parent = link.parentElement;
+                const ul = parent.querySelector('ul');
+                const menuTitle = link.textContent.trim();
+                
+                // Restaura estado do localStorage
+                if (localStorage.getItem('openMenu_' + menuTitle) === 'open') {
+                    ul.style.display = 'block';
+                }
+
                 link.addEventListener('click', function(e) {
+                    // Previne apenas se for link morto ou âncora de menu
                     if (this.getAttribute('href') === '#' || this.getAttribute('href') === 'admin/clinic' || this.getAttribute('href') === 'admin/ai-hub') {
                         e.preventDefault();
-                        const parent = this.parentElement;
-                        const ul = parent.querySelector('ul');
                         if (ul) {
-                            ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+                            if (ul.style.display === 'none') {
+                                ul.style.display = 'block';
+                                localStorage.setItem('openMenu_' + menuTitle, 'open');
+                            } else {
+                                ul.style.display = 'none';
+                                localStorage.setItem('openMenu_' + menuTitle, 'closed');
+                            }
                         }
                     }
                 });

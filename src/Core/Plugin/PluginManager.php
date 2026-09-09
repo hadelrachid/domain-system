@@ -63,17 +63,22 @@ class PluginManager
                 $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
 
                 
-                // Se for sub-plugin de um Hub, o namespace pode ser diferente, vamos tentar inferir ou usar autoloading padrão do composer
-                // Mas como não usamos composer para eles, vamos fazer require do arquivo Plugin.php manualmente!
+                // Se for sub-plugin de um Hub, o namespace pode ser diferente.
+                // Lemos o arquivo para inferir o namespace correto ANTES do require, evitando re-declaração fatal.
                 if (!class_exists($pluginClass)) {
                     $pluginFile = $dir . '/Plugin.php';
                     if (file_exists($pluginFile)) {
-                        require_once $pluginFile;
-                        
-                        // Inferir o namespace real do arquivo, caso seja um sub-plugin aninhado
                         $fileContent = file_get_contents($pluginFile);
                         if (preg_match('/namespace\s+([^;]+);/', $fileContent, $matches)) {
-                            $pluginClass = $matches[1] . '\\Plugin';
+                            $inferredClass = $matches[1] . '\\Plugin';
+                            if (class_exists($inferredClass)) {
+                                $pluginClass = $inferredClass;
+                            } else {
+                                require_once $pluginFile;
+                                $pluginClass = $inferredClass;
+                            }
+                        } else {
+                            require_once $pluginFile;
                         }
                     }
                 }

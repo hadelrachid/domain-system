@@ -49,9 +49,23 @@ class Plugin extends AbstractPlugin
             }, 'Exibe as informações do sistema.', ['color' => 'Cor de fundo do widget']);
         });
 
-        $events->addListener('router.register', function(Router $router) {
-            // Redireciona a raiz para o admin
-            $router->addRoute('GET', '/', function() { header("Location: " . BASE_URL . "/admin"); exit; });
+        $events->addListener('router.register', function(Router $router) use ($sessionManager) {
+            // Redireciona a raiz para o admin ou cockpit
+            $router->addRoute('GET', '/', function() use ($sessionManager) {
+                if ($sessionManager->has('user_role')) {
+                    $app = \DomainSystem\Core\Application::getInstance();
+                    if ($app->getContainer()->has(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class)) {
+                        $registry = $app->getContainer()->make(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class);
+                        $provider = $registry->getProviderForRole($sessionManager->get('user_role'));
+                        if ($provider) {
+                            header("Location: " . BASE_URL . $provider->getDashboardRoute());
+                            exit;
+                        }
+                    }
+                }
+                header("Location: " . BASE_URL . "/admin");
+                exit;
+            });
 
             // Rota de Emergência (Independente de Auth)
             $router->addRoute('GET', '/admin/emergency', [\DomainSystem\Plugins\SystemAdmin\Controllers\EmergencyController::class, 'index']);

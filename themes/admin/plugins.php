@@ -36,7 +36,8 @@
         let w = 0;
         setInterval(() => { w += (100 - w) * 0.2; document.getElementById('progress-bar-fill').style.width = w + '%'; }, 200);
     ">
-        <input type="file" name="plugin_zip" accept=".zip" required style="margin-bottom: 15px;">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <input type="file" name="plugin_zip" accept=".zip" required style="margin-bottom: 15px;">
         <div id="upload-buttons" style="display: block;">
             <button type="submit" class="btn btn-activate" style="padding: 6px 14px; font-size: 14px;">Instalar Agora</button>
             <button type="button" class="btn" style="margin-left: 5px; color: #d63638; border-color: #d63638;" onclick="document.getElementById('upload-form').style.display='none'">Cancelar</button>
@@ -99,6 +100,7 @@
             <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <form method="POST" action="admin/plugins/toggle" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         
                         <?php if ($plugin['is_core']): ?>
@@ -114,6 +116,7 @@
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
                     <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
                         <button type="submit" class="btn" style="color: #d63638; border-color: transparent; background: transparent; text-decoration: underline;">Excluir</button>

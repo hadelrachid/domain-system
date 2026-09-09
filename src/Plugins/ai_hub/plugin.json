@@ -1,7 +1,0 @@
-{
-    "name": "ai_hub",
-    "version": "1.0.0",
-    "description": "Central de Inteligencia Artificial. Conecta LLMs ao Kernel via Interfaces restritas.",
-    "core": false,
-    "dependencies": []
-}

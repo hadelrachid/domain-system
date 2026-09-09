@@ -26,6 +26,7 @@
             <h2 style="margin-top: 0; font-size: 1.2rem; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Credenciais da API</h2>
             
             <form action="admin/whatsapp/save" method="POST">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #475569;">Instance ID</label>
                     <input type="text" name="zapi_instance" value="<?= htmlspecialchars($settings['instance'] ?? '') ?>" placeholder="Ex: 3B9A8C7F9D9F8E7E9F8E7E9F8" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>
@@ -46,6 +47,7 @@
             <p style="color: #64748b; font-size: 0.9rem;">Envie uma mensagem de teste para verificar se a conexão está funcionando.</p>
             
             <form action="admin/whatsapp/test" method="POST">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #475569;">Telefone (com DDD)</label>
                     <input type="text" name="test_phone" placeholder="Ex: 5511999999999" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;" required>

@@ -3,6 +3,7 @@
         
         <!-- Botão de Sincronização com o Site Principal -->
         <form method="POST" action="<?= BASE_URL ?>/admin/doctors/sync-wp" style="margin:0;" onsubmit="return confirm('Isso fará o download dos médicos cadastrados no site principal (WordPress). Deseja continuar?');">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <button type="submit" class="page-title-action" style="background: none; cursor: pointer; padding: 4px 8px; text-decoration: none;">
                 Sincronizar via WordPress
             </button>
@@ -33,6 +34,7 @@
         <div class="upload-box form-panel">
             <h2 style="margin-top: 0;">Novo Médico</h2>
             <form method="POST" action="<?= BASE_URL ?>/admin/doctors">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <label style="display:block; margin-bottom: 5px;">Nome do Profissional</label>
                 <input type="text" name="name" required style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 
@@ -88,6 +90,7 @@
                                     <div style="display:flex; gap:5px;">
                                         <a href="<?= BASE_URL ?>/admin/doctors/edit?id=<?= $d['id'] ?>" class="btn btn-activate" style="text-decoration:none;">Editar</a>
                                         <form method="POST" action="<?= BASE_URL ?>/admin/doctors/delete" onsubmit="return confirm('Tem certeza que deseja excluir <?= htmlspecialchars($d['name']) ?>?');">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                             <input type="hidden" name="id" value="<?= $d['id'] ?>">
                                             <button type="submit" class="btn btn-deactivate">Excluir</button>
                                         </form>

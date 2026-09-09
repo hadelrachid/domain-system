@@ -9,6 +9,7 @@
     <?php endif; ?>
 
     <form method="POST" action="<?= BASE_URL ?>/admin/patients">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         <label style="display:block; margin-bottom: 5px;">Nome Completo</label>
         <input type="text" name="name" required style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 

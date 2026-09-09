@@ -58,25 +58,23 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $connection->getPdo()->exec("
-            CREATE TABLE IF NOT EXISTS patients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(255) NOT NULL,
-                cpf VARCHAR(14) NOT NULL UNIQUE,
-                email VARCHAR(255) NULL,
-                phone VARCHAR(20) NULL,
-                birthdate DATE NULL,
-                zip_code VARCHAR(10) NULL,
-                address VARCHAR(255) NULL,
-                address_number VARCHAR(20) NULL,
-                address_complement VARCHAR(100) NULL,
-                city VARCHAR(100) NULL,
-                state VARCHAR(50) NULL,
-                insurance_number VARCHAR(100) NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('patients', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('cpf', 14)->unique();
+            $table->string('email')->nullable();
+            $table->string('phone', 20)->nullable();
+            $table->date('birthdate')->nullable();
+            $table->string('zip_code', 10)->nullable();
+            $table->string('address')->nullable();
+            $table->string('address_number', 20)->nullable();
+            $table->string('address_complement', 100)->nullable();
+            $table->string('neighborhood', 100)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->string('state', 50)->nullable();
+            $table->string('insurance_number', 100)->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+        });
     }
 }

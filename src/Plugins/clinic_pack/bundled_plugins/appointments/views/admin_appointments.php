@@ -76,7 +76,9 @@
                                 <?php if ($a['status'] !== 'Cancelado'): ?>
                                     <div style="display:flex; flex-direction:column; gap:5px;">
                                         <div style="display:flex; gap:5px;">
-                                            <form method="POST" action="<?= BASE_URL ?>/admin/appointments/status" style="margin:0;">
+                                            <form method="POST" action="<?= BASE_URL ?>/admin/appointments/status" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
                                                 <input type="hidden" name="id" value="<?= $a['id'] ?>">
                                                 <select name="status" onchange="this.form.submit()" style="font-size: 11px; padding: 2px;">
                                                     <option value="">Alterar...</option>

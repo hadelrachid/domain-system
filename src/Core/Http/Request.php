@@ -21,7 +21,21 @@ class Request
 
     public static function capture(): self
     {
-        return new self($_GET, $_POST, $_SERVER, $_COOKIE, $_FILES);
+        $post = $_POST;
+
+        // Se o corpo for JSON (enviado pelo fetch do front-end), parsear aqui
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (str_contains($contentType, 'application/json')) {
+            $rawBody = file_get_contents('php://input');
+            if ($rawBody) {
+                $jsonData = json_decode($rawBody, true);
+                if (is_array($jsonData)) {
+                    $post = array_merge($post, $jsonData);
+                }
+            }
+        }
+
+        return new self($_GET, $post, $_SERVER, $_COOKIE, $_FILES);
     }
 
     public function input(string $key, $default = null)

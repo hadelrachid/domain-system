@@ -1,13 +1,21 @@
 {
-    "0": false,
-    "1": false,
     "ApiGateway": true,
     "auth": true,
     "clinic_pack": true,
-    "dev_simulator": true,
+    "dev_simulator": false,
     "pages": true,
     "settings": true,
-    "ai_hub": true,
+    "appointments_api": true,
     "appointments": true,
-    "patients": true
+    "patients": true,
+    "doctors": true,
+    "triage": true,
+    "medical_records": true,
+    "finance": true,
+    "whatsapp": true,
+    "Database": false,
+    "nobreak_shield": true,
+    "error_tester": true,
+    "Error Tester": false,
+    "No-Break Shield": true
 }

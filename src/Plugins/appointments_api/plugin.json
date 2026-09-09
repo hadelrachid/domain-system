@@ -1,0 +1,7 @@
+{
+    "name": "appointments_api",
+    "description": "API REST para Integracao com WordPress",
+    "version": "1.0.0",
+    "author": "System",
+    "active": true
+}

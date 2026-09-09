@@ -7,12 +7,13 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\appointments\Controllers\AppointmentController;
 use DomainSystem\Plugins\appointments\Controllers\ApiController;
+use DomainSystem\Plugins\appointments\Controllers\BookingController;
+use DomainSystem\Plugins\appointments\Controllers\ScheduleController;
 
 class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-
         /** @var EventDispatcher $events */
         $events = $this->events();
 
@@ -35,7 +36,7 @@ class Plugin extends AbstractPlugin
             $menus[] = [
                 'title' => 'Histórico',
                 'url' => '/admin/appointments/history',
-                'icon' => '🗄️'
+                'icon' => '🕒'
             ];
             return $menus;
         });
@@ -47,9 +48,19 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus'], 'appointments', ['admin', 'receptionist', 'doctor']);
             
             $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            
+            // Admin: Gestão de Horários do Médico
+            $router->addRoute('GET', '/admin/doctors/schedule', [ScheduleController::class, 'editSchedule'], 'doctors', ['admin', 'doctor']);
+            $router->addRoute('POST', '/admin/doctors/schedule/save', [ScheduleController::class, 'saveSchedule'], 'doctors', ['admin', 'doctor']);
+            
             // API Routes
             $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking'], 'appointments', ['admin', 'receptionist', 'doctor']);
             $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection'], 'appointments', ['admin', 'receptionist', 'doctor']);
+
+            // Public Routes
+            $router->addRoute('GET', '/agendamento', [BookingController::class, 'showBookingForm'], 'public', []);
+            $router->addRoute('GET', '/api/agendamento/slots', [ScheduleController::class, 'getAvailableSlots'], 'public', []);
+            $router->addRoute('POST', '/api/agendamento/submit', [BookingController::class, 'submitBooking'], 'public', []);
         });
 
         // Registrar Shortcodes

@@ -19,6 +19,7 @@
     <p>Digite os 6 dígitos gerados pelo aplicativo para confirmar que a sincronização funcionou.</p>
     
     <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
         <input type="hidden" name="secret" value="<?= $secret ?>">
         

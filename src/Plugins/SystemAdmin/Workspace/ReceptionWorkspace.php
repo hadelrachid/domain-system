@@ -20,6 +20,6 @@ class ReceptionWorkspace implements WorkspaceInterface
 
     public function getThemeName(): string
     {
-        return 'secretary';
+        return 'admin';
     }
 }

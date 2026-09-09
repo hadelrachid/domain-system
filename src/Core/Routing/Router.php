@@ -44,6 +44,7 @@ class Router
         // Busca rota exata
         if (isset($this->routes[$method][$uri])) {
             $this->checkAuthorization($this->routes[$method][$uri]['roles']);
+            $this->checkCsrfToken($request, $uri);
             return $this->executeHandler($this->routes[$method][$uri]['handler'], [], $request);
         }
 
@@ -53,11 +54,43 @@ class Router
             if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
                 array_shift($matches);
                 $this->checkAuthorization($config['roles']);
+                $this->checkCsrfToken($request, $uri);
                 return $this->executeHandler($config['handler'], $matches, $request);
             }
         }
 
         throw new Exception("Rota não encontrada: $uri", 404);
+    }
+
+        private function checkCsrfToken(\DomainSystem\Core\Http\Request $request, string $uri): void
+    {
+        // Apenas aplica validação CSRF para requisições POST
+        if (strtoupper($request->method()) !== 'POST') {
+            return;
+        }
+
+        // Ignora CSRF para rotas de API públicas ou webhooks que não usam sessão
+        if (str_starts_with($uri, '/api/')) {
+            return;
+        }
+
+        try {
+            $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+            $token = $request->input('csrf_token') ?? '';
+            
+            if (!$session->validateCsrfToken($token)) {
+                http_response_code(403);
+                $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
+                      . '<h2 style="color:#d63638;">Acesso Negado 🛑 (CSRF)</h2>'
+                      . '<p>Sua requisição foi bloqueada por motivos de segurança (Token Inválido ou Expirado).</p>'
+                      . '<a href="javascript:history.back()">Voltar</a>'
+                      . '</div>';
+                echo $html;
+                exit;
+            }
+        } catch (\Throwable $e) {
+            // Ignora se não conseguir instanciar a sessão
+        }
     }
 
     private function checkAuthorization(array $roles): void

@@ -38,38 +38,31 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
         
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS medical_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                appointment_id INTEGER NOT NULL,
-                patient_id INTEGER NOT NULL,
-                doctor_id INTEGER NOT NULL,
-                anamnese TEXT NULL,
-                exame_fisico TEXT NULL,
-                cid_10 TEXT NULL,
-                prescricao TEXT NULL,
-                evolucao TEXT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NULL,
-                FOREIGN KEY (appointment_id) REFERENCES appointments(id),
-                FOREIGN KEY (patient_id) REFERENCES patients(id),
-                FOREIGN KEY (doctor_id) REFERENCES doctors(id)
-            )
-        ");
+        $schema->create('medical_records', function ($table) {
+            $table->id();
+            $table->integer('appointment_id');
+            $table->integer('patient_id');
+            $table->integer('doctor_id');
+            $table->text('anamnese')->nullable();
+            $table->text('exame_fisico')->nullable();
+            $table->text('cid_10')->nullable();
+            $table->text('prescricao')->nullable();
+            $table->text('evolucao')->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+            $table->foreign('appointment_id', 'id', 'appointments');
+            $table->foreign('patient_id', 'id', 'patients');
+            $table->foreign('doctor_id', 'id', 'doctors');
+        });
 
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS medical_exams (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                appointment_id INTEGER NOT NULL,
-                file_name VARCHAR(255) NOT NULL,
-                file_path VARCHAR(255) NOT NULL,
-                uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (appointment_id) REFERENCES appointments(id)
-            )
-        ");
+        $schema->create('medical_exams', function ($table) {
+            $table->id();
+            $table->integer('appointment_id');
+            $table->string('file_name', 255);
+            $table->string('file_path', 255);
+            $table->datetime('uploaded_at')->nullable()->default('CURRENT_TIMESTAMP');
+            $table->foreign('appointment_id', 'id', 'appointments');
+        });
     }
 }

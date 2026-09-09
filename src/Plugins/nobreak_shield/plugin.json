@@ -1,0 +1,8 @@
+{
+    "name": "No-Break Shield",
+    "description": "Filtro de rede que intercepta erros na interface antes de atingirem o disjuntor global.",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "main": "DomainSystem\\Plugins\\nobreak_shield\\Plugin",
+    "dependencies": []
+}

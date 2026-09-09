@@ -27,5 +27,9 @@ class Plugin extends AbstractPlugin
         $this->container->bind(QueryBuilder::class, function($c) {
             return new QueryBuilder($c->make(Connection::class));
         });
+
+        $this->container->bind(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class, function($c) {
+            return new \DomainSystem\Plugins\Database\Schema\SchemaBuilder($c->make(Connection::class));
+        });
     }
 }

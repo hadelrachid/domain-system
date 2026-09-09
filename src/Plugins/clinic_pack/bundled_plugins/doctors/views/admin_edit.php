@@ -12,6 +12,7 @@
 
     <div class="upload-box" style="max-width: 600px; margin-top: 20px;">
         <form method="POST" action="<?= BASE_URL ?>/admin/doctors/update">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <input type="hidden" name="id" value="<?= $doctor['id'] ?>">
 
             <div style="display:flex; gap:15px; margin-bottom: 15px;">

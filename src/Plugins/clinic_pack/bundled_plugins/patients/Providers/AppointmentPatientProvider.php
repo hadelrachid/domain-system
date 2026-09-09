@@ -59,4 +59,32 @@ class AppointmentPatientProvider implements PatientReaderInterface
             'created_at' => date('Y-m-d H:i:s')
         ]);
     }
+
+    public function findPatientByEmailOrPhone(string $email, string $phone): ?array
+    {
+        $patients = $this->repository->findAll();
+        foreach ($patients as $p) {
+            $pEmail = $p['email'] ?? '';
+            $pPhone = $p['phone'] ?? '';
+            
+            if (!empty($email) && $pEmail === $email) {
+                return $p;
+            }
+            if (!empty($phone) && $pPhone === $phone) {
+                return $p;
+            }
+        }
+        return null;
+    }
+
+    public function createPatientFull(array $data): int
+    {
+        if (!isset($data['created_at'])) {
+            $data['created_at'] = date('Y-m-d H:i:s');
+        }
+        if (!isset($data['cpf']) || empty($data['cpf'])) {
+            $data['cpf'] = '000.000.000-00';
+        }
+        return $this->repository->save($data);
+    }
 }

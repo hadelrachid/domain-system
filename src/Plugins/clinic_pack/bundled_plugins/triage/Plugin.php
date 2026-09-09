@@ -39,24 +39,20 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        $connection = $this->db();
-        $db = $connection->getPdo();
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS triage (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                appointment_id INTEGER NOT NULL,
-                weight DECIMAL(5,2),
-                height DECIMAL(5,2),
-                blood_pressure VARCHAR(20),
-                temperature DECIMAL(4,1),
-                heart_rate INTEGER,
-                sp02 INTEGER,
-                blood_sugar INTEGER,
-                notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(appointment_id) REFERENCES appointments(id)
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('triage', function ($table) {
+            $table->id();
+            $table->integer('appointment_id');
+            $table->decimal('weight', 5, 2)->nullable();
+            $table->decimal('height', 5, 2)->nullable();
+            $table->string('blood_pressure', 20)->nullable();
+            $table->decimal('temperature', 4, 1)->nullable();
+            $table->integer('heart_rate')->nullable();
+            $table->integer('sp02')->nullable();
+            $table->integer('blood_sugar')->nullable();
+            $table->text('notes')->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+            $table->foreign('appointment_id', 'id', 'appointments');
+        });
     }
 }
-

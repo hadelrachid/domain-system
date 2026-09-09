@@ -1,0 +1,7 @@
+{
+    "name": "Agendamento Online",
+    "description": "Página pública responsiva para agendamento de consultas. Acessível por pacientes via celular, tablet ou desktop.",
+    "version": "1.0.0",
+    "author": "Domain System",
+    "type": "public"
+}

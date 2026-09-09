@@ -22,6 +22,10 @@ class Plugin extends AbstractPlugin
         $events->addListener('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'index'], 'settings', ['admin']);
             $router->addRoute('POST', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'save'], 'settings', ['admin']);
+            
+            // Factory Reset
+            $router->addRoute('GET', '/admin/settings/factory-reset', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'factoryReset'], 'settings', ['admin']);
+            $router->addRoute('POST', '/admin/settings/factory-reset/execute', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'executeFactoryReset'], 'settings', ['admin']);
         });
 
         // Adiciona ao Menu se for admin
@@ -41,16 +45,15 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('settings', function ($table) {
+            $table->string('key_name', 100)->primary();
+            $table->text('key_value')->nullable();
+        });
+
         /** @var Connection $connection */
         $connection = $this->db();
         $db = $connection->getPdo();
-        
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS settings (
-                key_name VARCHAR(100) PRIMARY KEY,
-                key_value TEXT NULL
-            )
-        ");
 
         // Inserir valores padro se a tabela estiver vazia
         $stmt = $db->query("SELECT COUNT(*) FROM settings");

@@ -26,6 +26,15 @@ class ApiAuthMiddleware
     public function handle(string $uri, Request $request)
     {
         if (str_starts_with($uri, "/api/")) {
+            // Rotas públicas de agendamento (pacientes externos, sem token)
+            $publicRoutes = [
+                '/api/agendamento/submit',
+                '/api/agendamento/slots',
+            ];
+            if (in_array($uri, $publicRoutes)) {
+                return; // Permite sem autenticação
+            }
+
             $headers = function_exists("apache_request_headers") ? apache_request_headers() : [];
             $authHeader = $request->server["HTTP_AUTHORIZATION"] ?? $headers["Authorization"] ?? "";
             

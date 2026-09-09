@@ -76,4 +76,40 @@ class SqliteAppointmentRepository implements AppointmentRepositoryInterface
         $stmt = $this->db->prepare("UPDATE appointments SET status = :status WHERE id = :id");
         $stmt->execute([':status' => $status, ':id' => $id]);
     }
+
+    public function isSlotOccupied(int $doctorId, string $date, string $time): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM appointments 
+            WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ?
+              AND status NOT IN ('Cancelada', 'Cancelado')
+        ");
+        $stmt->execute([$doctorId, $date, $time]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function getBookedSlots(int $doctorId, string $date, array $candidateSlots): array
+    {
+        if (empty($candidateSlots)) return [];
+        
+        $placeholders = implode(',', array_fill(0, count($candidateSlots), '?'));
+        $stmt = $this->db->prepare("
+            SELECT appointment_time 
+            FROM appointments 
+            WHERE doctor_id = ? 
+              AND appointment_date = ? 
+              AND appointment_time IN ($placeholders)
+              AND status NOT IN ('Cancelada', 'Cancelado')
+        ");
+        $params = [$doctorId, $date];
+        foreach ($candidateSlots as $slot) {
+            $params[] = $slot . ':00';
+        }
+        $stmt->execute($params);
+        $rawBooked = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        
+        return array_map(function($time) {
+            return substr($time, 0, 5); // Convert HH:MM:SS to HH:MM
+        }, $rawBooked);
+    }
 }

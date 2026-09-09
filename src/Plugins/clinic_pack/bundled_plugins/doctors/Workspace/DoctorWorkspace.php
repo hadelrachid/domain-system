@@ -20,6 +20,7 @@ class DoctorWorkspace implements WorkspaceInterface
 
     public function getThemeName(): string
     {
-        return 'doctor';
+        // Use the admin theme since there is no standalone 'doctor' theme folder
+        return 'admin';
     }
 }

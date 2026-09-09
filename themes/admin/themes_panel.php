@@ -73,6 +73,7 @@
                                     <span style="font-size: 12px; font-weight: 600;">Ver</span>
                                 </a>
                                 <form method="POST" action="<?= BASE_URL ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0; margin-left: auto;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
                                     <button type="submit" class="btn btn-deactivate" style="border: 1px solid #d63638; border-radius: 4px; background: transparent; cursor: pointer; color: #d63638; text-decoration: none; font-size: 12px; font-weight: 600; padding: 4px 8px; transition: all 0.2s;" onmouseover="this.style.background='#d63638'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#d63638';">Excluir</button>
                                 </form>
@@ -92,7 +93,8 @@
         <form method="POST" action="<?= BASE_URL ?>/admin/themes/create">
             <div style="margin-bottom: 15px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 5px;">Nome do Tema <span style="color:#d63638;">*</span></label>
-                <input type="text" name="theme_name" required style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 3px; box-sizing: border-box;">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <input type="text" name="theme_name" required style="width: 100%; padding: 8px; border: 1px solid #8c8f94; border-radius: 3px; box-sizing: border-box;">
                 <p style="font-size: 11px; color: #646970; margin-top: 4px;">Isso vai gerar a pasta e o nome de exibição.</p>
             </div>
             <div style="margin-bottom: 15px;">
@@ -119,7 +121,8 @@
         
         <form method="POST" action="<?= BASE_URL ?>/admin/themes/upload" enctype="multipart/form-data">
             <div style="margin-bottom: 20px; padding: 20px; border: 2px dashed #c3c4c7; text-align: center; border-radius: 4px;">
-                <input type="file" name="theme_zip" accept=".zip" required id="theme_zip_input">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <input type="file" name="theme_zip" accept=".zip" required id="theme_zip_input">
             </div>
             
             <div style="display: flex; justify-content: space-between;">

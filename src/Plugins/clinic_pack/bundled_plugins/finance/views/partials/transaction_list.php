@@ -41,6 +41,7 @@
                         <td style="padding: 12px; text-align: center;">
                             <?php if (!$isPaid): ?>
                                 <form action="<?= BASE_URL ?>/admin/finance/status" method="POST" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="id" value="<?= $t['id'] ?>">
                                     <input type="hidden" name="status" value="PAID">
                                     <button type="submit" style="background: #22c55e; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold;" title="Marcar como Pago">

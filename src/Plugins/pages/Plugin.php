@@ -48,18 +48,13 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
-        
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS pages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                slug VARCHAR(255) UNIQUE NOT NULL,
-                title VARCHAR(255) NOT NULL,
-                content TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('pages', function ($table) {
+            $table->id();
+            $table->string('slug')->unique();
+            $table->string('title');
+            $table->text('content')->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+        });
     }
 }

@@ -56,22 +56,30 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('doctors', function ($table) {
+            $table->id();
+            $table->integer('wp_id')->nullable();
+            $table->string('name', 100);
+            $table->string('crm', 50)->nullable();
+            $table->string('specialty', 100)->nullable();
+            $table->integer('consultation_time')->default(30);
+            $table->string('photo_url', 255)->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+        });
+
+        $schema->create('doctor_schedules', function ($table) {
+            $table->id();
+            $table->integer('doctor_id');
+            $table->integer('day_of_week');
+            $table->string('start_time', 5);
+            $table->string('end_time', 5);
+            $table->integer('slot_duration')->default(30);
+            $table->boolean('is_active')->default(1);
+            $table->foreign('doctor_id', 'id', 'doctors');
+        });
         
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS doctors (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                wp_id INTEGER NULL,
-                name VARCHAR(100) NOT NULL,
-                crm VARCHAR(50) NULL,
-                specialty VARCHAR(100) NULL,
-                consultation_time INTEGER DEFAULT 30,
-                photo_url VARCHAR(255) NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+        try { $db->exec("ALTER TABLE doctors ADD COLUMN user_id INTEGER NULL"); } catch (\Exception $e) {}
     }
 }
-

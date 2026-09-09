@@ -28,6 +28,8 @@
         <?php endif; ?>
         
         <form method='POST' action='<?= BASE_URL ?>/login'>
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
             
             <?php if (isset($_SESSION['pending_2fa_email'])): ?>
                 

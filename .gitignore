@@ -9,3 +9,5 @@ project.txt
 test_*.php
 tests/
 auditoria/
+
+database.sqlite

@@ -11,6 +11,23 @@ class SessionManager
             session_name('DS_SESS_' . substr(md5(__DIR__), 0, 8));
             session_start();
         }
+
+        if (!$this->has('csrf_token')) {
+            $this->set('csrf_token', bin2hex(random_bytes(32)));
+        }
+    }
+
+    public function getCsrfToken(): string
+    {
+        return $this->get('csrf_token', '');
+    }
+
+    public function validateCsrfToken(?string $token): bool
+    {
+        if (empty($token) || !$this->has('csrf_token')) {
+            return false;
+        }
+        return hash_equals($this->get('csrf_token'), $token);
     }
 
     public function get(string $key, $default = null)

@@ -207,14 +207,20 @@ class AppointmentController
 
     public function renderShortcodeBooking(array $attributes = []): string
     {
-        $preSelectedDoctorId = $attributes['doctor_id'] ?? null;
-        
-        $patients = $this->patientReader->getAllPatients();
-        $doctors = $this->doctorReader->getAllDoctors();
+        return $this->renderShortcodeBookingPublic($attributes);
+    }
 
-        ob_start();
-        include __DIR__ . '/../views/partials/booking_form.php';
-        return ob_get_clean();
+    public function renderShortcodeBookingPublic(array $attributes = []): string
+    {
+        $container = \DomainSystem\Core\Application::getInstance()->getContainer();
+        
+        // Em vez de duplicar lógica, chamamos o BookingController passando um Request simulado com &shortcode=1
+        $request = new \DomainSystem\Core\Http\Request(['shortcode' => '1'], [], [], [], [], []);
+        
+        $bookingController = $container->make(\DomainSystem\Plugins\appointments\Controllers\BookingController::class);
+        $response = $bookingController->showBookingForm($request);
+        
+        return $response->getContent();
     }
 }
 

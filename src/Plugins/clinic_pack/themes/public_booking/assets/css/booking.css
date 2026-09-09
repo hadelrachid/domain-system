@@ -1,0 +1,514 @@
+/* ============================================
+   AGENDAMENTO ONLINE - DAHER CLÍNICA
+   CSS Mobile-First & Responsivo
+   ============================================ */
+
+:root {
+    --primary: #1A365D;
+    --primary-light: #2A4A7F;
+    --secondary: #C5A880;
+    --secondary-dark: #A88B62;
+    --accent: #E2C296;
+    --bg-color: #F8F9FA;
+    --bg-card: #FFFFFF;
+    --text-dark: #333333;
+    --text-light: #666666;
+    --text-muted: #999999;
+    --white: #FFFFFF;
+    --success: #28a745;
+    --success-bg: #d4edda;
+    --error: #dc3545;
+    --error-bg: #f8d7da;
+    --border: #e0e0e0;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 16px 40px rgba(0,0,0,0.1);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 30px;
+    --transition: all 0.3s ease;
+}
+
+/* ============================================
+   RESET & BASE (Mobile-First)
+   ============================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.booking-widget-container {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.booking-header-bar {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.booking-header-bar .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--white);
+}
+
+.booking-header-bar .logo-img {
+    max-height: 36px;
+    width: auto;
+}
+
+.booking-header-bar .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    color: var(--secondary);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.booking-header-bar .logo-text .accent {
+    color: var(--white);
+}
+
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+.booking-main {
+    flex: 1;
+    padding: 20px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.booking-container {
+    width: 100%;
+    max-width: 720px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    border-top: 4px solid var(--secondary);
+    padding: 24px 20px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   BOOKING TITLE
+   ============================================ */
+.booking-title {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.booking-title h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--primary);
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.booking-title p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.booking-title .icon-calendar {
+    font-size: 2.5rem;
+    color: var(--secondary);
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* ============================================
+   ALERT MESSAGES
+   ============================================ */
+.alert {
+    display: none;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.alert-success {
+    background-color: var(--success-bg);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: var(--error-bg);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.88rem;
+    letter-spacing: 0.3px;
+}
+
+.form-group label .required {
+    color: var(--error);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-dark);
+    background-color: var(--white);
+    transition: var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.2);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* Select com seta customizada */
+select.form-control {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C5A880' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 90px;
+}
+
+/* Grid de 2 colunas (colapsável) */
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ============================================
+   SLOTS DE HORÁRIO (Botões Clicáveis)
+   ============================================ */
+.slots-container {
+    margin-bottom: 18px;
+}
+
+.slots-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.88rem;
+}
+
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.slot-btn {
+    padding: 10px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--text-dark);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.slot-btn:hover {
+    border-color: var(--secondary);
+    background-color: rgba(197, 168, 128, 0.08);
+}
+
+.slot-btn.selected {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(26, 54, 93, 0.25);
+    transform: scale(1.02);
+}
+
+.slot-btn:disabled {
+    background-color: #f0f0f0;
+    color: var(--text-muted);
+    border-color: #e8e8e8;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.slots-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.slots-loading i {
+    margin-right: 6px;
+}
+
+.slots-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background: #f9f9f9;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+.slots-hint {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #eef1f5 100%);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+.slots-hint i {
+    color: var(--secondary);
+    margin-right: 4px;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+.btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-full);
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.booking-footer {
+    text-align: center;
+    padding: 20px 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: auto;
+}
+
+.booking-footer a {
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+.booking-footer a:hover {
+    text-decoration: underline;
+}
+
+.booking-footer .footer-divider {
+    margin: 0 8px;
+    color: var(--border);
+}
+
+/* ============================================
+   SEGURANÇA / TRUST BADGE
+   ============================================ */
+.trust-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 10px;
+    background: #f0f7f0;
+    border-radius: var(--radius-sm);
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.trust-badge i {
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   RESPONSIVO: TABLET (>= 600px)
+   ============================================ */
+@media (min-width: 600px) {
+    .booking-header-bar {
+        padding: 14px 24px;
+    }
+
+    .booking-header-bar .logo-text {
+        font-size: 1.3rem;
+    }
+
+    .booking-header-bar .logo-img {
+        max-height: 42px;
+    }
+
+    .booking-main {
+        padding: 30px 24px;
+    }
+
+    .booking-container {
+        padding: 32px 30px;
+        border-radius: var(--radius-lg);
+    }
+
+    .booking-title h1 {
+        font-size: 1.9rem;
+    }
+
+    .booking-title p {
+        font-size: 0.95rem;
+    }
+
+    /* 2 colunas lado a lado */
+    .form-row {
+        flex-direction: row;
+        gap: 16px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    /* 4 slots por linha */
+    .slots-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+}
+
+/* ============================================
+   RESPONSIVO: DESKTOP (>= 992px)
+   ============================================ */
+@media (min-width: 992px) {
+    .booking-header-bar {
+        padding: 16px 40px;
+    }
+
+    .booking-header-bar .logo-text {
+        font-size: 1.5rem;
+    }
+
+    .booking-header-bar .logo-img {
+        max-height: 48px;
+    }
+
+    .booking-main {
+        padding: 40px 24px;
+        align-items: center;
+    }
+
+    .booking-container {
+        padding: 40px;
+    }
+
+    .booking-title h1 {
+        font-size: 2.2rem;
+    }
+
+    /* 5 slots por linha */
+    .slots-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .slot-btn {
+        padding: 12px 10px;
+    }
+}
+
+/* ============================================
+   ACESSIBILIDADE: REDUÇÃO DE ANIMAÇÕES
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+    }
+}

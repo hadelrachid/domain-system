@@ -33,6 +33,10 @@ class AuthController
     public function showLoginForm(\DomainSystem\Core\Http\Request $request)
     {
         if ($this->session->has('user_id')) {
+            $provider = $this->cockpitRegistry->getProviderForRole($this->session->get('user_role'));
+            if ($provider) {
+                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . $provider->getDashboardRoute());
+            }
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
         }
 

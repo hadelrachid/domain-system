@@ -48,22 +48,17 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
-        
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS financial_transactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type VARCHAR(20) NOT NULL, -- 'INCOME' ou 'EXPENSE'
-                amount DECIMAL(10, 2) NOT NULL,
-                description TEXT NOT NULL,
-                due_date DATE NOT NULL,
-                status VARCHAR(20) DEFAULT 'PENDING', -- 'PENDING' ou 'PAID'
-                patient_id INTEGER NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(patient_id) REFERENCES patients(id)
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('financial_transactions', function ($table) {
+            $table->id();
+            $table->string('type', 20); // 'INCOME' ou 'EXPENSE'
+            $table->decimal('amount', 10, 2);
+            $table->text('description');
+            $table->date('due_date');
+            $table->string('status', 20)->default('PENDING'); // 'PENDING' ou 'PAID'
+            $table->integer('patient_id')->nullable();
+            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+            $table->foreign('patient_id', 'id', 'patients');
+        });
     }
 }

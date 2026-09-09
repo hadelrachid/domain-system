@@ -11,6 +11,7 @@
     </div>
 
     <form method="POST" action="<?= BASE_URL ?>/admin/triage/save/<?= $appointment['id'] ?>" class="upload-box" style="background: #fff;">
+    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div>
                 <label style="display:block; font-weight:bold; margin-bottom:5px;">Peso (kg)</label>
