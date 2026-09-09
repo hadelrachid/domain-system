@@ -9,7 +9,7 @@
 
 ---
 
-[🇺🇸 Read in English](README-en.md) | [📚 Documentação & Tutoriais](docs/index.html) | [🛡️ Auditoria Arquitetural](docs/auditoria.md)
+[🇺🇸 Read in English](README-en.md) | [📚 Documentação & Tutoriais]( https://hadelrachid.github.io/domain-system/) | [🛡️ Auditoria Arquitetural](docs/auditoria.md)
 
 ## 🌐 O Que é o Domain System?
 
