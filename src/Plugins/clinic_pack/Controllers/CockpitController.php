@@ -221,6 +221,13 @@ class CockpitController
             $stmt->execute([$twoFactorType, $userId]);
         }
         
+        $dispatcher = \DomainSystem\Core\Application::getInstance()->getDispatcher();
+        $dispatcher->dispatch('cockpit.profile.save', (string)$userId, $request);
+        
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            return new \DomainSystem\Core\Http\Response(json_encode(['success' => true, 'message' => 'Configurações salvas com sucesso!']), 200, ['Content-Type' => 'application/json']);
+        }
+        
         // Redirecionar de volta para a mesma tela
         $referer = $_SERVER['HTTP_REFERER'] ?? (BASE_URL . "/admin");
         $redirectUrl = strpos($referer, '?') !== false ? $referer . '&success=1' : $referer . '?success=1';
