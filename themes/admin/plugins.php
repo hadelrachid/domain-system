@@ -127,6 +127,12 @@
                         <button type="submit" class="btn" style="color: #d63638; border-color: transparent; background: transparent; text-decoration: underline;">Excluir</button>
                     </form>
                     <?php endif; ?>
+                    
+                    <?php if ($plugin['folder'] === 'clinic_pack' && $plugin['is_active']): ?>
+                        <a href="<?= \BASE_URL ?>/admin/clinic/shortcodes" class="btn" style="background: #8b5cf6; color: white; border: none; text-decoration: none; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-puzzle-piece"></i> Catálogo de Shortcodes
+                        </a>
+                    <?php endif; ?>
                 </div>
             </td>
         </tr>
