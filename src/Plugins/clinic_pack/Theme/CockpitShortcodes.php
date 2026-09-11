@@ -204,7 +204,7 @@ class CockpitShortcodes
                     <?php if ($role === 'secretary' && !empty($cleanPhone)): ?>
                         <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="btn btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                     <?php elseif ($role === 'doctor'): ?>
-                        <button class="btn" style="background:#10b981; color:white; border:none; padding:10px 16px; border-radius:4px; font-weight:600; cursor:pointer;" onclick="changeStatus(<?= $app['id'] ?>, 'Atendido', this)">
+                        <button class="btn btn-confirm" style="cursor:pointer;" onclick="changeStatus(<?= $app['id'] ?>, 'Atendido', this)">
                             <i class="fas fa-check-double"></i> Concluir
                         </button>
                         <button class="btn-medical" onclick="alert('Funcionalidade de Prontuário em desenvolvimento.')"><i class="fas fa-notes-medical"></i> Abrir Prontuário</button>
@@ -283,16 +283,16 @@ class CockpitShortcodes
         ob_start();
         ?>
         <div style="background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-            <input type="text" id="search-name" placeholder="Nome do paciente..." style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
-            <input type="date" id="search-date" style="padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+            <input type="text" id="search-name" placeholder="Nome do paciente..." style="flex: 1; padding: 10px; border: 1px solid var(--primary-border); border-radius: 4px; background: var(--bg-body); color: var(--text-main);">
+            <input type="date" id="search-date" style="padding: 10px; border: 1px solid var(--primary-border); border-radius: 4px; background: var(--bg-body); color: var(--text-main);">
             <button class="btn btn-save" style="width: auto; margin-top: 0; display: flex; align-items: center; gap: 8px;" onclick="doSearch()">
                 <i class="fas fa-search"></i> Buscar
             </button>
         </div>
         <div id="search-results">
             <div style="text-align: center; padding: 50px; color: var(--text-muted); background: var(--bg-card); border-radius: 8px;">
-                <i class="fas fa-search" style="font-size: 40px; margin-bottom: 15px; color: var(--border);"></i>
-                <h3 style="margin:0 0 10px 0; color:var(--text);">Pesquisar Histórico</h3>
+                <i class="fas fa-search" style="font-size: 40px; margin-bottom: 15px; color: var(--primary-border);"></i>
+                <h3 style="margin:0 0 10px 0; color:var(--text-main);">Pesquisar Histórico</h3>
                 <p style="margin:0;">Busque por nome ou data para ver os atendimentos anteriores.</p>
             </div>
         </div>

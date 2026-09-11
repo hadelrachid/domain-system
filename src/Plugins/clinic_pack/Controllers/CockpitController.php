@@ -55,6 +55,7 @@ class CockpitController
 
         $this->theme->setActiveThemePath(__DIR__ . '/../themes/cockpit_doctor');
         $html = $this->theme->render('index', [
+            'user_id' => $userId,
             'user_name' => $this->session->get('user_name', $doctorName),
             'user_email' => $user['email'] ?? '',
             'profile_image' => $user['profile_image'] ?? '',
@@ -92,6 +93,7 @@ class CockpitController
 
         $this->theme->setActiveThemePath(__DIR__ . '/../themes/cockpit_secretary');
         $html = $this->theme->render('index', [
+            'user_id' => $userId,
             'user_name' => $this->session->get('user_name', 'Secretária'),
             'user_email' => $user['email'] ?? '',
             'profile_image' => $user['profile_image'] ?? '',
