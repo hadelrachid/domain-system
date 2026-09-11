@@ -107,10 +107,13 @@ class Plugin extends AbstractPlugin
                 }
             }
             
-            // Injeta como subplugins no clinic_pack
+            // Injeta como subplugins no clinic_pack, preservando os já encontrados
             foreach ($plugins as $k => $p) {
                 if ($p['folder'] === 'clinic_pack') {
-                    $plugins[$k]['subplugins'] = $bundled;
+                    if (!empty($bundled)) {
+                        $existing = $p['subplugins'] ?? [];
+                        $plugins[$k]['subplugins'] = array_merge($existing, $bundled);
+                    }
                     break;
                 }
             }
