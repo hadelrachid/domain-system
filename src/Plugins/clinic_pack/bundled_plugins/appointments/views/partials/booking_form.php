@@ -1,4 +1,4 @@
-<div class="form-panel" style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px;">
+<div class="form-panel" style="background: var(--bg-card, #fff); padding: 20px; border: 1px solid var(--primary-border, #c3c4c7); border-radius: 4px; color: var(--text-main, inherit);">
     <h2 style="margin-top: 0; font-size: 16px;">Novo Agendamento</h2>
     <form method="POST" action="<?= BASE_URL ?>/admin/appointments">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
@@ -6,7 +6,7 @@
         <!-- Paciente -->
         <div style="margin-bottom: 10px;">
             <label style="display:block; margin-bottom: 5px;">Selecione o Paciente *</label>
-            <select name="patient_id" required style="width: 100%; padding: 6px;">
+            <select name="patient_id" required style="width: 100%; padding: 6px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border);">
                 <option value="">Selecione...</option>
                 <?php foreach($patients as $p): ?>
                     <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?> (<?= htmlspecialchars($p['phone'] ?? 'Sem telefone') ?>)</option>
@@ -17,28 +17,28 @@
         <!-- Médico -->
         <div style="margin-bottom: 10px;">
             <label style="display:block; margin-bottom: 5px;">Médico *</label>
-            <select name="doctor_id" id="admin_doctor_id" required style="width: 100%; padding: 6px;">
+            <select name="doctor_id" id="admin_doctor_id" required style="width: 100%; padding: 6px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border);">
                 <option value="">Selecione...</option>
                 <?php foreach($doctors as $d): ?>
                     <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['name']) ?> - <?= htmlspecialchars($d['specialty']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <div id="admin-doctor-schedule-hint" style="font-size:12px; color:#2271b1; margin-top:5px; font-weight:600;"></div>
+            <div id="admin-doctor-schedule-hint" style="font-size:12px; color:var(--primary, #2271b1); margin-top:5px; font-weight:600;"></div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <!-- Data -->
             <div style="flex: 1;">
                 <label style="display:block; margin-bottom: 5px;">Data *</label>
-                <input type="date" name="appointment_date" id="admin_date" required style="width: 100%; padding: 6px; box-sizing: border-box;">
+                <input type="date" name="appointment_date" id="admin_date" required style="width: 100%; padding: 6px; box-sizing: border-box; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border); color-scheme: dark light;">
             </div>
         </div>
 
         <!-- Horário (Slots) -->
         <div style="margin-bottom: 10px;">
             <label style="display:block; margin-bottom: 5px;">Horário *</label>
-            <div id="adminSlotsContainer" style="min-height: 50px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px;">
-                <div style="color: #64748b; font-size: 13px;"><i class="fas fa-info-circle"></i> Selecione um médico e uma data para ver os horários.</div>
+            <div id="adminSlotsContainer" style="min-height: 50px; background: var(--bg-body, #f8fafc); border: 1px solid var(--primary-border, #e2e8f0); border-radius: 4px; padding: 15px;">
+                <div style="color: var(--text-muted, #64748b); font-size: 13px;"><i class="fas fa-info-circle"></i> Selecione um médico e uma data para ver os horários.</div>
             </div>
             <input type="hidden" name="appointment_time" id="admin_time" required>
         </div>

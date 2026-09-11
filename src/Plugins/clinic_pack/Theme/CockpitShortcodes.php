@@ -114,7 +114,7 @@ class CockpitShortcodes
                     <span class="info-label">Status</span>
                     <span class="status-badge Pendente" id="status-<?= $app['id'] ?>">⟳ Aguardando</span>
                 </div>
-                <div class="actions" style="display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; justify-content:space-between; margin-top:5px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <div class="actions" style="display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; justify-content:space-between; margin-top:5px; border-top:1px solid var(--primary-border, #e2e8f0); padding-top:12px;">
                     <div style="display:flex; gap:6px;">
                         <?php if(!empty($cleanPhone)): ?>
                             <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="btn btn-wa" title="WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
@@ -267,7 +267,7 @@ class CockpitShortcodes
                 </div>
                 <div class="info-group">
                     <span class="info-label">Status Final</span>
-                    <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:<?= strtolower($app['status']) === 'cancelado' ? '#fee2e2' : '#f1f5f9' ?>;color:<?= strtolower($app['status']) === 'cancelado' ? '#b91c1c' : '#475569' ?>;">
+                    <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:<?= strtolower($app['status']) === 'cancelado' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(100, 116, 139, 0.15)' ?>;color:<?= strtolower($app['status']) === 'cancelado' ? '#ef4444' : 'var(--text-main)' ?>;border:1px solid <?= strtolower($app['status']) === 'cancelado' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(100, 116, 139, 0.3)' ?>;">
                         <?= htmlspecialchars($app['status']) ?>
                     </span>
                 </div>

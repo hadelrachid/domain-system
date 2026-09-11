@@ -275,8 +275,8 @@ abstract class AbstractCockpitView implements CockpitViewInterface
                 .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
                 
                 .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-                .status-badge.Pendente   { background: #fef3c7; color: #d97706; }
-                .status-badge.Confirmado { background: #d1fae5; color: #059669; }
+                .status-badge.Pendente   { background: rgba(217, 119, 6, 0.2); color: #d97706; border: 1px solid rgba(217,119,6,0.3); }
+                .status-badge.Confirmado { background: rgba(5, 150, 105, 0.2); color: #059669; border: 1px solid rgba(5,150,105,0.3); }
             </style>
             
             <?php 
