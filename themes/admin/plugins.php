@@ -77,13 +77,18 @@
                 
                 <?php if (!empty($plugin['subplugins'])): ?>
                 <div style="margin-top: 15px;">
-                    <a href="#" onclick="event.preventDefault(); var el = document.getElementById('subplugins-<?= $plugin['folder'] ?>'); el.style.display = (el.style.display === 'none') ? 'block' : 'none';" style="text-decoration: none; color: #2271b1; font-weight: 600;">
-                        📦 Ver Micro-Módulos Acoplados (<?= count($plugin['subplugins']) ?>) ▾
+                    <a href="#" onclick="event.preventDefault(); var el = document.getElementById('subplugins-<?= $plugin['folder'] ?>'); el.style.display = (el.style.display === 'none') ? 'block' : 'none';" style="text-decoration: none; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        Exibir Componentes/Módulos (<?= count($plugin['subplugins']) ?>) ▾
                     </a>
-                    <div id="subplugins-<?= $plugin['folder'] ?>" style="display: none; margin-top: 10px; padding: 10px; background: #f6f7f7; border-left: 3px solid #2271b1; border-radius: 0 4px 4px 0;">
-                        <ul style="margin: 0; padding-left: 20px;">
+                    <div id="subplugins-<?= $plugin['folder'] ?>" style="display: none; margin-top: 10px; padding: 15px; background: #f8fafc; border-left: 3px solid #10b981; border-radius: 0 6px 6px 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                        <ul style="margin: 0; padding-left: 20px; color: #475569;">
                         <?php foreach($plugin['subplugins'] as $sub): ?>
-                            <li style="margin-bottom: 5px;"><strong><?= htmlspecialchars($sub['name']) ?></strong> <span style="color:#666;font-size:12px;">(v<?= htmlspecialchars($sub['version']) ?>)</span> - <?= htmlspecialchars($sub['description']) ?></li>
+                            <li style="margin-bottom: 8px;">
+                                <strong style="color: #1e293b;"><?= htmlspecialchars($sub['name']) ?></strong> 
+                                <span style="background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 12px; font-size: 11px; margin-left: 5px;">v<?= htmlspecialchars($sub['version']) ?></span>
+                                <br><span style="font-size: 13px; color: #64748b;"><?= htmlspecialchars($sub['description']) ?></span>
+                            </li>
                         <?php endforeach; ?>
                         </ul>
                     </div>

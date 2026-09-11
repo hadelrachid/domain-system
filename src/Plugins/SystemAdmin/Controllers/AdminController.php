@@ -50,6 +50,18 @@ class AdminController
                     $name = $metadata['name'] ?? basename($dir);
 
                     $subplugins = [];
+                    // 1. Componentes declarados nativamente no plugin.json (Nova Boa Prática)
+                    if (isset($metadata['components']) && is_array($metadata['components'])) {
+                        foreach ($metadata['components'] as $comp) {
+                            $subplugins[] = [
+                                'name' => $comp['name'] ?? 'Componente',
+                                'version' => $comp['version'] ?? 'Integrado',
+                                'description' => $comp['description'] ?? ''
+                            ];
+                        }
+                    }
+
+                    // 2. Módulos físicos acoplados (Bundled Plugins)
                     if (is_dir($dir . '/bundled_plugins')) {
                         $subDirs = glob($dir . '/bundled_plugins/*', GLOB_ONLYDIR);
                         foreach ($subDirs as $subDir) {
