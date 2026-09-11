@@ -14,7 +14,7 @@ class Plugin extends AbstractPlugin
         'pink'    => ['primary' => '#ec4899', 'hover' => '#be185d', 'light' => '#fce7f3', 'border' => '#f9a8d4', 'bg' => '#fdf2f8', 'card' => '#ffffff', 'text' => '#831843', 'muted' => '#db2777'],
         'purple'  => ['primary' => '#8b5cf6', 'hover' => '#6d28d9', 'light' => '#ede9fe', 'border' => '#c4b5fd', 'bg' => '#f5f3ff', 'card' => '#ffffff', 'text' => '#2e1065', 'muted' => '#7c3aed'],
         'orange'  => ['primary' => '#f97316', 'hover' => '#c2410c', 'light' => '#ffedd5', 'border' => '#fdba74', 'bg' => '#fff7ed', 'card' => '#ffffff', 'text' => '#7c2d12', 'muted' => '#ea580c'],
-        'dark'    => ['primary' => '#38bdf8', 'hover' => '#0ea5e9', 'light' => '#1e293b', 'border' => '#38bdf8', 'bg' => '#0f172a', 'card' => '#1e293b', 'text' => '#f8fafc', 'muted' => '#94a3b8'],
+        'dark'    => ['primary' => '#3b82f6', 'hover' => '#2563eb', 'light' => '#2d2d30', 'border' => '#3f3f46', 'bg' => '#1e1e1e', 'card' => '#252526', 'text' => '#e4e4e7', 'muted' => '#a1a1aa'],
     ];
 
     public function register(): void
@@ -93,7 +93,7 @@ class Plugin extends AbstractPlugin
                     'pink'    => ['label' => 'Rosa',       'color' => '#ec4899'],
                     'purple'  => ['label' => 'Roxo',       'color' => '#8b5cf6'],
                     'orange'  => ['label' => 'Laranja',    'color' => '#f97316'],
-                    'dark'    => ['label' => 'Dark',       'color' => '#334155'],
+                    'dark'    => ['label' => 'Dark',       'color' => '#1e1e1e'],
                 ];
 
                 $optionsHtml = '';
