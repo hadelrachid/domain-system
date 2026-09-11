@@ -13,9 +13,11 @@
     "medical_records": true,
     "finance": true,
     "whatsapp": true,
-    "Database": false,
+    "Database": true,
     "nobreak_shield": true,
     "error_tester": true,
     "Error Tester": false,
-    "No-Break Shield": true
+    "No-Break Shield": true,
+    "visual_themes": false,
+    "Temas Visuais (Visual Themes)": true
 }

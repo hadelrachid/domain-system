@@ -1,5 +1,8 @@
 {
     "name": "triage",
     "version": "1.0.0",
-    "description": "Painel de Triagem da Enfermagem"
+    "description": "Painel de Triagem da Enfermagem",
+    "dependencies": [
+        "appointments"
+    ]
 }

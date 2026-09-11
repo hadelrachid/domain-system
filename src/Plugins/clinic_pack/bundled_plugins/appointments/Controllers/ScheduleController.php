@@ -50,80 +50,41 @@ class ScheduleController
         /** @var \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface $appointmentRepo */
         $appointmentRepo = $container->make(\DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class);
 
-        // Descobrir o dia da semana (0=Dom, 1=Seg...6=Sab)
-        $dayOfWeek = (int) $dateObj->format('w');
+        // O Escriturário (Service) assume todo o trabalho e devolve o resultado final!
+        $escriturario = new \DomainSystem\Plugins\appointments\Services\AvailabilityService($doctorReader, $appointmentRepo);
+        
+        $result = $escriturario->getAvailableSlots((int)$doctorId, $date);
 
-        // Buscar grade de horários do médico
-        $allSchedules = $doctorReader->getDoctorSchedules((int)$doctorId);
-        $schedules = array_filter($allSchedules, fn($s) => (int)$s['day_of_week'] === $dayOfWeek && (int)$s['is_active'] === 1);
+        return Response::json($result);
+    }
 
-        if (empty($schedules)) {
-            // Dias da semana em PT-BR
-            $diasPtBr = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-            $diaNome = $diasPtBr[$dayOfWeek] ?? '';
-            return Response::json([
-                'slots' => [],
-                'message' => "Este médico não atende na $diaNome. Escolha outra data."
-            ]);
+    /**
+     * GET /api/doctors/schedules?doctor_id=1
+     * Retorna a grade de horários do médico (quais dias da semana ele trabalha)
+     */
+    public function getDoctorSchedulesApi(Request $request): Response
+    {
+        $doctorId = $request->input('doctor_id');
+        if (empty($doctorId)) {
+            return Response::json(['schedules' => [], 'message' => 'Médico não informado']);
         }
 
-        // Gerar todos os slots possíveis
-        $allSlots = [];
-        foreach ($schedules as $sched) {
-            $slotDuration = (int) ($sched['slot_duration'] ?: 30);
-            $start = \DateTime::createFromFormat('H:i', $sched['start_time']);
-            $end = \DateTime::createFromFormat('H:i', $sched['end_time']);
+        $container = Application::getInstance()->getContainer();
+        /** @var \DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface $doctorReader */
+        $doctorReader = $container->make(\DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class);
 
-            if (!$start || !$end) continue;
-
-            while ($start < $end) {
-                $allSlots[] = $start->format('H:i');
-                $start->modify("+{$slotDuration} minutes");
-            }
-        }
-
-        if (empty($allSlots)) {
-            return Response::json([
-                'slots' => [],
-                'message' => 'Nenhum horário configurado para esta data.'
-            ]);
-        }
-
-        // Remover slots já ocupados (appointments existentes)
-        $booked = $appointmentRepo->getBookedSlots((int)$doctorId, $date, $allSlots);
-
-        // Se for hoje, remover horários que já passaram
-        $now = new \DateTime();
-        $isToday = ($dateObj->format('Y-m-d') === $now->format('Y-m-d'));
-
-        $available = [];
-        foreach ($allSlots as $slot) {
-            // Slot já está ocupado
-            if (in_array($slot, $booked)) continue;
-
-            // Se for hoje, não mostrar slots no passado
-            if ($isToday) {
-                $slotTime = \DateTime::createFromFormat('H:i', $slot);
-                // Adiciona margem de 30min (não pode agendar "agora")
-                $slotTime->modify('+30 minutes');
-                if ($now > $slotTime) continue;
-            }
-
-            $available[] = $slot;
-        }
-
-        sort($available);
-
-        if (empty($available)) {
-            return Response::json([
-                'slots' => [],
-                'message' => 'Todos os horários desta data estão ocupados.'
-            ]);
-        }
+        $schedules = $doctorReader->getDoctorSchedules((int)$doctorId);
+        
+        // Se is_active não existir (schema antigo), assume 1. Se existir, deve ser 1.
+        $activeSchedules = array_filter($schedules, function($s) {
+            if (!isset($s['is_active'])) return true;
+            return (int)$s['is_active'] === 1;
+        });
 
         return Response::json([
-            'slots' => $available,
-            'message' => count($available) . ' horário(s) disponível(is).'
+            'schedules' => array_values($activeSchedules), 
+            'success' => true,
+            'debug' => $schedules // Temporary debug info
         ]);
     }
 

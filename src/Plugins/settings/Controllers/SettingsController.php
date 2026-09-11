@@ -114,9 +114,7 @@ class SettingsController
         </script>
         <?php
         $html = ob_get_clean();
-        
-        $theme = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Theme\ThemeManager::class);
-        return new \DomainSystem\Core\Http\Response($theme->render('layout', ['content' => $html]));
+        return new \DomainSystem\Core\Http\Response($html);
     }
 
     public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response

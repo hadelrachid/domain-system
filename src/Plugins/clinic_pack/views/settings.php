@@ -8,15 +8,15 @@
     </div>
 <?php endif; ?>
 
+<?php $activeTab = $_GET['tab'] ?? 'gerais'; ?>
 <!-- TABS HEADER -->
 <div style="border-bottom: 1px solid #c3c4c7; margin-bottom: 20px;">
-    <button type="button" class="tab-btn active" onclick="openTab('tab-gerais', this)" style="padding: 10px 15px; border: 1px solid #c3c4c7; border-bottom: none; background: #fff; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: bold;">Gerais & API</button>
-    <button type="button" class="tab-btn" onclick="openTab('tab-convenios', this)" style="padding: 10px 15px; border: none; background: transparent; cursor: pointer;">Convênios</button>
-    <button type="button" class="tab-btn" onclick="openTab('tab-corpo', this)" style="padding: 10px 15px; border: none; background: transparent; cursor: pointer;">Corpo Clínico</button>
+    <button type="button" class="tab-btn <?= $activeTab === 'gerais' ? 'active' : '' ?>" onclick="openTab('tab-gerais', this)" style="padding: 10px 15px; border: <?= $activeTab === 'gerais' ? '1px solid #c3c4c7' : 'none' ?>; border-bottom: none; background: <?= $activeTab === 'gerais' ? '#fff' : 'transparent' ?>; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: <?= $activeTab === 'gerais' ? 'bold' : 'normal' ?>;">Gerais & API</button>
+    <button type="button" class="tab-btn <?= $activeTab === 'convenios' ? 'active' : '' ?>" onclick="openTab('tab-convenios', this)" style="padding: 10px 15px; border: <?= $activeTab === 'convenios' ? '1px solid #c3c4c7' : 'none' ?>; border-bottom: none; background: <?= $activeTab === 'convenios' ? '#fff' : 'transparent' ?>; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: <?= $activeTab === 'convenios' ? 'bold' : 'normal' ?>;">Convênios</button>
 </div>
 
 <!-- TABS CONTENT -->
-<div class="tab-content" id="tab-gerais">
+<div class="tab-content" id="tab-gerais" style="display: <?= $activeTab === 'gerais' ? 'block' : 'none' ?>;">
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px;">
         <h3 style="margin-top:0;">Configurações Gerais</h3>
         <form method="POST" action="<?= BASE_URL ?>/admin/clinic/settings/save">
@@ -44,16 +44,16 @@
     </div>
 </div>
 
-<div class="tab-content" id="tab-convenios" style="display:none;">
+<div class="tab-content" id="tab-convenios" style="display: <?= $activeTab === 'convenios' ? 'block' : 'none' ?>;">
     <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; margin-bottom: 20px;">
         <h3 style="margin-top:0;">Adicionar Novo Convênio</h3>
         <form method="POST" action="<?= BASE_URL ?>/admin/clinic/settings/insurance/add" style="display:flex; gap: 10px; align-items: flex-end;">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <div style="flex:1; max-width: 300px;">
+            <div style="flex:1; max-width: 300px; margin-right: 10px;">
                 <label style="display:block; font-weight:bold; margin-bottom:5px;">Nome do Convênio</label>
-                <input type="text" name="name" required style="width: 100%; padding: 8px; border: 1px solid #c3c4c7; border-radius: 4px;">
+                <input type="text" name="name" required style="width: 100%; padding: 8px; border: 1px solid #c3c4c7; border-radius: 4px; box-sizing: border-box;">
             </div>
-            <button type="submit" class="btn" style="background: #2271b1; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Adicionar</button>
+            <button type="submit" class="btn" style="background: #2271b1; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 1px;">Adicionar</button>
         </form>
     </div>
     
@@ -74,55 +74,6 @@
                     <form method="POST" action="<?= BASE_URL ?>/admin/clinic/settings/insurance/delete" onsubmit="return confirm('Excluir este convênio?')">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="id" value="<?= $ins['id'] ?>">
-                        <button type="submit" style="color: #d63638; background: none; border: none; cursor: pointer; text-decoration: underline;">Excluir</button>
-                    </form>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-
-<div class="tab-content" id="tab-corpo" style="display:none;">
-    <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; margin-bottom: 20px;">
-        <h3 style="margin-top:0;">Adicionar Membro (Corpo Clínico)</h3>
-        <form method="POST" action="<?= BASE_URL ?>/admin/clinic/settings/doctor/add" style="display:flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <div style="flex:1; min-width: 200px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">Nome do Profissional</label>
-                <input type="text" name="name" required style="width: 100%; padding: 8px; border: 1px solid #c3c4c7; border-radius: 4px;">
-            </div>
-            <div style="flex:1; min-width: 200px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">Especialidade</label>
-                <input type="text" name="specialty" required style="width: 100%; padding: 8px; border: 1px solid #c3c4c7; border-radius: 4px;">
-            </div>
-            <div style="flex:1; min-width: 120px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">CRM/Registro</label>
-                <input type="text" name="crm" style="width: 100%; padding: 8px; border: 1px solid #c3c4c7; border-radius: 4px;">
-            </div>
-            <button type="submit" class="btn" style="background: #2271b1; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Cadastrar</button>
-        </form>
-    </div>
-    
-    <table class="wp-list-table widefat fixed striped">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Especialidade</th>
-                <th>CRM</th>
-                <th style="width: 80px;">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($doctors as $doc): ?>
-            <tr>
-                <td><strong><?= htmlspecialchars($doc['name']) ?></strong></td>
-                <td><?= htmlspecialchars($doc['specialty']) ?></td>
-                <td><?= htmlspecialchars($doc['crm']) ?></td>
-                <td>
-                    <form method="POST" action="<?= BASE_URL ?>/admin/clinic/settings/doctor/delete" onsubmit="return confirm('Excluir este profissional do Corpo Clínico?')">
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                        <input type="hidden" name="id" value="<?= $doc['id'] ?>">
                         <button type="submit" style="color: #d63638; background: none; border: none; cursor: pointer; text-decoration: underline;">Excluir</button>
                     </form>
                 </td>

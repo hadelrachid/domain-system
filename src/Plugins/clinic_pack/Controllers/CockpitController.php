@@ -145,6 +145,21 @@ class CockpitController
 
         return new Response($html);
     }
+
+    public function renderHistoryTabAjax(Request $request): Response
+    {
+        $role = $this->session->get('role');
+        $shortcodeManager = \DomainSystem\Core\Application::getInstance()->getShortcodeManager();
+        
+        $viewRole = $request->input('view_role', $role); 
+        if (!in_array($viewRole, ['doctor', 'secretary', 'admin'])) {
+            $viewRole = 'doctor';
+        }
+        if ($viewRole === 'admin') $viewRole = 'doctor';
+        
+        $html = $shortcodeManager->parse('[aba_historico role="' . $viewRole . '" type="today"]');
+        return new Response($html);
+    }
     public function updateAppointmentStatus(Request $request): Response
     {
         $id = $request->input('id');

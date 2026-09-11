@@ -235,7 +235,7 @@ if(empty($isShortcode)) {
 
             renderSlotsLoading();
 
-            fetch('<?= BASE_URL ?>/api/agendamento/slots?doctor_id=' + encodeURIComponent(doctorId) + '&date=' + encodeURIComponent(date))
+            fetch('<?= \BASE_URL ?>/api/agendamento/slots?doctor_id=' + encodeURIComponent(doctorId) + '&date=' + encodeURIComponent(date))
                 .then(r => r.json())
                 .then(data => {
                     if (data.slots && data.slots.length > 0) {
@@ -360,7 +360,7 @@ if(empty($isShortcode)) {
                 notes: document.getElementById('notes').value.trim()
             };
 
-            fetch('<?= BASE_URL ?>/api/agendamento/submit', {
+            fetch('<?= \BASE_URL ?>/api/agendamento/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

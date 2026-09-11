@@ -11,13 +11,12 @@ class BookingController
 {
     public function showBookingForm(Request $request): Response
     {
-        $db = Application::getInstance()
-            ->getContainer()
-            ->make(\DomainSystem\Plugins\Database\Connection::class)
-            ->getPdo();
+        $container = Application::getInstance()->getContainer();
         
-        $stmt = $db->query("SELECT id, name, specialty FROM doctors ORDER BY name");
-        $doctors = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        /** @var \DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface $doctorRepo */
+        $doctorRepo = $container->make(\DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface::class);
+        
+        $doctors = $doctorRepo->findAll();
 
         $specialties = [];
         $doctorsBySpecialty = [];
@@ -31,7 +30,9 @@ class BookingController
         }
         sort($specialties);
 
-        $stmtIns = $db->query("SELECT id, name FROM health_insurances WHERE active = 1 ORDER BY id");
+        // TODO: Mover para um HealthInsuranceRepositoryInterface
+        $pdo = $container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+        $stmtIns = $pdo->query("SELECT id, name FROM health_insurances WHERE active = 1 ORDER BY id");
         $insurances = $stmtIns->fetchAll(\PDO::FETCH_ASSOC);
         
         $selectedDoctor = $request->input('medico', '');
@@ -82,8 +83,7 @@ class BookingController
         }
 
         if ($time !== 'A definir') {
-            $timeSql = strlen($time) == 5 ? $time . ':00' : $time;
-            if ($appointmentRepo->isSlotOccupied((int)$doctor_id, $date, $timeSql)) {
+            if ($appointmentRepo->isSlotOccupied((int)$doctor_id, $date, $time)) {
                 return Response::json(['success' => false, 'message' => 'Este horário acabou de ser ocupado. Escolha outro.']);
             }
         }
@@ -92,11 +92,16 @@ class BookingController
         
         if ($patient) {
             $patientId = (int)$patient['id'];
+            
+            // Se o nome fornecido for diferente do que está no banco, atualiza o cadastro do paciente
+            if (!empty($name) && trim($name) !== trim($patient['name'] ?? '')) {
+                $patientReader->updatePatientData($patientId, ['name' => trim($name)]);
+            }
         } else {
             $patientId = $patientReader->createPatientFull([
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
+                'name' => trim($name),
+                'email' => trim($email ?? ''),
+                'phone' => trim($phone),
             ]);
         }
 
@@ -112,48 +117,8 @@ class BookingController
                 'health_insurance' => $health_insurance
             ]);
 
-            try {
-                $db = Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
-                $stmt = $db->prepare("
-                    SELECT d.name as doctor_name, u.email as doctor_email 
-                    FROM doctors d
-                    LEFT JOIN users u ON d.user_id = u.id
-                    WHERE d.id = ?
-                ");
-                $stmt->execute([$doctor_id]);
-                $doctorData = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-                if ($doctorData && !empty($doctorData['doctor_email'])) {
-                    $docEmail = $doctorData['doctor_email'];
-                    $docName = $doctorData['doctor_name'];
-                    $dateBr = date('d/m/Y', strtotime($date));
-                    $subject = "Novo Agendamento Online - $docName";
-                    
-                    $message = "Olá Dr(a). $docName,\n\n";
-                    $message .= "Você tem um novo agendamento marcado pelo portal online:\n\n";
-                    $message .= "Paciente: $name\n";
-                    $message .= "Telefone: $phone\n";
-                    $message .= "Data: $dateBr\n";
-                    $message .= "Horário: $time\n";
-                    $message .= "Tipo: " . ucfirst($attendance_type) . "\n";
-                    if ($attendance_type === 'convenio') {
-                        $message .= "Convênio: $health_insurance\n";
-                    }
-                    if (!empty($notes)) {
-                        $message .= "\nObservações do Paciente:\n$notes\n";
-                    }
-                    $message .= "\n\nAcesse o sistema para gerenciar sua agenda.";
-
-                    $host = $_SERVER['HTTP_HOST'] ?? 'clinica.com';
-                    $headers = "From: nao-responda@" . $host . "\r\n";
-                    $headers .= "Reply-To: $email\r\n";
-                    $headers .= "X-Mailer: PHP/" . phpversion();
-
-                    @mail($docEmail, $subject, $message, $headers);
-                }
-            } catch (\Exception $e) {
-                error_log("Erro ao enviar notificação ao médico: " . $e->getMessage());
-            }
+            // A notificação de agendamento ao médico foi temporariamente removida para ser
+            // reimplementada futuramente como um módulo/subplugin assíncrono (Event-Driven).
 
             return Response::json(['success' => true, 'message' => 'Agendamento solicitado com sucesso! Entraremos em contato para confirmar.']);
         } catch (\Exception $e) {

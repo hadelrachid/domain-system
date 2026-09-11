@@ -12,15 +12,18 @@ use DomainSystem\Plugins\appointments\Controllers\ScheduleController;
 
 class Plugin extends AbstractPlugin
 {
-    public function register(): void
-    {
+    public function register(): void { 
         /** @var EventDispatcher $events */
         $events = $this->events();
 
         // Registro de Contratos
         $this->container->bind(
             \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class,
-            \DomainSystem\Plugins\appointments\Repositories\SqliteAppointmentRepository::class
+            \DomainSystem\Plugins\appointments\Repositories\AppointmentRepository::class
+        );
+        $this->container->bind(
+            \DomainSystem\Plugins\appointments\Contracts\InsuranceRepositoryInterface::class,
+            \DomainSystem\Plugins\appointments\Repositories\InsuranceRepository::class
         );
 
         // Registrar item no menu lateral
@@ -54,12 +57,14 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/doctors/schedule/save', [ScheduleController::class, 'saveSchedule'], 'doctors', ['admin', 'doctor']);
             
             // API Routes
+            $router->addRoute('POST', '/cockpit/appointments/status', [\DomainSystem\Plugins\clinic_pack\Controllers\CockpitController::class, 'updateAppointmentStatus'], 'appointments', ['admin', 'receptionist', 'doctor']);
             $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking'], 'appointments', ['admin', 'receptionist', 'doctor']);
             $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection'], 'appointments', ['admin', 'receptionist', 'doctor']);
 
             // Public Routes
             $router->addRoute('GET', '/agendamento', [BookingController::class, 'showBookingForm'], 'public', []);
             $router->addRoute('GET', '/api/agendamento/slots', [ScheduleController::class, 'getAvailableSlots'], 'public', []);
+            $router->addRoute('GET', '/api/doctors/schedules', [ScheduleController::class, 'getDoctorSchedulesApi'], 'public', []);
             $router->addRoute('POST', '/api/agendamento/submit', [BookingController::class, 'submitBooking'], 'public', []);
         });
 
@@ -73,27 +78,30 @@ class Plugin extends AbstractPlugin
 
     public function activate(): void
     {
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->db();
-        $db = $connection->getPdo();
-        
-        $db->exec("
-            CREATE TABLE IF NOT EXISTS appointments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                patient_id INTEGER NOT NULL,
-                doctor_id INTEGER NOT NULL,
-                appointment_date DATE NOT NULL,
-                appointment_time VARCHAR(5) NOT NULL,
-                status VARCHAR(50) DEFAULT 'Pendente',
-                reception_notes TEXT NULL,
-                medical_record TEXT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(patient_id) REFERENCES patients(id),
-                FOREIGN KEY(doctor_id) REFERENCES doctors(id)
-            )
-        ");
+        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema->create('appointments', function ($table) {
+            $table->id();
+            $table->integer('patient_id');
+            $table->integer('doctor_id');
+            $table->string('appointment_date', 10);
+            $table->string('appointment_time', 5);
+            $table->string('status', 50)->default('Pendente');
+            $table->string('reception_notes', 255)->nullable();
+            $table->string('medical_record', 255)->nullable();
+            $table->string('attendance_type', 50)->default('particular');
+            $table->string('health_insurance', 100)->nullable();
+            $table->timestamps();
+            $table->foreign('patient_id', 'id', 'patients');
+            $table->foreign('doctor_id', 'id', 'doctors');
+        });
 
-        try { $db->exec("ALTER TABLE appointments ADD COLUMN attendance_type VARCHAR(50) DEFAULT 'particular'"); } catch (\Exception $e) {}
-        try { $db->exec("ALTER TABLE appointments ADD COLUMN health_insurance VARCHAR(100) NULL"); } catch (\Exception $e) {}
+        $schema->create('health_insurances', function ($table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->boolean('active')->default(1);
+        });
     }
 }
+
+
+

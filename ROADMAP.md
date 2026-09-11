@@ -61,21 +61,21 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 
 ---
 
-## 🟣 Fase 4: A Grande Interface (6 a 12 Meses)
+## 🟣 Fase 4: A Grande Interface (Iniciada em v1.2.0)
 
 ### 4.1. Motor de Temas (Theme Engine)
-- [ ] **Sistema de Templates Avançado:** Criar um mecanismo de temas completo, com hierarquia de templates (como o WordPress).
+- [x] **Sistema de Templates Avançado:** Suporte a Shortcodes aninhados e contêineres recursivos (Page Builder style).
 - [ ] **Editor Visual (WYSIWYG):** Permitir que usuários finais editem páginas e layouts sem programar.
-- [ ] **Biblioteca de Componentes:** Reutilização de Shortcodes e blocos prontos para uso.
+- [x] **Biblioteca de Componentes:** Reutilização de Shortcodes e blocos prontos para uso.
 
 ### 4.2. Cockpit 2.0 (Interface do Usuário)
-- [ ] **Design System Unificado:** Construir uma identidade visual moderna e acessível.
-- [ ] **Modo Escuro (Dark Mode):** Suporte nativo para temas claros e escuros.
-- [ ] **Responsividade Completa:** Interface otimizada para desktop, tablet e mobile.
+- [x] **Design System Unificado:** Identidade visual moderna, orientada a eventos e componentes CSS independentes.
+- [x] **Modo Escuro (Dark Mode):** Suporte nativo para temas claros e escuros via variáveis globais.
+- [x] **Responsividade e SPA (Single Page App):** Abas com "Live Fetch" via AJAX sem recarregar a tela.
 
 ### 4.3. Performance e Otimização
 - [ ] **Cache de Queries:** Redução de consultas repetidas ao banco de dados.
-- [ ] **Lazy Loading:** Carregamento sob demanda de módulos e recursos.
+- [x] **Lazy Loading de Interface:** Carregamento sob demanda de abas pesadas.
 - [ ] **Otimização de Assets:** Minificação e compressão de CSS/JS.
 
 ---

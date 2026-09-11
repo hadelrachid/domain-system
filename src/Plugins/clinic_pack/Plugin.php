@@ -34,17 +34,33 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/clinic/settings/save', [SettingsController::class, 'save'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/insurance/add', [SettingsController::class, 'addInsurance'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/insurance/delete', [SettingsController::class, 'deleteInsurance'], 'clinic_admin', ['admin']);
-            $router->addRoute('POST', '/admin/clinic/settings/doctor/add', [SettingsController::class, 'addDoctor'], 'clinic_admin', ['admin']);
-            $router->addRoute('POST', '/admin/clinic/settings/doctor/delete', [SettingsController::class, 'deleteDoctor'], 'clinic_admin', ['admin']);
             
             $router->addRoute('GET', '/cockpit/doctor', [CockpitController::class, 'renderDoctor'], 'cockpit', ['doctor', 'admin']);
             $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/search', [CockpitController::class, 'searchHistory'], 'cockpit', ['doctor', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/history-tab', [CockpitController::class, 'renderHistoryTabAjax'], 'cockpit', ['doctor', 'receptionist', 'admin']);
             $router->addRoute('POST', '/cockpit/profile', [CockpitController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
             $router->addRoute('GET', '/cockpit/profile/2fa', [CockpitController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
             $router->addRoute('POST', '/cockpit/profile/2fa', [CockpitController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
             $router->addRoute('GET', '/cockpit/nursing', [CockpitController::class, 'renderNursing'], 'cockpit', ['nurse', 'admin']);
             $router->addRoute('GET', '/admin/clinic', [CockpitController::class, 'renderAdminDashboard'], 'clinic_admin', ['admin']);
             $router->addRoute('GET', '/admin/clinic/shortcodes', [CockpitController::class, 'renderShortcodesCatalog'], 'clinic_admin', ['admin']);
+        });
+
+        // 2.5 Registro de Shortcodes das Abas e Perfil
+        $events->addListener('shortcodes.register', function($manager) {
+            $manager->add('aba_aguardando', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaAguardando'], 'Aba: Pacientes Aguardando', [], 'Agenda/Recepção');
+            $manager->add('aba_confirmados_hoje', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaConfirmadosHoje'], 'Aba: Confirmados Hoje', ['role' => 'secretary ou doctor'], 'Agenda/Recepção');
+            $manager->add('aba_historico', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaHistorico'], 'Aba: Histórico', ['role' => 'secretary ou doctor', 'type' => 'all ou today'], 'Histórico');
+            $manager->add('aba_pesquisar', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaPesquisar'], 'Aba: Pesquisar', [], 'Histórico');
+            
+            // Perfil
+            $manager->add('modal_perfil', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderModalPerfil'], 'Container do Modal de Perfil', [], 'Interface/Perfil');
+            $manager->add('form_dados_pessoais', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderFormDadosPessoais'], 'Formulário de dados do usuário (Foto, E-mail, Senha)', [], 'Formulários');
+            $manager->add('form_autenticacao_2fa', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderFormAutenticacao2FA'], 'Opções de Autenticação em 2 Fatores', [], 'Formulários');
+            $manager->add('botao_logout', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderBotaoLogout'], 'Botão de Sair do Sistema', [], 'Interface/Perfil');
+            $manager->add('relogio_digital', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderRelogioDigital'], 'Relógio digital ao vivo com data de hoje', [], 'Interface/Perfil');
+            $manager->add('widget_perfil_header', [\DomainSystem\Plugins\clinic_pack\Theme\ProfileShortcodes::class, 'renderWidgetPerfilHeader'], 'Botão de perfil no cabeçalho com engrenagem', [], 'Interface/Perfil');
         });
 
         // 3. Modificando o Menu (Para colocar tudo dentro de Daher Clínica)

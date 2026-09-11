@@ -81,10 +81,10 @@
                             else echo '👤 Paciente / Comum';
                             ?>
                             
-                            <!-- Redefinir Senha -->
-                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                            <!-- Redefinir Senha e Excluir -->
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; gap: 8px;">
                                 <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                     <div style="position: relative; flex: 1; min-width: 120px;">
                                         <input type="password" name="new_password" id="reset_pwd_<?= $u['id'] ?>" placeholder="Nova senha" required style="width: 100%; font-size: 13px; padding: 6px 8px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
@@ -94,6 +94,14 @@
                                     </div>
                                     <button type="submit" style="background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 12px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Mudar</button>
                                 </form>
+                                
+                                <?php if ($u['role'] !== 'admin'): ?>
+                                <form method="POST" action="<?= BASE_URL ?>/admin/users/delete" onsubmit="return confirm('ATENÇÃO: Deseja realmente EXCLUIR o usuário <?= htmlspecialchars($u['name']) ?>? Isso não pode ser desfeito.')" style="margin: 0;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+                                    <button type="submit" style="background: transparent; color: #dc2626; border: 1px solid #dc2626; padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; width: auto;"><i class="fas fa-trash-alt"></i> Excluir Conta</button>
+                                </form>
+                                <?php endif; ?>
                             </div>
                         </td>
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">

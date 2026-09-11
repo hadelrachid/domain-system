@@ -13,12 +13,12 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface::class,
-            \DomainSystem\Plugins\auth\Repositories\SqliteUserRepository::class
+            \DomainSystem\Plugins\auth\Repositories\UserRepository::class
         );
 
         $this->container->bind(
             \DomainSystem\Plugins\auth\Contracts\TwoFactorCodeStoreInterface::class,
-            \DomainSystem\Plugins\auth\Repositories\SqliteTwoFactorCodeStore::class
+            \DomainSystem\Plugins\auth\Repositories\TwoFactorCodeStore::class
         );
 
         $this->container->bind(
@@ -57,6 +57,7 @@ class Plugin extends AbstractPlugin
             $router->addRoute('GET', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/2fa-type', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'change2faType'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/reset-password', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'resetPassword'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/delete', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'delete'], 'auth', ['admin']);
         });
 
         $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
@@ -83,10 +84,13 @@ class Plugin extends AbstractPlugin
             $connection = $this->db();
             $db = $connection->getPdo();
             try {
-                $stmt = $db->query("SELECT COUNT(*) FROM users WHERE email = 'admin@admin.com'");
-                if ($stmt && $stmt->fetchColumn() == 0) {
-                    $pass = password_hash('admin', PASSWORD_DEFAULT);
-                    $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
+                // Só cria o admin padrão se o sistema já foi instalado
+                if (file_exists(dirname(__DIR__, 3) . '/config/installed.lock')) {
+                    $stmt = $db->query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+                    if ($stmt && $stmt->fetchColumn() == 0) {
+                        $pass = password_hash('admin', PASSWORD_DEFAULT);
+                        $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
+                    }
                 }
             } catch (\Exception $e) {}
         });
@@ -106,6 +110,7 @@ class Plugin extends AbstractPlugin
             $table->string('two_factor_type', 20)->default('none');
             $table->string('email_2fa_code', 6)->nullable();
             $table->datetime('email_2fa_expiry')->nullable();
+            $table->string('theme_color', 50)->default('default');
             $table->timestamps();
         });
 

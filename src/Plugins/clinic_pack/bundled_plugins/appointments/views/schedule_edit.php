@@ -26,17 +26,35 @@ foreach ($schedules as $s) {
 }
 
 $saved = $_GET['saved'] ?? false;
+$embedded = $_GET['embedded'] ?? false;
 ?>
-<div style="max-width: 900px;">
+<div style="max-width: 900px; <?= $embedded ? 'margin: 0; padding: 0;' : '' ?>">
+    
+    <?php if (!$embedded): ?>
     <h1>📅 Agenda dos Médicos</h1>
     <p style="color: #666; margin-bottom: 20px;">Configure os dias e horários de atendimento de cada médico. Estes dados serão usados para exibir os slots disponíveis no formulário público de agendamento.</p>
+    <?php endif; ?>
 
     <?php if ($saved): ?>
         <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
-            ✅ Grade de horários salva com sucesso!
+            <i class="fas fa-check-circle"></i> Configuração de horários salva com sucesso!
         </div>
     <?php endif; ?>
 
+    <?php if ($selectedDoctorId && !$embedded): ?>
+        <style>
+            .nav-tabs { display: flex; border-bottom: 1px solid #dcdcde; margin-top: 15px; margin-bottom: 20px; gap: 20px; }
+            .nav-tabs a { text-decoration: none; padding: 10px 5px; color: #50575e; border-bottom: 3px solid transparent; font-size: 14px; font-weight: 600; }
+            .nav-tabs a:hover { color: #2271b1; }
+            .nav-tabs a.active { color: #2271b1; border-bottom: 3px solid #2271b1; }
+        </style>
+        <div class="nav-tabs">
+            <a href="<?= BASE_URL ?>/admin/doctors/edit?id=<?= $selectedDoctorId ?>"><i class="fas fa-user-md"></i> Informações Gerais</a>
+            <a href="<?= BASE_URL ?>/admin/doctors/schedule?doctor_id=<?= $selectedDoctorId ?>" class="active"><i class="fas fa-calendar-alt"></i> Agenda de Horários</a>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!$embedded): ?>
     <!-- Selecionar Médico -->
     <form method="GET" action="<?= BASE_URL ?>/admin/doctors/schedule" style="margin-bottom: 24px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         <label for="doctor_id" style="font-weight: 600;">Selecionar Médico:</label>
@@ -50,12 +68,17 @@ $saved = $_GET['saved'] ?? false;
         </select>
         <button type="submit" style="padding: 8px 18px; background: #1A365D; color: white; border: none; border-radius: 6px; cursor: pointer;">Ver Agenda</button>
     </form>
+    <?php endif; ?>
 
     <?php if ($selectedDoctorId): ?>
     <!-- Formulário de Horários -->
-    <form method="POST" action="<?= BASE_URL ?>/admin/doctors/schedule/save" id="scheduleForm">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-        <input type="hidden" name="doctor_id" value="<?= htmlspecialchars($selectedDoctorId) ?>">
+    <form id="scheduleForm" method="POST" action="<?= BASE_URL ?>/admin/doctors/schedule/save" style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+        <input type="hidden" name="doctor_id" value="<?= $selectedDoctorId ?>">
+        
+        <?php if ($embedded): ?>
+            <input type="hidden" name="redirect" value="/admin/doctors/schedule?doctor_id=<?= $selectedDoctorId ?>&embedded=1&raw=1">
+        <?php endif; ?>
 
         <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
             <?php foreach ($days as $dayNum => $dayName):
@@ -133,7 +156,7 @@ $saved = $_GET['saved'] ?? false;
             <button type="submit" style="padding: 12px 28px; background: #1A365D; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
                 💾 Salvar Grade de Horários
             </button>
-            <a href="/admin/doctors" style="padding: 12px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 8px; font-size: 1rem;">
+            <a href="<?= BASE_URL ?>/admin/doctors" style="padding: 12px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 8px; font-size: 1rem;">
                 Voltar
             </a>
         </div>

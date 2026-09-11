@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\medical_records\Contracts\RecordRepositoryInterface::class,
-            \DomainSystem\Plugins\medical_records\Repositories\SqliteRecordRepository::class
+            \DomainSystem\Plugins\medical_records\Repositories\RecordRepository::class
         );
 
         /** @var EventDispatcher $events */

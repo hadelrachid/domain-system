@@ -1,6 +1,11 @@
 {
-  "name": "medical_records",
-  "version": "1.0.0",
-  "namespace": "DomainSystem\\Plugins\\medical_records\\",
-  "entrypoint": "Plugin"
+    "name": "medical_records",
+    "version": "1.0.0",
+    "namespace": "DomainSystem\\Plugins\\medical_records\\",
+    "entrypoint": "Plugin",
+    "dependencies": [
+        "appointments",
+        "patients",
+        "doctors"
+    ]
 }

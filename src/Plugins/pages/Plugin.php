@@ -14,7 +14,7 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,
-            \DomainSystem\Plugins\pages\Repositories\SqlitePageRepository::class
+            \DomainSystem\Plugins\pages\Repositories\PageRepository::class
         );
 
         /** @var EventDispatcher $events */

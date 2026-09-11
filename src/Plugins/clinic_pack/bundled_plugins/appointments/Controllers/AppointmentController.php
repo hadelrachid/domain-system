@@ -151,6 +151,22 @@ class AppointmentController
         exit;
     }
 
+    public function updateStatusApi(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
+    {
+        $id = $request->input('id');
+        $status = $request->input('status');
+
+        if ($id && $status) {
+            $allowed_statuses = ['Pendente', 'Confirmado', 'Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento', 'Finalizado', 'Cancelado', 'Concluído'];
+            if (in_array($status, $allowed_statuses)) {
+                $this->repo->updateStatus((int)$id, $status);
+                return \DomainSystem\Core\Http\Response::json(['success' => true]);
+            }
+        }
+        
+        return \DomainSystem\Core\Http\Response::json(['success' => false, 'message' => 'Parâmetros inválidos']);
+    }
+
     public function history()
     {
 
@@ -160,7 +176,7 @@ class AppointmentController
         $search = strtolower($_GET['s'] ?? '');
         
         $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
-        $appointmentsRaw = $this->repo->getHistory($filterDoctorId, $search);
+        $appointmentsRaw = $this->repo->getHistory($filterDoctorId, $search, 'all');
 
         $patientsMap = $this->patientReader->getPatientsMap();
         $doctorsMap = $this->doctorReader->getDoctorsMap();

@@ -19,6 +19,10 @@
     </style>
 </head>
 <body>
+    <script>
+        // Ao carregar a tela de login (após logout ou sessão expirada), limpa a memória das abas
+        sessionStorage.clear();
+    </script>
     <div class='login-box'>
         <div class="logo-container">
             <img src="<?= BASE_URL ?>/assets/img/logo.svg" alt="Cockpit Logo" style="max-width: 160px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">

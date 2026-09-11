@@ -79,13 +79,19 @@ class Router
             $token = $request->input('csrf_token') ?? '';
             
             if (!$session->validateCsrfToken($token)) {
-                http_response_code(403);
-                $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
-                      . '<h2 style="color:#d63638;">Acesso Negado 🛑 (CSRF)</h2>'
-                      . '<p>Sua requisição foi bloqueada por motivos de segurança (Token Inválido ou Expirado).</p>'
-                      . '<a href="javascript:history.back()">Voltar</a>'
-                      . '</div>';
-                echo $html;
+                // Log failed CSRF
+                file_put_contents(DOMAIN_SYSTEM_ROOT . '/temp/csrf_debug.log', date('Y-m-d H:i:s') . " - CSRF Failed. Passed: $token, Expected: " . $session->get('csrf_token') . "\n", FILE_APPEND);
+                
+                header('HTTP/1.1 403 Forbidden');
+                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => 'csrf', 'message' => 'Sessão de segurança expirada. Recarregue a tela.']);
+                } else {
+                    echo "<h2>Acesso Negado 🛑 (CSRF)</h2>";
+                    echo "<p>Sua requisição foi bloqueada por motivos de segurança (Token Inválido ou Expirado).</p>";
+                    echo "<a href='javascript:history.back()'>Voltar e tentar novamente</a>";
+                }
                 exit;
             }
         } catch (\Throwable $e) {

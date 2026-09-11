@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
         // SOLID: Inversão de Dependências
         $this->container->bind(
             \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppSettingsRepositoryInterface::class,
-            \DomainSystem\Plugins\whatsapp\Repositories\SqliteWhatsAppSettingsRepository::class
+            \DomainSystem\Plugins\whatsapp\Repositories\WhatsAppSettingsRepository::class
         );
         $this->container->bind(
             \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface::class,

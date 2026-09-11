@@ -71,12 +71,8 @@ class PluginManager
                         $fileContent = file_get_contents($pluginFile);
                         if (preg_match('/namespace\s+([^;]+);/', $fileContent, $matches)) {
                             $inferredClass = $matches[1] . '\\Plugin';
-                            if (class_exists($inferredClass)) {
-                                $pluginClass = $inferredClass;
-                            } else {
-                                require_once $pluginFile;
-                                $pluginClass = $inferredClass;
-                            }
+                            require_once $pluginFile;
+                            $pluginClass = $inferredClass;
                         } else {
                             require_once $pluginFile;
                         }
@@ -355,3 +351,4 @@ class PluginManager
         }
     }
 }
+

@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\finance\Contracts\FinanceRepositoryInterface::class,
-            \DomainSystem\Plugins\finance\Repositories\SqliteFinanceRepository::class
+            \DomainSystem\Plugins\finance\Repositories\FinanceRepository::class
         );
 
         /** @var EventDispatcher $events */

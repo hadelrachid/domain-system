@@ -1,42 +1,47 @@
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
+  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet?style=for-the-badge" alt="Version 1.2.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <br><br>
-  <h1>🚀 Domain System (CockPit)</h1>
-  <p><strong>The Business Engine that Refuses to Die. A modular, hyper-resilient, and extensible framework.</strong></p>
+  <h1>🚀 Domain System (CockPit) v1.2.0</h1>
+  <p><strong>The Business Engine that never dies. A modular, hyper-resilient, and extensible framework.</strong></p>
 </div>
 
 ---
 
-[🇧🇷 Leia em Português](README.md) | [📚 Documentation & Tutorials](docs/index_en.html) | [🛡️ Architecture Audit](docs/auditoria-en.md)
+[🇧🇷 Leia em Português](README.md) | [📚 Documentation & Tutorials]( https://hadelrachid.github.io/domain-system/) | [🛡️ Architecture Audit](docs/auditoria.md)
 
-## 🌐 What is the Domain System?
+## 🌐 What is Domain System?
 
-The **Domain System** (also known as **CockPit**) is a **CMS, Framework, and Universal Platform** written purely in PHP (following a philosophy similar to WordPress, but utilizing modern architectural concepts such as SOLID and Dependency Injection).
+**Domain System** (also known as **CockPit**) is a **CMS, Framework, and Universal Platform** written purely in PHP (similar to WordPress philosophy, but using modern architectural concepts like SOLID and Dependency Injection).
 
-It was designed to run **absolutely any business application**. The limit is your imagination! It acts as a **true Web Operating System** for your business:
-- The **Core (Kernel)** provides essential low-level infrastructure: Database, Global CSRF Security, Routing, Sessions, and Event Dispatching.
-- All **business logic** is encapsulated in independent, pluggable, and interchangeable **Plugins** (such as the included `clinic_pack`, which transforms the system into a powerful Medical ERP).
+It was designed to run **absolutely any business application**. The sky is the limit! It works as a true **Web Operating System** for your business:
+- The **Kernel** provides essential low-level infrastructure: Database, Global CSRF Security, Routing, Session, and Event Dispatcher.
+- All **business logic** is encapsulated in independent, pluggable, and interchangeable **Plugins** (like the included `clinic_pack`, which transforms the system into a powerful Medical ERP).
 
-## ✨ Key Differentiators
+## ✨ Key Features
 
-### ⚡ 1. Zero-Friction Installation (Wizard)
-Say goodbye to manual configuration files! The system features an **Automatic Installation Wizard**.
-Just open the project in your browser, and a user-friendly interface will guide you through database configuration, admin creation, and URL setup in seconds.
+### ⚡ 1. Zero-Friction Installation (Setup Wizard)
+Say goodbye to manual configuration file edits! The system features an **Automatic Installation Wizard**.
+Just open the project in your browser, and a friendly interface will guide you through Database configuration, admin creation, and URL setup in seconds.
 
 ### 🛡️ 2. No-Break Shield (The Immortal Circuit Breaker)
-Fatal errors (like a syntax error) bring traditional systems down. **Not the Domain System**.
-Thanks to our exclusive *Automatic Transfer Switch (Circuit Breaker)*, if a module or plugin attempts to cause a fatal crash, the system intercepts the power failure, isolates and deactivates the defective plugin, and keeps the entire system running. The administrator is safely notified.
+Fatal errors (like a syntax error) take down traditional systems. **Not Domain System**.
+Thanks to our exclusive *Automatic Transfer Switch (Circuit Breaker)*, if a module or plugin tries to cause a Fatal Error, the system intercepts the power outage, isolates and disables the defective plugin, and keeps the entire system online. The administrator is securely notified.
 
 ### 🔒 3. Global CSRF Shielding
-Native and invisible security. The core automatically injects Cross-Site Request Forgery protections into all system forms dynamically.
+Native and invisible security. The kernel automatically injects cross-site request forgery protections into all system forms.
 
-### 🎨 4. Theme Engine "CockPit" (Extensibility)
-Interfaces separated from logic! Create themes (CockPits) for doctors, secretaries, or patients without touching the back-end code.
-Soon, we will launch complete tutorials in our **[Wiki / Documentation](docs/)** teaching:
-- *How to develop your own Theme*
-- *How to build a Plugin from scratch*
+### 🎨 4. "CockPit" Theme Engine & Advanced Shortcodes
+Interfaces separated from logic! Create themes (CockPits) for doctors, secretaries, or patients without touching back-end code.
+In version 1.2.0, our **ShortcodeManager** became a Container builder, supporting deep recursion (e.g., `[modal_profile] [child] [/modal_profile]`), identical to modern page builders!
+
+### 🔐 5. Native 2-Factor Authentication (2FA)
+The core now has direct integration with Google Authenticator (TOTP) and email code delivery, configurable via the user panel for enterprise-grade security.
+
+### 🌑 6. Reactive UI & Dark Mode
+Single-page application (SPA) experience. Tabs load via asynchronous requests (Live Fetch) and the native design system relies on CSS variables that support elegant and consistent Light and Dark modes.
 
 ---
 

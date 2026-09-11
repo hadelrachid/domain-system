@@ -1,0 +1,1 @@
+<?php require "bootstrap.php"; $db = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo(); $stmt = $db->query("PRAGMA table_info(users)"); print_r($stmt->fetchAll(PDO::FETCH_ASSOC));

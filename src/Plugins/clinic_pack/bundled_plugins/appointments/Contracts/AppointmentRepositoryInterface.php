@@ -10,4 +10,6 @@ interface AppointmentRepositoryInterface
     public function updateStatus(int $id, string $status): void;
     public function isSlotOccupied(int $doctorId, string $date, string $time): bool;
     public function getBookedSlots(int $doctorId, string $date, array $candidateSlots): array;
+    public function getConfirmedAppointmentsByDoctor(int $doctorId): array;
+    public function getAllActiveAppointments(): array;
 }

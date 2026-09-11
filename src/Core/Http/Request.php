@@ -43,6 +43,11 @@ class Request
         return $this->request[$key] ?? $this->query[$key] ?? $default;
     }
 
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->request) || array_key_exists($key, $this->query);
+    }
+
     public function all(): array
     {
         return array_merge($this->query, $this->request);

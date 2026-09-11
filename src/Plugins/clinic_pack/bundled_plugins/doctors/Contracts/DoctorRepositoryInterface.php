@@ -28,4 +28,9 @@ interface DoctorRepositoryInterface
      * Exclui um médico pelo ID.
      */
     public function delete(int $id): void;
+    
+    /**
+     * Busca os horários de atendimento de um médico.
+     */
+    public function getSchedules(int $doctorId): array;
 }

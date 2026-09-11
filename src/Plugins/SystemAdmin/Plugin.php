@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class,
-            \DomainSystem\Plugins\SystemAdmin\Repositories\SqliteDashboardRepository::class
+            \DomainSystem\Plugins\SystemAdmin\Repositories\DashboardRepository::class
         );
 
         $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);

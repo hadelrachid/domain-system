@@ -73,20 +73,20 @@ class SetupController
             return new Response(ob_get_clean());
         }
 
-        // 1. Run migrations (reactivate all core plugins)
+        // 1. Apagar rastro de migrações passadas
+        $migrationsPath = DOMAIN_SYSTEM_ROOT . '/temp/migrations.json';
+        if (file_exists($migrationsPath)) {
+            unlink($migrationsPath);
+        }
+
+        // 2. Discover and Boot plugins (bootPlugins will sort topologically and run activate() since they are not in migrations.json)
         $pluginsJson = json_decode(file_get_contents(DOMAIN_SYSTEM_ROOT . '/config/plugins.json'), true);
         $app = \DomainSystem\Core\Application::getInstance();
         $manager = $app->getPluginManager();
         $manager->discoverPlugins(DOMAIN_SYSTEM_ROOT . '/src/Plugins', DOMAIN_SYSTEM_ROOT . '/config/plugins.json');
         
-        $allPlugins = $manager->getPlugins();
-        foreach ($allPlugins as $p) {
-            try {
-                $p->activate();
-            } catch (\Exception $e) {
-                // Ignore if already activated or error
-            }
-        }
+        // This runs the topological sort and calls activate() for unmigrated plugins
+        $manager->bootPlugins();
 
         // 2. Create Admin Account
         $db = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();

@@ -121,10 +121,10 @@ class QueryBuilder
 
         $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
         
-        $sql .= " ON CONFLICT(" . implode(', ', $conflictColumns) . ") DO UPDATE SET ";
+        $sql .= " ON DUPLICATE KEY UPDATE ";
         $sets = [];
         foreach ($updateColumns as $uCol) {
-            $sets[] = "$uCol = excluded.$uCol";
+            $sets[] = "$uCol = VALUES($uCol)";
         }
         $sql .= implode(', ', $sets);
 

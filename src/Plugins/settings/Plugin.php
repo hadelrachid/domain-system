@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin
     {
         $this->container->bind(
             \DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface::class,
-            \DomainSystem\Plugins\settings\Repositories\SqliteSettingRepository::class
+            \DomainSystem\Plugins\settings\Repositories\SettingRepository::class
         );
 
         /** @var EventDispatcher $events */

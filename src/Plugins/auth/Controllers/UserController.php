@@ -162,4 +162,31 @@ class UserController
         header("Location: " . BASE_URL . "/admin/users");
         exit;
     }
+
+    public function delete()
+    {
+        $user_id = $_POST['user_id'] ?? null;
+        
+        if ($user_id) {
+            $user = $this->userRepo->findById($user_id);
+            if ($user) {
+                if ($user['role'] === 'admin') {
+                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Não é permitido excluir um Administrador Geral.'];
+                } else {
+                    try {
+                        $db = \DomainSystem\Core\Application::getInstance()
+                            ->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+                        $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
+                        $stmt->execute([$user_id]);
+                        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Usuário excluído com sucesso!'];
+                    } catch (\Exception $e) {
+                        $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro ao excluir usuário: ' . $e->getMessage()];
+                    }
+                }
+            }
+        }
+        
+        header("Location: " . BASE_URL . "/admin/users");
+        exit;
+    }
 }

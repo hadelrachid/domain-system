@@ -30,23 +30,44 @@ class DoctorController
 
 
         $name = $_POST['name'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
         $crm = $_POST['crm'] ?? '';
         $specialty = $_POST['specialty'] ?? '';
         $consultation_time = $_POST['consultation_time'] ?? 30;
         $photo_url = $_POST['photo_url'] ?? '';
 
-        if (empty($name)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O nome do médico é obrigatório!'];
+        // Upload de foto no cadastro manual
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+            $filename = 'doctor_new_' . time() . '.' . $ext;
+            $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
+            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            
+            if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadPath . '/' . $filename)) {
+                $photo_url = '/uploads/' . $filename;
+            }
+        }
+
+        if (empty($name) || empty($email) || empty($password)) {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome, e-mail e senha são obrigatórios!'];
         } else {
             try {
-                $this->repository->save([
-                    'name' => $name,
-                    'crm' => $crm,
-                    'specialty' => $specialty,
-                    'consultation_time' => (int)$consultation_time,
-                    'photo_url' => $photo_url
-                ]);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico cadastrado com sucesso!'];
+                $app = \DomainSystem\Core\Application::getInstance();
+                $service = $app->getContainer()->make(\DomainSystem\Plugins\clinic_pack\Services\DoctorRegistrationService::class);
+                
+                $result = $service->registerDoctor($name, $specialty, $email, $crm, $password);
+                
+                if ($result['success']) {
+                    // Update the extra fields that the service doesn't handle natively
+                    $this->repository->update($result['doctor_id'], [
+                        'consultation_time' => (int)$consultation_time,
+                        'photo_url' => $photo_url
+                    ]);
+                    $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico cadastrado com sucesso! Conta de usuário e horários criados.'];
+                } else {
+                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $result['error']];
+                }
             } catch (\Exception $e) {
                 $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $e->getMessage()];
             }
@@ -91,6 +112,18 @@ class DoctorController
         $specialty = $_POST['specialty'] ?? '';
         $consultation_time = $_POST['consultation_time'] ?? 30;
         $photo_url = $_POST['photo_url'] ?? '';
+        
+        // Se enviou um arquivo de foto, faz o upload local
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+            $filename = 'doctor_' . $id . '_' . time() . '.' . $ext;
+            $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
+            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            
+            if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadPath . '/' . $filename)) {
+                $photo_url = '/uploads/' . $filename;
+            }
+        }
 
         if (empty($name)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O nome do médico é obrigatório!'];
@@ -99,13 +132,27 @@ class DoctorController
         }
 
         try {
-            $this->repository->update((int)$id, [
+            $updateData = [
                 'name' => $name,
                 'crm' => $crm,
                 'specialty' => $specialty,
-                'consultation_time' => (int)$consultation_time,
-                'photo_url' => $photo_url
-            ]);
+                'consultation_time' => (int)$consultation_time
+            ];
+            // Só atualiza a foto se ela foi enviada ou se a URL foi fornecida
+            if (!empty($photo_url)) {
+                $updateData['photo_url'] = $photo_url;
+            }
+            
+            $this->repository->update((int)$id, $updateData);
+            
+            // Espelhar de volta para o User associado, se houver
+            $doctorRecord = $this->repository->findById((int)$id);
+            if ($doctorRecord && !empty($doctorRecord['user_id']) && !empty($photo_url)) {
+                $app = \DomainSystem\Core\Application::getInstance();
+                $userRepo = $app->getContainer()->make(\DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface::class);
+                $userRepo->updateProfile($doctorRecord['user_id'], ['profile_image' => $photo_url]);
+            }
+            
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico atualizado com sucesso!'];
         } catch (\Exception $e) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $e->getMessage()];

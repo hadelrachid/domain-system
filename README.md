@@ -1,9 +1,10 @@
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
+  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet?style=for-the-badge" alt="Version 1.2.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <br><br>
-  <h1>🚀 Domain System (CockPit)</h1>
+  <h1>🚀 Domain System (CockPit) v1.2.0</h1>
   <p><strong>O Motor de Negócios que não Morre. Um framework modular, hiper-resiliente e extensível.</strong></p>
 </div>
 
@@ -32,8 +33,18 @@ Graças ao nosso exclusivo *Quadro de Transferência Automática (Circuit Breake
 ### 🔒 3. Blindagem CSRF Global
 Segurança nativa e invisível. O núcleo injeta automaticamente proteções contra ataques de falsificação de solicitações em todos os formulários do sistema.
 
-### 🎨 4. Motor de Temas "CockPit" (Extensibilidade)
+### 🎨 4. Motor de Temas "CockPit" & Shortcodes Avançados
 Interfaces separadas da lógica! Crie temas (CockPits) para médicos, secretárias ou pacientes sem tocar no código back-end. 
+Na versão 1.2.0, nosso **ShortcodeManager** tornou-se um construtor de Contêineres, suportando recursividade profunda (ex: `[modal_perfil] [child] [/modal_perfil]`), idêntico aos page builders modernos!
+
+### 🔐 5. Autenticação de 2 Fatores (2FA) Nativa
+O núcleo agora possui integração direta com o Google Authenticator (TOTP) e envio de códigos por e-mail, configurável via painel de usuário para segurança enterprise.
+
+### 🌑 6. UI Reativa & Dark Mode
+Experiência de single-page application (SPA). Abas carregam via requisições assíncronas (Live Fetch) e o design system nativo conta com variáveis CSS que suportam modos Claro e Escuro elegantes e consistentes.
+
+---
+
 Em breve, lançaremos na **[Wiki / Documentação](docs/)** tutoriais completos ensinando:
 - *Como desenvolver o seu próprio Tema*
 - *Como construir um Plugin do zero*

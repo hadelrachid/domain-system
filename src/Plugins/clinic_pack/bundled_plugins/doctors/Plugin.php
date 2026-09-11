@@ -14,7 +14,7 @@ class Plugin extends AbstractPlugin
         // 1. Bind da Infraestrutura (Repositório)
         $this->container->bind(
             \DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface::class,
-            \DomainSystem\Plugins\doctors\Repositories\SqliteDoctorRepository::class
+            \DomainSystem\Plugins\doctors\Repositories\DoctorRepository::class
         );
 
         // 2. Bind do Fornecedor para Agendamentos (DIP)

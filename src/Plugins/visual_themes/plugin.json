@@ -1,0 +1,9 @@
+{
+    "name": "Temas Visuais (Visual Themes)",
+    "description": "Responsável por gerenciar o motor de temas escuros e paletas de cores do sistema.",
+    "version": "1.0.0",
+    "author": "Antigravity",
+    "require": {
+        "core": ">=1.0.0"
+    }
+}
