@@ -150,6 +150,90 @@ class CockpitController
         return new Response($html);
     }
 
+    public function searchHistory(Request $request): Response
+    {
+        $name = trim($request->input('search_name', $request->input('name', '')));
+        $date = trim($request->input('search_date', $request->input('date', '')));
+
+        $db = \DomainSystem\Core\Application::getInstance()
+            ->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+
+        $role = $this->session->get('role');
+        $userId = $this->session->get('user_id');
+
+        $doctorId = null;
+        if ($role === 'doctor') {
+            $stmt = $db->prepare("SELECT linked_doctor_id FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $doctorId = $stmt->fetchColumn();
+        }
+
+        $sql = "SELECT a.*, d.name as doctor_name, p.name as patient_name
+                FROM appointments a
+                LEFT JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN patients p ON a.patient_id = p.id
+                WHERE 1=1";
+
+        $params = [];
+
+        if ($role === 'doctor' && $doctorId) {
+            $sql .= " AND a.doctor_id = ?";
+            $params[] = (int)$doctorId;
+        }
+
+        if (!empty($name)) {
+            $sql .= " AND (p.name LIKE ? OR a.patient_name LIKE ?)";
+            $params[] = "%{$name}%";
+            $params[] = "%{$name}%";
+        }
+
+        if (!empty($date)) {
+            $sql .= " AND DATE(a.appointment_date) = ?";
+            $params[] = $date;
+        }
+
+        $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 100";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        ob_start();
+        ?>
+        <?php if(empty($results)): ?>
+            <div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--bg-card);border-radius:8px;">
+                <i class="fas fa-search" style="font-size:36px;margin-bottom:10px;opacity:0.4;"></i>
+                <p style="margin:0;">Nenhum atendimento encontrado para os critérios pesquisados.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach($results as $app): ?>
+            <div class="appointment-card" style="border-left-color:<?= strtolower($app['status']) === 'cancelado' ? '#ef4444' : (strtolower($app['status']) === 'confirmado' ? '#10b981' : '#64748b') ?>;animation:none;margin-bottom:10px;">
+                <div class="info-group">
+                    <span class="info-label">Paciente</span>
+                    <span class="info-value"><?= htmlspecialchars($app['patient_name'] ?? $app['name'] ?? 'Paciente') ?></span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Data &amp; Hora</span>
+                    <span class="info-value"><?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= htmlspecialchars($app['appointment_time']) ?></span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Profissional</span>
+                    <span class="info-value"><?= htmlspecialchars($app['doctor_name'] ?: 'N/A') ?></span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Status</span>
+                    <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:<?= strtolower($app['status']) === 'cancelado' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(100, 116, 139, 0.15)' ?>;color:<?= strtolower($app['status']) === 'cancelado' ? '#ef4444' : 'var(--text-main)' ?>;border:1px solid <?= strtolower($app['status']) === 'cancelado' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(100, 116, 139, 0.3)' ?>;">
+                        <?= htmlspecialchars($app['status']) ?>
+                    </span>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        <?php
+        $html = ob_get_clean();
+        return new Response($html);
+    }
+
     public function renderHistoryTabAjax(Request $request): Response
     {
         $role = $this->session->get('role');
