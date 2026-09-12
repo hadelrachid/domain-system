@@ -75,7 +75,7 @@ class CockpitShortcodes
             FROM appointments a
             LEFT JOIN doctors d ON a.doctor_id = d.id
             LEFT JOIN patients p ON a.patient_id = p.id
-            WHERE a.status IN ('Pendente', 'Aguardando') AND DATE(a.appointment_date) <= CURDATE()
+            WHERE (a.status = 'Pendente') OR (a.status = 'Aguardando' AND DATE(a.appointment_date) <= CURDATE())
             ORDER BY a.appointment_date ASC, a.appointment_time ASC
         ")->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -149,7 +149,7 @@ class CockpitShortcodes
                 FROM appointments a
                 LEFT JOIN doctors d ON a.doctor_id = d.id
                 LEFT JOIN patients p ON a.patient_id = p.id
-                WHERE a.status = 'Confirmado' AND DATE(a.appointment_date) <= CURDATE()";
+                WHERE a.status = 'Confirmado'";
 
         if ($role === 'doctor' && $doctorId) {
             $sql .= " AND a.doctor_id = " . (int)$doctorId;
@@ -163,7 +163,7 @@ class CockpitShortcodes
         <?php if(empty($appointments)): ?>
             <div style="text-align:center;padding:60px;color:#64748b;background:var(--bg-card);border-radius:8px;">
                 <i class="fas fa-user-check" style="font-size:48px;margin-bottom:15px;color:#10b981;opacity:0.4;"></i>
-                <h2 style="margin:0;">Nenhum confirmado ainda hoje.</h2>
+                <h2 style="margin:0;">Nenhum paciente confirmado.</h2>
             </div>
         <?php else: ?>
             <?php foreach($appointments as $app): 

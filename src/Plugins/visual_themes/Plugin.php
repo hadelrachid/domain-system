@@ -25,6 +25,9 @@ class Plugin extends AbstractPlugin
         // 1. Salvar preferências de tema
         $events->addListener('cockpit.profile.save', function(string $userId, Request $request) {
             $themeColor = $request->input('theme_color');
+            $debugLog = dirname(__DIR__, 3) . '/temp/theme_debug.log';
+            file_put_contents($debugLog, date('Y-m-d H:i:s') . " - userId: $userId, theme_color_raw: " . json_encode($request->request) . ", themeColorVar: " . var_export($themeColor, true) . "\n", FILE_APPEND);
+
             if ($themeColor && array_key_exists($themeColor, $this->colors)) {
                 $prefsDir = dirname(__DIR__, 3) . '/public/uploads/prefs';
                 if (!is_dir($prefsDir)) {
@@ -34,12 +37,16 @@ class Plugin extends AbstractPlugin
                 $prefs = file_exists($prefsFile) ? json_decode(file_get_contents($prefsFile), true) : [];
                 $prefs['theme_color'] = $themeColor;
                 file_put_contents($prefsFile, json_encode($prefs));
+                file_put_contents($debugLog, date('Y-m-d H:i:s') . " - SAVED to $prefsFile: $themeColor\n", FILE_APPEND);
+            } else {
+                file_put_contents($debugLog, date('Y-m-d H:i:s') . " - FAILED TO SAVE: themeColor was empty or not in array.\n", FILE_APPEND);
             }
         });
 
         // 2. Injetar variáveis CSS no <head>
         $events->addListener('cockpit.head.css', function(string $css, ?string $userId, string $cockpitType) {
             $themeColor = 'default';
+            $debugLog = dirname(__DIR__, 3) . '/temp/theme_debug.log';
             if ($userId) {
                 $prefsFile = dirname(__DIR__, 3) . '/public/uploads/prefs/user_' . $userId . '.json';
                 if (file_exists($prefsFile)) {
@@ -47,6 +54,8 @@ class Plugin extends AbstractPlugin
                     $themeColor = $prefs['theme_color'] ?? 'default';
                 }
             }
+
+            file_put_contents($debugLog, date('Y-m-d H:i:s') . " - LOAD: userId=$userId, cockpitType=$cockpitType, themeColorLoaded=$themeColor\n", FILE_APPEND);
 
             // Fallbacks de compatibilidade para a versão antiga
             if ($cockpitType === 'secretary' && $themeColor === 'default') {

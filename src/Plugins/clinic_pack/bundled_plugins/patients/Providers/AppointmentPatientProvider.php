@@ -55,7 +55,7 @@ class AppointmentPatientProvider implements PatientReaderInterface
         return $this->repository->save([
             'name' => $name,
             'phone' => $phone,
-            'cpf' => '000.000.000-00', // Dummy required CPF
+            'cpf' => null, // LGPD: Opcional
             'created_at' => date('Y-m-d H:i:s')
         ]);
     }
@@ -83,7 +83,7 @@ class AppointmentPatientProvider implements PatientReaderInterface
             $data['created_at'] = date('Y-m-d H:i:s');
         }
         if (!isset($data['cpf']) || empty($data['cpf'])) {
-            $data['cpf'] = '000.000.000-00';
+            $data['cpf'] = null; // LGPD: Opcional
         }
         return $this->repository->save($data);
     }

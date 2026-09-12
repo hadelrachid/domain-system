@@ -9,7 +9,7 @@ class SecretaryCockpitView extends AbstractCockpitView
         extract($this->data);
         ?>
 <?php if(isset($_GET['success'])): ?>
-        <div style="background: #d1fae5; color: #059669; padding: 14px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #059669;">
+        <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 14px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #10b981;">
             <i class="fas fa-check-circle"></i> Configurações atualizadas com sucesso!
         </div>
     <?php endif; ?>

@@ -62,7 +62,7 @@ class Plugin extends AbstractPlugin
         $schema->create('patients', function ($table) {
             $table->id();
             $table->string('name');
-            $table->string('cpf', 14)->unique();
+            $table->string('cpf', 14)->nullable();
             $table->string('email')->nullable();
             $table->string('phone', 20)->nullable();
             $table->date('birthdate')->nullable();

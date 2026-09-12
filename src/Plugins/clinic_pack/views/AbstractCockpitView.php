@@ -100,6 +100,9 @@ abstract class AbstractCockpitView implements CockpitViewInterface
                 if (m) m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
             }
             
+            console.log("DEBUG SSR: user_id = <?= $this->data['user_id'] ?? 'NULL' ?>");
+            console.log("DEBUG SSR: cockpitType = <?= (strpos(static::class, 'Secretary') !== false) ? 'secretary' : 'doctor' ?>");
+
             // Toast Logic
             function showToast(msg, type = 'success') {
                 const t = document.getElementById('toast');
@@ -218,7 +221,8 @@ abstract class AbstractCockpitView implements CockpitViewInterface
                 <?php
                 $events = \DomainSystem\Core\Application::getInstance()->getDispatcher();
                 $cockpitType = (strpos(static::class, 'Secretary') !== false) ? 'secretary' : 'doctor';
-                echo $events->applyFilters('cockpit.head.css', '', $this->data['user_id'] ?? null, $cockpitType);
+                $currentUserId = $this->data['user_id'] ?? $_SESSION['user_id'] ?? null;
+                echo $events->applyFilters('cockpit.head.css', '', $currentUserId, $cockpitType);
                 ?>
                 body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); }
                 .header { background: var(--bg-card); padding: 12px 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-top: 4px solid var(--primary); }
