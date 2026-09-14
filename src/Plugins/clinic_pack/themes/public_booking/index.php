@@ -66,7 +66,9 @@ if(empty($isShortcode)) {
                         <input type="email" id="email" name="email" class="form-control" 
                                placeholder="seu@email.com" 
                                autocomplete="email"
-                               inputmode="email">
+                               inputmode="email"
+                               pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                               title="Digite um e-mail válido contendo @ e domínio.">
                     </div>
                 </div>
 
@@ -327,9 +329,15 @@ if(empty($isShortcode)) {
             const time = selectedTimeInput.value;
             const attendanceType = attType.value;
             const insurance = document.getElementById('health_insurance').value;
+            const email = document.getElementById('email').value.trim();
 
             if (!name || !phone || !doctorId || !date) {
                 showAlert('error', '<i class="fas fa-exclamation-circle"></i> Preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showAlert('error', '<i class="fas fa-exclamation-circle"></i> Por favor, insira um e-mail válido com @ e domínio.');
                 return;
             }
 
@@ -351,7 +359,7 @@ if(empty($isShortcode)) {
             const payload = {
                 name: name,
                 phone: phone,
-                email: document.getElementById('email').value.trim(),
+                email: email,
                 doctor_id: doctorId,
                 date: date,
                 time: time,
@@ -372,6 +380,16 @@ if(empty($isShortcode)) {
                     form.reset();
                     selectedTimeInput.value = '';
                     renderSlotsHint();
+                    
+                    // Se o formulário estiver rodando dentro do CockPit (shortcode)
+                    if (typeof window.forceSync === 'function') {
+                        window.forceSync();
+                        if (typeof window.switchTab === 'function') {
+                            setTimeout(() => {
+                                window.switchTab('pendentes');
+                            }, 1500); // Aguarda 1.5s para a pessoa ler o alerta de sucesso e depois move de aba
+                        }
+                    }
                 } else {
                     showAlert('error', '<i class="fas fa-exclamation-circle"></i> ' + (result.message || 'Erro desconhecido.'));
                 }

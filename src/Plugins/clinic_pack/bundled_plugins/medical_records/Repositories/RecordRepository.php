@@ -4,29 +4,22 @@ namespace DomainSystem\Plugins\medical_records\Repositories;
 
 use DomainSystem\Plugins\Database\Connection;
 use DomainSystem\Plugins\medical_records\Contracts\RecordRepositoryInterface;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 
 class RecordRepository implements RecordRepositoryInterface
 {
     private Connection $db;
+    private AppointmentRepositoryInterface $appointmentRepo;
 
-    public function __construct(Connection $db)
+    public function __construct(Connection $db, AppointmentRepositoryInterface $appointmentRepo)
     {
         $this->db = $db;
+        $this->appointmentRepo = $appointmentRepo;
     }
 
     public function getAppointmentDetails(int $appointmentId): ?array
     {
-        $pdo = $this->db->getPdo();
-        $stmt = $pdo->prepare("
-            SELECT a.*, p.name as patient_name, p.birthdate as patient_dob, p.cpf, d.name as doctor_name 
-            FROM appointments a 
-            JOIN patients p ON a.patient_id = p.id 
-            JOIN doctors d ON a.doctor_id = d.id 
-            WHERE a.id = ?
-        ");
-        $stmt->execute([$appointmentId]);
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $this->appointmentRepo->getAppointmentDetails($appointmentId);
     }
 
     public function findByAppointment(int $appointmentId): ?array
@@ -108,8 +101,6 @@ class RecordRepository implements RecordRepositoryInterface
 
     public function updateAppointmentStatus(int $appointmentId, string $status): void
     {
-        $pdo = $this->db->getPdo();
-        $stmt = $pdo->prepare("UPDATE appointments SET status = ? WHERE id = ?");
-        $stmt->execute([$status, $appointmentId]);
+        $this->appointmentRepo->updateStatus($appointmentId, $status);
     }
 }

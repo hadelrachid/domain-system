@@ -1,5 +1,5 @@
 {
-    "ApiGateway": true,
+    "ApiGateway": false,
     "auth": true,
     "clinic_pack": true,
     "dev_simulator": false,
@@ -13,7 +13,7 @@
     "medical_records": true,
     "finance": true,
     "whatsapp": true,
-    "Database": true,
+    "Database": false,
     "nobreak_shield": true,
     "error_tester": true,
     "Error Tester": false,

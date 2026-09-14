@@ -2,11 +2,12 @@
 
 namespace DomainSystem\Plugins\appointments\Controllers;
 
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
 use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
-
 use DomainSystem\Core\Events\EventDispatcher;
 
 class AppointmentController
@@ -31,14 +32,11 @@ class AppointmentController
         $this->doctorReader = $doctorReader;
     }
 
-    public function index()
+    public function index(Request $request): Response
     {
-
-        
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
         
-        // A lógica de negócio dita que médicos só vêem os próprios pacientes. O Repositório só executa o filtro.
         $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
         $appointmentsRaw = $this->repo->getPendingQueue($filterDoctorId);
         
@@ -52,7 +50,6 @@ class AppointmentController
             $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
             $a['doctor_specialty'] = $doctorsMap[$a['doctor_id']]['specialty'] ?? '';
             
-            // Lógica movida da View para o Controller
             $a['status_class'] = 'status-' . strtolower(str_replace(' ', '-', $a['status']));
             try {
                 $dateObj = new \DateTime($a['appointment_date'] . ' ' . $a['appointment_time']);
@@ -70,25 +67,25 @@ class AppointmentController
         $patients = $this->patientReader->getAllPatients();
         $doctors = $this->doctorReader->getAllDoctors();
 
-        return $this->theme->render('admin_appointments', [
+        $html = $this->theme->render('admin_appointments', [
             'appointments' => $appointments,
             'patients' => $patients,
             'doctors' => $doctors,
             'theme' => $this->theme
         ], __DIR__ . '/../views');
+        
+        return new Response($html);
     }
 
-    public function store()
+    public function store(Request $request): Response
     {
-
-
-        $patient_id = $_POST['patient_id'] ?? '';
-        $doctor_id = $_POST['doctor_id'] ?? '';
-        $appointment_date = $_POST['appointment_date'] ?? '';
-        $appointment_time = $_POST['appointment_time'] ?? '';
-        $attendance_type = $_POST['attendance_type'] ?? 'Consulta';
-        $health_insurance = $_POST['health_insurance'] ?? '';
-        $reception_notes = $_POST['reception_notes'] ?? '';
+        $patient_id = $request->input('patient_id', '');
+        $doctor_id = $request->input('doctor_id', '');
+        $appointment_date = $request->input('appointment_date', '');
+        $appointment_time = $request->input('appointment_time', '');
+        $attendance_type = $request->input('attendance_type', 'Consulta');
+        $health_insurance = $request->input('health_insurance', '');
+        $reception_notes = $request->input('reception_notes', '');
 
         if (empty($patient_id) || empty($doctor_id) || empty($appointment_date) || empty($appointment_time)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha todos os campos obrigatórios.'];
@@ -128,16 +125,13 @@ class AppointmentController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/appointments");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/appointments');
     }
 
-    public function updateStatus()
+    public function updateStatus(Request $request): Response
     {
-
-
-        $id = $_POST['id'] ?? null;
-        $status = $_POST['status'] ?? null;
+        $id = $request->input('id');
+        $status = $request->input('status');
 
         if ($id && $status) {
             $allowed_statuses = ['Pendente', 'Confirmado', 'Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento', 'Finalizado', 'Cancelado'];
@@ -147,8 +141,7 @@ class AppointmentController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/appointments");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/appointments');
     }
 
     public function updateStatusApi(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
@@ -167,13 +160,11 @@ class AppointmentController
         return \DomainSystem\Core\Http\Response::json(['success' => false, 'message' => 'Parâmetros inválidos']);
     }
 
-    public function history()
+    public function history(Request $request): Response
     {
-
-        
         $role = strtolower($_SESSION['user_role'] ?? 'admin');
         $doctor_id = $_SESSION['linked_doctor_id'] ?? null;
-        $search = strtolower($_GET['s'] ?? '');
+        $search = strtolower($request->input('s', ''));
         
         $filterDoctorId = ($role === 'doctor') ? $doctor_id : null;
         $appointmentsRaw = $this->repo->getHistory($filterDoctorId, $search, 'all');
@@ -215,10 +206,12 @@ class AppointmentController
         // Limit to 20 like before
         $appointments = array_slice($appointments, 0, 20);
 
-        return $this->theme->render('admin_history', [
+        $html = $this->theme->render('admin_history', [
             'appointments' => $appointments,
             'theme' => $this->theme
         ], __DIR__ . '/../views');
+        
+        return new Response($html);
     }
 
     public function renderShortcodeBooking(array $attributes = []): string

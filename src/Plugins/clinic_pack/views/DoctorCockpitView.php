@@ -21,21 +21,14 @@ class DoctorCockpitView extends AbstractCockpitView
             <?php endif; ?>
 
     <div class="tabs" style="margin-top:20px;">
-        <div class="tab active" onclick="switchTab('pacientes')" id="tab-btn-pacientes">
-            <i class="fas fa-user-injured"></i> Meus Pacientes de Hoje
-            <?php if(isset($appointments) && count($appointments) > 0): ?>
-                <span style="background:#10b981;color:white;border-radius:50%;padding:1px 7px;font-size:11px;margin-left:5px;"><?= count($appointments) ?></span>
-            <?php endif; ?>
-        </div>
-        <div class="tab" onclick="switchTab('historico-hoje')" id="tab-btn-historico-hoje">
-            <i class="fas fa-history"></i> Atendidos Hoje
-            <?php if(isset($history_today) && count($history_today) > 0): ?>
-                <span style="background:#64748b;color:white;border-radius:50%;padding:1px 7px;font-size:11px;margin-left:5px;"><?= count($history_today) ?></span>
-            <?php endif; ?>
-        </div>
-        <div class="tab" onclick="switchTab('pesquisar')" id="tab-btn-pesquisar">
-            <i class="fas fa-search"></i> Pesquisar Histórico
-        </div>
+        <?php
+        $pacientesCount = isset($appointments) ? count($appointments) : 0;
+        $atendidosCount = isset($history_today) ? count($history_today) : 0;
+        
+        echo $this->renderTab('pacientes', 'fas fa-user-injured', 'Meus Pacientes de Hoje', $pacientesCount, '#10b981', true);
+        echo $this->renderTab('historico-hoje', 'fas fa-history', 'Atendidos Hoje', $atendidosCount, '#64748b');
+        echo $this->renderTab('pesquisar', 'fas fa-search', 'Pesquisar Histórico', 0, '#64748b', false, true);
+        ?>
     </div>
 
                         <!-- ABA DE PACIENTES CONFIRMADOS -->
@@ -64,57 +57,24 @@ class DoctorCockpitView extends AbstractCockpitView
         ob_start();
         ?>
         <script>
-        function doSearch() {
+        async function doSearch() {
             const name = document.getElementById('search-name').value;
             const date = document.getElementById('search-date').value;
             const resultsDiv = document.getElementById('search-results');
             
             resultsDiv.innerHTML = '<div style="text-align: center; padding: 50px; color: var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
             
-            fetch('<?= \BASE_URL ?>/cockpit/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
-                body: new URLSearchParams({ 
-                    search_name: name, 
-                    search_date: date,
-                    csrf_token: '<?= $_SESSION['csrf_token'] ?? '' ?>'
-                })
-            })
-            .then(res => { if(!res.ok && res.status === 403) return res.json().then(data => { if(data.error === 'csrf') { showToast('Acesso Negado 🛑 (CSRF)', 'error'); throw new Error('CSRF'); } }); return res.text(); })
-            .then(html => { resultsDiv.innerHTML = html; })
-            .catch(err => { resultsDiv.innerHTML = '<div style="color:red; padding:20px;">Erro na busca.</div>'; });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            const content = document.getElementById('tab-' + tabId);
-            const btn     = document.getElementById('tab-btn-' + tabId);
-            if (content) content.classList.add('active');
-            if (btn)     btn.classList.add('active');
-            
-            sessionStorage.setItem('active_tab_' + window.location.pathname, tabId);
-            
-            // Auto-refresh the history tab when clicked
-            if (tabId === 'historico-hoje') {
-                content.innerHTML = '<div style="text-align: center; padding: 50px; color: var(--text-muted);"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-                fetch('<?= \BASE_URL ?>/cockpit/history-tab', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: 'view_role=doctor&csrf_token=<?= $_SESSION["csrf_token"] ?? "" ?>'
-                })
-                .then(res => res.text())
-                .then(html => { content.innerHTML = html; })
-                .catch(err => { content.innerHTML = '<div style="color:red; padding:20px;">Erro ao carregar histórico.</div>'; });
+            try {
+                const html = await DS.api.post('/cockpit/search', `search_name=${encodeURIComponent(name)}&search_date=${encodeURIComponent(date)}&csrf_token=<?= $_SESSION['csrf_token'] ?? '' ?>`, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                resultsDiv.innerHTML = '<div style="color:red; padding:20px;">Erro na busca.</div>';
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTab = sessionStorage.getItem('active_tab_' + window.location.pathname);
-            if (savedTab && document.getElementById('tab-' + savedTab)) {
-                switchTab(savedTab);
-            }
-        });
+        // Lógica das abas e sincronização herdada da classe abstrata (AbstractCockpitView.php)
 
         function toggleSettingsModal() {
             const modal = document.getElementById('settingsModal');
@@ -133,18 +93,16 @@ class DoctorCockpitView extends AbstractCockpitView
             document.getElementById('mtab-btn-' + tabId).classList.add('active');
         }
 
-        function changeStatus(id, newStatus, btn) {
+        async function changeStatus(id, newStatus, btn) {
             const orig = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             btn.disabled = true;
 
-            fetch('<?= \BASE_URL ?>/cockpit/appointments/status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
-                body: 'id=' + id + '&status=' + newStatus + '&csrf_token=<?= $_SESSION["csrf_token"] ?? "" ?>'
-            })
-            .then(res => { if(!res.ok && res.status === 403) return res.json().then(data => { if(data.error === 'csrf') { showToast('Acesso Negado 🛑 (CSRF): ' + (data.message||'Token Inválido'), 'error'); throw new Error('CSRF'); } }); return res.json(); })
-            .then(data => {
+            try {
+                const data = await DS.api.post('/cockpit/appointments/status', `id=${id}&status=${newStatus}&csrf_token=<?= $_SESSION["csrf_token"] ?? "" ?>`, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                
                 if (data.success) {
                     let card = document.getElementById('card-' + id);
                     if (card) {
@@ -171,14 +129,13 @@ class DoctorCockpitView extends AbstractCockpitView
                         }, 400);
                     }
                 } else {
-                    alert('Erro ao alterar status.');
+                    DS.ui.toast.error('Erro ao alterar status.');
                     btn.innerHTML = orig; btn.disabled = false;
                 }
-            })
-            .catch(err => {
-                alert('Erro de rede.');
+            } catch (err) {
+                // Erros de rede (e CSRF) já mostram Toast via DS.api
                 btn.innerHTML = orig; btn.disabled = false;
-            });
+            }
         }
 
         // Funções para grade de horários

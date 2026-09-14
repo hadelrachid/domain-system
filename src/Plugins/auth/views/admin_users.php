@@ -23,13 +23,29 @@
                 <label style="display: block; font-weight: bold; margin-bottom: 5px;">E-mail</label>
                 <input type="email" name="email" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
             </div>
-            <div style="margin-bottom: 15px;">
+            <div style="margin-bottom: 15px;" class="settings-form-group">
                 <label style="display: block; font-weight: bold; margin-bottom: 5px;">Senha</label>
                 <div style="position: relative;">
-                    <input type="password" name="password" id="new_user_pwd" required style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; padding-right: 35px; box-sizing: border-box; outline: none;">
+                    <input type="password" name="password" id="new_user_pwd" required style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 6px; padding-right: 35px; box-sizing: border-box; outline: none;" oninput="analyzePasswordStrength(this.value, 'admin_new')">
                     <button type="button" onclick="togglePasswordVisibility('new_user_pwd', this)" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: transparent; border: none; color: #666; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
+                </div>
+                
+                <div style="margin-top: 8px;">
+                    <button type="button" onclick="generatePasswordAndAnalyze('new_user_pwd', 'admin_new')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                        <i class="fas fa-magic"></i> Gerar Senha Segura
+                    </button>
+                </div>
+                
+                <div id="pwd-meter-admin_new" style="display:none; margin-top:8px;">
+                     <div style="height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden;">
+                          <div id="pwd-bar-admin_new" style="height:100%; width:0%; background:#ef4444; transition: width 0.3s, background 0.3s;"></div>
+                     </div>
+                     <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                         <div id="pwd-hint-admin_new" style="font-size:11px; color:#64748b;">Inclua letras, números e símbolos</div>
+                         <div id="pwd-text-admin_new" style="font-size:11px; font-weight:600; text-align:right;">Péssimo</div>
+                     </div>
                 </div>
             </div>
             <div style="margin-bottom: 15px;">
@@ -83,14 +99,35 @@
                             
                             <!-- Redefinir Senha e Excluir -->
                             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; gap: 8px;">
-                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <strong style="font-size:12px; color:#475569;">Mudar Senha</strong>
+                                </div>
+                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap;" class="settings-form-group">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                    <div style="position: relative; flex: 1; min-width: 120px;">
-                                        <input type="password" name="new_password" id="reset_pwd_<?= $u['id'] ?>" placeholder="Nova senha" required style="width: 100%; font-size: 13px; padding: 6px 8px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
-                                        <button type="button" onclick="togglePasswordVisibility('reset_pwd_<?= $u['id'] ?>', this)" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: transparent; border: none; color: #64748b; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                        </button>
+                                    <div style="position: relative; flex: 1; min-width: 120px; width:100%;">
+                                        <div style="position:relative;">
+                                            <input type="password" name="new_password" id="reset_pwd_<?= $u['id'] ?>" placeholder="Nova senha" required style="width: 100%; font-size: 13px; padding: 6px 8px; padding-right: 32px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; outline: none; transition: border-color 0.2s;" oninput="analyzePasswordStrength(this.value, '<?= $u['id'] ?>')">
+                                            <button type="button" onclick="togglePasswordVisibility('reset_pwd_<?= $u['id'] ?>', this)" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: transparent; border: none; color: #64748b; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            </button>
+                                        </div>
+                                        
+                                        <div style="margin-top: 8px;">
+                                            <button type="button" onclick="generatePasswordAndAnalyze('reset_pwd_<?= $u['id'] ?>', '<?= $u['id'] ?>')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                                                <i class="fas fa-magic"></i> Gerar Senha Segura
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="pwd-meter-<?= $u['id'] ?>" style="display:none; margin-top:8px; width:100%;">
+                                             <div style="height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden;">
+                                                  <div id="pwd-bar-<?= $u['id'] ?>" style="height:100%; width:0%; background:#ef4444; transition: width 0.3s, background 0.3s;"></div>
+                                             </div>
+                                             <div style="display:flex; justify-content:space-between; margin-top:2px;">
+                                                 <div id="pwd-hint-<?= $u['id'] ?>" style="font-size:9px; color:#64748b;">Inclua letras, números e símbolos</div>
+                                                 <div id="pwd-text-<?= $u['id'] ?>" style="font-size:9px; font-weight:600; text-align:right;">Péssimo</div>
+                                             </div>
+                                        </div>
                                     </div>
                                     <button type="submit" style="background: #0f172a; color: white; border: none; padding: 6px 12px; font-size: 12px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: background 0.2s;">Mudar</button>
                                 </form>

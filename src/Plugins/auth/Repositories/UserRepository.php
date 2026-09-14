@@ -55,7 +55,7 @@ class UserRepository implements UserRepositoryInterface
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function createUser(array $data): void
+    public function createUser(array $data): int
     {
         $fields = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
@@ -65,6 +65,7 @@ class UserRepository implements UserRepositoryInterface
             $params[":$k"] = $v;
         }
         $stmt->execute($params);
+        return (int)$this->db->lastInsertId();
     }
 
     public function updateTwoFactorSecret(int $userId, ?string $secret): void

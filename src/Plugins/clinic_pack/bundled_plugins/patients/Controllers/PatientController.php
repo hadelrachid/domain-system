@@ -2,6 +2,8 @@
 
 namespace DomainSystem\Plugins\patients\Controllers;
 
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\patients\Contracts\PatientRepositoryInterface;
 
@@ -16,20 +18,18 @@ class PatientController
         $this->repository = $repository;
     }
 
-    public function index()
+    public function index(Request $request): Response
     {
         $patients = $this->repository->findAll();
-
         $theme = $this->theme;
-        return $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
+        $html = $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
+        return new Response($html);
     }
 
-    public function store()
+    public function store(Request $request): Response
     {
-
-
-        $name = $_POST['name'] ?? '';
-        $cpf = preg_replace('/[^0-9]/', '', $_POST['cpf'] ?? '');
+        $name = $request->input('name', '');
+        $cpf = preg_replace('/[^0-9]/', '', $request->input('cpf', ''));
         
         if (empty($name) || empty($cpf)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome e CPF são obrigatórios!'];
@@ -38,16 +38,16 @@ class PatientController
                 $this->repository->save([
                     'name' => $name,
                     'cpf' => $cpf,
-                    'email' => $_POST['email'] ?? '',
-                    'phone' => $_POST['phone'] ?? '',
-                    'birthdate' => !empty($_POST['birthdate']) ? $_POST['birthdate'] : null,
-                    'zip_code' => $_POST['zip_code'] ?? null,
-                    'address' => $_POST['address'] ?? null,
-                    'address_number' => $_POST['address_number'] ?? null,
-                    'address_complement' => $_POST['address_complement'] ?? null,
-                    'city' => $_POST['city'] ?? null,
-                    'state' => $_POST['state'] ?? null,
-                    'insurance_number' => $_POST['insurance_number'] ?? null
+                    'email' => $request->input('email', ''),
+                    'phone' => $request->input('phone', ''),
+                    'birthdate' => $request->input('birthdate') ?: null,
+                    'zip_code' => $request->input('zip_code'),
+                    'address' => $request->input('address'),
+                    'address_number' => $request->input('address_number'),
+                    'address_complement' => $request->input('address_complement'),
+                    'city' => $request->input('city'),
+                    'state' => $request->input('state'),
+                    'insurance_number' => $request->input('insurance_number')
                 ]);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Paciente cadastrado com sucesso!'];
             } catch (\Exception $e) {
@@ -55,83 +55,73 @@ class PatientController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/patients");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/patients');
     }
 
-    public function edit()
+    public function edit(Request $request): Response
     {
-        $id = $_GET['id'] ?? null;
+        $id = $request->input('id');
         if (!$id) {
-            header("Location: " . BASE_URL . "/admin/patients");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/patients');
         }
 
         $patient = $this->repository->findById((int)$id);
         if (!$patient) {
-            header("Location: " . BASE_URL . "/admin/patients");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/patients');
         }
 
         $theme = $this->theme;
-        return $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
+        $html = $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
+        return new Response($html);
     }
 
-    public function update()
+    public function update(Request $request): Response
     {
-
-
-        $id = $_POST['id'] ?? null;
+        $id = $request->input('id');
         if (!$id) {
-            header("Location: " . BASE_URL . "/admin/patients");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/patients');
         }
 
-        $name = $_POST['name'] ?? '';
-        $cpf = preg_replace('/[^0-9]/', '', $_POST['cpf'] ?? '');
+        $name = $request->input('name', '');
+        $cpf = preg_replace('/[^0-9]/', '', $request->input('cpf', ''));
         
         if (empty($name) || empty($cpf)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome e CPF são obrigatórios!'];
-            header("Location: " . BASE_URL . "/admin/patients/edit?id=" . $id);
-            exit;
+            return Response::redirect(BASE_URL . '/admin/patients/edit?id=' . $id);
         }
 
         try {
             $this->repository->update((int)$id, [
                 'name' => $name,
                 'cpf' => $cpf,
-                'email' => $_POST['email'] ?? '',
-                'phone' => $_POST['phone'] ?? '',
-                'birthdate' => !empty($_POST['birthdate']) ? $_POST['birthdate'] : null,
-                'zip_code' => $_POST['zip_code'] ?? null,
-                'address' => $_POST['address'] ?? null,
-                'address_number' => $_POST['address_number'] ?? null,
-                'address_complement' => $_POST['address_complement'] ?? null,
-                'city' => $_POST['city'] ?? null,
-                'state' => $_POST['state'] ?? null,
-                'insurance_number' => $_POST['insurance_number'] ?? null
+                'email' => $request->input('email', ''),
+                'phone' => $request->input('phone', ''),
+                'birthdate' => $request->input('birthdate') ?: null,
+                'zip_code' => $request->input('zip_code'),
+                'address' => $request->input('address'),
+                'address_number' => $request->input('address_number'),
+                'address_complement' => $request->input('address_complement'),
+                'city' => $request->input('city'),
+                'state' => $request->input('state'),
+                'insurance_number' => $request->input('insurance_number')
             ]);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Paciente atualizado com sucesso!'];
         } catch (\Exception $e) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro ao atualizar paciente: ' . $e->getMessage()];
         }
 
-        header("Location: " . BASE_URL . "/admin/patients");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/patients');
     }
 
-    public function delete()
+    public function delete(Request $request): Response
     {
-
-
-        $id = $_POST['id'] ?? null;
+        $id = $request->input('id');
         if ($id) {
             $this->repository->delete((int)$id);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Paciente removido com sucesso.'];
         }
 
-        header("Location: " . BASE_URL . "/admin/patients");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/patients');
     }
 
     public function renderShortcodeForm(array $attributes = []): string

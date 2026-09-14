@@ -36,6 +36,22 @@ abstract class AbstractCockpitView implements CockpitViewInterface
         return $this->data[$key] ?? $default;
     }
 
+    /**
+     * Abstração genérica para renderizar abas e seus contadores dinamicamente.
+     */
+    protected function renderTab(string $id, string $icon, string $title, int $count = 0, string $badgeColor = '#64748b', bool $active = false, bool $hideZero = false): string
+    {
+        $activeClass = $active ? ' active' : '';
+        $badge = '';
+        if ($count > 0 || ($count === 0 && !$hideZero)) {
+            $badge = "<span style=\"background:{$badgeColor};color:white;border-radius:50%;padding:1px 7px;font-size:11px;margin-left:5px;\">{$count}</span>";
+        }
+        return "<div class=\"tab{$activeClass}\" onclick=\"switchTab('{$id}')\" id=\"tab-btn-{$id}\">
+            <i class=\"{$icon}\"></i> {$title}
+            {$badge}
+        </div>";
+    }
+
     public function renderHeader(): string
     {
         ob_start();
@@ -103,101 +119,31 @@ abstract class AbstractCockpitView implements CockpitViewInterface
             console.log("DEBUG SSR: user_id = <?= $this->data['user_id'] ?? 'NULL' ?>");
             console.log("DEBUG SSR: cockpitType = <?= (strpos(static::class, 'Secretary') !== false) ? 'secretary' : 'doctor' ?>");
 
-            // Toast Logic
-            function showToast(msg, type = 'success') {
-                const t = document.getElementById('toast');
-                if (!t) return;
-                t.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg;
-                t.className = 'show ' + type;
-                setTimeout(() => { t.className = ''; }, 4000);
-            }
+            // --- SYSTEM SENSOR (TOAST ABSTRACTION) ---
+            <?php include __DIR__ . '/../themes/partials/_sensor_led_js.php'; ?>
+            
+
 
             
-            // Profile Form AJAX Submit
-            function submitProfileForm(e) {
-                e.preventDefault();
-                const form = e.target;
-                const btn = document.getElementById('btn-save-profile');
-                const origHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-                btn.disabled = true;
-
-                fetch('<?= \BASE_URL ?>/cockpit/profile', {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(async res => {
-                    const contentType = res.headers.get("content-type");
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        return res.json();
-                    } else {
-                        // Se não retornou JSON, pode ser um erro fatal no PHP ou redirecionamento inesperado
-                        const text = await res.text();
-                        if (text.includes('Acesso Negado') || text.includes('CSRF')) {
-                            throw new Error('Sessão expirada. Recarregue a página.');
-                        }
-                        throw new Error('Erro desconhecido no servidor.');
-                    }
-                })
-                .then(data => {
-                    if (data.success) {
-                        showToast(data.message || 'Configurações salvas com sucesso!', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showToast(data.message || 'Erro ao salvar configurações.', 'error');
-                        btn.innerHTML = origHtml; btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    showToast(err.message || 'Erro de conexão.', 'error');
-                    btn.innerHTML = origHtml; btn.disabled = false;
-                });
-            }
-// Profile Form AJAX Submit
-            function submitProfileForm(e) {
-                e.preventDefault();
-                const form = e.target;
-                const btn = document.getElementById('btn-save-profile');
-                const origHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-                btn.disabled = true;
-
-                fetch('<?= \BASE_URL ?>/cockpit/profile', {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(async res => {
-                    const contentType = res.headers.get("content-type");
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        return res.json();
-                    } else {
-                        // Se não retornou JSON, pode ser um erro fatal no PHP ou redirecionamento inesperado
-                        const text = await res.text();
-                        if (text.includes('Acesso Negado') || text.includes('CSRF')) {
-                            throw new Error('Sessão expirada. Recarregue a página (F5).');
-                        }
-                        throw new Error('Erro desconhecido no servidor.');
-                    }
-                })
-                .then(data => {
-                    if (data.success) {
-                        showToast(data.message || 'Configurações salvas com sucesso!', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showToast(data.message || 'Erro ao salvar configurações.', 'error');
-                        btn.innerHTML = origHtml; btn.disabled = false;
-                    }
-                })
-                .catch(err => {
-                    showToast(err.message || 'Erro de conexão.', 'error');
-                    btn.innerHTML = origHtml; btn.disabled = false;
-                });
-            }
+            // --- GERENCIADOR OO DO COCKPIT ---
+            <?php include __DIR__ . '/../themes/partials/_cockpit_manager_js.php'; ?>
             
-            <?php 
-            include __DIR__ . '/../themes/partials/_avatar_js.php'; 
+            // Instanciar o Controller e Registrar os Ouvintes (Callbacks)
+            document.addEventListener('DOMContentLoaded', () => {
+                window.Cockpit = new CockpitController({
+                    role: '<?= (strpos(static::class, "Secretary") !== false) ? "secretary" : "doctor" ?>',
+                    baseUrl: '<?= \BASE_URL ?>',
+                    csrfToken: '<?= $_SESSION["csrf_token"] ?? "" ?>'
+                });
+
+                // Callback 1: Quando uma badge aumenta (ex: novo paciente agendado/aguardando)
+                window.Cockpit.on('badge:increased', (data) => {
+                    SystemSensor.info(data.msg); // Dispara a notificação flutuante com som!
+                });
+            });
+            // --- END UNIFIED LOGIC ---
+
+            <?php  
             $events = \DomainSystem\Core\Application::getInstance()->getDispatcher();
             echo $events->applyFilters('cockpit.footer.js', '');
             ?>
@@ -216,6 +162,14 @@ abstract class AbstractCockpitView implements CockpitViewInterface
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>CockPIT</title>
+            
+            <!-- JS Kernel (DS) -->
+            <script>window.DS_BASE_URL = '<?= BASE_URL ?>/';</script>
+            <script src="<?= BASE_URL ?>/assets/js/core/ds.js"></script>
+            <script src="<?= BASE_URL ?>/assets/js/core/events.js"></script>
+            <script src="<?= BASE_URL ?>/assets/js/core/api.js"></script>
+            <script src="<?= BASE_URL ?>/assets/js/core/toast.js"></script>
+
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 <?php
@@ -243,11 +197,6 @@ abstract class AbstractCockpitView implements CockpitViewInterface
                 .avatar-lg { width: 90px; height: 90px; font-size: 28px; border: 3px solid var(--primary-border); }
                 .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
                 
-                #toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; display: none; align-items: center; gap: 10px; z-index: 999999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); min-width: 280px; }
-                #toast.show { display: flex; }
-                #toast.success { border-left: 4px solid #10b981; }
-                #toast.error   { border-left: 4px solid #ef4444; }
-
                 /* Common helper classes that were in secretary/doctor index.php */
                 .tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 2px solid var(--primary-border); flex-wrap: wrap; }
                 .tab { padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text-muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s; white-space: nowrap; }
@@ -256,7 +205,9 @@ abstract class AbstractCockpitView implements CockpitViewInterface
                 .tab-content { display: none; }
                 .tab-content.active { display: block; }
                 
-                .appointment-card { background: var(--bg-card) !important; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; border-left: 5px solid #f59e0b; color: var(--text-main) !important; }
+                .appointment-card { background: var(--bg-card) !important; border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: grid; grid-template-columns: minmax(200px, 2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(120px, 1fr); gap: 15px; align-items: center; border-left: 5px solid #f59e0b; color: var(--text-main) !important; }
+                .appointment-card .actions, .appointment-card .card-notes { grid-column: 1 / -1; }
+                @media (max-width: 768px) { .appointment-card { grid-template-columns: 1fr; } }
                 .appointment-card.status-confirmado { border-left-color: #10b981; animation: none !important; }
                 @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 70% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
                 .appointment-card:not(.status-confirmado) { animation: pulse-yellow 2s infinite; }

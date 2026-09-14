@@ -24,12 +24,19 @@ class Plugin extends AbstractPlugin
                 \DomainSystem\Plugins\doctors\Providers\AppointmentDoctorProvider::class
             );
         }
+        
+        if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\DoctorScheduleWriterInterface::class)) {
+            $this->container->bind(
+                \DomainSystem\Plugins\appointments\Contracts\DoctorScheduleWriterInterface::class,
+                \DomainSystem\Plugins\doctors\Providers\AppointmentDoctorProvider::class
+            );
+        }
 
         /** @var EventDispatcher $events */
         $events = $this->events();
 
-        $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
-            $theme = $this->theme();
+        $events->addListener('workspace.register', function (\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
+            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('doctor', new \DomainSystem\Plugins\doctors\Workspace\DoctorWorkspace($theme));
         });
 

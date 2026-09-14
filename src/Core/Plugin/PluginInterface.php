@@ -59,7 +59,11 @@ interface PluginInterface
     /**
      * Construtor padrão que o PluginManager usará.
      */
-    public function __construct(\DomainSystem\Core\Container\Container $container, string $path);
+    public function __construct(
+        \DomainSystem\Core\Container\Container $container, 
+        string $path, 
+        \DomainSystem\Core\Events\EventDispatcher $events
+    );
     
     /**
      * Define o estado de ativação em tempo de execução.

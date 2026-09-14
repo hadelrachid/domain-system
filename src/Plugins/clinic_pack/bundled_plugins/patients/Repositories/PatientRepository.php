@@ -48,4 +48,28 @@ class PatientRepository implements PatientRepositoryInterface
     {
         $this->db->table($this->table)->where('id', '=', $id)->delete();
     }
+
+    public function findByPhone(string $phone): ?array
+    {
+        $stmt = $this->db->getPdo()->prepare("SELECT * FROM {$this->table} WHERE phone = :phone LIMIT 1");
+        $stmt->execute(['phone' => $phone]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function findByEmail(string $email): ?array
+    {
+        $stmt = $this->db->getPdo()->prepare("SELECT * FROM {$this->table} WHERE email = :email LIMIT 1");
+        $stmt->execute(['email' => $email]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function findByEmailOrPhone(string $email, string $phone): ?array
+    {
+        $stmt = $this->db->getPdo()->prepare("SELECT * FROM {$this->table} WHERE email = :email OR phone = :phone LIMIT 1");
+        $stmt->execute(['email' => $email, 'phone' => $phone]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
 }

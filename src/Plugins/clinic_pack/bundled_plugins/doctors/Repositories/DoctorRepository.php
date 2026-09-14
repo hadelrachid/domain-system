@@ -26,9 +26,9 @@ class DoctorRepository implements DoctorRepositoryInterface
         return !empty($result) ? $result[0] : null;
     }
 
-    public function save(array $data): void
+    public function save(array $data): int
     {
-        $this->db->table($this->table)->insert($data);
+        return (int)$this->db->table($this->table)->insert($data);
     }
 
     public function update(int $id, array $data): void
@@ -43,12 +43,31 @@ class DoctorRepository implements DoctorRepositoryInterface
 
     public function getSchedules(int $doctorId): array
     {
-        return $this->db->table('doctor_schedules')
-            ->where('doctor_id', '=', $doctorId)
-            // QueryBuilder currently might not support complex order_by chaining natively without checking its implementation,
-            // but we can assume it returns an array that we can sort in PHP or if it supports orderBy.
-            // Wait, looking at QueryBuilder, it may or may not support orderBy. 
-            // We'll just fetch and if needed sort.
-            ->get();
+        $db = $this->db->getPdo();
+        $stmt = $db->prepare("SELECT * FROM doctor_schedules WHERE doctor_id = ? ORDER BY day_of_week, start_time");
+        $stmt->execute([$doctorId]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function saveSchedules(int $doctorId, array $schedules): void
+    {
+        $db = $this->db->getPdo();
+        
+        $db->prepare("DELETE FROM doctor_schedules WHERE doctor_id = ?")->execute([$doctorId]);
+        
+        $insert = $db->prepare("
+            INSERT INTO doctor_schedules (doctor_id, day_of_week, start_time, end_time, slot_duration, is_active)
+            VALUES (?, ?, ?, ?, ?, 1)
+        ");
+
+        foreach ($schedules as $s) {
+            $insert->execute([
+                $doctorId, 
+                $s['day_of_week'], 
+                $s['start_time'], 
+                $s['end_time'], 
+                $s['slot_duration']
+            ]);
+        }
     }
 }

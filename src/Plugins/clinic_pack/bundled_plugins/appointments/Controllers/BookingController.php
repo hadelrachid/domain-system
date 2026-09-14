@@ -65,8 +65,14 @@ class BookingController
         /** @var \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface $appointmentRepo */
         $appointmentRepo = $container->make(\DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class);
         
-        /** @var \DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface $patientReader */
-        $patientReader = $container->make(\DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface::class);
+        /** @var \DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface $patientFinder */
+        $patientFinder = $container->make(\DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface::class);
+
+        /** @var \DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface $patientWriter */
+        $patientWriter = $container->make(\DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface::class);
+
+        /** @var \DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface $callback */
+        $callback = $container->make(\DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface::class);
 
         $name = $request->input('name');
         $phone = $request->input('phone');
@@ -79,26 +85,30 @@ class BookingController
         $notes = $request->input('notes', '');
         
         if (empty($name) || empty($phone) || empty($doctor_id) || empty($date)) {
-            return Response::json(['success' => false, 'message' => 'Por favor, preencha os campos obrigatórios.']);
+            return $callback->respond($callback::ERR_MISSING_FIELDS);
+        }
+
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $callback->respond($callback::ERR_INVALID_EMAIL);
         }
 
         if ($time !== 'A definir') {
             if ($appointmentRepo->isSlotOccupied((int)$doctor_id, $date, $time)) {
-                return Response::json(['success' => false, 'message' => 'Este horário acabou de ser ocupado. Escolha outro.']);
+                return $callback->respond($callback::ERR_SLOT_OCCUPIED);
             }
         }
         
-        $patient = $patientReader->findPatientByEmailOrPhone($email, $phone);
+        $patient = $patientFinder->findPatientByEmailOrPhone($email, $phone);
         
         if ($patient) {
             $patientId = (int)$patient['id'];
             
             // Se o nome fornecido for diferente do que está no banco, atualiza o cadastro do paciente
             if (!empty($name) && trim($name) !== trim($patient['name'] ?? '')) {
-                $patientReader->updatePatientData($patientId, ['name' => trim($name)]);
+                $patientWriter->updatePatientData($patientId, ['name' => trim($name)]);
             }
         } else {
-            $patientId = $patientReader->createPatientFull([
+            $patientId = $patientWriter->createPatientFull([
                 'name' => trim($name),
                 'email' => trim($email ?? ''),
                 'phone' => trim($phone),
@@ -120,7 +130,7 @@ class BookingController
             // A notificação de agendamento ao médico foi temporariamente removida para ser
             // reimplementada futuramente como um módulo/subplugin assíncrono (Event-Driven).
 
-            return Response::json(['success' => true, 'message' => 'Agendamento solicitado com sucesso! Entraremos em contato para confirmar.']);
+            return $callback->respond($callback::SUCCESS_BOOKED, ['message' => 'Agendamento solicitado com sucesso! Entraremos em contato para confirmar.']);
         } catch (\Exception $e) {
             return Response::json(['success' => false, 'message' => 'Erro ao salvar agendamento: ' . $e->getMessage()]);
         }

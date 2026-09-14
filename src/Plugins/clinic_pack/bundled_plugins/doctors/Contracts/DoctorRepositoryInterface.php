@@ -17,7 +17,7 @@ interface DoctorRepositoryInterface
     /**
      * Salva um novo médico.
      */
-    public function save(array $data): void;
+    public function save(array $data): int;
 
     /**
      * Atualiza os dados de um médico existente.
@@ -33,4 +33,9 @@ interface DoctorRepositoryInterface
      * Busca os horários de atendimento de um médico.
      */
     public function getSchedules(int $doctorId): array;
+
+    /**
+     * Salva a grade de horários do médico.
+     */
+    public function saveSchedules(int $doctorId, array $schedules): void;
 }

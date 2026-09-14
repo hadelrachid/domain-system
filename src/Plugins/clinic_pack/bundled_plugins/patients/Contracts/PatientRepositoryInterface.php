@@ -34,4 +34,19 @@ interface PatientRepositoryInterface
      * Exclui um paciente pelo ID.
      */
     public function delete(int $id): void;
+
+    /**
+     * Busca um paciente pelo telefone.
+     */
+    public function findByPhone(string $phone): ?array;
+
+    /**
+     * Busca um paciente pelo email.
+     */
+    public function findByEmail(string $email): ?array;
+
+    /**
+     * Busca um paciente pelo email ou telefone.
+     */
+    public function findByEmailOrPhone(string $email, string $phone): ?array;
 }

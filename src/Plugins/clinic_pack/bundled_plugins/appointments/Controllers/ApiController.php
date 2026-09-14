@@ -3,17 +3,23 @@
 namespace DomainSystem\Plugins\appointments\Controllers;
 
 use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
-use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface;
 
 class ApiController
 {
     private AppointmentRepositoryInterface $repo;
-    private PatientReaderInterface $patientReader;
+    private PatientFinderInterface $patientFinder;
+    private PatientWriterInterface $patientWriter;
 
-    public function __construct(AppointmentRepositoryInterface $repo, PatientReaderInterface $patientReader)
-    {
+    public function __construct(
+        AppointmentRepositoryInterface $repo, 
+        PatientFinderInterface $patientFinder, 
+        PatientWriterInterface $patientWriter
+    ) {
         $this->repo = $repo;
-        $this->patientReader = $patientReader;
+        $this->patientFinder = $patientFinder;
+        $this->patientWriter = $patientWriter;
     }
 
     public function receiveBooking()
@@ -51,9 +57,9 @@ class ApiController
         }
 
         // Tenta achar paciente pelo telefone (simplificado)
-        $patient = $this->patientReader->findPatientByPhone($telefone);
+        $patient = $this->patientFinder->findPatientByPhone($telefone);
         if (!$patient) {
-            $patientId = $this->patientReader->createPatient($nome, $telefone);
+            $patientId = $this->patientWriter->createPatient($nome, $telefone);
         } else {
             $patientId = $patient['id'];
         }

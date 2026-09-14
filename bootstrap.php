@@ -17,12 +17,13 @@ define('DOMAIN_SYSTEM_ROOT', __DIR__);
 // Carrega variáveis de ambiente (Ignora erros se não existir, mas em prod o servidor deve prover)
 $envFile = DOMAIN_SYSTEM_ROOT . '/.env';
 if (file_exists($envFile)) {
-    // Usar INI_SCANNER_RAW para evitar que caracteres como # e ) na senha quebrem o parser
     $envVariables = parse_ini_file($envFile, false, INI_SCANNER_RAW);
     if (is_array($envVariables)) {
         foreach ($envVariables as $key => $value) {
             $value = trim($value, '"\'');
             putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
 }

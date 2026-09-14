@@ -27,6 +27,12 @@
         .upload-box { background: #fff; padding: 20px; border: 1px dashed #c3c4c7; margin-bottom: 20px; }
         .page-title-action { display: inline-block; margin-left: 10px; padding: 4px 8px; font-size: 13px; text-decoration: none; border: 1px solid #2271b1; color: #2271b1; border-radius: 3px; }
     </style>
+    <!-- JS Kernel (DS) -->
+    <script>window.DS_BASE_URL = '<?= BASE_URL ?>/';</script>
+    <script src="<?= BASE_URL ?>/assets/js/core/ds.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/core/events.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/core/api.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/core/toast.js"></script>
 </head>
 <body>
     <div id="adminmenuback">
@@ -80,6 +86,7 @@
             <?= $content ?? '' ?>
         </div>
     </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const hasSubmenuLinks = document.querySelectorAll('.has-submenu > a');

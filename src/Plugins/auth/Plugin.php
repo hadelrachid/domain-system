@@ -81,7 +81,7 @@ class Plugin extends AbstractPlugin
         // Garante que o usuario admin padrao sempre exista para fins de estudo/teste
         $events->addListener('kernel_post_boot', function() {
             /** @var \DomainSystem\Plugins\Database\Connection $connection */
-            $connection = $this->db();
+            $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
             $db = $connection->getPdo();
             try {
                 // Só cria o admin padrão se o sistema já foi instalado

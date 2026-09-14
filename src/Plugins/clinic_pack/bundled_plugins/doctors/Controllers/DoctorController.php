@@ -2,6 +2,8 @@
 
 namespace DomainSystem\Plugins\doctors\Controllers;
 
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface;
 
@@ -16,28 +18,27 @@ class DoctorController
         $this->repository = $repository;
     }
 
-    public function index()
+    public function index(Request $request): Response
     {
-
         $doctors = $this->repository->findAll();
         $theme = $this->theme;
         
-        return $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
+        $html = $this->theme->render('admin_index', get_defined_vars(), __DIR__ . '/../views');
+        return new Response($html);
     }
 
-    public function store()
+    public function store(Request $request): Response
     {
+        $name = $request->input('name', '');
+        $email = $request->input('email', '');
+        $password = $request->input('password', '');
+        $crm = $request->input('crm', '');
+        $specialty = $request->input('specialty', '');
+        $consultation_time = $request->input('consultation_time', 30);
+        $photo_url = $request->input('photo_url', '');
 
-
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $crm = $_POST['crm'] ?? '';
-        $specialty = $_POST['specialty'] ?? '';
-        $consultation_time = $_POST['consultation_time'] ?? 30;
-        $photo_url = $_POST['photo_url'] ?? '';
-
-        // Upload de foto no cadastro manual
+        // TODO: Tratamento de arquivos via $request->file('photo') quando disponível
+        // Por ora, mantemos $_FILES apenas para o upload físico
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
             $filename = 'doctor_new_' . time() . '.' . $ext;
@@ -59,7 +60,6 @@ class DoctorController
                 $result = $service->registerDoctor($name, $specialty, $email, $crm, $password);
                 
                 if ($result['success']) {
-                    // Update the extra fields that the service doesn't handle natively
                     $this->repository->update($result['doctor_id'], [
                         'consultation_time' => (int)$consultation_time,
                         'photo_url' => $photo_url
@@ -73,47 +73,39 @@ class DoctorController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/doctors");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/doctors');
     }
 
-    public function edit()
+    public function edit(Request $request): Response
     {
-
-        
-        $id = $_GET['id'] ?? null;
+        $id = $request->input('id');
         if (!$id) {
-            header("Location: " . BASE_URL . "/admin/doctors");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/doctors');
         }
 
         $doctor = $this->repository->findById((int)$id);
         if (!$doctor) {
-            header("Location: " . BASE_URL . "/admin/doctors");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/doctors');
         }
 
         $theme = $this->theme;
-        return $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
+        $html = $this->theme->render('admin_edit', get_defined_vars(), __DIR__ . '/../views');
+        return new Response($html);
     }
 
-    public function update()
+    public function update(Request $request): Response
     {
-
-
-        $id = $_POST['id'] ?? null;
+        $id = $request->input('id');
         if (!$id) {
-            header("Location: " . BASE_URL . "/admin/doctors");
-            exit;
+            return Response::redirect(BASE_URL . '/admin/doctors');
         }
 
-        $name = $_POST['name'] ?? '';
-        $crm = $_POST['crm'] ?? '';
-        $specialty = $_POST['specialty'] ?? '';
-        $consultation_time = $_POST['consultation_time'] ?? 30;
-        $photo_url = $_POST['photo_url'] ?? '';
+        $name = $request->input('name', '');
+        $crm = $request->input('crm', '');
+        $specialty = $request->input('specialty', '');
+        $consultation_time = $request->input('consultation_time', 30);
+        $photo_url = $request->input('photo_url', '');
         
-        // Se enviou um arquivo de foto, faz o upload local
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
             $filename = 'doctor_' . $id . '_' . time() . '.' . $ext;
@@ -127,8 +119,7 @@ class DoctorController
 
         if (empty($name)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O nome do médico é obrigatório!'];
-            header("Location: " . BASE_URL . "/admin/doctors/edit?id=" . $id);
-            exit;
+            return Response::redirect(BASE_URL . '/admin/doctors/edit?id=' . $id);
         }
 
         try {
@@ -138,14 +129,12 @@ class DoctorController
                 'specialty' => $specialty,
                 'consultation_time' => (int)$consultation_time
             ];
-            // Só atualiza a foto se ela foi enviada ou se a URL foi fornecida
             if (!empty($photo_url)) {
                 $updateData['photo_url'] = $photo_url;
             }
             
             $this->repository->update((int)$id, $updateData);
             
-            // Espelhar de volta para o User associado, se houver
             $doctorRecord = $this->repository->findById((int)$id);
             if ($doctorRecord && !empty($doctorRecord['user_id']) && !empty($photo_url)) {
                 $app = \DomainSystem\Core\Application::getInstance();
@@ -158,47 +147,33 @@ class DoctorController
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $e->getMessage()];
         }
 
-        header("Location: " . BASE_URL . "/admin/doctors");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/doctors');
     }
 
-    public function delete()
+    public function delete(Request $request): Response
     {
-
-
-        $id = $_POST['id'] ?? null;
+        $id = $request->input('id');
         if ($id) {
             $this->repository->delete((int)$id);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico excluído com sucesso!'];
         }
 
-        header("Location: " . BASE_URL . "/admin/doctors");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/doctors');
     }
 
-    public function syncWp()
+    public function syncWp(Request $request): Response
     {
-
-        
         try {
-            // TODO: Implementar busca real na API do WordPress para sincronizar médicos
-            // Ex: $apiResponse = $this->httpClient->get('https://daherclinica.com/wp-json/daher/v1/doctors');
-            // $doctorsData = json_decode($apiResponse, true);
-            
             $syncedCount = 0;
-            // foreach ($doctorsData as $docData) { ... }
-
             $_SESSION['flash_message'] = [
                 'type' => 'success', 
                 'msg' => "Sincronização concluída! $syncedCount médicos importados/atualizados do site oficial."
             ];
-
         } catch (\Exception $e) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Falha na conexão com o site: ' . $e->getMessage()];
         }
 
-        header("Location: " . BASE_URL . "/admin/doctors");
-        exit;
+        return Response::redirect(BASE_URL . '/admin/doctors');
     }
 }
 

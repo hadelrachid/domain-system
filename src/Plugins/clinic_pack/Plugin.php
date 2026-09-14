@@ -19,13 +19,19 @@ class Plugin extends AbstractPlugin
         /** @var EventDispatcher $events */
         $events = $this->events();
 
-        // 1. Registra os Cockpits
+        // 0. Registrar dependências locais do pacote
+        $this->container->bind(
+            \DomainSystem\Plugins\clinic_pack\Contracts\UserProfileServiceInterface::class,
+            \DomainSystem\Plugins\clinic_pack\Services\UserProfileService::class
+        );
+
+        // 1. Registra os Cockpits usando o Container (permite injeção de dependência no construtor)
         if ($this->container->has(CockpitRegistryInterface::class)) {
             /** @var CockpitRegistryInterface $registry */
             $registry = $this->container->make(CockpitRegistryInterface::class);
-            $registry->registerProvider(new DoctorCockpitProvider());
-            $registry->registerProvider(new SecretaryCockpitProvider());
-            $registry->registerProvider(new NursingCockpitProvider());
+            $registry->registerProvider($this->container->make(DoctorCockpitProvider::class));
+            $registry->registerProvider($this->container->make(SecretaryCockpitProvider::class));
+            $registry->registerProvider($this->container->make(NursingCockpitProvider::class));
         }
 
         // 2. Roteamento do Cockpit e Admin Dashboard
@@ -36,12 +42,15 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/clinic/settings/insurance/delete', [SettingsController::class, 'deleteInsurance'], 'clinic_admin', ['admin']);
             
             $router->addRoute('GET', '/cockpit/doctor', [CockpitController::class, 'renderDoctor'], 'cockpit', ['doctor', 'admin']);
-            $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/search', [CockpitController::class, 'searchHistory'], 'cockpit', ['doctor', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/history-tab', [CockpitController::class, 'renderHistoryTabAjax'], 'cockpit', ['doctor', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/profile', [CockpitController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
-            $router->addRoute('GET', '/cockpit/profile/2fa', [CockpitController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
-            $router->addRoute('POST', '/cockpit/profile/2fa', [CockpitController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/search', [CockpitController::class, 'searchHistory'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/history-tab', [CockpitController::class, 'renderHistoryTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/tab-ajax', [CockpitController::class, 'renderTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/sync', [CockpitController::class, 'syncPanels'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            
+            $router->addRoute('POST', '/cockpit/profile', [CockpitController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('GET', '/cockpit/profile/2fa', [CockpitController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('POST', '/cockpit/profile/2fa', [CockpitController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
             $router->addRoute('GET', '/cockpit/nursing', [CockpitController::class, 'renderNursing'], 'cockpit', ['nurse', 'admin']);
             $router->addRoute('GET', '/admin/clinic', [CockpitController::class, 'renderAdminDashboard'], 'clinic_admin', ['admin']);
             $router->addRoute('GET', '/admin/clinic/shortcodes', [CockpitController::class, 'renderShortcodesCatalog'], 'clinic_admin', ['admin']);
@@ -51,6 +60,7 @@ class Plugin extends AbstractPlugin
         $events->addListener('shortcodes.register', function($manager) {
             $manager->add('aba_aguardando', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaAguardando'], 'Aba: Pacientes Aguardando', [], 'Agenda/Recepção');
             $manager->add('aba_confirmados_hoje', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaConfirmadosHoje'], 'Aba: Confirmados Hoje', ['role' => 'secretary ou doctor'], 'Agenda/Recepção');
+            $manager->add('aba_nao_compareceu', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaNaoCompareceu'], 'Aba: Pacientes que Faltaram', ['role' => 'secretary'], 'Agenda/Recepção');
             $manager->add('aba_historico', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaHistorico'], 'Aba: Histórico', ['role' => 'secretary ou doctor', 'type' => 'all ou today'], 'Histórico');
             $manager->add('aba_pesquisar', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaPesquisar'], 'Aba: Pesquisar', [], 'Histórico');
             
@@ -66,8 +76,21 @@ class Plugin extends AbstractPlugin
         // 3. Modificando o Menu (Para colocar tudo dentro de Daher Clínica)
         $events->addListener('admin.menu', function(array $menu) {
             $clinicSubmenus = [];
+            $clinicUrls = [
+                '/admin/patients', 
+                '/admin/appointments', 
+                '/admin/appointments/history', 
+                '/admin/doctors', 
+                '/admin/medical_records', 
+                '/admin/triage', 
+                '/admin/certificates', 
+                '/admin/finance', 
+                'admin/whatsapp',
+                '/admin/whatsapp'
+            ];
+            
             foreach ($menu as $k => $item) {
-                if (in_array($item['title'] ?? '', ['Pacientes', 'Agendamentos', 'Médicos', 'Prontuários', 'Histórico', 'Triagem', 'Atestados', 'Financeiro', 'WhatsApp Z-API'])) {
+                if (in_array($item['url'] ?? '', $clinicUrls)) {
                     $clinicSubmenus[] = $item;
                     unset($menu[$k]);
                 }

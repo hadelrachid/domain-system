@@ -24,6 +24,20 @@ class Plugin extends AbstractPlugin
                 \DomainSystem\Plugins\patients\Providers\AppointmentPatientProvider::class
             );
         }
+        
+        if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface::class)) {
+            $this->container->bind(
+                \DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface::class,
+                \DomainSystem\Plugins\patients\Providers\AppointmentPatientProvider::class
+            );
+        }
+
+        if (interface_exists(\DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface::class)) {
+            $this->container->bind(
+                \DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface::class,
+                \DomainSystem\Plugins\patients\Providers\AppointmentPatientProvider::class
+            );
+        }
 
         /** @var EventDispatcher $events */
         $events = $this->events();
@@ -50,7 +64,8 @@ class Plugin extends AbstractPlugin
             $menu[] = [
                 'title' => 'Pacientes',
                 'url' => '/admin/patients',
-                'icon' => '👥'
+                'icon' => '👥',
+                'group' => 'clinic'
             ];
             return $menu;
         });

@@ -88,8 +88,10 @@ class AvailabilityService
 
             if ($isToday) {
                 $slotTime = $this->parseTime($slot);
-                $slotTime->modify('+30 minutes'); // Margem
-                if ($now > $slotTime) continue; // Já passou
+                // Bloqueia qualquer horário que já passou, ou que esteja a menos de 5 minutos de começar
+                $slotTimeCopy = clone $slotTime;
+                $slotTimeCopy->modify('-5 minutes');
+                if ($now > $slotTimeCopy) continue; // Já passou
             }
 
             $available[] = $slot;

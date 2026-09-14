@@ -45,6 +45,9 @@ class UserController
 
         if (empty($name) || empty($email) || empty($password)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha nome, email e senha.'];
+        } elseif (!\DomainSystem\Core\Security\PasswordAnalyzer::isAcceptable($password)) {
+            $missing = implode(' ', \DomainSystem\Core\Security\PasswordAnalyzer::getMissingRequirements($password));
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A senha não atende aos requisitos de segurança: ' . $missing];
         } else {
             try {
                 $this->userRepo->createUser([
@@ -155,8 +158,13 @@ class UserController
         $new_password = $_POST['new_password'] ?? '';
 
         if ($user_id && !empty($new_password)) {
-            $this->userRepo->updatePassword($user_id, password_hash($new_password, PASSWORD_DEFAULT));
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Senha do usuário redefinida com sucesso!'];
+            if (!\DomainSystem\Core\Security\PasswordAnalyzer::isAcceptable($new_password)) {
+                $missing = implode(' ', \DomainSystem\Core\Security\PasswordAnalyzer::getMissingRequirements($new_password));
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A senha não atende aos requisitos de segurança: ' . $missing];
+            } else {
+                $this->userRepo->updatePassword($user_id, password_hash($new_password, PASSWORD_DEFAULT));
+                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Senha do usuário redefinida com sucesso!'];
+            }
         }
 
         header("Location: " . BASE_URL . "/admin/users");

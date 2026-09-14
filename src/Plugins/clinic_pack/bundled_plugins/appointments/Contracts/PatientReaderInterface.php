@@ -22,26 +22,4 @@ interface PatientReaderInterface
      * Retorna os dados completos de um único paciente.
      */
     public function getPatientData(int $id): ?array;
-    /**
-     * Atualiza dados básicos de um paciente.
-     */
-    public function updatePatientData(int $id, array $data): void;
-    /**
-     * Busca um paciente pelo telefone.
-     */
-    public function findPatientByPhone(string $phone): ?array;
-    /**
-     * Cria um paciente rápido (nome e telefone)
-     */
-    public function createPatient(string $name, string $phone): int;
-
-    /**
-     * Busca um paciente pelo email ou telefone (útil no agendamento online).
-     */
-    public function findPatientByEmailOrPhone(string $email, string $phone): ?array;
-
-    /**
-     * Cria um paciente com todos os dados.
-     */
-    public function createPatientFull(array $data): int;
 }

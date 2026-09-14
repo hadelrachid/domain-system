@@ -3,9 +3,11 @@
 namespace DomainSystem\Plugins\patients\Providers;
 
 use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface;
 use DomainSystem\Plugins\patients\Contracts\PatientRepositoryInterface;
 
-class AppointmentPatientProvider implements PatientReaderInterface
+class AppointmentPatientProvider implements PatientReaderInterface, PatientWriterInterface, PatientFinderInterface
 {
     private PatientRepositoryInterface $repository;
 
@@ -41,13 +43,7 @@ class AppointmentPatientProvider implements PatientReaderInterface
 
     public function findPatientByPhone(string $phone): ?array
     {
-        $patients = $this->repository->findAll();
-        foreach ($patients as $p) {
-            if (($p['phone'] ?? '') === $phone) {
-                return $p;
-            }
-        }
-        return null;
+        return $this->repository->findByPhone($phone);
     }
 
     public function createPatient(string $name, string $phone): int
@@ -62,19 +58,7 @@ class AppointmentPatientProvider implements PatientReaderInterface
 
     public function findPatientByEmailOrPhone(string $email, string $phone): ?array
     {
-        $patients = $this->repository->findAll();
-        foreach ($patients as $p) {
-            $pEmail = $p['email'] ?? '';
-            $pPhone = $p['phone'] ?? '';
-            
-            if (!empty($email) && $pEmail === $email) {
-                return $p;
-            }
-            if (!empty($phone) && $pPhone === $phone) {
-                return $p;
-            }
-        }
-        return null;
+        return $this->repository->findByEmailOrPhone($email, $phone);
     }
 
     public function createPatientFull(array $data): int

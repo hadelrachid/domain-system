@@ -11,11 +11,17 @@ abstract class AbstractPlugin implements PluginInterface
     protected string $path;
     protected array $metadata = [];
     protected bool $isActive = false;
+    
+    private \DomainSystem\Core\Events\EventDispatcher $events;
 
-    public function __construct(Container $container, string $path)
-    {
+    public function __construct(
+        Container $container, 
+        string $path, 
+        \DomainSystem\Core\Events\EventDispatcher $events
+    ) {
         $this->container = $container;
         $this->path = rtrim($path, '/\\');
+        $this->events = $events;
         $this->loadMetadata();
     }
 
@@ -67,18 +73,7 @@ abstract class AbstractPlugin implements PluginInterface
 
     protected function events(): \DomainSystem\Core\Events\EventDispatcher
     {
-        return $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
-    }
-
-    protected function db(): \DomainSystem\Plugins\Database\Connection
-    {
-        return $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
-    }
-
-
-    protected function theme(): \DomainSystem\Core\Theme\ThemeManager
-    {
-        return $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+        return $this->events;
     }
 
     abstract public function register(): void;

@@ -3,18 +3,24 @@
 namespace DomainSystem\Plugins\ApiGateway\Controllers;
 
 use DomainSystem\Core\Http\Request;
-use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface;
 use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 use Exception;
 
 class WebhookController
 {
-    private PatientReaderInterface $patients;
+    private PatientFinderInterface $patientFinder;
+    private PatientWriterInterface $patientWriter;
     private AppointmentRepositoryInterface $appointments;
 
-    public function __construct(PatientReaderInterface $patients, AppointmentRepositoryInterface $appointments)
-    {
-        $this->patients = $patients;
+    public function __construct(
+        PatientFinderInterface $patientFinder,
+        PatientWriterInterface $patientWriter,
+        AppointmentRepositoryInterface $appointments
+    ) {
+        $this->patientFinder = $patientFinder;
+        $this->patientWriter = $patientWriter;
         $this->appointments = $appointments;
     }
 
@@ -32,22 +38,13 @@ class WebhookController
 
         try {
             $phone = preg_replace("/[^0-9]/", "", $data["phone"]);
-            $patient = $this->patients->findPatientByPhone($phone);
+            $patient = $this->patientFinder->findPatientByPhone($phone);
             
             $patientId = null;
             if ($patient) {
                 $patientId = $patient["id"];
             } else {
-                // Generates a dummy CPF since it is required by the DB
-                $dummyCpf = date("YmdHis");
-                
-                // createPatient signature in PatientReaderInterface is createPatient(string $name, string $phone): int
-                // If it doesn't take CPF, it must be failing inside the PatientReader implementation!
-                // Wait, I can just use raw DB here if I have to, or modify createPatient interface...
-                // Actually, I'll just check if createPatient takes a third parameter in the interface.
-                // Wait, it DOESN'T take a third param in the interface. Let's see what happens.
-                
-                $patientId = $this->patients->createPatient($data["name"], $phone);
+                $patientId = $this->patientWriter->createPatient($data["name"], $phone);
             }
 
             $appointmentData = [

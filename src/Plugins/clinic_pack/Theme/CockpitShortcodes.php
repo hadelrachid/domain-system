@@ -2,37 +2,31 @@
 
 namespace DomainSystem\Plugins\clinic_pack\Theme;
 
-use DomainSystem\Plugins\Database\Connection;
 use DomainSystem\Core\Http\SessionManager;
 use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
-use DomainSystem\Core\Application;
+use DomainSystem\Plugins\appointments\Contracts\PatientReaderInterface;
+use DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface;
+use DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface;
 
 class CockpitShortcodes
 {
-    private \PDO $db;
-    private SessionManager $session;
-    private AppointmentRepositoryInterface $appointmentRepo;
-
-    public function __construct(Connection $conn, SessionManager $session, AppointmentRepositoryInterface $appointmentRepo)
-    {
-        $this->db = $conn->getPdo();
-        $this->session = $session;
-        $this->appointmentRepo = $appointmentRepo;
-    }
+    public function __construct(
+        private SessionManager $session,
+        private AppointmentRepositoryInterface $appointmentRepo,
+        private PatientReaderInterface $patientReader,
+        private DoctorReaderInterface $doctorReader,
+        private UserRepositoryInterface $userRepo
+    ) {}
 
     private function getDoctorIdForCurrentUser(): ?int
     {
-        if ($this->session->get('user_role') === 'doctor') {
-            $stmt = $this->db->prepare("SELECT linked_doctor_id FROM users WHERE id = ?");
-            $stmt->execute([$this->session->get('user_id')]);
-            return $stmt->fetchColumn() ?: null;
+        if ($this->session->get('user_role') === 'doctor' || $this->session->get('role') === 'doctor') {
+            $user = $this->userRepo->findById($this->session->get('user_id'));
+            return $user['linked_doctor_id'] ?? null;
         }
         return null;
     }
 
-    /**
-     * Helper to format names (Name + 3 surnames)
-     */
     private function formatName(string $fullName): string
     {
         $parts = explode(' ', trim($fullName));
@@ -42,9 +36,6 @@ class CockpitShortcodes
         return htmlspecialchars(implode(' ', $parts));
     }
 
-    /**
-     * Helper to format phones
-     */
     private function formatPhone(string $phone): string
     {
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
@@ -56,9 +47,6 @@ class CockpitShortcodes
         return htmlspecialchars($phone);
     }
     
-    /**
-     * Get clean phone for WhatsApp
-     */
     private function getCleanPhone(string $phone): string
     {
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
@@ -68,116 +56,91 @@ class CockpitShortcodes
         return $cleanPhone;
     }
 
-    public function renderAbaAguardando(array $attributes = []): string
+    private function enrichAppointments(array $appointments): array
     {
-        $appointments = $this->db->query("
-            SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone, p.email as patient_email
-            FROM appointments a
-            LEFT JOIN doctors d ON a.doctor_id = d.id
-            LEFT JOIN patients p ON a.patient_id = p.id
-            WHERE (a.status = 'Pendente') OR (a.status = 'Aguardando' AND DATE(a.appointment_date) <= CURDATE())
-            ORDER BY a.appointment_date ASC, a.appointment_time ASC
-        ")->fetchAll(\PDO::FETCH_ASSOC);
+        $patientsMap = $this->patientReader->getPatientsMap();
+        $doctorsMap = $this->doctorReader->getDoctorsMap();
 
-        ob_start();
-        ?>
-        <?php if(empty($appointments)): ?>
-            <div style="text-align:center;padding:60px;color:#64748b;background:var(--bg-card);border-radius:8px;">
-                <i class="fas fa-calendar-check" style="font-size:48px;margin-bottom:15px;color:#10b981;opacity:0.5;"></i>
-                <h2 style="margin:0;">Nenhum paciente aguardando!</h2>
-                <p style="color:#94a3b8;">Todos os agendamentos do dia foram confirmados.</p>
-            </div>
-        <?php else: ?>
-            <?php foreach($appointments as $app): 
-                $cleanPhone = $this->getCleanPhone($app['patient_phone'] ?? '');
-            ?>
-            <div class="appointment-card" id="card-<?= $app['id'] ?>">
-                <div class="info-group">
-                    <span class="info-label">Paciente</span>
-                    <span class="info-value"><i class="fas fa-user" style="color:#94a3b8;"></i> <?= $this->formatName($app['patient_name'] ?? '') ?></span>
-                    <?php if(!empty($app['patient_phone'])): ?><span style="font-size:12px;color:#64748b;"><?= $this->formatPhone($app['patient_phone'] ?? '') ?></span><?php endif; ?>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Data &amp; Hora</span>
-                    <span class="info-value"><i class="fas fa-clock" style="color:#94a3b8;"></i> <?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= $app['appointment_time'] ?></span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Profissional</span>
-                    <span class="info-value"><i class="fas fa-user-md" style="color:var(--primary);"></i> <?= htmlspecialchars($app['doctor_name'] ?: 'Não definido') ?></span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Tipo</span>
-                    <span class="info-value" style="text-transform:capitalize;"><?= htmlspecialchars($app['attendance_type'] ?? 'Particular') ?></span>
-                    <?php if(!empty($app['health_insurance'])): ?><span style="font-size:11px;color:#64748b;"><?= htmlspecialchars($app['health_insurance']) ?></span><?php endif; ?>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Status</span>
-                    <span class="status-badge Pendente" id="status-<?= $app['id'] ?>">⟳ Aguardando</span>
-                </div>
-                <div class="actions" style="display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; justify-content:space-between; margin-top:5px; border-top:1px solid var(--primary-border, #e2e8f0); padding-top:12px;">
-                    <div style="display:flex; gap:6px;">
-                        <?php if(!empty($cleanPhone)): ?>
-                            <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="btn btn-wa" title="WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                            <a href="https://t.me/+<?= $cleanPhone ?>" target="_blank" class="btn btn-tg" title="Telegram"><i class="fab fa-telegram"></i> Telegram</a>
-                        <?php endif; ?>
-                        <?php if(!empty($app['patient_email'])): ?>
-                            <a href="mailto:<?= htmlspecialchars($app['patient_email']) ?>" class="btn btn-email" title="E-mail"><i class="fas fa-envelope"></i> E-mail</a>
-                        <?php endif; ?>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="cancelarAgendamento(<?= $app['id'] ?>)" class="btn" style="background:#ef4444;color:white;border:none;padding:8px 12px;font-size:13px;" id="btn-cancel-<?= $app['id'] ?>">
-                            <i class="fas fa-user-times"></i> Não Compareceu
-                        </button>
-                        <button onclick="confirmarAgendamento(<?= $app['id'] ?>)" class="btn btn-confirm" id="btn-confirm-<?= $app['id'] ?>">
-                            <i class="fas fa-check"></i> Confirmar
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        <?php
-        return ob_get_clean();
+        foreach ($appointments as &$a) {
+            if (!isset($a['patient_name'])) {
+                $a['patient_name']  = $patientsMap[$a['patient_id']]['name']  ?? 'Desconhecido';
+                $a['patient_phone'] = $patientsMap[$a['patient_id']]['phone'] ?? '';
+                $a['patient_email'] = $patientsMap[$a['patient_id']]['email'] ?? '';
+            }
+            if (!isset($a['doctor_name'])) {
+                $a['doctor_name'] = $doctorsMap[$a['doctor_id']]['name'] ?? 'Desconhecido';
+            }
+        }
+        return $appointments;
     }
 
-    public function renderAbaConfirmadosHoje(array $attributes = []): string
+    public function renderAbaAguardando(array $attrs = []): string
     {
-        $role = $attributes['role'] ?? 'secretary';
+        return $this->renderQueueTemplate('Pendente', 'Nenhum paciente aguardando!', 'Todos os agendamentos da fila foram processados.', 'fas fa-calendar-check', '#10b981');
+    }
+
+    public function renderAbaConfirmadosHoje(array $attrs = []): string
+    {
+        $role = $attrs['role'] ?? 'secretary';
+        return $this->renderQueueTemplate('Confirmado', 'Nenhum paciente confirmado!', 'Não há pacientes confirmados aguardando o médico no momento.', 'fas fa-check-circle', '#64748b', $role);
+    }
+    
+    public function renderAbaNaoCompareceu(array $attrs = []): string
+    {
+        $role = $attrs['role'] ?? 'secretary';
+        return $this->renderQueueTemplate(['Faltou', 'Cancelado'], 'Ninguém faltou hoje!', 'Todos os pacientes confirmaram presença até o momento.', 'fas fa-smile-beam', '#10b981', $role);
+    }
+
+    private function renderQueueTemplate($status, string $emptyTitle, string $emptyDesc, string $emptyIcon, string $iconColor, string $role = 'secretary'): string
+    {
         $doctorId = $this->getDoctorIdForCurrentUser();
 
-        $sql = "SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone
-                FROM appointments a
-                LEFT JOIN doctors d ON a.doctor_id = d.id
-                LEFT JOIN patients p ON a.patient_id = p.id
-                WHERE a.status = 'Confirmado'";
-
-        if ($role === 'doctor' && $doctorId) {
-            $sql .= " AND a.doctor_id = " . (int)$doctorId;
+        if ($status === 'Pendente') {
+            $appointments = $this->appointmentRepo->getPendingQueue();
+        } elseif ($status === 'Confirmado') {
+            if ($role === 'doctor' && $doctorId) {
+                $appointments = $this->appointmentRepo->getConfirmedAppointmentsByDoctor($doctorId);
+            } else {
+                if (method_exists($this->appointmentRepo, 'getAllConfirmedAppointments')) {
+                    $appointments = $this->appointmentRepo->getAllConfirmedAppointments();
+                } else {
+                    $appointments = $this->appointmentRepo->search('', '', null);
+                    $appointments = array_filter($appointments, fn($a) => $a['status'] === 'Confirmado');
+                }
+            }
+        } else {
+            $appointments = $this->appointmentRepo->search('', '', null);
+            // $status pode ser um array, ex: ['Faltou', 'Cancelado']
+            if (is_array($status)) {
+                $appointments = array_filter($appointments, fn($a) => in_array($a['status'], $status) && date('Y-m-d', strtotime($a['appointment_date'])) === date('Y-m-d'));
+            } else {
+                $appointments = array_filter($appointments, fn($a) => $a['status'] === $status);
+            }
         }
-        $sql .= " ORDER BY a.appointment_date ASC, a.appointment_time ASC";
-
-        $appointments = $this->db->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        
+        $appointments = $this->enrichAppointments($appointments);
 
         ob_start();
         ?>
         <?php if(empty($appointments)): ?>
             <div style="text-align:center;padding:60px;color:#64748b;background:var(--bg-card);border-radius:8px;">
-                <i class="fas fa-user-check" style="font-size:48px;margin-bottom:15px;color:#10b981;opacity:0.4;"></i>
-                <h2 style="margin:0;">Nenhum paciente confirmado.</h2>
+                <i class="<?= htmlspecialchars($emptyIcon) ?>" style="font-size:48px;margin-bottom:15px;color:<?= htmlspecialchars($iconColor) ?>;opacity:0.4;"></i>
+                <h2 style="margin:0;"><?= htmlspecialchars($emptyTitle) ?></h2>
+                <p style="color:#94a3b8;"><?= htmlspecialchars($emptyDesc) ?></p>
             </div>
         <?php else: ?>
             <?php foreach($appointments as $app): 
                 $cleanPhone = $this->getCleanPhone($app['patient_phone'] ?? '');
             ?>
-            <div class="appointment-card status-confirmado" id="card-<?= $app['id'] ?>">
+            <div class="appointment-card <?= $status === 'Confirmado' ? 'status-confirmado' : '' ?>" id="card-<?= $app['id'] ?>">
                 <div class="info-group">
                     <span class="info-label">Paciente</span>
-                    <span class="info-value"><i class="fas fa-user" style="color:#10b981;"></i> <?= $this->formatName($app['patient_name'] ?? '') ?></span>
+                    <span class="info-value"><i class="fas fa-user" style="color:<?= $status === 'Confirmado' ? '#10b981' : '#94a3b8' ?>;"></i> <?= $this->formatName($app['patient_name'] ?? '') ?></span>
                     <?php if(!empty($app['patient_phone'])): ?><span style="font-size:12px;color:#64748b;"><?= $this->formatPhone($app['patient_phone'] ?? '') ?></span><?php endif; ?>
                 </div>
                 <div class="info-group">
                     <span class="info-label">Data &amp; Hora</span>
-                    <span class="info-value"><i class="fas fa-clock" style="color:#94a3b8;"></i> <?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= $app['appointment_time'] ?></span>
+                    <span class="info-value"><i class="fas fa-clock" style="color:#94a3b8;"></i> <?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= htmlspecialchars($app['appointment_time']) ?></span>
                 </div>
                 
                 <?php if ($role === 'secretary'): ?>
@@ -197,11 +160,47 @@ class CockpitShortcodes
 
                 <div class="info-group">
                     <span class="info-label">Status</span>
-                    <span class="status-badge Confirmado"><i class="fas fa-check-circle"></i> Confirmado</span>
+                    <span class="status-badge <?= is_array($status) ? 'Cancelado' : ($status === 'Pendente' ? 'Pendente' : 'Confirmado') ?>">
+                        <?php if (is_array($status)): ?>
+                            <i class="fas fa-times-circle"></i>
+                        <?php elseif ($status === 'Pendente'): ?>
+                            ⟳
+                        <?php else: ?>
+                            <i class="fas fa-check-circle"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($app['status']) ?>
+                    </span>
                 </div>
                 
-                <div class="actions">
-                    <?php if ($role === 'secretary' && !empty($cleanPhone)): ?>
+                <?php if(!empty($app['reception_notes'])): ?>
+                <div class="card-notes" title="<?= htmlspecialchars($app['reception_notes']) ?>" style="background: rgba(100,116,139,0.08); padding: 12px 15px; border-radius: 6px; font-size: 13px; color: var(--text-muted); border-left: 3px solid #94a3b8; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <strong><i class="fas fa-comment-medical" style="color:var(--primary);"></i> Motivo/Relato:</strong> 
+                    <span style="font-style: italic;"><?= htmlspecialchars(str_replace(["\r", "\n"], " ", $app['reception_notes'])) ?></span>
+                </div>
+                <?php endif; ?>
+                
+                <div class="actions" <?= $status === 'Pendente' ? 'style="display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; justify-content:space-between; margin-top:5px; border-top:1px solid var(--primary-border, #e2e8f0); padding-top:12px;"' : 'style="margin-top:5px;"' ?>>
+                    <?php if ($status === 'Pendente'): ?>
+                        <div style="display:flex; gap:6px;">
+                            <?php if(!empty($cleanPhone)): ?>
+                                <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="btn btn-wa" title="WhatsApp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                                <a href="https://t.me/+<?= $cleanPhone ?>" target="_blank" class="btn btn-tg" title="Telegram"><i class="fab fa-telegram"></i> Telegram</a>
+                            <?php endif; ?>
+                            <?php if(!empty($app['patient_email'])): ?>
+                                <a href="mailto:<?= htmlspecialchars($app['patient_email']) ?>" class="btn btn-email" title="E-mail"><i class="fas fa-envelope"></i> E-mail</a>
+                            <?php endif; ?>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="cancelarAgendamento(<?= $app['id'] ?>)" class="btn" style="background:#ef4444;color:white;border:none;padding:8px 12px;font-size:13px;" id="btn-cancel-<?= $app['id'] ?>">
+                                <i class="fas fa-user-times"></i> Não Compareceu
+                            </button>
+                            <button onclick="confirmarAgendamento(<?= $app['id'] ?>)" class="btn btn-confirm" id="btn-confirm-<?= $app['id'] ?>">
+                                <i class="fas fa-check"></i> Confirmar
+                            </button>
+                        </div>
+                    <?php elseif (is_array($status)): ?>
+                        <div style="font-size:12px;color:#ef4444;"><i class="fas fa-ban"></i> Ausência registrada.</div>
+                    <?php elseif ($role === 'secretary' && !empty($cleanPhone)): ?>
                         <a href="https://wa.me/<?= $cleanPhone ?>" target="_blank" class="btn btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                     <?php elseif ($role === 'doctor'): ?>
                         <button class="btn btn-confirm" style="cursor:pointer;" onclick="changeStatus(<?= $app['id'] ?>, 'Atendido', this)">
@@ -222,26 +221,12 @@ class CockpitShortcodes
         $role = $attributes['role'] ?? 'secretary';
         $doctorId = ($role === 'doctor') ? $this->getDoctorIdForCurrentUser() : null;
         
-        // Histórico de hoje ou Histórico geral dependendo do papel/atributo
         $type = $attributes['type'] ?? 'all'; 
         
-        $sql = "SELECT a.*, d.name as doctor_name, p.name as patient_name
-                FROM appointments a
-                LEFT JOIN doctors d ON a.doctor_id = d.id
-                LEFT JOIN patients p ON a.patient_id = p.id
-                WHERE a.status IN ('Cancelado', 'Cancelada', 'Concluído', 'Concluido', 'Atendido')";
-
-        if ($doctorId) {
-            $sql .= " AND a.doctor_id = " . (int)$doctorId;
-        }
-        
-        if ($type === 'today') {
-            $sql .= " AND (DATE(a.appointment_date) = CURDATE() OR DATE(a.updated_at) = CURDATE())";
-        }
-        
-        $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 100";
-
-        $history = $this->db->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        // Passando parametros delegados para o repositório
+        $date = ($type === 'today') ? date('Y-m-d') : 'all';
+        $history = $this->appointmentRepo->getHistory($doctorId, '', $date);
+        $history = $this->enrichAppointments($history);
 
         ob_start();
         ?>
@@ -259,7 +244,7 @@ class CockpitShortcodes
                 </div>
                 <div class="info-group">
                     <span class="info-label">Data &amp; Hora</span>
-                    <span class="info-value"><?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= $app['appointment_time'] ?></span>
+                    <span class="info-value"><?= date('d/m/Y', strtotime($app['appointment_date'])) ?> às <?= htmlspecialchars($app['appointment_time']) ?></span>
                 </div>
                 <div class="info-group">
                     <span class="info-label">Profissional</span>

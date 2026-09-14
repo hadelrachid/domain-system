@@ -33,11 +33,11 @@ class AppointmentRepository implements AppointmentRepositoryInterface
 
     public function getHistory(?string $doctorId = null, string $searchQuery = '', ?string $date = null): array
     {
-        $query = "SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone, p.email as patient_email FROM appointments a LEFT JOIN doctors d ON a.doctor_id = d.id LEFT JOIN patients p ON a.patient_id = p.id WHERE a.status IN ('Concluído', 'Concluido', 'Cancelado', 'Cancelada', 'Atendido', 'Finalizado')";
+        $query = "SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone, p.email as patient_email FROM appointments a LEFT JOIN doctors d ON a.doctor_id = d.id LEFT JOIN patients p ON a.patient_id = p.id WHERE a.status IN ('Concluído', 'Concluido', 'Cancelado', 'Cancelada', 'Atendido', 'Finalizado', 'Faltou')";
         $params = [];
 
         if ($date !== 'all') {
-            $targetDate = $date ?? date('Y-m-d');
+            $targetDate = ($date === 'today' || $date === null) ? date('Y-m-d') : $date;
             $query .= " AND a.appointment_date = :target_date";
             $params[':target_date'] = $targetDate;
         }
@@ -161,5 +161,87 @@ class AppointmentRepository implements AppointmentRepositoryInterface
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $row ?: null;
     }
-}
 
+    public function search(string $name = '', string $date = '', ?int $doctorId = null): array
+    {
+        $sql = "SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone, p.email as patient_email
+                FROM appointments a
+                LEFT JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN patients p ON a.patient_id = p.id
+                WHERE 1=1";
+
+        $params = [];
+
+        if ($doctorId !== null) {
+            $sql .= " AND a.doctor_id = ?";
+            $params[] = $doctorId;
+        }
+
+        if (!empty($name)) {
+            $sql .= " AND p.name LIKE ?";
+            $params[] = "%{$name}%";
+        }
+
+        if (!empty($date)) {
+            $sql .= " AND a.appointment_date = ?";
+            $params[] = $date;
+        }
+
+        $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 100";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getMissedToday(?int $doctorId = null): array
+    {
+        $sql = "SELECT a.*, d.name as doctor_name, p.name as patient_name, p.phone as patient_phone, p.email as patient_email
+                FROM appointments a
+                LEFT JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN patients p ON a.patient_id = p.id
+                WHERE a.status IN ('Faltou', 'Cancelado') AND a.appointment_date = CURRENT_DATE";
+
+        $params = [];
+        if ($doctorId !== null) {
+            $sql .= " AND a.doctor_id = ?";
+            $params[] = $doctorId;
+        }
+
+        $sql .= " ORDER BY a.appointment_time DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
+
+    public function getAppointmentDetails(int $id): ?array
+    {
+        $stmt = $this->db->prepare("
+            SELECT a.*, p.name as patient_name, p.birthdate as patient_dob, p.cpf, d.name as doctor_name 
+            FROM appointments a 
+            LEFT JOIN patients p ON a.patient_id = p.id 
+            LEFT JOIN doctors d ON a.doctor_id = d.id 
+            WHERE a.id = ?
+        ");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function getAwaitingTriage(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT a.*, p.name as patient_name, d.name as doctor_name 
+            FROM appointments a 
+            JOIN patients p ON a.patient_id = p.id 
+            JOIN doctors d ON a.doctor_id = d.id 
+            WHERE a.status = 'Aguardando Triagem'
+            ORDER BY a.appointment_date ASC, a.appointment_time ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+    }
+}

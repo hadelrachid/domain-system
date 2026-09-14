@@ -16,6 +16,11 @@ class QueryBuilder
         $this->connection = $connection;
     }
 
+    public function getPdo(): \PDO
+    {
+        return $this->connection->getPdo();
+    }
+
     public function table(string $table): self
     {
         // Return a new instance to allow chaining without polluting state (like multiple query builders)

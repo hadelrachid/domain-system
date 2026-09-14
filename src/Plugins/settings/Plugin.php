@@ -51,8 +51,8 @@ class Plugin extends AbstractPlugin
             $table->text('key_value')->nullable();
         });
 
-        /** @var Connection $connection */
-        $connection = $this->db();
+        /** @var \DomainSystem\Plugins\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
         $db = $connection->getPdo();
 
         // Inserir valores padro se a tabela estiver vazia

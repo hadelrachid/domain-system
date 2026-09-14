@@ -44,8 +44,12 @@ class UserProfileService implements UserProfileServiceInterface
             $updateData['email'] = $data['email'];
         }
 
-        // 3. Senha (Hashing)
+        // 3. Senha (Hashing e Validação de Complexidade)
         if (!empty($data['password'])) {
+            if (!\DomainSystem\Core\Security\PasswordAnalyzer::isAcceptable($data['password'])) {
+                $missing = implode(' ', \DomainSystem\Core\Security\PasswordAnalyzer::getMissingRequirements($data['password']));
+                throw new \Exception("A senha fornecida é muito fraca. " . $missing);
+            }
             $updateData['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
         }
 
@@ -54,10 +58,7 @@ class UserProfileService implements UserProfileServiceInterface
             $updateData['two_factor_type'] = $data['two_factor_type'];
         }
 
-        // 5. Tema
-        if (!empty($data['theme_color'])) {
-            $updateData['theme_color'] = $data['theme_color'];
-        }
+        // 5. Tema (Tratado via Eventos por plugins externos como visual_themes em JSON)
 
         // Executar atualização
         if (!empty($updateData)) {

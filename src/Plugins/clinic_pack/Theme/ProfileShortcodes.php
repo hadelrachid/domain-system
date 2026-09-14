@@ -88,7 +88,7 @@ class ProfileShortcodes
                 <h2 style="margin-top:0;color:var(--primary);margin-bottom:20px;font-size:18px;text-align:center;"><i class="fas fa-user-cog"></i> Configurações do Perfil</h2>
                 <?php endif; ?>
                 
-                <form id="profileForm" onsubmit="submitProfileForm(event)" enctype="multipart/form-data">
+                <form id="profileForm" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     
                     <?= $innerContent ?>
@@ -109,40 +109,8 @@ class ProfileShortcodes
                         });
                         const selected = document.getElementById('swatch-' + colorKey);
                         if (selected) selected.style.borderColor = '#1e293b';
-                        
-                        // Fake a color change by fetching the CSS path for demo purposes if needed
-                        // or just rely on form submission to save it
                     };
                 }
-                
-                window.submitProfileForm = function(e) {
-                    e.preventDefault();
-                    const form = e.target;
-                    const btn = document.getElementById('btn-save-profile');
-                    const origHtml = btn.innerHTML;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-                    btn.disabled = true;
-
-                    fetch('<?php echo \BASE_URL; ?>/cockpit/profile', {
-                        method: 'POST',
-                        body: new FormData(form),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (typeof showToast === 'function') showToast(data.message || 'Configurações salvas com sucesso!', 'success');
-                            setTimeout(() => { location.reload(); }, 1500);
-                        } else {
-                            if (typeof showToast === 'function') showToast(data.message || 'Erro ao salvar', 'error');
-                            btn.innerHTML = origHtml; btn.disabled = false;
-                        }
-                    })
-                    .catch(err => {
-                        if (typeof showToast === 'function') showToast('Erro de conexão ao salvar', 'error');
-                        btn.innerHTML = origHtml; btn.disabled = false;
-                    });
-                };
                 </script>
                 
                 <?php if ($doctorId): ?>
@@ -176,10 +144,27 @@ class ProfileShortcodes
         </div>
         
         <div class="settings-form-group">
-            <label><i class="fas fa-lock" style="color:var(--primary);width:16px;"></i> Nova Senha <small style="font-weight:400;color:var(--text-muted);">(em branco = manter)</small></label>
+            <label style="display:flex; justify-content:space-between; align-items:center;">
+                <span><i class="fas fa-lock" style="color:var(--primary);width:16px;"></i> Nova Senha <small style="font-weight:400;color:var(--text-muted);">(em branco = manter)</small></span>
+            </label>
             <div style="position:relative;">
-                <input type="password" name="password" id="modal_password" placeholder="••••••••" style="padding-right:40px;">
+                <input type="password" name="password" id="modal_password" placeholder="••••••••" style="padding-right:40px;" oninput="analyzePasswordStrength(this.value, 'prof')">
                 <i class="fas fa-eye" style="position:absolute;right:13px;top:11px;cursor:pointer;color:var(--text-muted);" onclick="togglePasswordVisibility(this)"></i>
+            </div>
+            <div style="margin-top: 8px;">
+                <button type="button" onclick="generatePasswordAndAnalyze('modal_password', 'prof')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                    <i class="fas fa-magic"></i> Gerar Senha Segura
+                </button>
+            </div>
+            
+            <div id="pwd-meter-prof" style="display:none; margin-top:8px;">
+                 <div style="height:6px; background:var(--primary-border); border-radius:3px; overflow:hidden;">
+                      <div id="pwd-bar-prof" style="height:100%; width:0%; background:#ef4444; transition: width 0.3s, background 0.3s;"></div>
+                 </div>
+                 <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                     <div id="pwd-hint-prof" style="font-size:11px; color:var(--text-muted);">Inclua letras, números e símbolos</div>
+                     <div id="pwd-text-prof" style="font-size:11px; font-weight:600; text-align:right;">Péssimo</div>
+                 </div>
             </div>
         </div>
         
@@ -198,6 +183,84 @@ class ProfileShortcodes
                         icon.classList.add('fa-eye');
                     }
                 }
+            };
+        }
+
+        if (typeof window.analyzePasswordStrength !== 'function') {
+            window.analyzePasswordStrength = function(pwd, suffix) {
+                const container = document.getElementById('pwd-meter-' + suffix);
+                const bar = document.getElementById('pwd-bar-' + suffix);
+                const text = document.getElementById('pwd-text-' + suffix);
+                const hint = document.getElementById('pwd-hint-' + suffix);
+                
+                if (!pwd) {
+                    container.style.display = 'none';
+                    return;
+                }
+                container.style.display = 'block';
+                
+                let score = 0;
+                let missing = [];
+                
+                if (pwd.length >= 8) score += 25; else missing.push('8+ caracteres');
+                if (/[A-Z]/.test(pwd)) score += 25; else missing.push('Letra maiúscula');
+                if (/[a-z]/.test(pwd)) score += 25; else missing.push('Letra minúscula');
+                if (/[0-9]/.test(pwd) && /[^a-zA-Z0-9]/.test(pwd)) score += 25; else missing.push('Número e Símbolo');
+                
+                bar.style.width = Math.max(10, score) + '%';
+                
+                if (score < 50) {
+                    bar.style.background = '#ef4444'; // Vermelho
+                    text.style.color = '#ef4444';
+                    text.innerText = 'Ruim';
+                } else if (score === 50) {
+                    bar.style.background = '#f97316'; // Alaranjado
+                    text.style.color = '#f97316';
+                    text.innerText = 'Bom';
+                } else if (score === 75) {
+                    bar.style.background = '#3b82f6'; // Azul
+                    text.style.color = '#3b82f6';
+                    text.innerText = 'Muito Bom';
+                } else {
+                    bar.style.background = '#10b981'; // Verde
+                    text.style.color = '#10b981';
+                    text.innerText = 'Ótimo';
+                }
+                
+                if (missing.length > 0) {
+                    hint.innerText = 'Falta: ' + missing.join(', ');
+                } else {
+                    hint.innerText = 'Senha atende aos padrões de segurança!';
+                }
+            };
+
+            window.generatePasswordAndAnalyze = function(inputId, meterSuffix) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
+                let pwd = '';
+                // Forçar requisitos mínimos
+                pwd += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+                pwd += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+                pwd += '0123456789'[Math.floor(Math.random() * 10)];
+                pwd += '!@#$%^&*()_+'[Math.floor(Math.random() * 12)];
+                for (let i = 0; i < 8; i++) {
+                    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                // Embaralhar
+                pwd = pwd.split('').sort(() => 0.5 - Math.random()).join('');
+                
+                const input = document.getElementById(inputId);
+                if(input) {
+                    input.value = pwd;
+                    input.type = 'text'; // Mostrar para o user copiar
+                    
+                    const eye = input.nextElementSibling;
+                    if (eye && eye.classList.contains('fa-eye')) {
+                        eye.classList.remove('fa-eye');
+                        eye.classList.add('fa-eye-slash');
+                    }
+                }
+                
+                window.analyzePasswordStrength(pwd, meterSuffix);
             };
         }
         </script>

@@ -3,43 +3,27 @@ namespace DomainSystem\Plugins\triage\Repositories;
 
 use DomainSystem\Plugins\triage\Contracts\TriageRepositoryInterface;
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
 
 class TriageRepository implements TriageRepositoryInterface
 {
     private \PDO $pdo;
+    private AppointmentRepositoryInterface $appointmentRepo;
 
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection, AppointmentRepositoryInterface $appointmentRepo)
     {
         $this->pdo = $connection->getPdo();
+        $this->appointmentRepo = $appointmentRepo;
     }
 
     public function getAwaitingTriage(): array
     {
-        $stmt = $this->pdo->query("
-            SELECT a.*, p.name as patient_name, d.name as doctor_name 
-            FROM appointments a 
-            JOIN patients p ON a.patient_id = p.id 
-            JOIN doctors d ON a.doctor_id = d.id 
-            WHERE a.status = 'Aguardando Triagem'
-            ORDER BY a.appointment_date ASC, a.appointment_time ASC
-        ");
-        
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+        return $this->appointmentRepo->getAwaitingTriage();
     }
 
     public function getAppointmentData(int $appointmentId): ?array
     {
-        $stmt = $this->pdo->prepare("
-            SELECT a.*, p.name as patient_name, p.birthdate, d.name as doctor_name 
-            FROM appointments a 
-            JOIN patients p ON a.patient_id = p.id 
-            JOIN doctors d ON a.doctor_id = d.id 
-            WHERE a.id = ?
-        ");
-        $stmt->execute([$appointmentId]);
-        
-        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $data ?: null;
+        return $this->appointmentRepo->getAppointmentDetails($appointmentId);
     }
 
     public function getTriageData(int $appointmentId): array
@@ -82,7 +66,6 @@ class TriageRepository implements TriageRepositoryInterface
         }
 
         // Atualiza o status do agendamento para Aguardando Médico
-        $stmt = $this->pdo->prepare("UPDATE appointments SET status = 'Aguardando Médico' WHERE id = ?");
-        $stmt->execute([$appointmentId]);
+        $this->appointmentRepo->updateStatus($appointmentId, 'Aguardando Médico');
     }
 }

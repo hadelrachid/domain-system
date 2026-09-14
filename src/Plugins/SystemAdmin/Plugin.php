@@ -33,7 +33,7 @@ class Plugin extends AbstractPlugin
         }, 999);
 
         $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
-            $theme = $this->theme();
+            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
 

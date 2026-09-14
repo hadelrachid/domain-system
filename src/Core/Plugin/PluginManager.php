@@ -81,7 +81,7 @@ class PluginManager
 
                 if (class_exists($pluginClass)) {
                     /** @var PluginInterface $plugin */
-                    $plugin = new $pluginClass($this->container, $dir);
+                    $plugin = new $pluginClass($this->container, $dir, $this->dispatcher);
                     $plugin->setActive(true);
                     $this->addPlugin($plugin);
                     $newlyDiscovered[] = $plugin;

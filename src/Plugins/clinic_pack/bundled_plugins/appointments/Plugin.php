@@ -25,6 +25,10 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\appointments\Contracts\InsuranceRepositoryInterface::class,
             \DomainSystem\Plugins\appointments\Repositories\InsuranceRepository::class
         );
+        $this->container->bind(
+            \DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface::class,
+            \DomainSystem\Plugins\appointments\Services\BookingCallbackService::class
+        );
 
         // Registrar item no menu lateral
         $events->addListener('admin.menu', function($menus, $role = 'admin') {
@@ -46,20 +50,20 @@ class Plugin extends AbstractPlugin
 
         // Registrar rotas
         $events->addListener('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/appointments', [AppointmentController::class, 'index'], 'appointments', ['admin', 'receptionist', 'doctor']);
-            $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store'], 'appointments', ['admin', 'receptionist', 'doctor']);
-            $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/admin/appointments', [AppointmentController::class, 'index'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
             
-            $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/admin/appointments/history', [AppointmentController::class, 'history'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
             
             // Admin: Gestão de Horários do Médico
             $router->addRoute('GET', '/admin/doctors/schedule', [ScheduleController::class, 'editSchedule'], 'doctors', ['admin', 'doctor']);
             $router->addRoute('POST', '/admin/doctors/schedule/save', [ScheduleController::class, 'saveSchedule'], 'doctors', ['admin', 'doctor']);
             
             // API Routes
-            $router->addRoute('POST', '/cockpit/appointments/status', [\DomainSystem\Plugins\clinic_pack\Controllers\CockpitController::class, 'updateAppointmentStatus'], 'appointments', ['admin', 'receptionist', 'doctor']);
-            $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking'], 'appointments', ['admin', 'receptionist', 'doctor']);
-            $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection'], 'appointments', ['admin', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/cockpit/appointments/status', [\DomainSystem\Plugins\clinic_pack\Controllers\CockpitController::class, 'updateAppointmentStatus'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
+            $router->addRoute('POST', '/api/agendamentos', [ApiController::class, 'receiveBooking'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
+            $router->addRoute('GET', '/api/test', [ApiController::class, 'testConnection'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
 
             // Public Routes
             $router->addRoute('GET', '/agendamento', [BookingController::class, 'showBookingForm'], 'public', []);

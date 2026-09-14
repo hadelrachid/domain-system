@@ -121,8 +121,8 @@ class ScheduleController
     public function saveSchedule(Request $request): Response
     {
         $container = Application::getInstance()->getContainer();
-        /** @var \DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface $doctorReader */
-        $doctorReader = $container->make(\DomainSystem\Plugins\appointments\Contracts\DoctorReaderInterface::class);
+        /** @var \DomainSystem\Plugins\appointments\Contracts\DoctorScheduleWriterInterface $doctorWriter */
+        $doctorWriter = $container->make(\DomainSystem\Plugins\appointments\Contracts\DoctorScheduleWriterInterface::class);
 
         $doctorId = (int)$request->input('doctor_id');
         if (!$doctorId) {
@@ -156,7 +156,7 @@ class ScheduleController
             }
         }
 
-        $doctorReader->saveDoctorSchedules($doctorId, $schedulesToSave);
+        $doctorWriter->saveDoctorSchedules($doctorId, $schedulesToSave);
 
         // Redirecionar de volta com mensagem de sucesso
         $redirectUrl = $request->input('redirect');
