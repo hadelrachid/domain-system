@@ -31,10 +31,14 @@ class UserRepository implements UserRepositoryInterface
 
     public function findDoctorByUserId(int $userId): ?array
     {
-        $stmt = $this->db->prepare("SELECT * FROM doctors WHERE user_id = :user_id LIMIT 1");
-        $stmt->execute([":user_id" => $userId]);
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $result ?: null;
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM doctors WHERE user_id = :user_id LIMIT 1");
+            $stmt->execute([":user_id" => $userId]);
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return $result ?: null;
+        } catch (\PDOException $e) {
+            return null;
+        }
     }
 
     public function updateTwoFactor(int $userId, string $type, ?string $secret): void
@@ -51,8 +55,12 @@ class UserRepository implements UserRepositoryInterface
 
     public function getAllDoctors(): array
     {
-        $stmt = $this->db->query("SELECT * FROM doctors");
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->db->query("SELECT * FROM doctors");
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            return [];
+        }
     }
 
     public function createUser(array $data): int
