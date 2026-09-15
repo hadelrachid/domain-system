@@ -189,7 +189,7 @@ class CockpitController {
             });
             contentDiv.innerHTML = html;
         } catch (err) {
-            contentDiv.innerHTML = '<div style="color:red; padding:20px;">Erro ao carregar histórico.</div>';
+            contentDiv.innerHTML = '<div style="text-align:center; padding:30px; color:#ef4444;"><i class="fas fa-wifi" style="font-size:30px; margin-bottom:10px; opacity:0.7;"></i><br><b>Sinal instável</b><br><span style="font-size:13px; color:var(--text-muted);">A conexão com o servidor falhou ao buscar o histórico.</span><br><button onclick="window.switchTab(\'historico-hoje\')" style="margin-top:15px; padding:8px 20px; background:var(--primary); color:white; font-weight:bold; border:none; border-radius:6px; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);"><i class="fas fa-sync-alt"></i> Tentar Novamente</button></div>';
         }
     }
 
