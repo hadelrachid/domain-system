@@ -12,6 +12,11 @@ use DomainSystem\Plugins\appointments\Controllers\ScheduleController;
 
 class Plugin extends AbstractPlugin
 {
+    public function getDependencies(): array
+    {
+        return ['database', 'doctors', 'patients'];
+    }
+
     public function register(): void { 
         /** @var EventDispatcher $events */
         $events = $this->events();

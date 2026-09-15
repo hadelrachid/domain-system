@@ -9,6 +9,11 @@ use DomainSystem\Plugins\patients\Controllers\PatientController;
 
 class Plugin extends AbstractPlugin
 {
+    public function getDependencies(): array
+    {
+        return ['database'];
+    }
+
     public function register(): void
     {
         // 1. Bind da Infraestrutura (Repositório)
