@@ -31,7 +31,10 @@
             <div class='error'><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
         
-        <form method='POST' action='<?= BASE_URL ?>/login'>
+        <?php
+            $tenantQuery = isset($_GET['tenant']) ? '?tenant=' . urlencode($_GET['tenant']) : '';
+        ?>
+        <form method='POST' action='<?= BASE_URL ?>/login<?= $tenantQuery ?>'>
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
             
