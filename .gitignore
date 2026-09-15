@@ -11,3 +11,4 @@ tests/
 auditoria/
 
 database.sqlite
+config/installed.lock
