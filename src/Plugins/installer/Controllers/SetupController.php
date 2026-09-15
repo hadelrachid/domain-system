@@ -93,13 +93,11 @@ class SetupController
         
         // Truncate users and insert admin (ensure clean slate)
         try {
-            // Check if admin exists
-            $stmt = $db->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-            $stmt->execute();
-            if (!$stmt->fetchColumn()) {
-                $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')");
-                $stmt->execute([$adminName, $adminEmail, password_hash($adminPass, PASSWORD_BCRYPT)]);
-            }
+            // Limpar administradores existentes e inserir o que o usuário escolheu no instalador
+            $db->exec("DELETE FROM users WHERE role = 'admin'");
+            
+            $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')");
+            $stmt->execute([$adminName, $adminEmail, password_hash($adminPass, PASSWORD_BCRYPT)]);
         } catch (\Exception $e) {
             // Table might not exist if migration failed, but we assume activate() worked
         }
