@@ -117,8 +117,8 @@ class CockpitController {
                 }
             }
         } catch (e) {
-            console.error('[CockpitController] Erro Fatal no sync:', e);
-            alert("Erro invisível no painel: " + e.message);
+            // Ignora silenciosamente erros de rede causados por reload da página ou queda de conexão.
+            console.error('[CockpitController] Erro de rede no sync (pode ser causado por navegação ou queda de conexão):', e);
         }
     }
 
