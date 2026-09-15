@@ -78,22 +78,7 @@ class Plugin extends AbstractPlugin
             }
         });
 
-        // Garante que o usuario admin padrao sempre exista para fins de estudo/teste
-        $events->addListener('kernel_post_boot', function() {
-            /** @var \DomainSystem\Plugins\Database\Connection $connection */
-            $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
-            $db = $connection->getPdo();
-            try {
-                // Só cria o admin padrão se o sistema já foi instalado
-                if (file_exists(dirname(__DIR__, 3) . '/config/installed.lock')) {
-                    $stmt = $db->query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
-                    if ($stmt && $stmt->fetchColumn() == 0) {
-                        $pass = password_hash('admin', PASSWORD_DEFAULT);
-                        $db->exec("INSERT INTO users (name, email, password, role) VALUES ('Administrador Geral', 'admin@admin.com', '$pass', 'admin')");
-                    }
-                }
-            } catch (\Exception $e) {}
-        });
+        // A injeção de administrador padrão agora é feita inteiramente pelo Installer (auto-healing).
     }
 
     public function activate(): void

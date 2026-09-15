@@ -12,8 +12,17 @@ class Plugin extends AbstractPlugin
     {
         $events = $this->events();
         
-        // Verifica se o arquivo installed.lock existe. Se não existir, o sistema entra em MODO SETUP.
-        $isInstalled = file_exists(DOMAIN_SYSTEM_ROOT . '/config/installed.lock');
+        // Verifica se existe um admin no banco de dados. Se não existir (ou der erro), o sistema entra em MODO SETUP.
+        $isInstalled = false;
+        try {
+            $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            $stmt = $db->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+            if ($stmt && $stmt->fetchColumn()) {
+                $isInstalled = true;
+            }
+        } catch (\Exception $e) {
+            // Tabela users não existe, banco inválido, etc.
+        }
 
         if (!$isInstalled) {
             // Prioridade máxima (1000) para barrar qualquer outro plugin (ex: SystemAdmin/Auth)

@@ -113,11 +113,10 @@ class SetupController
             // Table might not exist if migration failed, but we assume activate() worked
         }
 
-        // 3. Mark as installed
-        file_put_contents(DOMAIN_SYSTEM_ROOT . '/config/installed.lock', date('Y-m-d H:i:s'));
-
+        // O redirecionamento após o sucesso fará o kernel reavaliar a existência do Admin no banco.
+        
         // Redirect to admin
-        header("Location: " . BASE_URL . "/admin?installed=1");
+        header("Location: " . BASE_URL . "/admin");
         exit;
     }
 }

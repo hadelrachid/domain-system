@@ -139,11 +139,7 @@ class SettingsController
                 $db->exec("SET FOREIGN_KEY_CHECKS = 1;");
             }
 
-            // Remover installed.lock
-            $lockFile = DOMAIN_SYSTEM_ROOT . '/config/installed.lock';
-            if (file_exists($lockFile)) {
-                unlink($lockFile);
-            }
+            // Apenas destruir sessão (O sistema detectará que não há tabelas e voltará ao Setup Mode automaticamente)
 
             // Destruir sessão
             session_destroy();
