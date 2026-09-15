@@ -7,6 +7,23 @@ class TenantContext
     private ?string $tenantId = null;
     private ?string $tenantName = null;
     private ?string $domain = null;
+    private array $dbConfig = [];
+    
+    /**
+     * Define as credenciais do banco de dados deste Tenant
+     */
+    public function setDbConfig(array $config): void
+    {
+        $this->dbConfig = $config;
+    }
+    
+    /**
+     * Retorna as credenciais do banco
+     */
+    public function getDbConfig(): array
+    {
+        return $this->dbConfig;
+    }
     
     /**
      * Define the active tenant ID

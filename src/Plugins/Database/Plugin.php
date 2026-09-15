@@ -11,13 +11,16 @@ class Plugin extends AbstractPlugin
 
     public function register(): void
     {
-        // For default we look at env vars
-        $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite::memory:'; // Fallback to memory for safety if not set
-        $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
-        $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
-
         // We bind Connection to the container so that it acts as a Singleton
-        $this->container->singleton(Connection::class, function() use ($dsn, $user, $pass) {
+        $this->container->singleton(Connection::class, function($c) {
+            $context = $c->make(\DomainSystem\Core\Tenant\TenantContext::class);
+            $dbConfig = $context->getDbConfig();
+            
+            // Fallback for extreme cases where Context isn't fully loaded
+            $dsn = $dbConfig['dsn'] ?? $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite::memory:';
+            $user = $dbConfig['user'] ?? $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
+            $pass = $dbConfig['pass'] ?? $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
+            
             return new Connection($dsn, $user, $pass);
         });
 

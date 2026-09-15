@@ -1,0 +1,29 @@
+{
+    "master": {
+        "id": "master",
+        "name": "Nave Mãe - RachidD",
+        "db": {
+            "dsn": "mysql:host=localhost;dbname=daher_db;charset=utf8mb4",
+            "user": "root",
+            "pass": ""
+        }
+    },
+    "rachidd": {
+        "id": "rachidd",
+        "name": "RachidD - Portfólio",
+        "db": {
+            "dsn": "mysql:host=localhost;dbname=daher_db;charset=utf8mb4",
+            "user": "root",
+            "pass": ""
+        }
+    },
+    "clinica_a": {
+        "id": "clinica_a",
+        "name": "Clínica Nova Vida",
+        "db": {
+            "dsn": "mysql:host=localhost;dbname=db_clinica_a;charset=utf8mb4",
+            "user": "root",
+            "pass": ""
+        }
+    }
+}
