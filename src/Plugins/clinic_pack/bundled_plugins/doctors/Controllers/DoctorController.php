@@ -64,6 +64,12 @@ class DoctorController
                         'consultation_time' => (int)$consultation_time,
                         'photo_url' => $photo_url
                     ]);
+                    
+                    if (!empty($photo_url) && !empty($result['user_id'])) {
+                        $userRepo = $app->getContainer()->make(\DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface::class);
+                        $userRepo->updateProfile($result['user_id'], ['profile_image' => $photo_url]);
+                    }
+                    
                     $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Médico cadastrado com sucesso! Conta de usuário e horários criados.'];
                 } else {
                     $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro: ' . $result['error']];

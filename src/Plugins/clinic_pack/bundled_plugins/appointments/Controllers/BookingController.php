@@ -35,6 +35,20 @@ class BookingController
         $stmtIns = $pdo->query("SELECT id, name FROM health_insurances WHERE active = 1 ORDER BY id");
         $insurances = $stmtIns->fetchAll(\PDO::FETCH_ASSOC);
         
+        $stmtSched = $pdo->query("SELECT doctor_id, day_of_week FROM doctor_schedules WHERE is_active = 1");
+        $allSchedules = $stmtSched->fetchAll(\PDO::FETCH_ASSOC);
+        $doctorDays = [];
+        foreach ($allSchedules as $s) {
+            $docId = $s['doctor_id'];
+            $day = (int)$s['day_of_week'];
+            if (!isset($doctorDays[$docId])) {
+                $doctorDays[$docId] = [];
+            }
+            if (!in_array($day, $doctorDays[$docId])) {
+                $doctorDays[$docId][] = $day;
+            }
+        }
+        
         $selectedDoctor = $request->input('medico', '');
 
         $theme = Application::getInstance()->getContainer()->make(ThemeManager::class);
@@ -50,6 +64,7 @@ class BookingController
             'specialties' => $specialties,
             'doctorsBySpecialty' => $doctorsBySpecialty,
             'insurances' => $insurances,
+            'doctorDays' => $doctorDays,
             'selectedDoctor' => $selectedDoctor,
             'theme' => $theme,
             'isShortcode' => $request->input('shortcode') == '1',

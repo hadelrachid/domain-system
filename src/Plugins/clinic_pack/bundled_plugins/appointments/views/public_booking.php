@@ -9,6 +9,11 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Flatpickr (Calendário Customizado) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    
     <style>
         :root {
             --primary: #1A365D; /* Azul marinho escuro */
@@ -256,7 +261,7 @@
             <div class="grid-2">
                 <div class="form-group">
                     <label for="date">Data de Preferência *</label>
-                    <input type="date" id="date" name="date" class="form-control" required>
+                    <input type="text" id="date" name="date" class="form-control" required placeholder="Selecione uma data no calendário">
                 </div>
                 <div class="form-group">
                     <label for="time">Turno de Preferência</label>
@@ -283,7 +288,43 @@
         &copy; <?= date('Y') ?> Daher Clínica. Todos os direitos reservados.
     </footer>
 
+    <!-- Injeção da Classe Abstrata do Calendário -->
+    <script src="<?= BASE_URL ?>/assets/js/doctor-calendar.js"></script>
     <script>
+        const doctorDays = <?= json_encode($doctorDays ?? []) ?>;
+        
+        function validateDateSelection() {
+            const docSelect = document.getElementById('doctor_id');
+            const dateInput = document.getElementById('date');
+            
+            if (!docSelect.value || !dateInput.value) return;
+            
+            const docId = docSelect.value;
+            const allowedDays = doctorDays[docId];
+            
+            if (!allowedDays || allowedDays.length === 0) {
+                alert('Este médico ainda não possui horários configurados na agenda.');
+                dateInput.value = '';
+                return;
+            }
+            
+            const dateStr = dateInput.value.replace(/-/g, '\/');
+            const selectedDate = new Date(dateStr);
+            const selectedDayOfWeek = selectedDate.getDay();
+            
+            if (!allowedDays.includes(selectedDayOfWeek)) {
+                // Apenas por segurança (o calendário já bloqueia visualmente)
+                dateInput.value = '';
+            }
+        }
+        
+        // Instancia a classe abstrata!
+        new DoctorCalendarPicker('#date', '#doctor_id', doctorDays, function(selectedDates, dateStr, instance, isReset) {
+            if (!isReset) {
+                validateDateSelection();
+            }
+        });
+
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             

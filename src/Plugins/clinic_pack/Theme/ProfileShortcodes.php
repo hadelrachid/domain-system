@@ -29,6 +29,16 @@ class ProfileShortcodes
         if ($user) {
             $user['id'] = $userId;
             $user['name'] = $this->session->get('user_name');
+            
+            // Se o usuário não tem foto, mas é um médico e o médico tem foto, usa a do médico!
+            if (empty($user['profile_image']) && !empty($user['linked_doctor_id'])) {
+                $docStmt = $this->db->prepare("SELECT photo_url FROM doctors WHERE id = ?");
+                $docStmt->execute([$user['linked_doctor_id']]);
+                $docPhoto = $docStmt->fetchColumn();
+                if ($docPhoto) {
+                    $user['profile_image'] = $docPhoto;
+                }
+            }
         }
         return $user ?: null;
     }
@@ -101,6 +111,8 @@ class ProfileShortcodes
                 </form>
                 
                 <script>
+                <?php include dirname(__DIR__) . '/themes/partials/_avatar_js.php'; ?>
+                
                 if (typeof window.previewTheme !== 'function') {
                     window.previewTheme = function(colorKey) {
                         const allSwatches = document.querySelectorAll('[id^="swatch-"]');
@@ -149,7 +161,7 @@ class ProfileShortcodes
             </label>
             <div style="position:relative;">
                 <input type="password" name="password" id="modal_password" placeholder="••••••••" style="padding-right:40px;" oninput="analyzePasswordStrength(this.value, 'prof')">
-                <i class="fas fa-eye" style="position:absolute;right:13px;top:11px;cursor:pointer;color:var(--text-muted);" onclick="togglePasswordVisibility(this)"></i>
+                <i class="fas fa-eye" style="position:absolute;right:13px;top:11px;cursor:pointer;color:var(--text-muted);" onclick="togglePasswordVisibility('modal_password', this)"></i>
             </div>
             <div style="margin-top: 8px;">
                 <button type="button" onclick="generatePasswordAndAnalyze('modal_password', 'prof')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
@@ -167,103 +179,7 @@ class ProfileShortcodes
                  </div>
             </div>
         </div>
-        
-        <script>
-        if (typeof window.togglePasswordVisibility !== 'function') {
-            window.togglePasswordVisibility = function(icon) {
-                const p = icon.previousElementSibling;
-                if (p && p.tagName === 'INPUT') {
-                    if (p.type === 'password') {
-                        p.type = 'text';
-                        icon.classList.remove('fa-eye');
-                        icon.classList.add('fa-eye-slash');
-                    } else {
-                        p.type = 'password';
-                        icon.classList.remove('fa-eye-slash');
-                        icon.classList.add('fa-eye');
-                    }
-                }
-            };
-        }
 
-        if (typeof window.analyzePasswordStrength !== 'function') {
-            window.analyzePasswordStrength = function(pwd, suffix) {
-                const container = document.getElementById('pwd-meter-' + suffix);
-                const bar = document.getElementById('pwd-bar-' + suffix);
-                const text = document.getElementById('pwd-text-' + suffix);
-                const hint = document.getElementById('pwd-hint-' + suffix);
-                
-                if (!pwd) {
-                    container.style.display = 'none';
-                    return;
-                }
-                container.style.display = 'block';
-                
-                let score = 0;
-                let missing = [];
-                
-                if (pwd.length >= 8) score += 25; else missing.push('8+ caracteres');
-                if (/[A-Z]/.test(pwd)) score += 25; else missing.push('Letra maiúscula');
-                if (/[a-z]/.test(pwd)) score += 25; else missing.push('Letra minúscula');
-                if (/[0-9]/.test(pwd) && /[^a-zA-Z0-9]/.test(pwd)) score += 25; else missing.push('Número e Símbolo');
-                
-                bar.style.width = Math.max(10, score) + '%';
-                
-                if (score < 50) {
-                    bar.style.background = '#ef4444'; // Vermelho
-                    text.style.color = '#ef4444';
-                    text.innerText = 'Ruim';
-                } else if (score === 50) {
-                    bar.style.background = '#f97316'; // Alaranjado
-                    text.style.color = '#f97316';
-                    text.innerText = 'Bom';
-                } else if (score === 75) {
-                    bar.style.background = '#3b82f6'; // Azul
-                    text.style.color = '#3b82f6';
-                    text.innerText = 'Muito Bom';
-                } else {
-                    bar.style.background = '#10b981'; // Verde
-                    text.style.color = '#10b981';
-                    text.innerText = 'Ótimo';
-                }
-                
-                if (missing.length > 0) {
-                    hint.innerText = 'Falta: ' + missing.join(', ');
-                } else {
-                    hint.innerText = 'Senha atende aos padrões de segurança!';
-                }
-            };
-
-            window.generatePasswordAndAnalyze = function(inputId, meterSuffix) {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
-                let pwd = '';
-                // Forçar requisitos mínimos
-                pwd += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
-                pwd += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
-                pwd += '0123456789'[Math.floor(Math.random() * 10)];
-                pwd += '!@#$%^&*()_+'[Math.floor(Math.random() * 12)];
-                for (let i = 0; i < 8; i++) {
-                    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                // Embaralhar
-                pwd = pwd.split('').sort(() => 0.5 - Math.random()).join('');
-                
-                const input = document.getElementById(inputId);
-                if(input) {
-                    input.value = pwd;
-                    input.type = 'text'; // Mostrar para o user copiar
-                    
-                    const eye = input.nextElementSibling;
-                    if (eye && eye.classList.contains('fa-eye')) {
-                        eye.classList.remove('fa-eye');
-                        eye.classList.add('fa-eye-slash');
-                    }
-                }
-                
-                window.analyzePasswordStrength(pwd, meterSuffix);
-            };
-        }
-        </script>
         <?php
         return ob_get_clean();
     }

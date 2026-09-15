@@ -26,6 +26,12 @@ if(empty($isShortcode)) {
 }
 ?>
 
+<!-- Dependências do Calendário (Flatpickr) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/doctor-calendar.js"></script>
+
     <!-- Main Content -->
     <div class="booking-widget-container">
     <main class="booking-main">
@@ -94,7 +100,7 @@ if(empty($isShortcode)) {
                 <!-- Data -->
                 <div class="form-group">
                     <label for="date">Data da Consulta <span class="required">*</span></label>
-                    <input type="date" id="date" name="date" class="form-control" required>
+                    <input type="text" id="date" name="date" class="form-control" required placeholder="Selecione no calendário">
                 </div>
 
                 <!-- Slots de Horário (dinâmicos via JS) -->
@@ -188,6 +194,9 @@ if(empty($isShortcode)) {
                 doctorSelect.disabled = true;
                 doctorGroup.style.display = 'none';
             }
+            
+            // Dispara change para que a classe DoctorCalendarPicker saiba que o médico (ou a ausência dele) mudou
+            doctorSelect.dispatchEvent(new Event('change'));
             
             // Reset slots
             loadSlots();
@@ -294,8 +303,11 @@ if(empty($isShortcode)) {
         }
 
         // Eventos para recarregar slots
-        doctorSelect.addEventListener('change', loadSlots);
-        dateInput.addEventListener('change', loadSlots);
+        const doctorDays = <?= json_encode($doctorDays ?? []) ?>;
+        
+        new DoctorCalendarPicker('#date', '#doctor_id', doctorDays, function(selectedDates, dateStr, instance, isReset) {
+            loadSlots();
+        });
 
         // Se veio com médico pré-selecionado, disparar
         if (doctorSelect.value) {

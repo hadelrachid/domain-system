@@ -42,8 +42,31 @@
                 <label style="display:block; margin-bottom: 5px;">E-mail (Usado para login do painel)</label>
                 <input type="email" name="email" placeholder="medico@clinica.com" required style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
 
-                <label style="display:block; margin-bottom: 5px;">Senha Temporária</label>
-                <input type="password" name="password" placeholder="Defina uma senha" required style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px;">Senha Temporária</label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="doc_new_pwd" placeholder="Defina uma senha" required style="width: 100%; padding: 8px; padding-right: 35px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;" oninput="analyzePasswordStrength(this.value, 'doc_new')">
+                        <button type="button" onclick="togglePasswordVisibility('doc_new_pwd', this)" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; background: transparent; border: none; color: #666; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;" title="Mostrar/Ocultar Senha">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 8px;">
+                        <button type="button" onclick="generatePasswordAndAnalyze('doc_new_pwd', 'doc_new')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"></path><path d="m14 7 3 3"></path><path d="M5 6v4"></path><path d="M19 14v4"></path><path d="M10 2v2"></path><path d="M7 8H3"></path><path d="M21 16h-4"></path><path d="M11 3H9"></path></svg> Gerar Senha Segura
+                        </button>
+                    </div>
+                    
+                    <div id="pwd-meter-doc_new" style="display:none; margin-top:8px;">
+                         <div style="height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden;">
+                              <div id="pwd-bar-doc_new" style="height:100%; width:0%; background:#ef4444; transition: width 0.3s, background 0.3s;"></div>
+                         </div>
+                         <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                             <div id="pwd-hint-doc_new" style="font-size:11px; color:#64748b;">Inclua letras, números e símbolos</div>
+                             <div id="pwd-text-doc_new" style="font-size:11px; font-weight:600; text-align:right;">Péssimo</div>
+                         </div>
+                    </div>
+                </div>
 
                 <label style="display:block; margin-bottom: 5px;">CRM / Registro</label>
                 <input type="text" name="crm" placeholder="Ex: CRM/SP 12345" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">

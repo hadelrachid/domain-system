@@ -33,6 +33,7 @@
     <script src="<?= BASE_URL ?>/assets/js/core/events.js"></script>
     <script src="<?= BASE_URL ?>/assets/js/core/api.js"></script>
     <script src="<?= BASE_URL ?>/assets/js/core/toast.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/password-meter.js"></script>
 </head>
 <body>
     <div id="adminmenuback">

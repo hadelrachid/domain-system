@@ -169,6 +169,7 @@ abstract class AbstractCockpitView implements CockpitViewInterface
             <script src="<?= BASE_URL ?>/assets/js/core/events.js"></script>
             <script src="<?= BASE_URL ?>/assets/js/core/api.js"></script>
             <script src="<?= BASE_URL ?>/assets/js/core/toast.js"></script>
+            <script src="<?= BASE_URL ?>/assets/js/password-meter.js"></script>
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>

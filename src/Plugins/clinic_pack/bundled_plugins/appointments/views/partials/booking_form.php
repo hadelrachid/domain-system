@@ -30,7 +30,11 @@
             <!-- Data -->
             <div style="flex: 1;">
                 <label style="display:block; margin-bottom: 5px;">Data *</label>
-                <input type="date" name="appointment_date" id="admin_date" required style="width: 100%; padding: 6px; box-sizing: border-box; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border); color-scheme: dark light;">
+                <!-- Flatpickr via CDN local para o form -->
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+                <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+                <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+                <input type="text" name="appointment_date" id="admin_date" placeholder="Selecione no calendário" required style="width: 100%; padding: 6px; box-sizing: border-box; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border); color-scheme: dark light;">
             </div>
         </div>
 
@@ -75,7 +79,9 @@
     </form>
 </div>
 
-<script>
+    <!-- Injeção da Classe Abstrata do Calendário -->
+    <script src="<?= BASE_URL ?>/assets/js/doctor-calendar.js"></script>
+    <script>
     function loadAdminSlots() {
         let docId = document.getElementById('admin_doctor_id').value;
         let date = document.getElementById('admin_date').value;
@@ -102,11 +108,11 @@
                 html += '</div>';
                 slotsContainer.innerHTML = html;
 
-                slotsContainer.querySelectorAll('.slot-btn').forEach(btn => {
+                document.querySelectorAll('.slot-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        slotsContainer.querySelectorAll('.slot-btn').forEach(b => {
+                        document.querySelectorAll('.slot-btn').forEach(b => {
                             b.style.background = '#fff';
-                            b.style.color = '#1d2327';
+                            b.style.color = '#333';
                             b.style.borderColor = '#cbd5e1';
                         });
                         this.style.background = '#2271b1';
@@ -138,32 +144,21 @@
         fetch('<?= BASE_URL ?>/api/doctors/schedules?doctor_id=' + docId, { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
-            if(data.success && data.schedules.length > 0) {
-                const diasPtBr = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                let str = '🗓️ Atende: ';
-                let daysMap = {};
-                data.schedules.forEach(s => {
-                    let d = diasPtBr[s.day_of_week];
-                    if (!daysMap[d]) daysMap[d] = [];
-                    daysMap[d].push(s.start_time.substring(0,5) + ' às ' + s.end_time.substring(0,5));
-                });
+            if (data.schedules && data.schedules.length > 0) {
+                let diasMap = {0:'Dom',1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex',6:'Sáb'};
+                let diasTrabalho = [...new Set(data.schedules.map(s => diasMap[s.day_of_week]))];
+                hint.innerText = 'Dias de atendimento: ' + diasTrabalho.join(', ');
                 
-                let parts = [];
-                for(let d in daysMap) {
-                    parts.push(d + ' (' + daysMap[d].join(', ') + ')');
-                }
-                hint.innerHTML = str + parts.join(' | ');
-
                 let dateInput = document.getElementById('admin_date');
-                if (!dateInput.value) {
+                if(!dateInput.value) {
                     let today = new Date();
                     for(let i=0; i<=7; i++) {
                         let checkDate = new Date(today);
                         checkDate.setDate(today.getDate() + i);
                         let dow = checkDate.getDay();
                         if (data.schedules.find(s => s.day_of_week == dow)) {
-                            dateInput.value = checkDate.toISOString().split('T')[0];
-                            loadAdminSlots();
+                            // O calendário cuidará de popular o input formatado, ou podemos deixar como está
+                            // Apenas chamamos loadAdminSlots no change callback do calendário
                             break;
                         }
                     }
@@ -177,9 +172,15 @@
         });
     }
 
-    document.getElementById('admin_date').addEventListener('change', loadAdminSlots);
-    document.getElementById('admin_doctor_id').addEventListener('change', function() {
-        loadAdminSlots();
-        loadAdminDoctorSchedule();
+    const adminDoctorDays = <?= json_encode($doctorDays ?? []) ?>;
+
+    // Instancia a classe abstrata!
+    new DoctorCalendarPicker('#admin_date', '#admin_doctor_id', adminDoctorDays, function(selectedDates, dateStr, instance, isReset) {
+        if (isReset) {
+            document.getElementById('adminSlotsContainer').innerHTML = '<div style="color: #64748b; font-size: 13px;"><i class="fas fa-info-circle"></i> Selecione um médico e uma data para ver os horários.</div>';
+            loadAdminDoctorSchedule();
+        } else {
+            loadAdminSlots();
+        }
     });
 </script>

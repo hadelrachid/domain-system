@@ -66,11 +66,27 @@ class AppointmentController
 
         $patients = $this->patientReader->getAllPatients();
         $doctors = $this->doctorReader->getAllDoctors();
+        
+        $pdo = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+        $stmtSched = $pdo->query("SELECT doctor_id, day_of_week FROM doctor_schedules WHERE is_active = 1");
+        $allSchedules = $stmtSched->fetchAll(\PDO::FETCH_ASSOC);
+        $doctorDays = [];
+        foreach ($allSchedules as $s) {
+            $docId = $s['doctor_id'];
+            $day = (int)$s['day_of_week'];
+            if (!isset($doctorDays[$docId])) {
+                $doctorDays[$docId] = [];
+            }
+            if (!in_array($day, $doctorDays[$docId])) {
+                $doctorDays[$docId][] = $day;
+            }
+        }
 
         $html = $this->theme->render('admin_appointments', [
             'appointments' => $appointments,
             'patients' => $patients,
             'doctors' => $doctors,
+            'doctorDays' => $doctorDays,
             'theme' => $this->theme
         ], __DIR__ . '/../views');
         
