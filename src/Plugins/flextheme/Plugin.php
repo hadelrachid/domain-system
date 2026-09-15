@@ -8,6 +8,11 @@ use DomainSystem\Plugins\FlexTheme\Controllers\ThemeController;
 
 class Plugin extends AbstractPlugin
 {
+    public function register(): void
+    {
+        // Registrar bindings ou configs do tema no Container, se necessário
+    }
+
     public function boot(): void
     {
         // Opcional: injetar configurações de tema disponíveis no Container
