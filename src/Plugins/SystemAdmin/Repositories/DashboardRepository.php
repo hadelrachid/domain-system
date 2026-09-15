@@ -17,10 +17,18 @@ class DashboardRepository implements DashboardRepositoryInterface
 
     public function getGlobalStats(string $date): array
     {
-        $pdo = $this->db->getPdo();
-        $totalPatients = $pdo->query("SELECT COUNT(*) FROM patients")->fetchColumn() ?: 0;
-        $totalDoctors = $pdo->query("SELECT COUNT(*) FROM doctors")->fetchColumn() ?: 0;
-        $appointmentsToday = $pdo->query("SELECT COUNT(*) FROM appointments WHERE appointment_date = '{$date}'")->fetchColumn() ?: 0;
+        $totalPatients = 0;
+        $totalDoctors = 0;
+        $appointmentsToday = 0;
+        
+        try {
+            $pdo = $this->db->getPdo();
+            $totalPatients = $pdo->query("SELECT COUNT(*) FROM patients")->fetchColumn() ?: 0;
+            $totalDoctors = $pdo->query("SELECT COUNT(*) FROM doctors")->fetchColumn() ?: 0;
+            $appointmentsToday = $pdo->query("SELECT COUNT(*) FROM appointments WHERE appointment_date = '{$date}'")->fetchColumn() ?: 0;
+        } catch (\PDOException $e) {
+            // Tabelas ainda não existem neste tenant
+        }
 
         return [
             'totalPatients' => $totalPatients,
@@ -45,16 +53,20 @@ class DashboardRepository implements DashboardRepositoryInterface
 
     public function getGlobalQueue(string $date): array
     {
-        $pdo = $this->db->getPdo();
-        return $pdo->query("
-            SELECT a.id, a.appointment_time, p.name as patient_name, d.name as doctor_name, a.status 
-            FROM appointments a
-            JOIN patients p ON a.patient_id = p.id
-            JOIN doctors d ON a.doctor_id = d.id
-            WHERE a.appointment_date = '{$date}'
-            ORDER BY a.appointment_time ASC
-            LIMIT 10
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $pdo = $this->db->getPdo();
+            return $pdo->query("
+                SELECT a.id, a.appointment_time, p.name as patient_name, d.name as doctor_name, a.status 
+                FROM appointments a
+                JOIN patients p ON a.patient_id = p.id
+                JOIN doctors d ON a.doctor_id = d.id
+                WHERE a.appointment_date = '{$date}'
+                ORDER BY a.appointment_time ASC
+                LIMIT 10
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            return [];
+        }
     }
 
     public function getDoctorQueue(int $doctorId, string $date): array
@@ -75,41 +87,55 @@ class DashboardRepository implements DashboardRepositoryInterface
 
     public function getWaitingRoom(): array
     {
-        $pdo = $this->db->getPdo();
-        $today = date('Y-m-d');
-        return $pdo->query("
-            SELECT a.id, a.appointment_date, a.appointment_time, p.name as patient_name, d.name as doctor_name, a.status 
-            FROM appointments a
-            JOIN patients p ON a.patient_id = p.id
-            JOIN doctors d ON a.doctor_id = d.id
-            WHERE a.status IN ('Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento')
-            ORDER BY CASE a.status 
-                WHEN 'Em Atendimento' THEN 1 
-                WHEN 'Aguardando Médico' THEN 2 
-                WHEN 'Aguardando Triagem' THEN 3 
-                ELSE 4 END, a.appointment_date ASC, a.appointment_time ASC
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $pdo = $this->db->getPdo();
+            $today = date('Y-m-d');
+            return $pdo->query("
+                SELECT a.id, a.appointment_date, a.appointment_time, p.name as patient_name, d.name as doctor_name, a.status 
+                FROM appointments a
+                JOIN patients p ON a.patient_id = p.id
+                JOIN doctors d ON a.doctor_id = d.id
+                WHERE a.status IN ('Aguardando Triagem', 'Aguardando Médico', 'Em Atendimento')
+                ORDER BY CASE a.status 
+                    WHEN 'Em Atendimento' THEN 1 
+                    WHEN 'Aguardando Médico' THEN 2 
+                    WHEN 'Aguardando Triagem' THEN 3 
+                    ELSE 4 END, a.appointment_date ASC, a.appointment_time ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            return [];
+        }
     }
 
     public function getAppointmentsChartData(int $days, ?int $doctorId = null): array
     {
-        $pdo = $this->db->getPdo();
         $chartData = [];
         
-        // SQLite date formatting varies, we'll generate the last N days in PHP and query for each
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-{$i} days"));
-            $displayDate = date('d/m', strtotime($date));
+        try {
+            $pdo = $this->db->getPdo();
             
-            $query = "SELECT COUNT(*) FROM appointments WHERE appointment_date = '{$date}'";
-            if ($doctorId) {
-                $query .= " AND doctor_id = {$doctorId}";
+            // SQLite date formatting varies, we'll generate the last N days in PHP and query for each
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-{$i} days"));
+                $displayDate = date('d/m', strtotime($date));
+                
+                $query = "SELECT COUNT(*) FROM appointments WHERE appointment_date = '{$date}'";
+                if ($doctorId) {
+                    $query .= " AND doctor_id = {$doctorId}";
+                }
+                
+                $count = $pdo->query($query)->fetchColumn() ?: 0;
+                
+                $chartData['labels'][] = $displayDate;
+                $chartData['data'][] = (int)$count;
             }
-            
-            $count = $pdo->query($query)->fetchColumn() ?: 0;
-            
-            $chartData['labels'][] = $displayDate;
-            $chartData['data'][] = (int)$count;
+        } catch (\PDOException $e) {
+            // Se a tabela não existir, popula com zero
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-{$i} days"));
+                $chartData['labels'][] = date('d/m', strtotime($date));
+                $chartData['data'][] = 0;
+            }
         }
 
         return $chartData;
