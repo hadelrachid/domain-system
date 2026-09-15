@@ -9,7 +9,13 @@ $app = require_once dirname(__DIR__) . '/bootstrap.php';
 // Dispatch a pre-boot event
 $app->getDispatcher()->dispatch('kernel_pre_boot');
 
-// Boot the Kernel
+// ⚡ CRITICAL: Resolver o Tenant ANTES do boot dos plugins.
+// O plugin Database precisa saber qual banco conectar antes de ser materializado.
+// Sem isso, o Singleton PDO é criado com TenantContext vazio (violação do Princípio D do SOLID).
+$earlyRequest = \DomainSystem\Core\Http\Request::capture();
+$app->getContainer()->make(\DomainSystem\Core\Tenant\TenantManager::class)->resolveFromRequest($earlyRequest);
+
+// Boot the Kernel (agora o TenantContext já tem as credenciais corretas do banco)
 $app->boot();
 
 // Dispatch a post-boot event
@@ -20,11 +26,7 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 
 // Dispatch the request
 try {
-    $request = \DomainSystem\Core\Http\Request::capture();
-    
-    // Resolve o Tenant (Cliente) baseado na URL (Host ou Query Param)
-    $app->getContainer()->make(\DomainSystem\Core\Tenant\TenantManager::class)->resolveFromRequest($request);
-    
+    $request = $earlyRequest; // Reutiliza o Request já capturado
     // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
     $uri = $request->uri();
     $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
