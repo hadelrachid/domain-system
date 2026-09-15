@@ -52,7 +52,7 @@ class SettingsController
             'settings' => $settings,
             'insurances' => $insurances,
             'doctors' => $doctorsData
-        ], __DIR__ . '/../views'));
+        ], __DIR__ . '/../Views'));
     }
 
     public function save(Request $request): \DomainSystem\Core\Http\Response
