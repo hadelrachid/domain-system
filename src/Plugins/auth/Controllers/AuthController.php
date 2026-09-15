@@ -51,6 +51,7 @@ class AuthController
         }
 
         $error = $this->session->get('auth_error');
+        $this->session->remove('auth_error');
         return new \DomainSystem\Core\Http\Response($this->theme->render('login', ['error' => $error]));
     }
 

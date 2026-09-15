@@ -98,6 +98,17 @@ class SetupController
             
             $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'admin')");
             $stmt->execute([$adminName, $adminEmail, password_hash($adminPass, PASSWORD_BCRYPT)]);
+            
+            $userId = $db->lastInsertId();
+            
+            // Auto-login
+            $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
+            $session->regenerate();
+            $session->set('user_id', $userId);
+            $session->set('user_name', $adminName);
+            $session->set('user_role', 'admin');
+            $session->set('doctor_id', null);
+            $session->remove('auth_error'); // Limpa qualquer erro de login fantasma
         } catch (\Exception $e) {
             // Table might not exist if migration failed, but we assume activate() worked
         }
