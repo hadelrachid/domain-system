@@ -20,7 +20,7 @@ class TenantManager
     public function resolveFromRequest(Request $request): void
     {
         $host = $request->server['HTTP_HOST'] ?? 'localhost';
-        $queryTenant = $request->get('tenant');
+        $queryTenant = $request->input('tenant');
         
         if (!empty($queryTenant)) {
             // Dev Mode: Override by query param
