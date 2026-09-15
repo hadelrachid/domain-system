@@ -23,12 +23,18 @@ class Application
     private \DomainSystem\Core\Http\SessionManager $sessionManager;
     private \DomainSystem\Core\Cockpit\CockpitRegistry $cockpitRegistry;
     private string $basePath;
+    
+    private \DomainSystem\Core\Tenant\TenantContext $tenantContext;
+    private \DomainSystem\Core\Tenant\TenantManager $tenantManager;
 
     public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
         $this->basePath = $basePath;
+        
+        $this->tenantContext = new \DomainSystem\Core\Tenant\TenantContext();
+        $this->tenantManager = new \DomainSystem\Core\Tenant\TenantManager($this->tenantContext);
         
         $this->sessionManager = new \DomainSystem\Core\Http\SessionManager();
         $this->sessionManager->start(); // Start session securely on boot if HTTP context
@@ -53,6 +59,14 @@ class Application
         // Automatically bind itself to the container
         $this->container->singleton(Application::class, function() {
             return $this;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Tenant\TenantContext::class, function() {
+            return $this->tenantContext;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Tenant\TenantManager::class, function() {
+            return $this->tenantManager;
         });
         
         $this->container->singleton(\DomainSystem\Core\Http\SessionManager::class, function() {

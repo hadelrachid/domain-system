@@ -1,0 +1,8 @@
+{
+    "name": "flextheme",
+    "version": "1.0.0",
+    "description": "Motor de renderização de vitrines e temas (Frontend CMS)",
+    "author": "Hadel Rachid",
+    "dependencies": [],
+    "entry": "DomainSystem\\Plugins\\FlexTheme\\Plugin"
+}

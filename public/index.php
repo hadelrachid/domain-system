@@ -22,6 +22,9 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 try {
     $request = \DomainSystem\Core\Http\Request::capture();
     
+    // Resolve o Tenant (Cliente) baseado na URL (Host ou Query Param)
+    $app->getContainer()->make(\DomainSystem\Core\Tenant\TenantManager::class)->resolveFromRequest($request);
+    
     // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
     $uri = $request->uri();
     $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
