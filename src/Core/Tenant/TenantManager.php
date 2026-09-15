@@ -52,14 +52,9 @@ class TenantManager
                 $this->context->setDbConfig($data['db']);
             }
         } else {
-            // Fallback genérico para Tenants não cadastrados (pode apontar para um DB de erro no futuro)
-            $this->context->setTenantId($tenantId);
-            $this->context->setTenantName(ucfirst($tenantId) . ' Clínica');
-            $this->context->setDbConfig([
-                'dsn' => 'mysql:host=localhost;dbname=daher_db;charset=utf8mb4',
-                'user' => 'root',
-                'pass' => ''
-            ]);
+            // Recomendaçao do ChatGPT: Não conectar silenciosamente no master se o tenant for inválido.
+            // Para o master explícito, ele já está no tenants.json.
+            throw new \Exception("Tenant '{$tenantId}' não foi encontrado no registro. Acesso negado pela camada de segurança Multi-Tenant.");
         }
         
         $this->context->setDomain($host);

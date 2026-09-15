@@ -35,6 +35,12 @@
             $tenantQuery = isset($_GET['tenant']) ? '?tenant=' . urlencode($_GET['tenant']) : '';
         ?>
         <form method='POST' action='<?= BASE_URL ?>/login<?= $tenantQuery ?>'>
+    <?php
+        // Garante que o token CSRF está na sessão (caso a sessão tenha sido recriada)
+        if (session_status() === PHP_SESSION_ACTIVE && empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    ?>
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
             

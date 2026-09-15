@@ -10,9 +10,15 @@ $app = require_once dirname(__DIR__) . '/bootstrap.php';
 $app->getDispatcher()->dispatch('kernel_pre_boot');
 
 // ⚡ CRITICAL: Resolver o Tenant ANTES do boot dos plugins.
-// O plugin Database precisa saber qual banco conectar antes de ser materializado.
-// Sem isso, o Singleton PDO é criado com TenantContext vazio (violação do Princípio D do SOLID).
 $earlyRequest = \DomainSystem\Core\Http\Request::capture();
+
+// ⚡ CORREÇÃO (DeepSeek): Definir uma constante global com o tenant para persistir nos redirecionamentos
+if ($earlyRequest->has('tenant')) {
+    define('CURRENT_TENANT_QUERY', '?tenant=' . urlencode($earlyRequest->input('tenant')));
+} else {
+    define('CURRENT_TENANT_QUERY', '');
+}
+
 $app->getContainer()->make(\DomainSystem\Core\Tenant\TenantManager::class)->resolveFromRequest($earlyRequest);
 
 // Boot the Kernel (agora o TenantContext já tem as credenciais corretas do banco)
