@@ -73,6 +73,7 @@ class Plugin extends AbstractPlugin
 
             // Dashboard base
             $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
+            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout']);
 
             $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes']);
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);

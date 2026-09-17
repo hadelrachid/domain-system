@@ -63,15 +63,15 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 
 ## 🟣 Fase 4: A Grande Interface (Iniciada em v1.2.0)
 
-### 4.1. Motor de Temas (Theme Engine)
-- [x] **Sistema de Templates Avançado:** Suporte a Shortcodes aninhados e contêineres recursivos (Page Builder style).
-- [ ] **Editor Visual (WYSIWYG):** Permitir que usuários finais editem páginas e layouts sem programar.
-- [x] **Biblioteca de Componentes:** Reutilização de Shortcodes e blocos prontos para uso.
+### 4.1. Motor de Temas e Páginas (Theme & Page Builder)
+- [x] **Sistema de Templates Avançado:** Suporte a Shortcodes aninhados e contêineres recursivos.
+- [x] **Editor Visual OOP (Builder Flex):** Construtor de páginas drag-and-drop com arquitetura VCL/Componentes reais em JavaScript, com Snap to Grid e Object Inspector.
+- [x] **Biblioteca de Componentes:** Reutilização de widgets e blocos baseados em instâncias OOP.
 
-### 4.2. Cockpit 2.0 (Interface do Usuário)
-- [x] **Design System Unificado:** Identidade visual moderna, orientada a eventos e componentes CSS independentes.
-- [x] **Modo Escuro (Dark Mode):** Suporte nativo para temas claros e escuros via variáveis globais.
-- [x] **Responsividade e SPA (Single Page App):** Abas com "Live Fetch" via AJAX sem recarregar a tela.
+### 4.2. CockPit OS 2.0 (Interface do Usuário & Skin Engine)
+- [x] **Design System Unificado:** Contrato visual oficial (`DESIGN_SYSTEM.md`) obrigando plugins a usarem classes `.card`, `.btn` em vez de CSS engessado.
+- [x] **Skin Engine Dinâmica (JSON):** Herança de temas completa (Dark Futurista, Dracula) com leitura dinâmica via API em tempo real.
+- [x] **Responsividade e SPA (Single Page App):** Abas com "Live Fetch" via AJAX e componentes nativos de browser estilizados com CSS Webkit Filters.
 
 ### 4.3. Performance e Otimização
 - [ ] **Cache de Queries:** Redução de consultas repetidas ao banco de dados.

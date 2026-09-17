@@ -1,11 +1,4 @@
 <style>
-    .sys-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #c3c4c7; padding-bottom: 10px; }
-    .sys-tab { padding: 8px 16px; border: none; background: transparent; cursor: pointer; font-size: 14px; color: #50575e; border-radius: 4px; }
-    .sys-tab:hover { background: #f0f0f1; color: #1d2327; }
-    .sys-tab.active { background: #2271b1; color: #fff; font-weight: bold; }
-    .sys-content { display: none; background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; max-width: 600px; }
-    .sys-content.active { display: block; }
-    
     @keyframes pulse-red {
         0% { box-shadow: 0 0 0 0 rgba(220, 50, 50, 0.7); }
         70% { box-shadow: 0 0 0 15px rgba(220, 50, 50, 0); }

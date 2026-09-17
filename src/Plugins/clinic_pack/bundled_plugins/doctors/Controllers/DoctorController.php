@@ -40,13 +40,19 @@ class DoctorController
         // TODO: Tratamento de arquivos via $request->file('photo') quando disponível
         // Por ora, mantemos $_FILES apenas para o upload físico
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
-            $filename = 'doctor_new_' . time() . '.' . $ext;
-            $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
-            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            
+            if (in_array($ext, $allowed)) {
+                $filename = 'doctor_new_' . time() . '.' . $ext;
+                $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
+                if (!is_dir($uploadPath)) mkdir($uploadPath, 0755, true);
             
             if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadPath . '/' . $filename)) {
                 $photo_url = '/uploads/' . $filename;
+            }
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Formato de imagem inválido.'];
             }
         }
 
@@ -113,13 +119,20 @@ class DoctorController
         $photo_url = $request->input('photo_url', '');
         
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
-            $filename = 'doctor_' . $id . '_' . time() . '.' . $ext;
-            $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
-            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
             
-            if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadPath . '/' . $filename)) {
-                $photo_url = '/uploads/' . $filename;
+            if (in_array($ext, $allowed)) {
+                $filename = 'doctor_' . $id . '_' . time() . '.' . $ext;
+                $uploadPath = DOMAIN_SYSTEM_ROOT . '/public/uploads';
+                if (!is_dir($uploadPath)) mkdir($uploadPath, 0755, true);
+                
+                if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadPath . '/' . $filename)) {
+                    $photo_url = '/uploads/' . $filename;
+                }
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Formato de imagem inválido.'];
+                return Response::redirect(BASE_URL . '/admin/doctors/edit?id=' . $id);
             }
         }
 

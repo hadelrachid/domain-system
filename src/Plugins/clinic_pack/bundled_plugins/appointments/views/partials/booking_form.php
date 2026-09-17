@@ -1,12 +1,12 @@
-<div class="form-panel" style="background: var(--bg-card, #fff); padding: 20px; border: 1px solid var(--primary-border, #c3c4c7); border-radius: 4px; color: var(--text-main, inherit);">
-    <h2 style="margin-top: 0; font-size: 16px;">Novo Agendamento</h2>
+<div class="card" style="width: 100%; max-width: 800px; margin-bottom: 25px; padding: 25px;">
+    <h2 style="margin-top: 0; font-size: 18px; color: var(--text-main);">Novo Agendamento</h2>
     <form method="POST" action="<?= BASE_URL ?>/admin/appointments">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         
         <!-- Paciente -->
-        <div style="margin-bottom: 10px;">
-            <label style="display:block; margin-bottom: 5px;">Selecione o Paciente *</label>
-            <select name="patient_id" required style="width: 100%; padding: 6px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border);">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 8px; font-weight: 600;">Selecione o Paciente *</label>
+            <select name="patient_id" required style="width: 100%;">
                 <option value="">Selecione...</option>
                 <?php foreach($patients as $p): ?>
                     <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?> (<?= htmlspecialchars($p['phone'] ?? 'Sem telefone') ?>)</option>
@@ -15,50 +15,49 @@
         </div>
         
         <!-- Médico -->
-        <div style="margin-bottom: 10px;">
-            <label style="display:block; margin-bottom: 5px;">Médico *</label>
-            <select name="doctor_id" id="admin_doctor_id" required style="width: 100%; padding: 6px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border);">
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 8px; font-weight: 600;">Médico *</label>
+            <select name="doctor_id" id="admin_doctor_id" required style="width: 100%;">
                 <option value="">Selecione...</option>
                 <?php foreach($doctors as $d): ?>
                     <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['name']) ?> - <?= htmlspecialchars($d['specialty']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <div id="admin-doctor-schedule-hint" style="font-size:12px; color:var(--primary, #2271b1); margin-top:5px; font-weight:600;"></div>
+            <div id="admin-doctor-schedule-hint" style="font-size:12px; color:var(--accent-blue); margin-top:5px; font-weight:600;"></div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
             <!-- Data -->
             <div style="flex: 1;">
-                <label style="display:block; margin-bottom: 5px;">Data *</label>
+                <label style="display:block; margin-bottom: 8px; font-weight: 600;">Data *</label>
                 <!-- Flatpickr via CDN local para o form -->
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
                 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
                 <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
-                <input type="text" name="appointment_date" id="admin_date" placeholder="Selecione no calendário" required style="width: 100%; padding: 6px; box-sizing: border-box; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--primary-border); color-scheme: dark light;">
+                <input type="text" name="appointment_date" id="admin_date" placeholder="Selecione no calendário" required style="width: 100%;">
             </div>
         </div>
 
         <!-- Horário (Slots) -->
-        <div style="margin-bottom: 10px;">
-            <label style="display:block; margin-bottom: 5px;">Horário *</label>
-            <div id="adminSlotsContainer" style="min-height: 50px; background: var(--bg-body, #f8fafc); border: 1px solid var(--primary-border, #e2e8f0); border-radius: 4px; padding: 15px;">
-                <div style="color: var(--text-muted, #64748b); font-size: 13px;"><i class="fas fa-info-circle"></i> Selecione um médico e uma data para ver os horários.</div>
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 8px; font-weight: 600;">Horário *</label>
+            <div id="adminSlotsContainer" style="min-height: 50px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); border-radius: 6px; padding: 20px;">
+                <div style="color: var(--text-muted); font-size: 13px;"><i class="fas fa-info-circle"></i> Selecione um médico e uma data para ver os horários.</div>
             </div>
             <input type="hidden" name="appointment_time" id="admin_time" required>
         </div>
-        
         <!-- Tipo de Atendimento -->
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
             <div style="flex: 1;">
-                <label style="display:block; margin-bottom: 5px;">Tipo de Atendimento</label>
-                <select name="attendance_type" id="attendance_type" style="width: 100%; padding: 6px;" onchange="document.getElementById('insurance_box').style.display = (this.value === 'convenio') ? 'block' : 'none';">
+                <label style="display:block; margin-bottom: 8px; font-weight: 600;">Tipo de Atendimento</label>
+                <select name="attendance_type" id="attendance_type" style="width: 100%;" onchange="document.getElementById('insurance_box').style.display = (this.value === 'convenio') ? 'block' : 'none';">
                     <option value="particular">Particular</option>
                     <option value="convenio">Convênio</option>
                 </select>
             </div>
             <div style="flex: 1; display: none;" id="insurance_box">
-                <label style="display:block; margin-bottom: 5px;">Qual Convênio?</label>
-                <select name="health_insurance" style="width: 100%; padding: 6px;">
+                <label style="display:block; margin-bottom: 8px; font-weight: 600;">Qual Convênio?</label>
+                <select name="health_insurance" style="width: 100%;">
                     <option value="">Nenhum / Não Listado</option>
                     <?php if(isset($insurances) && is_array($insurances)): ?>
                         <?php foreach($insurances as $ins): ?>
@@ -70,9 +69,9 @@
         </div>
 
         <!-- Observações -->
-        <div style="margin-bottom: 15px;">
-            <label style="display:block; margin-bottom: 5px;">Observações da Recepção</label>
-            <textarea name="reception_notes" style="width: 100%; padding: 6px; box-sizing: border-box;" rows="2"></textarea>
+        <div style="margin-bottom: 25px;">
+            <label style="display:block; margin-bottom: 8px; font-weight: 600;">Observações da Recepção</label>
+            <textarea name="reception_notes" style="width: 100%;" rows="2"></textarea>
         </div>
 
         <button type="submit" class="btn btn-activate">Marcar Consulta</button>
@@ -103,7 +102,7 @@
             if(data.slots && data.slots.length > 0) {
                 let html = '<div class="slots-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px;">';
                 data.slots.forEach(slot => {
-                    html += '<button type="button" class="slot-btn" data-time="'+slot+'" style="padding: 10px; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; transition: 0.2s;">'+slot+'</button>';
+                    html += '<button type="button" class="slot-btn btn" data-time="'+slot+'" style="padding: 10px; text-align: center;">'+slot+'</button>';
                 });
                 html += '</div>';
                 slotsContainer.innerHTML = html;
@@ -111,13 +110,9 @@
                 document.querySelectorAll('.slot-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         document.querySelectorAll('.slot-btn').forEach(b => {
-                            b.style.background = '#fff';
-                            b.style.color = '#333';
-                            b.style.borderColor = '#cbd5e1';
+                            b.classList.remove('btn-activate');
                         });
-                        this.style.background = '#2271b1';
-                        this.style.color = '#fff';
-                        this.style.borderColor = '#135e96';
+                        this.classList.add('btn-activate');
                         timeInput.value = this.dataset.time;
                     });
                 });

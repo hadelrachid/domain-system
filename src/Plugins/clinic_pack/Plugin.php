@@ -16,14 +16,22 @@ class Plugin extends AbstractPlugin
 {
     public function register(): void
     {
-        /** @var EventDispatcher $events */
-        $events = $this->events();
+        // Registra o provedor de Widgets no Registry Global
+        try {
+            $registry = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
+            $registry->registerProvider(new \DomainSystem\Plugins\clinic_pack\Widgets\ClinicDashboardWidgetProvider());
+        } catch (\Exception $e) {
+            // Ignora se o registry não existir (ex: rodando scripts de teste isolados)
+        }
 
-        // 0. Registrar dependências locais do pacote
+        // Registrando Middlewaresndências locais do pacote
         $this->container->bind(
             \DomainSystem\Plugins\clinic_pack\Contracts\UserProfileServiceInterface::class,
             \DomainSystem\Plugins\clinic_pack\Services\UserProfileService::class
         );
+
+        /** @var EventDispatcher $events */
+        $events = $this->events();
 
         // 1. Registra os Cockpits usando o Container (permite injeção de dependência no construtor)
         if ($this->container->has(CockpitRegistryInterface::class)) {

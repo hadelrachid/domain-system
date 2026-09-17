@@ -1,11 +1,11 @@
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet?style=for-the-badge" alt="Version 1.2.0">
+  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet?style=for-the-badge" alt="Version 1.3.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <br><br>
-  <h1>🚀 Domain System (CockPit) v1.2.0</h1>
-  <p><strong>The Business Engine that never dies. A modular, hyper-resilient, and extensible framework.</strong></p>
+  <h1>🚀 CockPit OS 1.3.0 (Domain System)</h1>
+  <p><strong>The Web OS that never dies. A modular, hyper-resilient, and extensible framework with a Cyberpunk UI.</strong></p>
 </div>
 
 ---
@@ -33,15 +33,14 @@ Thanks to our exclusive *Automatic Transfer Switch (Circuit Breaker)*, if a modu
 ### 🔒 3. Global CSRF Shielding
 Native and invisible security. The kernel automatically injects cross-site request forgery protections into all system forms.
 
-### 🎨 4. "CockPit" Theme Engine & Advanced Shortcodes
-Interfaces separated from logic! Create themes (CockPits) for doctors, secretaries, or patients without touching back-end code.
-In version 1.2.0, our **ShortcodeManager** became a Container builder, supporting deep recursion (e.g., `[modal_profile] [child] [/modal_profile]`), identical to modern page builders!
+### 🎨 4. "Builder Flex" Theme Engine (VCL/OOP)
+Separate interfaces from logic! In version 1.3.0, we introduced **Builder Flex**: a visual drag-and-drop editor built on an Object-Oriented architecture (BaseWidget). It acts as a true VCL (Visual Component Library), allowing you to design pages by dragging and dropping elements with *Snap to Grid* and database persistence.
 
 ### 🔐 5. Native 2-Factor Authentication (2FA)
 The core now has direct integration with Google Authenticator (TOTP) and email code delivery, configurable via the user panel for enterprise-grade security.
 
-### 🌑 6. Reactive UI & Dark Mode
-Single-page application (SPA) experience. Tabs load via asynchronous requests (Live Fetch) and the native design system relies on CSS variables that support elegant and consistent Light and Dark modes.
+### 🌑 6. Cyberpunk Skin Engine (Design System)
+A visual revolution! OS.CORE is powered by a *Skin Engine* that reads JSON files (`dark_futurista.json`, `dracula.json`) and injects the visual DNA across the ecosystem. Dark glass forms, neon buttons, and dynamic inputs in a true Single-Page Application (SPA) experience.
 
 ---
 

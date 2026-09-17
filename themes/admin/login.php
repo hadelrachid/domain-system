@@ -25,7 +25,7 @@
     </script>
     <div class='login-box'>
         <div class="logo-container">
-            <img src="<?= BASE_URL ?>/assets/img/logo.svg" alt="Cockpit Logo" style="max-width: 160px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
+            <img src="<?= BASE_URL ?>/assets/img/logo.png" alt="CockPit Logo" style="max-width: 180px; height: auto; filter: drop-shadow(0 0 20px rgba(0, 210, 132, 0.2)); margin-bottom: 5px;">
         </div>
         <?php if (!empty($error)): ?>
             <div class='error'><?= htmlspecialchars($error) ?></div>

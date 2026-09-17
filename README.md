@@ -1,11 +1,11 @@
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet?style=for-the-badge" alt="Version 1.2.0">
+  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet?style=for-the-badge" alt="Version 1.3.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <br><br>
-  <h1>🚀 Domain System (CockPit) v1.2.0</h1>
-  <p><strong>O Motor de Negócios que não Morre. Um framework modular, hiper-resiliente e extensível.</strong></p>
+  <h1>🚀 CockPit OS 1.3.0 (Domain System)</h1>
+  <p><strong>O Sistema Operacional Web que não Morre. Um framework modular, hiper-resiliente e extensível com interface Cyberpunk.</strong></p>
 </div>
 
 ---
@@ -33,15 +33,14 @@ Graças ao nosso exclusivo *Quadro de Transferência Automática (Circuit Breake
 ### 🔒 3. Blindagem CSRF Global
 Segurança nativa e invisível. O núcleo injeta automaticamente proteções contra ataques de falsificação de solicitações em todos os formulários do sistema.
 
-### 🎨 4. Motor de Temas "CockPit" & Shortcodes Avançados
-Interfaces separadas da lógica! Crie temas (CockPits) para médicos, secretárias ou pacientes sem tocar no código back-end. 
-Na versão 1.2.0, nosso **ShortcodeManager** tornou-se um construtor de Contêineres, suportando recursividade profunda (ex: `[modal_perfil] [child] [/modal_perfil]`), idêntico aos page builders modernos!
+### 🎨 4. Motor de Temas "Builder Flex" (VCL/OOP)
+Interfaces separadas da lógica! Na versão 1.3.0, introduzimos o **Builder Flex**: um editor visual drag-and-drop construído sobre uma arquitetura Orientada a Objetos (BaseWidget). Ele atua como uma verdadeira VCL (Visual Component Library) permitindo desenhar páginas arrastando e soltando elementos com *Snap to Grid* e persistência em banco.
 
 ### 🔐 5. Autenticação de 2 Fatores (2FA) Nativa
 O núcleo agora possui integração direta com o Google Authenticator (TOTP) e envio de códigos por e-mail, configurável via painel de usuário para segurança enterprise.
 
-### 🌑 6. UI Reativa & Dark Mode
-Experiência de single-page application (SPA). Abas carregam via requisições assíncronas (Live Fetch) e o design system nativo conta com variáveis CSS que suportam modos Claro e Escuro elegantes e consistentes.
+### 🌑 6. Skin Engine Cyberpunk (Design System)
+Uma revolução visual! O OS.CORE é alimentado por uma *Skin Engine* que lê arquivos JSON (`dark_futurista.json`, `dracula.json`) e injeta o DNA visual em todo o ecossistema. Formulários de vidro escuro, botões neon, e inputs dinâmicos em uma verdadeira experiência de single-page application (SPA).
 
 ---
 

@@ -100,6 +100,10 @@ class Application
         $this->container->singleton(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class, function() {
             return $this->cockpitRegistry;
         });
+        
+        $this->container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
+            return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
+        });
     }
 
     public static function getInstance(): ?Application

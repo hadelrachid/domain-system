@@ -1,0 +1,14 @@
+{
+    "name": "Dracula OS",
+    "variables": {
+        "--bg-deep": "#282a36",
+        "--bg-panel": "#44475a",
+        "--bg-hover": "#6272a4",
+        "--border": "#6272a4",
+        "--text-main": "#f8f8f2",
+        "--text-muted": "#bfbfbf",
+        "--accent-green": "#50fa7b",
+        "--accent-orange": "#ffb86c",
+        "--accent-blue": "#8be9fd"
+    }
+}

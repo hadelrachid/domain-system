@@ -33,7 +33,7 @@
                 </div>
                 
                 <div style="margin-top: 8px;">
-                    <button type="button" onclick="generatePasswordAndAnalyze('new_user_pwd', 'admin_new')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                    <button type="button" class="btn" onclick="generatePasswordAndAnalyze('new_user_pwd', 'admin_new')">
                         <i class="fas fa-magic"></i> Gerar Senha Segura
                     </button>
                 </div>
@@ -114,7 +114,7 @@
                                         </div>
                                         
                                         <div style="margin-top: 8px;">
-                                            <button type="button" onclick="generatePasswordAndAnalyze('reset_pwd_<?= $u['id'] ?>', '<?= $u['id'] ?>')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; color:#3b82f6; font-weight:700; display:inline-flex; align-items:center; gap:6px; transition:0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'">
+                                            <button type="button" class="btn" onclick="generatePasswordAndAnalyze('reset_pwd_<?= $u['id'] ?>', '<?= $u['id'] ?>')">
                                                 <i class="fas fa-magic"></i> Gerar Senha Segura
                                             </button>
                                         </div>

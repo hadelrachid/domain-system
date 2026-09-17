@@ -57,13 +57,14 @@ interface PluginInterface
     public function getSubPluginsPath(): ?string;
 
     /**
-     * Construtor padrão que o PluginManager usará.
+     * Define se o plugin é um plugin de core do sistema
      */
-    public function __construct(
-        \DomainSystem\Core\Container\Container $container, 
-        string $path, 
-        \DomainSystem\Core\Events\EventDispatcher $events
-    );
+    public function isCore(): bool;
+    
+    /**
+     * Retorna a descrição do plugin
+     */
+    public function getDescription(): string;
     
     /**
      * Define o estado de ativação em tempo de execução.

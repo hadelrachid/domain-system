@@ -43,18 +43,16 @@ class TenantManager
             $tenants = json_decode(file_get_contents($tenantsFile), true) ?: [];
         }
         
-        // Se o tenant existir no json, usa os dados reais, senão faz um fallback seguro
+        // Se o tenant existir no json, usa os dados, MAS NUNCA SOBRESCREVE O BANCO (Single-Tenant)
         if (isset($tenants[$tenantId])) {
             $data = $tenants[$tenantId];
             $this->context->setTenantId($data['id']);
             $this->context->setTenantName($data['name']);
-            if (isset($data['db'])) {
-                $this->context->setDbConfig($data['db']);
-            }
+            // Foi REMOVIDA a troca de banco de dados aqui. O sistema usará o .env nativamente.
         } else {
-            // Recomendaçao do ChatGPT: Não conectar silenciosamente no master se o tenant for inválido.
-            // Para o master explícito, ele já está no tenants.json.
-            throw new \Exception("Tenant '{$tenantId}' não foi encontrado no registro. Acesso negado pela camada de segurança Multi-Tenant.");
+            // Se não achar, não quebra, apenas usa 'master' como padrão para Single-Tenant
+            $this->context->setTenantId('master');
+            $this->context->setTenantName('Instalação Principal');
         }
         
         $this->context->setDomain($host);

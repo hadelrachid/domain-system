@@ -25,12 +25,17 @@ class UserProfileService implements UserProfileServiceInterface
 
         // 1. Processamento da Foto de Perfil
         if (isset($files['photo']) && $files['photo']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($files['photo']['name'], PATHINFO_EXTENSION);
-            // Validar extensão se necessário
+            $ext = strtolower(pathinfo($files['photo']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            
+            if (!in_array($ext, $allowed)) {
+                throw new \Exception("Formato de imagem inválido. Use JPG, PNG ou WEBP.");
+            }
+            
             $filename = 'profile_' . $userId . '_' . time() . '.' . $ext;
             
             if (!is_dir($this->uploadPath)) {
-                mkdir($this->uploadPath, 0777, true);
+                mkdir($this->uploadPath, 0755, true);
             }
             
             $dest = $this->uploadPath . '/' . $filename;

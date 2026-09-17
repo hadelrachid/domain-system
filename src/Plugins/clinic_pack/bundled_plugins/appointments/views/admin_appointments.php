@@ -17,14 +17,18 @@
         .flex-container { flex-direction: column; }
         .table-responsive, .form-panel { width: 100%; flex: none; }
     }
-    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-    .status-pendente { background: #fff3cd; color: #856404; }
-    .status-confirmado { background: #d1ecf1; color: #0c5460; }
-    .status-atendido { background: #d4edda; color: #155724; }
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; border: 1px solid transparent; }
     
-    .status-aguardando-triagem { background: #ffeeba; color: #856404; } .status-aguardando-médico { background: #cce5ff; color: #004085; } .status-aguardando { background: #ffeeba; color: #856404; } /* Aguardando Triagem */
-    .status-medico { background: #cce5ff; color: #004085; } /* Aguardando Médico */
-    .status-cancelado { background: #f8d7da; color: #721c24; text-decoration: line-through; }
+    .status-pendente { background: rgba(245,110,40,0.1); color: var(--accent-orange); border-color: var(--accent-orange); }
+    .status-confirmado { background: rgba(0,210,132,0.1); color: var(--accent-green); border-color: var(--accent-green); }
+    .status-atendido { background: rgba(0,210,132,0.1); color: var(--accent-green); border-color: var(--accent-green); }
+    
+    .status-aguardando-triagem { background: rgba(88,166,255,0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+    .status-aguardando-médico { background: rgba(88,166,255,0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+    .status-aguardando { background: rgba(88,166,255,0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+    .status-medico { background: rgba(88,166,255,0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+    
+    .status-cancelado { background: rgba(255,0,0,0.1); color: #ff4444; border-color: #ff4444; text-decoration: line-through; }
 </style>
 
 <div class="flex-container">

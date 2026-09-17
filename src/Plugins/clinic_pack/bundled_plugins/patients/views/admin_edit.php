@@ -10,71 +10,71 @@
         </div>
     <?php endif; ?>
 
-    <div class="upload-box" style="max-width: 600px; margin-top: 20px;">
+    <div class="card" style="max-width: 800px; margin-top: 20px; padding: 25px;">
         <form method="POST" action="<?= BASE_URL ?>/admin/patients/update">
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <input type="hidden" name="id" value="<?= $patient['id'] ?>">
 
-            <div style="display:flex; gap:15px; margin-bottom: 15px;">
+            <div style="display:flex; gap:15px; margin-bottom: 20px;">
                 <div style="flex:2;">
-                    <label style="display:block; margin-bottom: 5px;">Nome Completo</label>
-                    <input type="text" name="name" value="<?= htmlspecialchars($patient['name'] ?? '') ?>" required style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Nome Completo</label>
+                    <input type="text" name="name" value="<?= htmlspecialchars($patient['name'] ?? '') ?>" required>
                 </div>
                 <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">CPF</label>
-                    <input type="text" name="cpf" value="<?= htmlspecialchars($patient['cpf'] ?? '') ?>" required placeholder="Apenas números" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-            </div>
-
-            <div style="display:flex; gap:15px; margin-bottom: 15px;">
-                <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">Data de Nascimento</label>
-                    <input type="date" name="birthdate" value="<?= htmlspecialchars($patient['birthdate'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-                <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">E-mail</label>
-                    <input type="email" name="email" value="<?= htmlspecialchars($patient['email'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-                <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">Telefone</label>
-                    <input type="text" name="phone" value="<?= htmlspecialchars($patient['phone'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-            </div>
-
-            <div style="border-top: 1px solid #ccc; margin-top: 20px; margin-bottom: 20px; padding-top: 10px;">
-                <strong>Endereço & Convênio</strong>
-            </div>
-
-            <label style="display:block; margin-bottom: 5px;">Convênio Médico</label>
-            <input type="text" name="insurance_number" value="<?= htmlspecialchars($patient['insurance_number'] ?? '') ?>" placeholder="Número da carteirinha" style="width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box;">
-
-            <div style="display:flex; gap:15px; margin-bottom: 15px;">
-                <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">CEP</label>
-                    <input type="text" name="zip_code" id="zip_code" value="<?= htmlspecialchars($patient['zip_code'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-                <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">Estado (UF)</label>
-                    <input type="text" name="state" id="state" value="<?= htmlspecialchars($patient['state'] ?? '') ?>" maxlength="2" style="width: 100%; padding: 8px; box-sizing: border-box;">
-                </div>
-                <div style="flex:2;">
-                    <label style="display:block; margin-bottom: 5px;">Cidade</label>
-                    <input type="text" name="city" id="city" value="<?= htmlspecialchars($patient['city'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">CPF</label>
+                    <input type="text" name="cpf" value="<?= htmlspecialchars($patient['cpf'] ?? '') ?>" required placeholder="Apenas números">
                 </div>
             </div>
 
             <div style="display:flex; gap:15px; margin-bottom: 20px;">
-                <div style="flex:3;">
-                    <label style="display:block; margin-bottom: 5px;">Endereço</label>
-                    <input type="text" name="address" id="address" value="<?= htmlspecialchars($patient['address'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                <div style="flex:1;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Data de Nascimento</label>
+                    <input type="date" name="birthdate" value="<?= htmlspecialchars($patient['birthdate'] ?? '') ?>">
                 </div>
                 <div style="flex:1;">
-                    <label style="display:block; margin-bottom: 5px;">Nº</label>
-                    <input type="text" name="address_number" id="address_number" value="<?= htmlspecialchars($patient['address_number'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">E-mail</label>
+                    <input type="email" name="email" value="<?= htmlspecialchars($patient['email'] ?? '') ?>">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Telefone</label>
+                    <input type="text" name="phone" value="<?= htmlspecialchars($patient['phone'] ?? '') ?>">
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed var(--border); margin-top: 30px; margin-bottom: 25px; padding-top: 15px;">
+                <strong style="color: var(--accent-blue);">Endereço & Convênio</strong>
+            </div>
+
+            <label style="display:block; font-weight: 600; margin-bottom: 8px;">Convênio Médico</label>
+            <input type="text" name="insurance_number" value="<?= htmlspecialchars($patient['insurance_number'] ?? '') ?>" placeholder="Número da carteirinha" style="width:100%; margin-bottom: 20px;">
+
+            <div style="display:flex; gap:15px; margin-bottom: 20px;">
+                <div style="flex:1;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">CEP</label>
+                    <input type="text" name="zip_code" id="zip_code" value="<?= htmlspecialchars($patient['zip_code'] ?? '') ?>" style="width:100%;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Estado (UF)</label>
+                    <input type="text" name="state" id="state" value="<?= htmlspecialchars($patient['state'] ?? '') ?>" maxlength="2" style="width:100%;">
                 </div>
                 <div style="flex:2;">
-                    <label style="display:block; margin-bottom: 5px;">Complemento</label>
-                    <input type="text" name="address_complement" id="address_complement" value="<?= htmlspecialchars($patient['address_complement'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Cidade</label>
+                    <input type="text" name="city" id="city" value="<?= htmlspecialchars($patient['city'] ?? '') ?>" style="width:100%;">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:15px; margin-bottom: 25px;">
+                <div style="flex:3;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Endereço</label>
+                    <input type="text" name="address" id="address" value="<?= htmlspecialchars($patient['address'] ?? '') ?>" style="width:100%;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Nº</label>
+                    <input type="text" name="address_number" id="address_number" value="<?= htmlspecialchars($patient['address_number'] ?? '') ?>" style="width:100%;">
+                </div>
+                <div style="flex:2;">
+                    <label style="display:block; font-weight: 600; margin-bottom: 8px;">Complemento</label>
+                    <input type="text" name="address_complement" id="address_complement" value="<?= htmlspecialchars($patient['address_complement'] ?? '') ?>" style="width:100%;">
                 </div>
             </div>
 

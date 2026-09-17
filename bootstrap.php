@@ -65,6 +65,10 @@ $errorHandler->register();
 $container = new Container();
 $dispatcher = new EventDispatcher();
 
+$container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
+    return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
+});
+
 // Initialize the Application Kernel
 $app = new Application($container, $dispatcher, DOMAIN_SYSTEM_ROOT);
 

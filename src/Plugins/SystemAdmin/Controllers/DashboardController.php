@@ -2,60 +2,113 @@
 namespace DomainSystem\Plugins\SystemAdmin\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface;
+use DomainSystem\Core\Application;
+use DomainSystem\Core\Registry\DashboardWidgetRegistry;
 use Exception;
 
 class DashboardController
 {
     private ThemeManager $theme;
-    private DashboardRepositoryInterface $repo;
 
-    public function __construct(ThemeManager $theme, DashboardRepositoryInterface $repo)
+    public function __construct(ThemeManager $theme)
     {
         $this->theme = $theme;
-        $this->repo = $repo;
     }
 
     public function index(\DomainSystem\Core\Http\Request $request)
     {
+        $userId = $_SESSION['user_id'] ?? null;
+        if (!$userId) {
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/login');
+        }
 
-        $role = strtolower($_SESSION['user_role'] ?? 'admin');
-        $doctorId = $_SESSION['linked_doctor_id'] ?? null;
-        
         try {
-            $today = date('Y-m-d');
-
-            if ($role === 'doctor') {
-                $stats = $this->repo->getDoctorStats((int)$doctorId, $today);
-                $queue = $this->repo->getDoctorQueue((int)$doctorId, $today);
-                $chartData = $this->repo->getAppointmentsChartData(7, (int)$doctorId);
-
-                return $this->theme->render('dashboard_doctor', [
-                    'appointmentsToday' => $stats['appointmentsToday'],
-                    'patientsServed' => $stats['patientsServed'],
-                    'pendingQueue' => $stats['pendingQueue'],
-                    'queue' => $queue,
-                    'chartData' => json_encode($chartData)
-                ]);
-            } else {
-                $stats = $this->repo->getGlobalStats($today);
-                $queue = $this->repo->getGlobalQueue($today);
-                $waitingRoom = $this->repo->getWaitingRoom();
-                $chartData = $this->repo->getAppointmentsChartData(7);
-
-                return $this->theme->render('dashboard', [
-                    'theme' => $this->theme,
-                    'totalPatients' => $stats['totalPatients'],
-                    'totalDoctors' => $stats['totalDoctors'],
-                    'appointmentsToday' => $stats['appointmentsToday'],
-                    'queue' => $queue,
-                    'waitingRoom' => $waitingRoom,
-                    'role' => $role,
-                    'chartData' => json_encode($chartData)
-                ]);
+            $db = Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            
+            // 1. Carrega as preferências do usuário
+            $stmt = $db->prepare("SELECT dashboard_layout FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $layoutStr = $stmt->fetchColumn();
+            
+            $userWidgets = [];
+            if ($layoutStr) {
+                $userWidgets = json_decode($layoutStr, true) ?: [];
             }
+            
+            // 2. Carrega todos os widgets disponíveis do Registry
+            $registry = Application::getInstance()->getContainer()->make(DashboardWidgetRegistry::class);
+            $providers = $registry->getProviders();
+            
+            // Se o usuário não tem layout salvo, carregamos widgets padrão se houver
+            if (empty($userWidgets) && !empty($providers)) {
+                $userWidgets = [];
+                // Auto-adiciona os dois primeiros widgets que encontrar como padrão
+                foreach ($providers as $class => $prov) {
+                    $av = $prov->getAvailableWidgets();
+                    foreach ($av as $id => $meta) {
+                        $userWidgets[] = ['provider' => $class, 'id' => $id];
+                        if (count($userWidgets) >= 2) break 2;
+                    }
+                }
+            }
+
+            // 3. Renderiza os widgets ativos do usuário
+            $renderedWidgets = [];
+            foreach ($userWidgets as $uw) {
+                $prov = $registry->getProvider($uw['provider']);
+                if ($prov) {
+                    $renderedWidgets[] = $prov->renderWidget($uw['id']);
+                }
+            }
+            
+            // 4. Monta o catálogo para o Combobox (Add Widget)
+            $catalog = [];
+            foreach ($providers as $class => $prov) {
+                $catalog[] = [
+                    'provider_class' => $class,
+                    'provider_name' => $prov->getProviderName(),
+                    'widgets' => $prov->getAvailableWidgets()
+                ];
+            }
+
+            return $this->theme->render('dashboard_modular', [
+                'theme' => $this->theme,
+                'renderedWidgets' => $renderedWidgets,
+                'catalog' => $catalog,
+                'userWidgets' => $userWidgets
+            ]);
+            
         } catch (Exception $e) {
-            return "Erro ao renderizar dashboard: " . $e->getMessage();
+            return "Erro ao renderizar dashboard modular: " . $e->getMessage();
+        }
+    }
+
+    public function saveLayout(\DomainSystem\Core\Http\Request $request)
+    {
+        $userId = $_SESSION['user_id'] ?? null;
+        if (!$userId) return \DomainSystem\Core\Http\Response::json(['error' => 'Not logged in'], 401);
+
+        $widgets = $request->input('widgets') ?? [];
+        $layoutArray = [];
+        if (is_array($widgets)) {
+            foreach ($widgets as $w) {
+                $decoded = json_decode(html_entity_decode($w), true);
+                if ($decoded) {
+                    $layoutArray[] = $decoded;
+                }
+            }
+        }
+        
+        $layout = json_encode($layoutArray);
+
+        try {
+            $db = Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            $stmt = $db->prepare("UPDATE users SET dashboard_layout = ? WHERE id = ?");
+            $stmt->execute([$layout, $userId]);
+            
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin');
+        } catch (\Exception $e) {
+            return \DomainSystem\Core\Http\Response::json(['error' => $e->getMessage()], 500);
         }
     }
 }
