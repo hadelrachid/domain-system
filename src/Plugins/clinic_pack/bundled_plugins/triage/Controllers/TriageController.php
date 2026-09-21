@@ -3,6 +3,7 @@ namespace DomainSystem\Plugins\triage\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Core\Http\Response;
 
 class TriageController
 {
@@ -26,11 +27,12 @@ class TriageController
         $appointment = $this->repository->getAppointmentData($appointmentId);
 
         if (!$appointment) {
-            die("Agendamento não encontrado.");
+            return Response::redirect(BASE_URL . '/admin/triage?error=Agendamento_nao_encontrado');
         }
 
         // Verificação de Autorização (Básica)
-        $this->checkAuthorization($appointment['doctor_id']);
+        $authResponse = $this->checkAuthorization($appointment['doctor_id']);
+        if ($authResponse) return $authResponse;
 
         $triage = $this->repository->getTriageData($appointmentId);
         
@@ -41,10 +43,11 @@ class TriageController
     {
         $appointment = $this->repository->getAppointmentData($appointmentId);
         if (!$appointment) {
-            die("Agendamento inválido.");
+            return Response::redirect(BASE_URL . '/admin/triage?error=Agendamento_invalido');
         }
         
-        $this->checkAuthorization($appointment['doctor_id']);
+        $authResponse = $this->checkAuthorization($appointment['doctor_id']);
+        if ($authResponse) return $authResponse;
         
         // Suporte a Request se for injetado, senao fallback para $_POST
         $data = [];
@@ -56,24 +59,21 @@ class TriageController
 
         $this->repository->saveTriage($appointmentId, $data);
 
-        header("Location: " . BASE_URL . "/admin/triage?success=Triagem salva");
-        exit;
+        return Response::redirect(BASE_URL . "/admin/triage?success=Triagem_salva");
     }
 
     /**
      * Auxiliar para checar se o usuário logado tem permissão
+     * Retorna a Response de redirect em caso de falha, ou null em caso de sucesso
      */
-    private function checkAuthorization($appointmentDoctorId): void
+    private function checkAuthorization($appointmentDoctorId)
     {
-
         $userRole = $_SESSION['user_role'] ?? '';
         $doctorId = $_SESSION['doctor_id'] ?? null;
         
         if ($userRole === 'doctor' && $appointmentDoctorId != $doctorId) {
-            die('<div style="padding:20px; text-align:center; font-family:sans-serif;"><h2>Acesso Negado 🛑</h2><p>Você não tem permissão para triar este paciente.</p><a href="'.BASE_URL.'/admin/triage">Voltar</a></div>');
+            return Response::redirect(BASE_URL . '/admin/triage?error=Acesso_Negado_Sem_Permissao');
         }
+        return null;
     }
 }
-
-
-

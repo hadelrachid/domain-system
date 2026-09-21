@@ -4,6 +4,7 @@ namespace DomainSystem\Plugins\medical_records\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\medical_records\Contracts\RecordRepositoryInterface;
+use DomainSystem\Core\Http\Response;
 
 class RecordController
 {
@@ -18,16 +19,16 @@ class RecordController
 
     public function view($appointmentId)
     {
-        if (!$appointmentId) die("ID Inválido");
+        if (!$appointmentId) return Response::redirect(BASE_URL . '/admin/appointments?error=ID_Invalido');
 
         // Buscar dados do agendamento
         $appointment = $this->repository->getAppointmentDetails($appointmentId);
 
-        if (!$appointment) die("Agendamento não encontrado.");
+        if (!$appointment) return Response::redirect(BASE_URL . '/admin/appointments?error=Agendamento_nao_encontrado');
 
 
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
-            die("Acesso Negado: Você não tem permissão para acessar este prontuário.");
+            return Response::redirect(BASE_URL . '/admin/appointments?error=Acesso_Negado');
         }
 
         // Buscar registro médico (se já existir)
@@ -62,20 +63,18 @@ class RecordController
     public function save($appointmentId)
     {
         if (!$appointmentId) {
-            header("Location: " . BASE_URL . "/admin/appointments?error=ID_INVALIDO");
-            exit;
+            return Response::redirect(BASE_URL . "/admin/appointments?error=ID_INVALIDO");
         }
 
         $appointment = $this->repository->getAppointmentDetails($appointmentId);
 
         if (!$appointment) {
-             header("Location: " . BASE_URL . "/admin/appointments?error=AGENDAMENTO_INEXISTENTE");
-             exit;
+             return Response::redirect(BASE_URL . "/admin/appointments?error=AGENDAMENTO_INEXISTENTE");
         }
 
 
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
-            die("Acesso Negado: Você não tem permissão para editar este prontuário.");
+            return Response::redirect(BASE_URL . "/admin/appointments?error=Acesso_Negado");
         }
 
         $data = [
@@ -91,25 +90,24 @@ class RecordController
         // Atualizar status do agendamento para "Atendido" ou "Em Atendimento"
         if (isset($_POST['finalizar'])) {
              $this->repository->updateAppointmentStatus($appointmentId, 'Finalizado');
-             header("Location: " . BASE_URL . "/admin/appointments/history?success=Atendimento Finalizado");
+             return Response::redirect(BASE_URL . "/admin/appointments/history?success=Atendimento Finalizado");
         } else {
              $this->repository->updateAppointmentStatus($appointmentId, 'Em Atendimento');
-             header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Salvo");
+             return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Salvo");
         }
-        exit;
     }
 
     public function printPdf($appointmentId)
     {
-        if (!$appointmentId) die("ID Inválido");
+        if (!$appointmentId) return Response::redirect(BASE_URL . "/admin/appointments?error=ID_INVALIDO");
 
         $appointment = $this->repository->getAppointmentDetails($appointmentId);
 
-        if (!$appointment) die("Agendamento não encontrado.");
+        if (!$appointment) return Response::redirect(BASE_URL . "/admin/appointments?error=Agendamento_nao_encontrado");
 
 
         if (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null)) {
-            die("Acesso Negado: Você não tem permissão para imprimir este prontuário.");
+            return Response::redirect(BASE_URL . "/admin/appointments?error=Acesso_Negado");
         }
 
         $record = $this->repository->findByAppointment($appointmentId);
@@ -126,19 +124,18 @@ class RecordController
     {
 
         if (empty($_FILES['exam_file']['name'])) {
-            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Nenhum arquivo enviado");
-            exit;
+            return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Nenhum arquivo enviado");
         }
 
         $appointment = $this->repository->getAppointmentDetails($appointmentId);
         
         if (!$appointment || (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null))) {
-            die("Acesso Negado: Permissão insuficiente.");
+            return Response::redirect(BASE_URL . "/admin/appointments?error=Acesso_Negado");
         }
         
         $uploadDir = dirname(__DIR__, 4) . '/public/uploads/exams/';
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+            mkdir($uploadDir, 0755, true);
         }
 
         $originalName = preg_replace("/[^a-zA-Z0-9\._-]/", "", basename($_FILES['exam_file']['name']));
@@ -146,8 +143,7 @@ class RecordController
         
         $allowedExts = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
         if (!in_array($fileExt, $allowedExts)) {
-            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Extensao invalida");
-            exit;
+            return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Extensao_invalida");
         }
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -156,8 +152,7 @@ class RecordController
         
         $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($mime, $allowedMimes)) {
-            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Tipo de arquivo invalido");
-            exit;
+            return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Tipo_de_arquivo_invalido");
         }
 
         $fileName = time() . '_' . $originalName;
@@ -165,11 +160,10 @@ class RecordController
 
         if (move_uploaded_file($_FILES['exam_file']['tmp_name'], $targetFile)) {
             $this->repository->attachExam($appointmentId, $_FILES['exam_file']['name'], '/uploads/exams/' . $fileName);
-            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame anexado com sucesso");
+            return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame anexado com sucesso");
         } else {
-            header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Falha no upload");
+            return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?error=Falha no upload");
         }
-        exit;
     }
 
     public function deleteExam($appointmentId)
@@ -181,7 +175,7 @@ class RecordController
             $appointment = $this->repository->getAppointmentDetails($appointmentId);
             
             if (!$appointment || (($_SESSION['user_role'] ?? '') === 'doctor' && $appointment['doctor_id'] != ($_SESSION['doctor_id'] ?? null))) {
-                die("Acesso Negado: Permissão insuficiente.");
+                return Response::redirect(BASE_URL . "/admin/appointments?error=Acesso_Negado");
             }
 
             $exam = $this->repository->getExamById($examId);
@@ -195,8 +189,6 @@ class RecordController
             }
         }
         
-        header("Location: " . BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame removido");
-        exit;
+        return Response::redirect(BASE_URL . "/admin/appointments/record/" . $appointmentId . "?success=Exame removido");
     }
 }
-

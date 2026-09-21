@@ -70,4 +70,11 @@ class DoctorRepository implements DoctorRepositoryInterface
             ]);
         }
     }
+
+    public function getAllActiveSchedules(): array
+    {
+        $db = $this->db->getPdo();
+        $stmt = $db->query("SELECT doctor_id, day_of_week FROM doctor_schedules WHERE is_active = 1");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

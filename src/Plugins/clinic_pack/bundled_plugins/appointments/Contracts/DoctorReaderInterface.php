@@ -27,4 +27,9 @@ interface DoctorReaderInterface
      * Retorna a grade de horários de um médico.
      */
     public function getDoctorSchedules(int $doctorId): array;
+
+    /**
+     * Retorna as grades de todos os médicos ativos.
+     */
+    public function getAllActiveSchedules(): array;
 }

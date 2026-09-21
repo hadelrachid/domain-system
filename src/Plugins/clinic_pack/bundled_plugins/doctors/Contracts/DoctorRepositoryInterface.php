@@ -38,4 +38,9 @@ interface DoctorRepositoryInterface
      * Salva a grade de horários do médico.
      */
     public function saveSchedules(int $doctorId, array $schedules): void;
+
+    /**
+     * Busca os horários ativos de todos os médicos.
+     */
+    public function getAllActiveSchedules(): array;
 }

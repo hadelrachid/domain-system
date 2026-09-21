@@ -2,18 +2,18 @@
 
 namespace DomainSystem\Plugins\clinic_pack\Theme;
 
-use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\Core\Http\SessionManager;
 use DomainSystem\Core\Application;
 
 class ProfileShortcodes
 {
-    private \PDO $db;
+    private UserRepositoryInterface $userRepo;
     private SessionManager $session;
 
-    public function __construct(Connection $conn, SessionManager $session)
+    public function __construct(UserRepositoryInterface $userRepo, SessionManager $session)
     {
-        $this->db = $conn->getPdo();
+        $this->userRepo = $userRepo;
         $this->session = $session;
     }
 
@@ -22,21 +22,20 @@ class ProfileShortcodes
         $userId = $this->session->get('user_id');
         if (!$userId) return null;
 
-        $stmt = $this->db->prepare("SELECT email, profile_image, linked_doctor_id, two_factor_type FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $user = $this->userRepo->findById($userId);
         
         if ($user) {
-            $user['id'] = $userId;
             $user['name'] = $this->session->get('user_name');
             
             // Se o usuário não tem foto, mas é um médico e o médico tem foto, usa a do médico!
             if (empty($user['profile_image']) && !empty($user['linked_doctor_id'])) {
-                $docStmt = $this->db->prepare("SELECT photo_url FROM doctors WHERE id = ?");
-                $docStmt->execute([$user['linked_doctor_id']]);
-                $docPhoto = $docStmt->fetchColumn();
-                if ($docPhoto) {
-                    $user['profile_image'] = $docPhoto;
+                // Como não temos doctorRepo injetado aqui diretamente (para não acoplar a plugin doctor opcional)
+                // e o UserRepository já implementa findDoctorByUserId, usamos ele.
+                // Mas wait, a view da tabela doctors talvez não seja a melhor, let's ver o que findDoctorByUserId tem:
+                // Ele busca por user_id.
+                $doctor = $this->userRepo->findDoctorByUserId($userId);
+                if ($doctor && !empty($doctor['photo_url'])) {
+                    $user['profile_image'] = $doctor['photo_url'];
                 }
             }
         }

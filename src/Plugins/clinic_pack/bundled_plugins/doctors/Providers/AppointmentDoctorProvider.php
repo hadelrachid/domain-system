@@ -45,4 +45,9 @@ class AppointmentDoctorProvider implements DoctorReaderInterface, DoctorSchedule
     {
         $this->repository->saveSchedules($doctorId, $schedules);
     }
+
+    public function getAllActiveSchedules(): array
+    {
+        return $this->repository->getAllActiveSchedules();
+    }
 }

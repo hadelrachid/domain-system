@@ -4,19 +4,45 @@ namespace DomainSystem\Plugins\appointments\Controllers;
 
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
-use DomainSystem\Core\Application;
 use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface;
+use DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface;
+use DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface;
+use DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface;
+use DomainSystem\Plugins\Database\Connection;
 
 class BookingController
 {
+    private DoctorRepositoryInterface $doctorRepo;
+    private AppointmentRepositoryInterface $appointmentRepo;
+    private PatientFinderInterface $patientFinder;
+    private PatientWriterInterface $patientWriter;
+    private BookingCallbackInterface $callback;
+    private Connection $connection;
+    private ThemeManager $theme;
+
+    public function __construct(
+        DoctorRepositoryInterface $doctorRepo,
+        AppointmentRepositoryInterface $appointmentRepo,
+        PatientFinderInterface $patientFinder,
+        PatientWriterInterface $patientWriter,
+        BookingCallbackInterface $callback,
+        Connection $connection,
+        ThemeManager $theme
+    ) {
+        $this->doctorRepo = $doctorRepo;
+        $this->appointmentRepo = $appointmentRepo;
+        $this->patientFinder = $patientFinder;
+        $this->patientWriter = $patientWriter;
+        $this->callback = $callback;
+        $this->connection = $connection;
+        $this->theme = $theme;
+    }
+
     public function showBookingForm(Request $request): Response
     {
-        $container = Application::getInstance()->getContainer();
-        
-        /** @var \DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface $doctorRepo */
-        $doctorRepo = $container->make(\DomainSystem\Plugins\doctors\Contracts\DoctorRepositoryInterface::class);
-        
-        $doctors = $doctorRepo->findAll();
+        $doctors = $this->doctorRepo->findAll();
 
         $specialties = [];
         $doctorsBySpecialty = [];
@@ -30,13 +56,12 @@ class BookingController
         }
         sort($specialties);
 
-        // TODO: Mover para um HealthInsuranceRepositoryInterface
-        $pdo = $container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+        // TODO: Mover para um HealthInsuranceRepositoryInterface futuramente
+        $pdo = $this->connection->getPdo();
         $stmtIns = $pdo->query("SELECT id, name FROM health_insurances WHERE active = 1 ORDER BY id");
         $insurances = $stmtIns->fetchAll(\PDO::FETCH_ASSOC);
         
-        $stmtSched = $pdo->query("SELECT doctor_id, day_of_week FROM doctor_schedules WHERE is_active = 1");
-        $allSchedules = $stmtSched->fetchAll(\PDO::FETCH_ASSOC);
+        $allSchedules = $this->doctorRepo->getAllActiveSchedules();
         $doctorDays = [];
         foreach ($allSchedules as $s) {
             $docId = $s['doctor_id'];
@@ -51,22 +76,21 @@ class BookingController
         
         $selectedDoctor = $request->input('medico', '');
 
-        $theme = Application::getInstance()->getContainer()->make(ThemeManager::class);
         $themePath = dirname(__DIR__, 3) . '/themes/public_booking';
-        $theme->setActiveThemePath($themePath);
+        $this->theme->setActiveThemePath($themePath);
         
         if (!defined('DOMAIN_SYSTEM_ROOT')) {
             define('DOMAIN_SYSTEM_ROOT', dirname(__DIR__, 5));
         }
         
-        $html = $theme->render('index', [
+        $html = $this->theme->render('index', [
             'doctors' => $doctors,
             'specialties' => $specialties,
             'doctorsBySpecialty' => $doctorsBySpecialty,
             'insurances' => $insurances,
             'doctorDays' => $doctorDays,
             'selectedDoctor' => $selectedDoctor,
-            'theme' => $theme,
+            'theme' => $this->theme,
             'isShortcode' => $request->input('shortcode') == '1',
         ]);
         
@@ -75,20 +99,6 @@ class BookingController
     
     public function submitBooking(Request $request): Response
     {
-        $container = Application::getInstance()->getContainer();
-        
-        /** @var \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface $appointmentRepo */
-        $appointmentRepo = $container->make(\DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class);
-        
-        /** @var \DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface $patientFinder */
-        $patientFinder = $container->make(\DomainSystem\Plugins\appointments\Contracts\PatientFinderInterface::class);
-
-        /** @var \DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface $patientWriter */
-        $patientWriter = $container->make(\DomainSystem\Plugins\appointments\Contracts\PatientWriterInterface::class);
-
-        /** @var \DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface $callback */
-        $callback = $container->make(\DomainSystem\Plugins\appointments\Contracts\BookingCallbackInterface::class);
-
         $name = $request->input('name');
         $phone = $request->input('phone');
         $email = $request->input('email');
@@ -100,30 +110,30 @@ class BookingController
         $notes = $request->input('notes', '');
         
         if (empty($name) || empty($phone) || empty($doctor_id) || empty($date)) {
-            return $callback->respond($callback::ERR_MISSING_FIELDS);
+            return $this->callback->respond($this->callback::ERR_MISSING_FIELDS);
         }
 
         if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $callback->respond($callback::ERR_INVALID_EMAIL);
+            return $this->callback->respond($this->callback::ERR_INVALID_EMAIL);
         }
 
         if ($time !== 'A definir') {
-            if ($appointmentRepo->isSlotOccupied((int)$doctor_id, $date, $time)) {
-                return $callback->respond($callback::ERR_SLOT_OCCUPIED);
+            if ($this->appointmentRepo->isSlotOccupied((int)$doctor_id, $date, $time)) {
+                return $this->callback->respond($this->callback::ERR_SLOT_OCCUPIED);
             }
         }
         
-        $patient = $patientFinder->findPatientByEmailOrPhone($email, $phone);
+        $patient = $this->patientFinder->findPatientByEmailOrPhone($email, $phone);
         
         if ($patient) {
             $patientId = (int)$patient['id'];
             
             // Se o nome fornecido for diferente do que está no banco, atualiza o cadastro do paciente
             if (!empty($name) && trim($name) !== trim($patient['name'] ?? '')) {
-                $patientWriter->updatePatientData($patientId, ['name' => trim($name)]);
+                $this->patientWriter->updatePatientData($patientId, ['name' => trim($name)]);
             }
         } else {
-            $patientId = $patientWriter->createPatientFull([
+            $patientId = $this->patientWriter->createPatientFull([
                 'name' => trim($name),
                 'email' => trim($email ?? ''),
                 'phone' => trim($phone),
@@ -131,7 +141,7 @@ class BookingController
         }
 
         try {
-            $appointmentRepo->createAppointment([
+            $this->appointmentRepo->createAppointment([
                 'patient_id' => $patientId,
                 'doctor_id' => $doctor_id,
                 'appointment_date' => $date,
@@ -145,7 +155,7 @@ class BookingController
             // A notificação de agendamento ao médico foi temporariamente removida para ser
             // reimplementada futuramente como um módulo/subplugin assíncrono (Event-Driven).
 
-            return $callback->respond($callback::SUCCESS_BOOKED, ['message' => 'Agendamento solicitado com sucesso! Entraremos em contato para confirmar.']);
+            return $this->callback->respond($this->callback::SUCCESS_BOOKED, ['message' => 'Agendamento solicitado com sucesso! Entraremos em contato para confirmar.']);
         } catch (\Exception $e) {
             return Response::json(['success' => false, 'message' => 'Erro ao salvar agendamento: ' . $e->getMessage()]);
         }
