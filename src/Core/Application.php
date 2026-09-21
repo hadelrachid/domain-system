@@ -2,8 +2,8 @@
 
 namespace DomainSystem\Core;
 
-use DomainSystem\Core\Container\Container;
-use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Theme\ThemeManager;
@@ -13,8 +13,8 @@ class Application
 {
     private static ?Application $instance = null;
     
-    private Container $container;
-    private EventDispatcher $dispatcher;
+    private ContainerInterface $container;
+    private EventDispatcherInterface $dispatcher;
     private PluginManager $pluginManager;
     private Router $router;
     private ThemeManager $themeManager;
@@ -27,7 +27,7 @@ class Application
     private \DomainSystem\Core\Tenant\TenantContext $tenantContext;
     private \DomainSystem\Core\Tenant\TenantManager $tenantManager;
 
-    public function __construct(Container $container, EventDispatcher $dispatcher, string $basePath)
+    public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
@@ -77,7 +77,15 @@ class Application
             return $this->container;
         });
         
+        $this->container->singleton(\DomainSystem\Core\Contracts\ContainerInterface::class, function() {
+            return $this->container;
+        });
+        
         $this->container->singleton(EventDispatcher::class, function() {
+            return $this->dispatcher;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() {
             return $this->dispatcher;
         });
 
@@ -86,6 +94,10 @@ class Application
         });
 
         $this->container->singleton(Router::class, function() {
+            return $this->router;
+        });
+        
+        $this->container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function() {
             return $this->router;
         });
 

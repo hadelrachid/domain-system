@@ -6,7 +6,9 @@ use Exception;
 use ReflectionClass;
 use ReflectionMethod;
 
-class Container
+use DomainSystem\Core\Contracts\ContainerInterface;
+
+class Container implements ContainerInterface
 {
     private array $bindings = [];
     private array $instances = [];

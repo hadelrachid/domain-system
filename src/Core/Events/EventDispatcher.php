@@ -2,13 +2,30 @@
 
 namespace DomainSystem\Core\Events;
 
-class EventDispatcher
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
+
+class EventDispatcher implements EventDispatcherInterface
 {
     private array $listeners = [];
 
     public function addListener(string $eventName, callable $listener, int $priority = 10): void
     {
         $this->listeners[$eventName][$priority][] = $listener;
+    }
+
+    public function removeListener(string $eventName, callable $listener): void
+    {
+        if (!isset($this->listeners[$eventName])) {
+            return;
+        }
+
+        foreach ($this->listeners[$eventName] as $priority => $listenersGroup) {
+            foreach ($listenersGroup as $key => $registeredListener) {
+                if ($registeredListener === $listener) {
+                    unset($this->listeners[$eventName][$priority][$key]);
+                }
+            }
+        }
     }
 
     public function dispatch(string $eventName, ...$args): void

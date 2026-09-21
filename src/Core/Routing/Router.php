@@ -5,12 +5,16 @@ namespace DomainSystem\Core\Routing;
 use DomainSystem\Core\Container\Container;
 use Exception;
 
-class Router
+use DomainSystem\Core\Contracts\RouterInterface;
+
+use DomainSystem\Core\Contracts\ContainerInterface;
+
+class Router implements RouterInterface
 {
     private array $routes = [];
-    private Container $container;
+    private ContainerInterface $container;
 
-    public function __construct(Container $container)
+    public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
     }

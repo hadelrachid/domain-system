@@ -2,15 +2,15 @@
 
 namespace DomainSystem\Core\Plugin;
 
-use DomainSystem\Core\Container\Container;
-use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Utils\Archive\ExtractorFactory;
 use Exception;
 
 class PluginManager
 {
-    private Container $container;
-    private EventDispatcher $dispatcher;
+    private ContainerInterface $container;
+    private EventDispatcherInterface $dispatcher;
     
     /** @var PluginInterface[] */
     private array $plugins = [];
@@ -18,7 +18,7 @@ class PluginManager
     /** @var string|null Rastreia qual plugin está inicializando no exato momento (Para o QTA) */
     private ?string $currentBootingPlugin = null;
 
-    public function __construct(Container $container, EventDispatcher $dispatcher)
+    public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher)
     {
         $this->container = $container;
         $this->dispatcher = $dispatcher;

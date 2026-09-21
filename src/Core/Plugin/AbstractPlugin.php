@@ -2,22 +2,23 @@
 
 namespace DomainSystem\Core\Plugin;
 
-use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use Exception;
 
 abstract class AbstractPlugin implements PluginInterface
 {
-    protected Container $container;
+    protected ContainerInterface $container;
     protected string $path;
     protected array $metadata = [];
     protected bool $isActive = false;
     
-    private \DomainSystem\Core\Events\EventDispatcher $events;
+    private EventDispatcherInterface $events;
 
     public function __construct(
-        Container $container, 
+        ContainerInterface $container, 
         string $path, 
-        \DomainSystem\Core\Events\EventDispatcher $events
+        EventDispatcherInterface $events
     ) {
         $this->container = $container;
         $this->path = rtrim($path, '/\\');
@@ -71,7 +72,7 @@ abstract class AbstractPlugin implements PluginInterface
         $this->isActive = $active;
     }
 
-    protected function events(): \DomainSystem\Core\Events\EventDispatcher
+    protected function events(): EventDispatcherInterface
     {
         return $this->events;
     }
