@@ -33,7 +33,7 @@ class Container implements ContainerInterface
         return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]) || class_exists($abstract);
     }
 
-    public function make(string $abstract)
+    public function make(string $abstract): mixed
     {
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
