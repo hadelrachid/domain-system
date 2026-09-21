@@ -123,12 +123,12 @@ class Application
         return self::$instance;
     }
 
-    public function getContainer(): Container
+    public function getContainer(): ContainerInterface
     {
         return $this->container;
     }
 
-    public function getDispatcher(): EventDispatcher
+    public function getDispatcher(): EventDispatcherInterface
     {
         return $this->dispatcher;
     }
