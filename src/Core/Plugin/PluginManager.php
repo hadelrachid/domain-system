@@ -11,20 +11,31 @@ class PluginManager
 {
     private ContainerInterface $container;
     private EventDispatcherInterface $dispatcher;
+    private Services\PluginStateManager $stateManager;
+    private Services\PluginDiscoverer $discoverer;
+    private Services\PluginBootstrapper $bootstrapper;
+    private Services\PluginInstaller $installer;
     
     /** @var PluginInterface[] */
     private array $plugins = [];
-    
-    /** @var string|null Rastreia qual plugin está inicializando no exato momento (Para o QTA) */
-    private ?string $currentBootingPlugin = null;
 
-    public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher)
-    {
+    public function __construct(
+        ContainerInterface $container, 
+        EventDispatcherInterface $dispatcher,
+        Services\PluginStateManager $stateManager,
+        Services\PluginDiscoverer $discoverer,
+        Services\PluginBootstrapper $bootstrapper,
+        Services\PluginInstaller $installer
+    ) {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
+        $this->stateManager = $stateManager;
+        $this->discoverer = $discoverer;
+        $this->bootstrapper = $bootstrapper;
+        $this->installer = $installer;
         
         // Liga o QTA (Quadro de Transferência Automática) / Disjuntor V2 Extra
-        register_shutdown_function([$this, 'handleFatalCrash']);
+        register_shutdown_function([$this->bootstrapper, 'handleFatalCrash']);
     }
 
     public function addPlugin(PluginInterface $plugin): void
@@ -34,129 +45,15 @@ class PluginManager
 
     public function discoverPlugins(string $pluginsPath, string $configPath, bool $forceActive = false): void
     {
-        if (!is_dir($pluginsPath)) {
-            return;
-        }
-
-        $activeStates = $this->getActiveStates($configPath);
-
-        $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
-        
-        $newlyDiscovered = [];
-
-        foreach ($directories as $dir) {
-            $jsonPath = $dir . '/plugin.json';
-            $pluginName = basename($dir);
-            if (file_exists($jsonPath)) {
-                $metadata = json_decode(file_get_contents($jsonPath), true);
-                if (isset($metadata['name'])) {
-                    $pluginName = $metadata['name'];
-                }
-            }
-
-            // Se estiver explicitamente definido como 'false' no json, bloqueia até o forceActive!
-            $isExplicitlyDisabled = isset($activeStates[$pluginName]) && $activeStates[$pluginName] === false;
-            $isActive = (!$isExplicitlyDisabled && $forceActive) || (!empty($activeStates[$pluginName]));
-            $isCore = isset($metadata['core']) && $metadata['core'] === true;
-
-            if ($isActive || $isCore) {
-                $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
-
-                
-                // Se for sub-plugin de um Hub, o namespace pode ser diferente.
-                // Lemos o arquivo para inferir o namespace correto ANTES do require, evitando re-declaração fatal.
-                if (!class_exists($pluginClass)) {
-                    $pluginFile = $dir . '/Plugin.php';
-                    if (file_exists($pluginFile)) {
-                        $fileContent = file_get_contents($pluginFile);
-                        if (preg_match('/namespace\s+([^;]+);/', $fileContent, $matches)) {
-                            $inferredClass = $matches[1] . '\\Plugin';
-                            require_once $pluginFile;
-                            $pluginClass = $inferredClass;
-                        } else {
-                            require_once $pluginFile;
-                        }
-                    }
-                }
-
-                if (class_exists($pluginClass)) {
-                    /** @var PluginInterface $plugin */
-                    $plugin = new $pluginClass($this->container, $dir, $this->dispatcher);
-                    $plugin->setActive(true);
-                    $this->addPlugin($plugin);
-                    $newlyDiscovered[] = $plugin;
-                }
-            }
-        }
-
-        // Descobre sub-plugins de Hubs recém descobertos
-        foreach ($newlyDiscovered as $plugin) {
-            $subPath = $plugin->getSubPluginsPath();
-            if ($subPath && is_dir($subPath)) {
-                // Se o Hub está ativo, forçamos os sub-plugins a ficarem ativos também!
-                $this->discoverPlugins($subPath, $configPath, true);
-            }
+        $discovered = $this->discoverer->discover($pluginsPath, $forceActive);
+        foreach ($discovered as $plugin) {
+            $this->addPlugin($plugin);
         }
     }
 
     public function bootPlugins(): void
     {
-        $orderedPlugins = $this->resolveDependencies();
-        
-        $migrationsPath = $this->getBasePath() . '/temp/migrations.json';
-        $migrated = file_exists($migrationsPath) ? json_decode(file_get_contents($migrationsPath), true) ?? [] : [];
-        $needsSave = false;
-
-        foreach ($orderedPlugins as $pluginName) {
-            $plugin = $this->plugins[$pluginName];
-            
-            if ($plugin->isActive()) {
-                try {
-                    $this->currentBootingPlugin = $pluginName; // Anota no quadro
-                    
-                    // Executa a migração (activate) apenas uma vez na vida do plugin
-                    if (!isset($migrated[$pluginName])) {
-                        if (method_exists($plugin, 'activate')) {
-                            $plugin->activate();
-                        }
-                        $migrated[$pluginName] = true;
-                        $needsSave = true;
-                    }
-                    
-                    $plugin->register();
-                    $plugin->boot();
-                    $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
-                    
-                    $this->currentBootingPlugin = null; // Apaga do quadro
-                } catch (\Throwable $e) {
-                    $this->currentBootingPlugin = null; // Apaga do quadro em caso de Exception capturada
-                    
-                    // The plugin crashed! We must disable it to save the system.
-                    $this->disable($pluginName);
-                    
-                    try {
-                        $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-                        $crashes = $session->get('plugin_crashes', []);
-                        $crashes[] = [
-                            'plugin' => $pluginName,
-                            'error' => $e->getMessage()
-                        ];
-                        $session->set('plugin_crashes', $crashes);
-                    } catch (\Throwable $ignored) {
-                        // O container pode não ter a sessão se rodando em CLI cru, ignoramos
-                    }
-                    error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
-                    file_put_contents(dirname(__DIR__, 3) . '/temp/boot_crashes.txt', date('Y-m-d H:i:s') . " - {$pluginName} crashed: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n\n", FILE_APPEND);
-                }
-            }
-        }
-        
-        if ($needsSave) {
-            if (!is_dir(dirname($migrationsPath))) {
-                mkdir(dirname($migrationsPath), 0777, true);
-            }
-            file_put_contents($migrationsPath, json_encode($migrated, JSON_PRETTY_PRINT));
-        }
+        $this->bootstrapper->bootPlugins($this->plugins, $this->getBasePath());
     }
 
     public function getPlugins(): array
@@ -164,191 +61,39 @@ class PluginManager
         return $this->plugins;
     }
 
-    private function resolveDependencies(): array
+    public function getActiveStates(): array
     {
-        $resolved = [];
-        $unresolved = [];
-
-        foreach ($this->plugins as $plugin) {
-            if ($plugin->isActive()) {
-                try {
-                    $this->resolveNode($plugin, $resolved, $unresolved);
-                } catch (Exception $e) {
-                    // Se o plugin exigia uma dependência que não existe ou está morta,
-                    // nós desativamos este plugin também (Efeito Cascata).
-                    $this->disable($plugin->getName());
-                    error_log("Cascata: Plugin '{$plugin->getName()}' desativado. Motivo: " . $e->getMessage());
-                    $unresolved = []; // Limpa o rastro da falha para não corromper os próximos plugins
-                }
-            }
-        }
-
-        return $resolved;
-    }
-
-    private function resolveNode(PluginInterface $plugin, array &$resolved, array &$unresolved): void
-    {
-        $name = $plugin->getName();
-
-        if (in_array($name, $resolved)) {
-            return;
-        }
-
-        if (in_array($name, $unresolved)) {
-            throw new Exception("Circular dependency detected for plugin '{$name}'.");
-        }
-
-        $unresolved[] = $name;
-
-        foreach ($plugin->getDependencies() as $dependencyName) {
-            if (!isset($this->plugins[$dependencyName]) || !$this->plugins[$dependencyName]->isActive()) {
-                throw new Exception("Dependency '{$dependencyName}' for plugin '{$name}' not found or inactive.");
-            }
-            $this->resolveNode($this->plugins[$dependencyName], $resolved, $unresolved);
-        }
-
-        $unresolved = array_diff($unresolved, [$name]);
-        $resolved[] = $name;
-    }
-
-    // --- Instalação e Gerenciamento de Plugins ---
-
-    private function getBasePath(): string
-    {
-        return dirname(__DIR__, 3); // domain-system root
-    }
-
-    private function getConfigPath(): string
-    {
-        return $this->getBasePath() . '/config/plugins.json';
-    }
-
-    private function getPluginsPath(): string
-    {
-        return $this->getBasePath() . '/src/Plugins';
-    }
-
-    public function installFromZip(string $zipFilePath): string
-    {
-        $extractor = ExtractorFactory::create();
-        return $extractor->extract($zipFilePath, $this->getPluginsPath());
-    }
-
-    public function getActiveStates(?string $configPath = null): array
-    {
-        $path = $configPath ?? $this->getConfigPath();
-        if (file_exists($path)) {
-            return json_decode(file_get_contents($path), true) ?? [];
-        }
-        return [];
-    }
-
-    private function saveStates(array $states): void
-    {
-        $configPath = $this->getConfigPath();
-        if (!is_dir(dirname($configPath))) {
-            mkdir(dirname($configPath), 0777, true);
-        }
-        file_put_contents($configPath, json_encode($states, JSON_PRETTY_PRINT));
+        return $this->stateManager->getActiveStates();
     }
 
     public function enable(string $pluginName): void
     {
         if ($this->isCore($pluginName)) return;
-
-        $states = $this->getActiveStates();
-        $states[$pluginName] = true;
-        $this->saveStates($states);
+        $this->stateManager->enable($pluginName);
     }
 
     public function disable(string $pluginName): void
     {
         if ($this->isCore($pluginName)) return;
+        $this->stateManager->disable($pluginName);
+    }
 
-        $states = $this->getActiveStates();
-        $states[$pluginName] = false;
-        $this->saveStates($states);
+    public function installFromZip(string $zipFilePath): string
+    {
+        return $this->installer->installFromZip($zipFilePath);
     }
 
     public function delete(string $pluginName, string $pluginFolder): void
     {
-        if ($this->isCore($pluginName)) {
-            throw new Exception("Não é possível excluir plugins core do sistema.");
-        }
-
-        $states = $this->getActiveStates();
-        if (!empty($states[$pluginName])) {
-            throw new Exception("O plugin precisa ser desativado antes de ser excluído.");
-        }
-
-        $pluginPath = $this->getPluginsPath() . '/' . $pluginFolder;
-        if (file_exists($pluginPath)) {
-            $this->deleteDirectory($pluginPath);
-        }
+        $this->installer->delete($pluginName, $pluginFolder);
     }
 
     public function isCore(string $pluginName): bool
     {
-        // Se o plugin já está instanciado/descoberto, podemos perguntar a ele
         if (isset($this->plugins[$pluginName])) {
             return $this->plugins[$pluginName]->isCore();
         }
-
-        // Caso contrário, tentamos ler do plugin.json diretamente
-        $jsonPath = $this->getPluginsPath() . '/' . $pluginName . '/plugin.json';
-        if (file_exists($jsonPath)) {
-            $metadata = json_decode(file_get_contents($jsonPath), true);
-            return isset($metadata['core']) && $metadata['core'] === true;
-        }
-
-        return false;
-    }
-
-    private function deleteDirectory(string $dir): bool
-    {
-        if (!file_exists($dir)) return true;
-        if (!is_dir($dir)) return unlink($dir);
-        
-        foreach (scandir($dir) as $item) {
-            if ($item == '.' || $item == '..') continue;
-            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
-        }
-        return rmdir($dir);
-    }
-
-    /**
-     * O QTA (Automatic Transfer Switch).
-     * Roda no último milissegundo caso o servidor PHP desabe (ex: Out of Memory, Parse Error fatal).
-     */
-    public function handleFatalCrash(): void
-    {
-        $error = error_get_last();
-        
-        // Se houve erro e ele é um erro fatal imperdoável
-        if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-            
-            // Se a queda de energia ocorreu enquanto um plugin tentava inicializar
-            if ($this->currentBootingPlugin !== null) {
-                
-                // Desativa o plugin na fiação rígida (JSON)
-                $this->disable($this->currentBootingPlugin);
-                
-                try {
-                    $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-                    $crashes = $session->get('plugin_crashes', []);
-                    $crashes[] = [
-                        'plugin' => $this->currentBootingPlugin,
-                        'error' => "FATAL CRASH (QTA Acionado pelo Gerador): " . $error['message']
-                    ];
-                    $session->set('plugin_crashes', $crashes);
-                } catch (\Throwable $ignored) {
-                    // Ignora se não houver container de sessão montado
-                }
-                
-                error_log("QTA ACIONADO! Plugin '{$this->currentBootingPlugin}' sofreu um colapso fatal (Ex: Fim de Memória) e foi ejetado automaticamente. Erro: " . $error['message']);
-                file_put_contents(dirname(__DIR__, 3) . '/temp/boot_crashes.txt', date('Y-m-d H:i:s') . " - {$this->currentBootingPlugin} FATAL CRASH: " . $error['message'] . "\n\n", FILE_APPEND);
-            }
-        }
+        return false; // Ou usar o installer/discoverer
     }
 }
 

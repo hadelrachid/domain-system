@@ -93,3 +93,4 @@ Você já pode acessar nosso **[Guia do Desenvolvedor (DEVELOPER_GUIDE.md)](DEVE
 
 Feito com ☕ e focado na resiliência arquitetural.
 
+

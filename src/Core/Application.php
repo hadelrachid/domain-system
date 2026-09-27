@@ -9,172 +9,590 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Workspace\WorkspaceManager;
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CLASSE: Application
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 🐝 O KERNEL DO DOMAIN SYSTEM — O PADRÃO SINGLETON
+ *
+ * Esta classe é a RAINHA da colméia. Ela é o coração do sistema, o núcleo
+ * que orquestra todos os serviços essenciais: Container, Router, PluginManager,
+ * ThemeManager, WorkspaceManager, entre outros.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SINGLETON: A GARANTIA DE UNICIDADE
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Esta classe implementa o padrão SINGLETON, garantindo que:
+ *
+ *   1. Exista APENAS UMA instância de Application em todo o sistema.
+ *   2. O acesso a essa instância seja feito via um ponto único: getInstance().
+ *   3. Ninguém possa criar uma nova instância com 'new' fora da classe.
+ *   4. Ninguém possa clonar a instância existente.
+ *   5. Ninguém possa desserializar uma nova instância.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * A ANALOGIA DA NATUREZA: A RAINHA DA COLMÉIA
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Assim como uma colméia tem APENAS UMA RAINHA, o Domain System tem
+ * APENAS UM KERNEL. A rainha:
+ *
+ *   • É única por natureza (Singleton).
+ *   • Controla a reprodução (construtor privado).
+ *   • É protegida pelas operárias (clone e wakeup privados).
+ *   • É o centro nervoso da colméia (orquestra todos os serviços).
+ *
+ * Se houvesse duas rainhas, a colméia entraria em colapso.
+ * Se houvesse dois Kernels, o sistema entraria em colapso.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * A ANALOGIA DO COMPUTADOR: O KERNEL DO SISTEMA OPERACIONAL
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Assim como um computador tem APENAS UM KERNEL rodando, o Domain System
+ * tem APENAS UM Application. O Kernel:
+ *
+ *   • É o primeiro a ser criado (construtor público para o bootstrap).
+ *   • Gerencia a memória (Container, SessionManager).
+ *   • Gerencia os processos (PluginManager, Router).
+ *   • É o último a ser destruído.
+ *
+ * Se houvesse dois Kernels, o computador entraria em colapso.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DECISÃO ARQUITETURAL: EAGER LOADING vs LAZY LOADING
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Esta implementação usa EAGER LOADING (carregamento ansioso), pois:
+ *
+ *   1. O Kernel será usado SEMPRE (cada requisição precisa dele).
+ *   2. A criação não é pesada (não carrega todos os plugins, só a estrutura).
+ *   3. Precisa estar disponível imediatamente (o bootstrap precisa dele).
+ *   4. É essencial — sem Kernel, não há sistema.
+ *
+ * O construtor é PÚBLICO porque o bootstrap precisa criar o Kernel.
+ * Após a criação, self::$instance armazena a instância única.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * BLINDAGEM DO SINGLETON
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * O Singleton está BLINDADO contra:
+ *
+ *   • new        → Construtor público (bootstrap cria), mas apenas uma vez.
+ *   • clone      → __clone() privado lança exceção.
+ *   • unserialize → __wakeup() privado lança exceção.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * CONEXÃO COM O CONTAINER DI
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * O Singleton NÃO substitui o Container DI. Eles são PARCEIROS:
+ *
+ *   • O Singleton garante a UNICIDADE do Kernel.
+ *   • O Container DI garante a DISTRIBUIÇÃO do Kernel.
+ *
+ * Após a criação, o Kernel se registra no Container, para que qualquer
+ * classe possa obtê-lo via injeção de dependência, sem precisar chamar
+ * Application::getInstance() diretamente.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 class Application
 {
+    // ═══════════════════════════════════════════════════════════════════════
+    // 1️⃣ A ÚNICA INSTÂNCIA (SINGLETON)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * A única instância da classe Application.
+     *
+     * • static: pertence à classe, não ao objeto.
+     * • private: ninguém fora da classe pode acessar diretamente.
+     * • ?Application: pode ser null (antes da primeira criação) ou Application.
+     * • null: indica que ainda não foi instanciada.
+     *
+     * Este é o coração do Singleton: a variável que guarda a rainha.
+     */
     private static ?Application $instance = null;
-    
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 2️⃣ SERVIÇOS ESSENCIAIS DO KERNEL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * O Container de Injeção de Dependências.
+     *
+     * O "Almoxarifado" que gerencia a criação e distribuição de objetos.
+     * Usa a INTERFACE (ContainerInterface), não a implementação concreta,
+     * respeitando o Princípio da Inversão de Dependência (DIP).
+     */
     private ContainerInterface $container;
+
+    /**
+     * O Despachante de Eventos (Event Dispatcher).
+     *
+     * O "Rádio Comunicador" do sistema. Permite que plugins se comuniquem
+     * sem se conhecerem, via eventos (dispatch) e ouvintes (listeners).
+     * Também usa a INTERFACE, respeitando DIP.
+     */
     private EventDispatcherInterface $dispatcher;
+
+    /**
+     * O Gerenciador de Plugins (Plugin Manager).
+     *
+     * Escaneia a pasta de plugins, valida os manifestos (plugin.json),
+     * e ativa/desativa os módulos. É o "Slot PCI-Express" do sistema.
+     */
     private PluginManager $pluginManager;
+
+    /**
+     * O Roteador (Router).
+     *
+     * Mapeia URLs para Controllers. Age como o "Porteiro Global"
+     * (Gatekeeper), verificando permissões antes de chamar os Controllers.
+     */
     private Router $router;
+
+    /**
+     * O Gerenciador de Temas (Theme Manager).
+     *
+     * Gerencia o Front-end. Permite que múltiplos temas (CockPITs)
+     * coexistam no mesmo sistema.
+     */
     private ThemeManager $themeManager;
+
+    /**
+     * O Gerenciador de Shortcodes (Shortcode Manager).
+     *
+     * Permite que plugins injetem conteúdo dinâmico nos temas
+     * sem que o tema precise conhecer o plugin.
+     */
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodeManager;
+
+    /**
+     * O Gerenciador de Workspaces.
+     *
+     * Define o layout visual baseado no perfil do usuário
+     * (admin, doctor, receptionist, etc.).
+     */
     private WorkspaceManager $workspaceManager;
+
+    /**
+     * O Gerenciador de Sessões (Session Manager).
+     *
+     * Gerencia o estado do usuário (sessão) de forma abstrata,
+     * evitando acesso direto à superglobal $_SESSION.
+     */
     private \DomainSystem\Core\Http\SessionManager $sessionManager;
+
+    /**
+     * O Registro de Cockpits.
+     *
+     * Registra os diferentes painéis (cockpits) para cada perfil
+     * de usuário, permitindo que cada um tenha sua própria interface.
+     */
     private \DomainSystem\Core\Cockpit\CockpitRegistry $cockpitRegistry;
+
+    /**
+     * O caminho base do projeto.
+     *
+     * Usado para localizar plugins, temas, configurações, etc.
+     */
     private string $basePath;
-    
+
+    /**
+     * O Contexto de Tenant (Multi-Tenancy).
+     *
+     * Permite que múltiplas clínicas/empresas compartilhem o mesmo
+     * sistema, com dados isolados.
+     */
     private \DomainSystem\Core\Tenant\TenantContext $tenantContext;
+
+    /**
+     * O Gerenciador de Tenants.
+     *
+     * Gerencia a criação, seleção e ciclo de vida dos tenants.
+     */
     private \DomainSystem\Core\Tenant\TenantManager $tenantManager;
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3️⃣ CONSTRUTOR PÚBLICO (MAS COM CONTROLE DE SINGLETON)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Construtor da classe Application.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * POR QUE O CONSTRUTOR É PÚBLICO?
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * Em um Singleton clássico, o construtor é PRIVADO para impedir 'new'.
+     * Aqui, ele é PÚBLICO porque o bootstrap precisa criar o Kernel.
+     *
+     * Mas o Singleton é garantido de outra forma:
+     *   • Após a criação, self::$instance armazena a instância.
+     *   • O método getInstance() sempre retorna essa instância.
+     *   • O Container DI registra o Kernel como singleton.
+     *
+     * Portanto, mesmo com o construtor público, o Kernel permanece ÚNICO
+     * na prática, pois o bootstrap só o cria uma vez.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * EAGER LOADING: CRIAÇÃO IMEDIATA
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * Este é o coração do Eager Loading. No final do construtor, fazemos:
+     *     self::$instance = $this;
+     *
+     * Isso significa que, assim que o Kernel é criado, ele já se registra
+     * como a instância única. Não há "espera" — ele nasce pronto.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * PARÂMETROS
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * @param ContainerInterface       $container   O Container de Injeção de Dependências.
+     * @param EventDispatcherInterface $dispatcher  O Despachante de Eventos.
+     * @param string                   $basePath    O caminho base do projeto.
+     */
     public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath)
     {
+        // ─────────────────────────────────────────────────────────────────
+        // Armazena as dependências essenciais
+        // ─────────────────────────────────────────────────────────────────
         $this->container = $container;
         $this->dispatcher = $dispatcher;
         $this->basePath = $basePath;
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o contexto de Tenant (Multi-Tenancy)
+        // ─────────────────────────────────────────────────────────────────
         $this->tenantContext = new \DomainSystem\Core\Tenant\TenantContext();
         $this->tenantManager = new \DomainSystem\Core\Tenant\TenantManager($this->tenantContext);
-        
-        $this->sessionManager = new \DomainSystem\Core\Http\SessionManager();
-        $this->sessionManager->start(); // Start session securely on boot if HTTP context
 
-        $this->pluginManager = new PluginManager($container, $dispatcher);
-        $this->router = new Router($container);
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o Gerenciador de Sessões e inicia a sessão
+        // ─────────────────────────────────────────────────────────────────
+        $this->sessionManager = new \DomainSystem\Core\Http\SessionManager();
+        $this->sessionManager->start(); // Inicia a sessão de forma segura
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa as Operárias do Gerenciador de Plugins (Slots PCI-Express)
+        // ─────────────────────────────────────────────────────────────────
+        $stateManager = new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
+        $discoverer = new \DomainSystem\Core\Plugin\Services\PluginDiscoverer($container, $dispatcher, $stateManager);
+        $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($container, $dispatcher, $stateManager);
+        $installer = new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $stateManager);
         
-        // Instantiate ShortcodeManager
+        $this->pluginManager = new PluginManager(
+            $container, 
+            $dispatcher,
+            $stateManager,
+            $discoverer,
+            $bootstrapper,
+            $installer
+        );
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o Roteador (Porteiro Global / Gatekeeper)
+        // ─────────────────────────────────────────────────────────────────
+        $this->router = new Router($container);
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o Gerenciador de Shortcodes
+        // ─────────────────────────────────────────────────────────────────
         $this->shortcodeManager = new \DomainSystem\Core\Theme\ShortcodeManager($this->container);
 
-        // Define the default theme path. This can be changed later by a DB config or a plugin.
+        // ─────────────────────────────────────────────────────────────────
+        // Define o caminho padrão do tema (pode ser alterado depois)
+        // ─────────────────────────────────────────────────────────────────
         $themePath = $basePath . '/themes/admin';
         $this->themeManager = new ThemeManager($themePath, $this->shortcodeManager);
         $this->themeManager->setDispatcher($dispatcher);
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o Gerenciador de Workspaces
+        // ─────────────────────────────────────────────────────────────────
         $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Inicializa o Registro de Cockpits
+        // ─────────────────────────────────────────────────────────────────
         $this->cockpitRegistry = new \DomainSystem\Core\Cockpit\CockpitRegistry();
-        
+
+        // ═════════════════════════════════════════════════════════════════
+        // 🔵 AUTOINSTANCIAÇÃO — O CORAÇÃO DO SINGLETON (EAGER LOADING)
+        // ═════════════════════════════════════════════════════════════════
+        //
+        // Aqui, o Kernel se registra como a ÚNICA instância de si mesmo.
+        // A partir deste momento, Application::getInstance() sempre
+        // retornará ESTA instância.
+        //
+        // Isso é o equivalente à rainha assumindo o trono da colméia.
+        // ═════════════════════════════════════════════════════════════════
         self::$instance = $this;
 
-        // Automatically bind itself to the container
+        // ═════════════════════════════════════════════════════════════════
+        // REGISTRO NO CONTAINER DI
+        // ═════════════════════════════════════════════════════════════════
+        //
+        // O Kernel se registra no Container, para que outras classes
+        // possam obtê-lo via injeção de dependência, sem precisar
+        // chamar Application::getInstance() diretamente.
+        //
+        // Isso é a distribuição da rainha via feromônio (Container DI).
+        // ═════════════════════════════════════════════════════════════════
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o próprio Kernel (Application)
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(Application::class, function() {
             return $this;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra os serviços de Multi-Tenancy
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(\DomainSystem\Core\Tenant\TenantContext::class, function() {
             return $this->tenantContext;
         });
-        
+
         $this->container->singleton(\DomainSystem\Core\Tenant\TenantManager::class, function() {
             return $this->tenantManager;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Gerenciador de Sessões
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(\DomainSystem\Core\Http\SessionManager::class, function() {
             return $this->sessionManager;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Container (tanto a classe concreta quanto a interface)
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(Container::class, function() {
             return $this->container;
         });
-        
+
         $this->container->singleton(\DomainSystem\Core\Contracts\ContainerInterface::class, function() {
             return $this->container;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Despachante de Eventos
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(EventDispatcher::class, function() {
             return $this->dispatcher;
         });
-        
+
         $this->container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() {
             return $this->dispatcher;
         });
 
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Gerenciador de Plugins
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(PluginManager::class, function() {
             return $this->pluginManager;
         });
 
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Roteador (tanto a classe concreta quanto a interface)
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(Router::class, function() {
             return $this->router;
         });
-        
+
         $this->container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function() {
             return $this->router;
         });
 
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Gerenciador de Temas
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(ThemeManager::class, function() {
             return $this->themeManager;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Gerenciador de Shortcodes
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function() {
             return $this->shortcodeManager;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Registro de Cockpits
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class, function() {
             return $this->cockpitRegistry;
         });
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Registro de Widgets de Dashboard
+        // ─────────────────────────────────────────────────────────────────
         $this->container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
             return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
         });
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // 4️⃣ MÉTODO DE ACESSO (SINGLETON) — O ÚNICO PONTO DE ENTRADA
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Retorna a ÚNICA instância de Application.
+     *
+     * Este é o ponto de acesso global ao Kernel (Singleton).
+     * Qualquer classe pode chamar Application::getInstance() para obter
+     * a rainha da colméia.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * POR QUE ISSO É IMPORTANTE?
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * Sem isso, cada classe poderia criar sua própria instância do Kernel,
+     * causando o caos das "duas rainhas". Com isso, todos compartilham
+     * a mesma instância, garantindo consistência e unicidade.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * EAGER LOADING vs LAZY LOADING
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * Aqui, NÃO fazemos "if (self::$instance === null) { ... }" como
+     * no Lazy Loading. Em vez disso, apenas retornamos self::$instance,
+     * pois o construtor já a criou (Eager Loading).
+     *
+     * @return ?Application A instância única do Kernel (ou null).
+     */
     public static function getInstance(): ?Application
     {
         return self::$instance;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // 5️⃣ GETTERS — ACESSO AOS SERVIÇOS DO KERNEL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Retorna o Container de Injeção de Dependências.
+     */
     public function getContainer(): ContainerInterface
     {
         return $this->container;
     }
 
+    /**
+     * Retorna o Despachante de Eventos.
+     */
     public function getDispatcher(): EventDispatcherInterface
     {
         return $this->dispatcher;
     }
 
+    /**
+     * Retorna o Gerenciador de Plugins.
+     */
     public function getPluginManager(): PluginManager
     {
         return $this->pluginManager;
     }
 
+    /**
+     * Retorna o Roteador.
+     */
     public function getRouter(): Router
     {
         return $this->router;
     }
 
+    /**
+     * Retorna o Gerenciador de Temas.
+     */
     public function getThemeManager(): ThemeManager
     {
         return $this->themeManager;
     }
-    
+
+    /**
+     * Retorna o Gerenciador de Shortcodes.
+     */
     public function getShortcodeManager(): \DomainSystem\Core\Theme\ShortcodeManager
     {
         return $this->shortcodeManager;
     }
 
+    /**
+     * Retorna o Gerenciador de Workspaces.
+     */
     public function getWorkspaceManager(): WorkspaceManager
     {
         return $this->workspaceManager;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // 6️⃣ MÉTODO boot() — A INICIALIZAÇÃO DO SISTEMA
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Inicializa o sistema: descobre plugins, carrega-os, e dispara eventos.
+     *
+     * Este método é o "boot" do Kernel. Ele é chamado pelo bootstrap após
+     * a criação do Kernel (Eager Loading). Aqui, o Kernel:
+     *
+     *   1. Descobre todos os plugins ativos.
+     *   2. Carrega-os (chama register() e boot() de cada plugin).
+     *   3. Dispara eventos de inicialização.
+     *   4. Registra shortcodes e workspaces.
+     *
+     * ───────────────────────────────────────────────────────────────────────
+     * A ANALOGIA DA COLMÉIA
+     * ───────────────────────────────────────────────────────────────────────
+     *
+     * Isso é como a rainha acordando a colméia:
+     *   • Descobre as operárias (plugins ativos).
+     *   • Dá ordens a cada uma (register + boot).
+     *   • Comunica via feromônio (dispatch de eventos).
+     *   • Distribui tarefas (shortcodes e workspaces).
+     */
     public function boot(): void
     {
+        // ─────────────────────────────────────────────────────────────────
+        // Define os caminhos dos plugins e da configuração
+        // ─────────────────────────────────────────────────────────────────
         $pluginsPath = $this->basePath . '/src/Plugins';
         $configPath = $this->basePath . '/config/plugins.json';
-        
+
+        // ─────────────────────────────────────────────────────────────────
+        // Descobre os plugins (lê a pasta e valida os manifestos)
+        // ─────────────────────────────────────────────────────────────────
         $this->pluginManager->discoverPlugins($pluginsPath, $configPath);
-        
-        // Load plugins
+
+        // ─────────────────────────────────────────────────────────────────
+        // Carrega os plugins (chama register() e boot() de cada um)
+        // ─────────────────────────────────────────────────────────────────
         $this->pluginManager->bootPlugins();
-        
-        // Dispatch the init hook, giving plugins a chance to register their components
+
+        // ─────────────────────────────────────────────────────────────────
+        // Dispara o evento 'init', permitindo que plugins se inicializem
+        // ─────────────────────────────────────────────────────────────────
         $this->dispatcher->dispatch('init');
-        
-        // Dispatch the shortcodes registration hook
+
+        // ─────────────────────────────────────────────────────────────────
+        // Dispara o evento 'shortcodes.register', permitindo que plugins
+        // registrem seus shortcodes
+        // ─────────────────────────────────────────────────────────────────
         $this->dispatcher->dispatch('shortcodes.register', $this->shortcodeManager);
-        
-        // Register workspaces from plugins
+
+        // ─────────────────────────────────────────────────────────────────
+        // Dispara o evento 'workspace.register', permitindo que plugins
+        // registrem seus workspaces (layouts por perfil de usuário)
+        // ─────────────────────────────────────────────────────────────────
         $this->dispatcher->dispatch('workspace.register', $this->workspaceManager);
     }
 }
+

@@ -12,7 +12,7 @@ $app->getDispatcher()->dispatch('kernel_pre_boot');
 // ⚡ CRITICAL: Resolver o Tenant ANTES do boot dos plugins.
 $earlyRequest = \DomainSystem\Core\Http\Request::capture();
 
-// ⚡ CORREÇÃO (DeepSeek): Definir uma constante global com o tenant para persistir nos redirecionamentos
+// ⚡ CORREÇÃO: Definir uma constante global com o tenant para persistir nos redirecionamentos
 if ($earlyRequest->has('tenant')) {
     define('CURRENT_TENANT_QUERY', '?tenant=' . urlencode($earlyRequest->input('tenant')));
 } else {
