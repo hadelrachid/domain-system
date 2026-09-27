@@ -5,6 +5,17 @@ namespace DomainSystem\Core\Plugin\Services;
 use DomainSystem\Core\Utils\Archive\ExtractorFactory;
 use Exception;
 
+/**
+ * ────────────────────────────────────────────────────────────────────────────
+ * CLASSE: PluginInstaller
+ * ────────────────────────────────────────────────────────────────────────────
+ * Responsabilidade Única (SRP): Lidar com operações destrutivas ou de criação 
+ * física de arquivos (Extrair ZIPs e Excluir diretórios de plugins).
+ * 
+ * Na analogia da colmeia, esta é a operária "Construtora e Faxineira". Ela 
+ * manipula o ambiente físico (HD). Adiciona novos favos (instalação) e
+ * destrói favos que não são mais necessários (deleção).
+ */
 class PluginInstaller
 {
     private string $basePath;

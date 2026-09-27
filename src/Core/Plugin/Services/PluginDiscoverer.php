@@ -6,6 +6,17 @@ use DomainSystem\Core\Contracts\ContainerInterface;
 use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Plugin\PluginInterface;
 
+/**
+ * ────────────────────────────────────────────────────────────────────────────
+ * CLASSE: PluginDiscoverer
+ * ────────────────────────────────────────────────────────────────────────────
+ * Responsabilidade Única (SRP): Vasculhar o sistema de arquivos, encontrar
+ * os plugins (pastas) e carregar suas instâncias básicas (sem dar o boot).
+ * 
+ * Na analogia da colmeia, esta é a operária "Batedora". Ela sai voando pelas 
+ * pastas (src/Plugins), lê os "feromônios" (plugin.json) e diz ao sistema 
+ * quem está lá fora, mas não dá a ordem para eles começarem a trabalhar.
+ */
 class PluginDiscoverer
 {
     private ContainerInterface $container;

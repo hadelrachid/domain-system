@@ -7,6 +7,25 @@ use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Utils\Archive\ExtractorFactory;
 use Exception;
 
+/**
+ * ────────────────────────────────────────────────────────────────────────────
+ * CLASSE: PluginManager (O Gestor de Plugins)
+ * ────────────────────────────────────────────────────────────────────────────
+ * PADRÃO DE PROJETO: FACADE (Fachada)
+ * 
+ * Antes, esta era uma "God Class" (Classe Deus) que fazia absolutamente TUDO: 
+ * lia arquivos, resolvia dependências, extraia ZIPs, interceptava erros 
+ * fatais (QTA). Isso violava o SRP (Single Responsibility Principle) e
+ * tornava o sistema frágil (como uma colmeia com operárias confusas).
+ * 
+ * AGORA, o PluginManager é uma "Fachada". Ele apenas RECEBE as operárias 
+ * especialistas via Injeção de Dependências (DIP) e repassa os comandos para 
+ * elas. 
+ * 
+ * Se o sistema externo precisa "instalar" um plugin, ele pede para o 
+ * PluginManager, que por sua vez pede para o PluginInstaller. O mundo 
+ * externo não precisa conhecer as operárias, apenas a Fachada!
+ */
 class PluginManager
 {
     private ContainerInterface $container;

@@ -7,6 +7,19 @@ use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Plugin\PluginInterface;
 use Exception;
 
+/**
+ * ────────────────────────────────────────────────────────────────────────────
+ * CLASSE: PluginBootstrapper
+ * ────────────────────────────────────────────────────────────────────────────
+ * Responsabilidade Única (SRP): Inicializar os plugins na ordem certa (re-
+ * solvendo dependências) e protegê-los de falhas catastróficas.
+ * 
+ * Na analogia da colmeia, esta é a operária "Supervisora". Ela pega a lista
+ * de abelhas encontradas pela Batedora, organiza quem deve trabalhar primeiro
+ * (gráfico de dependências) e diz: "Comecem a trabalhar!" (método boot()).
+ * Ela também atua como a Guarda da Rainha, através do QTA (handleFatalCrash),
+ * ejetando plugins que tentam derrubar a colmeia inteira (Out of Memory).
+ */
 class PluginBootstrapper
 {
     private ContainerInterface $container;
