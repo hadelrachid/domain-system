@@ -7,8 +7,8 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\patients\Controllers\PatientController;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -23,7 +23,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         // Exige acesso aos serviços vitais fornecidos pelo Kernel (ou outros plugins)
         $os->requireLink('core.db');
@@ -37,7 +37,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         // 1. Bind da Infraestrutura (Repositório) - Mantido no Container Local
         $this->container->bind(

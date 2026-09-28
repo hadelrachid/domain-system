@@ -2,13 +2,15 @@
 
 namespace DomainSystem\Core\Plugin;
 
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+
 /**
  * OsConnector (A Ponte de Negociação)
  *
  * Utilizado pelos plugins na Fase 1 para declarar suas intenções ao SO.
  * O SO guarda estas informações para auditar e aprovar os recursos.
  */
-class OsConnector
+class OsConnector implements OsConnectorInterface
 {
     private array $requiredLinks = [];
     private array $providedLinks = [];

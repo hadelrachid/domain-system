@@ -6,8 +6,8 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\installer\Controllers\SetupController;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -18,7 +18,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         $os->requireLink('core.db');
         $os->listenHook('router.before_dispatch');
@@ -28,7 +28,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         // Verifica se existe um admin no banco de dados. Se não existir (ou der erro), o sistema entra em MODO SETUP.
         try {

@@ -17,8 +17,8 @@ use DomainSystem\Plugins\clinic_pack\Providers\DoctorCockpitProvider;
 use DomainSystem\Plugins\clinic_pack\Providers\SecretaryCockpitProvider;
 use DomainSystem\Plugins\clinic_pack\Providers\NursingCockpitProvider;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -28,7 +28,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         // O clinic_pack (como Hub) avisa ao OS quais canais ele vai escutar
         $os->listenHook('router.register');
@@ -40,7 +40,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         // Registra o provedor de Widgets no Registry Global
         try {

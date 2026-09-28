@@ -4,8 +4,8 @@ namespace DomainSystem\Plugins\Database;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -15,7 +15,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // FASE 1: NEGOCIAÇÃO
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         // O Plugin Database grita para o OS: "Eu forneço essas 3 ferramentas para o sistema!"
         $os->provideLink('core.db', Connection::class);
@@ -26,7 +26,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // FASE 2: EXECUÇÃO
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         // 1. Configuramos os singletons no Container do Kernel
         // Isso atende os "Providers" oficiais do OS 2.0 e MANTÉM retrocompatibilidade com plugins legados!

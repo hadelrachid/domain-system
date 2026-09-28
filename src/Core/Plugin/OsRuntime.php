@@ -2,7 +2,8 @@
 
 namespace DomainSystem\Core\Plugin;
 
-use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 use Exception;
 
 /**
@@ -11,14 +12,14 @@ use Exception;
  * Utilizado pelos plugins na Fase 2 para pedir os recursos.
  * Aplica o Princípio do Menor Privilégio: se o plugin não pediu na Fase 1, o Runtime barra!
  */
-class OsRuntime
+class OsRuntime implements OsRuntimeInterface
 {
-    private Container $container;
+    private ContainerInterface $container;
     private OsConnector $connectorManifest;
     private LinkRegistry $linkRegistry;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher;
     
-    public function __construct(Container $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContainerInterface $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher)
     {
         $this->container = $container;
         $this->connectorManifest = $connectorManifest;

@@ -3,8 +3,8 @@ namespace DomainSystem\Plugins\dev_simulator;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -13,7 +13,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         // Trava de Segurança Crítica: Aborta o sistema inteiro se estiver em Produção!
         $env = getenv('APP_ENV') ?: (defined('APP_ENV') ? APP_ENV : 'production');
@@ -25,7 +25,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         // Pega a Tomada e a Memória (já resolvidos pelo container no plugin auth)
         $twoFactorService = $this->container->make(\DomainSystem\Plugins\auth\Services\TwoFactorService::class);

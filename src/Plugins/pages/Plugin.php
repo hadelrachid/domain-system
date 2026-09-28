@@ -8,8 +8,8 @@ use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\pages\Controllers\PageAdminController;
 use DomainSystem\Plugins\pages\Controllers\PageFrontController;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -18,7 +18,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         $os->requireLink('core.db');
         $os->listenHook('admin.menu');
@@ -28,7 +28,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,

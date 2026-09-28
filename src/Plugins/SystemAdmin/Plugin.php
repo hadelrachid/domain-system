@@ -7,8 +7,8 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
 use DomainSystem\Plugins\SystemAdmin\Controllers\DashboardController;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
-use DomainSystem\Core\Plugin\OsConnector;
-use DomainSystem\Core\Plugin\OsRuntime;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -17,7 +17,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
     // ==========================================
-    public function osRegister(OsConnector $os): void
+    public function osRegister(OsConnectorInterface $os): void
     {
         $os->requireLink('core.session');
         $os->listenHook('router.before_dispatch');
@@ -29,7 +29,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     // 2. FASE DE EXECUÇÃO (OS 2.0)
     // ==========================================
-    public function osBoot(OsRuntime $runtime): void
+    public function osBoot(OsRuntimeInterface $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class,
