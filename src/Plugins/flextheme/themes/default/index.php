@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($tenantName) ?></title>
+    <title><?= htmlspecialchars($siteName) ?></title>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 50px; }
         h1 { color: #333; }
@@ -11,9 +11,8 @@
 </head>
 <body>
     <div class="box">
-        <h1>Bem-vindo à <?= htmlspecialchars($tenantName) ?></h1>
-        <p>Este site está sendo gerado pelo motor FlexTheme do nosso SaaS.</p>
-        <p>Tenant ID: <code><?= htmlspecialchars($tenantId) ?></code></p>
+        <h1>Bem-vindo ao <?= htmlspecialchars($siteName) ?></h1>
+        <p>Este site está sendo gerado pelo motor FlexTheme de forma independente.</p>
     </div>
 </body>
 </html>

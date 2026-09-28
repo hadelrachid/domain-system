@@ -27,7 +27,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             $totalDoctors = $pdo->query("SELECT COUNT(*) FROM doctors")->fetchColumn() ?: 0;
             $appointmentsToday = $pdo->query("SELECT COUNT(*) FROM appointments WHERE appointment_date = '{$date}'")->fetchColumn() ?: 0;
         } catch (\PDOException $e) {
-            // Tabelas ainda não existem neste tenant
+            // Tabelas ainda não existem
         }
 
         return [

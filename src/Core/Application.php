@@ -203,20 +203,7 @@ class Application
      */
     private string $basePath;
 
-    /**
-     * O Contexto de Tenant (Multi-Tenancy).
-     *
-     * Permite que múltiplas clínicas/empresas compartilhem o mesmo
-     * sistema, com dados isolados.
-     */
-    private \DomainSystem\Core\Tenant\TenantContext $tenantContext;
 
-    /**
-     * O Gerenciador de Tenants.
-     *
-     * Gerencia a criação, seleção e ciclo de vida dos tenants.
-     */
-    private \DomainSystem\Core\Tenant\TenantManager $tenantManager;
 
     // ═══════════════════════════════════════════════════════════════════════
     // 3️⃣ CONSTRUTOR PÚBLICO (MAS COM CONTROLE DE SINGLETON)
@@ -267,11 +254,7 @@ class Application
         $this->dispatcher = $dispatcher;
         $this->basePath = $basePath;
 
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o contexto de Tenant (Multi-Tenancy)
-        // ─────────────────────────────────────────────────────────────────
-        $this->tenantContext = new \DomainSystem\Core\Tenant\TenantContext();
-        $this->tenantManager = new \DomainSystem\Core\Tenant\TenantManager($this->tenantContext);
+
 
         // ─────────────────────────────────────────────────────────────────
         // Inicializa o Gerenciador de Sessões e inicia a sessão
@@ -353,16 +336,7 @@ class Application
             return $this;
         });
 
-        // ─────────────────────────────────────────────────────────────────
-        // Registra os serviços de Multi-Tenancy
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(\DomainSystem\Core\Tenant\TenantContext::class, function() {
-            return $this->tenantContext;
-        });
 
-        $this->container->singleton(\DomainSystem\Core\Tenant\TenantManager::class, function() {
-            return $this->tenantManager;
-        });
 
         // ─────────────────────────────────────────────────────────────────
         // Registra o Gerenciador de Sessões

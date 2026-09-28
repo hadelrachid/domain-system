@@ -56,12 +56,6 @@ class Response
 
     public static function redirect(string $url, int $status = 302): self
     {
-        // Preserva o tenant na URL para ambiente de desenvolvimento local (XAMPP sem subdomínios)
-        // Usa a constante global definida no front controller (solução DeepSeek)
-        if (defined('CURRENT_TENANT_QUERY') && !empty(CURRENT_TENANT_QUERY) && !str_contains($url, 'tenant=')) {
-            $separator = str_contains($url, '?') ? '&' : '?';
-            $url .= $separator . ltrim(CURRENT_TENANT_QUERY, '?');
-        }
         return new self('', $status, ['Location' => $url]);
     }
 }
