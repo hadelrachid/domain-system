@@ -2,10 +2,27 @@
 namespace DomainSystem\Plugins\nobreak_shield;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        // Interceptar o Kernel não requer hooks nominais, pois atua na camada PHP, 
+        // mas marcamos a intenção de inicializar o Shield.
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         // Intercepta a cadeia de erros para "desarmar" o erro sem desligar o disjuntor principal
         set_exception_handler([$this, 'handleShieldException']);

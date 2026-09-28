@@ -6,14 +6,29 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\ApiGateway\Middleware\ApiAuthMiddleware;
 use DomainSystem\Plugins\ApiGateway\Controllers\WebhookController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
-    {
-        $events = $this->events();
+    public function register(): void {}
 
-        $events->addListener("router.before_dispatch", function(string $uri) {
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->listenHook("router.before_dispatch");
+        $os->listenHook("router.register");
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
+        $runtime->onHook("router.before_dispatch", function(string $uri) {
             if (str_starts_with($uri, "/api/")) {
                 $middleware = new ApiAuthMiddleware();
                 $request = $this->container->make(\DomainSystem\Core\Http\Request::class);
@@ -21,7 +36,7 @@ class Plugin extends AbstractPlugin
             }
         }, 100);
 
-        $events->addListener("router.register", function(Router $router) {
+        $runtime->onHook("router.register", function(Router $router) {
             $router->addRoute("POST", "/api/v1/webhooks/whatsapp", [WebhookController::class, "handleWhatsApp"]);
         });
     }

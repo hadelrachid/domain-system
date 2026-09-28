@@ -4,19 +4,34 @@ namespace DomainSystem\Plugins\SystemMonitor;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\SystemMonitor\Controllers\MonitorController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
-    {
-        $events = $this->events();
+    public function register(): void {}
 
-        $events->addListener('router.register', function(Router $router) {
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->listenHook('router.register');
+        $os->listenHook('admin.menu');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/monitor', [MonitorController::class, 'index'], 'SystemMonitor', ['admin']);
             $router->addRoute('POST', '/admin/monitor/clear', [MonitorController::class, 'clear'], 'SystemMonitor', ['admin']);
         });
 
-        $events->addListener('admin.menu', function($menu) {
+        $runtime->onHook('admin.menu', function($menu) {
             $menu[] = [
                 'title' => 'Supervisão (Erros)',
                 'url' => '/admin/monitor',

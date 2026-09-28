@@ -5,26 +5,32 @@ namespace DomainSystem\Plugins\FlexTheme;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\FlexTheme\Controllers\ThemeController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
     {
-        // Registrar bindings ou configs do tema no Container, se necessário
+        $os->listenHook('router.register');
     }
 
-    public function boot(): void
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
-        // Opcional: injetar configurações de tema disponíveis no Container
-    }
-
-    public function registerRoutes(Router $router): void
-    {
-        // Rota CATCH-ALL para o Frontend (A Vitrine)
-        // Só renderiza se não for uma rota /admin ou de api
-        
-        $router->get('/', [ThemeController::class, 'renderHome']);
-        
-        // Exemplo: $router->get('/sobre', [ThemeController::class, 'renderPage']);
+        $runtime->onHook('router.register', function(Router $router) {
+            // Rota CATCH-ALL para o Frontend (A Vitrine)
+            // Só renderiza se não for uma rota /admin ou de api
+            $router->addRoute('GET', '/', [ThemeController::class, 'renderHome']);
+            // Exemplo: $router->addRoute('GET', '/sobre', [ThemeController::class, 'renderPage']);
+        });
     }
 }

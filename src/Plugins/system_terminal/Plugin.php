@@ -4,24 +4,34 @@ namespace DomainSystem\Plugins\system_terminal;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
     {
-        // Registre dependências no container
+        $os->listenHook('router.register');
+        $os->listenHook('admin.menu');
     }
 
-    public function boot(): void
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
-        $events = $this->events();
-
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/terminal', [\DomainSystem\Plugins\system_terminal\Controllers\TerminalController::class, 'index'], 'system_terminal', ['admin']);
             $router->addRoute('POST', '/admin/terminal/execute', [\DomainSystem\Plugins\system_terminal\Controllers\TerminalController::class, 'execute'], 'system_terminal', ['admin']);
         });
 
-        $events->addListener('admin.menu', function($menu) {
+        $runtime->onHook('admin.menu', function($menu) {
             $menu[] = [
                 'title' => 'Web Terminal',
                 'url' => '/admin/terminal',

@@ -3,12 +3,28 @@ namespace DomainSystem\Plugins\appointments_api;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
     {
-        $this->events()->addListener("router.register", function ($router) {
+        $os->listenHook("router.register");
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
+        $runtime->onHook("router.register", function ($router) {
             // Rota publica de teste para verificar a conectividade
             $router->addRoute("GET", "/api/v1/ping", function () {
                 header("Content-Type: application/json");
