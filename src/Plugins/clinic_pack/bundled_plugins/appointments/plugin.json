@@ -1,8 +1,12 @@
 {
     "name": "appointments",
     "description": "Módulo de Agendamentos e Prontuários",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "author": "Antigravity",
     "main": "Plugin.php",
-    "dependencies": ["patients", "doctors"]
+    "dependencies": [
+        "patients",
+        "doctors"
+    ],
+    "os_version": "2.0"
 }

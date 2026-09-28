@@ -1,0 +1,8 @@
+{
+    "name": "test_os",
+    "version": "2.0.0",
+    "description": "Plugin de Teste para o novo Sistema Operacional Web",
+    "core": false,
+    "dependencies": [],
+    "os_version": "2.0"
+}
