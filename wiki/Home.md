@@ -51,8 +51,8 @@ Para manter os princípios **SOLID** (Single Responsibility Principle) e evitar 
 A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/`. Recomendamos fortemente a leitura da arquitetura **OS 2.0**:
 
 - 🚀 **[Guia Interativo de Extensões (Temas e Plugins)](../docs/tutorial-dev.html)** - O novo padrão de Injeção de Dependências.
-- 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.md)** - Por que abandonamos o Padrão WordPress.
-- 🤖 **[O Ciclo de Confiança Verificável (IA)](../docs/architecture/01-ciclo-de-confianca-verificavel.md)** - Como preparamos o terreno para a Inteligência Artificial.
+- 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.html)** - Por que abandonamos o Padrão WordPress.
+- 🤖 **[O Ciclo de Confiança Verificável (IA)](../docs/architecture/01-ciclo-de-confianca-verificavel.html)** - Como preparamos o terreno para a Inteligência Artificial.
 - ⚡ **[O Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)**
 - 🚪 **[A Escotilha de Emergência](Emergency-Hatch.md)**
 - 🛑 **[O Porteiro Global (ACL)](Global-Gatekeeper.md)**
@@ -106,8 +106,8 @@ To maintain **SOLID** principles (Single Responsibility Principle) and avoid spa
 The main system documentation has evolved and is now centralized in our `docs/` folder. We strongly recommend reading about the **OS 2.0** architecture:
 
 - 🚀 **[Interactive Extension Guide (Themes & Plugins)](../docs/tutorial-dev.html)** - The new Dependency Injection standard.
-- 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.md)** - Why we abandoned the WordPress Pattern.
-- 🤖 **[The Verifiable Trust Cycle (AI)](../docs/architecture/01-ciclo-de-confianca-verificavel.md)** - How we paved the way for Artificial Intelligence.
+- 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.html)** - Why we abandoned the WordPress Pattern.
+- 🤖 **[The Verifiable Trust Cycle (AI)](../docs/architecture/01-ciclo-de-confianca-verificavel.html)** - How we paved the way for Artificial Intelligence.
 - ⚡ **[The Circuit Breaker](Disjuntor-Circuit-Breaker.md)**
 - 🚪 **[The Emergency Hatch](Emergency-Hatch.md)**
 - 🛑 **[The Global Gatekeeper (ACL)](Global-Gatekeeper.md)**
