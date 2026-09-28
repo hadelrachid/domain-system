@@ -9,19 +9,10 @@ $app = require_once dirname(__DIR__) . '/bootstrap.php';
 // Dispatch a pre-boot event
 $app->getDispatcher()->dispatch('kernel_pre_boot');
 
-// ⚡ CRITICAL: Resolver o Tenant ANTES do boot dos plugins.
 $earlyRequest = \DomainSystem\Core\Http\Request::capture();
 
-// ⚡ CORREÇÃO: Definir uma constante global com o tenant para persistir nos redirecionamentos
-if ($earlyRequest->has('tenant')) {
-    define('CURRENT_TENANT_QUERY', '?tenant=' . urlencode($earlyRequest->input('tenant')));
-} else {
-    define('CURRENT_TENANT_QUERY', '');
-}
+// Boot the Kernel
 
-$app->getContainer()->make(\DomainSystem\Core\Tenant\TenantManager::class)->resolveFromRequest($earlyRequest);
-
-// Boot the Kernel (agora o TenantContext já tem as credenciais corretas do banco)
 $app->boot();
 
 // Dispatch a post-boot event
