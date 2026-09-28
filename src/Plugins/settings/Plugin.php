@@ -6,20 +6,35 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.session');
+        $os->listenHook('router.register');
+        $os->listenHook('admin.menu');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface::class,
             \DomainSystem\Plugins\settings\Repositories\SettingRepository::class
         );
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'index'], 'settings', ['admin']);
             $router->addRoute('POST', '/admin/settings', [\DomainSystem\Plugins\settings\Controllers\SettingsController::class, 'save'], 'settings', ['admin']);
             
@@ -29,8 +44,8 @@ class Plugin extends AbstractPlugin
         });
 
         // Adiciona ao Menu se for admin
-        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-        $events->addListener('admin.menu', function($menu) use ($sessionManager) {
+        $sessionManager = $runtime->getLink('core.session');
+        $runtime->onHook('admin.menu', function($menu) use ($sessionManager) {
             $role = strtolower($sessionManager->get('user_role', 'admin'));
             if ($role === 'admin') {
                 $menu[] = [

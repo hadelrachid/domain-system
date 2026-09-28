@@ -7,21 +7,36 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\pages\Controllers\PageAdminController;
 use DomainSystem\Plugins\pages\Controllers\PageFrontController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,
             \DomainSystem\Plugins\pages\Repositories\PageRepository::class
         );
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
         // Adiciona ao Menu do Painel
-        $events->addListener('admin.menu', function($menus, $role = 'admin') {
+        $runtime->onHook('admin.menu', function($menus, $role = 'admin') {
             if (in_array($role, ['admin', 'manager', 'receptionist'])) {
                 $menus[] = [
                     'title' => 'Páginas',
@@ -33,7 +48,7 @@ class Plugin extends AbstractPlugin
         });
 
         // Rotas
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             // Rotas do Painel
             $router->addRoute('GET', '/admin/pages', [PageAdminController::class, 'index']);
             $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create']);

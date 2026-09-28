@@ -5,8 +5,11 @@ namespace DomainSystem\Plugins\visual_themes;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
     private array $colors = [
         'default' => ['primary' => '#10b981', 'hover' => '#059669', 'light' => '#d1fae5', 'border' => '#6ee7b7', 'bg' => '#f0f2f5', 'card' => '#ffffff', 'text' => '#1d2327', 'muted' => '#64748b'],
@@ -17,13 +20,25 @@ class Plugin extends AbstractPlugin
         'dark'    => ['primary' => '#3b82f6', 'hover' => '#2563eb', 'light' => '#2d2d30', 'border' => '#3f3f46', 'bg' => '#1e1e1e', 'card' => '#252526', 'text' => '#e4e4e7', 'muted' => '#a1a1aa'],
     ];
 
-    public function register(): void
-    {
-        /** @var EventDispatcher $events */
-        $events = $this->events();
+    public function register(): void {}
 
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->listenHook('cockpit.profile.save');
+        $os->listenHook('cockpit.head.css');
+        $os->listenHook('shortcodes.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
         // 1. Salvar preferências de tema
-        $events->addListener('cockpit.profile.save', function(string $userId, Request $request) {
+        $runtime->onHook('cockpit.profile.save', function(string $userId, Request $request) {
             $themeColor = $request->input('theme_color');
             $debugLog = dirname(__DIR__, 3) . '/temp/theme_debug.log';
             file_put_contents($debugLog, date('Y-m-d H:i:s') . " - userId: $userId, theme_color_raw: " . json_encode($request->request) . ", themeColorVar: " . var_export($themeColor, true) . "\n", FILE_APPEND);
@@ -44,7 +59,7 @@ class Plugin extends AbstractPlugin
         });
 
         // 2. Injetar variáveis CSS no <head>
-        $events->addListener('cockpit.head.css', function(string $css, ?string $userId, string $cockpitType) {
+        $runtime->onHook('cockpit.head.css', function(string $css, ?string $userId, string $cockpitType) {
             $themeColor = 'default';
             $debugLog = dirname(__DIR__, 3) . '/temp/theme_debug.log';
             if ($userId) {
@@ -84,7 +99,7 @@ class Plugin extends AbstractPlugin
         });
 
         // 3. Registrar Shortcode da Paleta de Cores
-        $events->addListener('shortcodes.register', function($manager) {
+        $runtime->onHook('shortcodes.register', function($manager) {
             $manager->add('theme_palette', function($attrs) {
                 $userId = $attrs['user_id'] ?? null;
                 $themeColor = 'default';

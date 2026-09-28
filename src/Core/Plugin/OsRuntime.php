@@ -55,7 +55,7 @@ class OsRuntime
     /**
      * Permite ao plugin executar um código (callback) quando o evento acontecer.
      */
-    public function onHook(string $hookName, callable $callback): void
+    public function onHook(string $hookName, callable $callback, int $priority = 0): void
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
         if (!in_array($hookName, $this->connectorManifest->getListenedHooks())) {
@@ -63,7 +63,7 @@ class OsRuntime
         }
 
         // Repassa para o EventDispatcher real do Kernel
-        $this->eventDispatcher->addListener($hookName, $callback);
+        $this->eventDispatcher->addListener($hookName, $callback, $priority);
     }
 
     /**

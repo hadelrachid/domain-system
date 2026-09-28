@@ -6,24 +6,42 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\SystemAdmin\Controllers\AdminController;
 use DomainSystem\Plugins\SystemAdmin\Controllers\DashboardController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.session');
+        $os->listenHook('router.before_dispatch');
+        $os->listenHook('workspace.register');
+        $os->listenHook('shortcodes.register');
+        $os->listenHook('router.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class,
             \DomainSystem\Plugins\SystemAdmin\Repositories\DashboardRepository::class
         );
 
-        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-
-        $events = $this->events();
+        $sessionManager = $runtime->getLink('core.session');
 
         // --- THE EMERGENCY HATCH (REDE DE SEGURANÇA) ---
         // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
         // Se o plugin Auth estivesse vivo, ele já teria redirecionado e dado EXIT.
-        $events->addListener('router.before_dispatch', function(string $uri) use ($sessionManager) {
+        $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
             if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
                 if (!$sessionManager->has('user_id')) {
                     header("Location: " . BASE_URL . "/admin/emergency");
@@ -32,15 +50,13 @@ class Plugin extends AbstractPlugin
             }
         }, 999);
 
-        $events->addListener('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
+        $runtime->onHook('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
             $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
 
-        // Shortcodes menu removed as requested
-
         // O Plugue (Macho) se conectando à Régua de Tomadas!
-        $events->addListener('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
             $shortcodes->add('info_sistema', function($attr) {
                 $color = $attr['color'] ?? 'black';
                 return "<div style='padding: 10px; background-color: {$color}; color: white; border-radius: 5px;'>
@@ -49,7 +65,7 @@ class Plugin extends AbstractPlugin
             }, 'Exibe as informações do sistema.', ['color' => 'Cor de fundo do widget']);
         });
 
-        $events->addListener('router.register', function(Router $router) use ($sessionManager) {
+        $runtime->onHook('router.register', function(Router $router) use ($sessionManager) {
             // Redireciona a raiz para o admin ou cockpit
             $router->addRoute('GET', '/', function() use ($sessionManager) {
                 if ($sessionManager->has('user_role')) {
