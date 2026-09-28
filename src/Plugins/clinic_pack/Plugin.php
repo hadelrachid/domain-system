@@ -6,7 +6,12 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Contracts\CockpitRegistryInterface;
-use DomainSystem\Plugins\clinic_pack\Controllers\CockpitController;
+use DomainSystem\Plugins\clinic_pack\Controllers\AdminDashboardController;
+use DomainSystem\Plugins\clinic_pack\Controllers\DoctorDashboardController;
+use DomainSystem\Plugins\clinic_pack\Controllers\SecretaryDashboardController;
+use DomainSystem\Plugins\clinic_pack\Controllers\NursingDashboardController;
+use DomainSystem\Plugins\clinic_pack\Controllers\CockpitAjaxController;
+use DomainSystem\Plugins\clinic_pack\Controllers\ProfileController;
 use DomainSystem\Plugins\clinic_pack\Controllers\SettingsController;
 use DomainSystem\Plugins\clinic_pack\Providers\DoctorCockpitProvider;
 use DomainSystem\Plugins\clinic_pack\Providers\SecretaryCockpitProvider;
@@ -24,7 +29,7 @@ class Plugin extends AbstractPlugin
             // Ignora se o registry não existir (ex: rodando scripts de teste isolados)
         }
 
-        // Registrando Middlewaresndências locais do pacote
+        // Registrando dependências locais do pacote
         $this->container->bind(
             \DomainSystem\Plugins\clinic_pack\Contracts\UserProfileServiceInterface::class,
             \DomainSystem\Plugins\clinic_pack\Services\UserProfileService::class
@@ -49,19 +54,22 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/clinic/settings/insurance/add', [SettingsController::class, 'addInsurance'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/insurance/delete', [SettingsController::class, 'deleteInsurance'], 'clinic_admin', ['admin']);
             
-            $router->addRoute('GET', '/cockpit/doctor', [CockpitController::class, 'renderDoctor'], 'cockpit', ['doctor', 'admin']);
-            $router->addRoute('GET', '/cockpit/secretary', [CockpitController::class, 'renderSecretary'], 'cockpit', ['secretary', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/search', [CockpitController::class, 'searchHistory'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/history-tab', [CockpitController::class, 'renderHistoryTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/tab-ajax', [CockpitController::class, 'renderTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
-            $router->addRoute('POST', '/cockpit/sync', [CockpitController::class, 'syncPanels'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('GET', '/cockpit/doctor', [DoctorDashboardController::class, 'index'], 'cockpit', ['doctor', 'admin']);
+            $router->addRoute('GET', '/cockpit/secretary', [SecretaryDashboardController::class, 'index'], 'cockpit', ['secretary', 'receptionist', 'admin']);
+            $router->addRoute('GET', '/cockpit/nursing', [NursingDashboardController::class, 'index'], 'cockpit', ['nurse', 'admin']);
             
-            $router->addRoute('POST', '/cockpit/profile', [CockpitController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
-            $router->addRoute('GET', '/cockpit/profile/2fa', [CockpitController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
-            $router->addRoute('POST', '/cockpit/profile/2fa', [CockpitController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
-            $router->addRoute('GET', '/cockpit/nursing', [CockpitController::class, 'renderNursing'], 'cockpit', ['nurse', 'admin']);
-            $router->addRoute('GET', '/admin/clinic', [CockpitController::class, 'renderAdminDashboard'], 'clinic_admin', ['admin']);
-            $router->addRoute('GET', '/admin/clinic/shortcodes', [CockpitController::class, 'renderShortcodesCatalog'], 'clinic_admin', ['admin']);
+            $router->addRoute('POST', '/cockpit/search', [CockpitAjaxController::class, 'searchHistory'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/history-tab', [CockpitAjaxController::class, 'renderHistoryTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/tab-ajax', [CockpitAjaxController::class, 'renderTabAjax'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/sync', [CockpitAjaxController::class, 'syncPanels'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            $router->addRoute('POST', '/cockpit/status', [CockpitAjaxController::class, 'updateAppointmentStatus'], 'cockpit', ['doctor', 'secretary', 'receptionist', 'admin']);
+            
+            $router->addRoute('POST', '/cockpit/profile', [ProfileController::class, 'updateProfile'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('GET', '/cockpit/profile/2fa', [ProfileController::class, 'generate2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
+            $router->addRoute('POST', '/cockpit/profile/2fa', [ProfileController::class, 'confirm2fa'], 'cockpit', ['admin', 'doctor', 'secretary', 'receptionist', 'nurse', 'patient']);
+            
+            $router->addRoute('GET', '/admin/clinic', [AdminDashboardController::class, 'index'], 'clinic_admin', ['admin']);
+            $router->addRoute('GET', '/admin/clinic/shortcodes', [AdminDashboardController::class, 'shortcodesCatalog'], 'clinic_admin', ['admin']);
         });
 
         // 2.5 Registro de Shortcodes das Abas e Perfil
