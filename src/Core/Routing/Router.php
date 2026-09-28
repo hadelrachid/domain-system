@@ -29,13 +29,18 @@ class Router implements RouterInterface
         ];
     }
 
+    private array $globalMiddlewares = [
+        \DomainSystem\Core\Routing\Middlewares\CsrfMiddleware::class,
+        \DomainSystem\Core\Routing\Middlewares\AuthMiddleware::class
+    ];
+
     public function dispatch(\DomainSystem\Core\Http\Request $request): mixed
     {
         $method = strtoupper($request->method());
         // Remove query string
         $uri = strtok($request->uri(), '?');
 
-        // Dispara o middleware via EventDispatcher (se estiver no Container)
+        // Dispara o listener (opcional, mantendo retrocompatibilidade com plugins antigos)
         if ($this->container->has(\DomainSystem\Core\Events\EventDispatcher::class)) {
             $dispatcher = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
             $dispatcher->dispatch('router.before_dispatch', $uri);
@@ -47,9 +52,7 @@ class Router implements RouterInterface
 
         // Busca rota exata
         if (isset($this->routes[$method][$uri])) {
-            $this->checkAuthorization($this->routes[$method][$uri]['roles']);
-            $this->checkCsrfToken($request, $uri);
-            return $this->executeHandler($this->routes[$method][$uri]['handler'], [], $request);
+            return $this->runPipeline($request, $this->routes[$method][$uri], []);
         }
 
         // Busca rota com parâmetros (ex: /pacientes/{id})
@@ -57,81 +60,35 @@ class Router implements RouterInterface
             $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $route);
             if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
                 array_shift($matches);
-                $this->checkAuthorization($config['roles']);
-                $this->checkCsrfToken($request, $uri);
-                return $this->executeHandler($config['handler'], $matches, $request);
+                return $this->runPipeline($request, $config, $matches);
             }
         }
 
         throw new Exception("Rota não encontrada: $uri", 404);
     }
 
-        private function checkCsrfToken(\DomainSystem\Core\Http\Request $request, string $uri): void
+    /**
+     * Executa a "Cebola" (Pipeline de Middlewares)
+     */
+    private function runPipeline(\DomainSystem\Core\Http\Request $request, array $routeConfig, array $matches): mixed
     {
-        // Apenas aplica validação CSRF para requisições POST
-        if (strtoupper($request->method()) !== 'POST') {
-            return;
+        $pipeline = array_reverse($this->globalMiddlewares);
+        
+        // O miolo da cebola (o destino final) é executar o handler do Controller
+        $next = function ($req) use ($routeConfig, $matches) {
+            return $this->executeHandler($routeConfig['handler'], $matches, $req);
+        };
+
+        // Envolve o miolo nas camadas de middleware
+        foreach ($pipeline as $middlewareClass) {
+            $middleware = $this->container->make($middlewareClass);
+            $next = function ($req) use ($middleware, $next, $routeConfig) {
+                return $middleware->handle($req, $next, $routeConfig);
+            };
         }
 
-        // Ignora CSRF para rotas de API públicas ou webhooks que não usam sessão
-        if (str_starts_with($uri, '/api/')) {
-            return;
-        }
-
-        try {
-            $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-            $token = $request->input('csrf_token') ?? '';
-            
-            if (!$session->validateCsrfToken($token)) {
-                // Log failed CSRF
-                file_put_contents(DOMAIN_SYSTEM_ROOT . '/temp/csrf_debug.log', date('Y-m-d H:i:s') . " - CSRF Failed. Passed: $token, Expected: " . $session->get('csrf_token') . "\n", FILE_APPEND);
-                
-                header('HTTP/1.1 403 Forbidden');
-                $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
-                if ($isAjax) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'error' => 'csrf', 'message' => 'Sessão de segurança expirada. Recarregue a tela.']);
-                } else {
-                    echo "<div style='font-family: sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; text-align: center;'>";
-                    echo "<h2 style='color: #d63638;'><i class='fas fa-shield-alt'></i> Acesso Negado 🛑 (CSRF)</h2>";
-                    echo "<p style='font-size: 16px; color: #3c434a;'>Sua requisição foi bloqueada por motivos de segurança (Token Inválido ou Expirado).</p>";
-                    echo "<div style='background: #f0f6fc; border-left: 4px solid #72aee6; padding: 15px; margin: 20px 0; text-align: left;'>";
-                    echo "<strong>Por que isso aconteceu?</strong><br>Sua sessão pode ter expirado por inatividade ou você fez login em outra aba. O formulário que você tentou enviar continha uma credencial de segurança desatualizada.";
-                    echo "</div>";
-                    echo "<p style='font-weight: bold; color: #d63638;'>⚠️ IMPORTANTE: Após clicar em voltar, você DEVE recarregar a página (F5) para obter um novo token de segurança antes de tentar novamente!</p>";
-                    echo "<button onclick='window.history.back()' style='background: #2271b1; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 15px;'>⬅️ Voltar</button>";
-                    echo "</div>";
-                }
-                exit;
-            }
-        } catch (\Throwable $e) {
-            // Ignora se não conseguir instanciar a sessão
-        }
-    }
-
-    private function checkAuthorization(array $roles): void
-    {
-        if (empty($roles)) {
-            return;
-        }
-
-        try {
-            $session  = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-            $userRole = $session->get('user_role', '');
-        } catch (\Throwable $e) {
-            $userRole = '';
-        }
-
-        if (!in_array($userRole, $roles)) {
-            http_response_code(403);
-            $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
-                  . '<h2 style="color:#d63638;">Acesso Negado 🛑</h2>'
-                  . '<p>O seu perfil (' . htmlspecialchars($userRole) . ') não tem permissão para acessar esta área.</p>'
-                  . '<a href="javascript:history.back()">Voltar</a>'
-                  . '</div>';
-            echo $html;
-            exit;
-        }
+        // Dá a mordida na cebola (inicia a cadeia)
+        return $next($request);
     }
 
     private function executeHandler(callable|array $handler, array $params = [], \DomainSystem\Core\Http\Request $request = null): mixed
