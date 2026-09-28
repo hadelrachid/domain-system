@@ -292,24 +292,48 @@
             
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><span class="k">namespace</span> DomainSystem\Plugins\my_plugin;
+<pre><span class="k">namespace</span> DomainSystem\Plugins\meu_plugin;
 
+<span class="c">// 1. Importação Obrigatória dos Módulos do OS</span>
 <span class="k">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
 <span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
 <span class="k">use</span> DomainSystem\Core\Plugin\OsConnector;
 <span class="k">use</span> DomainSystem\Core\Plugin\OsRuntime;
+<span class="k">use</span> DomainSystem\Core\Http\SessionManager;
 
 <span class="k">class</span> <span class="f">Plugin</span> <span class="k">extends</span> AbstractPlugin <span class="k">implements</span> OsExtensionInterface
 {
+    <span class="c">// Método legado (Ignorado pelo OS Novo, mas exigido pela classe Abstrata)</span>
+    <span class="k">public function</span> <span class="f">register</span>(): <span class="k">void</span> {}
+
+    <span class="c">// ==========================================</span>
+    <span class="c">// FASE 1: NEGOCIAÇÃO</span>
+    <span class="c">// ==========================================</span>
     <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
     {
+        <span class="c">// Pede acesso à sessão</span>
         <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.session'</span>);
+        
+        <span class="c">// Solicita espaço visual no painel</span>
+        <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
     }
 
+    <span class="c">// ==========================================</span>
+    <span class="c">// FASE 2: EXECUÇÃO</span>
+    <span class="c">// ==========================================</span>
     <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
     {
+        <span class="c">// O Runtime entrega o recurso com segurança e tipagem correta!</span>
+        <span class="c">/** @var SessionManager $session */</span>
         <span class="v">$session</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.session'</span>);
-        <span class="c">// Your safe, isolated code goes here!</span>
+        
+        <span class="f">error_log</span>(<span class="s">"🚀 BINGO! O Plugin TestOS foi aprovado, negociou recursos e bootou pelo novo motor OsRuntime!"</span>);
+
+        <span class="c">// Aqui injetamos nossa mensagem no Slot da Tela</span>
+        <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
+            <span class="s">'type'</span> => <span class="s">'success'</span>,
+            <span class="s">'message'</span> => <span class="s">'O novo Sistema Operacional Web está operante!'</span>
+        ]);
     }
 }</pre>
             </div>

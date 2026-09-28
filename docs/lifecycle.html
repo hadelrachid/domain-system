@@ -260,6 +260,50 @@
                 </div>
             </div>
 
+            <!-- STEP 4 -->
+            <div class="timeline-step" onclick="activateStep(this)">
+                <div class="timeline-content">
+                    <h2 data-i18n="step4_title"><span>🧩</span> 4. O Código Completo</h2>
+                    <h3 data-i18n="step4_subtitle">Juntando todas as peças</h3>
+                    <p data-i18n="step4_desc">Veja como fica o arquivo final da sua Extensão, com os "uses" (namespaces) obrigatórios e o método legado exigido pela arquitetura de transição.</p>
+                    <div class="code-block">
+<pre><span class="k">namespace</span> DomainSystem\Plugins\test_os;
+
+<span class="c">// Importação dos Módulos do OS</span>
+<span class="k">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
+<span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
+<span class="k">use</span> DomainSystem\Core\Plugin\OsConnector;
+<span class="k">use</span> DomainSystem\Core\Plugin\OsRuntime;
+<span class="k">use</span> DomainSystem\Core\Http\SessionManager;
+
+<span class="k">class</span> <span class="f">Plugin</span> <span class="k">extends</span> AbstractPlugin <span class="k">implements</span> OsExtensionInterface
+{
+    <span class="c">// Método Legado (ignorado pelo OS novo, mas exigido)</span>
+    <span class="k">public function</span> <span class="f">register</span>(): <span class="k">void</span> {}
+    
+    <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+    {
+        <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.session'</span>);
+        <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+    }
+
+    <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+    {
+        <span class="c">/** @var SessionManager $session */</span>
+        <span class="v">$session</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.session'</span>);
+
+        <span class="f">error_log</span>(<span class="s">"🚀 BINGO! O Plugin TestOS foi aprovado!"</span>);
+        
+        <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
+            <span class="s">'type'</span> => <span class="s">'success'</span>,
+            <span class="s">'message'</span> => <span class="s">'O novo Sistema Operacional Web está operante!'</span>
+        ]);
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -277,7 +321,10 @@
                 step2_desc: "If the passport is valid and enabled, the Kernel loads your PHP file. But it doesn't let you work just yet! It calls you into an interview room (<code style='color:var(--accent-purple)'>osRegister</code>). The Kernel asks: <em>'What will you need to use in here?'</em>. You reply by writing it down on the connector's clipboard.",
                 step3_title: "<span>🛠️</span> 3. The Access Badge (Execution)",
                 step3_subtitle: "The osBoot() Method and Dependency Injection",
-                step3_desc: "With the interview approved, the Kernel finally hands you the access badge (<code style='color:var(--accent-purple)'>OsRuntime</code>). It says: <em>'You can start working! Here are the tools you asked for.'</em>. Through the Runtime, the OS injects the dependencies directly into your hands. If you try to grab something you didn't ask for in Step 2, the badge is immediately blocked."
+                step3_desc: "With the interview approved, the Kernel finally hands you the access badge (<code style='color:var(--accent-purple)'>OsRuntime</code>). It says: <em>'You can start working! Here are the tools you asked for.'</em>. Through the Runtime, the OS injects the dependencies directly into your hands. If you try to grab something you didn't ask for in Step 2, the badge is immediately blocked.",
+                step4_title: "<span>🧩</span> 4. The Complete Code",
+                step4_subtitle: "Putting all the pieces together",
+                step4_desc: "See how the final file of your Extension looks, with the mandatory 'uses' (namespaces) and the legacy method required by the transition architecture."
             },
             pt: {
                 title: "O Fluxo de Vida do Plugin",
@@ -291,7 +338,10 @@
                 step2_desc: "Se o passaporte estiver válido e ativado, o Kernel carrega o seu arquivo PHP. Mas ele não deixa você trabalhar ainda! Ele chama você para uma sala de entrevista (<code style='color:var(--accent-purple)'>osRegister</code>). O Kernel pergunta: <em>'O que você vai precisar usar aqui dentro?'</em>. Você responde anotando na prancheta do conector.",
                 step3_title: "<span>🛠️</span> 3. O Crachá (Execução)",
                 step3_subtitle: "O Método osBoot() e a Injeção de Dependências",
-                step3_desc: "Com a entrevista aprovada, o Kernel finalmente te entrega o crachá de acesso (<code style='color:var(--accent-purple)'>OsRuntime</code>). Ele diz: <em>'Pode começar a trabalhar! Aqui estão as ferramentas que você pediu.'</em>. Através do Runtime, o SO injeta as dependências diretamente na sua mão. Se você tentar pegar algo que não pediu no Passo 2, o crachá é bloqueado imediatamente."
+                step3_desc: "Com a entrevista aprovada, o Kernel finalmente te entrega o crachá de acesso (<code style='color:var(--accent-purple)'>OsRuntime</code>). Ele diz: <em>'Pode começar a trabalhar! Aqui estão as ferramentas que você pediu.'</em>. Através do Runtime, o SO injeta as dependências diretamente na sua mão. Se você tentar pegar algo que não pediu no Passo 2, o crachá é bloqueado imediatamente.",
+                step4_title: "<span>🧩</span> 4. O Código Completo",
+                step4_subtitle: "Juntando todas as peças",
+                step4_desc: "Veja como fica o arquivo final da sua Extensão, com os 'uses' (namespaces) obrigatórios e o método legado exigido pela arquitetura de transição."
             }
         };
 
