@@ -256,11 +256,14 @@
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
 {
-    <span class="c">// Requesting permission to read user data</span>
-    <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'auth.user_reader'</span>);
+    <span class="c">// 1. LINKS (Tools/Services)</span>
+    <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.db'</span>);
     
-    <span class="c">// Requesting permission to create a dashboard widget</span>
+    <span class="c">// 2. SLOTS (Visual injection)</span>
     <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+
+    <span class="c">// 3. HOOKS (Events/Triggers)</span>
+    <span class="v">$os</span>-><span class="f">listenHook</span>(<span class="s">'patient.created'</span>);
 }</pre>
             </div>
         </div>
@@ -274,13 +277,18 @@
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
 {
-    <span class="c">// The OS INJECTS the tool into your hands</span>
-    <span class="v">$userReader</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'auth.user_reader'</span>);
+    <span class="c">// 1. GETTING TOOLS</span>
+    <span class="v">$db</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.db'</span>);
     
-    <span class="c">// Now we can inject our visuals into the UI (Slot)</span>
+    <span class="c">// 2. INJECTING VISUALS</span>
     <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
         <span class="s">'message'</span> => <span class="s">'Plugin successfully booted!'</span>
     ]);
+
+    <span class="c">// 3. LISTENING TO EVENTS</span>
+    <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'patient.created'</span>, <span class="k">function</span>(<span class="v">$patientId</span>) <span class="k">use</span> (<span class="v">$db</span>) {
+        <span class="c">// Safe to execute logic here!</span>
+    });
 }</pre>
             </div>
         </div>
@@ -315,7 +323,6 @@
 <span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
 <span class="k">use</span> DomainSystem\Core\Plugin\OsConnector;
 <span class="k">use</span> DomainSystem\Core\Plugin\OsRuntime;
-<span class="k">use</span> DomainSystem\Core\Http\SessionManager;
 
 <span class="k">class</span> <span class="f">Plugin</span> <span class="k">extends</span> AbstractPlugin <span class="k">implements</span> OsExtensionInterface
 {
@@ -327,11 +334,9 @@
     <span class="c">// ==========================================</span>
     <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
     {
-        <span class="c">// Pede acesso à sessão</span>
-        <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.session'</span>);
-        
-        <span class="c">// Solicita espaço visual no painel</span>
+        <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.db'</span>);
         <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+        <span class="v">$os</span>-><span class="f">listenHook</span>(<span class="s">'patient.created'</span>);
     }
 
     <span class="c">// ==========================================</span>
@@ -339,17 +344,16 @@
     <span class="c">// ==========================================</span>
     <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
     {
-        <span class="c">// O Runtime entrega o recurso com segurança e tipagem correta!</span>
-        <span class="c">/** @var SessionManager $session */</span>
-        <span class="v">$session</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.session'</span>);
+        <span class="v">$db</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.db'</span>);
         
-        <span class="f">error_log</span>(<span class="s">"🚀 BINGO! O Plugin TestOS foi aprovado, negociou recursos e bootou pelo novo motor OsRuntime!"</span>);
-
-        <span class="c">// Aqui injetamos nossa mensagem no Slot da Tela</span>
         <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
             <span class="s">'type'</span> => <span class="s">'success'</span>,
             <span class="s">'message'</span> => <span class="s">'O novo Sistema Operacional Web está operante!'</span>
         ]);
+
+        <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'patient.created'</span>, <span class="k">function</span>(<span class="v">$patientId</span>) <span class="k">use</span> (<span class="v">$db</span>) {
+            <span class="v">$db</span>-><span class="f">query</span>(<span class="s">"INSERT INTO log..."</span>);
+        });
     }
 }</pre>
             </div>

@@ -15,13 +15,13 @@ class OsRuntime
 {
     private Container $container;
     private OsConnector $connectorManifest;
+    private LinkRegistry $linkRegistry;
     
-    // (O LinkRegistry será injetado aqui futuramente para gerenciar as rotas de links)
-
-    public function __construct(Container $container, OsConnector $connectorManifest)
+    public function __construct(Container $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry)
     {
         $this->container = $container;
         $this->connectorManifest = $connectorManifest;
+        $this->linkRegistry = $linkRegistry;
     }
 
     /**
@@ -34,9 +34,7 @@ class OsRuntime
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou acessar o Link '{$linkName}', mas não o requisitou durante a Fase de Registro.");
         }
 
-        // Simulação do LinkRegistry por enquanto (ele pedirá ao Container)
-        // No futuro: return $this->linkRegistry->resolve($linkName);
-        return null; 
+        return $this->linkRegistry->resolve($linkName);
     }
 
     /**
@@ -49,6 +47,32 @@ class OsRuntime
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou modificar o Slot visual '{$slotName}', mas não pediu permissão no registro.");
         }
 
-        // No futuro: Injeta o $payload no sistema visual de Hooks/Eventos.
+        // No futuro: Injeta o $payload no sistema visual.
+    }
+
+    /**
+     * Permite ao plugin executar um código (callback) quando o evento acontecer.
+     */
+    public function onHook(string $hookName, callable $callback): void
+    {
+        // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
+        if (!in_array($hookName, $this->connectorManifest->getListenedHooks())) {
+            throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou escutar o Evento/Hook '{$hookName}', mas não declarou intenção no registro.");
+        }
+
+        // Aqui o EventDispatcher real do Kernel armazenaria o $callback
+    }
+
+    /**
+     * Permite ao plugin avisar o sistema que algo aconteceu.
+     */
+    public function dispatchHook(string $hookName, mixed $payload = null): void
+    {
+        // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
+        if (!in_array($hookName, $this->connectorManifest->getProvidedHooks())) {
+            throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou disparar o Evento/Hook '{$hookName}', mas não declarou que o forneceria no registro.");
+        }
+
+        // Aqui o EventDispatcher real do Kernel percorreria os ouvintes e executaria os callbacks
     }
 }
