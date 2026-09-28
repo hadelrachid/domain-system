@@ -36,6 +36,40 @@
             text-align: center;
             border-bottom: 2px solid var(--accent-blue);
             box-shadow: 0 4px 30px rgba(56, 189, 248, 0.2);
+            position: relative;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-switch button:hover {
+            color: var(--text-main);
+        }
+
+        .lang-switch button.active {
+            background: var(--accent-blue);
+            color: #fff;
         }
 
         h1 {
@@ -178,8 +212,12 @@
 <body>
 
     <header>
-        <h1>Domain-System OS</h1>
-        <p style="color: var(--accent-blue); font-size: 1.1rem;">Guia Oficial de Construção de Extensões (Temas e Plugins)</p>
+        <div class="lang-switch">
+            <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
+            <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
+        </div>
+        <h1 data-i18n="title">Domain-System OS</h1>
+        <p style="color: var(--accent-blue); font-size: 1.1rem;" data-i18n="subtitle">Official Extension Building Guide (Themes & Plugins)</p>
     </header>
 
     <div class="container">
@@ -187,41 +225,41 @@
         <div class="alert-warning">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             <div>
-                <h3 style="margin: 0 0 5px; color: var(--accent-red);">Pré-requisito Crítico</h3>
-                <p style="color: #fca5a5; margin: 0;">Para construir para o Domain-System OS, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.</p>
+                <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">Critical Prerequisite</h3>
+                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">To build for Domain-System OS, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.</p>
             </div>
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('tab1')">1. O Contrato</button>
-            <button class="tab-btn" onclick="openTab('tab2')">2. A Negociação (osRegister)</button>
-            <button class="tab-btn" onclick="openTab('tab3')">3. A Execução (osBoot)</button>
-            <button class="tab-btn" onclick="openTab('tab4')">4. Exemplo Completo</button>
+            <button class="tab-btn active" onclick="openTab('tab1')" data-i18n="tab1_btn">1. The Contract</button>
+            <button class="tab-btn" onclick="openTab('tab2')" data-i18n="tab2_btn">2. Negotiation (osRegister)</button>
+            <button class="tab-btn" onclick="openTab('tab3')" data-i18n="tab3_btn">3. Execution (osBoot)</button>
+            <button class="tab-btn" onclick="openTab('tab4')" data-i18n="tab4_btn">4. Full Example</button>
         </div>
 
         <!-- TAB 1 -->
         <div id="tab1" class="tab-content active">
-            <h2>O Fim da Bagunça Global</h2>
-            <p>Se você vem do WordPress, está acostumado a criar um <code class="highlight">functions.php</code> e usar funções globais. No Domain-System OS, isso é proibido.</p>
-            <p>Toda Extensão (Plugin ou Tema) é uma Classe que deve assinar um contrato chamado <code class="highlight">OsExtensionInterface</code>. Esse contrato divide a vida do seu plugin em duas fases de segurança.</p>
+            <h2 data-i18n="tab1_h2">The End of Global Mess</h2>
+            <p data-i18n="tab1_p1">If you come from WordPress, you are used to creating a <code class="highlight">functions.php</code> and using global functions. In Domain-System OS, this is strictly prohibited.</p>
+            <p data-i18n="tab1_p2">Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class="highlight">OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.</p>
             
-            <h3>A Injeção de Dependências (O Garçom)</h3>
-            <p>Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo "Garçom": você senta, pede o que quer (Fase 1), e o Sistema Operacional <strong class="highlight">injeta</strong> a ferramenta pronta na sua mão (Fase 2).</p>
+            <h3 data-i18n="tab1_h3">Dependency Injection (The Waiter)</h3>
+            <p data-i18n="tab1_p3">Here, you don't hunt for system resources by instantiating random variables globally. The system works on a "Waiter" model: you sit down, ask for what you want (Phase 1), and the Operating System <strong class="highlight">injects</strong> the ready tool right into your hands (Phase 2).</p>
         </div>
 
         <!-- TAB 2 -->
         <div id="tab2" class="tab-content">
-            <h2>Fase 1: Negociação (osRegister)</h2>
-            <p>Antes de rodar qualquer regra de negócio, você usa o objeto <code class="highlight">OsConnector</code> para avisar ao Sistema Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.</p>
+            <h2 data-i18n="tab2_h2">Phase 1: Negotiation (osRegister)</h2>
+            <p data-i18n="tab2_p1">Before running any business logic, you use the <code class="highlight">OsConnector</code> object to notify the Operating System what you will need to use. If you do not request permission here, you will be blocked in Phase 2.</p>
             
             <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
 {
-    <span class="c">// Pedindo permissão para ler dados de usuários</span>
+    <span class="c">// Requesting permission to read user data</span>
     <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'auth.user_reader'</span>);
     
-    <span class="c">// Pedindo permissão para criar um widget na tela</span>
+    <span class="c">// Requesting permission to create a dashboard widget</span>
     <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
 }</pre>
             </div>
@@ -229,19 +267,19 @@
 
         <!-- TAB 3 -->
         <div id="tab3" class="tab-content">
-            <h2>Fase 2: Execução (osBoot)</h2>
-            <p>Depois de aprovar seu contrato, o Sistema Operacional te passa o <code class="highlight">OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.</p>
+            <h2 data-i18n="tab3_h2">Phase 2: Execution (osBoot)</h2>
+            <p data-i18n="tab3_p1">After approving your contract, the OS hands you the <code class="highlight">OsRuntime</code>. This is where you actually work, receiving the requested resources strictly via Dependency Injection.</p>
             
             <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
 {
-    <span class="c">// O SO Injeta a ferramenta na sua mão</span>
+    <span class="c">// The OS INJECTS the tool into your hands</span>
     <span class="v">$userReader</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'auth.user_reader'</span>);
     
-    <span class="c">// Agora podemos injetar nosso visual na tela (Slot)</span>
+    <span class="c">// Now we can inject our visuals into the UI (Slot)</span>
     <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
-        <span class="s">'message'</span> => <span class="s">'Plugin inicializado com sucesso!'</span>
+        <span class="s">'message'</span> => <span class="s">'Plugin successfully booted!'</span>
     ]);
 }</pre>
             </div>
@@ -249,12 +287,12 @@
 
         <!-- TAB 4 -->
         <div id="tab4" class="tab-content">
-            <h2>Estrutura Completa de um Plugin/Tema</h2>
-            <p>Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente.</p>
+            <h2 data-i18n="tab4_h2">Complete Extension Structure</h2>
+            <p data-i18n="tab4_p1">Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest.</p>
             
             <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
-<pre><span class="k">namespace</span> DomainSystem\Plugins\meu_plugin;
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><span class="k">namespace</span> DomainSystem\Plugins\my_plugin;
 
 <span class="k">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
 <span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
@@ -271,7 +309,7 @@
     <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
     {
         <span class="v">$session</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.session'</span>);
-        <span class="c">// Seu código seguro e isolado vai aqui!</span>
+        <span class="c">// Your safe, isolated code goes here!</span>
     }
 }</pre>
             </div>
@@ -280,12 +318,72 @@
     </div>
 
     <script>
+        const translations = {
+            en: {
+                title: "Domain-System OS",
+                subtitle: "Official Extension Building Guide (Themes & Plugins)",
+                alert_title: "Critical Prerequisite",
+                alert_desc: "To build for Domain-System OS, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.",
+                tab1_btn: "1. The Contract",
+                tab2_btn: "2. Negotiation (osRegister)",
+                tab3_btn: "3. Execution (osBoot)",
+                tab4_btn: "4. Full Example",
+                tab1_h2: "The End of Global Mess",
+                tab1_p1: "If you come from WordPress, you are used to creating a <code class='highlight'>functions.php</code> and using global functions. In Domain-System OS, this is strictly prohibited.",
+                tab1_p2: "Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class='highlight'>OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.",
+                tab1_h3: "Dependency Injection (The Waiter)",
+                tab1_p3: "Here, you don't hunt for system resources by instantiating random variables globally. The system works on a 'Waiter' model: you sit down, ask for what you want (Phase 1), and the Operating System <strong class='highlight'>injects</strong> the ready tool right into your hands (Phase 2).",
+                tab2_h2: "Phase 1: Negotiation (osRegister)",
+                tab2_p1: "Before running any business logic, you use the <code class='highlight'>OsConnector</code> object to notify the Operating System what you will need to use. If you do not request permission here, you will be blocked in Phase 2.",
+                tab3_h2: "Phase 2: Execution (osBoot)",
+                tab3_p1: "After approving your contract, the OS hands you the <code class='highlight'>OsRuntime</code>. This is where you actually work, receiving the requested resources strictly via Dependency Injection.",
+                tab4_h2: "Complete Extension Structure",
+                tab4_p1: "Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest."
+            },
+            pt: {
+                title: "Domain-System OS",
+                subtitle: "Guia Oficial de Construção de Extensões (Temas e Plugins)",
+                alert_title: "Pré-requisito Crítico",
+                alert_desc: "Para construir para o Domain-System OS, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.",
+                tab1_btn: "1. O Contrato",
+                tab2_btn: "2. A Negociação (osRegister)",
+                tab3_btn: "3. A Execução (osBoot)",
+                tab4_btn: "4. Exemplo Completo",
+                tab1_h2: "O Fim da Bagunça Global",
+                tab1_p1: "Se você vem do WordPress, está acostumado a criar um <code class='highlight'>functions.php</code> e usar funções globais. No Domain-System OS, isso é proibido.",
+                tab1_p2: "Toda Extensão (Plugin ou Tema) é uma Classe que deve assinar um contrato chamado <code class='highlight'>OsExtensionInterface</code>. Esse contrato divide a vida do seu plugin em duas fases de segurança.",
+                tab1_h3: "A Injeção de Dependências (O Garçom)",
+                tab1_p3: "Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo 'Garçom': você senta, pede o que quer (Fase 1), e o Sistema Operacional <strong class='highlight'>injeta</strong> a ferramenta pronta na sua mão (Fase 2).",
+                tab2_h2: "Fase 1: Negociação (osRegister)",
+                tab2_p1: "Antes de rodar qualquer regra de negócio, você usa o objeto <code class='highlight'>OsConnector</code> para avisar ao Sistema Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.",
+                tab3_h2: "Fase 2: Execução (osBoot)",
+                tab3_p1: "Depois de aprovar seu contrato, o Sistema Operacional te passa o <code class='highlight'>OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.",
+                tab4_h2: "Estrutura Completa de um Plugin/Tema",
+                tab4_p1: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente."
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            
+            // Update buttons
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+            
+            // Update copy buttons text
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.innerText = lang === 'en' ? 'Copy' : 'Copiar';
+            });
+        }
+
         function openTab(tabId) {
-            // Remove active classes
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked tab
             event.target.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         }
@@ -294,7 +392,8 @@
             const code = btn.nextElementSibling.innerText;
             navigator.clipboard.writeText(code).then(() => {
                 const originalText = btn.innerText;
-                btn.innerText = 'Copiado!';
+                const isEnglish = document.getElementById('btn-en').classList.contains('active');
+                btn.innerText = isEnglish ? 'Copied!' : 'Copiado!';
                 btn.style.color = '#10b981';
                 btn.style.borderColor = '#10b981';
                 setTimeout(() => {
@@ -304,6 +403,9 @@
                 }, 2000);
             });
         }
+        
+        // Initialize Default English
+        setLanguage('en');
     </script>
 </body>
 </html>
