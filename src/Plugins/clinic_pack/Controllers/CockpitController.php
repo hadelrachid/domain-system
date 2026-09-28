@@ -284,18 +284,30 @@ class CockpitController
     {
         $userId = (int)$this->session->get('user_id');
         
-        $result = $this->userProfileService->updateProfile($userId, $request->all(), $_FILES);
-        
-        // Dispara evento para plugins que escutam salvamento de perfil (ex: visual_themes)
-        $this->events->dispatch('cockpit.profile.save', (string)$userId, $request);
-        
-        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-            return new Response(json_encode(['success' => true, 'message' => 'Configurações salvas com sucesso!']), 200, ['Content-Type' => 'application/json']);
+        try {
+            $result = $this->userProfileService->updateProfile($userId, $request->all(), $_FILES);
+            
+            // Dispara evento para plugins que escutam salvamento de perfil (ex: visual_themes)
+            $this->events->dispatch('cockpit.profile.save', (string)$userId, $request);
+            
+            $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                return new Response(json_encode(['success' => true, 'message' => 'Configurações salvas com sucesso!']), 200, ['Content-Type' => 'application/json']);
+            }
+            
+            $referer = $_SERVER['HTTP_REFERER'] ?? '/admin';
+            $redirectUrl = strpos($referer, '?') !== false ? $referer . '&success=1' : $referer . '?success=1';
+            return Response::redirect($redirectUrl);
+
+        } catch (\Exception $e) {
+            $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 400, ['Content-Type' => 'application/json']);
+            }
+            
+            $referer = $_SERVER['HTTP_REFERER'] ?? '/admin';
+            $redirectUrl = strpos($referer, '?') !== false ? $referer . '&error=' . urlencode($e->getMessage()) : $referer . '?error=' . urlencode($e->getMessage());
+            return Response::redirect($redirectUrl);
         }
-        
-        $referer = $_SERVER['HTTP_REFERER'] ?? (\BASE_URL . "/admin");
-        $redirectUrl = strpos($referer, '?') !== false ? $referer . '&success=1' : $referer . '?success=1';
-        header("Location: " . $redirectUrl);
-        exit;
     }
 }

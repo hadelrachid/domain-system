@@ -49,7 +49,10 @@ class PluginInstaller
             throw new Exception("O plugin precisa ser desativado antes de ser excluído.");
         }
 
-        $pluginPath = $this->getPluginsPath() . '/' . $pluginFolder;
+        // Segurança: Evita Path Traversal (ex: passar "../../etc" como nome da pasta)
+        $safeFolder = basename($pluginFolder);
+        $pluginPath = $this->getPluginsPath() . '/' . $safeFolder;
+        
         if (file_exists($pluginPath)) {
             $this->deleteDirectory($pluginPath);
         }
