@@ -21,14 +21,105 @@ $app->getDispatcher()->dispatch('kernel_post_boot');
 $command = $argv[1] ?? 'help';
 
 switch ($command) {
+    case 'shell':
+        echo "Bem-vindo ao Domain-System Shell Interativo!\n";
+        echo "Dica: Digite 'help' para ver comandos do shell ou 'exit' para sair.\n";
+        while (true) {
+            $line = readline("domain-sys> ");
+            if ($line === false || trim($line) === 'exit' || trim($line) === 'quit') {
+                echo "Bye!\n";
+                break;
+            }
+            
+            $cmd = trim($line);
+            if (empty($cmd)) continue;
+
+            if ($cmd === 'help') {
+                echo "  show plugins             - Lista os plugins e seus status\n";
+                echo "  activate plugin <nome>   - Ativa um plugin\n";
+                echo "  deactivate plugin <nome> - Desativa um plugin\n";
+                echo "  show databases           - Lista os bancos de dados (SQLite)\n";
+                echo "  clear                    - Limpa a tela\n";
+                echo "  exit                     - Sai do shell\n";
+            }
+            elseif ($cmd === 'clear') {
+                echo "\033[2J\033[;H";
+            }
+            elseif ($cmd === 'show plugins') {
+                $pluginsFile = __DIR__ . '/config/plugins.json';
+                if (file_exists($pluginsFile)) {
+                    $json = json_decode(file_get_contents($pluginsFile), true);
+                    echo "Plugins Ativos:\n";
+                    foreach ($json as $p) {
+                        echo "  - [ON]  $p\n";
+                    }
+                    echo "\nPlugins Inativos (em src/Plugins/):\n";
+                    $dirs = array_filter(glob(__DIR__ . '/src/Plugins/*'), 'is_dir');
+                    foreach ($dirs as $d) {
+                        $name = basename($d);
+                        if (!in_array($name, $json)) {
+                            echo "  - [OFF] $name\n";
+                        }
+                    }
+                } else {
+                    echo "Erro: config/plugins.json não encontrado.\n";
+                }
+            }
+            elseif (preg_match('/^activate plugin (.+)$/i', $cmd, $matches)) {
+                $pName = trim($matches[1]);
+                $pluginsFile = __DIR__ . '/config/plugins.json';
+                $json = file_exists($pluginsFile) ? json_decode(file_get_contents($pluginsFile), true) : [];
+                if (!in_array($pName, $json)) {
+                    $json[] = $pName;
+                    file_put_contents($pluginsFile, json_encode($json, JSON_PRETTY_PRINT));
+                    echo "✅ Plugin '$pName' ativado!\n";
+                } else {
+                    echo "O plugin '$pName' já está ativo.\n";
+                }
+            }
+            elseif (preg_match('/^deactivate plugin (.+)$/i', $cmd, $matches)) {
+                $pName = trim($matches[1]);
+                $pluginsFile = __DIR__ . '/config/plugins.json';
+                $json = file_exists($pluginsFile) ? json_decode(file_get_contents($pluginsFile), true) : [];
+                if (in_array($pName, $json)) {
+                    $json = array_values(array_diff($json, [$pName]));
+                    file_put_contents($pluginsFile, json_encode($json, JSON_PRETTY_PRINT));
+                    echo "✅ Plugin '$pName' desativado!\n";
+                } else {
+                    echo "O plugin '$pName' não está ativo.\n";
+                }
+            }
+            elseif ($cmd === 'show databases') {
+                echo "Banco de Dados Conectado: sqlite (database.sqlite)\n";
+                /** @var \DomainSystem\Plugins\Database\Connection $connection */
+                $connection = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class);
+                $db = $connection->getPdo();
+                try {
+                    $stmt = $db->query("SELECT name FROM sqlite_master WHERE type='table'");
+                    $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    echo "Tabelas encontradas:\n";
+                    foreach ($tables as $t) {
+                        echo "  - $t\n";
+                    }
+                } catch (Exception $e) {
+                    echo "Erro: " . $e->getMessage() . "\n";
+                }
+            }
+            else {
+                echo "Comando não reconhecido no shell: '$cmd'. Digite 'help'.\n";
+            }
+        }
+        break;
+
     case 'help':
     case 'list':
         echo "\n🚀 Domain-System CockPit CLI v1.2.0\n";
         echo str_repeat("-", 40) . "\n";
         echo "Uso: php cockpit [comando] [argumentos]\n\n";
         echo "Comandos Disponíveis:\n";
+        echo "  shell                Abre o terminal interativo (REPL) da IA.\n";
         echo "  db:query \"SQL\"       Executa uma query SQL direta no banco de dados.\n";
-        echo "  plugin:make <nome>   Gera a estrutura base de um novo plugin.\n";
+        echo "  plugin:make <nome>   Gera a estrutura base de um novo plugin OS 2.0.\n";
         echo "  theme:make <nome>    Gera a estrutura base de um novo tema.\n";
         echo "  clear:temp           Limpa arquivos temporários da pasta temp/.\n";
         echo "\n";
@@ -71,33 +162,43 @@ switch ($command) {
         mkdir($pluginDir . '/Controllers', 0777, true);
         mkdir($pluginDir . '/views', 0777, true);
         
+        $pluginJson = <<<JSON
+{
+    "name": "{$pluginName}",
+    "version": "1.0.0",
+    "description": "Novo plugin criado via CLI",
+    "os_version": "2.0"
+}
+JSON;
+        file_put_contents($pluginDir . '/plugin.json', $pluginJson);
+
         $pluginClass = <<<PHP
 <?php
 
 namespace DomainSystem\Plugins\\{$pluginName};
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    public function osRegister(OsConnector \$os): void
     {
-        // Registre dependências no container
+        // 1. Fase de Negociação (Ex: \$os->requireLink('core.db');)
     }
 
-    public function boot(): void
+    public function osBoot(OsRuntime \$runtime): void
     {
-        // Adicione rotas ou listeners de eventos
-    }
-
-    public function activate(): void
-    {
-        // Criação de tabelas no banco de dados
+        // 2. Fase de Execução
     }
 }
 PHP;
         file_put_contents($pluginDir . '/Plugin.php', $pluginClass);
-        echo "✅ Plugin '$pluginName' criado com sucesso em src/Plugins/$pluginName\n";
+        echo "✅ Plugin OS 2.0 '$pluginName' criado com sucesso em src/Plugins/$pluginName\n";
         break;
 
     case 'theme:make':
