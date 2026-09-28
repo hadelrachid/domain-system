@@ -47,11 +47,17 @@ Para manter os princípios **SOLID** (Single Responsibility Principle) e evitar 
 
 ---
 
-## 📖 Como navegar na Wiki
-*(Aqui você pode criar sub-páginas, por exemplo:)*
-- **1. Guia do Desenvolvedor:** Como criar um Plugin do zero.
-- **2. Entendendo o Injetor de Dependências.**
-- **3. Como conectar uma IA via API (Hooks e Eventos).**
+## 📖 Como navegar (Links e Documentação Oficial)
+A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/`. Recomendamos fortemente a leitura da arquitetura **OS 2.0**:
+
+- 🚀 **[Guia Interativo de Extensões (Temas e Plugins)](../docs/tutorial-dev.html)** - O novo padrão de Injeção de Dependências.
+- 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.md)** - Por que abandonamos o Padrão WordPress.
+- 🤖 **[O Ciclo de Confiança Verificável (IA)](../docs/architecture/01-ciclo-de-confianca-verificavel.md)** - Como preparamos o terreno para a Inteligência Artificial.
+- ⚡ **[O Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)**
+- 🚪 **[A Escotilha de Emergência](Emergency-Hatch.md)**
+- 🛑 **[O Porteiro Global (ACL)](Global-Gatekeeper.md)**
+
+---
 
 The **Domain-System** is not just a clinic management system. It is a genuine **Web Operating System** (Universal CMS / Framework). The "clinic pack" is just one example of what it can run. It is a highly modular, resilient, **Event-Driven** platform designed under strict **SOLID** architecture principles.
 
@@ -96,8 +102,13 @@ To maintain **SOLID** principles (Single Responsibility Principle) and avoid spa
 
 ---
 
-## 📖 How to navigate the Wiki
-*(Here you can link to sub-pages, for example:)*
-- **1. Developer's Guide:** How to create a Plugin from scratch.
-- **2. Understanding the Dependency Injector.**
-- **3. How to connect an AI via API (Hooks and Events).**
+## 📖 How to navigate (Links and Official Docs)
+The main system documentation has evolved and is now centralized in our `docs/` folder. We strongly recommend reading about the **OS 2.0** architecture:
+
+- 🚀 **[Interactive Extension Guide (Themes & Plugins)](../docs/tutorial-dev.html)** - The new Dependency Injection standard.
+- 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.md)** - Why we abandoned the WordPress Pattern.
+- 🤖 **[The Verifiable Trust Cycle (AI)](../docs/architecture/01-ciclo-de-confianca-verificavel.md)** - How we paved the way for Artificial Intelligence.
+- ⚡ **[The Circuit Breaker](Disjuntor-Circuit-Breaker.md)**
+- 🚪 **[The Emergency Hatch](Emergency-Hatch.md)**
+- 🛑 **[The Global Gatekeeper (ACL)](Global-Gatekeeper.md)**
+
