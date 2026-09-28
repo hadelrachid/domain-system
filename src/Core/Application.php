@@ -412,6 +412,22 @@ class Application
         $this->container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
             return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
         });
+
+        // ─────────────────────────────────────────────────────────────────
+        // Registra o Registro de Links (O Cabeamento do OS)
+        // ─────────────────────────────────────────────────────────────────
+        $linkRegistry = new \DomainSystem\Core\Plugin\LinkRegistry($this->container);
+        $this->container->singleton(\DomainSystem\Core\Plugin\LinkRegistry::class, function() use ($linkRegistry) {
+            return $linkRegistry;
+        });
+
+        // ─────────────────────────────────────────────────────────────────
+        // O KERNEL ASSUME SEU PAPEL DE PROVEDOR OFICIAL (OS 2.0)
+        // ─────────────────────────────────────────────────────────────────
+        $kernelConnector = new \DomainSystem\Core\Plugin\OsConnector();
+        $kernelConnector->provideLink('core.session', \DomainSystem\Core\Http\SessionManager::class);
+        $kernelConnector->provideLink('core.router', \DomainSystem\Core\Routing\Router::class);
+        $linkRegistry->registerConnector('kernel', $kernelConnector);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

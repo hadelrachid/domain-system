@@ -74,8 +74,31 @@ class PluginBootstrapper
                         $needsSave = true;
                     }
                     
-                    $plugin->register();
-                    $plugin->boot();
+                    // 🚨 AQUI ENTRA A REVOLUÇÃO DO SO 🚨
+                    if ($plugin instanceof \DomainSystem\Core\Contracts\OsExtensionInterface) {
+                        
+                        // 1. Fase de Negociação
+                        $connector = new \DomainSystem\Core\Plugin\OsConnector();
+                        $plugin->osRegister($connector);
+                        
+                        // Opcionalmente registrar o connector no LinkRegistry se estiver disponível
+                        try {
+                            $linkRegistry = $this->container->make(\DomainSystem\Core\Plugin\LinkRegistry::class);
+                            $linkRegistry->registerConnector($pluginName, $connector);
+                            
+                            // 2. Fase de Execução (O OS passa o guardião de runtime)
+                            $runtime = new \DomainSystem\Core\Plugin\OsRuntime($this->container, $connector, $linkRegistry, $this->dispatcher);
+                            $plugin->osBoot($runtime);
+                        } catch (\Exception $e) {
+                            throw new \Exception("Erro ao configurar motor OS para {$pluginName}: " . $e->getMessage());
+                        }
+
+                    } else {
+                        // Modo Legado de Compatibilidade
+                        $plugin->register();
+                        $plugin->boot();
+                    }
+                    
                     $this->dispatcher->dispatch('plugin.registered', $plugin->getName());
                     
                     $this->currentBootingPlugin = null; // Apaga do quadro

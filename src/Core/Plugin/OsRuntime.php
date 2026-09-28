@@ -16,12 +16,14 @@ class OsRuntime
     private Container $container;
     private OsConnector $connectorManifest;
     private LinkRegistry $linkRegistry;
+    private \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher;
     
-    public function __construct(Container $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry)
+    public function __construct(Container $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher)
     {
         $this->container = $container;
         $this->connectorManifest = $connectorManifest;
         $this->linkRegistry = $linkRegistry;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -60,19 +62,21 @@ class OsRuntime
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou escutar o Evento/Hook '{$hookName}', mas não declarou intenção no registro.");
         }
 
-        // Aqui o EventDispatcher real do Kernel armazenaria o $callback
+        // Repassa para o EventDispatcher real do Kernel
+        $this->eventDispatcher->addListener($hookName, $callback);
     }
 
     /**
      * Permite ao plugin avisar o sistema que algo aconteceu.
      */
-    public function dispatchHook(string $hookName, mixed $payload = null): void
+    public function dispatchHook(string $hookName, mixed ...$payload): void
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
         if (!in_array($hookName, $this->connectorManifest->getProvidedHooks())) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou disparar o Evento/Hook '{$hookName}', mas não declarou que o forneceria no registro.");
         }
 
-        // Aqui o EventDispatcher real do Kernel percorreria os ouvintes e executaria os callbacks
+        // Repassa para o EventDispatcher real do Kernel
+        $this->eventDispatcher->dispatch($hookName, ...$payload);
     }
 }

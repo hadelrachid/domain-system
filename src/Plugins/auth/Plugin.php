@@ -6,11 +6,36 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\auth\Controllers\AuthController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    // Ignorado pelo OS novo
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
     {
+        // Pede os serviços vitais
+        $os->requireLink('core.db');
+        $os->requireLink('core.session');
+
+        // Pede permissão para ouvir eventos do Kernel
+        $os->listenHook('router.register');
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.before_dispatch');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
+        // 1. Registra os Contratos de Segurança no Container (Local do Plugin)
         $this->container->bind(
             \DomainSystem\Plugins\auth\Contracts\UserRepositoryInterface::class,
             \DomainSystem\Plugins\auth\Repositories\UserRepository::class
@@ -44,9 +69,10 @@ class Plugin extends AbstractPlugin
             }
         );
 
-        $events = $this->events();
-
-        $events->addListener('router.register', function(\DomainSystem\Core\Routing\Router $router) {
+        // 2. Ouvindo Hooks com Segurança Absoluta (Aprovado pelo OsConnector)
+        
+        // 2.1. Rotas
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'showLoginForm']);
             $router->addRoute('POST', '/login', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'authenticate']);
             $router->addRoute('GET', '/logout', [\DomainSystem\Plugins\auth\Controllers\AuthController::class, 'logout']);
@@ -60,8 +86,9 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/users/delete', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'delete'], 'auth', ['admin']);
         });
 
-        $sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-        $events->addListener('admin.menu', function($menu) use ($sessionManager) {
+        // 2.2. Menu do Admin (Puxando a Sessão Oficial via Link)
+        $sessionManager = $runtime->getLink('core.session');
+        $runtime->onHook('admin.menu', function($menu) use ($sessionManager) {
             $role = strtolower($sessionManager->get('user_role', 'admin'));
             if ($role === 'admin') {
                 $menu[] = ['title' => 'Usuários', 'url' => '/admin/users', 'icon' => '👥'];
@@ -69,7 +96,8 @@ class Plugin extends AbstractPlugin
             return $menu;
         });
 
-        $events->addListener('router.before_dispatch', function(string $uri) use ($sessionManager) {
+        // 2.3. Blindagem de Segurança Global
+        $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
             if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
                 if (!$sessionManager->has('user_id')) {
                     header("Location: " . BASE_URL . "/login");
@@ -77,8 +105,6 @@ class Plugin extends AbstractPlugin
                 }
             }
         });
-
-        // A injeção de administrador padrão agora é feita inteiramente pelo Installer (auto-healing).
     }
 
     public function activate(): void
