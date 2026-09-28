@@ -16,18 +16,37 @@ use DomainSystem\Plugins\clinic_pack\Controllers\SettingsController;
 use DomainSystem\Plugins\clinic_pack\Providers\DoctorCockpitProvider;
 use DomainSystem\Plugins\clinic_pack\Providers\SecretaryCockpitProvider;
 use DomainSystem\Plugins\clinic_pack\Providers\NursingCockpitProvider;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    // Ignorado pelo OS 2.0
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        // O clinic_pack (como Hub) avisa ao OS quais canais ele vai escutar
+        $os->listenHook('router.register');
+        $os->listenHook('shortcodes.register');
+        $os->listenHook('admin.menu');
+        $os->listenHook('admin.plugins.list');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         // Registra o provedor de Widgets no Registry Global
         try {
             $registry = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
             $registry->registerProvider(new \DomainSystem\Plugins\clinic_pack\Widgets\ClinicDashboardWidgetProvider());
-        } catch (\Exception $e) {
-            // Ignora se o registry não existir (ex: rodando scripts de teste isolados)
-        }
+        } catch (\Exception $e) {}
 
         // Registrando dependências locais do pacote
         $this->container->bind(
@@ -35,20 +54,16 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\clinic_pack\Services\UserProfileService::class
         );
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
-        // 1. Registra os Cockpits usando o Container (permite injeção de dependência no construtor)
+        // 1. Registra os Cockpits usando o Container
         if ($this->container->has(CockpitRegistryInterface::class)) {
-            /** @var CockpitRegistryInterface $registry */
             $registry = $this->container->make(CockpitRegistryInterface::class);
             $registry->registerProvider($this->container->make(DoctorCockpitProvider::class));
             $registry->registerProvider($this->container->make(SecretaryCockpitProvider::class));
             $registry->registerProvider($this->container->make(NursingCockpitProvider::class));
         }
 
-        // 2. Roteamento do Cockpit e Admin Dashboard
-        $events->addListener('router.register', function(Router $router) {
+        // 2. Roteamento (Através dos Hooks do OS 2.0)
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/clinic/settings', [SettingsController::class, 'index'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/save', [SettingsController::class, 'save'], 'clinic_admin', ['admin']);
             $router->addRoute('POST', '/admin/clinic/settings/insurance/add', [SettingsController::class, 'addInsurance'], 'clinic_admin', ['admin']);
@@ -72,8 +87,8 @@ class Plugin extends AbstractPlugin
             $router->addRoute('GET', '/admin/clinic/shortcodes', [AdminDashboardController::class, 'shortcodesCatalog'], 'clinic_admin', ['admin']);
         });
 
-        // 2.5 Registro de Shortcodes das Abas e Perfil
-        $events->addListener('shortcodes.register', function($manager) {
+        // 2.5 Registro de Shortcodes
+        $runtime->onHook('shortcodes.register', function($manager) {
             $manager->add('aba_aguardando', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaAguardando'], 'Aba: Pacientes Aguardando', [], 'Agenda/Recepção');
             $manager->add('aba_confirmados_hoje', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaConfirmadosHoje'], 'Aba: Confirmados Hoje', ['role' => 'secretary ou doctor'], 'Agenda/Recepção');
             $manager->add('aba_nao_compareceu', [\DomainSystem\Plugins\clinic_pack\Theme\CockpitShortcodes::class, 'renderAbaNaoCompareceu'], 'Aba: Pacientes que Faltaram', ['role' => 'secretary'], 'Agenda/Recepção');
@@ -90,7 +105,7 @@ class Plugin extends AbstractPlugin
         });
 
         // 3. Modificando o Menu (Para colocar tudo dentro de Daher Clínica)
-        $events->addListener('admin.menu', function(array $menu) {
+        $runtime->onHook('admin.menu', function(array $menu) {
             $clinicSubmenus = [];
             $clinicUrls = [
                 '/admin/patients', 
@@ -118,7 +133,6 @@ class Plugin extends AbstractPlugin
                     'icon' => '🧩'
                 ];
                 
-                // Adiciona Configurações ao grupo da clínica
                 $clinicSubmenus[] = [
                     'title' => 'Configurações da Clínica',
                     'url' => '/admin/clinic/settings',
@@ -133,10 +147,10 @@ class Plugin extends AbstractPlugin
                 ];
             }
             return array_values($menu);
-        }, 999);
+        }); // Removida a prioridade 999 por enquanto, pois o OS Dispatcher gerencia
 
-        // 4. Ocultar micro-plugins da lista principal (Régua de tomadas)
-        $events->addListener('admin.plugins.list', function(array $plugins) {
+        // 4. Ocultar micro-plugins da lista principal
+        $runtime->onHook('admin.plugins.list', function(array $plugins) {
             $hidden = ['patients', 'doctors', 'appointments', 'triage', 'medical_records', 'whatsapp', 'finance'];
             $bundled = [];
             foreach ($plugins as $k => $p) {
@@ -146,7 +160,6 @@ class Plugin extends AbstractPlugin
                 }
             }
             
-            // Injeta como subplugins no clinic_pack, preservando os já encontrados
             foreach ($plugins as $k => $p) {
                 if ($p['folder'] === 'clinic_pack') {
                     if (!empty($bundled)) {
@@ -160,6 +173,7 @@ class Plugin extends AbstractPlugin
         });
     }
 
+    // Mantemos a interface oficial do Hub! O Bootstrapper chama isso para ler as subpastas.
     public function getSubPluginsPath(): ?string
     {
         return __DIR__ . '/bundled_plugins';
