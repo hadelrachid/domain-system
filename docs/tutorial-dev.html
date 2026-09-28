@@ -288,7 +288,23 @@
         <!-- TAB 4 -->
         <div id="tab4" class="tab-content">
             <h2 data-i18n="tab4_h2">Complete Extension Structure</h2>
-            <p data-i18n="tab4_p1">Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest.</p>
+            <p data-i18n="tab4_p1">Every extension needs two files to exist: the Manifest (JSON) and the Contract (PHP Class).</p>
+            
+            <h3 style="color: var(--accent-purple);" data-i18n="tab4_json_title">1. The Manifest (plugin.json or theme.json)</h3>
+            <p data-i18n="tab4_json_desc">This file acts as the passport for your extension. It tells the OS who you are before any PHP code runs.</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre>{
+    <span class="s">"name"</span>: <span class="s">"test_os"</span>,
+    <span class="s">"version"</span>: <span class="s">"1.0.0"</span>,
+    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Sistema Operacional Web"</span>,
+    <span class="s">"core"</span>: <span class="v">false</span>,
+    <span class="s">"dependencies"</span>: []
+}</pre>
+            </div>
+
+            <h3 style="color: var(--accent-blue);" data-i18n="tab4_php_title">2. The Contract (Plugin.php)</h3>
+            <p data-i18n="tab4_php_desc">Just create your class implementing the Interface. The Kernel will automatically handle the rest.</p>
             
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -362,7 +378,11 @@
                 tab3_h2: "Phase 2: Execution (osBoot)",
                 tab3_p1: "After approving your contract, the OS hands you the <code class='highlight'>OsRuntime</code>. This is where you actually work, receiving the requested resources strictly via Dependency Injection.",
                 tab4_h2: "Complete Extension Structure",
-                tab4_p1: "Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest."
+                tab4_p1: "Every extension needs two files to exist: the Manifest (JSON) and the Contract (PHP Class).",
+                tab4_json_title: "1. The Manifest (plugin.json or theme.json)",
+                tab4_json_desc: "This file acts as the passport for your extension. It tells the OS who you are before any PHP code runs.",
+                tab4_php_title: "2. The Contract (Plugin.php)",
+                tab4_php_desc: "Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest."
             },
             pt: {
                 title: "Domain-System OS",
@@ -382,8 +402,12 @@
                 tab2_p1: "Antes de rodar qualquer regra de negócio, você usa o objeto <code class='highlight'>OsConnector</code> para avisar ao Sistema Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.",
                 tab3_h2: "Fase 2: Execução (osBoot)",
                 tab3_p1: "Depois de aprovar seu contrato, o Sistema Operacional te passa o <code class='highlight'>OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.",
-                tab4_h2: "Estrutura Completa de um Plugin/Tema",
-                tab4_p1: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente."
+                tab4_h2: "Estrutura Completa da Extensão",
+                tab4_p1: "Toda extensão precisa de dois arquivos para existir: o Manifesto (JSON) e o Contrato (Classe PHP).",
+                tab4_json_title: "1. O Manifesto (plugin.json ou theme.json)",
+                tab4_json_desc: "Esse arquivo age como o passaporte da sua extensão. Ele avisa ao SO quem você é antes de qualquer código PHP rodar.",
+                tab4_php_title: "2. O Contrato (Plugin.php)",
+                tab4_php_desc: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente."
             }
         };
 

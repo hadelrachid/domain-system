@@ -214,9 +214,11 @@
                     <p data-i18n="step1_desc">A primeira coisa que o Kernel faz é ler o arquivo <code style="color:var(--accent-purple)">plugin.json</code>. Nenhuma linha de código PHP foi executada ainda. O Kernel apenas olha o documento e avalia: <em>"Quem é você? Qual sua versão? Você precisa de outro plugin para funcionar?"</em>. Se algo estiver corrompido, ele barra a entrada aqui, evitando a famosa "Tela Branca da Morte".</p>
                     <div class="code-block">
 <pre>{
-    <span class="s">"name"</span>: <span class="s">"clinic_pack"</span>,
+    <span class="s">"name"</span>: <span class="s">"test_os"</span>,
     <span class="s">"version"</span>: <span class="s">"1.0.0"</span>,
-    <span class="s">"dependencies"</span>: [<span class="s">"auth"</span>]
+    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Sistema Operacional Web"</span>,
+    <span class="s">"core"</span>: <span class="v">false</span>,
+    <span class="s">"dependencies"</span>: []
 }</pre>
                     </div>
                 </div>
