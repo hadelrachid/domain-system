@@ -72,7 +72,7 @@ class PluginManager
 
     public function bootPlugins(): void
     {
-        $this->bootstrapper->bootPlugins($this->plugins, $this->getBasePath());
+        $this->bootstrapper->bootPlugins($this->plugins);
     }
 
     public function getPlugins(): array

@@ -25,6 +25,7 @@ class PluginBootstrapper
     private ContainerInterface $container;
     private EventDispatcherInterface $dispatcher;
     private PluginStateManager $stateManager;
+    private string $basePath;
 
     /** @var string|null */
     private ?string $currentBootingPlugin = null;
@@ -32,11 +33,13 @@ class PluginBootstrapper
     public function __construct(
         ContainerInterface $container, 
         EventDispatcherInterface $dispatcher, 
-        PluginStateManager $stateManager
+        PluginStateManager $stateManager,
+        string $basePath
     ) {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
         $this->stateManager = $stateManager;
+        $this->basePath = $basePath;
     }
 
     public function getCurrentBootingPlugin(): ?string
@@ -47,11 +50,11 @@ class PluginBootstrapper
     /**
      * @param PluginInterface[] $plugins
      */
-    public function bootPlugins(array &$plugins, string $basePath): void
+    public function bootPlugins(array &$plugins): void
     {
         $orderedPlugins = $this->resolveDependencies($plugins);
         
-        $migrationsPath = $basePath . '/temp/migrations.json';
+        $migrationsPath = $this->basePath . '/temp/migrations.json';
         $migrated = file_exists($migrationsPath) ? json_decode(file_get_contents($migrationsPath), true) ?? [] : [];
         $needsSave = false;
 

@@ -284,7 +284,7 @@ class Application
         // ─────────────────────────────────────────────────────────────────
         $stateManager = new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
         $discoverer = new \DomainSystem\Core\Plugin\Services\PluginDiscoverer($container, $dispatcher, $stateManager);
-        $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($container, $dispatcher, $stateManager);
+        $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($container, $dispatcher, $stateManager, $basePath);
         $installer = new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $stateManager);
         
         $this->pluginManager = new PluginManager(
