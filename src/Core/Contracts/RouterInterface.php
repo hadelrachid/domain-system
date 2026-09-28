@@ -15,4 +15,9 @@ interface RouterInterface
      * Processa a requisição atual e executa o handler da rota correspondente.
      */
     public function dispatch(Request $request): mixed;
+    
+    /**
+     * Adiciona um middleware global ao roteador.
+     */
+    public function addGlobalMiddleware(string $middlewareClass): void;
 }

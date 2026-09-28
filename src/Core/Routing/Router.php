@@ -29,10 +29,12 @@ class Router implements RouterInterface
         ];
     }
 
-    private array $globalMiddlewares = [
-        \DomainSystem\Core\Routing\Middlewares\CsrfMiddleware::class,
-        \DomainSystem\Core\Routing\Middlewares\AuthMiddleware::class
-    ];
+    private array $globalMiddlewares = [];
+    
+    public function addGlobalMiddleware(string $middlewareClass): void
+    {
+        $this->globalMiddlewares[] = $middlewareClass;
+    }
 
     public function dispatch(\DomainSystem\Core\Http\Request $request): mixed
     {
@@ -41,8 +43,8 @@ class Router implements RouterInterface
         $uri = strtok($request->uri(), '?');
 
         // Dispara o listener (opcional, mantendo retrocompatibilidade com plugins antigos)
-        if ($this->container->has(\DomainSystem\Core\Events\EventDispatcher::class)) {
-            $dispatcher = $this->container->make(\DomainSystem\Core\Events\EventDispatcher::class);
+        if ($this->container->has(\DomainSystem\Core\Contracts\EventDispatcherInterface::class)) {
+            $dispatcher = $this->container->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
             $dispatcher->dispatch('router.before_dispatch', $uri);
         }
 

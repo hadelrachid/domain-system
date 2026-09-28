@@ -4,11 +4,12 @@ namespace DomainSystem\Core\Theme;
 
 use Exception;
 use DomainSystem\Core\Events\EventDispatcher;
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
 
 class ThemeManager
 {
     private string $activeThemePath;
-    public ?EventDispatcher $dispatcher = null;
+    public ?EventDispatcherInterface $dispatcher = null;
     private ?ShortcodeManager $shortcodeManager = null;
 
     public function __construct(string $activeThemePath, ?ShortcodeManager $shortcodeManager = null)
@@ -27,7 +28,7 @@ class ThemeManager
         return $this->activeThemePath;
     }
 
-    public function setDispatcher(EventDispatcher $dispatcher): void
+    public function setDispatcher(EventDispatcherInterface $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
     }

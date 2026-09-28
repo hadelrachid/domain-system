@@ -254,180 +254,32 @@ class Application
         $this->dispatcher = $dispatcher;
         $this->basePath = $basePath;
 
-
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o Gerenciador de Sessões e inicia a sessão
-        // ─────────────────────────────────────────────────────────────────
-        $this->sessionManager = new \DomainSystem\Core\Http\SessionManager();
-        $this->sessionManager->start(); // Inicia a sessão de forma segura
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa as Operárias do Gerenciador de Plugins (Slots PCI-Express)
-        // ─────────────────────────────────────────────────────────────────
-        $stateManager = new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
-        $discoverer = new \DomainSystem\Core\Plugin\Services\PluginDiscoverer($container, $dispatcher, $stateManager);
-        $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($container, $dispatcher, $stateManager, $basePath);
-        $installer = new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $stateManager);
-        
-        $this->pluginManager = new PluginManager(
-            $container, 
-            $dispatcher,
-            $stateManager,
-            $discoverer,
-            $bootstrapper,
-            $installer
-        );
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o Roteador (Porteiro Global / Gatekeeper)
-        // ─────────────────────────────────────────────────────────────────
-        $this->router = new Router($container);
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o Gerenciador de Shortcodes
-        // ─────────────────────────────────────────────────────────────────
-        $this->shortcodeManager = new \DomainSystem\Core\Theme\ShortcodeManager($this->container);
-
-        // ─────────────────────────────────────────────────────────────────
-        // Define o caminho padrão do tema (pode ser alterado depois)
-        // ─────────────────────────────────────────────────────────────────
-        $themePath = $basePath . '/themes/admin';
-        $this->themeManager = new ThemeManager($themePath, $this->shortcodeManager);
-        $this->themeManager->setDispatcher($dispatcher);
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o Gerenciador de Workspaces
-        // ─────────────────────────────────────────────────────────────────
-        $this->workspaceManager = new WorkspaceManager($this->container, $this->themeManager);
-
-        // ─────────────────────────────────────────────────────────────────
-        // Inicializa o Registro de Cockpits
-        // ─────────────────────────────────────────────────────────────────
-        $this->cockpitRegistry = new \DomainSystem\Core\Cockpit\CockpitRegistry();
-
         // ═════════════════════════════════════════════════════════════════
         // 🔵 AUTOINSTANCIAÇÃO — O CORAÇÃO DO SINGLETON (EAGER LOADING)
         // ═════════════════════════════════════════════════════════════════
-        //
-        // Aqui, o Kernel se registra como a ÚNICA instância de si mesmo.
-        // A partir deste momento, Application::getInstance() sempre
-        // retornará ESTA instância.
-        //
-        // Isso é o equivalente à rainha assumindo o trono da colméia.
-        // ═════════════════════════════════════════════════════════════════
         self::$instance = $this;
 
-        // ═════════════════════════════════════════════════════════════════
-        // REGISTRO NO CONTAINER DI
-        // ═════════════════════════════════════════════════════════════════
-        //
-        // O Kernel se registra no Container, para que outras classes
-        // possam obtê-lo via injeção de dependência, sem precisar
-        // chamar Application::getInstance() diretamente.
-        //
-        // Isso é a distribuição da rainha via feromônio (Container DI).
-        // ═════════════════════════════════════════════════════════════════
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o próprio Kernel (Application)
-        // ─────────────────────────────────────────────────────────────────
+        // Registra a si mesmo no Container
         $this->container->singleton(Application::class, function() {
             return $this;
         });
 
-
-
         // ─────────────────────────────────────────────────────────────────
-        // Registra o Gerenciador de Sessões
+        // CARREGA TODOS OS SERVIÇOS DO KERNEL VIA SERVICE PROVIDER (SRP)
         // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(\DomainSystem\Core\Http\SessionManager::class, function() {
-            return $this->sessionManager;
-        });
+        $provider = new \DomainSystem\Core\Providers\CoreServiceProvider();
+        $provider->register($this->container, $this->dispatcher, $this->basePath);
 
         // ─────────────────────────────────────────────────────────────────
-        // Registra o Container (tanto a classe concreta quanto a interface)
+        // INSTANCIA AS PROPRIEDADES VIA INJEÇÃO DE DEPENDÊNCIA (DIP)
         // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(Container::class, function() {
-            return $this->container;
-        });
-
-        $this->container->singleton(\DomainSystem\Core\Contracts\ContainerInterface::class, function() {
-            return $this->container;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Despachante de Eventos
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(EventDispatcher::class, function() {
-            return $this->dispatcher;
-        });
-
-        $this->container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() {
-            return $this->dispatcher;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Gerenciador de Plugins
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(PluginManager::class, function() {
-            return $this->pluginManager;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Roteador (tanto a classe concreta quanto a interface)
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(Router::class, function() {
-            return $this->router;
-        });
-
-        $this->container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function() {
-            return $this->router;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Gerenciador de Temas
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(ThemeManager::class, function() {
-            return $this->themeManager;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Gerenciador de Shortcodes
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function() {
-            return $this->shortcodeManager;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Registro de Cockpits
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class, function() {
-            return $this->cockpitRegistry;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Registro de Widgets de Dashboard
-        // ─────────────────────────────────────────────────────────────────
-        $this->container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
-            return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // Registra o Registro de Links (O Cabeamento do OS)
-        // ─────────────────────────────────────────────────────────────────
-        $linkRegistry = new \DomainSystem\Core\Plugin\LinkRegistry($this->container);
-        $this->container->singleton(\DomainSystem\Core\Plugin\LinkRegistry::class, function() use ($linkRegistry) {
-            return $linkRegistry;
-        });
-
-        // ─────────────────────────────────────────────────────────────────
-        // O KERNEL ASSUME SEU PAPEL DE PROVEDOR OFICIAL (OS 2.0)
-        // ─────────────────────────────────────────────────────────────────
-        $kernelConnector = new \DomainSystem\Core\Plugin\OsConnector();
-        $kernelConnector->provideLink('core.session', \DomainSystem\Core\Http\SessionManager::class);
-        $kernelConnector->provideLink('core.router', \DomainSystem\Core\Routing\Router::class);
-        $linkRegistry->registerConnector('kernel', $kernelConnector);
+        $this->sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+        $this->pluginManager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
+        $this->router = $this->container->make(\DomainSystem\Core\Contracts\RouterInterface::class);
+        $this->shortcodeManager = $this->container->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        $this->themeManager = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
+        $this->workspaceManager = $this->container->make(\DomainSystem\Core\Workspace\WorkspaceManager::class);
+        $this->cockpitRegistry = $this->container->make(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
