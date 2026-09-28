@@ -6,15 +6,35 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\doctors\Controllers\DoctorController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
     public function getDependencies(): array
     {
         return ['database'];
     }
 
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        
+        $os->listenHook('workspace.register');
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         // 1. Bind da Infraestrutura (Repositório)
         $this->container->bind(
@@ -37,16 +57,13 @@ class Plugin extends AbstractPlugin
             );
         }
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
-        $events->addListener('workspace.register', function (\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
+        $runtime->onHook('workspace.register', function (\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
             $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('doctor', new \DomainSystem\Plugins\doctors\Workspace\DoctorWorkspace($theme));
         });
 
         // Registrar item no menu lateral
-        $events->addListener('admin.menu', function($menu) {
+        $runtime->onHook('admin.menu', function($menu) {
             $menu[] = [
                 'title' => 'Médicos',
                 'url' => '/admin/doctors',
@@ -56,7 +73,7 @@ class Plugin extends AbstractPlugin
         });
 
         // Registrar rotas
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/doctors', [DoctorController::class, 'index'], 'doctors', ['admin', 'receptionist']);
             $router->addRoute('POST', '/admin/doctors', [DoctorController::class, 'store'], 'doctors', ['admin', 'receptionist']);
             $router->addRoute('GET', '/admin/doctors/edit', [DoctorController::class, 'edit'], 'doctors', ['admin', 'receptionist']);

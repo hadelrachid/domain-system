@@ -6,21 +6,38 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\finance\Controllers\FinanceController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.register');
+        $os->listenHook('shortcodes.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\finance\Contracts\FinanceRepositoryInterface::class,
             \DomainSystem\Plugins\finance\Repositories\FinanceRepository::class
         );
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
         // Menu
-        $events->addListener('admin.menu', function($menus, $role = 'admin') {
+        $runtime->onHook('admin.menu', function($menus, $role = 'admin') {
             if ($role === 'admin' || $role === 'manager') {
                 $menus[] = [
                     'title' => 'Financeiro',
@@ -32,14 +49,14 @@ class Plugin extends AbstractPlugin
         });
 
         // Rotas
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/finance', [FinanceController::class, 'index'], 'finance', ['admin']);
             $router->addRoute('POST', '/admin/finance/store', [FinanceController::class, 'store'], 'finance', ['admin']);
             $router->addRoute('POST', '/admin/finance/status', [FinanceController::class, 'updateStatus'], 'finance', ['admin']);
         });
 
         // Shortcodes
-        $events->addListener('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
             $shortcodes->add('finance_summary', [FinanceController::class, 'renderShortcodeSummary'], 'Cards de resumo financeiro (Receitas, Despesas, Saldo).', []);
             $shortcodes->add('finance_form', [FinanceController::class, 'renderShortcodeForm'], 'Formulário para lançamento de nova receita/despesa.', []);
             $shortcodes->add('finance_list', [FinanceController::class, 'renderShortcodeList'], 'Tabela de lançamentos financeiros.', ['limit' => 'Máximo de itens exibidos']);

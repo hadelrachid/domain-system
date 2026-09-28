@@ -9,18 +9,36 @@ use DomainSystem\Plugins\appointments\Controllers\AppointmentController;
 use DomainSystem\Plugins\appointments\Controllers\ApiController;
 use DomainSystem\Plugins\appointments\Controllers\BookingController;
 use DomainSystem\Plugins\appointments\Controllers\ScheduleController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
     public function getDependencies(): array
     {
         return ['database', 'doctors', 'patients'];
     }
 
-    public function register(): void { 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
+    public function register(): void {}
 
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.register');
+        $os->listenHook('shortcodes.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
+    {
         // Registro de Contratos
         $this->container->bind(
             \DomainSystem\Plugins\appointments\Contracts\AppointmentRepositoryInterface::class,
@@ -36,7 +54,7 @@ class Plugin extends AbstractPlugin
         );
 
         // Registrar item no menu lateral
-        $events->addListener('admin.menu', function($menus, $role = 'admin') {
+        $runtime->onHook('admin.menu', function($menus, $role = 'admin') {
             if ($role === 'admin' || $role === 'receptionist') {
                 $menus[] = [
                     'title' => 'Agendamentos',
@@ -54,7 +72,7 @@ class Plugin extends AbstractPlugin
         });
 
         // Registrar rotas
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/appointments', [AppointmentController::class, 'index'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
             $router->addRoute('POST', '/admin/appointments', [AppointmentController::class, 'store'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
             $router->addRoute('POST', '/admin/appointments/status', [AppointmentController::class, 'updateStatus'], 'appointments', ['admin', 'secretary', 'receptionist', 'doctor']);
@@ -78,7 +96,7 @@ class Plugin extends AbstractPlugin
         });
 
         // Registrar Shortcodes
-        $events->addListener('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
             $shortcodes->add('agendamento_form', [AppointmentController::class, 'renderShortcodeBooking'], 'Formulário completo de agendamento.', [
                 'doctor_id' => 'Pré-seleciona um médico (opcional)'
             ]);

@@ -6,21 +6,35 @@ use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        $os->listenHook('router.register');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         $this->container->bind(
             \DomainSystem\Plugins\medical_records\Contracts\RecordRepositoryInterface::class,
             \DomainSystem\Plugins\medical_records\Repositories\RecordRepository::class
         );
 
-        /** @var EventDispatcher $events */
-        $events = $this->events();
-
         // Registrar Rota do Pronturio
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             // Rota para o Mdico acessar o Pronturio de um Agendamento
             $router->addRoute('GET', '/admin/appointments/record/{id}', [\DomainSystem\Plugins\medical_records\Controllers\RecordController::class, 'view']);
             $router->addRoute('POST', '/admin/appointments/record/{id}', [\DomainSystem\Plugins\medical_records\Controllers\RecordController::class, 'save']);
@@ -30,10 +44,6 @@ class Plugin extends AbstractPlugin
             $router->addRoute('POST', '/admin/appointments/record/{id}/upload-exam', [\DomainSystem\Plugins\medical_records\Controllers\RecordController::class, 'uploadExam']);
             $router->addRoute('POST', '/admin/appointments/record/{id}/delete-exam', [\DomainSystem\Plugins\medical_records\Controllers\RecordController::class, 'deleteExam']);
         });
-        
-        // Em "appointments" nós temos a fila. Podemos injetar um boto de "Atender" via javascript depois,
-        // ou adicionar o boto diretamente na view do appointments (isso requer um hook na view de appointments,
-        // mas por hora, se o cara for Médico, mudaremos a fila para apontar para /admin/appointments/record/{id}).
     }
 
     public function activate(): void

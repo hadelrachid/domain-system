@@ -5,10 +5,30 @@ namespace DomainSystem\Plugins\whatsapp;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\whatsapp\Controllers\WhatsAppSettingsController;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Plugin\OsConnector;
+use DomainSystem\Core\Plugin\OsRuntime;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    public function register(): void {}
+
+    // ==========================================
+    // 1. FASE DE NEGOCIAÇÃO (OS 2.0)
+    // ==========================================
+    public function osRegister(OsConnector $os): void
+    {
+        $os->requireLink('core.db');
+        
+        $os->listenHook('admin.menu');
+        $os->listenHook('router.register');
+        $os->listenHook('appointment.created');
+    }
+
+    // ==========================================
+    // 2. FASE DE EXECUÇÃO (OS 2.0)
+    // ==========================================
+    public function osBoot(OsRuntime $runtime): void
     {
         // SOLID: Inversão de Dependências
         $this->container->bind(
@@ -20,11 +40,8 @@ class Plugin extends AbstractPlugin
             \DomainSystem\Plugins\whatsapp\Services\ZApiService::class
         );
 
-        /** @var \DomainSystem\Core\Events\EventDispatcher $events */
-        $events = $this->events();
-
         // Add plugin to admin menu
-        $events->addListener('admin.menu', function($menus) {
+        $runtime->onHook('admin.menu', function($menus) {
             $menus[] = [
                 'title' => 'WhatsApp Z-API',
                 'url' => 'admin/whatsapp',
@@ -34,14 +51,14 @@ class Plugin extends AbstractPlugin
         });
 
         // Register router dynamically when needed
-        $events->addListener('router.register', function(Router $router) {
+        $runtime->onHook('router.register', function(Router $router) {
             $router->addRoute('GET', '/admin/whatsapp', [WhatsAppSettingsController::class, 'index'], 'whatsapp', ['admin']);
             $router->addRoute('POST', '/admin/whatsapp/save', [WhatsAppSettingsController::class, 'save'], 'whatsapp', ['admin']);
             $router->addRoute('POST', '/admin/whatsapp/test', [WhatsAppSettingsController::class, 'testMessage'], 'whatsapp', ['admin']);
         });
 
         // Hook into appointment creation
-        $events->addListener('appointment.created', function(array $data) {
+        $runtime->onHook('appointment.created', function(array $data) {
             try {
                 /** @var \DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface $provider */
                 $provider = $this->container->make(\DomainSystem\Plugins\whatsapp\Contracts\WhatsAppProviderInterface::class);
