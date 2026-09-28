@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain-System OS | O Ciclo de Confiança Verificável</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --accent-orange: #f59e0b;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-purple);
+            box-shadow: 0 4px 30px rgba(168, 85, 247, 0.2);
+            position: relative;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-switch button.active {
+            background: var(--accent-purple);
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(45deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .hero-text {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .highlight { color: var(--text-main); font-weight: bold; }
+        .text-purple { color: var(--accent-purple); }
+        .text-blue { color: var(--accent-blue); }
+        .text-green { color: var(--accent-green); }
+
+        .card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        h2 { margin-bottom: 20px; color: var(--accent-purple); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        h3 { margin: 20px 0 10px; color: var(--accent-blue); font-size: 1.3rem;}
+        h4 { margin: 15px 0 5px; color: var(--accent-green); font-size: 1.1rem; }
+        p { margin-bottom: 15px; }
+
+        .diagram {
+            background: #000;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+            color: var(--accent-green);
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .layer-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .layer-list li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        .layer-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-purple);
+        }
+
+        .quote-block {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 4px solid var(--accent-purple);
+            padding: 20px;
+            margin-top: 40px;
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="lang-switch">
+            <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
+            <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
+        </div>
+        <h1 data-i18n="title">O Ciclo de Confiança Verificável</h1>
+        <p style="color: var(--accent-purple); font-size: 1.1rem;" data-i18n="subtitle">Fundação Arquitetural para IA e Segurança (Verifiable Trust Cycle)</p>
+    </header>
+
+    <div class="container">
+        
+        <p class="hero-text" data-i18n="hero">
+            Um sistema que só confia na IA é frágil. Um sistema que só confia no humano é lento. Um sistema que <strong class="highlight">confia nos dois, mas audita tudo</strong>, é <strong class="highlight text-purple">robusto e escalável</strong>.
+        </p>
+
+        <div class="card">
+            <h2 data-i18n="h2_1">O Funcionamento do Ciclo</h2>
+            <p data-i18n="p1_1">Cada etapa <strong class="highlight">filtra</strong> o que a anterior deixou passar. Nenhuma etapa é 100% confiável sozinha. <strong class="highlight">Juntas, elas formam uma rede de segurança praticamente inviolável.</strong></p>
+            
+            <div class="diagram" id="diagram1">┌─────────────────────────────────────────────────────┐
+│                                                      │
+│  1. INTENÇÃO (Humano descreve o que quer)           │
+│           ↓                                          │
+│  2. GERAÇÃO (IA produz código na DSL)               │
+│           ↓                                          │
+│  3. VALIDAÇÃO SINTÁTICA (O sistema compila?)        │
+│           ↓                                          │
+│  4. AUDITORIA SEMÂNTICA (O código faz sentido?)     │
+│           ↓                                          │
+│  5. EXECUÇÃO EM SANDBOX (Roda isolado?)             │
+│           ↓                                          │
+│  6. FEEDBACK HUMANO (Dev aprova ou ajusta?)         │
+│           ↓                                          │
+│  7. ATIVAÇÃO (Entra em produção)                    │
+│           ↓                                          │
+│  8. MONITORAMENTO CONTÍNUO (Auditoria a cada N)     │
+│           ↓                                          │
+│  ← Loop de melhoria contínua ────────────────────→  │
+│                                                      │
+└─────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="h2_2">A Visão de Auditoria</h2>
+            <p data-i18n="p2_1">O programador não deve ficar preso à visão da IA. Ele precisa de uma segunda opinião — uma auditoria independente que:</p>
+            <ul class="layer-list" style="margin-bottom: 30px;">
+                <li data-i18n="li2_1"><strong class="highlight">Valida o que a IA produziu</strong> (sem viés)</li>
+                <li data-i18n="li2_2"><strong class="highlight">Sugere melhorias</strong> (não só erros)</li>
+                <li data-i18n="li2_3"><strong class="highlight">Registra evolução</strong> (auditoria histórica)</li>
+                <li data-i18n="li2_4"><strong class="highlight">Bloqueia padrões ruins</strong> (regras configuráveis)</li>
+            </ul>
+
+            <h3 data-i18n="h3_1">As 5 Camadas de Auditoria</h3>
+            
+            <h4 data-i18n="h4_1">Camada 1: Auditoria Sintática (Automática)</h4>
+            <ul class="layer-list">
+                <li data-i18n="c1_1">Plugin.php compila</li>
+                <li data-i18n="c1_2">Sem erros de sintaxe</li>
+                <li data-i18n="c1_3">Sem código morto e variáveis não usadas</li>
+            </ul>
+
+            <h4 data-i18n="h4_2" style="margin-top: 20px;">Camada 2: Auditoria de Contratos (Automática)</h4>
+            <ul class="layer-list">
+                <li data-i18n="c2_1">Todos os Links exigidos existem</li>
+                <li data-i18n="c2_2">Todos os Hooks escutados existem</li>
+                <li data-i18n="c2_3">Todas as Interfaces estão implementadas corretamente</li>
+                <li data-i18n="c2_4">Nenhum Link é consumido sem declaração prévia</li>
+                <li data-i18n="c2_5">Nenhuma Contribution invade área de outro plugin</li>
+            </ul>
+
+            <h4 data-i18n="h4_3" style="margin-top: 20px;">Camada 3: Auditoria Semântica (IA Leve)</h4>
+            <ul class="layer-list">
+                <li data-i18n="c3_1">Analisa intenção vs. implementação.</li>
+                <li data-i18n="c3_2">Valida se os Hooks e Links escolhidos fazem sentido para o objetivo de negócio.</li>
+            </ul>
+
+            <h4 data-i18n="h4_4" style="margin-top: 20px;">Camada 4: Auditoria SOLID (Estática + Regras)</h4>
+            <ul class="layer-list">
+                <li data-i18n="c4_1">SRP, OCP, LSP, ISP, DIP.</li>
+                <li data-i18n="c4_2">Valida tamanho de classes, interfaces infladas e acoplamento.</li>
+            </ul>
+
+            <h4 data-i18n="h4_5" style="margin-top: 20px;">Camada 5: Auditoria de Segurança e LGPD</h4>
+            <ul class="layer-list">
+                <li data-i18n="c5_1">Bloqueia funções perigosas (<code>eval</code>, <code>shell_exec</code>).</li>
+                <li data-i18n="c5_2">Previne SSRF, SQL Injection, XSS.</li>
+                <li data-i18n="c5_3">Valida exposição de PII (Personally Identifiable Information).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="h2_3">Como Isso Se Encaixa com a DSL</h2>
+            <p data-i18n="p3_1">A auditoria funciona perfeitamente <strong class="highlight">porque o Domain-System possui uma DSL</strong>. Sem DSL, a auditoria precisa entender código livre (impossível com 100% de precisão). Com DSL, a auditoria sabe exatamente o que esperar de cada plugin (Análise Contratual).</p>
+            
+            <p><strong class="highlight text-blue" data-i18n="p3_example">Exemplo de Validação Contratual:</strong></p>
+            <ul class="layer-list">
+                <li><strong data-i18n="ex_1">Declarado:</strong> <code>getSubscribedHooks() => ['appointment.canceled']</code></li>
+                <li><strong data-i18n="ex_2">Implementado:</strong> <code>public function onAppointmentCanceled($appointment)</code></li>
+                <li data-i18n="ex_3">A auditoria verifica a correspondência e o respeito à assinatura do contrato.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="h2_4">A Arquitetura Completa</h2>
+            <div class="diagram" id="diagram2">┌─────────────────────────────────────────────────────┐
+│                     KERNEL CORE                      │
+│  Container, Router, EventDispatcher, PluginManager  │
+└─────────────────────────────────────────────────────┘
+           ↕                    ↕                  ↕
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐
+│  KERNEL SERVICES │  │  DSL             │  │  AUDITORIA   │
+│                  │  │                  │  │              │
+│  LinkRegistry    │  │  4 Verbos        │  │  Sintática   │
+│  HookRegistry    │  │  Contratos       │  │  Contratos   │
+│  HubManager      │  │  Manifestos      │  │  Semântica   │
+│  CircuitBreaker  │  │  Validação       │  │  SOLID       │
+│                  │  │                  │  │  Segurança   │
+└──────────────────┘  └──────────────────┘  └──────────────┘
+           ↕                    ↕                  ↕
+┌─────────────────────────────────────────────────────┐
+│                ECOSSISTEMA                           │
+│                                                      │
+│  🧩 Plugins    📦 Hubs    🎨 Temas    🪄 IA          │
+│                                                      │
+│  Cada um passa por auditoria antes e durante a vida │
+└─────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="quote-block" data-i18n="quote">
+            "Domain-System OS: o único sistema operacional onde IA gera, auditoria valida, humano aprova, e o Kernel garante."
+        </div>
+
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                title: "The Verifiable Trust Cycle",
+                subtitle: "Architectural Foundation for AI and Security",
+                hero: "A system that only trusts AI is fragile. A system that only trusts humans is slow. A system that <strong class='highlight'>trusts both, but audits everything</strong>, is <strong class='highlight text-purple'>robust and scalable</strong>.",
+                h2_1: "How the Cycle Works",
+                p1_1: "Each step <strong class='highlight'>filters</strong> what the previous one missed. No step is 100% reliable alone. <strong class='highlight'>Together, they form a practically unbreakable safety net.</strong>",
+                h2_2: "The Audit Vision",
+                p2_1: "The programmer should not be bound to the AI's vision. They need a second opinion — an independent audit that:",
+                li2_1: "<strong class='highlight'>Validates what the AI produced</strong> (without bias)",
+                li2_2: "<strong class='highlight'>Suggests improvements</strong> (not just errors)",
+                li2_3: "<strong class='highlight'>Records evolution</strong> (historical audit)",
+                li2_4: "<strong class='highlight'>Blocks bad patterns</strong> (configurable rules)",
+                h3_1: "The 5 Layers of Auditing",
+                h4_1: "Layer 1: Syntactic Audit (Automatic)",
+                c1_1: "Plugin.php compiles",
+                c1_2: "No syntax errors",
+                c1_3: "No dead code or unused variables",
+                h4_2: "Layer 2: Contract Audit (Automatic)",
+                c2_1: "All required Links exist",
+                c2_2: "All listened Hooks exist",
+                c2_3: "All Interfaces are implemented correctly",
+                c2_4: "No Link is consumed without prior declaration",
+                c2_5: "No Contribution invades another plugin's area",
+                h4_3: "Layer 3: Semantic Audit (Light AI)",
+                c3_1: "Analyzes intention vs. implementation.",
+                c3_2: "Validates if the chosen Hooks and Links make sense for the business goal.",
+                h4_4: "Layer 4: SOLID Audit (Static + Rules)",
+                c4_1: "SRP, OCP, LSP, ISP, DIP.",
+                c4_2: "Validates class size, bloated interfaces, and coupling.",
+                h4_5: "Layer 5: Security and GDPR Audit",
+                c5_1: "Blocks dangerous functions (<code>eval</code>, <code>shell_exec</code>).",
+                c5_2: "Prevents SSRF, SQL Injection, XSS.",
+                c5_3: "Validates exposure of PII (Personally Identifiable Information).",
+                h2_3: "How This Fits with the DSL",
+                p3_1: "Auditing works perfectly <strong class='highlight'>because Domain-System has a DSL</strong>. Without a DSL, auditing needs to understand free code (impossible with 100% accuracy). With a DSL, the audit knows exactly what to expect from each plugin (Contractual Analysis).",
+                p3_example: "Example of Contractual Validation:",
+                ex_1: "Declared:",
+                ex_2: "Implemented:",
+                ex_3: "The audit verifies the correspondence and adherence to the contract signature.",
+                h2_4: "The Complete Architecture",
+                quote: "\"Domain-System OS: the only operating system where AI generates, audit validates, human approves, and the Kernel guarantees.\""
+            },
+            pt: {
+                title: "O Ciclo de Confiança Verificável",
+                subtitle: "Fundação Arquitetural para IA e Segurança (Verifiable Trust Cycle)",
+                hero: "Um sistema que só confia na IA é frágil. Um sistema que só confia no humano é lento. Um sistema que <strong class='highlight'>confia nos dois, mas audita tudo</strong>, é <strong class='highlight text-purple'>robusto e escalável</strong>.",
+                h2_1: "O Funcionamento do Ciclo",
+                p1_1: "Cada etapa <strong class='highlight'>filtra</strong> o que a anterior deixou passar. Nenhuma etapa é 100% confiável sozinha. <strong class='highlight'>Juntas, elas formam uma rede de segurança praticamente inviolável.</strong>",
+                h2_2: "A Visão de Auditoria",
+                p2_1: "O programador não deve ficar preso à visão da IA. Ele precisa de uma segunda opinião — uma auditoria independente que:",
+                li2_1: "<strong class='highlight'>Valida o que a IA produziu</strong> (sem viés)",
+                li2_2: "<strong class='highlight'>Sugere melhorias</strong> (não só erros)",
+                li2_3: "<strong class='highlight'>Registra evolução</strong> (auditoria histórica)",
+                li2_4: "<strong class='highlight'>Bloqueia padrões ruins</strong> (regras configuráveis)",
+                h3_1: "As 5 Camadas de Auditoria",
+                h4_1: "Camada 1: Auditoria Sintática (Automática)",
+                c1_1: "Plugin.php compila",
+                c1_2: "Sem erros de sintaxe",
+                c1_3: "Sem código morto e variáveis não usadas",
+                h4_2: "Camada 2: Auditoria de Contratos (Automática)",
+                c2_1: "Todos os Links exigidos existem",
+                c2_2: "Todos os Hooks escutados existem",
+                c2_3: "Todas as Interfaces estão implementadas corretamente",
+                c2_4: "Nenhum Link é consumido sem declaração prévia",
+                c2_5: "Nenhuma Contribution invade área de outro plugin",
+                h4_3: "Camada 3: Auditoria Semântica (IA Leve)",
+                c3_1: "Analisa intenção vs. implementação.",
+                c3_2: "Valida se os Hooks e Links escolhidos fazem sentido para o objetivo de negócio.",
+                h4_4: "Camada 4: Auditoria SOLID (Estática + Regras)",
+                c4_1: "SRP, OCP, LSP, ISP, DIP.",
+                c4_2: "Valida tamanho de classes, interfaces infladas e acoplamento.",
+                h4_5: "Camada 5: Auditoria de Segurança e LGPD",
+                c5_1: "Bloqueia funções perigosas (<code>eval</code>, <code>shell_exec</code>).",
+                c5_2: "Previne SSRF, SQL Injection, XSS.",
+                c5_3: "Valida exposição de PII (Personally Identifiable Information).",
+                h2_3: "Como Isso Se Encaixa com a DSL",
+                p3_1: "A auditoria funciona perfeitamente <strong class='highlight'>porque o Domain-System possui uma DSL</strong>. Sem DSL, a auditoria precisa entender código livre (impossível com 100% de precisão). Com DSL, a auditoria sabe exatamente o que esperar de cada plugin (Análise Contratual).",
+                p3_example: "Exemplo de Validação Contratual:",
+                ex_1: "Declarado:",
+                ex_2: "Implementado:",
+                ex_3: "A auditoria verifica a correspondência e o respeito à assinatura do contrato.",
+                h2_4: "A Arquitetura Completa",
+                quote: "\"Domain-System OS: o único sistema operacional onde IA gera, auditoria valida, humano aprova, e o Kernel garante.\""
+            }
+        };
+
+        const diag1_pt = `┌─────────────────────────────────────────────────────┐
+│                                                      │
+│  1. INTENÇÃO (Humano descreve o que quer)           │
+│           ↓                                          │
+│  2. GERAÇÃO (IA produz código na DSL)               │
+│           ↓                                          │
+│  3. VALIDAÇÃO SINTÁTICA (O sistema compila?)        │
+│           ↓                                          │
+│  4. AUDITORIA SEMÂNTICA (O código faz sentido?)     │
+│           ↓                                          │
+│  5. EXECUÇÃO EM SANDBOX (Roda isolado?)             │
+│           ↓                                          │
+│  6. FEEDBACK HUMANO (Dev aprova ou ajusta?)         │
+│           ↓                                          │
+│  7. ATIVAÇÃO (Entra em produção)                    │
+│           ↓                                          │
+│  8. MONITORAMENTO CONTÍNUO (Auditoria a cada N)     │
+│           ↓                                          │
+│  ← Loop de melhoria contínua ────────────────────→  │
+│                                                      │
+└─────────────────────────────────────────────────────┘`;
+
+        const diag1_en = `┌─────────────────────────────────────────────────────┐
+│                                                      │
+│  1. INTENTION (Human describes goal)                │
+│           ↓                                          │
+│  2. GENERATION (AI produces code in DSL)            │
+│           ↓                                          │
+│  3. SYNTACTIC VALIDATION (Does it compile?)         │
+│           ↓                                          │
+│  4. SEMANTIC AUDIT (Does the code make sense?)      │
+│           ↓                                          │
+│  5. SANDBOX EXECUTION (Does it run isolated?)       │
+│           ↓                                          │
+│  6. HUMAN FEEDBACK (Dev approves or adjusts?)       │
+│           ↓                                          │
+│  7. ACTIVATION (Goes into production)               │
+│           ↓                                          │
+│  8. CONTINUOUS MONITORING (Audit every N ticks)     │
+│           ↓                                          │
+│  ← Continuous improvement loop ──────────────────→  │
+│                                                      │
+└─────────────────────────────────────────────────────┘`;
+
+        const diag2_pt = `┌─────────────────────────────────────────────────────┐
+│                     KERNEL CORE                      │
+│  Container, Router, EventDispatcher, PluginManager  │
+└─────────────────────────────────────────────────────┘
+           ↕                    ↕                  ↕
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐
+│  KERNEL SERVICES │  │  DSL             │  │  AUDITORIA   │
+│                  │  │                  │  │              │
+│  LinkRegistry    │  │  4 Verbos        │  │  Sintática   │
+│  HookRegistry    │  │  Contratos       │  │  Contratos   │
+│  HubManager      │  │  Manifestos      │  │  Semântica   │
+│  CircuitBreaker  │  │  Validação       │  │  SOLID       │
+│                  │  │                  │  │  Segurança   │
+└──────────────────┘  └──────────────────┘  └──────────────┘
+           ↕                    ↕                  ↕
+┌─────────────────────────────────────────────────────┐
+│                ECOSSISTEMA                           │
+│                                                      │
+│  🧩 Plugins    📦 Hubs    🎨 Temas    🪄 IA          │
+│                                                      │
+│  Cada um passa por auditoria antes e durante a vida │
+└─────────────────────────────────────────────────────┘`;
+
+        const diag2_en = `┌─────────────────────────────────────────────────────┐
+│                     KERNEL CORE                      │
+│  Container, Router, EventDispatcher, PluginManager  │
+└─────────────────────────────────────────────────────┘
+           ↕                    ↕                  ↕
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐
+│  KERNEL SERVICES │  │  DSL             │  │  AUDITING    │
+│                  │  │                  │  │              │
+│  LinkRegistry    │  │  4 Verbs         │  │  Syntactic   │
+│  HookRegistry    │  │  Contracts       │  │  Contracts   │
+│  HubManager      │  │  Manifests       │  │  Semantic    │
+│  CircuitBreaker  │  │  Validation      │  │  SOLID       │
+│                  │  │                  │  │  Security    │
+└──────────────────┘  └──────────────────┘  └──────────────┘
+           ↕                    ↕                  ↕
+┌─────────────────────────────────────────────────────┐
+│                ECOSYSTEM                             │
+│                                                      │
+│  🧩 Plugins    📦 Hubs    🎨 Themes   🪄 AI          │
+│                                                      │
+│  Each one passes an audit before and during its life│
+└─────────────────────────────────────────────────────┘`;
+
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            
+            document.getElementById('diagram1').textContent = lang === 'en' ? diag1_en : diag1_pt;
+            document.getElementById('diagram2').textContent = lang === 'en' ? diag2_en : diag2_pt;
+
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+        }
+
+        // Initialize Default English
+        setLanguage('en');
+    </script>
+</body>
+</html>
