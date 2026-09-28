@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain-System OS | Guia do Desenvolvedor</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-blue);
+            box-shadow: 0 4px 30px rgba(56, 189, 248, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Prerequisite Alert */
+        .alert-warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .alert-warning svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-red);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Tabs System */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.1);
+            box-shadow: inset 0 -2px 0 var(--accent-blue);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { margin-bottom: 15px; color: var(--accent-blue); }
+        h3 { margin: 25px 0 10px; color: var(--accent-green); }
+        p { margin-bottom: 15px; color: var(--text-muted); }
+        
+        .highlight { color: var(--text-main); font-weight: bold; }
+
+        /* Code Blocks */
+        .code-block {
+            background: #000;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid #1f2937;
+        }
+
+        .code-block pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            color: #e5e7eb;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-main);
+            border-color: var(--accent-blue);
+        }
+
+        /* Keyword Highlights for PHP */
+        .k { color: #c678dd; } /* Keyword */
+        .f { color: #61afef; } /* Function */
+        .v { color: #e06c75; } /* Variable */
+        .s { color: #98c379; } /* String */
+        .c { color: #5c6370; font-style: italic; } /* Comment */
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Domain-System OS</h1>
+        <p style="color: var(--accent-blue); font-size: 1.1rem;">Guia Oficial de Construção de Extensões (Temas e Plugins)</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="alert-warning">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <div>
+                <h3 style="margin: 0 0 5px; color: var(--accent-red);">Pré-requisito Crítico</h3>
+                <p style="color: #fca5a5; margin: 0;">Para construir para o Domain-System OS, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('tab1')">1. O Contrato</button>
+            <button class="tab-btn" onclick="openTab('tab2')">2. A Negociação (osRegister)</button>
+            <button class="tab-btn" onclick="openTab('tab3')">3. A Execução (osBoot)</button>
+            <button class="tab-btn" onclick="openTab('tab4')">4. Exemplo Completo</button>
+        </div>
+
+        <!-- TAB 1 -->
+        <div id="tab1" class="tab-content active">
+            <h2>O Fim da Bagunça Global</h2>
+            <p>Se você vem do WordPress, está acostumado a criar um <code class="highlight">functions.php</code> e usar funções globais. No Domain-System OS, isso é proibido.</p>
+            <p>Toda Extensão (Plugin ou Tema) é uma Classe que deve assinar um contrato chamado <code class="highlight">OsExtensionInterface</code>. Esse contrato divide a vida do seu plugin em duas fases de segurança.</p>
+            
+            <h3>A Injeção de Dependências (O Garçom)</h3>
+            <p>Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo "Garçom": você senta, pede o que quer (Fase 1), e o Sistema Operacional <strong class="highlight">injeta</strong> a ferramenta pronta na sua mão (Fase 2).</p>
+        </div>
+
+        <!-- TAB 2 -->
+        <div id="tab2" class="tab-content">
+            <h2>Fase 1: Negociação (osRegister)</h2>
+            <p>Antes de rodar qualquer regra de negócio, você usa o objeto <code class="highlight">OsConnector</code> para avisar ao Sistema Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.</p>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<pre><span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+{
+    <span class="c">// Pedindo permissão para ler dados de usuários</span>
+    <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'auth.user_reader'</span>);
+    
+    <span class="c">// Pedindo permissão para criar um widget na tela</span>
+    <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+}</pre>
+            </div>
+        </div>
+
+        <!-- TAB 3 -->
+        <div id="tab3" class="tab-content">
+            <h2>Fase 2: Execução (osBoot)</h2>
+            <p>Depois de aprovar seu contrato, o Sistema Operacional te passa o <code class="highlight">OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.</p>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<pre><span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+{
+    <span class="c">// O SO Injeta a ferramenta na sua mão</span>
+    <span class="v">$userReader</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'auth.user_reader'</span>);
+    
+    <span class="c">// Agora podemos injetar nosso visual na tela (Slot)</span>
+    <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
+        <span class="s">'message'</span> => <span class="s">'Plugin inicializado com sucesso!'</span>
+    ]);
+}</pre>
+            </div>
+        </div>
+
+        <!-- TAB 4 -->
+        <div id="tab4" class="tab-content">
+            <h2>Estrutura Completa de um Plugin/Tema</h2>
+            <p>Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente.</p>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+<pre><span class="k">namespace</span> DomainSystem\Plugins\meu_plugin;
+
+<span class="k">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
+<span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
+<span class="k">use</span> DomainSystem\Core\Plugin\OsConnector;
+<span class="k">use</span> DomainSystem\Core\Plugin\OsRuntime;
+
+<span class="k">class</span> <span class="f">Plugin</span> <span class="k">extends</span> AbstractPlugin <span class="k">implements</span> OsExtensionInterface
+{
+    <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+    {
+        <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.session'</span>);
+    }
+
+    <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+    {
+        <span class="v">$session</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.session'</span>);
+        <span class="c">// Seu código seguro e isolado vai aqui!</span>
+    }
+}</pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openTab(tabId) {
+            // Remove active classes
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'Copiado!';
+                btn.style.color = '#10b981';
+                btn.style.borderColor = '#10b981';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
