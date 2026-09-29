@@ -76,7 +76,9 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 ### 4.3. Performance e Otimização
 - [ ] **Cache de Queries:** Redução de consultas repetidas ao banco de dados.
 - [x] **Lazy Loading de Interface:** Carregamento sob demanda de abas pesadas.
-- [ ] **Otimização de Assets:** Minificação e compressão de CSS/JS.
+- [ ] **Otimização de Assets (SEO Engine):** Minificação e compressão profunda de CSS/JS e HTML para bater 99+ no Lighthouse.
+- [ ] **SEO Monitor Plugin:** Plugin autônomo que consome a API do Google PageSpeed Insights e exibe relatórios de saúde do SEO diretamente em Widgets no Dashboard.
+- [ ] **Auto-Fixer Baseado em IA:** Integração da IA para propor ou gerar automaticamente correções caso a nota do PageSpeed caia abaixo de 90.
 
 ---
 

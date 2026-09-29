@@ -12,3 +12,6 @@ auditoria/
 
 database.sqlite
 config/installed.lock
+
+# Temas Privados
+src/Plugins/flextheme/themes/rachidd

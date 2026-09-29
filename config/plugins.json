@@ -20,5 +20,8 @@
     "No-Break Shield": true,
     "visual_themes": false,
     "Temas Visuais (Visual Themes)": true,
-    "flextheme": true
+    "flextheme": true,
+    "test_os": true,
+    "seo": false,
+    "SEO & Theme Engine": true
 }

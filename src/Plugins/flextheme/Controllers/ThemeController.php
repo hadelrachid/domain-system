@@ -12,23 +12,22 @@ class ThemeController
         // Em arquitetura Single-Tenant, o tema pode vir de um arquivo config.json ou env.
         $themeName = $_ENV['ACTIVE_THEME'] ?? 'default';
         
-        $themePath = __DIR__ . '/../themes/' . $themeName . '/index.php';
+        $themeDir = __DIR__ . '/../themes/' . $themeName;
+        $themePath = file_exists($themeDir . '/templates/home.php') 
+            ? $themeDir . '/templates/home.php' 
+            : $themeDir . '/index.php';
         
         if (!file_exists($themePath)) {
             return new Response("Tema não encontrado: " . htmlspecialchars($themeName), 404);
         }
 
-        // Variáveis injetadas na View
-        $viewData = [
-            'siteName' => $_ENV['SITE_NAME'] ?? 'Domain System',
-        ];
-
         // Output Buffer para ler o HTML
         ob_start();
-        extract($viewData);
+        $siteName = $_ENV['SITE_NAME'] ?? 'Domain System';
         require $themePath;
         $html = ob_get_clean();
 
+        // 🚨 O SEO Middleware vai interceptar esta Response e envelopá-la no main.php + Minificar!
         return new Response($html);
     }
 }
