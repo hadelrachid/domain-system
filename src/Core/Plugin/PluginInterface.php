@@ -2,72 +2,12 @@
 
 namespace DomainSystem\Core\Plugin;
 
-interface PluginInterface
+use DomainSystem\Core\Contracts\PluginLifecycleInterface;
+use DomainSystem\Core\Contracts\PluginMetadataInterface;
+use DomainSystem\Core\Contracts\PluginStateInterface;
+
+interface PluginInterface extends PluginLifecycleInterface, PluginMetadataInterface, PluginStateInterface
 {
-    /**
-     * Registra os hooks, rotas e serviços do plugin.
-     * Chamado durante o boot do Kernel. Somente para registro/composição.
-     */
-    public function register(): void;
-
-    /**
-     * Inicialização pós-registro (quando todos os plugins já foram registrados).
-     */
-    public function boot(): void;
-
-    /**
-     * Chamado quando o plugin é ativado no painel (para migrations, etc).
-     */
-    public function activate(): void;
-
-    /**
-     * Chamado quando o plugin é desativado no painel.
-     */
-    public function deactivate(): void;
-
-    /**
-     * Chamado quando o plugin é completamente removido.
-     */
-    public function uninstall(): void;
-
-    /**
-     * Retorna o nome do plugin (para identificação).
-     */
-    public function getName(): string;
-
-    /**
-     * Retorna a versão do plugin.
-     */
-    public function getVersion(): string;
-
-    /**
-     * Retorna as dependências (nomes de outros plugins) que este plugin precisa.
-     */
-    public function getDependencies(): array;
-
-    /**
-     * Define se o plugin está ativo.
-     */
-    public function isActive(): bool;
-
-    /**
-     * Retorna o caminho para sub-plugins (caso este plugin seja um Hub/Adapter).
-     * Se não for um Hub, deve retornar null.
-     */
-    public function getSubPluginsPath(): ?string;
-
-    /**
-     * Define se o plugin é um plugin de core do sistema
-     */
-    public function isCore(): bool;
-    
-    /**
-     * Retorna a descrição do plugin
-     */
-    public function getDescription(): string;
-    
-    /**
-     * Define o estado de ativação em tempo de execução.
-     */
-    public function setActive(bool $active): void;
+    // Métodos segregados nas interfaces acima (ISP).
+    // Mantido aqui para retrocompatibilidade de Type Hinting no sistema legado.
 }

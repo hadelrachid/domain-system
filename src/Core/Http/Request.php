@@ -2,7 +2,9 @@
 
 namespace DomainSystem\Core\Http;
 
-class Request
+use DomainSystem\Core\Contracts\RequestInterface;
+
+class Request implements RequestInterface
 {
     public array $query;
     public array $request;

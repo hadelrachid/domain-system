@@ -20,7 +20,9 @@ class CoreServiceProvider
         $container->singleton(\DomainSystem\Core\Plugin\PluginManager::class, function($c) use ($basePath, $dispatcher) {
             $stateManager = new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
             $discoverer = new \DomainSystem\Core\Plugin\Services\PluginDiscoverer($c, $dispatcher, $stateManager);
-            $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($c, $dispatcher, $stateManager, $basePath);
+            $sessionManager = $c->make(\DomainSystem\Core\Http\SessionManager::class);
+            $linkRegistry = $c->make(\DomainSystem\Core\Plugin\LinkRegistry::class);
+            $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($c, $dispatcher, $stateManager, $basePath, $sessionManager, $linkRegistry);
             $installer = new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $stateManager);
             
             return new \DomainSystem\Core\Plugin\PluginManager(
@@ -34,8 +36,8 @@ class CoreServiceProvider
         });
 
         // 3. Router
-        $container->singleton(\DomainSystem\Core\Routing\Router::class, function($c) {
-            $router = new \DomainSystem\Core\Routing\Router($c);
+        $container->singleton(\DomainSystem\Core\Routing\Router::class, function($c) use ($dispatcher) {
+            $router = new \DomainSystem\Core\Routing\Router($c, $dispatcher);
             $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\CsrfMiddleware::class);
             $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\AuthMiddleware::class);
             return $router;

@@ -12,11 +12,12 @@ use DomainSystem\Core\Contracts\ContainerInterface;
 class Router implements RouterInterface
 {
     private array $routes = [];
-    private ContainerInterface $container;
+    private ?\DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container, ?\DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher = null)
     {
         $this->container = $container;
+        $this->dispatcher = $dispatcher;
     }
 
     public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $roles = []): void
@@ -42,10 +43,9 @@ class Router implements RouterInterface
         // Remove query string
         $uri = strtok($request->uri(), '?');
 
-        // Dispara o listener (opcional, mantendo retrocompatibilidade com plugins antigos)
-        if ($this->container->has(\DomainSystem\Core\Contracts\EventDispatcherInterface::class)) {
-            $dispatcher = $this->container->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
-            $dispatcher->dispatch('router.before_dispatch', $uri);
+        // Dispara o listener
+        if ($this->dispatcher !== null) {
+            $this->dispatcher->dispatch('router.before_dispatch', $uri);
         }
 
         if (!isset($this->routes[$method])) {

@@ -2,7 +2,9 @@
 
 namespace DomainSystem\Core\Http;
 
-class Response
+use DomainSystem\Core\Contracts\ResponseInterface;
+
+class Response implements ResponseInterface
 {
     protected string $content;
     protected int $statusCode;

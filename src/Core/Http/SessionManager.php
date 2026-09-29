@@ -2,7 +2,9 @@
 
 namespace DomainSystem\Core\Http;
 
-class SessionManager
+use DomainSystem\Core\Contracts\SessionManagerInterface;
+
+class SessionManager implements SessionManagerInterface
 {
     public function start(): void
     {

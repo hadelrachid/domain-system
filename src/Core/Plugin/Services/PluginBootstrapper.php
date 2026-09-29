@@ -26,6 +26,8 @@ class PluginBootstrapper
     private EventDispatcherInterface $dispatcher;
     private PluginStateManager $stateManager;
     private string $basePath;
+    private ?\DomainSystem\Core\Contracts\SessionManagerInterface $sessionManager;
+    private ?\DomainSystem\Core\Plugin\LinkRegistry $linkRegistry;
 
     /** @var string|null */
     private ?string $currentBootingPlugin = null;
@@ -34,12 +36,16 @@ class PluginBootstrapper
         ContainerInterface $container, 
         EventDispatcherInterface $dispatcher, 
         PluginStateManager $stateManager,
-        string $basePath
+        string $basePath,
+        ?\DomainSystem\Core\Contracts\SessionManagerInterface $sessionManager = null,
+        ?\DomainSystem\Core\Plugin\LinkRegistry $linkRegistry = null
     ) {
         $this->container = $container;
         $this->dispatcher = $dispatcher;
         $this->stateManager = $stateManager;
         $this->basePath = $basePath;
+        $this->sessionManager = $sessionManager;
+        $this->linkRegistry = $linkRegistry;
     }
 
     public function getCurrentBootingPlugin(): ?string
@@ -83,11 +89,12 @@ class PluginBootstrapper
                         
                         // Opcionalmente registrar o connector no LinkRegistry se estiver disponível
                         try {
-                            $linkRegistry = $this->container->make(\DomainSystem\Core\Plugin\LinkRegistry::class);
-                            $linkRegistry->registerConnector($pluginName, $connector);
+                            if ($this->linkRegistry) {
+                                $this->linkRegistry->registerConnector($pluginName, $connector);
+                            }
                             
                             // 2. Fase de Execução (O OS passa o guardião de runtime)
-                            $runtime = new \DomainSystem\Core\Plugin\OsRuntime($this->container, $connector, $linkRegistry, $this->dispatcher);
+                            $runtime = new \DomainSystem\Core\Plugin\OsRuntime($this->container, $connector, $this->linkRegistry, $this->dispatcher);
                             $plugin->osBoot($runtime);
                         } catch (\Exception $e) {
                             throw new \Exception("Erro ao configurar motor OS para {$pluginName}: " . $e->getMessage());
@@ -108,13 +115,14 @@ class PluginBootstrapper
                     $this->stateManager->disable($pluginName);
                     
                     try {
-                        $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-                        $crashes = $session->get('plugin_crashes', []);
-                        $crashes[] = [
-                            'plugin' => $pluginName,
-                            'error' => $e->getMessage()
-                        ];
-                        $session->set('plugin_crashes', $crashes);
+                        if ($this->sessionManager) {
+                            $crashes = $this->sessionManager->get('plugin_crashes', []);
+                            $crashes[] = [
+                                'plugin' => $pluginName,
+                                'error' => $e->getMessage()
+                            ];
+                            $this->sessionManager->set('plugin_crashes', $crashes);
+                        }
                     } catch (\Throwable $ignored) {}
 
                     error_log("Plugin '{$pluginName}' crashed during boot and was automatically disabled. Error: " . $e->getMessage());
@@ -191,13 +199,14 @@ class PluginBootstrapper
                 $this->stateManager->disable($this->currentBootingPlugin);
                 
                 try {
-                    $session = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
-                    $crashes = $session->get('plugin_crashes', []);
-                    $crashes[] = [
-                        'plugin' => $this->currentBootingPlugin,
-                        'error' => "FATAL CRASH (QTA Acionado pelo Gerador): " . $error['message']
-                    ];
-                    $session->set('plugin_crashes', $crashes);
+                    if ($this->sessionManager) {
+                        $crashes = $this->sessionManager->get('plugin_crashes', []);
+                        $crashes[] = [
+                            'plugin' => $this->currentBootingPlugin,
+                            'error' => "FATAL CRASH (QTA Acionado pelo Gerador): " . $error['message']
+                        ];
+                        $this->sessionManager->set('plugin_crashes', $crashes);
+                    }
                 } catch (\Throwable $ignored) {}
                 
                 error_log("QTA ACIONADO! Plugin '{$this->currentBootingPlugin}' sofreu um colapso fatal (Ex: Fim de Memória) e foi ejetado automaticamente. Erro: " . $error['message']);
