@@ -109,22 +109,25 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function activate(): void
     {
-        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
-        $schema->create('users', function ($table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->string('role', 50)->default('admin');
-            $table->integer('linked_doctor_id')->nullable();
-            $table->string('two_factor_secret')->nullable();
-            $table->string('two_factor_type', 20)->default('none');
-            $table->string('email_2fa_code', 6)->nullable();
-            $table->datetime('email_2fa_expiry')->nullable();
-            $table->string('theme_color', 50)->default('default');
-            $table->string('profile_image', 255)->nullable();
-            $table->timestamps();
-        });
+        try {
+            $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+            $schema->create('users', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('email')->unique();
+                $table->string('password');
+                $table->string('role', 50)->default('admin');
+                $table->integer('linked_doctor_id')->nullable();
+                $table->string('two_factor_secret')->nullable();
+                $table->string('two_factor_type', 20)->default('none');
+                $table->string('email_2fa_code', 6)->nullable();
+                $table->datetime('email_2fa_expiry')->nullable();
+                $table->string('theme_color', 50)->default('default');
+                $table->string('profile_image', 255)->nullable();
+                $table->text('dashboard_layout')->nullable();
+                $table->timestamps();
+            });
+        } catch (\Exception $e) {}
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
         $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
@@ -135,5 +138,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_code VARCHAR(6) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_expiry DATETIME NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) NULL"); } catch (\Exception $e) {}
+        try { $db->exec("ALTER TABLE users ADD COLUMN dashboard_layout TEXT NULL"); } catch (\Exception $e) {}
     }
 }

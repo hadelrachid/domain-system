@@ -24,6 +24,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->listenHook('workspace.register');
         $os->listenHook('shortcodes.register');
         $os->listenHook('router.register');
+        $os->listenHook('dashboard.register_widgets');
     }
 
     // ==========================================
@@ -54,6 +55,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
             $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
         });
+
+        try {
+            $registry = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
+            $registry->registerProvider(new \DomainSystem\Plugins\SystemAdmin\Widgets\SystemWidgetProvider());
+        } catch (\Exception $e) {}
 
         // O Plugue (Macho) se conectando à Régua de Tomadas!
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
@@ -104,3 +110,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 }
+
+
+
+

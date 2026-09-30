@@ -37,8 +37,8 @@
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
         <div class="form-group">
-            <label for="admin_name">Nome da Clínica (ou Seu Nome)</label>
-            <input type="text" name="admin_name" id="admin_name" required placeholder="Ex: Clínica Saúde +">
+            <label for="admin_name">Nome do Site ou Empresa</label>
+            <input type="text" name="admin_name" id="admin_name" required placeholder="Ex: RachidD">
         </div>
         
         <div class="form-group">

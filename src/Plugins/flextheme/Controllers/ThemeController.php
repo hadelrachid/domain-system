@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\FlexTheme\Controllers;
+namespace DomainSystem\Plugins\flextheme\Controllers;
 
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;

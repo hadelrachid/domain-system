@@ -1,10 +1,10 @@
 <?php
 
-namespace DomainSystem\Plugins\FlexTheme;
+namespace DomainSystem\Plugins\flextheme;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
-use DomainSystem\Plugins\FlexTheme\Controllers\ThemeController;
+use DomainSystem\Plugins\flextheme\Controllers\ThemeController;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;

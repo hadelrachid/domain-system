@@ -29,17 +29,27 @@ try {
     $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
     $scriptName = str_replace('\\', '/', $scriptName);
     
-    // Remove o scriptName da URI se existir
+    // 1. Remove o scriptName exato se acessaram diretamente /public/index.php
     if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
         $uri = substr($uri, strlen($scriptName));
     }
-    // Caso tenham acessado /domain-system/admin diretamente pela regra raiz
+    
+    // 2. Calcula o BASE_URL e limpa a URI
     $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
+    $scriptDir = rtrim(dirname($scriptName), '/\\'); // ex: /domain-system ou raiz da hostinger
+    
     if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
+        // Acesso local XAMPP: a URL começa com a pasta do projeto
         $uri = substr($uri, strlen($baseFolder));
         if (!defined('BASE_URL')) define('BASE_URL', $baseFolder);
     } else {
-        if (!defined('BASE_URL')) define('BASE_URL', rtrim($scriptName, '/'));
+        // Acesso em Produção (Hostinger)
+        if ($scriptDir !== '' && strpos($_SERVER['REQUEST_URI'], $scriptDir) !== 0) {
+            // RewriteRule .htaccess ocultou o public
+            if (!defined('BASE_URL')) define('BASE_URL', '');
+        } else {
+            if (!defined('BASE_URL')) define('BASE_URL', rtrim($scriptName, '/'));
+        }
     }
     
     if (empty($uri)) {

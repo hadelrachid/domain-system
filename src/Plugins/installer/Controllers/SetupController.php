@@ -16,9 +16,9 @@ class SetupController
 
     public function logo(Request $request): Response
     {
-        $path = DOMAIN_SYSTEM_ROOT . '/public/assets/img/logo-cockpit.png';
+        $path = DOMAIN_SYSTEM_ROOT . '/public/assets/img/site-home/logo-rd.svg';
         if (file_exists($path)) {
-            header('Content-Type: image/png');
+            header('Content-Type: image/svg+xml');
             readfile($path);
             exit;
         }
@@ -38,11 +38,11 @@ class SetupController
             if ($driver === 'sqlite') {
                 $dsn = "sqlite:" . DOMAIN_SYSTEM_ROOT . "/database.sqlite";
                 $pdo = new \PDO($dsn);
-                $envContent = "DB_DSN=\"$dsn\"\nDB_USER=\"\"\nDB_PASS=\"\"\n";
+                $envContent = "DB_DSN=\"$dsn\"\nDB_USER=\"\"\nDB_PASS=\"\"\nACTIVE_THEME=\"rachidd\"\n";
             } else {
                 $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
                 $pdo = new \PDO($dsn, $user, $pass, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-                $envContent = "DB_DSN=\"$dsn\"\nDB_USER=\"$user\"\nDB_PASS=\"$pass\"\n";
+                $envContent = "DB_DSN=\"$dsn\"\nDB_USER=\"$user\"\nDB_PASS=\"$pass\"\nACTIVE_THEME=\"rachidd\"\n";
             }
 
             // Save .env
@@ -79,14 +79,21 @@ class SetupController
             unlink($migrationsPath);
         }
 
-        // 2. Discover and Boot plugins (bootPlugins will sort topologically and run activate() since they are not in migrations.json)
-        $pluginsJson = json_decode(file_get_contents(DOMAIN_SYSTEM_ROOT . '/config/plugins.json'), true);
+        // 2. Executar migrações manualmente em vez de dar duplo boot
         $app = \DomainSystem\Core\Application::getInstance();
         $manager = $app->getPluginManager();
-        $manager->discoverPlugins(DOMAIN_SYSTEM_ROOT . '/src/Plugins', DOMAIN_SYSTEM_ROOT . '/config/plugins.json');
+        $container = $app->getContainer();
         
-        // This runs the topological sort and calls activate() for unmigrated plugins
-        $manager->bootPlugins();
+        $migrated = [];
+        foreach ($manager->getPlugins() as $name => $plugin) {
+            try {
+                $plugin->activate($container);
+                $migrated[] = $name;
+            } catch (\Throwable $e) {}
+        }
+        
+        // Salva o log de migrações
+        file_put_contents($migrationsPath, json_encode($migrated));
 
         // 2. Create Admin Account
         $db = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
@@ -115,8 +122,10 @@ class SetupController
 
         // O redirecionamento após o sucesso fará o kernel reavaliar a existência do Admin no banco.
         
+        file_put_contents(DOMAIN_SYSTEM_ROOT . '/config/installed.lock', date('Y-m-d H:i:s'));
         // Redirect to admin
         header("Location: " . BASE_URL . "/admin");
         exit;
     }
 }
+

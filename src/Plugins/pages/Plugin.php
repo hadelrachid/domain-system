@@ -63,13 +63,30 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function activate(): void
     {
-        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
-        $schema->create('pages', function ($table) {
-            $table->id();
-            $table->string('slug')->unique();
-            $table->string('title');
-            $table->text('content')->nullable();
-            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
-        });
+        try {
+            $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+            $schema->create('pages', function ($table) {
+                $table->id();
+                $table->string('slug')->unique();
+                $table->string('title');
+                $table->text('content')->nullable();
+                $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
+            });
+            
+            // Seed default pages
+            $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            
+            $defaults = [
+                ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>'],
+                ['sobre', 'Sobre Mim', '<h1>Sobre Rachid</h1><p>Sou o criador do Domain-System OS.</p>'],
+                ['termos', 'Termos de Uso', '<h1>Termos de Uso</h1><p>Estes são os termos de uso.</p>'],
+                ['privacidade', 'Política de Privacidade', '<h1>Política de Privacidade</h1><p>Respeitamos seus dados.</p>']
+            ];
+            
+            $stmt = $db->prepare("INSERT INTO pages (slug, title, content) VALUES (?, ?, ?)");
+            foreach ($defaults as $p) {
+                $stmt->execute($p);
+            }
+        } catch (\Exception $e) {}
     }
 }

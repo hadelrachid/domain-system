@@ -30,15 +30,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        // Verifica se existe um admin no banco de dados. Se não existir (ou der erro), o sistema entra em MODO SETUP.
-        try {
-            $db = $runtime->getLink('core.db')->getPdo();
-            $stmt = $db->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-            if ($stmt && $stmt->fetchColumn()) {
-                $this->isInstalled = true;
-            }
-        } catch (\Exception $e) {
-            // Tabela users não existe, banco inválido, etc.
+        // Verifica se o arquivo de proteção existe. Se não existir, MODO SETUP.
+        if (file_exists(DOMAIN_SYSTEM_ROOT . '/config/installed.lock')) {
+            $this->isInstalled = true;
         }
 
         if (!$this->isInstalled) {

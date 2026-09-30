@@ -23,5 +23,6 @@
     "flextheme": true,
     "test_os": true,
     "seo": false,
-    "SEO & Theme Engine": true
+    "SEO & Theme Engine": true,
+    "analytics": false
 }

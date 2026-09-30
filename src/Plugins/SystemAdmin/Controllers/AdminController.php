@@ -193,7 +193,7 @@ class AdminController
         $themesPath = $basePath . '/themes';
         
         $themes = [];
-        // 1. Temas Globais
+        // 1. Temas do FlexTheme
         if (is_dir($themesPath)) {
             $directories = glob($themesPath . '/*', GLOB_ONLYDIR);
             foreach ($directories as $dir) {
@@ -267,7 +267,9 @@ class AdminController
                             }
                             
                             $previewUrl = \BASE_URL . '/cockpit/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder));
-                            if ($folder === 'public_booking') {
+                            if ($pluginName === 'flextheme') {
+                                $previewUrl = \BASE_URL . '/';
+                            } elseif ($folder === 'public_booking') {
                                 $previewUrl = \BASE_URL . '/agendamento';
                             }
 
@@ -459,3 +461,8 @@ class AdminController
         }
     }
 }
+
+
+
+
+
