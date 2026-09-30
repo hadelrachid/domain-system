@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resilience & Circuit Breaker - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <a href="index_en.html" class="back-link">&larr; Back to Index</a>
+        <a href="circuit-breaker.html" class="lang-toggle">🇧🇷 Português</a>
+        <h1>⚡ Resilience & Circuit Breaker</h1>
+        <p>How Domain-System protects itself from fatal plugins and critical errors.</p>
+    </header>
+    <div class="content">
+        <h2>The Classic Problem (White Screen of Death)</h2>
+        <p>In traditional monolithic or plugin-based systems (like legacy WordPress), a simple typo by a developer — such as forgetting a semicolon in a newly installed plugin — can cause the infamous "White Screen of Death". PHP abruptly halts all execution, and the entire site becomes inaccessible for everyone (including administrators).</p>
+        <h2>The Solution: Circuit Breaker</h2>
+        <p>The <strong>Domain-System</strong> was designed with an advanced architectural concept focused on high resilience: the <a href="https://martinfowler.com/bliki/CircuitBreaker.html" target="_blank">Circuit Breaker</a>.</p>
+        <p>It works very similarly to an electrical circuit breaker in a house. When an "overload" (a fatal error) occurs in one of the rooms (plugins), the breaker "trips" only that line, protecting the overall core from burning out.</p>
+        <h3>How It Works Under the Hood</h3>
+        <ol>
+            <li><strong>Global Interception (ErrorHandler):</strong> A defense layer, directly hooked into PHP's <code>register_shutdown_function</code>, watches all fatal events at the hardware and compilation level (Syntax Errors, Parse Errors, etc).</li>
+            <li><strong>Isolated Tracking:</strong> When a fatal exception blows up, the Watchman captures the <em>Stack Trace</em> to discover the exact origin of the error.</li>
+            <li><strong>Automatic Disarming:</strong> If the system identifies that the failure came from a file belonging to a specific Plugin's folder, it intercepts the <code>config/plugins.json</code> file and <strong>disconnects / disables the plugin in milliseconds</strong>.</li>
+            <li><strong>Panel Protection:</strong> The system clears half-rendered buffers and displays a clean "Core Overload" screen <strong>only for the author of the affected request</strong>. On the same screen, it displays a button to Reload the Safe System.</li>
+            <li><strong>Log and Visual Alerts:</strong> The system adds a record of the crash to the temporary <code>disarmed.json</code> file. As soon as the administrator accesses the native Plugins screen (via <em>SystemAdmin</em>), they see a bright alert highlighting the disarmed plugin, with a shortcut to the detailed reports screen (<em>SystemMonitor</em>).</li>
+        </ol>
+    </div>
+</body>
+</html>

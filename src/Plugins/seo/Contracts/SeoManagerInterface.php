@@ -25,6 +25,11 @@ interface SeoManagerInterface
     public function setCanonical(string $url): self;
 
     /**
+     * Define o ícone (favicon) do site.
+     */
+    public function setFavicon(string $url): self;
+
+    /**
      * Adiciona tags meta customizadas (OpenGraph, Twitter Cards, etc).
      */
     public function addMeta(string $name, string $content, string $type = 'name'): self;

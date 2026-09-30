@@ -57,9 +57,13 @@ class Router implements RouterInterface
             return $this->runPipeline($request, $this->routes[$method][$uri], []);
         }
 
-        // Busca rota com parâmetros (ex: /pacientes/{id})
+        // Busca rota com parâmetros (ex: /pacientes/{id} ou /docs/{*path})
         foreach ($this->routes[$method] as $route => $config) {
-            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $route);
+            // Suporte a catch-all (ex: {*path}) que captura inclusive barras
+            $pattern = preg_replace('/\{\*[a-zA-Z_]+\}/', '(.*)', $route);
+            // Suporte a variáveis normais (ex: {id}) que param na barra
+            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $pattern);
+            
             if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
                 array_shift($matches);
                 return $this->runPipeline($request, $config, $matches);

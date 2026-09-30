@@ -1,8 +1,9 @@
 <?php
-require __DIR__ . '/../public/index.php';
+require __DIR__ . '/../bootstrap.php';
 
 $pdo = new PDO($_ENV['DB_DSN'], $_ENV['DB_USER'], $_ENV['DB_PASS'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
+// Usaremos a constante BASE_URL no link para que funcione perfeitamente
 $content = <<<HTML
 <div style="text-align: center; margin-bottom: 50px;">
     <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Central de <span class="text-primary">Conhecimento</span></h2>
@@ -12,7 +13,7 @@ $content = <<<HTML
 <div class="grid-responsive" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
     
     <!-- Pasta: Domain-System -->
-    <a href="#" style="text-decoration: none;">
+    <a href="[base_url]/docs/index" style="text-decoration: none;">
         <div class="glass-panel" style="padding: 30px; text-align: center; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(69,243,255,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
             <div style="font-size: 3rem; margin-bottom: 15px;">⚙️</div>
             <h3 style="color: #fff; margin-bottom: 10px;">Domain-System OS</h3>
@@ -52,4 +53,4 @@ $stmt->execute([
     'content' => $content
 ]);
 
-echo "Cards desabilitados com sucesso!\n";
+echo "Card de Tutoriais atualizado com o link para a documentação!\n";

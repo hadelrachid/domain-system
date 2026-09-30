@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain-System OS | Manifesto O Contrato do Sistema</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-blue);
+            box-shadow: 0 4px 30px rgba(56, 189, 248, 0.2);
+            position: relative;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-switch button.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .alert-warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .alert-warning svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-red);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .content-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { margin: 25px 0 15px; color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+        h3 { margin: 25px 0 10px; color: var(--accent-green); }
+        p { margin-bottom: 15px; color: var(--text-muted); }
+        
+        .highlight { color: var(--text-main); font-weight: bold; }
+
+        .code-block {
+            background: #000;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid #1f2937;
+        }
+
+        .code-block pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            color: #e5e7eb;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-main);
+            border-color: var(--accent-blue);
+        }
+
+        .k { color: #c678dd; } /* Keyword */
+        .f { color: #61afef; } /* Function */
+        .v { color: #e06c75; } /* Variable */
+        .s { color: #98c379; } /* String */
+        .c { color: #5c6370; font-style: italic; } /* Comment */
+        
+        ol { margin-left: 20px; color: var(--text-muted); margin-bottom: 20px; }
+        ol li { margin-bottom: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="lang-switch">
+            <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
+            <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
+        </div>
+        <h1 data-i18n="title">O Contrato do Sistema Operacional</h1>
+        <p style="color: var(--accent-blue); font-size: 1.1rem;" data-i18n="subtitle">Manifesto de Injeção de Dependências e Arquitetura</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="content-card">
+            <p data-i18n="intro1">Bem-vindo ao coração do <strong class="highlight">Domain-System OS</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.</p>
+            <p data-i18n="intro2">Aqui, nós não escrevemos código "solto" torcendo para não dar conflito. Nós assinamos um <strong class="highlight">Contrato de Execução</strong>.</p>
+            <p data-i18n="intro3">Este manual explicará passo a passo como o motor do sistema funciona e introduzirá um dos conceitos mais poderosos (e muitas vezes mal compreendidos) da engenharia de software: a <strong class="highlight">Injeção de Dependências</strong>.</p>
+        </div>
+
+        <h2 data-i18n="h2_1">1. Por que um Contrato? (A Morte do functions.php)</h2>
+        <div class="content-card">
+            <p data-i18n="p1_1">Em sistemas antigos, os plugins usam funções globais para modificar o sistema. Isso é como ter um quadro elétrico com os fios soltos: se dois plugins tentarem usar a mesma "tomada", o sistema entra em curto (Fatal Error) e sai do ar.</p>
+            <p data-i18n="p1_2">No <strong class="highlight">Domain-System OS</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class="highlight">OsExtensionInterface</code>.</p>
+            <p data-i18n="p1_3">Esta interface funciona como um disjuntor inteligente. Ela divide a vida do seu plugin em duas fases isoladas: <strong class="highlight">Negociação</strong> e <strong class="highlight">Execução</strong>.</p>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><span class="k">interface</span> <span class="f">OsExtensionInterface</span> {
+    <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>;
+    <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>;
+}</pre>
+            </div>
+        </div>
+
+        <h2 data-i18n="h2_2">2. Fase 1: A Negociação (osRegister)</h2>
+        <div class="content-card">
+            <p data-i18n="p2_1">Antes de deixar o seu código rodar, o Sistema Operacional pergunta: <em>"O que você precisa para trabalhar e o que você oferece em troca?"</em></p>
+            <p data-i18n="p2_2">Você usa o objeto <code class="highlight">$os</code> (A Ponte de Negociação) para declarar formalmente as suas intenções. Nenhuma regra de banco de dados ou lógica complexa deve ser colocada aqui.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+{
+    <span class="c">// Eu preciso ler os usuários do sistema</span>
+    <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'auth.user_reader'</span>);
+    
+    <span class="c">// Eu quero desenhar um widget no dashboard administrativo</span>
+    <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+    
+    <span class="c">// Eu ofereço ao sistema o serviço de envio de SMS</span>
+    <span class="v">$os</span>-><span class="f">provideLink</span>(<span class="s">'sms.sender'</span>, TwilioSmsSender::class);
+}</pre>
+            </div>
+
+            <div class="alert-warning">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <div>
+                    <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">Segurança em Primeiro Lugar</h3>
+                    <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Sistema Operacional bloqueará o seu plugin por violação de segurança.</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <h2 data-i18n="h2_3">3. A Magia da Injeção de Dependências (O que é isso?)</h2>
+        <div class="content-card">
+            <p data-i18n="p3_1">Antes de irmos para a Fase 2, precisamos desmistificar um termo que assusta muita gente: <strong class="highlight">Injeção de Dependências (Dependency Injection)</strong>.</p>
+            
+            <h3 data-i18n="h3_3_1">O Jeito Antigo (Errado): A Caça ao Tesouro</h3>
+            <p data-i18n="p3_2">Nos sistemas legados, se você precisasse do Banco de Dados, você fazia assim:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><span class="v">$db</span> = Application::<span class="f">getInstance</span>()-><span class="f">getDatabase</span>(); <span class="c">// O plugin caçando a ferramenta</span></pre>
+            </div>
+            <p data-i18n="p3_3">O problema é que o plugin se torna "xereta". Ele entra onde não deve, procura as coisas sozinho, e se o nome do Banco de Dados mudar, o plugin quebra.</p>
+
+            <h3 data-i18n="h3_3_2">O Jeito Moderno (Certo): Injeção de Dependências</h3>
+            <p data-i18n="p3_4">Injeção de Dependências é, de forma simples, o conceito do <strong class="highlight">"Garçom"</strong>. Você não vai até a cozinha preparar o prato. Você senta na mesa e o garçom <em>traz (injeta)</em> a comida pronta para você.</p>
+            <p data-i18n="p3_5">Em vez de você ir caçar a ferramenta, o Sistema Operacional "Injeta" a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!</p>
+        </div>
+
+        <h2 data-i18n="h2_4">4. Fase 2: A Execução (osBoot)</h2>
+        <div class="content-card">
+            <p data-i18n="p4_1">Aqui o seu plugin acorda e começa a trabalhar. E como o Sistema Operacional sabe que o seu plugin é "confiável" (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class="highlight">$runtime</code>.</p>
+            <p data-i18n="p4_2">O <code class="highlight">$runtime</code> carrega uma bandeja <strong class="highlight">contendo estritamente as coisas que você pediu</strong>, através de <strong class="highlight">Injeção de Dependências</strong>.</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+{
+    <span class="c">// O OS INJETA a ferramenta na sua mão! Sem classes globais.</span>
+    <span class="v">$userReader</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'auth.user_reader'</span>);
+    
+    <span class="c">// Agora você pode usar a ferramenta com segurança</span>
+    <span class="v">$medicos</span> = <span class="v">$userReader</span>-><span class="f">getAllDoctors</span>();
+    
+    <span class="c">// O OS permite que você injete HTML no slot que você requisitou</span>
+    <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
+        <span class="s">'type'</span> => <span class="s">'success'</span>,
+        <span class="s">'message'</span> => <span class="s">'Carregamos '</span> . <span class="f">count</span>(<span class="v">$medicos</span>) . <span class="s">' médicos com sucesso!'</span>
+    ]);
+}</pre>
+            </div>
+
+            <h3 data-i18n="h3_4_1">Resumo dos Benefícios</h3>
+            <ol>
+                <li><strong class="highlight" data-i18n="li1_strong">Sem Erros Fatais:</strong> <span data-i18n="li1_span">Se faltar o <code>auth.user_reader</code>, o sistema avisa o usuário para instalar o plugin faltante antes de rodar, em vez de quebrar a tela inteira.</span></li>
+                <li><strong class="highlight" data-i18n="li2_strong">Auto-Complete Perfeito:</strong> <span data-i18n="li2_span">As IDEs modernas conseguem ler o <code>$runtime</code> e sugerir as opções de código, eliminando a necessidade de decorar nomes de funções.</span></li>
+                <li><strong class="highlight" data-i18n="li3_strong">Auditoria Pronta para IA:</strong> <span data-i18n="li3_span">Um robô ou inteligência artificial pode ler o seu <code>osRegister</code> e entender instantaneamente tudo o que o seu plugin faz, criando um ciclo de verificação e segurança perfeito.</span></li>
+            </ol>
+            
+            <p style="text-align: center; color: var(--accent-purple); font-size: 1.2rem; margin-top: 30px; font-weight: bold;" data-i18n="welcome">Bem-vindo à nova era do PHP modular!</p>
+        </div>
+
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                title: "The Operating System Contract",
+                subtitle: "Dependency Injection and Architecture Manifesto",
+                intro1: "Welcome to the heart of <strong class='highlight'>Domain-System OS</strong>. If you are used to creating themes and plugins for systems like WordPress, prepare for a paradigm shift.",
+                intro2: "Here, we don't write 'loose' code hoping it won't conflict. We sign an <strong class='highlight'>Execution Contract</strong>.",
+                intro3: "This manual will explain step-by-step how the system engine works and introduce one of the most powerful (and often misunderstood) concepts in software engineering: <strong class='highlight'>Dependency Injection</strong>.",
+                h2_1: "1. Why a Contract? (The Death of functions.php)",
+                p1_1: "In legacy systems, plugins use global functions to modify the system. This is like having an electrical panel with loose wires: if two plugins try to use the same 'socket', the system short-circuits (Fatal Error) and crashes.",
+                p1_2: "In <strong class='highlight'>Domain-System OS</strong>, every Extension (whether a visual Theme or a backend Plugin) is required to sign the <code class='highlight'>OsExtensionInterface</code>.",
+                p1_3: "This interface acts as a smart circuit breaker. It divides the life of your plugin into two isolated phases: <strong class='highlight'>Negotiation</strong> and <strong class='highlight'>Execution</strong>.",
+                h2_2: "2. Phase 1: Negotiation (osRegister)",
+                p2_1: "Before letting your code run, the Operating System asks: <em>'What do you need to work and what do you offer in return?'</em>",
+                p2_2: "You use the <code class='highlight'>$os</code> object (The Negotiation Bridge) to formally declare your intentions. No database rules or complex logic should be placed here.",
+                alert_title: "Safety First",
+                alert_desc: "If you try to use a resource in Phase 2 that was not requested here in Phase 1, the <strong>Operating System will block your plugin for security violation.</strong>",
+                h2_3: "3. The Magic of Dependency Injection (What is it?)",
+                p3_1: "Before moving to Phase 2, we need to demystify a term that scares many people: <strong class='highlight'>Dependency Injection</strong>.",
+                h3_3_1: "The Old Way (Wrong): The Treasure Hunt",
+                p3_2: "In legacy systems, if you needed the Database, you did this:",
+                p3_3: "The problem is that the plugin becomes 'nosy'. It enters where it shouldn't, looks for things on its own, and if the Database name changes, the plugin breaks.",
+                h3_3_2: "The Modern Way (Right): Dependency Injection",
+                p3_4: "Dependency Injection is, simply put, the concept of the <strong class='highlight'>'Waiter'</strong>. You don't go to the kitchen to prepare the dish. You sit at the table and the waiter <em>brings (injects)</em> the ready food to you.",
+                p3_5: "Instead of hunting for the tool, the Operating System 'Injects' the tool directly into your hand. And that's exactly what happens in Phase 2!",
+                h2_4: "4. Phase 2: Execution (osBoot)",
+                p4_1: "Here your plugin wakes up and starts working. And since the Operating System knows your plugin is 'trustworthy' (because it negotiated everything in Phase 1), it sends the waiter: the <code class='highlight'>$runtime</code> object.",
+                p4_2: "The <code class='highlight'>$runtime</code> carries a tray <strong class='highlight'>strictly containing the things you asked for</strong>, through <strong class='highlight'>Dependency Injection</strong>.",
+                h3_4_1: "Summary of Benefits",
+                li1_strong: "No Fatal Errors:",
+                li1_span: "If <code>auth.user_reader</code> is missing, the system warns the user to install the missing plugin before running, instead of breaking the entire screen.",
+                li2_strong: "Perfect Auto-Complete:",
+                li2_span: "Modern IDEs can read the <code>$runtime</code> and suggest code options, eliminating the need to memorize function names.",
+                li3_strong: "AI-Ready Auditing:",
+                li3_span: "A robot or AI can read your <code>osRegister</code> and instantly understand everything your plugin does, creating a perfect verification and security cycle.",
+                welcome: "Welcome to the new era of modular PHP!"
+            },
+            pt: {
+                title: "O Contrato do Sistema Operacional",
+                subtitle: "Manifesto de Injeção de Dependências e Arquitetura",
+                intro1: "Bem-vindo ao coração do <strong class='highlight'>Domain-System OS</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.",
+                intro2: "Aqui, nós não escrevemos código 'solto' torcendo para não dar conflito. Nós assinamos um <strong class='highlight'>Contrato de Execução</strong>.",
+                intro3: "Este manual explicará passo a passo como o motor do sistema funciona e introduzirá um dos conceitos mais poderosos (e muitas vezes mal compreendidos) da engenharia de software: a <strong class='highlight'>Injeção de Dependências</strong>.",
+                h2_1: "1. Por que um Contrato? (A Morte do functions.php)",
+                p1_1: "Em sistemas antigos, os plugins usam funções globais para modificar o sistema. Isso é como ter um quadro elétrico com os fios soltos: se dois plugins tentarem usar a mesma 'tomada', o sistema entra em curto (Fatal Error) e sai do ar.",
+                p1_2: "No <strong class='highlight'>Domain-System OS</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class='highlight'>OsExtensionInterface</code>.",
+                p1_3: "Esta interface funciona como um disjuntor inteligente. Ela divide a vida do seu plugin em duas fases isoladas: <strong class='highlight'>Negociação</strong> e <strong class='highlight'>Execução</strong>.",
+                h2_2: "2. Fase 1: A Negociação (osRegister)",
+                p2_1: "Antes de deixar o seu código rodar, o Sistema Operacional pergunta: <em>'O que você precisa para trabalhar e o que você oferece em troca?'</em>",
+                p2_2: "Você usa o objeto <code class='highlight'>$os</code> (A Ponte de Negociação) para declarar formalmente as suas intenções. Nenhuma regra de banco de dados ou lógica complexa deve ser colocada aqui.",
+                alert_title: "Segurança em Primeiro Lugar",
+                alert_desc: "Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Sistema Operacional bloqueará o seu plugin por violação de segurança.</strong>",
+                h2_3: "3. A Magia da Injeção de Dependências (O que é isso?)",
+                p3_1: "Antes de irmos para a Fase 2, precisamos desmistificar um termo que assusta muita gente: <strong class='highlight'>Injeção de Dependências (Dependency Injection)</strong>.",
+                h3_3_1: "O Jeito Antigo (Errado): A Caça ao Tesouro",
+                p3_2: "Nos sistemas legados, se você precisasse do Banco de Dados, você fazia assim:",
+                p3_3: "O problema é que o plugin se torna 'xereta'. Ele entra onde não deve, procura as coisas sozinho, e se o nome do Banco de Dados mudar, o plugin quebra.",
+                h3_3_2: "O Jeito Moderno (Certo): Injeção de Dependências",
+                p3_4: "Injeção de Dependências é, de forma simples, o conceito do <strong class='highlight'>'Garçom'</strong>. Você não vai até a cozinha preparar o prato. Você senta na mesa e o garçom <em>traz (injeta)</em> a comida pronta para você.",
+                p3_5: "Em vez de você ir caçar a ferramenta, o Sistema Operacional 'Injeta' a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!",
+                h2_4: "4. Fase 2: A Execução (osBoot)",
+                p4_1: "Aqui o seu plugin acorda e começa a trabalhar. E como o Sistema Operacional sabe que o seu plugin é 'confiável' (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class='highlight'>$runtime</code>.",
+                p4_2: "O <code class='highlight'>$runtime</code> carrega uma bandeja <strong class='highlight'>contendo estritamente as coisas que você pediu</strong>, através de <strong class='highlight'>Injeção de Dependências</strong>.",
+                h3_4_1: "Resumo dos Benefícios",
+                li1_strong: "Sem Erros Fatais:",
+                li1_span: "Se faltar o <code>auth.user_reader</code>, o sistema avisa o usuário para instalar o plugin faltante antes de rodar, em vez de quebrar a tela inteira.",
+                li2_strong: "Auto-Complete Perfeito:",
+                li2_span: "As IDEs modernas conseguem ler o <code>$runtime</code> e sugerir as opções de código, eliminando a necessidade de decorar nomes de funções.",
+                li3_strong: "Auditoria Pronta para IA:",
+                li3_span: "Um robô ou inteligência artificial pode ler o seu <code>osRegister</code> e entender instantaneamente tudo o que o seu plugin faz, criando um ciclo de verificação e segurança perfeito.",
+                welcome: "Bem-vindo à nova era do PHP modular!"
+            }
+        };
+
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+
+            // Update copy buttons text
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.innerText = lang === 'en' ? 'Copy' : 'Copiar';
+            });
+        }
+
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = btn.innerText;
+                const isEnglish = document.getElementById('btn-en').classList.contains('active');
+                btn.innerText = isEnglish ? 'Copied!' : 'Copiado!';
+                btn.style.color = '#10b981';
+                btn.style.borderColor = '#10b981';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            });
+        }
+        
+        // Initialize Default English
+        setLanguage('en');
+    </script>
+</body>
+</html>

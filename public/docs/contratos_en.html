@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interface Contracts - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="criando-plugins_en.html">Building Plugins &rarr;</a></li>
+            <li style="margin-left:auto"><a href="contratos.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Contracts and Interfaces</h1>
+    </header>
+
+    <div class="content">
+        <h2>The Importance of Interfaces (SOLID)</h2>
+        <p>In the Domain-System, we strictly apply the "Letter I" of SOLID (Interface Segregation Principle). Classes don't depend on each other, they depend on <strong>Contracts (Interfaces)</strong>.</p>
+        <p>If the system expects you to extract ZIP files, it doesn't depend on the native ZIP library, it asks for an <code>ExtractorInterface</code>. This means tomorrow you can change the extraction method without breaking the entire system.</p>
+
+        <h2>PluginInterface</h2>
+        <p>Every plugin MUST sign this contract indirectly (by extending the abstract class <code>AbstractPlugin</code>). It dictates the lifecycle rules:</p>
+        <pre><code>interface PluginInterface
+{
+    public function register(): void;
+    public function boot(): void;
+    public function activate(): void;
+    public function deactivate(): void;
+    public function uninstall(): void;
+}</code></pre>
+
+        <h3>Explanation of Methods:</h3>
+        <ul>
+            <li><strong>register():</strong> The right place to register Routes, Event Listeners, and Dashboard Menus. Executed on every request.</li>
+            <li><strong>boot():</strong> Executed after all plugins finish registering.</li>
+            <li><strong>activate():</strong> Run <strong>only once</strong> when you turn on the Plugin in the Dashboard (Ideal for Migrations and table creation).</li>
+            <li><strong>deactivate() / uninstall():</strong> Used to clean up the traces the plugin left when deactivated or deleted.</li>
+        </ul>
+
+    </div>
+</body>
+</html>

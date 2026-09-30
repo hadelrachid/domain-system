@@ -9,6 +9,7 @@ class SeoManager implements SeoManagerInterface
     private string $title = 'Domain System OS';
     private string $description = '';
     private string $canonical = '';
+    private string $favicon = '';
     private array $metaTags = [];
 
     public function setTitle(string $title): self
@@ -44,9 +45,21 @@ class SeoManager implements SeoManagerInterface
         return $this;
     }
 
+    public function setFavicon(string $url): self
+    {
+        $this->favicon = $url;
+        return $this;
+    }
+
     public function generateTags(): string
     {
         $html = "<title>" . htmlspecialchars($this->title) . "</title>\n";
+        
+        if (!empty($this->favicon)) {
+            // Se for svg, adiciona type image/svg+xml
+            $type = str_ends_with(strtolower($this->favicon), '.svg') ? 'image/svg+xml' : 'image/x-icon';
+            $html .= "<link rel=\"icon\" type=\"{$type}\" href=\"" . htmlspecialchars($this->favicon) . "\">\n";
+        }
         
         if (!empty($this->description)) {
             $html .= "<meta name=\"description\" content=\"" . htmlspecialchars($this->description) . "\">\n";

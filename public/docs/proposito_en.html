@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purpose and Vision - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="arquitetura_en.html">Architecture &rarr;</a></li>
+            <li style="margin-left:auto"><a href="proposito.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>Vision, Purpose and Target Audience</h1>
+    </header>
+
+    <div class="content">
+        <h2>Why create this project?</h2>
+        <p>The current web suffers from two extremes: on one side, heavy and slow monolithic systems (like legacy and bloated versions of traditional CMS) full of workarounds; on the other side, modern and complex frameworks that require a very high learning curve and infinite dependencies via Composer.</p>
+        <p>The <strong>Domain-System</strong> was born from the need to find the <em>perfect middle ground</em>: a system <strong>simple in its essence</strong> (pure PHP), but <strong>extremely robust in its architecture</strong> (100% focused on SOLID principles and Design Patterns).</p>
+
+        <h2>What is the purpose?</h2>
+        <p>Create an ultralight, secure and agnostic <strong>Kernel</strong>, whose sole job is to <em>orchestrate</em> smaller applications (Plugins) and Views (Themes). The core doesn't know what a "Patient" or an "Appointment" is. It just provides Tools (Dependency Injection, Router, Secure Database) for the Plugins to do the hard work.</p>
+        <p>This way, we created a scalable <strong>White-label SaaS (Software as a Service)</strong>. If tomorrow we want to create a system for Lawyers instead of Clinics, the core remains the same, just requiring new Plugins to be connected.</p>
+
+        <h2>Who is this project for?</h2>
+        <p>For medical clinics, offices, and enterprise developers who need a <strong>flexible, fast and proprietary</strong> ecosystem, without paying expensive licenses or being held hostage by third-party spaghetti code. The structure is made for serious developers who appreciate Clean Architecture and TDD (Test-Driven Development).</p>
+
+        <h2>How can it be extended?</h2>
+        <p>Scalability is infinite. Thanks to the <em>Event-Driven</em> architecture, future developers can inject behaviors (via Filters and Actions) without ever touching the original code (Open/Closed Principle).</p>
+        <p>You can add a Payment Gateway Plugin, a Smart WhatsApp Plugin (Z-API), or connect the frontend via REST APIs, all respecting the system's natural routing flow.</p>
+    </div>
+</body>
+</html>

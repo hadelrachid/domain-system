@@ -19,6 +19,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osRegister(OsConnectorInterface $os): void
     {
         $os->listenHook('router.register');
+        $os->listenHook('shortcodes.register');
     }
 
     // ==========================================
@@ -30,7 +31,20 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // Rota CATCH-ALL para o Frontend (A Vitrine)
             // Só renderiza se não for uma rota /admin ou de api
             $router->addRoute('GET', '/', [ThemeController::class, 'renderHome']);
+            $router->addRoute('GET', '/docs/{*slug}', [ThemeController::class, 'renderDoc']);
+            $router->addRoute('GET', '/docs', function() {
+                // Redireciona /docs para /docs/index
+                $base = defined('BASE_URL') ? BASE_URL : '';
+                header("Location: $base/docs/index");
+                exit;
+            });
             // Exemplo: $router->addRoute('GET', '/sobre', [ThemeController::class, 'renderPage']);
+        });
+
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) {
+            $sm->add('base_url', function() {
+                return defined('BASE_URL') ? BASE_URL : '';
+            }, 'Retorna a URL base do site (ex: /domain-system/public)');
         });
     }
 }
