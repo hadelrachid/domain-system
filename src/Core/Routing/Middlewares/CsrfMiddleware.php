@@ -24,9 +24,9 @@ class CsrfMiddleware implements MiddlewareInterface
 
     public function handle(Request $request, Closure $next, array $routeConfig = []): mixed
     {
-        // Apenas aplica validação CSRF para requisições POST
-        if (strtoupper($request->method()) !== 'POST') {
-            return $next($request); // Deixa passar
+        // Apenas aplica validação CSRF para requisições de mutação
+        if (!in_array(strtoupper($request->method()), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+            return $next($request); // Deixa passar GET, HEAD, OPTIONS
         }
 
         // Ignora CSRF para rotas de API públicas ou webhooks

@@ -404,7 +404,8 @@ class AdminController
         
         file_put_contents($themeDir . '/theme.json', json_encode($json, JSON_PRETTY_PRINT));
         
-        $layoutHtml = "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>$name</title>\n</head>\n<body>\n    <h1>$name</h1>\n    <?= \$content ?? '' ?>\n</body>\n</html>";
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $layoutHtml = "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>{$safeName}</title>\n</head>\n<body>\n    <h1>{$safeName}</h1>\n    <?= \$content ?? '' ?>\n</body>\n</html>";
         file_put_contents($themeDir . '/layout.php', $layoutHtml);
         
         $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Tema scaffolding criado com sucesso!'];
@@ -416,7 +417,11 @@ class AdminController
 
         
         $folder = $request->input('theme_folder', '');
-        $folder = basename($folder);
+        $folder = basename(trim($folder));
+        if ($folder === '.' || $folder === '..') {
+            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Nome de pasta inválido.'];
+            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
+        }
         
         if (empty($folder) || in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default'])) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é permitido excluir temas core vitais do sistema.'];

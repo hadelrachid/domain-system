@@ -29,6 +29,9 @@ class ZipArchiveExtractor implements ExtractorInterface
             }
         }
         
+        $tempDir = dirname($destinationPath, 2) . '/temp/zip_' . uniqid();
+        @mkdir($tempDir, 0777, true);
+
         // Se zipado diretamente (sem pasta raiz)
         if (!$hasDescriptor) {
             $idx = $zip->locateName($descriptorFile);
@@ -39,9 +42,22 @@ class ZipArchiveExtractor implements ExtractorInterface
                     $hasDescriptor = true;
                     $componentDirName = preg_replace('/[^a-zA-Z0-9]+/', '-', strtolower($data['name']));
                     
-                    @mkdir($destinationPath . '/' . $componentDirName, 0777, true);
-                    $zip->extractTo($destinationPath . '/' . $componentDirName);
+                    $zip->extractTo($tempDir);
                     $zip->close();
+                    
+                    $targetPath = $destinationPath . '/' . $componentDirName;
+                    
+                    // Prevenir sobrescrita de plugins core vitais
+                    if (file_exists($targetPath . '/' . $descriptorFile)) {
+                        $meta = json_decode(file_get_contents($targetPath . '/' . $descriptorFile), true);
+                        if (!empty($meta['core'])) {
+                            $this->deleteDirectory($tempDir);
+                            throw new Exception("Segurança: Não é possível sobrescrever um plugin Core do sistema via upload.");
+                        }
+                    }
+
+                    if (file_exists($targetPath)) $this->deleteDirectory($targetPath);
+                    rename($tempDir, $targetPath);
                     return $componentDirName;
                 }
             }
@@ -49,12 +65,41 @@ class ZipArchiveExtractor implements ExtractorInterface
 
         if (!$hasDescriptor || !$componentDirName) {
             $zip->close();
+            if (is_dir($tempDir)) $this->deleteDirectory($tempDir);
             throw new Exception("ZIP inválido: Não possui um arquivo $descriptorFile válido no pacote.");
         }
 
-        $zip->extractTo($destinationPath);
+        $zip->extractTo($tempDir);
         $zip->close();
 
+        // Agora movemos APENAS a pasta do componente, ignorando o resto do lixo do ZIP
+        $sourcePath = $tempDir . '/' . $componentDirName;
+        $targetPath = $destinationPath . '/' . $componentDirName;
+
+        if (file_exists($targetPath . '/' . $descriptorFile)) {
+            $meta = json_decode(file_get_contents($targetPath . '/' . $descriptorFile), true);
+            if (!empty($meta['core'])) {
+                $this->deleteDirectory($tempDir);
+                throw new Exception("Segurança: Não é possível sobrescrever um plugin Core do sistema via upload.");
+            }
+        }
+
+        if (file_exists($targetPath)) $this->deleteDirectory($targetPath);
+        rename($sourcePath, $targetPath);
+        $this->deleteDirectory($tempDir);
+
         return $componentDirName;
+    }
+
+    private function deleteDirectory(string $dir): bool
+    {
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir)) return unlink($dir);
+        
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') continue;
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+        }
+        return rmdir($dir);
     }
 }

@@ -51,14 +51,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Rotas
         $runtime->onHook('router.register', function(Router $router) {
             // Rotas do Painel
-            $router->addRoute('GET', '/admin/pages', [PageAdminController::class, 'index']);
-            $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create']);
-            $router->addRoute('GET', '/admin/pages/edit/{id}', [PageAdminController::class, 'edit']);
-            $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store']);
-            $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete']);
+            $router->addRoute('GET', '/admin/pages', [PageAdminController::class, 'index'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('GET', '/admin/pages/edit/{id}', [PageAdminController::class, 'edit'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete'], 'pages', ['admin', 'manager', 'receptionist']);
             
             // A rota de API para carregar os templates do tema dinamicamente!
-            $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles']);
+            $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles'], 'pages', ['admin', 'manager', 'receptionist']);
             
             // Rota Pública (O site)
             // Alterado de /p/{slug} para /{slug} para URLs limpas (estilo WordPress)

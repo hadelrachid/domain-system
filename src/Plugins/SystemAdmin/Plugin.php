@@ -117,19 +117,19 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/emergency', [\DomainSystem\Plugins\SystemAdmin\Controllers\EmergencyController::class, 'login']);
 
             // Dashboard base
-            $router->addRoute('GET', '/admin', [DashboardController::class, 'index']);
-            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout']);
+            $router->addRoute('GET', '/admin', [DashboardController::class, 'index'], 'system-admin', ['admin', 'doctor', 'receptionist']);
+            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout'], 'system-admin', ['admin', 'doctor', 'receptionist']);
 
-            $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes']);
-            $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins']);
-            $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes']);
-            $router->addRoute('GET', '/admin/themes/preview', [AdminController::class, 'previewTheme']);
-            $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme']);
-            $router->addRoute('POST', '/admin/themes/upload', [AdminController::class, 'uploadTheme']);
-            $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme']);
-            $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin']);
-            $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin']);
-            $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin']);
+            $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes'], 'system-admin', ['admin']);
+            $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins'], 'system-admin', ['admin']);
+            $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes'], 'system-admin', ['admin']);
+            $router->addRoute('GET', '/admin/themes/preview', [AdminController::class, 'previewTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/upload', [AdminController::class, 'uploadTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin'], 'system-admin', ['admin']);
         });
     }
 }

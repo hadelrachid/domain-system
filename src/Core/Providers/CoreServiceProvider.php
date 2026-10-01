@@ -65,7 +65,10 @@ class CoreServiceProvider
 
         // 3. Routing
         $container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function($c) use ($dispatcher) {
-            return new \DomainSystem\Core\Routing\Router($c, $dispatcher);
+            $router = new \DomainSystem\Core\Routing\Router($c, $dispatcher);
+            $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\CsrfMiddleware::class);
+            $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\AuthMiddleware::class);
+            return $router;
         });
 
         // 4. Themes & Shortcodes

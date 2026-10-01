@@ -46,13 +46,20 @@ class PageFrontController
             if (str_starts_with($templateFile, 'pages/')) {
                 // MODO PÁGINA ESTÁTICA (Bypassa o renderizador de templates)
                 $filePath = $themeRoot . '/' . $templateFile;
-                if (!file_exists($filePath)) {
+                $realPath = realpath($filePath);
+                $realThemeRoot = realpath($themeRoot);
+                
+                if ($realPath === false || $realThemeRoot === false || !str_starts_with($realPath, $realThemeRoot)) {
+                    return new \DomainSystem\Core\Http\Response("<h1>403 - Tentativa de acesso inválido</h1>", 403);
+                }
+                
+                if (!file_exists($realPath)) {
                     return new \DomainSystem\Core\Http\Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
                 }
                 
                 ob_start();
-                extract(['page' => $page]);
-                include $filePath;
+                extract(['page' => $page], EXTR_SKIP);
+                include $realPath;
                 $html = ob_get_clean();
             } else {
                 // MODO TEMPLATE (Usa o ThemeManager)
@@ -64,9 +71,10 @@ class PageFrontController
             }
         } else {
             // Renderiza o fallback de conteúdo de banco de dados
+            $safeTitle = htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8');
             $html = "<div class='container' style='padding: 60px 20px; min-height: 70vh;'>
                         <article class='glass-panel' style='padding: 40px; margin-top: 20px;'>
-                            <h1 class='text-primary' style='font-size: 2.5rem; border-bottom: 1px solid rgba(69, 243, 255, 0.2); padding-bottom: 20px; margin-bottom: 30px;'>{$page['title']}</h1>
+                            <h1 class='text-primary' style='font-size: 2.5rem; border-bottom: 1px solid rgba(69, 243, 255, 0.2); padding-bottom: 20px; margin-bottom: 30px;'>{$safeTitle}</h1>
                             <div class='page-content' style='font-size: 1.1rem; line-height: 1.8; color: var(--text-main);'>
                                 {$page['content']}
                             </div>

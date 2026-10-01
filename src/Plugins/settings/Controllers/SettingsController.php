@@ -130,27 +130,12 @@ class SettingsController
 
     public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
     {
-        $db = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
-        $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
-
         try {
-            if ($driver === 'sqlite') {
-                $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
-                foreach ($tables as $table) {
-                    if ($table !== 'sqlite_sequence') {
-                        $db->exec("DROP TABLE IF EXISTS `$table`");
-                    }
-                }
-            } else {
-                $db->exec("SET FOREIGN_KEY_CHECKS = 0;");
-                $tables = $db->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
-                foreach ($tables as $table) {
-                    $db->exec("DROP TABLE `$table`");
-                }
-                $db->exec("SET FOREIGN_KEY_CHECKS = 1;");
+            // Apenas destruir o arquivo de lock e limpar config/plugins.json
+            $lockFile = DOMAIN_SYSTEM_ROOT . '/config/installed.lock';
+            if (file_exists($lockFile)) {
+                unlink($lockFile);
             }
-
-            // Apenas destruir sessão (O sistema detectará que não há tabelas e voltará ao Setup Mode automaticamente)
 
             // Destruir sessão
             session_destroy();
@@ -160,7 +145,7 @@ class SettingsController
             exit;
         } catch (\Exception $e) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            echo json_encode(['success' => false, 'error' => 'Erro ao redefinir: ' . $e->getMessage()]);
             exit;
         }
     }

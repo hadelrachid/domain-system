@@ -40,7 +40,8 @@ class UserController
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-        $role = $_POST['role'] ?? 'receptionist';
+        $allowedRoles = ['admin', 'manager', 'receptionist', 'doctor', 'patient'];
+        $role = in_array($_POST['role'] ?? '', $allowedRoles) ? $_POST['role'] : 'receptionist';
         $linked_doctor_id = !empty($_POST['linked_doctor_id']) ? $_POST['linked_doctor_id'] : null;
 
         if (empty($name) || empty($email) || empty($password)) {
@@ -124,7 +125,7 @@ class UserController
     {
 
 
-        $user_id = $_GET['id'] ?? null;
+        $user_id = $_POST['id'] ?? null;
         if ($user_id) {
             $this->userRepo->updateTwoFactorSecret($user_id, null);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '2FA desativado.'];

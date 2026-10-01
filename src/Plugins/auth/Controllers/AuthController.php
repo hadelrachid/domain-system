@@ -62,7 +62,7 @@ class AuthController
         $twofa_code = $request->input('twofa_code', '');
 
         $user       = $this->userRepo->findByEmail($email);
-        $passwordOk = $this->session->get('pending_2fa_password_ok') === true;
+        $passwordOk = ($this->session->get('pending_2fa_password_ok') === true) && ($this->session->get('pending_2fa_email') === $email);
 
         if ($user && ($passwordOk || password_verify($password, $user['password']))) {
 
@@ -91,6 +91,9 @@ class AuthController
             }
 
             $this->session->regenerate();
+            $this->session->remove('pending_2fa_email');
+            $this->session->remove('pending_2fa_type');
+            $this->session->remove('pending_2fa_password_ok');
             $this->session->set('user_id',   $user['id']);
             $this->session->set('user_name', $user['name']);
             $this->session->set('user_role', $user['role'] ?? 'admin');

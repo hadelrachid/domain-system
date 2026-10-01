@@ -80,7 +80,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/users', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'store'], 'auth', ['admin']);
             $router->addRoute('GET', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'generate2fa'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/2fa', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'confirm2fa'], 'auth', ['admin']);
-            $router->addRoute('GET', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/2fa-disable', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'disable2fa'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/2fa-type', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'change2faType'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/reset-password', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'resetPassword'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/delete', [\DomainSystem\Plugins\auth\Controllers\UserController::class, 'delete'], 'auth', ['admin']);

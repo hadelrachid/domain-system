@@ -155,7 +155,11 @@
     <?php if (($u['two_factor_type'] ?? 'none') === 'app'): ?>
         <?php if (!empty($u['two_factor_secret'])): ?>
             <span style="color: #16a34a; font-size: 12px; font-weight: 500; display: block; margin-top: 5px;">✅ Sincronizado</span>
-            <a href="<?= BASE_URL ?>/admin/users/2fa-disable?id=<?= $u['id'] ?>" onclick="return confirm('Remover sincronização?')" style="color: #dc2626; font-size: 11px; text-decoration: none; display: block; margin-top: 4px;">Refazer QR Code</a>
+            <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa-disable" style="display:inline; margin-top:4px;" onsubmit="return confirm('Remover sincronização?');">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                <button type="submit" style="background:none; border:none; color:#dc2626; font-size:11px; text-decoration:none; padding:0; cursor:pointer;">Refazer QR Code</button>
+            </form>
         <?php else: ?>
             <span style="color: #dc2626; font-size: 12px; font-weight: 500; display: block; margin-top: 5px;">⚠️ Pendente</span>
             <a href="<?= BASE_URL ?>/admin/users/2fa?id=<?= $u['id'] ?>" class="btn" style="background: #dc2626; color: white; display: inline-block; text-align: center; margin-top: 6px; font-size: 11px; padding: 5px 8px; border-radius: 6px; text-decoration: none; border: none; cursor: pointer;">Configurar QR</a>

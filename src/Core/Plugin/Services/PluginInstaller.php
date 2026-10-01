@@ -49,8 +49,11 @@ class PluginInstaller
             throw new Exception("O plugin precisa ser desativado antes de ser excluído.");
         }
 
-        // Segurança: Evita Path Traversal (ex: passar "../../etc" como nome da pasta)
+        // Segurança: Evita Path Traversal rigorosamente
         $safeFolder = basename($pluginFolder);
+        if ($safeFolder === '.' || $safeFolder === '..' || empty($safeFolder)) {
+            throw new \Exception("Tentativa de exclusão com caminho inválido bloqueada.");
+        }
         $pluginPath = $this->getPluginsPath() . '/' . $safeFolder;
         
         if (file_exists($pluginPath)) {

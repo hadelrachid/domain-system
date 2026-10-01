@@ -36,22 +36,43 @@ class ThemeManager implements ThemeManagerInterface
 
     public function render(string $template, array $args = [], ?string $pluginViewsDir = null): string
     {
-        $file = $this->activeThemePath . '/' . $template . '.php';
+        $file = $this->activeThemePath . '/' . ltrim($template, '/') . '.php';
+        $realFile = realpath($file);
+        $realThemePath = realpath($this->activeThemePath);
 
-        if (!file_exists($file)) {
+        if ($realFile !== false && $realThemePath !== false && str_starts_with($realFile, $realThemePath)) {
+            $fileToInclude = $realFile;
+        } else {
+            $fileToInclude = null;
+        }
+
+        if (!$fileToInclude || !file_exists($fileToInclude)) {
             if ($pluginViewsDir !== null) {
                 $file = $pluginViewsDir . '/' . basename($template) . '.php';
+                $realFile = realpath($file);
+                $realPluginDir = realpath($pluginViewsDir);
+                if ($realFile !== false && $realPluginDir !== false && str_starts_with($realFile, $realPluginDir)) {
+                    $fileToInclude = $realFile;
+                }
             }
-            if (!file_exists($file)) {
-                throw new Exception("Template '{$template}' not found in theme or plugin.");
+            if (!$fileToInclude || !file_exists($fileToInclude)) {
+                throw new \Exception("Template '{$template}' not found in theme or plugin.");
             }
         }
 
-        extract($args);
+        extract($args, EXTR_SKIP);
         
+        $obLevel = ob_get_level();
         ob_start();
-        include $file;
-        $content = ob_get_clean();
+        try {
+            include $fileToInclude;
+            $content = ob_get_clean();
+        } catch (\Throwable $t) {
+            while (ob_get_level() > $obLevel) {
+                ob_end_clean();
+            }
+            throw $t;
+        }
         
         if ($this->shortcodeManager !== null) {
             $content = $this->shortcodeManager->parse($content);
