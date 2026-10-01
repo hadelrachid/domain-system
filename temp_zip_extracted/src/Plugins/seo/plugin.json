@@ -1,7 +1,0 @@
-{
-    "slug": "seo",
-    "name": "SEO & Theme Engine",
-    "version": "1.0.0",
-    "description": "Middleware Global responsável por injetar o Tema Ativo, minificar os assets (HTML/CSS) e gerenciar as Meta Tags em todas as respostas de frontend.",
-    "author": "Rachid"
-}

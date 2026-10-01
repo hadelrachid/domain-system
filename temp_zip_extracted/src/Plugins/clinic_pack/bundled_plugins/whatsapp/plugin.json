@@ -1,9 +1,0 @@
-{
-    "name": "whatsapp",
-    "description": "Integração oficial com a Z-API para disparo automático de mensagens no WhatsApp.",
-    "version": "2.0.0",
-    "author": "Domain System",
-    "namespace": "DomainSystem\\Plugins\\whatsapp\\",
-    "main": "Plugin.php",
-    "os_version": "2.0"
-}

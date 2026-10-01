@@ -22,6 +22,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     {
         $os->requireLink('core.db');
         $os->listenHook('admin.menu');
+        $os->listenHook('shortcodes.register');
         $os->listenHook('router.register');
     }
 
@@ -60,7 +61,23 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles']);
             
             // Rota Pública (O site)
-            $router->addRoute('GET', '/p/{slug}', [PageFrontController::class, 'show']);
+            // Alterado de /p/{slug} para /{slug} para URLs limpas (estilo WordPress)
+            $router->addRoute('GET', '/{slug}', [PageFrontController::class, 'show']);
+        });
+
+        // ==================================================
+        // 🛡️ SHORTCODE DE LINK BLINDADO
+        // Ex: [url to="privacidade"] ou [url to="docs/index"]
+        // ==================================================
+        $runtime->onHook('shortcodes.register', function($manager) {
+            $manager->add('url', function($attrs) {
+                $to = $attrs['to'] ?? '';
+                if (empty($to)) return '#';
+                
+                $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                return $baseUrl . '/' . ltrim($to, '/');
+                
+            }, 'Gera um link seguro para uma rota. Exemplo: href="[url to=\'sobre\']"', ['to' => 'Slug da página (ex: tutoriais)'], 'Páginas');
         });
     }
 
@@ -88,7 +105,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 ['privacidade', 'Política de Privacidade', '<h1>Política de Privacidade</h1><p>Respeitamos seus dados.</p>']
             ];
             
-            $stmt = $db->prepare("INSERT INTO pages (slug, title, content) VALUES (?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO pages (slug, title, content, theme, template_file) VALUES (?, ?, ?, 'rachidd', 'pages/index.php')");
             foreach ($defaults as $p) {
                 $stmt->execute($p);
             }

@@ -1,8 +1,0 @@
-{
-    "name": "settings",
-    "version": "2.0.0",
-    "namespace": "DomainSystem\\Plugins\\settings\\",
-    "entrypoint": "Plugin",
-    "description": "Módulo de Configurações do Sistema. Gerencia parâmetros vitais, URLs e chaves globais da plataforma.",
-    "os_version": "2.0"
-}

@@ -86,6 +86,11 @@ class CoreServiceProvider
             return $c->make(\DomainSystem\Core\Theme\ThemeManager::class);
         });
 
+        // 4.1. Navigation Manager
+        $container->singleton(\DomainSystem\Core\Contracts\NavigationManagerInterface::class, function($c) {
+            return new \DomainSystem\Core\Theme\NavigationManager();
+        });
+
         // 5. Workspace
         $container->singleton(\DomainSystem\Core\Workspace\WorkspaceManager::class, function($c) {
             $themeManager = $c->make(\DomainSystem\Core\Theme\ThemeManager::class);
