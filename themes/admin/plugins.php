@@ -64,7 +64,7 @@
 ?>
 
 <h2 style="color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;">Aplicativos e Extensões</h2>
-<p style="color: var(--text-muted); margin-bottom: 20px;">Plugins públicos, temas e integrações de terceiros.</p>
+<p style="color: var(--text-muted); margin-bottom: 20px;">Plugins públicos e integrações de terceiros.</p>
 
 <table class="plugin-table">
     <thead>
@@ -177,7 +177,8 @@
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($corePlugins as $plugin): ?><tr class="<?= $plugin['is_active'] ? 'plugin-row-active' : ($plugin['is_disarmed'] ? 'plugin-row-disarmed' : '') ?>">
+            <?php foreach ($corePlugins as $plugin): ?>
+<tr class="<?= $plugin['is_active'] ? 'plugin-row-active' : ($plugin['is_disarmed'] ? 'plugin-row-disarmed' : '') ?>">
             <td style="<?= $plugin['is_disarmed'] ? 'border-left: 4px solid var(--accent-orange);' : '' ?>">
                 <strong style="font-size: 14px; color: var(--text-main);"><?= htmlspecialchars($plugin['name']) ?></strong> 
                 <br>
@@ -203,6 +204,57 @@
                                 <span class="badge" style="background: rgba(88,166,255,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 2px 6px; font-size: 10px; margin-left: 5px;">v<?= htmlspecialchars($sub['version']) ?></span>
                                 <br><span style="font-size: 13px; color: var(--text-muted);"><?= htmlspecialchars($sub['description']) ?></span>
                             </li>
-                        <?php endforeach; ?></tbody></table></div>
+                        <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($plugin['is_disarmed']): ?>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(245,110,40,0.1); color: var(--text-main); border-radius: 4px; border: 1px dashed var(--accent-orange); font-size: 13px;">
+                    <strong style="color: var(--accent-orange);">⚠️ Plugin Danificado:</strong> Este plugin causou um erro fatal e foi desconectado pelo Disjuntor.<br>
+                    <a href="admin/monitor" style="color: var(--accent-orange); font-weight: bold; text-decoration: underline;">Verificar Monitor de Erros</a>
+                </div>
+                <?php endif; ?>
+            </td>
+            <td>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <form method="POST" action="admin/plugins/toggle" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
+                        
+                        <?php if ($plugin['is_core']): ?>
+                            <button type="button" class="btn btn-core" disabled style="opacity: 0.5;">Núcleo</button>
+                        <?php elseif ($plugin['is_active']): ?>
+                            <input type="hidden" name="action" value="disable">
+                            <button type="submit" class="btn">Desativar</button>
+                        <?php else: ?>
+                            <input type="hidden" name="action" value="enable">
+                            <button type="submit" class="btn btn-activate">Ativar</button>
+                        <?php endif; ?>
+                    </form>
+
+                    <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
+                    <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
+                        <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
+                        <button type="submit" class="btn btn-deactivate">Excluir</button>
+                    </form>
+                    <?php endif; ?>
+                    
+                    <?php if ($plugin['folder'] === 'clinic_pack' && $plugin['is_active']): ?>
+                        <a href="<?= \BASE_URL ?>/admin/clinic/shortcodes" class="btn btn-activate" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-puzzle-piece"></i> Shortcodes
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </td>
+        </tr>
+        
+        <?php endforeach; ?>
+    </tbody>
+</table>
+</div>
 
 

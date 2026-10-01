@@ -2,6 +2,7 @@
 $file = 'D:/xampp/htdocs/domain-system/themes/admin/plugins.php';
 $content = file_get_contents($file);
 
+// Add styles
 $styles = <<<EOT
 <style>
     .plugin-table { width: 100%; border-collapse: separate; border-spacing: 0; background: transparent; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 30px; }
@@ -42,9 +43,10 @@ EOT;
 
 $content = preg_replace('/<style>.*?\.plugin-table { width: 100%;.*?<tbody>\s*<\?php foreach \(\$plugins as \$plugin\): \?>/is', $styles, $content);
 
-$tableRowContent = substr($content, strpos($content, '<tr class="<?= $plugin[\'is_active\']'));
-$tableRowContent = substr($tableRowContent, 0, strpos($tableRowContent, '<?php endforeach; ?>'));
-
+// Extract the row content
+// Use regex to find the inner row which starts with '<tr class="<'.'?= $plugin['is_active']' and ends with '<'.'?php endforeach; ?'.'>' JUST before '</tbody>'
+preg_match('/<tr class="<'.'\?= \$plugin\[\'is_active\'\].*?(?=<'.'\?php endforeach; \?'.'>\s*<\/tbody>)/is', $content, $matches);
+$rowContent = $matches[0];
 
 $footer = <<<EOT
         <?php endforeach; ?>
@@ -74,7 +76,8 @@ $footer = <<<EOT
             <?php foreach (\$corePlugins as \$plugin): ?>
 EOT;
 
-$content = preg_replace('/<\?php endforeach; \?>\s*<\/tbody>\s*<\/table>/is', $footer . $tableRowContent . '<?php endforeach; ?></tbody></table></div>', $content);
+// Replace the end
+$content = preg_replace('/<'.'\?php endforeach; \?'.'>\s*<\/tbody>\s*<\/table>/is', $footer . "\n" . $rowContent . "\n" . '        <?php endforeach; ?>' . "\n" . '    </tbody>' . "\n" . '</table>' . "\n" . '</div>', $content);
 
 file_put_contents($file, $content);
-echo "View reescrita!\n";
+echo "View reescrita com sucesso!\n";
