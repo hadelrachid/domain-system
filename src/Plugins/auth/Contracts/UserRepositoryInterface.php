@@ -5,10 +5,8 @@ interface UserRepositoryInterface
 {
     public function findByEmail(string $email): ?array;
     public function findById(int $id): ?array;
-    public function findDoctorByUserId(int $userId): ?array;
     public function updateTwoFactor(int $userId, string $type, ?string $secret): void;
     public function getAllUsers(): array;
-    public function getAllDoctors(): array;
     public function createUser(array $data): int;
     public function updateTwoFactorSecret(int $userId, ?string $secret): void;
     public function updatePassword(int $userId, string $hash): void;

@@ -150,13 +150,13 @@
             overflow: hidden;
         }
 
-        input[type="submit"]:hover, .btn:hover, .button:hover {
+        input[type="submit"]:hover, .btn:hover, .button:hover, .page-title-action:hover {
             background: linear-gradient(135deg, rgba(88,166,255,0.3) 0%, rgba(88,166,255,0.6) 100%) !important;
             box-shadow: 0 0 20px rgba(88,166,255,0.6), inset 0 0 10px rgba(255,255,255,0.2) !important;
             transform: translateY(-2px);
         }
         
-        input[type="submit"]:active, .btn:active, .button:active {
+        input[type="submit"]:active, .btn:active, .button:active, .page-title-action:active {
             transform: translateY(1px);
             box-shadow: 0 0 5px rgba(88,166,255,0.4) !important;
         }

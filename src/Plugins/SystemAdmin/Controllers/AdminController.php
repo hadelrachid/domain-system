@@ -205,7 +205,7 @@ class AdminController
                 $version = '1.0.0';
                 $author = '';
                 $screenshot = '';
-                $isCore = in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default']);
+                $isCore = in_array($folder, ['admin', 'manager', 'subscriber', 'user', 'default']);
                 
                 if (file_exists($jsonPath)) {
                     $meta = json_decode(file_get_contents($jsonPath), true);
@@ -423,7 +423,7 @@ class AdminController
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
-        if (empty($folder) || in_array($folder, ['admin', 'doctor', 'secretary', 'lawyer', 'default'])) {
+        if (empty($folder) || in_array($folder, ['admin', 'manager', 'subscriber', 'user', 'default'])) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é permitido excluir temas core vitais do sistema.'];
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }

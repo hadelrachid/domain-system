@@ -50,22 +50,12 @@
             </div>
             <div style="margin-bottom: 15px;">
                 <label style="display: block; font-weight: bold; margin-bottom: 5px;">Perfil de Acesso</label>
-                <select name="role" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" onchange="document.getElementById('doctor_select').style.display = (this.value === 'doctor') ? 'block' : 'none';">
-                    <option value="patient">Paciente / Comum</option>
-                    <option value="receptionist">Recepcionista</option>
-                    <option value="doctor">Médico</option>
+                <select name="role" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="user">Usuário Comum</option>
+                    <option value="subscriber">Assinante</option>
+                    <option value="manager">Gerente</option>
                     <option value="admin">Administrador Geral</option>
                 </select>
-            </div>
-            <div id="doctor_select" style="margin-bottom: 15px; display: none; background: #f0f6fc; padding: 10px; border: 1px solid #b6d4fe; border-radius: 4px;">
-                <label style="display: block; font-weight: bold; margin-bottom: 5px;">Vincular a qual Médico?</label>
-                <select name="linked_doctor_id" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <option value="">-- Selecione o Médico --</option>
-                    <?php foreach ($doctors as $d): ?>
-                        <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['name']) ?> (CRM: <?= htmlspecialchars($d['crm']) ?>)</option>
-                    <?php endforeach; ?>
-                </select>
-                <small style="color: #666; display: block; margin-top: 5px;">Se este usuário é um médico, vincule-o ao cadastro dele para que ele possa ver sua própria agenda.</small>
             </div>
             
             <button type="submit" class="btn btn-activate">Salvar Usuário</button>
@@ -92,9 +82,9 @@
                         <td style="padding: 10px; border-bottom: 1px solid #eee;">
                             <?php 
                             if ($u['role'] === 'admin') echo '🛡️ Administrador';
-                            elseif ($u['role'] === 'doctor') echo '⚕️ Médico';
-                            elseif ($u['role'] === 'receptionist') echo '👩‍💼 Recepcionista';
-                            else echo '👤 Paciente / Comum';
+                            elseif ($u['role'] === 'manager') echo '📋 Gerente';
+                            elseif ($u['role'] === 'subscriber') echo '⭐ Assinante';
+                            else echo '👤 Usuário Comum';
                             ?>
                             
                             <!-- Redefinir Senha e Excluir -->

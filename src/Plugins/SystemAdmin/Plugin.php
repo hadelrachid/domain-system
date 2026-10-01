@@ -33,10 +33,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        $this->container->bind(
-            \DomainSystem\Plugins\SystemAdmin\Contracts\DashboardRepositoryInterface::class,
-            \DomainSystem\Plugins\SystemAdmin\Repositories\DashboardRepository::class
-        );
 
         $sessionManager = $runtime->getLink('core.session');
 
@@ -73,11 +69,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 }
             }
         }, 999);
-
-        $runtime->onHook('workspace.register', function(\DomainSystem\Core\Workspace\WorkspaceManager $wm) {
-            $theme = $this->container->make(\DomainSystem\Core\Theme\ThemeManager::class);
-            $wm->registerWorkspace('receptionist', new \DomainSystem\Plugins\SystemAdmin\Workspace\ReceptionWorkspace($theme));
-        });
 
         try {
             $registry = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
@@ -117,8 +108,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/emergency', [\DomainSystem\Plugins\SystemAdmin\Controllers\EmergencyController::class, 'login']);
 
             // Dashboard base
-            $router->addRoute('GET', '/admin', [DashboardController::class, 'index'], 'system-admin', ['admin', 'doctor', 'receptionist']);
-            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout'], 'system-admin', ['admin', 'doctor', 'receptionist']);
+            $router->addRoute('GET', '/admin', [DashboardController::class, 'index'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
+            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
 
             $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes'], 'system-admin', ['admin']);
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins'], 'system-admin', ['admin']);

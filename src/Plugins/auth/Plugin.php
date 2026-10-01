@@ -117,7 +117,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $table->string('email')->unique();
                 $table->string('password');
                 $table->string('role', 50)->default('admin');
-                $table->integer('linked_doctor_id')->nullable();
                 $table->string('two_factor_secret')->nullable();
                 $table->string('two_factor_type', 20)->default('none');
                 $table->string('email_2fa_code', 6)->nullable();
@@ -132,7 +131,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
         $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
         try { $db->exec("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'admin'"); } catch (\Exception $e) {}
-        try { $db->exec("ALTER TABLE users ADD COLUMN linked_doctor_id INTEGER NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_code VARCHAR(6) NULL"); } catch (\Exception $e) {}

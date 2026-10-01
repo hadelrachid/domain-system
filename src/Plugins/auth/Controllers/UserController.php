@@ -21,28 +21,21 @@ class UserController
 
     public function index()
     {
-
-        
         $users = $this->userRepo->getAllUsers();
-        $doctors = $this->userRepo->getAllDoctors();
         
         return $this->theme->render('admin_users', [
             'users' => $users,
-            'doctors' => $doctors,
             'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
 
     public function store()
     {
-
-
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-        $allowedRoles = ['admin', 'manager', 'receptionist', 'doctor', 'patient'];
-        $role = in_array($_POST['role'] ?? '', $allowedRoles) ? $_POST['role'] : 'receptionist';
-        $linked_doctor_id = !empty($_POST['linked_doctor_id']) ? $_POST['linked_doctor_id'] : null;
+        $allowedRoles = ['admin', 'manager', 'user', 'subscriber'];
+        $role = in_array($_POST['role'] ?? '', $allowedRoles) ? $_POST['role'] : 'user';
 
         if (empty($name) || empty($email) || empty($password)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha nome, email e senha.'];
@@ -55,8 +48,7 @@ class UserController
                     'name' => $name,
                     'email' => $email,
                     'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'role' => $role,
-                    'linked_doctor_id' => $linked_doctor_id
+                    'role' => $role
                 ]);
                 $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Usuário criado com sucesso!'];
             } catch (\Exception $e) {

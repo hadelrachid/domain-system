@@ -98,12 +98,8 @@ class AuthController
             $this->session->set('user_name', $user['name']);
             $this->session->set('user_role', $user['role'] ?? 'admin');
 
-            if ($this->session->get('user_role') === 'doctor') {
-                $doctor = $this->userRepo->findDoctorByUserId($user['id']);
-                $this->session->set('doctor_id', $doctor ? $doctor['id'] : null);
-            } else {
-                $this->session->set('doctor_id', null);
-            }
+            // Genérico
+            $this->session->set('doctor_id', null);
 
             $this->session->remove('auth_error');
             $this->session->remove('pending_2fa_email');

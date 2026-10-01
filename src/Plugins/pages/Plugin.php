@@ -38,7 +38,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // Adiciona ao Menu do Painel
         $runtime->onHook('admin.menu', function($menus, $role = 'admin') {
-            if (in_array($role, ['admin', 'manager', 'receptionist'])) {
+            if (in_array($role, ['admin', 'manager'])) {
                 $menus[] = [
                     'title' => 'Páginas',
                     'url' => '/admin/pages',
@@ -51,14 +51,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Rotas
         $runtime->onHook('router.register', function(Router $router) {
             // Rotas do Painel
-            $router->addRoute('GET', '/admin/pages', [PageAdminController::class, 'index'], 'pages', ['admin', 'manager', 'receptionist']);
-            $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create'], 'pages', ['admin', 'manager', 'receptionist']);
-            $router->addRoute('GET', '/admin/pages/edit/{id}', [PageAdminController::class, 'edit'], 'pages', ['admin', 'manager', 'receptionist']);
-            $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store'], 'pages', ['admin', 'manager', 'receptionist']);
-            $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('GET', '/admin/pages', [PageAdminController::class, 'index'], 'pages', ['admin', 'manager']);
+            $router->addRoute('GET', '/admin/pages/create', [PageAdminController::class, 'create'], 'pages', ['admin', 'manager']);
+            $router->addRoute('GET', '/admin/pages/edit/{id}', [PageAdminController::class, 'edit'], 'pages', ['admin', 'manager']);
+            $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store'], 'pages', ['admin', 'manager']);
+            $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete'], 'pages', ['admin', 'manager']);
             
             // A rota de API para carregar os templates do tema dinamicamente!
-            $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles'], 'pages', ['admin', 'manager', 'receptionist']);
+            $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles'], 'pages', ['admin', 'manager']);
             
             // Rota Pública (O site)
             // Alterado de /p/{slug} para /{slug} para URLs limpas (estilo WordPress)
