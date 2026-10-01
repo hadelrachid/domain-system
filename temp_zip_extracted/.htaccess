@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Bloquear acesso direto a arquivos de configuração
+<FilesMatch "^\.env|database\.sqlite|.*\.log|.*\.json$">
+    Require all denied
+</FilesMatch>
+
+# Impedir listagem de diretório na raiz
+Options -Indexes

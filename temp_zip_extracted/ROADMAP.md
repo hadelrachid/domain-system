@@ -1,0 +1,113 @@
+# 🗺️ Roteiro de Desenvolvimento — Domain System
+
+Este documento descreve a visão de futuro para o **Domain System**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema.
+
+---
+
+## 🟢 Fase 1: Consolidação e Resiliência (Concluída em v1.1.0)
+
+*   [x] **Circuit Breaker V2** — Proteção contra falhas fatais em plugins.
+*   [x] **Emergency Hatch** — Rota de emergência para recuperação do sistema.
+*   [x] **Dev Simulator** — Ambiente de desenvolvimento seguro com interceptação de e-mails.
+*   [x] **Repository Pattern** — Implementação inicial para desacoplar Controllers do banco.
+*   [x] **AI Hub (Plugin Builder)** — Geração de plugins e formulários via IA.
+
+---
+
+## 🟡 Fase 2: Experiência do Usuário e Produtividade (Próximos 3 Meses)
+
+### 2.1. Dashboard Inteligente
+- [ ] **Métricas em Tempo Real:** Substituir a tela de boas-vindas por um dashboard com KPIs (consultas de hoje, pacientes totais, faturamento do mês).
+- [ ] **Gráficos Interativos:** Visualização de produtividade dos médicos e fluxo de pacientes.
+- [ ] **Widgets Customizáveis:** Permitir que o usuário monte seu próprio painel.
+
+### 2.2. Comunicação e Notificações
+- [ ] **Módulo WhatsApp (Z-API):** Disparo automático de lembretes de consulta (24h antes) e confirmações.
+- [ ] **Notificações por E-mail:** Alertas para novos agendamentos, cancelamentos e atualizações de prontuário.
+- [ ] **Sistema de Filas (Queue):** Processamento assíncrono de notificações para não travar a interface.
+
+### 2.3. Melhorias no Prontuário Médico
+- [ ] **Upload de Exames:** Adicionar suporte para upload de PDFs e imagens diretamente no prontuário.
+- [ ] **Histórico do Paciente:** Timeline visual com todas as consultas, exames e prescrições.
+- [ ] **Receituário Digital:** Geração de receitas com assinatura digital e QR Code.
+
+### 2.4. Instalador Visual (Estilo WordPress)
+- [ ] **Wizard de Instalação:** Interface web de 5 minutos para primeira configuração.
+- [ ] **Setup de Banco de Dados:** Combobox para escolha entre SQLite (Local) e MySQL/MariaDB (Hostinger/XAMPP).
+- [ ] **Criação de Super Admin:** Configuração da senha e e-mail no primeiro acesso.
+
+### 2.5. Schema Builder e Abstração de BD
+- [ ] **Migrações Agnósticas:** Tradutor de SQL para gerar tabelas em dialetos corretos (SQLite vs MySQL).
+- [ ] **Auto-detecção:** O sistema adapta as queries de acordo com o driver do `.env`.
+
+---
+
+## 🔵 Fase 3: Escalabilidade e Integrações (3 a 6 Meses)
+
+### 3.1. Gateway de Pagamentos
+- [ ] **Integração com Stripe/PagSeguro:** Permitir que o paciente pague consultas online.
+- [ ] **Faturamento Automático:** Geração de boletos e notas fiscais eletrônicas.
+- [ ] **Relatórios Financeiros:** Análise de inadimplência e fluxo de caixa.
+
+### 3.2. API Pública (REST)
+- [ ] **Documentação Swagger/OpenAPI:** Expor endpoints para integração com sistemas externos.
+- [ ] **Autenticação OAuth2:** Segurança para terceiros consumirem a API.
+- [ ] **Webhooks:** Permitir que sistemas externos escutem eventos do Domain System (ex: `appointment.created`).
+
+### 3.3. Multi-Tenancy (SaaS)
+- [ ] **Isolamento de Dados:** Suporte para múltiplas clínicas/empresas no mesmo servidor.
+- [ ] **Gestão de Assinaturas:** Controle de planos (Básico, Pro, Enterprise) e limites de uso.
+- [ ] **White-Label:** Permitir que cada cliente personalize a marca (logo, cores, domínio).
+
+---
+
+## 🟣 Fase 4: A Grande Interface (Iniciada em v1.2.0)
+
+### 4.1. Motor de Temas e Páginas (Theme & Page Builder)
+- [x] **Sistema de Templates Avançado:** Suporte a Shortcodes aninhados e contêineres recursivos.
+- [x] **Editor Visual OOP (Builder Flex):** Construtor de páginas drag-and-drop com arquitetura VCL/Componentes reais em JavaScript, com Snap to Grid e Object Inspector.
+- [x] **Biblioteca de Componentes:** Reutilização de widgets e blocos baseados em instâncias OOP.
+
+### 4.2. CockPit OS 2.0 (Interface do Usuário & Skin Engine)
+- [x] **Design System Unificado:** Contrato visual oficial (`DESIGN_SYSTEM.md`) obrigando plugins a usarem classes `.card`, `.btn` em vez de CSS engessado.
+- [x] **Skin Engine Dinâmica (JSON):** Herança de temas completa (Dark Futurista, Dracula) com leitura dinâmica via API em tempo real.
+- [x] **Responsividade e SPA (Single Page App):** Abas com "Live Fetch" via AJAX e componentes nativos de browser estilizados com CSS Webkit Filters.
+
+### 4.3. Performance e Otimização
+- [ ] **Cache de Queries:** Redução de consultas repetidas ao banco de dados.
+- [x] **Lazy Loading de Interface:** Carregamento sob demanda de abas pesadas.
+- [ ] **Otimização de Assets (SEO Engine):** Minificação e compressão profunda de CSS/JS e HTML para bater 99+ no Lighthouse.
+- [ ] **SEO Monitor Plugin:** Plugin autônomo que consome a API do Google PageSpeed Insights e exibe relatórios de saúde do SEO diretamente em Widgets no Dashboard.
+- [ ] **Auto-Fixer Baseado em IA:** Integração da IA para propor ou gerar automaticamente correções caso a nota do PageSpeed caia abaixo de 90.
+
+---
+
+## ⚙️ Dívida Técnica (Refatoração Contínua)
+
+| Item | Prioridade | Status |
+|------|------------|--------|
+| Eliminar Service Locator (`$this->db()`, `$this->events()`) do `AbstractPlugin` | P0 (Crítico) | 🕒 Pendente (v2.0) |
+| Decompor `ErrorHandler` | P1 (Alta) | 🕒 Pendente |
+| Migrar Migrations para `activate()` | P1 (Alta) | 🟡 Em Progresso |
+| Centralizar Eventos em Constantes | P2 (Média) | 🟡 Em Progresso |
+| Padronizar Respostas HTTP (Request/Response) | P2 (Média) | 🟢 Concluído |
+| Criar Interfaces para `PatientController` | P1 (Alta) | 🟢 Concluído |
+| Criar Interfaces para `FinanceController` | P1 (Alta) | 🟢 Concluído |
+| Remover Acesso Direto a `$_SESSION` | P0 (Crítico) | 🟢 Concluído |
+
+---
+
+## 🧪 Experimentos e Pesquisas
+
+- [ ] **Integração com Blockchain:** Registro imutável de prontuários médicos.
+- [ ] **Chatbot com IA:** Assistente virtual para pacientes (triagem inicial).
+- [ ] **Serverless:** Deploy do Kernel em ambientes como AWS Lambda.
+
+---
+
+## 📊 Critérios de Sucesso
+
+- **Zero downtime** durante atualizações de plugins.
+- **Tempo de resposta** < 200ms para 95% das requisições.
+- **Cobertura de Testes** > 80% para o Core.
+- **Satisfação do Desenvolvedor** — Facilidade para criar novos plugins e temas.

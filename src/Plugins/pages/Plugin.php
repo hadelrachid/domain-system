@@ -56,6 +56,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/pages/store', [PageAdminController::class, 'store']);
             $router->addRoute('POST', '/admin/pages/delete/{id}', [PageAdminController::class, 'delete']);
             
+            // A rota de API para carregar os templates do tema dinamicamente!
+            $router->addRoute('GET', '/admin/pages/api/theme-files', [PageAdminController::class, 'getThemeFiles']);
+            
             // Rota Pública (O site)
             $router->addRoute('GET', '/p/{slug}', [PageFrontController::class, 'show']);
         });
@@ -70,6 +73,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $table->string('slug')->unique();
                 $table->string('title');
                 $table->text('content')->nullable();
+                $table->string('theme')->nullable();
+                $table->string('template_file')->nullable();
                 $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
             });
             

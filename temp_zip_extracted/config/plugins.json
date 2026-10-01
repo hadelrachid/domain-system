@@ -1,0 +1,17 @@
+{
+    "ApiGateway": false,
+    "auth": true,
+    "clinic_pack": false,
+    "dev_simulator": false,
+    "pages": true,
+    "settings": true,
+    "appointments_api": true,
+    "Database": true,
+    "nobreak_shield": true,
+    "visual_themes": false,
+    "flextheme": true,
+    "test_os": true,
+    "seo": true,
+    "analytics": true,
+    "academy": true
+}

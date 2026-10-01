@@ -10,7 +10,7 @@ class ThemeController
     public function renderHome(Request $request): Response
     {
         // Em arquitetura Single-Tenant, o tema pode vir de um arquivo config.json ou env.
-        $themeName = $_ENV['ACTIVE_THEME'] ?? 'default';
+        $themeName = trim(empty($_ENV['ACTIVE_THEME']) ? 'rachidd' : $_ENV['ACTIVE_THEME']);
         
         $themeDir = __DIR__ . '/../themes/' . $themeName;
         $themePath = file_exists($themeDir . '/templates/home.php') 
@@ -31,7 +31,7 @@ class ThemeController
 
     public function renderDoc(Request $request, string $slug): Response
     {
-        $themeName = $_ENV['ACTIVE_THEME'] ?? 'default';
+        $themeName = trim(empty($_ENV['ACTIVE_THEME']) ? 'rachidd' : $_ENV['ACTIVE_THEME']);
         $themeDir = __DIR__ . '/../themes/' . $themeName;
         
         // Evitar directory traversal hacker
@@ -39,7 +39,7 @@ class ThemeController
             return new Response("Acesso negado", 403);
         }
         
-        $docPath = $themeDir . '/templates/docs/' . $slug . '.php';
+        $docPath = $themeDir . '/pages/' . $slug . '.php';
 
         if (!file_exists($docPath)) {
             return new Response("Documentação não encontrada: " . htmlspecialchars($slug), 404);

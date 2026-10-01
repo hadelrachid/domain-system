@@ -403,6 +403,9 @@ class Application
      */
     public function boot(): void
     {
+        // Inicia a sessão nativa do Kernel antes de qualquer plugin
+        $this->sessionManager->start();
+
         // ─────────────────────────────────────────────────────────────────
         // Define os caminhos dos plugins e da configuração
         // ─────────────────────────────────────────────────────────────────
@@ -437,4 +440,6 @@ class Application
         $this->dispatcher->dispatch('workspace.register', $this->workspaceManager);
     }
 }
+
+
 

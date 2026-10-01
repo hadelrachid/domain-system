@@ -1,0 +1,141 @@
+<?php
+
+namespace DomainSystem\Core\Routing;
+
+use DomainSystem\Core\Container\Container;
+use Exception;
+
+use DomainSystem\Core\Contracts\RouterInterface;
+
+use DomainSystem\Core\Contracts\ContainerInterface;
+
+class Router implements RouterInterface
+{
+    private array $routes = [];
+    private ?\DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
+
+    public function __construct(ContainerInterface $container, ?\DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher = null)
+    {
+        $this->container = $container;
+        $this->dispatcher = $dispatcher;
+    }
+
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $roles = []): void
+    {
+        $method = strtoupper($method);
+        $this->routes[$method][$path] = [
+            'handler' => $handler,
+            'plugin' => $plugin,
+            'roles' => $roles
+        ];
+    }
+
+    private array $globalMiddlewares = [];
+    
+    public function addGlobalMiddleware(string $middlewareClass): void
+    {
+        $this->globalMiddlewares[] = $middlewareClass;
+    }
+
+    public function dispatch(\DomainSystem\Core\Http\Request $request): mixed
+    {
+        $method = strtoupper($request->method());
+        // Remove query string
+        $uri = strtok($request->uri(), '?');
+
+        // Dispara o listener
+        if ($this->dispatcher !== null) {
+            $this->dispatcher->dispatch('router.before_dispatch', $uri);
+        }
+
+        if (!isset($this->routes[$method])) {
+            throw new Exception("Rota não encontrada: $uri", 404);
+        }
+
+        // Busca rota exata
+        if (isset($this->routes[$method][$uri])) {
+            return $this->runPipeline($request, $this->routes[$method][$uri], []);
+        }
+
+        // Busca rota com parâmetros (ex: /pacientes/{id} ou /docs/{*path})
+        foreach ($this->routes[$method] as $route => $config) {
+            // Suporte a catch-all (ex: {*path}) que captura inclusive barras
+            $pattern = preg_replace('/\{\*[a-zA-Z_]+\}/', '(.*)', $route);
+            // Suporte a variáveis normais (ex: {id}) que param na barra
+            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $pattern);
+            
+            if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
+                array_shift($matches);
+                return $this->runPipeline($request, $config, $matches);
+            }
+        }
+
+        throw new Exception("Rota não encontrada: $uri", 404);
+    }
+
+    /**
+     * Executa a "Cebola" (Pipeline de Middlewares)
+     */
+    private function runPipeline(\DomainSystem\Core\Http\Request $request, array $routeConfig, array $matches): mixed
+    {
+        $pipeline = array_reverse($this->globalMiddlewares);
+        
+        // O miolo da cebola (o destino final) é executar o handler do Controller
+        $next = function ($req) use ($routeConfig, $matches) {
+            return $this->executeHandler($routeConfig['handler'], $matches, $req);
+        };
+
+        // Envolve o miolo nas camadas de middleware
+        foreach ($pipeline as $middlewareClass) {
+            $middleware = $this->container->make($middlewareClass);
+            $next = function ($req) use ($middleware, $next, $routeConfig) {
+                return $middleware->handle($req, $next, $routeConfig);
+            };
+        }
+
+        // Dá a mordida na cebola (inicia a cadeia)
+        return $next($request);
+    }
+
+    private function executeHandler(callable|array $handler, array $params = [], \DomainSystem\Core\Http\Request $request = null): mixed
+    {
+        if (is_callable($handler)) {
+            // Check if closure expects Request
+            $reflection = new \ReflectionFunction($handler);
+            return $this->invokeReflection($reflection, $handler, null, $params, $request);
+        }
+
+        if (is_array($handler) && count($handler) === 2) {
+            [$class, $method] = $handler;
+            $instance = $this->container->make($class);
+            $reflection = new \ReflectionMethod($class, $method);
+            return $this->invokeReflection($reflection, $method, $instance, $params, $request);
+        }
+
+        throw new Exception("Handler inválido.");
+    }
+    
+    private function invokeReflection(\ReflectionFunctionAbstract $reflection, string|callable $methodOrClosure, ?object $instance, array $params, ?\DomainSystem\Core\Http\Request $request)
+    {
+        $dependencies = [];
+        $paramIndex = 0;
+        foreach ($reflection->getParameters() as $param) {
+            $type = $param->getType();
+            if ($type && $type->getName() === \DomainSystem\Core\Http\Request::class) {
+                $dependencies[] = $request;
+            } else {
+                if (isset($params[$paramIndex])) {
+                    $dependencies[] = $params[$paramIndex];
+                    $paramIndex++;
+                } else {
+                    $dependencies[] = null;
+                }
+            }
+        }
+        
+        if ($instance !== null) {
+            return $reflection->invokeArgs($instance, $dependencies);
+        }
+        return $reflection->invokeArgs($dependencies);
+    }
+}

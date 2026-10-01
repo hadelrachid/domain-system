@@ -40,6 +40,11 @@ class Response implements ResponseInterface
         return $this;
     }
 
+    public function getHeader(string $name): ?string
+    {
+        return $this->headers[$name] ?? null;
+    }
+
     public function send(): void
     {
         if (!headers_sent()) {

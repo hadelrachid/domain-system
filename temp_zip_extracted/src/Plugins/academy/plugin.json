@@ -1,0 +1,7 @@
+{
+    "name": "academy",
+    "version": "1.0.0",
+    "author": "Rachid",
+    "description": "LMS e Hub de Cursos para o Domain-System OS.",
+    "core": false
+}

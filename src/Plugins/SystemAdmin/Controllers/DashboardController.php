@@ -83,6 +83,14 @@ class DashboardController
         }
     }
 
+    public function clearCrashes(\DomainSystem\Core\Http\Request $request)
+    {
+        if (isset($_SESSION['plugin_crashes'])) {
+            unset($_SESSION['plugin_crashes']);
+        }
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin');
+    }
+
     public function saveLayout(\DomainSystem\Core\Http\Request $request)
     {
         $userId = $_SESSION['user_id'] ?? null;

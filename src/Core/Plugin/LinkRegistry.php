@@ -42,14 +42,26 @@ class LinkRegistry
      */
     public function resolve(string $linkName)
     {
-        if (!isset($this->providedLinks[$linkName])) {
-            throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
+        if (isset($this->providedLinks[$linkName])) {
+            $providerClass = $this->providedLinks[$linkName];
+            return $this->container->make($providerClass);
         }
 
-        $providerClass = $this->providedLinks[$linkName];
-        
-        // Use the Container to instantiate the provider
-        return $this->container->make($providerClass);
+        // --- FALLBACK DO KERNEL (LINKS OFICIAIS DO SO) ---
+        if ($linkName === 'core.session') {
+            return $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+        }
+        if ($linkName === 'core.db') {
+            return $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        }
+        if ($linkName === 'core.router') {
+            return $this->container->make(\DomainSystem\Core\Contracts\RouterInterface::class);
+        }
+        if ($linkName === 'core.theme') {
+            return $this->container->make(\DomainSystem\Core\Contracts\ThemeManagerInterface::class);
+        }
+
+        throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
     }
 
     /**
@@ -61,9 +73,24 @@ class LinkRegistry
         $missing = [];
         foreach ($this->connectors as $pluginName => $connector) {
             foreach ($connector->getRequiredLinks() as $linkName) {
-                if (!isset($this->providedLinks[$linkName])) {
+                // If it's not a core link and not provided by a plugin, it's missing
+                if (!str_starts_with($linkName, 'core.') && !isset($this->providedLinks[$linkName])) {
                     $missing[$pluginName][] = $linkName;
                 }
+            }
+        }
+        return $missing;
+    }
+
+    public function getUnmetLinks(string $pluginName): array
+    {
+        if (!isset($this->connectors[$pluginName])) {
+            return [];
+        }
+        $missing = [];
+        foreach ($this->connectors[$pluginName]->getRequiredLinks() as $linkName) {
+            if (!str_starts_with($linkName, 'core.') && !isset($this->providedLinks[$linkName])) {
+                $missing[] = $linkName;
             }
         }
         return $missing;

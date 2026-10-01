@@ -418,6 +418,7 @@ $errorHandler->register();
  * tem sua função específica, e a rainha coordena todos eles.
  */
 $container = new Container();
+$container->singleton(\DomainSystem\Core\Contracts\ContainerInterface::class, function() use ($container) { return $container; });
 
 /**
  * Cria o Despachante de Eventos.
@@ -434,6 +435,7 @@ $container = new Container();
  * precisar se conhecerem diretamente.
  */
 $dispatcher = new EventDispatcher();
+$container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() use ($dispatcher) { return $dispatcher; });
 
 /**
  * Registra o DashboardWidgetRegistry no Container como singleton.
@@ -529,6 +531,9 @@ $app = new Application($container, $dispatcher, DOMAIN_SYSTEM_ROOT);
  * reinar, chamando `$app->boot()`.
  */
 return $app;
+
+
+
 
 
 

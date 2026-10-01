@@ -4,6 +4,32 @@
  * Domain-System Front Controller
  */
 
+// =========================================================================
+// MODO DE MANUTENÇÃO (hPanel / External Panel Integration)
+// =========================================================================
+// Verifica a existência do arquivo de lock físico sem invocar o framework.
+// Isso permite que plataformas como Hostinger hPanel ativem a manutenção 
+// apenas criando este arquivo (padrão da indústria).
+$maintenanceFile = dirname(__DIR__) . '/.maintenance';
+if (file_exists($maintenanceFile)) {
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    // Libera a passagem apenas para rotas de sistema crítico (Admin/Login/API/Setup)
+    if (strpos($uri, '/admin') === false && strpos($uri, '/login') === false && strpos($uri, '/api') === false && strpos($uri, '/setup') === false) {
+        $maintenancePage = __DIR__ . '/maintenance.php';
+        if (file_exists($maintenancePage)) {
+            header('Retry-After: 3600');
+            http_response_code(503);
+            require $maintenancePage;
+        } else {
+            header('Retry-After: 3600');
+            http_response_code(503);
+            echo "<h1 style='text-align:center; font-family:sans-serif; margin-top:50px;'>Manutenção do Sistema. Voltamos em breve.</h1>";
+        }
+        exit; // Interrompe a execução antes de encostar no Banco ou Autoloader
+    }
+}
+// =========================================================================
+
 $app = require_once dirname(__DIR__) . '/bootstrap.php';
 
 // Dispatch a pre-boot event
@@ -71,7 +97,11 @@ try {
     }
     
     // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-    if (strpos($uri, '/admin') === 0 && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency') && !str_starts_with($uri, '/admin/themes/preview') && !str_starts_with($uri, '/admin/ai-hub/test') && !str_starts_with($uri, '/admin/terminal/execute')) {
+    // IMPORTANTE: Rotas de API (/api/) e respostas JSON NÃO devem ser embrulhadas no layout!
+    $isApiRoute = str_contains($uri, '/api/');
+    $isJsonResponse = $response instanceof \DomainSystem\Core\Http\Response && str_contains($response->getHeader('Content-Type') ?? '', 'application/json');
+    
+    if (strpos($uri, '/admin') === 0 && !$isApiRoute && !$isJsonResponse && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency') && !str_starts_with($uri, '/admin/themes/preview') && !str_starts_with($uri, '/admin/ai-hub/test') && !str_starts_with($uri, '/admin/terminal/execute')) {
         $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
         $role = $session->get('user_role', 'admin');
         $workspace = $app->getWorkspaceManager()->getWorkspace($role);

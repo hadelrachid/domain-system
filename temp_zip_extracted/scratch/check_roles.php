@@ -1,0 +1,1 @@
+<?php require "bootstrap.php"; $db = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo(); print_r($db->query("SELECT role FROM users LIMIT 5")->fetchAll(PDO::FETCH_ASSOC));

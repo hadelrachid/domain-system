@@ -9,45 +9,66 @@ class CoreServiceProvider
 {
     public function register(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath): void
     {
-        // 1. Session Manager
-        $container->singleton(\DomainSystem\Core\Http\SessionManager::class, function() {
-            $session = new \DomainSystem\Core\Http\SessionManager();
-            $session->start();
-            return $session;
+        // 1. Database
+        $container->singleton(\DomainSystem\Plugins\Database\Connection::class, function() {
+            return new \DomainSystem\Plugins\Database\Connection();
+        });
+        
+        $container->singleton(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class, function($c) {
+            return new \DomainSystem\Plugins\Database\Schema\SchemaBuilder($c->make(\DomainSystem\Plugins\Database\Connection::class));
         });
 
-        // 2. Plugin Subsystem
-        $container->singleton(\DomainSystem\Core\Plugin\PluginManager::class, function($c) use ($basePath, $dispatcher) {
-            $stateManager = new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
-            $discoverer = new \DomainSystem\Core\Plugin\Services\PluginDiscoverer($c, $dispatcher, $stateManager);
-            $sessionManager = $c->make(\DomainSystem\Core\Http\SessionManager::class);
-            $linkRegistry = $c->make(\DomainSystem\Core\Plugin\LinkRegistry::class);
-            $bootstrapper = new \DomainSystem\Core\Plugin\Services\PluginBootstrapper($c, $dispatcher, $stateManager, $basePath, $sessionManager, $linkRegistry);
-            $installer = new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $stateManager);
-            
-            return new \DomainSystem\Core\Plugin\PluginManager(
+        // 2. Auth (Session-based)
+        $container->singleton(\DomainSystem\Plugins\auth\AuthManager::class, function($c) {
+            $session = $c->make(\DomainSystem\Core\Http\SessionManager::class);
+            $db = $c->make(\DomainSystem\Plugins\Database\Connection::class);
+            return new \DomainSystem\Plugins\auth\AuthManager($session, $db);
+        });
+
+        // Plugin Services
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginStateManager::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
+        });
+        
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginDiscoverer::class, function($c) {
+            return new \DomainSystem\Core\Plugin\Services\PluginDiscoverer(
                 $c, 
-                $dispatcher,
-                $stateManager,
-                $discoverer,
-                $bootstrapper,
-                $installer
+                $c->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class)
+            );
+        });
+        
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginBootstrapper::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Plugin\Services\PluginBootstrapper(
+                $c, 
+                $c->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class),
+                $basePath,
+                $c->make(\DomainSystem\Core\Http\SessionManager::class)
             );
         });
 
-        // 3. Router
-        $container->singleton(\DomainSystem\Core\Routing\Router::class, function($c) use ($dispatcher) {
-            $router = new \DomainSystem\Core\Routing\Router($c, $dispatcher);
-            $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\CsrfMiddleware::class);
-            $router->addGlobalMiddleware(\DomainSystem\Core\Routing\Middlewares\AuthMiddleware::class);
-            return $router;
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginInstaller::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class));
         });
 
+        $container->singleton(\DomainSystem\Core\Plugin\PluginManager::class, function($c) {
+            return new \DomainSystem\Core\Plugin\PluginManager(
+                $c,
+                $c->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginDiscoverer::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginBootstrapper::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginInstaller::class)
+            );
+        });
+
+        // 3. Routing
         $container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function($c) {
-            return $c->make(\DomainSystem\Core\Routing\Router::class);
+            return new \DomainSystem\Core\Routing\Router($c);
         });
 
-        // 4. Theme & Shortcode
+        // 4. Themes & Shortcodes
         $container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function($c) {
             return new \DomainSystem\Core\Theme\ShortcodeManager($c);
         });
@@ -58,6 +79,11 @@ class CoreServiceProvider
             $themeManager = new \DomainSystem\Core\Theme\ThemeManager($themePath, $shortcodeManager);
             $themeManager->setDispatcher($dispatcher);
             return $themeManager;
+        });
+
+        // Bind ThemeManagerInterface
+        $container->singleton(\DomainSystem\Core\Contracts\ThemeManagerInterface::class, function($c) {
+            return $c->make(\DomainSystem\Core\Theme\ThemeManager::class);
         });
 
         // 5. Workspace
@@ -74,23 +100,5 @@ class CoreServiceProvider
         $container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, function() {
             return new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
         });
-
-        $container->singleton(\DomainSystem\Core\Plugin\LinkRegistry::class, function($c) {
-            return new \DomainSystem\Core\Plugin\LinkRegistry($c);
-        });
-
-        // 7. OS 2.0 Links
-        $kernelConnector = new \DomainSystem\Core\Plugin\OsConnector();
-        $kernelConnector->provideLink('core.session', \DomainSystem\Core\Http\SessionManager::class);
-        $kernelConnector->provideLink('core.router', \DomainSystem\Core\Routing\Router::class);
-        
-        $linkRegistry = $container->make(\DomainSystem\Core\Plugin\LinkRegistry::class);
-        $linkRegistry->registerConnector('kernel', $kernelConnector);
-
-        // 8. Container & Dispatcher Aliases
-        $container->singleton(\DomainSystem\Core\Container\Container::class, function($c) { return $c; });
-        $container->singleton(\DomainSystem\Core\Contracts\ContainerInterface::class, function($c) { return $c; });
-        $container->singleton(\DomainSystem\Core\Events\EventDispatcher::class, function() use ($dispatcher) { return $dispatcher; });
-        $container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() use ($dispatcher) { return $dispatcher; });
     }
 }

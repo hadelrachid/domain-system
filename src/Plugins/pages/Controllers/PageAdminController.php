@@ -2,21 +2,20 @@
 
 namespace DomainSystem\Plugins\pages\Controllers;
 
-use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 
 class PageAdminController
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
     private PageRepositoryInterface $pageRepo;
 
-    public function __construct(ThemeManager $theme, PageRepositoryInterface $pageRepo)
+    public function __construct(ThemeManagerInterface $theme, PageRepositoryInterface $pageRepo)
     {
         $this->theme = $theme;
         $this->pageRepo = $pageRepo;
-
     }
 
     public function index()
@@ -27,7 +26,8 @@ class PageAdminController
 
     public function create()
     {
-        return $this->theme->render('admin_page_form', ['page' => null], dirname(__DIR__) . '/views');
+        $themes = $this->theme->getAvailableThemes();
+        return $this->theme->render('admin_page_form', ['page' => null, 'available_themes' => $themes], dirname(__DIR__) . '/views');
     }
 
     public function edit(string $id)
@@ -36,7 +36,8 @@ class PageAdminController
         if (!$page) {
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
-        return $this->theme->render('admin_page_form', ['page' => $page], dirname(__DIR__) . '/views');
+        $themes = $this->theme->getAvailableThemes();
+        return $this->theme->render('admin_page_form', ['page' => $page, 'available_themes' => $themes], dirname(__DIR__) . '/views');
     }
 
     public function store(Request $request)
@@ -44,23 +45,25 @@ class PageAdminController
         $id = $request->input('id');
         $title = $request->input('title');
         $content = $request->input('content', '');
+        $theme = $request->input('theme');
+        $template_file = $request->input('template_file');
         
         if (empty($title)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O Título é obrigatório.'];
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
 
-        // Gera slug básico
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
 
         if ($id) {
             $this->pageRepo->update((int)$id, [
                 'title' => $title,
-                'content' => $content
+                'content' => $content,
+                'theme' => $theme,
+                'template_file' => $template_file
             ]);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página atualizada!'];
         } else {
-            // Check slug exists
             $exists = $this->pageRepo->findBySlug($slug);
             if ($exists) {
                 $slug = $slug . '-' . time();
@@ -69,12 +72,31 @@ class PageAdminController
             $this->pageRepo->create([
                 'title' => $title,
                 'slug' => $slug,
-                'content' => $content
+                'content' => $content,
+                'theme' => $theme,
+                'template_file' => $template_file
             ]);
             $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página criada!'];
         }
 
         return Response::redirect(\BASE_URL . '/admin/pages');
+    }
+
+    public function getThemeFiles(Request $request)
+    {
+        $themeName = $request->input('theme');
+        if (!$themeName) {
+            return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
+        }
+        
+        $templates = $this->theme->getAvailableTemplates($themeName);
+        $pages = $this->theme->getAvailablePages($themeName);
+        
+        $data = [
+            'templates' => $templates,
+            'pages' => $pages
+        ];
+        return new Response(json_encode($data), 200, ['Content-Type' => 'application/json']);
     }
 
     public function delete(string $id)

@@ -81,3 +81,4 @@ class PageRepository implements PageRepositoryInterface
         $stmt->execute([":id" => $id]);
     }
 }
+
