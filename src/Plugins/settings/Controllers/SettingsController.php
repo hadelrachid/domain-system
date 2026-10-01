@@ -131,10 +131,39 @@ class SettingsController
     public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
     {
         try {
+            // Drop all tables
+            $app = \DomainSystem\Core\Application::getInstance();
+            if ($app && $app->getContainer()->has(\DomainSystem\Plugins\Database\Connection::class)) {
+                $db = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+                if ($db) {
+                    $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
+                    if ($driver === 'mysql') {
+                        $db->exec('SET FOREIGN_KEY_CHECKS = 0;');
+                        $tables = $db->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+                        foreach ($tables as $table) {
+                            $db->exec("DROP TABLE IF EXISTS `$table`");
+                        }
+                        $db->exec('SET FOREIGN_KEY_CHECKS = 1;');
+                    } elseif ($driver === 'sqlite') {
+                        $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
+                        foreach ($tables as $table) {
+                            if ($table !== 'sqlite_sequence') {
+                                $db->exec("DROP TABLE `$table`");
+                            }
+                        }
+                    }
+                }
+            }
+
             // Apenas destruir o arquivo de lock e limpar config/plugins.json
             $lockFile = DOMAIN_SYSTEM_ROOT . '/config/installed.lock';
             if (file_exists($lockFile)) {
                 unlink($lockFile);
+            }
+
+            $pluginsConfig = DOMAIN_SYSTEM_ROOT . '/config/plugins.json';
+            if (file_exists($pluginsConfig)) {
+                unlink($pluginsConfig);
             }
 
             // Destruir sessão

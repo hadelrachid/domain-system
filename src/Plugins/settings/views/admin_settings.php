@@ -131,7 +131,7 @@
             <h4 style="margin-top: 0; font-size: 18px; color: #b32d2d;">Restaurar Padrões de Fábrica (Wipe)</h4>
             <p style="margin: 15px 0 30px; font-size: 14px; color: #646970; line-height: 1.6;">
                 Atenção: Ao executar esta ação, <strong>TODO</strong> o banco de dados será limpo.<br>
-                Usuários, pacientes, prontuários, configurações e agendamentos serão destruídos instantaneamente.<br>
+                Usuários, tenants, dados estruturais, configurações e agendamentos serão destruídos instantaneamente.<br>
                 O sistema voltará ao seu estado de pré-instalação (Modo Assistente).
             </p>
 
