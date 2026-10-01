@@ -122,6 +122,9 @@ class PluginBootstrapper
         }
 
         if ($needsSave) {
+            if (!is_dir(dirname($migrationsPath))) {
+                mkdir(dirname($migrationsPath), 0755, true);
+            }
             file_put_contents($migrationsPath, json_encode($migrated));
         }
     }

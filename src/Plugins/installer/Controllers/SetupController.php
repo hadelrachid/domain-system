@@ -120,7 +120,8 @@ class SetupController
             $session->set('doctor_id', null);
             $session->remove('auth_error'); // Limpa qualquer erro de login fantasma
         } catch (\Exception $e) {
-            // Table might not exist if migration failed, but we assume activate() worked
+            // Em vez de engolir o erro, mostre-o para debug!
+            die("Erro crítico ao criar usuário: " . $e->getMessage());
         }
 
         // O redirecionamento após o sucesso fará o kernel reavaliar a existência do Admin no banco.
