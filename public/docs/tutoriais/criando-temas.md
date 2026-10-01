@@ -19,7 +19,7 @@ Este arquivo JSON é lido pelo **ThemeManager** para construir a interface visua
 
 ```json
 {
-  "name": "Meu Portal do Paciente",
+  "name": "Meu Portal do usuário",
   "version": "1.0.0",
   "description": "Um tema voltado para agendamentos online e resultados de exames públicos.",
   "author": "Dr. Fulano",

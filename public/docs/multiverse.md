@@ -8,8 +8,8 @@ Ao contrário de CMSs e sistemas legados (como o WordPress), onde apenas *UM* te
 
 Isso significa que, simultaneamente, na mesma instalação e consumindo o mesmo banco de dados e APIs, você pode rodar inúmeros mundos:
 
-- 🌍 **O Mundo Público:** Um tema de *Landing Page*, rápido e focado em SEO, rodando na raiz do site para os visitantes e pacientes.
-- 🏥 **O Mundo do Médico (Cockpit Doctor):** Um tema com design veloz, focado em atalhos de teclado, anamnese e produtividade.
+- 🌍 **O Mundo Público:** Um tema de *Landing Page*, rápido e focado em SEO, rodando na raiz do site para os visitantes e usuários.
+- 🏥 **O Mundo do administrador (Cockpit Doctor):** Um tema com design veloz, focado em atalhos de teclado, anamnese e produtividade.
 - 💼 **O Mundo Administrativo (System Core):** O painel de mestre, com visão gerencial para configuração de plugins, rotas e banco de dados.
 - 🤝 **O Mundo da Recepção:** Um tema focado em Kiosk / Self-Service, com botões gigantes e fluxos simplificados para secretárias e autoatendimento.
 

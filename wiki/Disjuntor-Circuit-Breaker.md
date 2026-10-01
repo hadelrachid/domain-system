@@ -4,7 +4,7 @@
 
 # 🇧🇷 ⚡ O Disjuntor (Circuit Breaker) e o Efeito Cascata
 
-Em sistemas tradicionais monolíticos, se um pequeno módulo falha (como o módulo de chat ou de relatórios), ele costuma gerar um **Fatal Error** na memória do PHP. Isso resulta na famosa "Tela Branca da Morte", derrubando o sistema inteiro e impedindo que todos os funcionários da clínica trabalhem.
+Em sistemas tradicionais monolíticos, se um pequeno módulo falha (como o módulo de chat ou de relatórios), ele costuma gerar um **Fatal Error** na memória do PHP. Isso resulta na famosa "Tela Branca da Morte", derrubando o sistema inteiro e impedindo que todos os funcionários da sistema trabalhem.
 
 Para evitar cenários catastróficos, o **Domain-System** adota um padrão de resiliência herdado da engenharia elétrica e de microserviços: o **Circuit Breaker** (Disjuntor).
 
@@ -18,7 +18,7 @@ Quando o sistema está inicializando a árvore de plugins, o processo acontece d
 1. **Interceptação:** O erro crítico é capturado antes de chegar ao navegador do usuário.
 2. **Isolamento:** O módulo defeituoso é bloqueado temporariamente na memória.
 3. **Log de Supervisão:** Um relatório de incidente é gerado e registrado silenciosamente no painel de Monitoramento (Supervisão).
-4. **Sobrevivência:** O restante do sistema ignora o módulo defeituoso e termina de carregar, permitindo que a clínica continue operando.
+4. **Sobrevivência:** O restante do sistema ignora o módulo defeituoso e termina de carregar, permitindo que a sistema continue operando.
 
 ## 🌊 O Efeito Cascata (Cascade Failure Handling)
 

@@ -9,13 +9,13 @@ O pior "código sujo" (Code Smell) que você pode encontrar na camada Controller
 if ($_SESSION['user_role'] !== 'admin') { die('Acesso Negado'); }
 ```
 
-Além de violar o princípio de **Responsabilidade Única (SRP)** (o controlador não deveria ser o segurança da porta), isso cria falhas críticas de escalabilidade. Se a clínica criar um novo cargo, o programador precisará alterar dezenas de controladores manualmente.
+Além de violar o princípio de **Responsabilidade Única (SRP)** (o controlador não deveria ser o segurança da porta), isso cria falhas críticas de escalabilidade. Se a sistema criar um novo cargo, o programador precisará alterar dezenas de controladores manualmente.
 
 Para resolver isso, o **Domain-System** move a responsabilidade de autorização (ACL - Access Control List) para a engrenagem mais alta possível: **O Roteador (Router)**.
 
 ## O Roteador como Gatekeeper
 
-Em vez de verificar sessões dentro dos controladores de negócio (Finanças, Pacientes, Prontuários), a autorização passa a ser puramente **Declarativa**.
+Em vez de verificar sessões dentro dos controladores de negócio (Finanças, usuários, Prontuários), a autorização passa a ser puramente **Declarativa**.
 
 Quando um módulo registra suas rotas no arquivo central `Plugin.php`, ele declara uma matriz (array) de Papéis Permitidos (`Roles`) diretamente na rota:
 

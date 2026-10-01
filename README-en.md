@@ -1,52 +1,47 @@
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet?style=for-the-badge" alt="Version 1.3.0">
+  <img src="https://img.shields.io/badge/Version-2.0.0-blueviolet?style=for-the-badge" alt="Version 2.0.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <br><br>
-  <h1>🚀 CockPit OS 1.3.0 (Domain System)</h1>
-  <p><strong>The Web OS that never dies. A modular, hyper-resilient, and extensible framework with a Cyberpunk UI.</strong></p>
+  <h1>🚀 Domain System OS (v2.0)</h1>
+  <p><strong>The Ultimate Web Operating System. A pure, hyper-resilient, multi-tenant Micro-Kernel SaaS designed to compete with the giants.</strong></p>
 </div>
 
 ---
 
-[🇧🇷 Leia em Português](README.md) | [📚 Documentation & Tutorials]( https://hadelrachid.github.io/domain-system/) | [🛡️ Architecture Audit](docs/auditoria.md)
+[🇧🇷 Leia em Português](README.md) | [📚 Documentation & Tutorials]( https://hadelrachid.github.io/domain-system/) | [🛡️ Architectural Audit](docs/auditoria-en.md)
 
 ## 🌐 What is Domain System?
 
-**Domain System** (also known as **CockPit**) is a **CMS, Framework, and Universal Platform** written purely in PHP (similar to WordPress philosophy, but using modern architectural concepts like SOLID and Dependency Injection).
+The **Domain System** has evolved. It is no longer a rigid system, but a **true Web Operating System (SaaS Core)**, written purely in PHP with clean architecture (SOLID and Dependency Injection). It is a modern, ultra-fast alternative to WordPress and frameworks like Laravel.
 
-It was designed to run **absolutely any business application**. The sky is the limit! It works as a true **Web Operating System** for your business:
-- The **Kernel** provides essential low-level infrastructure: Database, Global CSRF Security, Routing, Session, and Event Dispatcher.
-- All **business logic** is encapsulated in independent, pluggable, and interchangeable **Plugins** (like the included `clinic_pack`, which transforms the system into a powerful Medical ERP).
+The limit is your imagination! You can run **absolutely any application** on top of it:
+- The **Core (Micro-Kernel)** provides low-level, completely agnostic infrastructure: Database, Dynamic Routing, CSRF Security, Sessions, Multi-tenant (Isolated Subdomains), and an Event Dispatcher (Event-Driven).
+- All **business logic** (whether a legal system, an e-commerce, or a blog) is injected via independent **Plugins**. The core never knows what the application does; it just orchestrates!
 
 ## ✨ Key Features
 
-### ⚡ 1. Zero-Friction Installation (Setup Wizard)
-Say goodbye to manual configuration file edits! The system features an **Automatic Installation Wizard**.
-Just open the project in your browser, and a friendly interface will guide you through Database configuration, admin creation, and URL setup in seconds.
+### ⚡ 1. Native Multi-Tenant Architecture
+The OS is built to be the foundation of a SaaS (Software as a Service). Through subdomain mapping (`tenants.json`), the Kernel routes different clients to fully isolated databases, sharing resources efficiently and safely without mixing data.
 
 ### 🛡️ 2. No-Break Shield (The Immortal Circuit Breaker)
-Fatal errors (like a syntax error) take down traditional systems. **Not Domain System**.
-Thanks to our exclusive *Automatic Transfer Switch (Circuit Breaker)*, if a module or plugin tries to cause a Fatal Error, the system intercepts the power outage, isolates and disables the defective plugin, and keeps the entire system online. The administrator is securely notified.
+Forget the "White Screen of Death" (WSOD). Domain System runs with the **No-Break Shield**: a Kernel-level Circuit Breaker that intercepts fatal crashes caused by poorly written plugins, disables the faulty execution, displays a rich telemetry panel (Error Supervision with standardized codes), and keeps the rest of the OS running perfectly.
 
-### 🔒 3. Global CSRF Shielding
-Native and invisible security. The kernel automatically injects cross-site request forgery protections into all system forms.
+### 🎨 3. Builder-Flex and Dynamic Page Engine
+With the `pages` plugin and theme engine, the system dynamically converts requests based on the URI, coupling front-end templates from your theme to data blocks. The ground is prepared for the introduction of **Builder-Flex** (a complete drag-and-drop visual builder).
 
-### 🎨 4. "Builder Flex" Theme Engine (VCL/OOP)
-Separate interfaces from logic! In version 1.3.0, we introduced **Builder Flex**: a visual drag-and-drop editor built on an Object-Oriented architecture (BaseWidget). It acts as a true VCL (Visual Component Library), allowing you to design pages by dragging and dropping elements with *Snap to Grid* and database persistence.
+### 🔐 4. Global 2-Factor Authentication (2FA) & RBAC
+The security core (`Auth` plugin) includes native support for Google Authenticator (TOTP) and access control based on universal roles (`admin`, `manager`, `subscriber`, `user`), allowing you to build any permission hierarchy generically.
 
-### 🔐 5. Native 2-Factor Authentication (2FA)
-The core now has direct integration with Google Authenticator (TOTP) and email code delivery, configurable via the user panel for enterprise-grade security.
-
-### 🌑 6. Cyberpunk Skin Engine (Design System)
-A visual revolution! OS.CORE is powered by a *Skin Engine* that reads JSON files (`dark_futurista.json`, `dracula.json`) and injects the visual DNA across the ecosystem. Dark glass forms, neon buttons, and dynamic inputs in a true Single-Page Application (SPA) experience.
+### 🌑 5. Zero-Friction Installation and Skin Engine
+Browser-assisted installer (Wizard) that self-destructs its own routes after setting up the database. In the Admin Panel, you navigate an interface powered by a Cyberpunk *Skin Engine* based on CSS variables and native Dark-First mode.
 
 ---
 
 ## 🚀 How to Install
 
-1. **Clone the repository** to the public folder of your Apache/Nginx server (e.g., `htdocs` or `www`):
+1. **Clone the repository** to your Apache/Nginx public server folder (e.g., `htdocs` or `www`):
    ```bash
    git clone https://github.com/hadelrachid/domain-system.git
    ```
@@ -58,10 +53,10 @@ A visual revolution! OS.CORE is powered by a *Skin Engine* that reads JSON files
    ```
 
 3. **Open in Browser:**
-   Go to `http://localhost/domain-system` (or your domain).
+   Access `http://localhost/domain-system` (or your domain).
 
-4. **Installation Wizard:**
-   The system will detect that it is not configured and redirect you to the **Installation Wizard**. Follow the simple steps on the screen (database, admin user), and you're done!
+4. **Wizard Installer:**
+   The system will detect it's not configured (missing `config/installed.lock`) and guide you through the **Installation Wizard**. Follow the steps (database, admin user), and the OS will be ready to use!
 
 ---
 
@@ -69,21 +64,21 @@ A visual revolution! OS.CORE is powered by a *Skin Engine* that reads JSON files
 
 ```text
 /
-├── config/              # Dynamic settings generated by the panel (plugins, DB)
-├── public/              # Public directory (assets, index.php)
-├── storage/             # Generated files (error logs, cache)
+├── config/              # Tenant Center, Plugin & DB Configurations
+├── public/              # Public directory (assets, entrypoint index.php)
+├── storage/             # Persistent files (error logs, cache)
 └── src/
-    ├── Core/            # The OS Brain (Router, Events, Container, Exceptions)
-    └── Plugins/         # Where the magic happens.
-        ├── auth/        # Core Authentication and 2FA System
-        ├── clinic_pack/ # Super-package that turns the system into a Medical Clinic!
-        └── installer/   # The setup wizard (Auto-disables after use)
+    ├── Core/            # OS Micro-Kernel (Router, Events, Container, Shield)
+    └── Plugins/         # Ecosystem of business extensions
+        ├── auth/        # Base RBAC and 2FA system 
+        ├── pages/       # Dynamic web page generator 
+        ├── system-admin/# OS control interface (Dashboard and Widgets)
+        └── installer/   # Smart installation wizard
 ```
 
 ## 🛠️ Contributing and Tutorials
 
-Our goal is to turn this project into an ecosystem.
-You can already access our **[Developer Guide (DEVELOPER_GUIDE.md)](DEVELOPER_GUIDE.md)** to learn the technical fundamentals of how to extend the system. The `docs/` folder and the GitHub Wiki tab will soon receive even more advanced tutorials for programmers.
+Our goal is to standardize and unify web development in PHP. 
+Access our **[Developer Guide (DEVELOPER_GUIDE.md)](DEVELOPER_GUIDE.md)** to master Dependency Injection and hook creation in the OS. The `docs/` folder is constantly updated with manuals and architecture dictionaries.
 
-Built with ☕ and focused on architectural resilience.
-
+Made with ☕ and forged in architectural resilience.

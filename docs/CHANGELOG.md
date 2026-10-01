@@ -11,7 +11,7 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ### Added
 - **Cérebro I.A. (AI Hub):** Novo plugin dedicado para gerenciamento de chaves de API (Gemini, ChatGPT, DeepSeek, Claude).
 - **Plugin Builder:** Construtor visual de plugins integrado ao Cérebro I.A. para gerar formulários baseados em IA.
-- **Gestão Clínica (`clinic_pack`):** Novo plugin isolado para organizar o menu "Gestão Clínica" sem interferir no Kernel.
+- **Gestão sistema (`clinic_pack`):** Novo plugin isolado para organizar o menu "Gestão sistema" sem interferir no Kernel.
 - **SessionManager:** Nova classe central para o gerenciamento abstrato e orientado a objetos do estado da memória do usuário (Sessão).
 
 ### Changed
@@ -32,7 +32,7 @@ Esta atualização introduz proteções críticas no núcleo do sistema, além d
 ### Adicionado
 - **QTA (Automatic Transfer Switch):** Função de Último Suspiro acoplada ao `register_shutdown_function` para interceptar Erros Fatais e Quedas de Memória Absoluta, ejetando automaticamente o plugin responsável antes da morte térmica do PHP.
 - **Método genérico de Upsert:** Adicionado `upsert()` ao `QueryBuilder` nativo do banco de dados SQLite, permitindo operações "Insert On Conflict Do Update" de forma orientada a objetos.
-- **Rotas de Prontuário Médico:** Novas rotas `GET` e `POST` para `/admin/appointments/record`.
+- **Rotas de Prontuário administrador:** Novas rotas `GET` e `POST` para `/admin/appointments/record`.
 
 ### Modificado
 - **Arquitetura 2FA (Princípios SOLID):** Extração total da lógica de envio (E-mail, Aplicativo) do `TwoFactorService` para suas respectivas interfaces e classes provedoras autônomas (Plugs).
@@ -42,7 +42,7 @@ Esta atualização introduz proteções críticas no núcleo do sistema, além d
 ### Removido
 - Lixo residual e scripts soltos de testes na raiz (`test_plugins.php` e `test_record.php`).
 - **Código morto inatingível:** Limpeza de múltiplos comandos `exit;` perdidos após retornos na `ApiController`.
-- Simulação de mock hardcoded de médicos (convertido para TODO para futura integração real com WordPress).
+- Simulação de mock hardcoded de administradors (convertido para TODO para futura integração real com WordPress).
 
 ### Segurança e Desenvolvimento
 - **Dev Simulator Plugin:** Um novo plugin isolado capaz de sequestrar a fiação mestre de e-mails em ambiente de desenvolvimento, interceptando códigos 2FA e gravando-os em `temp/auth-2fa.txt` para prevenir vazamento de dados reais de usuários.
@@ -61,4 +61,4 @@ Lançamento inicial do Domain System.
 - Roteador Nativo e Suporte a SQLite.
 - Plugins base inaugurais: `auth`, `appointments`, `doctors`, `patients`, `settings`, `triage`, `SystemAdmin`.
 - Disjuntor V1 (Circuit Breaker básico) para isolamento de falhas de Exceptions de Plugins.
-- Sistema de controle de acesso (ACL) focado em Workspaces (Médicos, Recepcionistas, Advogados).
+- Sistema de controle de acesso (ACL) focado em Workspaces (administradors, Recepcionistas, Advogados).

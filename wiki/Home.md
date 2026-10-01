@@ -4,7 +4,7 @@
 
 # 🇧🇷 Bem-vindo ao Domain-System (Cockpit) 🚀
 
-O **Domain-System** não é apenas um sistema de clínica. Ele é um autêntico **Sistema Operacional Web** (CMS / Framework Universal). O "pacote de clínica médica" é apenas um exemplo do que ele pode rodar. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
+O **Domain-System** não é apenas um sistema de sistema. Ele é um autêntico **Sistema Operacional Web** (CMS / Framework Universal). O "pacote de sistema médica" é apenas um exemplo do que ele pode rodar. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
 
 Inspirado nas engrenagens de grandes ecossistemas (como o WordPress e sistemas operacionais de missão crítica), o projeto foi concebido para ser altamente escalável, permitindo que componentes sejam conectados ou desconectados em tempo real sem afetar o núcleo do sistema.
 
@@ -15,7 +15,7 @@ Inspirado nas engrenagens de grandes ecossistemas (como o WordPress e sistemas o
 A arquitetura do Domain-System é dividida em três pilares principais:
 
 ### 1. O Kernel (SystemAdmin) e o Event Dispatcher
-No coração do sistema, não existe regra de negócio (Pacientes, Prontuários, Finanças). O Kernel atua puramente como um **Sistema Operacional**. Sua principal ferramenta é o **Event Dispatcher** (Despachante de Eventos).
+No coração do sistema, não existe regra de negócio (usuários, Prontuários, Finanças). O Kernel atua puramente como um **Sistema Operacional**. Sua principal ferramenta é o **Event Dispatcher** (Despachante de Eventos).
 - O Kernel não chama os módulos. Ele apenas "grita" eventos no sistema (ex: `router.register`, `admin.menu`, `appointment.created`).
 - Os módulos (Plugins), que estão "escutando" essas frequências, reagem e injetam seus dados no Kernel. Isso garante **desacoplamento absoluto**.
 
@@ -25,7 +25,7 @@ Os plugins são independentes, injetam suas próprias rotas, menus e escutam eve
 - **Injeção de Dependências (DIP):** Os módulos usam Containers e Contratos (Interfaces) para realizar o "trabalho sujo" com o banco de dados via Padrão Repository (Ex: `WhatsAppProviderInterface`). O controlador nunca toca no banco de dados diretamente.
 
 ### 3. A Régua de Extensão (Plugin Pack)
-Pensando na escalabilidade ilimitada, o sistema adotou a filosofia da "Régua de Extensão" (Hub). Em vez de entupir o Menu Principal do Kernel com dezenas de botões, o sistema prevê "Pacotes" (como o `clinic_pack`). O Pacote se conecta ao Kernel e, por sua vez, fornece *sub-tomadas* para os módulos médicos (Médicos, Pacientes, Histórico), organizando tudo em submenus elegantes.
+Pensando na escalabilidade ilimitada, o sistema adotou a filosofia da "Régua de Extensão" (Hub). Em vez de entupir o Menu Principal do Kernel com dezenas de botões, o sistema prevê "Pacotes" (como o `clinic_pack`). O Pacote se conecta ao Kernel e, por sua vez, fornece *sub-tomadas* para os módulos administradors (administradors, usuários, Histórico), organizando tudo em submenus elegantes.
 
 ---
 
@@ -35,7 +35,7 @@ Como um sistema de saúde lida com dados críticos, implementamos ferramentas de
 
 ### O Disjuntor (Circuit Breaker)
 Se um plugin sofre um erro fatal (Ex: estouro de memória ou dependência corrompida), o sistema não tela branco. O **Disjuntor** entra em ação, captura o *Fatal Error*, joga o erro para o Painel de Supervisão e **Desativa o plugin problemático automaticamente**, permitindo que o resto do hospital continue funcionando perfeitamente.
-- **Efeito Cascata:** Se o módulo "Pacientes" depender do módulo "Auth", e o "Auth" cair, o disjuntor entende a árvore de dependências e ejeta o "Pacientes" em cascata, salvando o boot do servidor.
+- **Efeito Cascata:** Se o módulo "usuários" depender do módulo "Auth", e o "Auth" cair, o disjuntor entende a árvore de dependências e ejeta o "usuários" em cascata, salvando o boot do servidor.
 
 ### A Escotilha de Emergência (Emergency Hatch)
 Caso uma falha de energia ocorra no núcleo de segurança (`Auth`), ativando o Disjuntor, os administradores não ficam trancados para fora. O Kernel ativa a **Rota de Fuga**. Ao acessar a URL, uma tela de terminal verde de emergência se abre, solicitando a `APP_KEY` do servidor, permitindo acesso provisório (Modo de Segurança) para o administrador religar os disjuntores.

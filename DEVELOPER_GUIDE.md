@@ -1,6 +1,6 @@
 # Guia do Desenvolvedor: Como criar Plugins e Temas
 
-O **Domain System** é um Framework Universal (CMS) onde tudo é extensível. O sistema de clínica médica incluído por padrão é apenas um exemplo do que a plataforma pode rodar. 
+O **Domain System** é um Framework Universal (CMS) onde tudo é extensível. O sistema de sistema médica incluído por padrão é apenas um exemplo do que a plataforma pode rodar. 
 
 Ele foi desenhado para ser infinitamente extensível, mantendo uma clara separação entre **Lógica (Plugins)** e **Apresentação (Temas)**.
 
@@ -29,7 +29,7 @@ Este arquivo diz ao sistema como carregar o seu plugin. Ele é obrigatório.
 {
     "name": "patients",
     "version": "1.0.0",
-    "description": "Módulo de gestão de pacientes",
+    "description": "Módulo de gestão de usuários",
     "dependencies": ["auth", "database", "system-admin"],
     "namespace": "DomainSystem\\Plugins\\Patients\\"
 }
@@ -103,7 +103,7 @@ class PatientController
         $patients = [...]; 
         
         // Renderiza a view 'admin/patients/index' enviando os dados
-        return $this->theme->render('admin/patients/index', ['pacientes' => $patients]);
+        return $this->theme->render('admin/patients/index', ['usuários' => $patients]);
     }
 }
 ```
@@ -117,11 +117,11 @@ Como você chamou `admin/patients/index`, o `ThemeManager` procurará o arquivo 
 <?= $this->getHeader() ?> <!-- Traz o topo do site (navbar, css) -->
 
 <div class="container">
-    <h1>Lista de Pacientes</h1>
+    <h1>Lista de usuários</h1>
     
     <ul>
-        <?php foreach ($pacientes as $paciente): ?>
-            <li><?= htmlspecialchars($paciente['name']) ?></li>
+        <?php foreach ($usuários as $usuário): ?>
+            <li><?= htmlspecialchars($usuário['name']) ?></li>
         <?php endforeach; ?>
     </ul>
 </div>

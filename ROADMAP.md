@@ -1,84 +1,64 @@
-# 🗺️ Roteiro de Desenvolvimento — Domain System
+# 🗺️ Roteiro de Desenvolvimento — Domain System OS v2.0
 
-Este documento descreve a visão de futuro para o **Domain System**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema.
+Este documento descreve a visão de futuro para o **Domain System OS**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema para bater de frente com as ferramentas consolidadas no mercado (WordPress, Laravel).
 
 ---
 
-## 🟢 Fase 1: Consolidação e Resiliência (Concluída em v1.1.0)
+## 🟢 Fase 1: Consolidação e Resiliência (Concluída em v1.3.0)
 
-*   [x] **Circuit Breaker V2** — Proteção contra falhas fatais em plugins.
+*   [x] **No-Break Shield (Circuit Breaker V2)** — Proteção contra falhas fatais em plugins e painel de telemetria visual.
 *   [x] **Emergency Hatch** — Rota de emergência para recuperação do sistema.
-*   [x] **Dev Simulator** — Ambiente de desenvolvimento seguro com interceptação de e-mails.
-*   [x] **Repository Pattern** — Implementação inicial para desacoplar Controllers do banco.
-*   [x] **AI Hub (Plugin Builder)** — Geração de plugins e formulários via IA.
+*   [x] **Dependency Injection Container** — Migração total para injeção de dependências e eliminação de Service Locators.
+*   [x] **RBAC e Auth Nativo** — Limpeza de acoplamentos legados. Criação de Roles universais (Admin, Manager, Subscriber, User).
+*   [x] **Instalador Visual (Zero-Friction)** — Setup wizard com auto-destruição para proteção de rotas, configurando banco e primeiro usuário em segundos.
 
 ---
 
-## 🟡 Fase 2: Experiência do Usuário e Produtividade (Próximos 3 Meses)
+## 🟡 Fase 2: Experiência do Desenvolvedor e do Usuário (Em Andamento)
 
-### 2.1. Dashboard Inteligente
-- [ ] **Métricas em Tempo Real:** Substituir a tela de boas-vindas por um dashboard com KPIs (consultas de hoje, pacientes totais, faturamento do mês).
-- [ ] **Gráficos Interativos:** Visualização de produtividade dos médicos e fluxo de pacientes.
-- [ ] **Widgets Customizáveis:** Permitir que o usuário monte seu próprio painel.
+### 2.1. Construtor Visual (Builder-Flex)
+- [ ] **Integração com JSON Schema:** Abandonar salvamento de HTML cru no banco; salvar a estrutura do layout das páginas em formato JSON estruturado.
+- [ ] **Editor Drag-and-Drop VCL:** Construtor de blocos visuais reais em JavaScript, com manipulação de propriedades (Object Inspector) no painel administrativo.
+- [ ] **Renderização Dinâmica no Core:** O `PageFrontController` será responsável por ler o JSON e injetar os componentes PHP em tempo de execução.
 
-### 2.2. Comunicação e Notificações
-- [ ] **Módulo WhatsApp (Z-API):** Disparo automático de lembretes de consulta (24h antes) e confirmações.
-- [ ] **Notificações por E-mail:** Alertas para novos agendamentos, cancelamentos e atualizações de prontuário.
-- [ ] **Sistema de Filas (Queue):** Processamento assíncrono de notificações para não travar a interface.
+### 2.2. Ferramentas para Criação Autônoma (AI Hub)
+- [ ] **Editor de Plugins Code-in-Browser:** Uma mini IDE integrada no painel do OS, permitindo criar a estrutura (`plugin.json`, `Plugin.php`) sem precisar abrir ferramentas externas.
+- [ ] **Integração com IA (LLMs):** Um assistente integrado ao painel capaz de gerar rotas e cruds dinamicamente injetando código no Builder-Flex e no Editor de Plugins.
+- [ ] **Prompt Terminal (CLI Visual):** Linha de comando no Dashboard capaz de entender códigos de erro do `ERROR_DICTIONARY.md` e corrigir automaticamente falhas (Automação Autônoma).
 
-### 2.3. Melhorias no Prontuário Médico
-- [ ] **Upload de Exames:** Adicionar suporte para upload de PDFs e imagens diretamente no prontuário.
-- [ ] **Histórico do Paciente:** Timeline visual com todas as consultas, exames e prescrições.
-- [ ] **Receituário Digital:** Geração de receitas com assinatura digital e QR Code.
-
-### 2.4. Instalador Visual (Estilo WordPress)
-- [ ] **Wizard de Instalação:** Interface web de 5 minutos para primeira configuração.
-- [ ] **Setup de Banco de Dados:** Combobox para escolha entre SQLite (Local) e MySQL/MariaDB (Hostinger/XAMPP).
-- [ ] **Criação de Super Admin:** Configuração da senha e e-mail no primeiro acesso.
-
-### 2.5. Schema Builder e Abstração de BD
-- [ ] **Migrações Agnósticas:** Tradutor de SQL para gerar tabelas em dialetos corretos (SQLite vs MySQL).
-- [ ] **Auto-detecção:** O sistema adapta as queries de acordo com o driver do `.env`.
+### 2.3. Dashboard Inteligente e Modular
+- [ ] **Widgets Customizáveis:** Permitir que o usuário final adicione, remova e arraste widgets criados por plugins na tela inicial.
+- [ ] **Telemetria Centralizada:** Gráficos mostrando uso de RAM, requisições por segundo e relatórios de uptime baseados no log do No-Break Shield.
 
 ---
 
-## 🔵 Fase 3: Escalabilidade e Integrações (3 a 6 Meses)
+## 🔵 Fase 3: Escalabilidade e Multi-Tenant SaaS (3 a 6 Meses)
 
-### 3.1. Gateway de Pagamentos
-- [ ] **Integração com Stripe/PagSeguro:** Permitir que o paciente pague consultas online.
-- [ ] **Faturamento Automático:** Geração de boletos e notas fiscais eletrônicas.
-- [ ] **Relatórios Financeiros:** Análise de inadimplência e fluxo de caixa.
+### 3.1. Arquitetura de Subdomínios (Tenant Engine)
+- [ ] **Roteador Avançado:** Consolidar a leitura dinâmica do `tenants.json` no boot do sistema para separar o banco de dados antes que qualquer plugin inicie.
+- [ ] **Tenant Provisioner Plugin:** Um plugin oficial que permite criar um novo ambiente (banco de dados + subdomínio) com 1 clique a partir de um painel Super Admin.
+- [ ] **Gestão de Assinaturas (Stripe):** Bloqueio ou liberação de tenants baseado no status da fatura do cliente.
 
-### 3.2. API Pública (REST)
-- [ ] **Documentação Swagger/OpenAPI:** Expor endpoints para integração com sistemas externos.
-- [ ] **Autenticação OAuth2:** Segurança para terceiros consumirem a API.
-- [ ] **Webhooks:** Permitir que sistemas externos escutem eventos do Domain System (ex: `appointment.created`).
+### 3.2. Abstração Total de Banco de Dados
+- [ ] **Schema Builder:** Em vez de arquivos `.sql` ou queries hardcoded, os plugins usarão uma classe `Schema` para criar tabelas que funcione tanto no MySQL (Produção Hostinger) quanto no SQLite (Testes).
+- [ ] **Migrações Automáticas:** O Kernel comparará o Schema desejado pelo plugin com a tabela real no banco e aplicará as alterações (ALTER TABLE) sem intervenção humana.
 
-### 3.3. Multi-Tenancy (SaaS)
-- [ ] **Isolamento de Dados:** Suporte para múltiplas clínicas/empresas no mesmo servidor.
-- [ ] **Gestão de Assinaturas:** Controle de planos (Básico, Pro, Enterprise) e limites de uso.
-- [ ] **White-Label:** Permitir que cada cliente personalize a marca (logo, cores, domínio).
+### 3.3. API Pública (REST & Webhooks)
+- [ ] **Central de Webhooks (Event Gateway):** Um ponto único e seguro onde serviços externos disparam eventos no OS.
+- [ ] **Autenticação OAuth2:** Permitir que aplicativos móveis ou terceiros consigam gerar chaves API para acessar os dados do SO.
 
 ---
 
-## 🟣 Fase 4: A Grande Interface (Iniciada em v1.2.0)
+## 🟣 Fase 4: A Grande Interface (Iniciada)
 
-### 4.1. Motor de Temas e Páginas (Theme & Page Builder)
-- [x] **Sistema de Templates Avançado:** Suporte a Shortcodes aninhados e contêineres recursivos.
-- [x] **Editor Visual OOP (Builder Flex):** Construtor de páginas drag-and-drop com arquitetura VCL/Componentes reais em JavaScript, com Snap to Grid e Object Inspector.
-- [x] **Biblioteca de Componentes:** Reutilização de widgets e blocos baseados em instâncias OOP.
+### 4.1. CockPit OS 2.0 (Interface do Usuário & Skin Engine)
+- [x] **Design System Unificado:** Contrato visual oficial (`DESIGN_SYSTEM.md`) obrigando plugins a usarem classes unificadas em vez de CSS solto.
+- [x] **Skin Engine Cyberpunk Dinâmica:** Sistema baseado em arquivos `.json` e variáveis CSS que permitem injetar temas dark/light sem relar no PHP.
+- [ ] **Painel Totalmente SPA:** Transição de abas e menus via "Live Fetch" AJAX, acabando com a sensação de recarregamento (F5) ao transitar nas configurações.
 
-### 4.2. CockPit OS 2.0 (Interface do Usuário & Skin Engine)
-- [x] **Design System Unificado:** Contrato visual oficial (`DESIGN_SYSTEM.md`) obrigando plugins a usarem classes `.card`, `.btn` em vez de CSS engessado.
-- [x] **Skin Engine Dinâmica (JSON):** Herança de temas completa (Dark Futurista, Dracula) com leitura dinâmica via API em tempo real.
-- [x] **Responsividade e SPA (Single Page App):** Abas com "Live Fetch" via AJAX e componentes nativos de browser estilizados com CSS Webkit Filters.
-
-### 4.3. Performance e Otimização
-- [ ] **Cache de Queries:** Redução de consultas repetidas ao banco de dados.
-- [x] **Lazy Loading de Interface:** Carregamento sob demanda de abas pesadas.
-- [ ] **Otimização de Assets (SEO Engine):** Minificação e compressão profunda de CSS/JS e HTML para bater 99+ no Lighthouse.
-- [ ] **SEO Monitor Plugin:** Plugin autônomo que consome a API do Google PageSpeed Insights e exibe relatórios de saúde do SEO diretamente em Widgets no Dashboard.
-- [ ] **Auto-Fixer Baseado em IA:** Integração da IA para propor ou gerar automaticamente correções caso a nota do PageSpeed caia abaixo de 90.
+### 4.2. Performance e Otimização de SEO
+- [ ] **Otimização de Assets (SEO Engine):** Minificação e compressão profunda de CSS/JS e HTML para bater 99+ no Lighthouse em páginas públicas criadas via Builder-Flex.
+- [ ] **Auto-Fixer de Velocidade Baseado em IA:** Integração para o Kernel propor ou gerar automaticamente correções de performance caso a nota da página comece a cair.
 
 ---
 
@@ -86,28 +66,16 @@ Este documento descreve a visão de futuro para o **Domain System**. As priorida
 
 | Item | Prioridade | Status |
 |------|------------|--------|
-| Eliminar Service Locator (`$this->db()`, `$this->events()`) do `AbstractPlugin` | P0 (Crítico) | 🕒 Pendente (v2.0) |
-| Decompor `ErrorHandler` | P1 (Alta) | 🕒 Pendente |
-| Migrar Migrations para `activate()` | P1 (Alta) | 🟡 Em Progresso |
-| Centralizar Eventos em Constantes | P2 (Média) | 🟡 Em Progresso |
-| Padronizar Respostas HTTP (Request/Response) | P2 (Média) | 🟢 Concluído |
-| Criar Interfaces para `PatientController` | P1 (Alta) | 🟢 Concluído |
-| Criar Interfaces para `FinanceController` | P1 (Alta) | 🟢 Concluído |
-| Remover Acesso Direto a `$_SESSION` | P0 (Crítico) | 🟢 Concluído |
-
----
-
-## 🧪 Experimentos e Pesquisas
-
-- [ ] **Integração com Blockchain:** Registro imutável de prontuários médicos.
-- [ ] **Chatbot com IA:** Assistente virtual para pacientes (triagem inicial).
-- [ ] **Serverless:** Deploy do Kernel em ambientes como AWS Lambda.
+| Implementar Padronização Completa de Erros (Dicionário de Códigos) | P0 (Crítico) | 🟢 Concluído |
+| Expurgo Absoluto de Dependências de Negócio (Desacoplamento do SaaS) | P0 (Crítico) | 🟢 Concluído |
+| Decompor `ErrorHandler` nativo e mesclar com o No-Break Shield | P1 (Alta) | 🟡 Em Progresso |
+| Migrar Queries Manuais para um QueryBuilder unificado | P2 (Média) | 🕒 Pendente |
 
 ---
 
 ## 📊 Critérios de Sucesso
 
-- **Zero downtime** durante atualizações de plugins.
-- **Tempo de resposta** < 200ms para 95% das requisições.
-- **Cobertura de Testes** > 80% para o Core.
-- **Satisfação do Desenvolvedor** — Facilidade para criar novos plugins e temas.
+- **Agnóstico Total**: O Kernel não deve ter dependências que deduzam que negócio está rodando nele.
+- **Zero downtime** durante falhas de código ou ativação de plugins.
+- **Tempo de resposta** < 150ms para renderização de páginas front-end públicas.
+- **Ecossistema:** Ter a mesma facilidade de criar temas e extensões que o WordPress oferece aos seus desenvolvedores.

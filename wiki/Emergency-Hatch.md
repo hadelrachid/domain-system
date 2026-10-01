@@ -19,7 +19,7 @@ O Kernel (SystemAdmin) possui um *Listener* (Ouvinte) atrelado ao Roteador que m
 Se o Kernel perceber que o pacote de Autenticação (`Auth`) não inicializou, mas alguém está tentando acessar o sistema, ele intercepta o acesso e engatilha a Rota de Fuga:
 
 1. **Redirecionamento:** O usuário é expulso da interface visual normal e é direcionado para a rota `/admin/emergency`.
-2. **Interface Minimalista:** A interface padrão da clínica é substituída por um Terminal de Segurança verde e preto. Isso garante que, mesmo se o banco de dados e as dependências visuais tiverem colapsado, a tela vai carregar.
+2. **Interface Minimalista:** A interface padrão da sistema é substituída por um Terminal de Segurança verde e preto. Isso garante que, mesmo se o banco de dados e as dependências visuais tiverem colapsado, a tela vai carregar.
 3. **Chave Mestra:** O sistema ignora senhas do banco de dados (pois o banco pode estar inacessível) e exige a `APP_KEY` — uma chave de segurança física criptografada salva no arquivo de ambiente do servidor (`.env`).
 4. **Recuperação:** Ao digitar a chave mestre corretamente, o Kernel monta uma "Sessão Administrativa de Sobrevivência", permitindo que o administrador entre no Painel, ligue/desligue plugins e reestruture o sistema.
 
