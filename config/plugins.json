@@ -1,8 +1,6 @@
 {
     "academy": true,
     "RachidD Analytics": true,
-    
-    
     "auth": true,
     "database": true,
     "flextheme": true,
@@ -13,5 +11,6 @@
     "settings": true,
     "system-admin": true,
     "SystemMonitor": true,
-    "Temas Visuais (Visual Themes)": true
+    "Temas Visuais (Visual Themes)": true,
+    "nav_menus": true
 }
