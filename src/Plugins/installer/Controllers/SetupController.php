@@ -87,7 +87,7 @@ class SetupController
         $migrated = [];
         foreach ($manager->getPlugins() as $name => $plugin) {
             try {
-                $plugin->activate($container);
+                $plugin->activate();
                 $migrated[] = $name;
             } catch (\Throwable $e) {}
         }
