@@ -77,10 +77,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $stmt = $db->query("SELECT COUNT(*) FROM settings");
         if ($stmt->fetchColumn() == 0) {
             $db->exec("INSERT INTO settings (key_name, key_value) VALUES 
-                ('clinic_name', 'Clnica Padrão'),
-                ('clinic_slogan', 'Excelência em Saúde'),
-                ('clinic_address', 'Rua das Flores, 123 - Centro'),
-                ('clinic_phone', '(11) 99999-9999')
+                ('site_name', 'Meu Sistema Web'),
+                ('site_slogan', 'Plataforma SaaS Universal'),
+                ('site_address', 'Rua das Flores, 123 - Centro'),
+                ('site_phone', '(11) 99999-9999')
             ");
         }
     }

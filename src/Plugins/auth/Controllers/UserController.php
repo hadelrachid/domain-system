@@ -77,7 +77,7 @@ class UserController
         }
 
         $appProvider = $this->twoFactor->getProvider('app');
-        $appSecret = $appProvider->generateSecret('DaherClinica');
+        $appSecret = $appProvider->generateSecret('DomainSystem');
         
         // Simulação p/ Dev Mode
         $user['two_factor_secret'] = $appSecret['secret'];

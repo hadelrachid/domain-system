@@ -50,7 +50,7 @@ class OsConnector implements OsConnectorInterface
 
     /**
      * NOVO: O Plugin avisa: "Eu QUERO ser notificado quando X acontecer."
-     * Ex: $os->listenHook('patient.created');
+     * Ex: $os->listenHook('user.created');
      */
     public function listenHook(string $hookName): self
     {
@@ -60,7 +60,7 @@ class OsConnector implements OsConnectorInterface
 
     /**
      * NOVO: O Plugin avisa: "Eu VOU DISPARAR este evento para os outros ouvirem."
-     * Ex: $os->provideHook('appointment.canceled');
+     * Ex: $os->provideHook('order.canceled');
      */
     public function provideHook(string $hookName): self
     {

@@ -32,7 +32,7 @@ class SettingsController
 
     public function save(Request $request): \DomainSystem\Core\Http\Response
     {
-        $allowedKeys = ['clinic_name', 'clinic_cnpj', 'clinic_slogan', 'clinic_address', 'clinic_phone', 'clinic_whatsapp'];
+        $allowedKeys = ['site_name', 'site_cnpj', 'site_slogan', 'site_address', 'site_phone', 'site_whatsapp'];
         
         foreach ($allowedKeys as $key) {
             if ($request->has($key)) {
@@ -41,9 +41,9 @@ class SettingsController
         }
 
         // Handle File Upload (Logo)
-        if (isset($_FILES['clinic_logo']) && $_FILES['clinic_logo']['error'] === UPLOAD_ERR_OK) {
-            $tmpPath = $_FILES['clinic_logo']['tmp_name'];
-            $ext = strtolower(pathinfo($_FILES['clinic_logo']['name'], PATHINFO_EXTENSION));
+        if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] === UPLOAD_ERR_OK) {
+            $tmpPath = $_FILES['site_logo']['tmp_name'];
+            $ext = strtolower(pathinfo($_FILES['site_logo']['name'], PATHINFO_EXTENSION));
             if ($ext === 'png') {
                 $destDir = DOMAIN_SYSTEM_ROOT . '/public/assets/img';
                 if (!is_dir($destDir)) {
@@ -51,7 +51,7 @@ class SettingsController
                 }
                 $destFile = $destDir . '/logo-cockpit.png';
                 if (move_uploaded_file($tmpPath, $destFile)) {
-                    $this->settingRepo->upsert('clinic_logo', BASE_URL . '/assets/img/logo-cockpit.png?' . time());
+                    $this->settingRepo->upsert('site_logo', BASE_URL . '/assets/img/logo-cockpit.png?' . time());
                 }
             }
         }

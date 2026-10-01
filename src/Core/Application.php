@@ -176,7 +176,7 @@ class Application
      * O Gerenciador de Workspaces.
      *
      * Define o layout visual baseado no perfil do usuário
-     * (admin, doctor, receptionist, etc.).
+     * (admin, manager, user, etc.).
      */
     private WorkspaceManager $workspaceManager;
 

@@ -19,7 +19,7 @@ $connection = $app->getContainer()->make(Connection::class);
 /** @var QueryBuilder $db */
 $db = $app->getContainer()->make(QueryBuilder::class);
 
-$email = "admin@daherclinica.com.br";
+$email = "admin@meusistema.com";
 $password = "senha123";
 $hash = password_hash($password, PASSWORD_DEFAULT);
 

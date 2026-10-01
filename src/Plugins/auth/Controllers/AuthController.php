@@ -99,7 +99,7 @@ class AuthController
             $this->session->set('user_role', $user['role'] ?? 'admin');
 
             // Genérico
-            $this->session->set('doctor_id', null);
+            
 
             $this->session->remove('auth_error');
             $this->session->remove('pending_2fa_email');

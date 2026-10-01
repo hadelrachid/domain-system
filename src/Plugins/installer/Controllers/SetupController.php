@@ -117,7 +117,7 @@ class SetupController
             $session->set('user_id', $userId);
             $session->set('user_name', $adminName);
             $session->set('user_role', 'admin');
-            $session->set('doctor_id', null);
+            
             $session->remove('auth_error'); // Limpa qualquer erro de login fantasma
         } catch (\Exception $e) {
             // Em vez de engolir o erro, mostre-o para debug!

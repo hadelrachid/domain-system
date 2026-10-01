@@ -50,44 +50,44 @@
     <form method="POST" action="<?= BASE_URL ?>/admin/settings" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         <div style="margin-bottom: 15px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Nome da Clínica / Negócio</label>
-            <input type="text" name="clinic_name" value="<?= htmlspecialchars($settings['clinic_name'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;" required>
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Nome do Sistema / Negócio</label>
+            <input type="text" name="site_name" value="<?= htmlspecialchars($settings['site_name'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;" required>
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">CNPJ (Opcional)</label>
-            <input type="text" name="clinic_cnpj" value="<?= htmlspecialchars($settings['clinic_cnpj'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;" placeholder="00.000.000/0001-00">
+            <input type="text" name="site_cnpj" value="<?= htmlspecialchars($settings['site_cnpj'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;" placeholder="00.000.000/0001-00">
         </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Slogan / Subtítulo</label>
-            <input type="text" name="clinic_slogan" value="<?= htmlspecialchars($settings['clinic_slogan'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
-            <small style="color: #666;">Aparece no cabeçalho do receituário PDF.</small>
+            <input type="text" name="site_slogan" value="<?= htmlspecialchars($settings['site_slogan'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <small style="color: #666;">Aparece no cabeçalho de documentos PDF.</small>
         </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Endereço Completo</label>
-            <input type="text" name="clinic_address" value="<?= htmlspecialchars($settings['clinic_address'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <input type="text" name="site_address" value="<?= htmlspecialchars($settings['site_address'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
         </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Telefone Fixo</label>
-            <input type="text" name="clinic_phone" value="<?= htmlspecialchars($settings['clinic_phone'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <input type="text" name="site_phone" value="<?= htmlspecialchars($settings['site_phone'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
         </div>
 
         <div style="margin-bottom: 20px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">WhatsApp Oficial</label>
-            <input type="text" name="clinic_whatsapp" value="<?= htmlspecialchars($settings['clinic_whatsapp'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <input type="text" name="site_whatsapp" value="<?= htmlspecialchars($settings['site_whatsapp'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;">
         </div>
 
         <div style="margin-bottom: 20px; padding-top: 15px; border-top: 1px solid #eee;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Logo da Clínica (PNG, máx 512x512)</label>
-            <?php if(!empty($settings['clinic_logo'])): ?>
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Logo do Sistema (PNG, máx 512x512)</label>
+            <?php if(!empty($settings['site_logo'])): ?>
                 <div style="margin-bottom: 10px;">
-                    <img src="<?= $settings['clinic_logo'] ?>" alt="Logo" style="max-height: 80px; border: 1px solid #ccc; padding: 5px; background: #fafafa;">
+                    <img src="<?= $settings['site_logo'] ?>" alt="Logo" style="max-height: 80px; border: 1px solid #ccc; padding: 5px; background: #fafafa;">
                 </div>
             <?php endif; ?>
-            <input type="file" name="clinic_logo" accept="image/png" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <input type="file" name="site_logo" accept="image/png" style="width: 100%; padding: 8px; box-sizing: border-box;">
         </div>
 
         <button type="submit" class="btn btn-activate" style="padding: 10px 20px; font-size: 14px;">Salvar Configurações</button>

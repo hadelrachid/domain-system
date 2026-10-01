@@ -43,7 +43,7 @@
         
         <div class="form-group">
             <label for="admin_email">E-mail de Login</label>
-            <input type="email" name="admin_email" id="admin_email" required placeholder="admin@clinica.com">
+            <input type="email" name="admin_email" id="admin_email" required placeholder="admin@meusistema.com">
         </div>
         
         <div class="form-group">
