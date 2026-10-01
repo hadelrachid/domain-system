@@ -57,7 +57,7 @@ class AuthController
 
     public function authenticate(\DomainSystem\Core\Http\Request $request)
     {
-        $email      = $request->input('email', '');
+        $email      = trim($request->input('email', ''));
         $password   = $request->input('password', '');
         $twofa_code = $request->input('twofa_code', '');
 

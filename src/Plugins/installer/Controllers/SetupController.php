@@ -62,9 +62,9 @@ class SetupController
 
     public function step3_install(Request $request): Response
     {
-        $adminName = $request->input('admin_name');
-        $adminEmail = $request->input('admin_email');
-        $adminPass = $request->input('admin_pass');
+        $adminName = trim($request->input('admin_name', ''));
+        $adminEmail = trim($request->input('admin_email', ''));
+        $adminPass = $request->input('admin_pass', '');
 
         if (empty($adminName) || empty($adminEmail) || empty($adminPass)) {
             $error = "Preencha todos os campos do administrador.";
@@ -93,6 +93,9 @@ class SetupController
         }
         
         // Salva o log de migrações
+        if (!is_dir(dirname($migrationsPath))) {
+            mkdir(dirname($migrationsPath), 0755, true);
+        }
         file_put_contents($migrationsPath, json_encode($migrated));
 
         // 2. Create Admin Account

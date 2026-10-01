@@ -6,7 +6,7 @@
     "auth": true,
     "database": true,
     "flextheme": true,
-    "installer": false,
+    "installer": true,
     "No-Break Shield": true,
     "pages": true,
     "SEO & Theme Engine": true,

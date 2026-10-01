@@ -64,8 +64,8 @@ class CoreServiceProvider
         });
 
         // 3. Routing
-        $container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function($c) {
-            return new \DomainSystem\Core\Routing\Router($c);
+        $container->singleton(\DomainSystem\Core\Contracts\RouterInterface::class, function($c) use ($dispatcher) {
+            return new \DomainSystem\Core\Routing\Router($c, $dispatcher);
         });
 
         // 4. Themes & Shortcodes
