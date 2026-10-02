@@ -5,7 +5,7 @@
         <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;" id="clearLogsForm">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <button type="button" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="OS.confirm('Tem certeza que deseja limpar todo o histórico de erros?', () => document.getElementById('clearLogsForm').submit());">Limpar Logs</button>
-        </form>
+        </form></div>
     </h1>
     
     <p>Este painel intercepta e exibe todos os erros críticos (Páginas em branco, exceções e falhas fatais em plugins) protegendo o núcleo do sistema.</p>
