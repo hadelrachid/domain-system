@@ -8,9 +8,72 @@
         </form></div>
     </h1>
     
-    <p>Este painel intercepta e exibe todos os erros críticos (Páginas em branco, exceções e falhas fatais em plugins) protegendo o núcleo do sistema.</p>
+    
+    <p>Este painel intercepta e exibe todos os erros críticos protegendo o núcleo do sistema, e também monitora a Pilha de Serviços (PIDs e Memória) na inicialização.</p>
+
+    <div class="sys-tabs">
+        <button class="sys-tab active" onclick="openSysTab(event, 'tab-erros')"><i class="fas fa-bug"></i> Histórico de Crashes</button>
+        <button class="sys-tab" onclick="openSysTab(event, 'tab-processos')"><i class="fas fa-server"></i> Pilha de Serviços (PIDs)</button>
+    </div>
+
+    <!-- ABA 2: PILHA DE PROCESSOS -->
+    <div id="tab-processos" class="sys-content">
+        <h2 style="margin-top:0; color:#fff;">Gerenciador de Tarefas do Kernel</h2>
+        <p style="color:#94a3b8; font-size:13px;">Instantâneo (Snapshot) gravado na última inicialização do sistema. Permite auditar consumo de RAM e lentidão causada por plugins.</p>
+        
+        <?php if (empty($processes)): ?>
+            <div style="background: var(--bg-panel); padding: 30px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                <p>Nenhuma pilha de processos foi registrada nesta inicialização.</p>
+            </div>
+        <?php else: ?>
+            <table class="wp-list-table">
+                <thead>
+                    <tr>
+                        <th style="width: 150px;">PID</th>
+                        <th>Módulo / Plugin</th>
+                        <th>Camada (Ring)</th>
+                        <th>Memória (Δ)</th>
+                        <th>Tempo de Boot</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($processes as $pid => $proc): ?>
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold; color: var(--accent-blue);"><?= htmlspecialchars($proc['pid']) ?></td>
+                        <td><strong><?= htmlspecialchars($proc['name']) ?></strong></td>
+                        <td>
+                            <?php if($proc['type'] === 'SystemApp'): ?>
+                                <span class="badge" style="background: rgba(88,166,255,0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">Ring 0 (Core)</span>
+                            <?php else: ?>
+                                <span class="badge" style="background: rgba(245,110,40,0.1); color: var(--accent-orange); border: 1px solid var(--accent-orange);">Ring 3 (User)</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="color: <?= $proc['memory_used_kb'] > 5000 ? '#ef4444' : 'var(--text-main)' ?>;">
+                            <?= number_format($proc['memory_used_kb'], 2) ?> KB
+                        </td>
+                        <td style="color: <?= $proc['duration_ms'] > 100 ? '#ef4444' : 'var(--accent-green)' ?>;">
+                            <?= number_format($proc['duration_ms'], 2) ?> ms
+                        </td>
+                        <td>
+                            <?php if($proc['status'] === 'Running'): ?>
+                                <span style="color: var(--accent-green);">● Estável</span>
+                            <?php else: ?>
+                                <span style="color: #ef4444; font-weight:bold;">✖ Crashed</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+
+    <!-- ABA 1: ERROS -->
+    <div id="tab-erros" class="sys-content active">
 
     <?php if (isset($_GET['cleared'])): ?>
+
         <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-left: 4px solid #28a745;">
             Histórico de erros apagado com sucesso.
         </div>
@@ -77,3 +140,20 @@
     <?php endif; ?>
 </div>
 
+
+    </div>
+    <script>
+    function openSysTab(evt, tabId) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("sys-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove("active");
+        }
+        tablinks = document.getElementsByClassName("sys-tab");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        document.getElementById(tabId).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+    </script>

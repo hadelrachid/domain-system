@@ -233,6 +233,11 @@ class PluginBootstrapper
             }
             file_put_contents($migrationsPath, json_encode($migrated, JSON_PRETTY_PRINT));
         }
+
+        // Salva a pilha de processos para o Gerenciador de Tarefas
+        if ($this->processRegistry) {
+            $this->processRegistry->saveSnapshot($this->basePath);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════════

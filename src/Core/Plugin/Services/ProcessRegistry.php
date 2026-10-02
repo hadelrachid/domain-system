@@ -113,4 +113,26 @@ class ProcessRegistry
     {
         return $this->processes;
     }
+
+    /**
+     * Tira uma "fotografia" do estado final dos processos e salva em disco
+     * para que o painel de administração (Frontend) possa exibir a tabela.
+     */
+    public function saveSnapshot(string $basePath): void
+    {
+        $file = rtrim($basePath, '/\\') . '/temp/process_stack.json';
+        file_put_contents($file, json_encode($this->processes, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Carrega o último snapshot salvo.
+     */
+    public function loadSnapshot(string $basePath): array
+    {
+        $file = rtrim($basePath, '/\\') . '/temp/process_stack.json';
+        if (file_exists($file)) {
+            return json_decode(file_get_contents($file), true) ?: [];
+        }
+        return [];
+    }
 }
