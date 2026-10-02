@@ -538,11 +538,136 @@
             });
         });
     </script>
-    <!-- OS Notification System -->
-    <div id="os-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999;"></div>
+        <!-- OS Notification System (Hub & Toasts) -->
+    <style>
+        /* Toast Container */
+        #os-toast-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        /* Notification Hub Button */
+        #os-notif-hub-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 99999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        #os-notif-hub-btn:hover { background: #334155; color: #fff; }
+        
+        .os-notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        /* Notification Flyout Panel */
+        #os-notif-panel {
+            position: fixed;
+            bottom: 75px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 99998;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #os-notif-panel.open {
+            display: flex;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .os-notif-header {
+            padding: 15px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .os-notif-header h3 { margin: 0; font-size: 14px; color: #f8fafc; }
+        .os-notif-clear { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px; }
+        .os-notif-clear:hover { color: #fff; text-decoration: underline; }
+
+        .os-notif-body {
+            padding: 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .os-notif-item {
+            background: #1e293b;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+            color: #cbd5e1;
+            border-left: 4px solid #3b82f6;
+            line-height: 1.4;
+        }
+        .os-notif-item.success { border-left-color: #10b981; }
+        .os-notif-item.error { border-left-color: #ef4444; }
+        .os-notif-item.warning { border-left-color: #f59e0b; }
+        .os-notif-time { font-size: 11px; color: #64748b; margin-top: 5px; display: block; }
+    </style>
+
+    <div id="os-toast-container"></div>
+    
+    <div id="os-notif-panel">
+        <div class="os-notif-header">
+            <h3>Notificações</h3>
+            <button class="os-notif-clear" onclick="OS.clearHub()">Limpar Fila</button>
+        </div>
+        <div class="os-notif-body" id="os-notif-list">
+            <!-- Items go here -->
+        </div>
+    </div>
+
+    <button id="os-notif-hub-btn" onclick="OS.toggleHub()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <div class="os-notif-badge" id="os-notif-badge">0</div>
+    </button>
+
     <script>
         window.OS = window.OS || {};
-                window.OS.confirm = function(message, onConfirm) {
+        
+        window.OS.confirm = function(message, onConfirm) {
             const overlay = document.createElement('div');
             overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 999999; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s;';
             
@@ -589,10 +714,79 @@
                 box.style.transform = 'scale(1)';
             });
         };
-        window.OS.notify = function(message, type = 'success') {
+        
+        let notifQueue = [];
+        let unreadCount = 0;
+
+        // Toggles the flyout panel
+        window.OS.toggleHub = function() {
+            const panel = document.getElementById('os-notif-panel');
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+                setTimeout(() => panel.style.display = 'none', 200); // Wait for transition
+            } else {
+                panel.style.display = 'flex';
+                // Reset unread count when opening
+                unreadCount = 0;
+                document.getElementById('os-notif-badge').style.display = 'none';
+                
+                requestAnimationFrame(() => {
+                    panel.classList.add('open');
+                });
+            }
+        };
+
+        window.OS.clearHub = function() {
+            document.getElementById('os-notif-list').innerHTML = '<div style="text-align:center; padding: 20px; color: #64748b;">Nenhuma notificação na fila.</div>';
+            notifQueue = [];
+            unreadCount = 0;
+            document.getElementById('os-notif-badge').style.display = 'none';
+        };
+
+        // Adds to hub history
+        window.OS.addToHub = function(message, type) {
+            const list = document.getElementById('os-notif-list');
+            
+            // Remove empty state text if present
+            if (notifQueue.length === 0) {
+                list.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'os-notif-item ' + type;
+            item.innerHTML = `<strong>${type.toUpperCase()}</strong><br>${message}<span class="os-notif-time">Agora mesmo</span>`;
+            
+            // Add to top
+            list.prepend(item);
+            notifQueue.unshift({message, type});
+            
+            // Limit to 50 items in DOM
+            if (list.children.length > 50) {
+                list.lastChild.remove();
+            }
+
+            // Increment badge se não for carga histórica
+            if (!arguments[2]) {
+                const panel = document.getElementById('os-notif-panel');
+                if (!panel.classList.contains('open')) {
+                    unreadCount++;
+                    const badge = document.getElementById('os-notif-badge');
+                    badge.innerText = unreadCount;
+                    badge.style.display = 'block';
+                }
+            }
+        };
+
+        window.OS.notify = function(message, type = 'success', skipHub = false) {
             const container = document.getElementById('os-toast-container');
             if (!container) return;
             
+            // Add to Notification Hub History
+            if (!skipHub) {
+                window.OS.addToHub(message, type);
+            }
+
+            // Render temporary Toast (Auto-hides)
             const toast = document.createElement('div');
             let color = '#3b82f6';
             let icon = 'ℹ️';
@@ -600,7 +794,7 @@
             if (type === 'error') { color = '#ef4444'; icon = '🚨'; }
             if (type === 'warning') { color = '#f59e0b'; icon = '⚠️'; }
             
-            toast.style = `background: #0f172a; color: #f8fafc; padding: 16px 24px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; border-left: 5px solid ${color}; letter-spacing: 0.3px; max-width: 450px; line-height: 1.4;`;
+            toast.style = `background: #0f172a; color: #f8fafc; padding: 14px 20px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; border-left: 5px solid ${color}; letter-spacing: 0.3px; max-width: 400px; line-height: 1.4;`;
             toast.innerHTML = `<span>${icon}</span> <span class="os-msg-content"></span>`;
             toast.querySelector('.os-msg-content').textContent = message;
             
@@ -608,27 +802,50 @@
             
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateX(0)';
+                toast.style.transform = 'translateY(0)';
             });
             
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateX(50px)';
+                toast.style.transform = 'translateY(20px)';
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 4000); // 4 seconds visibility
         };
     </script>
-    <?php if (!empty($unreadNotifs)): ?>
+    
+    <?php
+        $unreadNotifs = [];
+        $allNotifs = [];
+        try {
+            $app = \DomainSystem\Core\Application::getInstance();
+            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
+                $unreadNotifs = $notifManager->getUnread();
+                $allNotifs = $notifManager->getAll();
+                if (!empty($unreadNotifs)) {
+                    $notifManager->markAsRead();
+                }
+            }
+        } catch (\Throwable $e) {}
+    ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            <?php if (empty($allNotifs)): ?>
+                document.getElementById('os-notif-list').innerHTML = '<div style="text-align:center; padding: 20px; color: #64748b;">Nenhuma notificação na fila.</div>';
+            <?php else: ?>
+                <?php foreach (array_reverse($allNotifs) as $n): ?>
+                    // Apenas popula no hub em background
+                    window.OS.addToHub(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>, true);
+                <?php endforeach; ?>
+            <?php endif; ?>
+
+            // Dispara toast apenas para as NAO LIDAS (skipHub = true para não duplicar na lista)
             <?php foreach (array_reverse($unreadNotifs) as $n): ?>
             setTimeout(() => {
-                OS.notify(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>);
+                OS.notify(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>, true);
             }, 500);
             <?php endforeach; ?>
         });
     </script>
-    <?php endif; ?>
 </body>
 </html>
-
