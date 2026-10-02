@@ -558,9 +558,9 @@
         /* Toast Container */
         #os-toast-container {
             position: fixed;
-            bottom: 80px;
+            top: 20px;
             right: 20px;
-            z-index: 99999;
+            z-index: 999999;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -850,22 +850,32 @@
             if (type === 'error') { color = '#ef4444'; icon = '🚨'; }
             if (type === 'warning') { color = '#f59e0b'; icon = '⚠️'; }
             
-            toast.style = `background: #0f172a; color: #f8fafc; padding: 14px 20px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; border-left: 5px solid ${color}; letter-spacing: 0.3px; max-width: 400px; line-height: 1.4;`;
-            toast.innerHTML = `<span>${icon}</span> <span class="os-msg-content"></span>`;
+            toast.style = `background: #0f172a; color: #f8fafc; padding: 16px 20px; border-radius: 8px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); opacity: 0; transform: translateX(50px); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 14px; display: flex; align-items: flex-start; gap: 15px; border: 1px solid #334155; border-left: 6px solid ${color}; letter-spacing: 0.3px; max-width: 450px; line-height: 1.5; cursor: pointer;`;
+            
+            toast.innerHTML = `
+                <span style="font-size: 18px; margin-top: -2px;">${icon}</span> 
+                <span class="os-msg-content" style="flex-grow: 1;"></span>
+                <button style="background:none; border:none; color:#94a3b8; cursor:pointer; padding:0; font-size:16px; margin-top:-2px;" onclick="this.parentElement.style.opacity='0'; setTimeout(()=>this.parentElement.remove(), 300);">✖</button>
+            `;
             toast.querySelector('.os-msg-content').textContent = message;
             
             container.appendChild(toast);
             
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
+                toast.style.transform = 'translateX(0)';
             });
             
+            // Se for erro, fica 15 segundos ou até clicar. Se for sucesso, 5 segundos.
+            const delay = (type === 'error') ? 15000 : 5000;
+            
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000); // 4 seconds visibility
+                if(toast.parentElement) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(50px)';
+                    setTimeout(() => toast.remove(), 400);
+                }
+            }, delay);
         };
     </script>
     
