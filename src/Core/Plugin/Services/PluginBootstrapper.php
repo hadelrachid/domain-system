@@ -8,18 +8,105 @@ use DomainSystem\Core\Plugin\PluginInterface;
 use Exception;
 
 /**
-     * Executa o ciclo de inicialização completo separando a barreira de confiança (Rings).
-     * 
-     * ⚠️ ATENÇÃO ARQUITETURAL (Cuidado com Falhas Silenciosas do PHP):
-     * A assinatura DEVE exigir explicitamente as duas arrays ($systemApps e $userPlugins).
-     * Se no futuro a assinatura for alterada para receber apenas (array $plugins)
-     * e quem chama (PluginManager) continuar enviando dois argumentos, o PHP 8.x 
-     * NÃO lançará um erro fatal. Ele simplesmente consumirá o primeiro argumento,
-     * ignorará o segundo silenciosamente, e os Plugins de Usuário sumirão do painel
-     * sem deixar absolutamente NENHUM log de erro (Silent Failure).
+ * ════════════════════════════════════════════════════════════════════════════
+ * CLASSE: PluginBootstrapper (O Motor de Inicialização do Kernel)
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * OBJETIVO ARQUITETURAL:
+ * ──────────────────────
+ * Esta classe é o coração da inicialização do Domain System OS. Ela 
+ * recebe a Pilha ordenada de plugins (via PluginBootStack) e executa 
+ * o ciclo de vida completo de cada módulo em DUAS FASES distintas, 
+ * seguindo o padrão de Service Providers (similar ao Laravel/Symfony).
+ *
+ * O CICLO DE INICIALIZAÇÃO EM 2 FASES:
+ * ─────────────────────────────────────
+ *
+ *   ╔══════════════════════════════════════════════════════════╗
+ *   ║  FASE 1: NEGOCIAÇÃO (osRegister)                        ║
+ *   ║  ───────────────────────────────                        ║
+ *   ║  Cada plugin apenas DECLARA o que precisa e o que       ║
+ *   ║  oferece (Hooks, Links). Nenhuma lógica pesada roda.    ║
+ *   ║  → Database diz: "Eu forneço core.db"                  ║
+ *   ║  → Academy diz: "Eu preciso de core.db"                ║
+ *   ╠══════════════════════════════════════════════════════════╣
+ *   ║  FASE 2: EXECUÇÃO (osBoot + boot)                      ║
+ *   ║  ────────────────────────────────                       ║
+ *   ║  Cada plugin roda sua lógica real. Neste ponto, todas   ║
+ *   ║  as dependências declaradas na Fase 1 já estão prontas. ║
+ *   ║  → Database expõe o PDO no Container                   ║
+ *   ║  → Academy busca cursos no banco com segurança          ║
+ *   ╚══════════════════════════════════════════════════════════╝
+ *
+ * INTEGRAÇÃO COM O PROCESSREGISTRY (PIDs):
+ * ─────────────────────────────────────────
+ * Na Fase 2, antes de ligar cada plugin, o Bootstrapper gera um PID 
+ * (Process Identifier) via ProcessRegistry. Isso permite ao SystemMonitor 
+ * exibir uma tabela de processos em tempo real (RAM, CPU, Status).
+ *
+ * INTEGRAÇÃO COM O NO-BREAK SHIELD (Severity Routing):
+ * ─────────────────────────────────────────────────────
+ * Se um plugin explodir durante o Boot, o Bootstrapper:
+ *   1. Finaliza o PID com status 'Crashed'.
+ *   2. Consulta o PluginBootStack para saber se é Ring 0 ou Ring 3.
+ *   3. Define a severidade: CRITICAL (Ring 0) ou WARNING (Ring 3).
+ *   4. Despacha o evento 'os.plugin.crashed' com todos os metadados.
+ *   5. Se for Ring 3, desativa o plugin (quarentena).
+ *   6. O loop CONTINUA — o sistema sobrevive.
+ *
+ * PADRÃO DE PROJETO: Template Method / Pipeline
+ * PRINCÍPIO SOLID:   SRP + OCP (aberto para extensão via eventos)
+ */
+class PluginBootstrapper
+{
+    private ContainerInterface $container;
+    private EventDispatcherInterface $dispatcher;
+    private PluginStateManager $stateManager;
+    private ProcessRegistry $processRegistry;
+    private string $basePath;
+    private ?\DomainSystem\Core\Contracts\SessionManagerInterface $sessionManager;
+    private ?\DomainSystem\Core\Plugin\LinkRegistry $linkRegistry;
+
+    /** @var string|null Nome do plugin sendo inicializado (para rastreio de crash fatal) */
+    private ?string $currentBootingPlugin = null;
+
+    public function __construct(
+        ContainerInterface $container,
+        EventDispatcherInterface $dispatcher,
+        PluginStateManager $stateManager,
+        string $basePath,
+        ?\DomainSystem\Core\Contracts\SessionManagerInterface $sessionManager = null,
+        ?ProcessRegistry $processRegistry = null,
+        ?\DomainSystem\Core\Plugin\LinkRegistry $linkRegistry = null
+    ) {
+        $this->container        = $container;
+        $this->dispatcher       = $dispatcher;
+        $this->stateManager     = $stateManager;
+        $this->basePath         = $basePath;
+        $this->sessionManager   = $sessionManager;
+        $this->processRegistry  = $processRegistry ?? new ProcessRegistry();
+        $this->linkRegistry     = $linkRegistry;
+    }
+
+    public function getCurrentBootingPlugin(): ?string
+    {
+        return $this->currentBootingPlugin;
+    }
+
+    public function getProcessRegistry(): ProcessRegistry
+    {
+        return $this->processRegistry;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  MÉTODO PRINCIPAL: bootPlugins() — O Motor de 2 Fases
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Executa o ciclo de inicialização completo de todos os plugins na 
+     * ordem definida pela Pilha (PluginBootStack: Ring 0 → Ring 3).
      *
-     * @param array<string, PluginInterface> $systemApps (Ring 0)
-     * @param array<string, PluginInterface> $userPlugins (Ring 3)
+     * @param array<string, PluginInterface> $plugins Pilha ordenada de plugins
      */
     public function bootPlugins(array $systemApps, array $userPlugins = []): void
     {

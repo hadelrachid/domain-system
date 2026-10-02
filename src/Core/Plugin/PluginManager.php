@@ -7,13 +7,74 @@ use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use Exception;
 
 /**
-     * Executa o Boot de todos os plugins na ordem da Pilha (Ring 0 -> Ring 3).
-     * 
-     * ⚠️ ATENÇÃO - SEGURANÇA DE TIPAGEM E RINGS:
-     * Sempre envie os SystemApps e UserPlugins como dois parâmetros estritos separados.
-     * O Bootstrapper precisa dessa separação para garantir matematicamente que
-     * módulos de usuário (Ring 3) nunca subvertam a inicialização do Kernel (Ring 0),
-     * mesmo que declarem dependências maliciosas no JSON.
+ * ════════════════════════════════════════════════════════════════════════════
+ * CLASSE: PluginManager (O Gestor de Plugins)
+ * ════════════════════════════════════════════════════════════════════════════
+ * PADRÃO DE PROJETO: FACADE (Fachada)
+ *
+ * O PluginManager é a "porta de entrada" para todo o subsistema de plugins.
+ * Ele delega responsabilidades para operárias especializadas via DI:
+ *   - PluginDiscoverer    → Varre as pastas e encontra plugins.
+ *   - PluginBootStack     → Gerencia a Pilha de prioridades (Ring 0 → Ring 3).
+ *   - PluginBootstrapper  → Executa o ciclo de Boot em 2 Fases.
+ *   - PluginStateManager  → Controla o estado ativo/inativo (plugins.json).
+ *   - PluginInstaller     → Instala/remove plugins via ZIP.
+ *
+ * PRINCÍPIO SOLID: SRP (não faz nada sozinho, apenas delega).
+ */
+class PluginManager
+{
+    private ContainerInterface $container;
+    private EventDispatcherInterface $dispatcher;
+    private Services\PluginStateManager $stateManager;
+    private Services\PluginDiscoverer $discoverer;
+    private Services\PluginBootstrapper $bootstrapper;
+    private Services\PluginBootStack $bootStack;
+    private Services\PluginInstaller $installer;
+
+    public function __construct(
+        ContainerInterface $container,
+        EventDispatcherInterface $dispatcher,
+        Services\PluginStateManager $stateManager,
+        Services\PluginDiscoverer $discoverer,
+        Services\PluginBootstrapper $bootstrapper,
+        Services\PluginBootStack $bootStack,
+        Services\PluginInstaller $installer
+    ) {
+        $this->container    = $container;
+        $this->dispatcher   = $dispatcher;
+        $this->stateManager = $stateManager;
+        $this->discoverer   = $discoverer;
+        $this->bootstrapper = $bootstrapper;
+        $this->bootStack    = $bootStack;
+        $this->installer    = $installer;
+
+        // Liga o QTA (Quadro de Transferência Automática) / Disjuntor V2 Extra
+        register_shutdown_function([$this->bootstrapper, 'handleFatalCrash']);
+    }
+
+    /**
+     * Descobre plugins numa pasta e os empilha na camada correta.
+     *
+     * @param string $pluginsPath  Caminho da pasta (SystemApps ou Plugins)
+     * @param string $configPath   Caminho do arquivo de configuração
+     * @param bool   $forceActive  Se true, força todos como ativos (Ring 0)
+     * @param bool   $isSystemApp  Se true, empilha como Ring 0 (protegido)
+     */
+    public function discoverPlugins(string $pluginsPath, string $configPath, bool $forceActive = false, bool $isSystemApp = false): void
+    {
+        $discovered = $this->discoverer->discover($pluginsPath, $forceActive);
+        foreach ($discovered as $plugin) {
+            if ($isSystemApp) {
+                $this->bootStack->pushSystemApp($plugin);
+            } else {
+                $this->bootStack->pushUserPlugin($plugin);
+            }
+        }
+    }
+
+    /**
+     * Executa o Boot de todos os plugins na ordem da Pilha (Ring 0 → Ring 3).
      */
     public function bootPlugins(): void
     {
