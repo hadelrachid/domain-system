@@ -290,14 +290,14 @@ class PluginBootstrapper
             'line'       => $e->getLine(),
             'pid'        => $pid,
         ]);
+        // 3. Grava no Flight Recorder
+        try { if ($this->container->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) { $this->container->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)->push($e->getMessage(), $isSystemApp ? "error" : "warning", $pluginName, ["file" => $e->getFile(), "line" => $e->getLine(), "severity" => $severity]); } } catch (\Throwable $i) {}
+        error_log("[{$severity}] OS Plugin Crash - {$pluginName}: " . $e->getMessage());
 
-        // 3. Log de emergência no error_log do servidor
-        error_log(
-            "[{$severity}] OS Plugin Crash — {$pluginName} ({$errorCode}): "
-            . $e->getMessage()
-            . " em {$e->getFile()}:{$e->getLine()}"
-        );
+
     }
+
+
 
     // ════════════════════════════════════════════════════════════════════════
     //  RESOLUÇÃO DE DEPENDÊNCIAS (Ordenação Topológica)
@@ -384,7 +384,7 @@ class PluginBootstrapper
         }
 
         // Salva na sessão para exibição no painel admin
-        try {
+        // Salva na sessao para painel admin e Flight Recorder
             if ($this->sessionManager) {
                 $crashes   = $this->sessionManager->get('plugin_crashes', []);
                 $severity  = $isCore ? 'CRITICAL' : 'WARNING';
@@ -395,8 +395,8 @@ class PluginBootstrapper
                         . ($isCore ? ' [RING 0 — NÃO DESATIVADO]' : ' [RING 3 — PLUGIN EJETADO]'),
                 ];
                 $this->sessionManager->set('plugin_crashes', $crashes);
-            }
-        } catch (\Throwable $ignored) {
+                $this->sessionManager->set("plugin_crashes", $crashes);
+                if ($this->container->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) { $this->container->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)->push("FATAL: " . $error["message"], "error", $pluginName, ["file" => $error["file"], "line" => $error["line"], "severity" => $severity]); }
             // Dentro de um shutdown function, não podemos falhar
         }
 
