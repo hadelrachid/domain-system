@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const title = titleInput.value.trim();
         if (!title) {
             e.preventDefault();
-            alert('O título é obrigatório.');
+            OS.notify('O título é obrigatório.', 'error');
             return;
         }
         

@@ -529,6 +529,53 @@
     <div id="os-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999;"></div>
     <script>
         window.OS = window.OS || {};
+                window.OS.confirm = function(message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 999999; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s;';
+            
+            const box = document.createElement('div');
+            box.style = 'background: #1e1e2d; border: 1px solid #323248; border-radius: 8px; padding: 25px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
+            
+            const text = document.createElement('p');
+            text.style = 'color: #fff; font-size: 16px; margin-bottom: 25px; line-height: 1.5;';
+            text.innerText = message;
+            
+            const btnGroup = document.createElement('div');
+            btnGroup.style = 'display: flex; justify-content: center; gap: 15px;';
+            
+            const btnCancel = document.createElement('button');
+            btnCancel.innerText = 'Cancelar';
+            btnCancel.style = 'background: transparent; border: 1px solid #4a4a6a; color: #a1a1b5; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;';
+            btnCancel.onclick = function() {
+                overlay.style.opacity = '0';
+                box.style.transform = 'scale(0.9)';
+                setTimeout(() => overlay.remove(), 200);
+            };
+            
+            const btnConfirm = document.createElement('button');
+            btnConfirm.innerText = 'Confirmar';
+            btnConfirm.style = 'background: #45f3ff; border: none; color: #0b0c10; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;';
+            btnConfirm.onclick = function() {
+                overlay.style.opacity = '0';
+                box.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    overlay.remove();
+                    if(onConfirm) onConfirm();
+                }, 200);
+            };
+            
+            btnGroup.appendChild(btnCancel);
+            btnGroup.appendChild(btnConfirm);
+            box.appendChild(text);
+            box.appendChild(btnGroup);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+                box.style.transform = 'scale(1)';
+            });
+        };
         window.OS.notify = function(message, type = 'success') {
             const container = document.getElementById('os-toast-container');
             if (!container) return;
