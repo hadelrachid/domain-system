@@ -141,3 +141,22 @@ Se o seu `Plugin.php` quebrar por algum motivo (um erro de sintaxe ou erro no Ba
 4. Continuar carregando o resto do sistema normalmente (O site não sai do ar!).
 
 **Regra de Ouro:** Lance Exceções (`throw new Exception("Mensagem")`) sempre que o seu Plugin encontrar um cenário impossível de continuar. O Kernel cuida do resto!
+
+---
+
+## 🛡️ Entendendo a Arquitetura de OS Virtual
+
+O Domain System não é um CMS tradicional. Ele emula conceitos de Sistemas Operacionais modernos em PHP:
+
+### 1. Anéis de Proteção (Rings 0 e 3)
+*   **SystemApps (Ring 0):** Módulos vitais do sistema (Ex: Database, Roteador). Ficam em `src/SystemApps/`. Se um deles falhar, o sistema entra em modo de segurança (Degraded Mode).
+*   **UserPlugins (Ring 3):** Seus plugins de negócio. Ficam em `src/Plugins/`. Se um deles falhar, o Kernel o isola, aborta o carregamento, mas o restante do site continua funcionando ileso.
+
+### 2. Gerenciador de Processos (PIDs e Memória)
+Cada plugin que você constrói ganha um **PID** (Identificador de Processo) único a cada requisição. O **Process Registry** monitora:
+*   Tempo exato em milissegundos que o método `register()` e o boot interno levam.
+*   Consumo de Memória RAM (Δ) gasto pelas operações pesadas do seu plugin.
+Isso fica visível no "Gerenciador de Tarefas" do painel Administrativo (`/admin/monitor`). Seu código não afeta o desempenho do Core silenciosamente!
+
+### 3. No-Break Shield (Interceptação de Fatal Errors)
+Se você escrever um código que causaria uma "Tela Branca" ou `Fatal Error` (como tentar ler um método de um objeto `null`), o sistema usa o *No-Break Shield* para isolar o erro na sandbox do seu plugin. Um Toast de aviso aparecerá no topo do painel, o "sino" registrará o stack trace, e seu plugin será desativado até você corrigir o código. O Frontend continuará intacto.
