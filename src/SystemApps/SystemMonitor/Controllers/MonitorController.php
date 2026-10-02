@@ -44,5 +44,22 @@ class MonitorController
         header("Location: " . BASE_URL . "/admin/monitor?cleared=1");
         exit;
     }
-}
 
+    public function clearApi()
+    {
+        try {
+            $app = \DomainSystem\Core\Application::getInstance();
+            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
+                $notifManager->clear();
+            }
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+            exit;
+        } catch (\Throwable $e) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false]);
+            exit;
+        }
+    }
+}

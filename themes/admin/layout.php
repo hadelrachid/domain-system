@@ -538,7 +538,22 @@
             });
         });
     </script>
-        <!-- OS Notification System (Hub & Toasts) -->
+        <?php
+        $unreadNotifs = [];
+        $allNotifs = [];
+        try {
+            $app = \DomainSystem\Core\Application::getInstance();
+            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
+                $unreadNotifs = $notifManager->getUnread();
+                $allNotifs = $notifManager->getAll();
+                if (!empty($unreadNotifs)) {
+                    $notifManager->markAsRead();
+                }
+            }
+        } catch (\Throwable $e) {}
+    ?>
+    <!-- OS Notification System (Hub & Toasts) -->
     <style>
         /* Toast Container */
         #os-toast-container {
@@ -645,6 +660,23 @@
         .os-notif-item.error { border-left-color: #ef4444; }
         .os-notif-item.warning { border-left-color: #f59e0b; }
         .os-notif-time { font-size: 11px; color: #64748b; margin-top: 5px; display: block; }
+
+        @keyframes ring-bell {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-15deg); }
+            30% { transform: rotate(10deg); }
+            40% { transform: rotate(-10deg); }
+            50% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            70% { transform: rotate(0); }
+            100% { transform: rotate(0); }
+        }
+        .os-ringing {
+            animation: ring-bell 0.8s ease-in-out;
+            transform-origin: top center;
+            color: #ef4444; /* Fica vermelho enquanto bate */
+        }
     </style>
 
     <div id="os-toast-container"></div>
@@ -660,7 +692,7 @@
     </div>
 
     <button id="os-notif-hub-btn" onclick="OS.toggleHub()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <svg id="os-notif-bell" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         <div class="os-notif-badge" id="os-notif-badge">0</div>
     </button>
 
@@ -716,7 +748,16 @@
         };
         
         let notifQueue = [];
-        let unreadCount = 0;
+        let unreadCount = <?= !empty($unreadNotifs) ? count($unreadNotifs) : 0 ?>;
+        
+        // Exibe a badge no load inicial se houver não lidas
+        window.addEventListener('DOMContentLoaded', () => {
+            if (unreadCount > 0) {
+                const b = document.getElementById('os-notif-badge');
+                b.innerText = unreadCount;
+                b.style.display = 'block';
+            }
+        });
 
         // Toggles the flyout panel
         window.OS.toggleHub = function() {
@@ -741,6 +782,15 @@
             notifQueue = [];
             unreadCount = 0;
             document.getElementById('os-notif-badge').style.display = 'none';
+            
+            // Apaga de verdade no backend
+            const fd = new FormData();
+            fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+            fetch('<?= BASE_URL ?>/api/os/notifications/clear', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '<?= $_SESSION['csrf_token'] ?? '' ?>' },
+                body: fd
+            });
         };
 
         // Adds to hub history
@@ -773,6 +823,12 @@
                     const badge = document.getElementById('os-notif-badge');
                     badge.innerText = unreadCount;
                     badge.style.display = 'block';
+                    
+                    // Anima o sino!
+                    const bell = document.getElementById('os-notif-bell');
+                    bell.classList.remove('os-ringing');
+                    void bell.offsetWidth; // trigger reflow
+                    bell.classList.add('os-ringing');
                 }
             }
         };
@@ -813,21 +869,7 @@
         };
     </script>
     
-    <?php
-        $unreadNotifs = [];
-        $allNotifs = [];
-        try {
-            $app = \DomainSystem\Core\Application::getInstance();
-            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
-                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
-                $unreadNotifs = $notifManager->getUnread();
-                $allNotifs = $notifManager->getAll();
-                if (!empty($unreadNotifs)) {
-                    $notifManager->markAsRead();
-                }
-            }
-        } catch (\Throwable $e) {}
-    ?>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             <?php if (empty($allNotifs)): ?>
