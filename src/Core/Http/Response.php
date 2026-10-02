@@ -28,6 +28,11 @@ class Response implements ResponseInterface
         return $this->content;
     }
 
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
     public function setStatusCode(int $code): self
     {
         $this->statusCode = $code;
