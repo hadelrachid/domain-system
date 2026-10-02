@@ -1,0 +1,7 @@
+{
+    "name": "Crash Test (Simulador)",
+    "version": "1.0",
+    "description": "Plugin desenvolvido exclusivamente para testar a Torre de Controle e os Toasts do No-Break Shield.",
+    "author": "Antigravity",
+    "namespace": "DomainSystem\\Plugins\\crash_test"
+}
