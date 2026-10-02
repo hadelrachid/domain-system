@@ -51,6 +51,18 @@ class MonitorController
         exit;
     }
 
+    public function getStackApi()
+    {
+        $stackPath = dirname(__DIR__, 4) . '/temp/process_stack.json';
+        $processes = [];
+        if (file_exists($stackPath)) {
+            $processes = json_decode(file_get_contents($stackPath), true) ?: [];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'processes' => $processes]);
+        exit;
+    }
+
     public function clearApi()
     {
         try {

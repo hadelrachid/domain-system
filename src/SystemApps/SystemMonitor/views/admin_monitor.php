@@ -37,7 +37,7 @@
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="process-table-body">
                     <?php foreach ($processes as $pid => $proc): ?>
                     <tr>
                         <td style="font-family: monospace; font-weight: bold; color: var(--accent-blue);"><?= htmlspecialchars($proc['pid']) ?></td>
@@ -136,7 +136,60 @@
                     OS.notify("Erro ao copiar: " + err, 'error');
                 });
             }
-        </script>
+        
+// --- AJAX POLLING DA PILHA DE SERVIÇOS ---
+function updateProcessStack() {
+    // Visão Focada: Só faz requisição se a aba estiver ativa
+    if (!document.getElementById('tab-processos').classList.contains('active')) {
+        return;
+    }
+
+    fetch(window.DS_BASE_URL + 'api/os/monitor/stack')
+        .then(r => r.json())
+        .then(data => {
+            if(data.success && data.processes) {
+                renderProcessTable(data.processes);
+            }
+        }).catch(err => console.log('OS Monitor:', err));
+}
+
+function renderProcessTable(processes) {
+    const tbody = document.getElementById('process-table-body');
+    if(!tbody) return;
+    
+    let html = '';
+    for(let pid in processes) {
+        let proc = processes[pid];
+        let ringBadge = proc.type === 'SystemApp' 
+            ? '<span class="badge" style="background: rgba(88,166,255,0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">Ring 0 (Core)</span>'
+            : '<span class="badge" style="background: rgba(245,110,40,0.1); color: var(--accent-orange); border: 1px solid var(--accent-orange);">Ring 3 (User)</span>';
+        
+        let memColor = parseFloat(proc.memory_used_kb) > 5000 ? '#ef4444' : 'var(--text-main)';
+        let timeColor = parseFloat(proc.duration_ms) > 100 ? '#ef4444' : 'var(--accent-green)';
+        let statusHtml = proc.status === 'Running'
+            ? '<span style="color: var(--accent-green);">● Estável</span>'
+            : '<span style="color: #ef4444; font-weight:bold;">✖ Crashed</span>';
+
+        // Garantir formatação correta de float
+        let memKb = parseFloat(proc.memory_used_kb).toFixed(2);
+        let timeMs = parseFloat(proc.duration_ms).toFixed(2);
+
+        html += `
+        <tr>
+            <td style="font-family: monospace; font-weight: bold; color: var(--accent-blue);">${proc.pid}</td>
+            <td><strong>${proc.name}</strong></td>
+            <td>${ringBadge}</td>
+            <td style="color: ${memColor};">${memKb} KB</td>
+            <td style="color: ${timeColor};">${timeMs} ms</td>
+            <td>${statusHtml}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// Inicia o heartbeat do Kernel a cada 3 segundos
+setInterval(updateProcessStack, 3000);
+</script>
     <?php endif; ?>
 </div>
 
@@ -156,4 +209,57 @@
         document.getElementById(tabId).classList.add("active");
         evt.currentTarget.classList.add("active");
     }
-    </script>
+    
+// --- AJAX POLLING DA PILHA DE SERVIÇOS ---
+function updateProcessStack() {
+    // Visão Focada: Só faz requisição se a aba estiver ativa
+    if (!document.getElementById('tab-processos').classList.contains('active')) {
+        return;
+    }
+
+    fetch(window.DS_BASE_URL + 'api/os/monitor/stack')
+        .then(r => r.json())
+        .then(data => {
+            if(data.success && data.processes) {
+                renderProcessTable(data.processes);
+            }
+        }).catch(err => console.log('OS Monitor:', err));
+}
+
+function renderProcessTable(processes) {
+    const tbody = document.getElementById('process-table-body');
+    if(!tbody) return;
+    
+    let html = '';
+    for(let pid in processes) {
+        let proc = processes[pid];
+        let ringBadge = proc.type === 'SystemApp' 
+            ? '<span class="badge" style="background: rgba(88,166,255,0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">Ring 0 (Core)</span>'
+            : '<span class="badge" style="background: rgba(245,110,40,0.1); color: var(--accent-orange); border: 1px solid var(--accent-orange);">Ring 3 (User)</span>';
+        
+        let memColor = parseFloat(proc.memory_used_kb) > 5000 ? '#ef4444' : 'var(--text-main)';
+        let timeColor = parseFloat(proc.duration_ms) > 100 ? '#ef4444' : 'var(--accent-green)';
+        let statusHtml = proc.status === 'Running'
+            ? '<span style="color: var(--accent-green);">● Estável</span>'
+            : '<span style="color: #ef4444; font-weight:bold;">✖ Crashed</span>';
+
+        // Garantir formatação correta de float
+        let memKb = parseFloat(proc.memory_used_kb).toFixed(2);
+        let timeMs = parseFloat(proc.duration_ms).toFixed(2);
+
+        html += `
+        <tr>
+            <td style="font-family: monospace; font-weight: bold; color: var(--accent-blue);">${proc.pid}</td>
+            <td><strong>${proc.name}</strong></td>
+            <td>${ringBadge}</td>
+            <td style="color: ${memColor};">${memKb} KB</td>
+            <td style="color: ${timeColor};">${timeMs} ms</td>
+            <td>${statusHtml}</td>
+        </tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
+// Inicia o heartbeat do Kernel a cada 3 segundos
+setInterval(updateProcessStack, 3000);
+</script>
