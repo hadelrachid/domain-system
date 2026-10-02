@@ -7,12 +7,12 @@ use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
 use DomainSystem\Core\Routing\Router;
-use DomainSystem\Plugins\builder_flex\Controllers\BuilderAdminController;
-use DomainSystem\Plugins\builder_flex\Contracts\WidgetManagerInterface;
-use DomainSystem\Plugins\builder_flex\Core\WidgetManager;
-use DomainSystem\Plugins\builder_flex\Core\ContainerWidget;
-use DomainSystem\Plugins\builder_flex\Widgets\TextWidget;
-use DomainSystem\Plugins\builder_flex\Widgets\LogoWidget;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Controllers\BuilderAdminController;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Core\WidgetManager;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Core\ContainerWidget;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\TextWidget;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\LogoWidget;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -69,3 +69,4 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Aqui criaremos tabelas no futuro se necessário (ex: global_templates para header e footer)
     }
 }
+

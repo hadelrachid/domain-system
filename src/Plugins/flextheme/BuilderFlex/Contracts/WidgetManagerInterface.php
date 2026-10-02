@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\builder_flex\Contracts;
+namespace DomainSystem\Plugins\flextheme\BuilderFlex\Contracts;
 
 interface WidgetManagerInterface
 {
@@ -8,3 +8,4 @@ interface WidgetManagerInterface
     public function getWidgets(): array;
     public function bootShortcodes($shortcodeManager): void;
 }
+

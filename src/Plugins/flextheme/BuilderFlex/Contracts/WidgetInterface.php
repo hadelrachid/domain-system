@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\builder_flex\Contracts;
+namespace DomainSystem\Plugins\flextheme\BuilderFlex\Contracts;
 
 interface WidgetInterface
 {
@@ -9,3 +9,4 @@ interface WidgetInterface
     public function getControls(): array;
     public function render(array $attributes, string $content = ''): string;
 }
+

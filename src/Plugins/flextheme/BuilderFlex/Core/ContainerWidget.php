@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\builder_flex\Core;
+namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 class ContainerWidget extends AbstractWidget
 {

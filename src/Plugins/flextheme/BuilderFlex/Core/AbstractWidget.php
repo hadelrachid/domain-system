@@ -1,8 +1,8 @@
 <?php
 
-namespace DomainSystem\Plugins\builder_flex\Core;
+namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
-use DomainSystem\Plugins\builder_flex\Contracts\WidgetInterface;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
 
 abstract class AbstractWidget implements WidgetInterface
 {

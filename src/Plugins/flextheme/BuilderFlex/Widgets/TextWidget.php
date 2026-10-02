@@ -1,8 +1,8 @@
 <?php
 
-namespace DomainSystem\Plugins\builder_flex\Widgets;
+namespace DomainSystem\Plugins\flextheme\BuilderFlex\Widgets;
 
-use DomainSystem\Plugins\builder_flex\Core\AbstractWidget;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Core\AbstractWidget;
 
 class TextWidget extends AbstractWidget
 {
@@ -23,3 +23,4 @@ class TextWidget extends AbstractWidget
         );
     }
 }
+
