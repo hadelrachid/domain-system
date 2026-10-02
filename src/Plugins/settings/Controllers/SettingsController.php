@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\SystemApps\settings\Controllers;
+namespace DomainSystem\Plugins\settings\Controllers;
 
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Theme\ThemeManager;

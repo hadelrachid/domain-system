@@ -41,62 +41,47 @@ class AdminController
 
         // Discover all plugins
         $allPlugins = [];
-        if (is_dir($pluginsPath)) {
-            $directories = glob($pluginsPath . '/*', GLOB_ONLYDIR);
-            foreach ($directories as $dir) {
-                $jsonPath = $dir . '/plugin.json';
-                if (file_exists($jsonPath)) {
-                    $metadata = json_decode(file_get_contents($jsonPath), true);
-                    $name = $metadata['name'] ?? basename($dir);
-
-                    $subplugins = [];
-                    // 1. Componentes declarados nativamente no plugin.json (Nova Boa Prática)
-                    if (isset($metadata['components']) && is_array($metadata['components'])) {
-                        foreach ($metadata['components'] as $comp) {
-                            $subplugins[] = [
-                                'name' => $comp['name'] ?? 'Componente',
-                                'version' => $comp['version'] ?? 'Integrado',
-                                'description' => $comp['description'] ?? ''
-                            ];
-                        }
-                    }
-
-                    // 2. Módulos físicos acoplados (Bundled Plugins)
-                    if (is_dir($dir . '/bundled_plugins')) {
-                        $subDirs = glob($dir . '/bundled_plugins/*', GLOB_ONLYDIR);
-                        foreach ($subDirs as $subDir) {
-                            $subJson = $subDir . '/plugin.json';
-                            if (file_exists($subJson)) {
-                                $subMeta = json_decode(file_get_contents($subJson), true);
-                                $subplugins[] = [
-                                    'name' => $subMeta['name'] ?? basename($subDir),
-                                    'version' => $subMeta['version'] ?? '1.0.0',
-                                    'description' => $subMeta['description'] ?? 'Módulo interno integrado.'
-                                ];
-                            } else {
-                                $subplugins[] = [
-                                    'name' => ucfirst(basename($subDir)),
-                                    'version' => '1.0.0',
-                                    'description' => 'Módulo interno integrado.'
-                                ];
+        $foldersToScan = [dirname(__DIR__, 3) . '/SystemApps' => true, dirname(__DIR__, 3) . '/Plugins' => false];
+        foreach ($foldersToScan as $scanPath => $isSystemApp) {
+            if (is_dir($scanPath)) {
+                $directories = glob($scanPath . '/*', GLOB_ONLYDIR);
+                foreach ($directories as $dir) {
+                    $jsonPath = $dir . '/plugin.json';
+                    if (file_exists($jsonPath)) {
+                        $metadata = json_decode(file_get_contents($jsonPath), true);
+                        $name = $metadata['name'] ?? basename($dir);
+                        $folder = basename($dir);
+                        $subplugins = [];
+                        if (isset($metadata['components']) && is_array($metadata['components'])) {
+                            foreach ($metadata['components'] as $comp) {
+                                $subplugins[] = ['name' => $comp['name'] ?? 'Componente', 'version' => $comp['version'] ?? 'Integrado', 'description' => $comp['description'] ?? ''];
                             }
                         }
+                        if (is_dir($dir . '/bundled_plugins')) {
+                            $subDirs = glob($dir . '/bundled_plugins/*', GLOB_ONLYDIR);
+                            foreach ($subDirs as $subDir) {
+                                $subJson = $subDir . '/plugin.json';
+                                if (file_exists($subJson)) {
+                                    $subMeta = json_decode(file_get_contents($subJson), true);
+                                    $subplugins[] = ['name' => $subMeta['name'] ?? basename($subDir), 'version' => $subMeta['version'] ?? '1.0.0', 'description' => $subMeta['description'] ?? ''];
+                                }
+                            }
+                        }
+                        $allPlugins[] = [
+                            'folder' => $folder,
+                            'name' => $name,
+                            'version' => $metadata['version'] ?? 'N/A',
+                            'description' => $metadata['description'] ?? '',
+                            'is_active' => $isSystemApp ? true : ($activeStates[$name] ?? ($activeStates[$folder] ?? false)),
+                            'is_core' => $isSystemApp ? true : ((isset($metadata['core']) && $metadata['core'] === true) ? true : $this->manager->isCore($name)),
+                            'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false),
+                            'subplugins' => $subplugins
+                        ];
                     }
-
-                    $allPlugins[] = [
-                        'folder' => basename($dir),
-                        'name' => $name,
-                        'version' => $metadata['version'] ?? 'N/A',
-                        'description' => $metadata['description'] ?? '',
-                        'is_active' => $activeStates[$name] ?? ($activeStates[basename($dir)] ?? false),
-                        'is_core' => (isset($metadata['core']) && $metadata['core'] === true) ? true : $this->manager->isCore($name),
-                        'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false),
-                        'subplugins' => $subplugins
-                    ];
                 }
             }
         }
-        
+
         $app = \DomainSystem\Core\Application::getInstance();
         if ($app) {
             $allPlugins = $app->getDispatcher()->applyFilters('admin.plugins.list', $allPlugins);

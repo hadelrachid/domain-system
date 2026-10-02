@@ -24,6 +24,7 @@ class PluginBootstrapper
         PluginStateManager $stateManager,
         string $basePath,
         ?\DomainSystem\Core\Contracts\SessionManagerInterface $sessionManager = null,
+        ProcessRegistry $processRegistry = null,
         ?\DomainSystem\Core\Plugin\LinkRegistry $linkRegistry = null
     ) {
         $this->container = $container;
@@ -31,6 +32,7 @@ class PluginBootstrapper
         $this->stateManager = $stateManager;
         $this->basePath = $basePath;
         $this->sessionManager = $sessionManager;
+        $this->processRegistry = $processRegistry ?? new ProcessRegistry();
         $this->linkRegistry = $linkRegistry;
     }
 

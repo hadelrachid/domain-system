@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\SystemApps\settings;
+namespace DomainSystem\Plugins\settings;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
