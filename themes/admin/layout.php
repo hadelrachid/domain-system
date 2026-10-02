@@ -465,19 +465,7 @@
         </ul>
     </div>
     
-    <?php
-        $unreadNotifs = [];
-        try {
-            $app = \DomainSystem\Core\Application::getInstance();
-            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
-                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
-                $unreadNotifs = $notifManager->getUnread();
-                if (!empty($unreadNotifs)) {
-                    $notifManager->markAsRead();
-                }
-            }
-        } catch (\Throwable $e) {}
-    ?>
+    
     <div id="wpcontent">
         <div class="wrap">
             <?= $content ?? '' ?>

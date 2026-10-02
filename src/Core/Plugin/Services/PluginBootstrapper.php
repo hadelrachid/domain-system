@@ -291,9 +291,27 @@ class PluginBootstrapper
             'pid'        => $pid,
         ]);
         // 3. Grava no Flight Recorder
-        try { if ($this->container->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) { $this->container->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)->push($e->getMessage(), $isSystemApp ? "error" : "warning", $pluginName, ["file" => $e->getFile(), "line" => $e->getLine(), "severity" => $severity]); } } catch (\Throwable $i) {}
-        error_log("[{$severity}] OS Plugin Crash - {$pluginName}: " . $e->getMessage());
+        try {
+            if ($this->container->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $this->container->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)->push(
+                    $e->getMessage(),
+                    $isSystemApp ? 'error' : 'warning',
+                    $pluginName,
+                    ['file' => $e->getFile(), 'line' => $e->getLine(), 'severity' => $severity]
+                );
+            }
+        } catch (\Throwable $i) {}
 
+        // 4. Suprime flash de "sucesso" e injeta flash de erro para o Toast
+        if (isset($_SESSION['flash_message']) && $_SESSION['flash_message']['type'] === 'success') {
+            unset($_SESSION['flash_message']);
+        }
+        $_SESSION['flash_message'] = [
+            'type' => 'error',
+            'msg'  => "⚠ Plugin \"{$pluginName}\" falhou ao iniciar e foi desativado. Erro: " . $e->getMessage()
+        ];
+
+        error_log("[{$severity}] OS Plugin Crash - {$pluginName}: " . $e->getMessage());
 
     }
 
