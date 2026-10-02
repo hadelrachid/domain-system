@@ -108,9 +108,16 @@ class PluginBootstrapper
      *
      * @param array<string, PluginInterface> $plugins Pilha ordenada de plugins
      */
-    public function bootPlugins(array $plugins): void
+    public function bootPlugins(array $systemApps, array $userPlugins = []): void
     {
-        $orderedPlugins = $this->resolveDependencies($plugins);
+        $resolvedSystemApps = $this->resolveDependencies($systemApps);
+        $allPlugins = array_merge($systemApps, $userPlugins);
+        $resolvedUserPlugins = $this->resolveDependencies($allPlugins);
+        $filteredUserPlugins = array_filter($resolvedUserPlugins, function($name) use ($systemApps) { 
+            return !isset($systemApps[$name]); 
+        });
+        $orderedPlugins = array_merge($resolvedSystemApps, $filteredUserPlugins);
+        $plugins = $allPlugins;
 
         // Prepara o sistema de migrações
         $migrationsPath = $this->basePath . '/temp/migrations.json';
