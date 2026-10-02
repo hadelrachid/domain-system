@@ -16,22 +16,28 @@ class MonitorController
 
     public function index()
     {
-
         // Somente admin pode ver os erros
-
         $logs = [];
         if (file_exists($this->logPath)) {
             $content = file_get_contents($this->logPath);
             $logs = json_decode($content, true) ?: [];
         }
 
-        return $this->theme->render('admin_monitor', ['logs' => $logs], dirname(__DIR__) . '/views');
+        // Carrega a Pilha de Serviços (PIDs) do último boot
+        $processes = [];
+        $stackPath = dirname(__DIR__, 4) . '/temp/process_stack.json';
+        if (file_exists($stackPath)) {
+            $processes = json_decode(file_get_contents($stackPath), true) ?: [];
+        }
+
+        return $this->theme->render('admin_monitor', [
+            'logs'      => $logs,
+            'processes' => $processes,
+        ], dirname(__DIR__) . '/views');
     }
 
     public function clear()
     {
-
-
         if (file_exists($this->logPath)) {
             unlink($this->logPath);
         }
