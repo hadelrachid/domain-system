@@ -465,6 +465,19 @@
         </ul>
     </div>
     
+    <?php
+        $unreadNotifs = [];
+        try {
+            $app = \DomainSystem\Core\Application::getInstance();
+            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
+                $unreadNotifs = $notifManager->getUnread();
+                if (!empty($unreadNotifs)) {
+                    $notifManager->markAsRead();
+                }
+            }
+        } catch (\Throwable $e) {}
+    ?>
     <div id="wpcontent">
         <div class="wrap">
             <?= $content ?? '' ?>
@@ -602,6 +615,17 @@
             }, 3000);
         };
     </script>
+    <?php if (!empty($unreadNotifs)): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php foreach (array_reverse($unreadNotifs) as $n): ?>
+            setTimeout(() => {
+                OS.notify(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>);
+            }, 500);
+            <?php endforeach; ?>
+        });
+    </script>
+    <?php endif; ?>
 </body>
 </html>
 

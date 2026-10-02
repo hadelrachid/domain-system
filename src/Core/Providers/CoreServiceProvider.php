@@ -21,6 +21,11 @@ class CoreServiceProvider
             return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(\DomainSystem\SystemApps\Database\Connection::class));
         });
 
+                // Core Monitoring Services
+        $container->singleton(\DomainSystem\Core\Contracts\NotificationManagerInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Monitoring\NotificationManager($basePath);
+        });
+
         // 2. Auth (Session-based)
         $container->singleton(\DomainSystem\SystemApps\auth\AuthManager::class, function($c) {
             $session = $c->make(\DomainSystem\Core\Http\SessionManager::class);
