@@ -131,23 +131,21 @@ class SettingsController
     {
         try {
             // Drop all tables
-                        if ($this->db) {
+            if ($this->db) {
                 $db = $this->db;
                 $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
-                    $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
-                    if ($driver === 'mysql') {
-                        $db->exec('SET FOREIGN_KEY_CHECKS = 0;');
-                        $tables = $db->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
-                        foreach ($tables as $table) {
-                            $db->exec("DROP TABLE IF EXISTS `$table`");
-                        }
-                        $db->exec('SET FOREIGN_KEY_CHECKS = 1;');
-                    } elseif ($driver === 'sqlite') {
-                        $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
-                        foreach ($tables as $table) {
-                            if ($table !== 'sqlite_sequence') {
-                                $db->exec("DROP TABLE `$table`");
-                            }
+                if ($driver === 'mysql') {
+                    $db->exec('SET FOREIGN_KEY_CHECKS = 0;');
+                    $tables = $db->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+                    foreach ($tables as $table) {
+                        $db->exec("DROP TABLE IF EXISTS `$table`");
+                    }
+                    $db->exec('SET FOREIGN_KEY_CHECKS = 1;');
+                } elseif ($driver === 'sqlite') {
+                    $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
+                    foreach ($tables as $table) {
+                        if ($table !== 'sqlite_sequence') {
+                            $db->exec("DROP TABLE `$table`");
                         }
                     }
                 }
@@ -177,5 +175,3 @@ class SettingsController
         }
     }
 }
-
-
