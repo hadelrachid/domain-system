@@ -55,11 +55,17 @@ class MonitorController
     {
         $stackPath = dirname(__DIR__, 4) . '/temp/process_stack.json';
         $processes = [];
+        $lastModified = 0;
         if (file_exists($stackPath)) {
             $processes = json_decode(file_get_contents($stackPath), true) ?: [];
+            $lastModified = filemtime($stackPath);
         }
         header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'processes' => $processes]);
+        echo json_encode([
+            'success'      => true,
+            'processes'    => $processes,
+            'lastModified' => $lastModified,
+        ]);
         exit;
     }
 
