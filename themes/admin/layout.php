@@ -756,10 +756,7 @@
                 const b = document.getElementById('os-notif-badge');
                 b.innerText = unreadCount;
                 b.style.display = 'block';
-                // Abre o hub automaticamente se houver mensagens na fila ao entrar no admin
-                setTimeout(() => {
-                    window.OS.toggleHub();
-                }, 800);
+
             }
         });
 
@@ -871,7 +868,7 @@
             });
             
             // Se for erro, fica 15 segundos ou até clicar. Se for sucesso, 5 segundos.
-            const delay = (type === 'error') ? 15000 : 5000;
+            const delay = (type === 'success') ? 5000 : 15000;
             
             setTimeout(() => {
                 if(toast.parentElement) {
