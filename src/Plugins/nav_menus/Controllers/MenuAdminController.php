@@ -23,7 +23,7 @@ class MenuAdminController
         $menus = $this->db->query("SELECT * FROM theme_menus ORDER BY name ASC")->fetchAll();
         $pages = $this->db->query("SELECT id, title, slug FROM pages ORDER BY title ASC")->fetchAll();
         
-        $activeMenuId = $request->get('menu_id') ?: ($menus[0]['id'] ?? null);
+        $activeMenuId = $request->input('menu_id') ?: ($menus[0]['id'] ?? null);
         
         $menuItems = [];
         $activeMenu = null;
@@ -48,9 +48,9 @@ class MenuAdminController
 
     public function storeMenu(Request $request): Response
     {
-        $name = $request->post('name');
-        $location = $request->post('location');
-        $id = $request->post('id');
+        $name = $request->input('name');
+        $location = $request->input('location');
+        $id = $request->input('id');
 
         if (empty($name) || empty($location)) {
             $_SESSION['admin_error'] = 'Nome e Localização são obrigatórios.';
@@ -84,8 +84,8 @@ class MenuAdminController
 
     public function storeItems(Request $request): Response
     {
-        $menuId = $request->post('menu_id');
-        $itemsData = $request->post('items'); // Array JSON de itens
+        $menuId = $request->input('menu_id');
+        $itemsData = $request->input('items'); // Array JSON de itens
         
         if (!$menuId) {
             header("Location: " . BASE_URL . "/admin/themes/menus");
