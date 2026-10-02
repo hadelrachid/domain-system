@@ -506,10 +506,10 @@
                 }
 
                 link.addEventListener('click', function(e) {
-                    if (this.getAttribute('href') === '#' || this.getAttribute('href') === 'admin/clinic' || this.getAttribute('href') === 'admin/ai-hub') {
+                    if (this.getAttribute('href') === '#') {
                         e.preventDefault();
                         if (ul) {
-                            if (ul.style.display === 'none') {
+                            if (ul.style.display === 'none' || ul.style.display === '') {
                                 ul.style.display = 'block';
                                 localStorage.setItem('openMenu_' + menuTitle, 'open');
                             } else {
@@ -517,6 +517,9 @@
                                 localStorage.setItem('openMenu_' + menuTitle, 'closed');
                             }
                         }
+                    } else {
+                        // Para links reais, apenas garante que abra no próximo reload
+                        localStorage.setItem('openMenu_' + menuTitle, 'open');
                     }
                 });
             });
