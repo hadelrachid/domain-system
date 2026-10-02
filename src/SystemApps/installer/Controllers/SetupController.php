@@ -7,6 +7,14 @@ use DomainSystem\Core\Http\Response;
 
 class SetupController
 {
+    private \DomainSystem\Core\Plugin\PluginManager $manager;
+    private \DomainSystem\Core\Contracts\ContainerInterface $container;
+
+    public function __construct(\DomainSystem\Core\Plugin\PluginManager $manager, \DomainSystem\Core\Contracts\ContainerInterface $container)
+    {
+        $this->manager = $manager;
+        $this->container = $container;
+    }
     public function step1(Request $request): Response
     {
         ob_start();
@@ -80,9 +88,7 @@ class SetupController
         }
 
         // 2. Executar migrações manualmente em vez de dar duplo boot
-        $app = \DomainSystem\Core\Application::getInstance();
-        $manager = $app->getPluginManager();
-        $container = $app->getContainer();
+        $manager = $this->manager; $container = $this->container;
         
         $migrated = [];
         foreach ($manager->getPlugins() as $name => $plugin) {
@@ -132,4 +138,5 @@ class SetupController
         exit;
     }
 }
+
 

@@ -7,6 +7,13 @@ use DomainSystem\Core\Application;
 
 class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
 {
+    private \PDO $db;
+
+    public function __construct(\PDO $db)
+    {
+        $this->db = $db;
+    }
+
     public function getProviderName(): string
     {
         return "RachidD Analytics (Monitor)";
@@ -29,13 +36,12 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
     public function renderWidget(string $widgetId): string
     {
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
             $startOfMonth = date('Y-m-01 00:00:00');
             $endOfMonth = date('Y-m-t 23:59:59');
 
             if ($widgetId === 'anl_pageviews_month') {
-                $stmt = $db->prepare("SELECT COUNT(*) as total, COUNT(DISTINCT session_hash) as unique_visits FROM analytics_events WHERE event_type = 'pageview' AND created_at BETWEEN ? AND ?");
+                $stmt = $this->db->prepare("SELECT COUNT(*) as total, COUNT(DISTINCT session_hash) as unique_visits FROM analytics_events WHERE event_type = 'pageview' AND created_at BETWEEN ? AND ?");
                 $stmt->execute([$startOfMonth, $endOfMonth]);
                 $row = $stmt->fetch();
                 $total = $row['total'] ?? 0;
@@ -59,7 +65,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
             }
 
             if ($widgetId === 'anl_clicks_month') {
-                $stmt = $db->prepare("SELECT event_source, COUNT(*) as cliq FROM analytics_events WHERE event_type = 'click' AND created_at BETWEEN ? AND ? GROUP BY event_source ORDER BY cliq DESC LIMIT 5");
+                $stmt = $this->db->prepare("SELECT event_source, COUNT(*) as cliq FROM analytics_events WHERE event_type = 'click' AND created_at BETWEEN ? AND ? GROUP BY event_source ORDER BY cliq DESC LIMIT 5");
                 $stmt->execute([$startOfMonth, $endOfMonth]);
                 $clicks = $stmt->fetchAll();
 
@@ -106,3 +112,4 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
         return "";
     }
 }
+

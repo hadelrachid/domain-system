@@ -139,13 +139,11 @@ class MenuAdminController
         return Response::json(['success' => true, 'message' => 'Menu excluído com sucesso.']);
     }
 
-    public static function renderNavMenu(string $location): string
+    public function renderNavMenu(string $location): string
     {
         try {
-            $app = \DomainSystem\Core\Application::getInstance();
-            if (!$app || !$app->getContainer()->has(Connection::class)) return '';
-            
-            $db = $app->getContainer()->make(Connection::class)->getPdo();
+            if (!$this->db) return '';
+            $db = $this->db;
             
             $stmt = $db->prepare("SELECT id FROM theme_menus WHERE location = ?");
             $stmt->execute([$location]);

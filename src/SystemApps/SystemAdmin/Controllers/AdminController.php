@@ -11,12 +11,14 @@ class AdminController
     private PluginManager $manager;
     private ThemeManager $theme;
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodes;
+    private \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
 
-    public function __construct(PluginManager $manager, ThemeManager $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes)
+    public function __construct(PluginManager $manager, ThemeManager $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher)
     {
         $this->manager = $manager;
         $this->theme = $theme;
         $this->shortcodes = $shortcodes;
+        $this->dispatcher = $dispatcher;
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
@@ -82,10 +84,10 @@ class AdminController
             }
         }
 
-        $app = \DomainSystem\Core\Application::getInstance();
-        if ($app) {
-            $allPlugins = $app->getDispatcher()->applyFilters('admin.plugins.list', $allPlugins);
-        }
+        $allPlugins = $this->dispatcher->applyFilters('admin.plugins.list', $allPlugins);
+
+
+
 
         // Capture crashes from session
         $crashes = [];

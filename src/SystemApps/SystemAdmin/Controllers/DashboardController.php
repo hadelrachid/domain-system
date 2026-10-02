@@ -9,10 +9,14 @@ use Exception;
 class DashboardController
 {
     private ThemeManager $theme;
+    private \PDO $db;
+    private DashboardWidgetRegistry $registry;
 
-    public function __construct(ThemeManager $theme)
+    public function __construct(ThemeManager $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry)
     {
         $this->theme = $theme;
+        $this->db = $connection->getPdo();
+        $this->registry = $registry;
     }
 
     public function index(\DomainSystem\Core\Http\Request $request)
@@ -23,7 +27,7 @@ class DashboardController
         }
 
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $this->db;
             
             // 1. Carrega as preferências do usuário
             $stmt = $db->prepare("SELECT dashboard_layout FROM users WHERE id = ?");
@@ -36,7 +40,7 @@ class DashboardController
             }
             
             // 2. Carrega todos os widgets disponíveis do Registry
-            $registry = Application::getInstance()->getContainer()->make(DashboardWidgetRegistry::class);
+            $registry = $this->registry;
             $providers = $registry->getProviders();
             
             // Se o usuário não tem layout salvo, carregamos widgets padrão se houver
@@ -110,7 +114,7 @@ class DashboardController
         $layout = json_encode($layoutArray);
 
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $this->db;
             $stmt = $db->prepare("UPDATE users SET dashboard_layout = ? WHERE id = ?");
             $stmt->execute([$layout, $userId]);
             

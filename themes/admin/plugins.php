@@ -19,13 +19,13 @@
     <?php endforeach; ?>
 <?php endif; ?>
 
-<div id="upload-form" class="upload-box" style="display: none; background: #fff; border: 1px solid #c3c4c7; padding: 20px; box-shadow: 0 1px 1px rgba(0,0,0,.04); border-radius: 4px;">
+<div id="upload-form" class="upload-box" style="display: none; background: var(--card); border: 1px solid var(--border); margin-bottom: 20px; padding: 20px; box-shadow: 0 1px 1px rgba(0,0,0,.04); border-radius: 4px;">
     <h3 style="margin-top: 0;">Fazer Upload de Plugin</h3>
-    <p style="color: #646970;">Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
+    <p style="color: var(--text-muted);">Se você possui um plugin em formato .zip, você pode instalá-lo fazendo o upload do arquivo aqui.</p>
     
     <div id="upload-progress" style="display: none; margin: 15px 0;">
-        <div style="font-size: 14px; margin-bottom: 5px; color: #1d2327;">Descompactando e ligando módulos...</div>
-        <div style="width: 100%; background: #f0f0f1; border-radius: 4px; overflow: hidden; border: 1px solid #c3c4c7;">
+        <div style="font-size: 14px; margin-bottom: 5px; color: var(--text);">Descompactando e ligando módulos...</div>
+        <div style="width: 100%; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid #c3c4c7;">
             <div id="progress-bar-fill" style="width: 0%; height: 20px; background: #2271b1; transition: width 0.5s ease;"></div>
         </div>
     </div>
@@ -256,5 +256,6 @@
     </tbody>
 </table>
 </div>
+
 
 

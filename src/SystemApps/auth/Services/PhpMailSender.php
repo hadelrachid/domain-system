@@ -8,10 +8,16 @@ use DomainSystem\SystemApps\Database\Connection;
 
 class PhpMailSender implements EmailSenderInterface
 {
+    private \PDO $db;
+
+    public function __construct(Connection $connection)
+    {
+        $this->db = $connection->getPdo();
+    }
     public function send(string $to, string $subject, string $message): void
     {
         // Pega as configurações do banco
-        $db = Application::getInstance()->getContainer()->make(Connection::class)->getPdo();
+        $db = $this->db;
         $stmt = $db->query("SELECT key_name, key_value FROM settings WHERE key_name LIKE 'smtp_%'");
         $settings = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
 
@@ -95,3 +101,4 @@ class PhpMailSender implements EmailSenderInterface
         return $data;
     }
 }
+

@@ -7,22 +7,22 @@ use DomainSystem\Core\Http\Response;
 
 class CourseAdminController
 {
-    private $db;
+    private \PDO $db;
+    private \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema;
 
-    public function __construct()
-    {
-        $this->db = \DomainSystem\Core\Application::getInstance()
-            ->getContainer()
-            ->make(\DomainSystem\SystemApps\Database\Connection::class)
-            ->getPdo();
+    public function __construct(
+        \DomainSystem\SystemApps\Database\Connection $connection,
+        \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema
+    ) {
+        $this->db = $connection->getPdo();
+        $this->schema = $schema;
     }
 
     public function index(Request $request): Response
     {
         // Auto-migração silenciosa para Hostinger (MySQL) / Local (SQLite)
         try {
-            $schema = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
-            $schema->create('academy_courses', function ($table) {
+            $this->schema->create('academy_courses', function ($table) {
                 $table->id();
                 $table->string('title');
                 $table->string('slug')->unique();

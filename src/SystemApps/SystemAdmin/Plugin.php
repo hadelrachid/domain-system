@@ -77,7 +77,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         }, 999);
 
         try {
-            $registry = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
+            $registry = $this->container->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
             $registry->registerProvider(new \DomainSystem\SystemApps\SystemAdmin\Widgets\SystemWidgetProvider());
         } catch (\Exception $e) {}
 
@@ -95,8 +95,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // Redireciona a raiz para o admin ou cockpit
             $router->addRoute('GET', '/', function() use ($sessionManager) {
                 if ($sessionManager->has('user_role')) {
-                    $app = \DomainSystem\Core\Application::getInstance();
-                    if ($app->getContainer()->has(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class)) {
+                    if ($this->container()->has(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class)) {
                         $registry = $app->getContainer()->make(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class);
                         $provider = $registry->getProviderForRole($sessionManager->get('user_role'));
                         if ($provider) {
@@ -130,6 +129,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 }
+
 
 
 

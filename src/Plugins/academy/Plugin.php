@@ -24,9 +24,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osBoot(OsRuntimeInterface $runtime): void
     {
         // 1. Menu Administrativo
-        $runtime->onHook('admin.menu', function($menus) {
-            $sessionManager = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
-            if ($sessionManager->get('user_role') === 'admin') {
+        $runtime->onHook('admin.menu', function($menus, $role = 'guest') {
+            if ($role === 'admin') {
                 $menus[] = [
                     'title' => 'Academy (Cursos)',
                     'url' => '/admin/academy',

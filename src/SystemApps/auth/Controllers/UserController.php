@@ -175,10 +175,7 @@ class UserController
                     $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Não é permitido excluir um Administrador Geral.'];
                 } else {
                     try {
-                        $db = \DomainSystem\Core\Application::getInstance()
-                            ->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
-                        $stmt = $db->prepare("DELETE FROM users WHERE id = ?");
-                        $stmt->execute([$user_id]);
+                        $this->userRepo->deleteUser($user_id);
                         $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Usuário excluído com sucesso!'];
                     } catch (\Exception $e) {
                         $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro ao excluir usuário: ' . $e->getMessage()];
@@ -191,3 +188,4 @@ class UserController
         exit;
     }
 }
+

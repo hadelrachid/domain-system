@@ -8,6 +8,13 @@ use DomainSystem\Core\Application;
 
 class TrackerController
 {
+    private \PDO $db;
+
+    public function __construct(\DomainSystem\SystemApps\Database\Connection $connection)
+    {
+        $this->db = $connection->getPdo();
+    }
+
     public function track(Request $request)
     {
         // Pega corpo JSON
@@ -22,9 +29,8 @@ class TrackerController
         $hash = hash('sha256', $ip . $ua . date('Y-m-d')); // Único por dia
         
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
-            $stmt = $db->prepare("INSERT INTO analytics_events (event_type, event_source, session_hash) VALUES (?, ?, ?)");
+            $stmt = $this->db->prepare("INSERT INTO analytics_events (event_type, event_source, session_hash) VALUES (?, ?, ?)");
             $stmt->execute([$type, $source, $hash]);
             
             return Response::json(['status' => 'ok']);

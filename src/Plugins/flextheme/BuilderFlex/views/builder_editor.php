@@ -109,14 +109,14 @@
 
     <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <?php $baseUrl = defined('BASE_URL') ? BASE_URL : ''; ?>
-            <a href="<?= $baseUrl ?>/admin" style="color: var(--text-secondary); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-glass); transition: all 0.2s;" onmouseover="this.style.color='var(--accent-neon)';this.style.borderColor='var(--accent-neon)'" onmouseout="this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-glass)'">
-                <i class="fas fa-arrow-left"></i> Painel
-            </a>
             <i class="fas fa-paint-brush" style="color: var(--accent-neon); font-size: 20px;"></i>
             <h2 style="margin: 0; font-size: 18px;">Builder Flex <span style="font-size: 12px; color: var(--text-secondary);">by FlexTheme</span></h2>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px;">
+            <?php $baseUrl = defined('BASE_URL') ? BASE_URL : ''; ?>
+            <a href="<?= $baseUrl ?>/admin" class="btn" style="background: rgba(255, 68, 68, 0.1); border-color: rgba(255, 68, 68, 0.3); color: #ff4444; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-sign-out-alt"></i> Sair do Editor
+            </a>
             <button type="button" class="btn btn-activate" onclick="Engine.exportJSON()"><i class="fas fa-code"></i> Exportar JSON</button>
         </div>
     </div>

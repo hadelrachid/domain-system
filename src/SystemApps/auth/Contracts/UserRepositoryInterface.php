@@ -11,4 +11,6 @@ interface UserRepositoryInterface
     public function updateTwoFactorSecret(int $userId, ?string $secret): void;
     public function updatePassword(int $userId, string $hash): void;
     public function updateProfile(int $userId, array $data): void;
+    public function deleteUser(int $id): void;
 }
+

@@ -11,8 +11,7 @@ class SettingsController
     private ThemeManager $theme;
     private SettingRepositoryInterface $settingRepo;
 
-    public function __construct(ThemeManager $theme, SettingRepositoryInterface $settingRepo)
-    {
+    private \PDO $db; public function __construct(ThemeManager $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;
     }
@@ -132,10 +131,9 @@ class SettingsController
     {
         try {
             // Drop all tables
-            $app = \DomainSystem\Core\Application::getInstance();
-            if ($app && $app->getContainer()->has(\DomainSystem\SystemApps\Database\Connection::class)) {
-                $db = $app->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
-                if ($db) {
+                        if ($this->db) {
+                $db = $this->db;
+                $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
                     $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
                     if ($driver === 'mysql') {
                         $db->exec('SET FOREIGN_KEY_CHECKS = 0;');
@@ -179,4 +177,5 @@ class SettingsController
         }
     }
 }
+
 
