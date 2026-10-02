@@ -33,17 +33,17 @@ class PluginManager
     private Services\PluginStateManager $stateManager;
     private Services\PluginDiscoverer $discoverer;
     private Services\PluginBootstrapper $bootstrapper;
+    private Services\PluginBootStack $bootStack;
     private Services\PluginInstaller $installer;
     
     /** @var PluginInterface[] */
-    private array $plugins = [];
-
     public function __construct(
         ContainerInterface $container, 
         EventDispatcherInterface $dispatcher,
         Services\PluginStateManager $stateManager,
         Services\PluginDiscoverer $discoverer,
         Services\PluginBootstrapper $bootstrapper,
+        Services\PluginBootStack $bootStack,
         Services\PluginInstaller $installer
     ) {
         $this->container = $container;
@@ -51,33 +51,36 @@ class PluginManager
         $this->stateManager = $stateManager;
         $this->discoverer = $discoverer;
         $this->bootstrapper = $bootstrapper;
+        $this->bootStack = $bootStack;
         $this->installer = $installer;
         
         // Liga o QTA (Quadro de Transferência Automática) / Disjuntor V2 Extra
         register_shutdown_function([$this->bootstrapper, 'handleFatalCrash']);
     }
 
-    public function addPlugin(PluginInterface $plugin): void
-    {
-        $this->plugins[$plugin->getName()] = $plugin;
-    }
+    
 
-    public function discoverPlugins(string $pluginsPath, string $configPath, bool $forceActive = false): void
+    public function discoverPlugins(string $pluginsPath, string $configPath, bool $forceActive = false, bool $isSystemApp = false): void
     {
         $discovered = $this->discoverer->discover($pluginsPath, $forceActive);
         foreach ($discovered as $plugin) {
-            $this->addPlugin($plugin);
+            if ($isSystemApp) {
+                $this->bootStack->pushSystemApp($plugin);
+            } else {
+                $this->bootStack->pushUserPlugin($plugin);
+            }
         }
     }
 
     public function bootPlugins(): void
     {
-        $this->bootstrapper->bootPlugins($this->plugins);
+        $stack = $this->bootStack->getOrderedStack();
+        $this->bootstrapper->bootPlugins($stack);
     }
 
     public function getPlugins(): array
     {
-        return $this->plugins;
+        return $this->bootStack->getOrderedStack();
     }
 
     public function getActiveStates(): array

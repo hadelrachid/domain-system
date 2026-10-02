@@ -62,6 +62,7 @@ class CoreServiceProvider
                 $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class),
                 $c->make(\DomainSystem\Core\Plugin\Services\PluginDiscoverer::class),
                 $c->make(\DomainSystem\Core\Plugin\Services\PluginBootstrapper::class),
+                $c->make(\DomainSystem\Core\Plugin\Services\PluginBootStack::class),
                 $c->make(\DomainSystem\Core\Plugin\Services\PluginInstaller::class)
             );
         });

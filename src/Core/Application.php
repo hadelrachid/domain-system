@@ -417,10 +417,10 @@ class Application
         // ─────────────────────────────────────────────────────────────────
         // 1. Carrega os Aplicativos do Sistema (Protegidos/Core)
         $systemAppsPath = dirname(__DIR__) . '/SystemApps';
-        $this->pluginManager->discoverPlugins($systemAppsPath, $configPath, true);
+        $this->pluginManager->discoverPlugins($systemAppsPath, $configPath, true, true);
 
         // 2. Carrega os Plugins de Usuário
-        $this->pluginManager->discoverPlugins($pluginsPath, $configPath);
+        $this->pluginManager->discoverPlugins($pluginsPath, $configPath, false, false);
 
         // ─────────────────────────────────────────────────────────────────
         // Carrega os plugins (chama register() e boot() de cada um)
