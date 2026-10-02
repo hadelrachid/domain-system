@@ -130,14 +130,34 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $shortcodeManager = $this->container->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
         $manager->bootShortcodes($shortcodeManager);
 
-        // 5. Adiciona o botão do Builder no menu administrativo
+                // 5. Adiciona o botão do Builder no menu administrativo (DENTRO DO MENU TEMAS)
         $runtime->onHook('admin.menu', function($menus, $role) {
             if (in_array($role, ['admin', 'manager'])) {
-                $menus[] = [
-                    'title' => 'Flex Builder',
-                    'url'   => '/admin/builder',
-                    'icon'  => '🏗️'
-                ];
+                $inserted = false;
+                
+                // Procura o menu "Temas" para inserir como submenu
+                foreach ($menus as &$menu) {
+                    if (isset($menu['title']) && $menu['title'] === 'Temas') {
+                        if (!isset($menu['submenu'])) {
+                            $menu['submenu'] = [];
+                        }
+                        $menu['submenu'][] = [
+                            'title' => 'Flex Builder',
+                            'url'   => '/admin/builder',
+                        ];
+                        $inserted = true;
+                        break;
+                    }
+                }
+                
+                // Se o menu "Temas" não existir (ex: admin plugin desativado), cria avulso
+                if (!$inserted) {
+                    $menus[] = [
+                        'title' => 'Flex Builder',
+                        'url'   => '/admin/builder',
+                        'icon'  => '🏗️'
+                    ];
+                }
             }
             return $menus;
         });
