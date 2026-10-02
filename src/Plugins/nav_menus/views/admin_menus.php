@@ -2,8 +2,7 @@
     <h1 style="display: flex; align-items: center; gap: 10px; color: #fff; margin-bottom: 20px;">
         <i class="fas fa-sitemap text-primary"></i> Gerenciador de Menus
     </h1>
-    <!-- Toast Container -->
-    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+    
 
 
     
@@ -212,25 +211,7 @@
     }
 
     <script>
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        const bg = type === 'success' ? '#28a745' : '#dc3545';
-        toast.style = `background: ${bg}; color: white; padding: 15px 25px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(50px); transition: all 0.3s ease;`;
-        toast.innerText = message;
-        container.appendChild(toast);
-        
-        requestAnimationFrame(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateX(0)';
-        });
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(50px)';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
+    
 
     async function saveMenuSettings(e, url) {
         e.preventDefault();
@@ -246,15 +227,15 @@
             });
             const resData = await response.json();
             if (resData.success) {
-                showToast(resData.message, 'success');
+                OS.notify(resData.message, 'success');
                 if (!data.id) { // Foi criado um novo
                     setTimeout(() => window.location.href = '?menu_id=' + resData.id, 1000);
                 }
             } else {
-                showToast(resData.message, 'error');
+                OS.notify(resData.message, 'error');
             }
         } catch (err) {
-            showToast('Erro ao salvar as configurações.', 'error');
+            OS.notify('Erro ao salvar as configurações.', 'error');
         }
     }
 
@@ -280,12 +261,12 @@
             });
             const resData = await response.json();
             if (resData.success) {
-                showToast(resData.message, 'success');
+                OS.notify(resData.message, 'success');
             } else {
-                showToast(resData.message, 'error');
+                OS.notify(resData.message, 'error');
             }
         } catch (err) {
-            showToast('Erro ao salvar a estrutura do menu.', 'error');
+            OS.notify('Erro ao salvar a estrutura do menu.', 'error');
         }
     }
 
@@ -299,13 +280,13 @@
             });
             const resData = await response.json();
             if (resData.success) {
-                showToast(resData.message, 'success');
+                OS.notify(resData.message, 'success');
                 setTimeout(() => window.location.href = '?deleted=1', 1000);
             } else {
-                showToast(resData.message, 'error');
+                OS.notify(resData.message, 'error');
             }
         } catch (err) {
-            showToast('Erro ao excluir.', 'error');
+            OS.notify('Erro ao excluir.', 'error');
         }
     }
 
