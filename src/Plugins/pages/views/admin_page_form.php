@@ -22,10 +22,10 @@
                     <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted, #64748b);">
                         <span>🔗 Permalink: </span>
                         <code style="background: var(--bg-surface, #f1f5f9); padding: 2px 8px; border-radius: 3px;">
-                            <?= rtrim(BASE_URL, '/') ?>/p/<span id="slug_preview"><?= $page ? htmlspecialchars($page['slug']) : '...' ?></span>
+                            <?= rtrim(BASE_URL, '/') ?>/<span id="slug_preview"><?= $page ? htmlspecialchars($page['slug']) : '...' ?></span>
                         </code>
                         <?php if($page): ?>
-                            <a href="<?= BASE_URL ?>/p/<?= htmlspecialchars($page['slug']) ?>" target="_blank" style="margin-left: 8px; font-size: 12px;">↗ Visualizar</a>
+                            <a href="<?= BASE_URL ?>/<?= htmlspecialchars($page['slug']) ?>" target="_blank" style="margin-left: 8px; font-size: 12px;">↗ Visualizar</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -110,7 +110,7 @@
                 
                 <?php if($page): ?>
                 <div style="margin-top: 10px; text-align: center;">
-                    <a href="<?= BASE_URL ?>/p/<?= htmlspecialchars($page['slug']) ?>" target="_blank" style="font-size: 13px; color: var(--accent-blue, #2563eb);">
+                    <a href="<?= BASE_URL ?>/<?= htmlspecialchars($page['slug']) ?>" target="_blank" style="font-size: 13px; color: var(--accent-blue, #2563eb);">
                         ↗ Visualizar no Site
                     </a>
                 </div>
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         msg += usingTemplate 
             ? `📄 Modo: Template PHP\n📁 Arquivo: ${templateSelect.value}` 
             : `✏️ Modo: Conteúdo do Editor`;
-        msg += `\n🔗 Slug: /p/${slugPreview.textContent}`;
+        msg += `\n🔗 Slug: /${slugPreview.textContent}`;
         
         if (!confirm(msg)) {
             e.preventDefault();
