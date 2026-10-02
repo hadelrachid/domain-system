@@ -29,13 +29,23 @@ class CsrfMiddleware implements MiddlewareInterface
             return $next($request); // Deixa passar GET, HEAD, OPTIONS
         }
 
-        // Ignora CSRF para rotas de API públicas ou webhooks
+        // API Routing e CSRF: O Escudo Anti-CSRF
         $uri = strtok($request->uri(), '?');
         if (str_starts_with($uri, '/api/')) {
-            return $next($request); // Deixa passar
+            // Bloqueia o bypass cego de API! 
+            // Só libera sem token se for uma rota PÚBLICA (webhook, analytics)
+            if (empty($routeConfig['roles'])) {
+                return $next($request);
+            }
         }
 
-        $token = $request->input('csrf_token') ?? '';
+        // Tenta recuperar do corpo da requisição ou do Cabeçalho (Ajax/Fetch)
+        $token = $request->input('csrf_token');
+        if (empty($token) && isset($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'];
+        }
+        
+        $token = $token ?? '';
 
         if (!$this->session->validateCsrfToken($token)) {
             // Log failed CSRF
