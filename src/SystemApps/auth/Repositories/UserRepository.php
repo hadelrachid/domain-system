@@ -82,5 +82,10 @@ class UserRepository implements UserRepositoryInterface
         $stmt = $this->db->prepare("UPDATE users SET $setClause WHERE id = :id");
         $stmt->execute($params);
     }
-}
 
+    public function deleteUser(int $id): void
+    {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+    }
+}
