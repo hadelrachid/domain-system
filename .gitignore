@@ -10,6 +10,17 @@ test_*.php
 tests/
 auditoria/
 
+# Scripts temporários de manutenção
+fix_*.php
+add_*.php
+migrate-*.php
+rewrite*.php
+update_*.php
+seed_*.php
+inject_*.php
+all_core_code.txt
+.phpunit.result.cache
+
 database.sqlite
 config/installed.lock
 

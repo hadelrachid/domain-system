@@ -88,8 +88,8 @@ class AdminController
                         'name' => $name,
                         'version' => $metadata['version'] ?? 'N/A',
                         'description' => $metadata['description'] ?? '',
-                        'is_active' => $activeStates[$name] ?? false,
-                        'is_core' => $this->manager->isCore($name),
+                        'is_active' => $activeStates[$name] ?? ($activeStates[basename($dir)] ?? false),
+                        'is_core' => (isset($metadata['core']) && $metadata['core'] === true) ? true : $this->manager->isCore($name),
                         'is_disarmed' => isset($disarmedStates[$name]) && !($activeStates[$name] ?? false),
                         'subplugins' => $subplugins
                     ];
