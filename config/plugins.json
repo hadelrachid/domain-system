@@ -12,5 +12,6 @@
     "system-admin": true,
     "SystemMonitor": true,
     "Temas Visuais (Visual Themes)": true,
-    "nav_menus": true
+    "nav_menus": true,
+    "Crash Test (Simulador)": false
 }

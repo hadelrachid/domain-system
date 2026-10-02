@@ -594,10 +594,13 @@
             if (!container) return;
             
             const toast = document.createElement('div');
-            const bg = type === 'success' ? '#28a745' : (type === 'error' ? '#dc3545' : '#17a2b8');
-            const icon = type === 'success' ? '✅ ' : (type === 'error' ? '❌ ' : 'ℹ️ ');
+            let color = '#3b82f6';
+            let icon = 'ℹ️';
+            if (type === 'success') { color = '#10b981'; icon = '✅'; }
+            if (type === 'error') { color = '#ef4444'; icon = '🚨'; }
+            if (type === 'warning') { color = '#f59e0b'; icon = '⚠️'; }
             
-            toast.style = `background: ${bg}; color: white; padding: 16px 24px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 10px; border-left: 4px solid rgba(255,255,255,0.3);`;
+            toast.style = `background: #0f172a; color: #f8fafc; padding: 16px 24px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; border-left: 5px solid ${color}; letter-spacing: 0.3px; max-width: 450px; line-height: 1.4;`;
             toast.innerHTML = `<span>${icon}</span> <span class="os-msg-content"></span>`;
             toast.querySelector('.os-msg-content').textContent = message;
             
