@@ -2,17 +2,19 @@
 
 namespace DomainSystem\SystemApps\auth\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\SystemApps\auth\Services\TwoFactorService;
 
 class UserController
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
     private UserRepositoryInterface $userRepo;
     private TwoFactorService $twoFactor;
 
-    public function __construct(ThemeManager $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor)
+    public function __construct(ThemeManagerInterface $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor)
     {
         $this->theme = $theme;
         $this->userRepo = $userRepo;

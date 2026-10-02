@@ -1,6 +1,8 @@
 <?php
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Application;
 use DomainSystem\Core\Registry\DashboardWidgetRegistry;
@@ -8,11 +10,11 @@ use Exception;
 
 class DashboardController
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
     private \PDO $db;
     private DashboardWidgetRegistry $registry;
 
-    public function __construct(ThemeManager $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry)
+    public function __construct(ThemeManagerInterface $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry)
     {
         $this->theme = $theme;
         $this->db = $connection->getPdo();

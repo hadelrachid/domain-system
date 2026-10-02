@@ -2,6 +2,8 @@
 
 namespace DomainSystem\SystemApps\nav_menus\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\SystemApps\Database\Connection;
@@ -12,7 +14,7 @@ class MenuAdminController
     private $db;
     private $theme;
 
-    public function __construct(Connection $conn, ThemeManager $theme)
+    public function __construct(Connection $conn, ThemeManagerInterface $theme)
     {
         $this->db = $conn->getPdo();
         $this->theme = $theme;

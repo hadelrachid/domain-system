@@ -2,6 +2,8 @@
 
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Theme\ThemeManager;
 use Exception;
@@ -9,11 +11,11 @@ use Exception;
 class AdminController
 {
     private PluginManager $manager;
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodes;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
 
-    public function __construct(PluginManager $manager, ThemeManager $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher)
+    public function __construct(PluginManager $manager, ThemeManagerInterface $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher)
     {
         $this->manager = $manager;
         $this->theme = $theme;

@@ -2,6 +2,8 @@
 
 namespace DomainSystem\Plugins\pages\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Theme\ShortcodeManager;
 use DomainSystem\Core\Theme\ThemeManager;
@@ -12,9 +14,9 @@ class PageFrontController
     private PageRepositoryInterface $pageRepo;
     private ShortcodeManager $shortcodes;
     private SeoManagerInterface $seo;
-    private ThemeManager $themeManager;
+    private ThemeManagerInterface $themeManager;
 
-    public function __construct(PageRepositoryInterface $pageRepo, ShortcodeManager $shortcodes, SeoManagerInterface $seo, ThemeManager $themeManager)
+    public function __construct(PageRepositoryInterface $pageRepo, ShortcodeManager $shortcodes, SeoManagerInterface $seo, ThemeManagerInterface $themeManager)
     {
         $this->pageRepo = $pageRepo;
         $this->shortcodes = $shortcodes;

@@ -80,4 +80,22 @@ class OsRuntime implements OsRuntimeInterface
         // Repassa para o EventDispatcher real do Kernel
         $this->eventDispatcher->dispatch($hookName, ...$payload);
     }
+
+    /**
+     * Permite ao plugin aplicar modificações sobre um valor usando filtros.
+     */
+    public function applyFilter(string $filterName, mixed $value, mixed ...$args): mixed
+    {
+        // ?? O GUARDIÃO DE PERMISSÕES ??
+        if (!in_array($filterName, $this->connectorManifest->getProvidedHooks())) {
+            throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou aplicar o filtro '$filterName', mas não declarou que o forneceria no registro.");
+        }
+
+        // Repassa para o EventDispatcher real do Kernel
+        if (method_exists($this->eventDispatcher, 'applyFilters')) {
+            return $this->eventDispatcher->applyFilters($filterName, $value, ...$args);
+        }
+        
+        return $value;
+    }
 }

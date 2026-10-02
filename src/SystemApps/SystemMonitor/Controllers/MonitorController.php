@@ -1,16 +1,20 @@
 <?php
 namespace DomainSystem\SystemApps\SystemMonitor\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Theme\ThemeManager;
 
 class MonitorController
 {
     private string $logPath;
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
+    private ?\DomainSystem\Core\Contracts\NotificationManagerInterface $notifManager;
 
-    public function __construct(ThemeManager $theme)
+    public function __construct(ThemeManagerInterface $theme, ?\DomainSystem\Core\Contracts\NotificationManagerInterface $notifManager = null)
     {
         $this->theme = $theme;
+        $this->notifManager = $notifManager;
         $this->logPath = dirname(__DIR__, 4) . '/temp/error_logs.json';
     }
 
@@ -72,10 +76,8 @@ class MonitorController
     public function clearApi()
     {
         try {
-            $app = \DomainSystem\Core\Application::getInstance();
-            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
-                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
-                $notifManager->clear();
+            if ($this->notifManager) {
+                $this->notifManager->clear();
             }
             header('Content-Type: application/json');
             echo json_encode(['success' => true]);

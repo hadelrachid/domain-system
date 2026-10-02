@@ -78,8 +78,10 @@ class PluginManager
      */
     public function bootPlugins(): void
     {
-        $stack = $this->bootStack->getOrderedStack();
-        $this->bootstrapper->bootPlugins($stack);
+        $this->bootstrapper->bootPlugins(
+            $this->bootStack->getSystemApps(),
+            $this->bootStack->getUserPlugins()
+        );
     }
 
     public function getPlugins(): array

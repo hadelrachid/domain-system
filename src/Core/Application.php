@@ -2,6 +2,8 @@
 
 namespace DomainSystem\Core;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Contracts\ContainerInterface;
 use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use DomainSystem\Core\Plugin\PluginManager;
@@ -162,7 +164,7 @@ class Application
      * Gerencia o Front-end. Permite que múltiplos temas (CockPITs)
      * coexistam no mesmo sistema.
      */
-    private ThemeManager $themeManager;
+    private ThemeManagerInterface $themeManager;
 
     /**
      * O Gerenciador de Shortcodes (Shortcode Manager).

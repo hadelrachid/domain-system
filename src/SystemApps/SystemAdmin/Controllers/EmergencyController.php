@@ -2,14 +2,16 @@
 
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Http\Request;
 
 class EmergencyController
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
 
-    public function __construct(ThemeManager $theme)
+    public function __construct(ThemeManagerInterface $theme)
     {
         $this->theme = $theme;
     }

@@ -2,16 +2,18 @@
 
 namespace DomainSystem\Plugins\settings\Controllers;
 
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;
 
 class SettingsController
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
     private SettingRepositoryInterface $settingRepo;
 
-    private \PDO $db; public function __construct(ThemeManager $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
+    private \PDO $db; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;
     }
