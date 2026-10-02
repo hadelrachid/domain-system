@@ -70,7 +70,8 @@ try {
         if (!defined('BASE_URL')) define('BASE_URL', $baseFolder);
     } else {
         // Acesso em Produção (Hostinger)
-        if ($scriptDir !== '' && strpos($_SERVER['REQUEST_URI'], $scriptDir) !== 0) {
+        $reqUri = $_SERVER['REQUEST_URI'] ?? '';
+        if ($scriptDir !== '' && strpos($reqUri, $scriptDir) !== 0) {
             // RewriteRule .htaccess ocultou o public
             if (!defined('BASE_URL')) define('BASE_URL', '');
         } else {
