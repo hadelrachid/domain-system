@@ -46,8 +46,8 @@
 </div>
 
 <!-- ABA 1: GERAL -->
-<div id="tab-geral" class="sys-content active">
-    <form method="POST" action="<?= BASE_URL ?>/admin/settings" enctype="multipart/form-data">
+<div id="tab-geral" class="sys-content active" style="padding: 10px 20px;">
+    <form method="POST" action="<?= BASE_URL ?>/admin/settings" enctype="multipart/form-data" style="max-width: 800px;">
         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Nome do Sistema / Negócio</label>
@@ -95,8 +95,8 @@
 </div>
 
 <!-- ABA 2: AVANÇADO -->
-<div id="tab-avancado" class="sys-content">
-    <div style="padding-top: 10px;">
+<div id="tab-avancado" class="sys-content" style="padding: 10px 20px;">
+    <div style="padding-top: 10px; max-width: 800px;">
         <h3 style="color: #dc3232; margin-top: 0; display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-exclamation-triangle"></i> Zona de Perigo
         </h3>
