@@ -18,11 +18,12 @@
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">Título da Página</label>
                     <input type="text" name="title" id="title_input" value="<?= $page ? htmlspecialchars($page['title']) : '' ?>" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; background: var(--bg-input, #fff); color: var(--text-main, #1d2327);" required>
                     
-                    <!-- SLUG PREVIEW -->
-                    <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted, #64748b);">
+                                        <!-- SLUG FIELD -->
+                    <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted, #64748b); display: flex; align-items: center; gap: 5px;">
                         <span>🔗 Permalink: </span>
-                        <code style="background: var(--bg-surface, #f1f5f9); padding: 2px 8px; border-radius: 3px;">
-                            <?= rtrim(BASE_URL, '/') ?>/<span id="slug_preview"><?= $page ? htmlspecialchars($page['slug']) : '...' ?></span>
+                        <code style="background: var(--bg-surface, #f1f5f9); padding: 2px 8px; border-radius: 3px; display: flex; align-items: center; gap: 2px;">
+                            <?= rtrim(BASE_URL, '/') ?>/
+                            <input type="text" name="slug" id="slug_input" value="<?= $page ? htmlspecialchars($page['slug']) : '' ?>" placeholder="gerado-automaticamente" style="background: transparent; border: none; border-bottom: 1px dashed #cbd5e1; color: var(--text-main); font-family: monospace; outline: none; width: 150px;">
                         </code>
                         <?php if($page): ?>
                             <a href="<?= BASE_URL ?>/<?= htmlspecialchars($page['slug']) ?>" target="_blank" style="margin-left: 8px; font-size: 12px;">↗ Visualizar</a>

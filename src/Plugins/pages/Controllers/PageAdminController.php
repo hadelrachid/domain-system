@@ -48,16 +48,27 @@ class PageAdminController
         $theme = $request->input('theme');
         $template_file = $request->input('template_file');
         
+                $manualSlug = $request->input('slug');
+
         if (empty($title)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O Título é obrigatório.'];
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
 
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
+        $slug = !empty($manualSlug) 
+            ? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $manualSlug)))
+            : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
 
         if ($id) {
+            // Verificar colisão de slug na edição
+            $exists = $this->pageRepo->findBySlug($slug);
+            if ($exists && $exists['id'] != $id) {
+                $slug = $slug . '-' . time();
+            }
+
             $this->pageRepo->update((int)$id, [
                 'title' => $title,
+                'slug' => $slug,
                 'content' => $content,
                 'theme' => $theme,
                 'template_file' => $template_file
