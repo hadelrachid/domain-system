@@ -4,7 +4,7 @@
         <span>🚨 Painel de Supervisão e Rastreamento de Erros</span>
         <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <button type="submit" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="return confirm('Tem certeza que deseja limpar todo o histórico de erros?');">Limpar Logs</button>
+            <button type="submit" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="event.preventDefault(); const target = this.href; OS.confirm('Tem certeza que deseja limpar todo o histórico de erros?', () => window.location.href = target);">Limpar Logs</button>
         </form>
     </h1>
     
@@ -70,7 +70,7 @@
                         btn.innerHTML = originalText;
                     }, 2000);
                 }).catch(function(err) {
-                    alert("Erro ao copiar: " + err);
+                    OS.notify("Erro ao copiar: " + err, 'error');
                 });
             }
         </script>

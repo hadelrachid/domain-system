@@ -101,7 +101,7 @@ try {
     $isApiRoute = str_contains($uri, '/api/');
     $isJsonResponse = $response instanceof \DomainSystem\Core\Http\Response && str_contains($response->getHeader('Content-Type') ?? '', 'application/json');
     
-    if (strpos($uri, '/admin') === 0 && !$isApiRoute && !$isJsonResponse && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency') && !str_starts_with($uri, '/admin/themes/preview') && !str_starts_with($uri, '/admin/ai-hub/test') && !str_starts_with($uri, '/admin/terminal/execute')) {
+    if (strpos($uri, '/admin') === 0 && !in_array($response->getStatusCode(), [301, 302, 303, 307, 308]) && !$isApiRoute && !$isJsonResponse && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency') && !str_starts_with($uri, '/admin/themes/preview') && !str_starts_with($uri, '/admin/ai-hub/test') && !str_starts_with($uri, '/admin/terminal/execute')) {
         $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
         $role = $session->get('user_role', 'admin');
         $workspace = $app->getWorkspaceManager()->getWorkspace($role);

@@ -347,7 +347,14 @@ class AdminController
         
         $basePath = dirname(__DIR__, 4);
         $themeDir = $basePath . '/themes/' . basename($themeFolder);
-        
+        if (!is_dir($themeDir)) {
+            // Fallback para temas em plugins (ex: flextheme)
+            $themeDirPlugin = $basePath . '/src/Plugins/flextheme/themes/' . basename($themeFolder);
+            if (is_dir($themeDirPlugin)) {
+                $themeDir = $themeDirPlugin;
+            }
+        }
+
         if (!is_dir($themeDir)) {
             $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado para preview.'];
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");

@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const templateInfo = document.getElementById('template_info');
     const contentInfo = document.getElementById('content_info');
     const titleInput = document.getElementById('title_input');
-    const slugPreview = document.getElementById('slug_preview');
+    const slugInput = document.getElementById('slug_input');
     const slugSidebar = document.getElementById('slug_sidebar');
     const publishBtn = document.getElementById('publish_btn');
     const savedTemplate = '<?= $page["template_file"] ?? "" ?>';
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     titleInput.addEventListener('input', function() {
         if (!isEditing) {
             const slug = generateSlug(this.value) || '...';
-            slugPreview.textContent = slug;
+            if (slugInput) slugInput.value = slug;
             slugSidebar.textContent = slug;
         }
     });

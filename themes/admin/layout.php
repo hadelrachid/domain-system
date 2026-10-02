@@ -585,7 +585,8 @@
             const icon = type === 'success' ? '✅ ' : (type === 'error' ? '❌ ' : 'ℹ️ ');
             
             toast.style = `background: ${bg}; color: white; padding: 16px 24px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 0; transform: translateX(50px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 10px; border-left: 4px solid rgba(255,255,255,0.3);`;
-            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            toast.innerHTML = `<span>${icon}</span> <span class="os-msg-content"></span>`;
+            toast.querySelector('.os-msg-content').textContent = message;
             
             container.appendChild(toast);
             

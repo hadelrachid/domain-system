@@ -126,9 +126,9 @@ class MenuAdminController
         return Response::json(['success' => true, 'message' => 'Estrutura do menu salva com sucesso!']);
     }
 
-    public function deleteMenu(Request $request, array $vars): Response
+    public function deleteMenu(Request $request, string $id): Response
     {
-        $id = $vars['id'];
+        
         
         $stmt = $this->db->prepare('DELETE FROM theme_menu_items WHERE menu_id = ?');
         $stmt->execute([$id]);

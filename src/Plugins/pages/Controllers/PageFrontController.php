@@ -24,7 +24,7 @@ class PageFrontController
 
     public function show(string $slug)
     {
-        $page = $this->pageRepo->findBySlug(escapeshellcmd($slug));
+        $page = $this->pageRepo->findBySlug($slug);
 
         if (!$page) {
             return new \DomainSystem\Core\Http\Response("<h1>404 - Página não encontrada</h1>", 404);

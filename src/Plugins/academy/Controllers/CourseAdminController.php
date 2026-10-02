@@ -76,7 +76,7 @@ class CourseAdminController
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 15px; text-align: right;">
-                                    <form method="POST" action="<?= BASE_URL ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline;" onsubmit="return confirm('Excluir curso?')">
+                                    <form method="POST" action="<?= BASE_URL ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline;" onsubmit="event.preventDefault(); const f = this; OS.confirm('Excluir curso?', () => f.submit());">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <button type="submit" style="background:transparent; border:none; color:#dc3232; cursor:pointer;"><i class="fas fa-trash"></i></button>
                                     </form>

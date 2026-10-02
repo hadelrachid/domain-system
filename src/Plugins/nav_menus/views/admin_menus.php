@@ -88,7 +88,7 @@
                 <div style="margin-bottom: 20px;">
                     <button type="submit" class="btn btn-primary">Salvar Configurações do Menu</button>
                     <?php if ($activeMenu): ?>
-                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="deleteMenuData('<?= BASE_URL ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>')">Excluir Menu</button>
+                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="deleteMenuData(event, '<?= BASE_URL ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>')">Excluir Menu</button>
                     <?php endif; ?>
                 </div>
             </form>
@@ -151,7 +151,7 @@
     function addSelectedPages() {
         const checkboxes = document.querySelectorAll('.page-checkbox:checked');
         const list = document.getElementById('menu-items-list');
-        if (!list) { alert('Você precisa criar ou selecionar um menu antes de adicionar itens.'); return; }
+        if (!list) { OS.notify('Você precisa criar ou selecionar um menu antes de adicionar itens.', 'error'); return; }
         
         checkboxes.forEach(cb => {
             const title = cb.getAttribute('data-title');
@@ -193,12 +193,14 @@
         const text = textInput.value.trim();
         
         if (!url || !text) {
-            alert('Preencha a URL e o texto do link.');
+            OS.notify('Preencha a URL e o texto do link.', 'error');
             return;
         }
+    const title = text;
+    const displayType = 'Link Personalizado';
 
         const list = document.getElementById('menu-items-list');
-        if (!list) { alert('Você precisa criar ou selecionar um menu antes de adicionar itens.'); return; }
+        if (!list) { OS.notify('Você precisa criar ou selecionar um menu antes de adicionar itens.', 'error'); return; }
 
         const li = document.createElement('li');
         li.className = 'menu-item';
@@ -279,8 +281,18 @@
         }
     }
 
-    async function deleteMenuData(url) {
-        if (!confirm('Tem certeza absoluta que deseja excluir este menu?')) return;
+    async function deleteMenuData(event, url) {
+        
+    // Confirm is handled by OS.confirm wrapper
+    const btn = event.currentTarget;
+    if (!btn.dataset.confirmed) {
+        OS.confirm('Tem certeza absoluta que deseja excluir este menu?', () => {
+            btn.dataset.confirmed = 'true';
+            btn.click();
+        });
+        return;
+    }
+
         
         try {
             const response = await fetch(url, {
@@ -303,7 +315,10 @@
         const li = btn.closest('.menu-item');
         const titleEl = li.querySelector('strong');
         const currentTitle = li.dataset.title;
+        
+        // Using OS.prompt if exists, otherwise fallback to native for now or just prompt
         const newTitle = prompt('Digite o novo texto para o link:', currentTitle);
+
         if (newTitle && newTitle.trim() !== '') {
             li.dataset.title = newTitle.trim();
             titleEl.innerText = newTitle.trim();

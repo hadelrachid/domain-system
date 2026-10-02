@@ -10,8 +10,11 @@ class CoreServiceProvider
     public function register(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath): void
     {
         // 1. Database
-        $container->singleton(\DomainSystem\Plugins\Database\Connection::class, function() {
-            return new \DomainSystem\Plugins\Database\Connection();
+        $container->singleton(\DomainSystem\Plugins\Database\Connection::class, function() use ($basePath) {
+            $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite:' . $basePath . '/database.sqlite';
+            $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
+            $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
+            return new \DomainSystem\Plugins\Database\Connection($dsn, $user, $pass);
         });
         
         $container->singleton(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class, function($c) {

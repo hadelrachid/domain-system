@@ -92,7 +92,7 @@
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <strong style="font-size:12px; color:#475569;">Mudar Senha</strong>
                                 </div>
-                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="return confirm('Tem certeza que deseja mudar a senha deste usuário?')" style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap;" class="settings-form-group">
+                                <form method="POST" action="<?= BASE_URL ?>/admin/users/reset-password" onsubmit="event.preventDefault(); const f = this; OS.confirm('Tem certeza que deseja mudar a senha deste usuário?', () => f.submit());" style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap;" class="settings-form-group">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                     <div style="position: relative; flex: 1; min-width: 120px; width:100%;">
@@ -145,7 +145,7 @@
     <?php if (($u['two_factor_type'] ?? 'none') === 'app'): ?>
         <?php if (!empty($u['two_factor_secret'])): ?>
             <span style="color: #16a34a; font-size: 12px; font-weight: 500; display: block; margin-top: 5px;">✅ Sincronizado</span>
-            <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa-disable" style="display:inline; margin-top:4px;" onsubmit="return confirm('Remover sincronização?');">
+            <form method="POST" action="<?= BASE_URL ?>/admin/users/2fa-disable" style="display:inline; margin-top:4px;" onsubmit="event.preventDefault(); const f = this; OS.confirm('Remover sincronização?', () => f.submit());">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="id" value="<?= $u['id'] ?>">
                 <button type="submit" style="background:none; border:none; color:#dc2626; font-size:11px; text-decoration:none; padding:0; cursor:pointer;">Refazer QR Code</button>
