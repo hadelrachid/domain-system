@@ -5,14 +5,17 @@ namespace DomainSystem\Plugins\nav_menus\Controllers;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\Plugins\SystemAdmin\Contracts\AdminThemeInterface;
 
 class MenuAdminController
 {
     private $db;
+    private $theme;
 
-    public function __construct(Connection $conn)
+    public function __construct(Connection $conn, AdminThemeInterface $theme)
     {
         $this->db = $conn->getPdo();
+        $this->theme = $theme;
     }
 
     public function index(Request $request): Response
@@ -34,11 +37,13 @@ class MenuAdminController
             $menuItems = $stmt->fetchAll();
         }
 
-        ob_start();
-        include dirname(__DIR__) . '/views/admin_menus.php';
-        $html = ob_get_clean();
-
-        return new Response($html);
+        return $this->theme->render('admin_menus', [
+            'menus' => $menus,
+            'pages' => $pages,
+            'activeMenuId' => $activeMenuId,
+            'activeMenu' => $activeMenu,
+            'menuItems' => $menuItems
+        ], dirname(__DIR__) . '/views');
     }
 
     public function storeMenu(Request $request): Response
