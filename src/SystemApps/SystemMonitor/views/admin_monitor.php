@@ -2,9 +2,9 @@
 <div class="wrap">
     <h1 style="display:flex; justify-content:space-between; align-items:center;">
         <span>🚨 Painel de Supervisão e Rastreamento de Erros</span>
-        <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;">
+        <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;" id="clearLogsForm">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <button type="submit" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="event.preventDefault(); const target = this.href; OS.confirm('Tem certeza que deseja limpar todo o histórico de erros?', () => window.location.href = target);">Limpar Logs</button>
+            <button type="button" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="OS.confirm('Tem certeza que deseja limpar todo o histórico de erros?', () => document.getElementById('clearLogsForm').submit());">Limpar Logs</button>
         </form>
     </h1>
     
