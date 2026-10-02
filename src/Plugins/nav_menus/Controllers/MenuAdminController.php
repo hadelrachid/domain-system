@@ -23,6 +23,14 @@ class MenuAdminController
         $menus = $this->db->query("SELECT * FROM theme_menus ORDER BY name ASC")->fetchAll();
         $pages = $this->db->query("SELECT id, title, slug FROM pages ORDER BY title ASC")->fetchAll();
         
+        // Injete a "Home" / "Início" no topo da lista para facilitar
+        array_unshift($pages, [
+            'id' => null, // Não tem ID real
+            'title' => 'Início (Home)',
+            'slug' => '/',
+            'is_home' => true
+        ]);
+        
         $activeMenuId = $request->input('menu_id') ?: ($menus[0]['id'] ?? null);
         
         $menuItems = [];

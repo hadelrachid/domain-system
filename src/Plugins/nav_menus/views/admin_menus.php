@@ -156,12 +156,13 @@
             li.className = 'menu-item';
             li.dataset.title = title;
             li.dataset.pageId = pageId;
-            li.dataset.url = '';
+            li.dataset.url = pageId ? '' : slug;
             li.style = 'background: var(--bg-deep); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: grab;';
+            const displayType = pageId ? "Página Dinâmica" : "Página Inicial (Home)";
             li.innerHTML = `
                 <div>
-                    <strong style="color: #fff;">${title || text}</strong>
-                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${pageId ? "Página Dinâmica" : "Link Personalizado (" + url + ")"}</span>
+                    <strong style="color: #fff;">${title}</strong>
+                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${displayType}</span>
                 </div>
                 <div>
                     <button type="button" style="background:transparent; border:none; color:var(--primary); cursor:pointer; margin-right: 10px;" onclick="editItemTitle(this)">Editar</button>
@@ -196,8 +197,8 @@
         li.style = 'background: var(--bg-deep); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: grab;';
         li.innerHTML = `
                 <div>
-                    <strong style="color: #fff;">${title || text}</strong>
-                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${pageId ? "Página Dinâmica" : "Link Personalizado (" + url + ")"}</span>
+                    <strong style="color: #fff;">${title}</strong>
+                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${displayType}</span>
                 </div>
                 <div>
                     <button type="button" style="background:transparent; border:none; color:var(--primary); cursor:pointer; margin-right: 10px;" onclick="editItemTitle(this)">Editar</button>
