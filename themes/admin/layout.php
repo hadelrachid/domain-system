@@ -895,9 +895,16 @@
                 <?php endforeach; ?>
             <?php endif; ?>
 
+            // Renderiza Flash Messages legadas como Toasts
+            <?php if (isset($_SESSION['flash_message'])): ?>
+                setTimeout(() => {
+                    OS.notify(<?= json_encode($_SESSION['flash_message']['msg']) ?>, <?= json_encode($_SESSION['flash_message']['type']) ?>);
+                }, 100);
+            <?php unset($_SESSION['flash_message']); endif; ?>
+
             // Dispara toast de destaque APENAS para Sucesso ou Erro Crítico (Instalação/Quebra)
             <?php foreach (array_reverse($unreadNotifs) as $n): ?>
-            <?php if ($n['type'] === 'error' || $n['type'] === 'success'): ?>
+            <?php if ($n['type'] === 'error' || $n['type'] === 'warning' || $n['type'] === 'success'): ?>
             setTimeout(() => {
                 OS.notify(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>, true);
             }, 500);

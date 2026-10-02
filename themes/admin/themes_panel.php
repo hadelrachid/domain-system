@@ -4,12 +4,7 @@
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('uploadThemeModal').style.display='block'; return false;">Instalar Tema (.zip)</a>
     <p style="color: var(--text-muted); margin-bottom: 25px;">Aqui você pode ver e criar interfaces dinâmicas (CockPITs) instaladas no sistema. Cada tema isola a interface de um perfil de usuário.</p>
 
-    <?php if (isset($_SESSION['flash_message'])): ?>
-        <div style="background: <?= $_SESSION['flash_message']['type'] === 'error' ? 'rgba(245,110,40,0.1)' : 'rgba(0,210,132,0.1)' ?>; border-left: 4px solid <?= $_SESSION['flash_message']['type'] === 'error' ? 'var(--accent-orange)' : 'var(--accent-green)' ?>; padding: 12px; margin-bottom: 20px;">
-            <p style="margin: 0; color: var(--text-main); font-weight: 600;"><?= htmlspecialchars($_SESSION['flash_message']['msg']) ?></p>
-        </div>
-        <?php unset($_SESSION['flash_message']); ?>
-    <?php endif; ?>
+
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
         <?php foreach ($themes as $t): ?>
