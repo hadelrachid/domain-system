@@ -3,41 +3,41 @@
   <img src="https://img.shields.io/badge/Version-2.0.0-blueviolet?style=for-the-badge" alt="Version 2.0.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/Weight-~26MB-orange?style=for-the-badge" alt="Weight">
   <br><br>
-  <h1>🚀 Domain System OS (v2.0)</h1>
-  <p><strong>O Sistema Operacional Web Definitivo. Um Micro-Kernel SaaS Multi-tenant puro, hiper-resiliente e desenhado para competir com os gigantes.</strong></p>
+  <h1>⚙️ Domain System OS (v2.0)</h1>
+  <p><strong>Um Sistema Operacional Web de 26MB. Uma alternativa limpa, hiper-resiliente e estruturada em SOLID para substituir gigantes como WordPress e frameworks monolíticos.</strong></p>
 </div>
 
 ---
 
-[🇺🇸 Read in English](README-en.md) | [📚 Documentação & Tutoriais]( https://hadelrachid.github.io/domain-system/) | [🛡️ Auditoria Arquitetural](docs/auditoria.md)
+[🇺🇸 Read in English](README-en.md) | [📚 Documentação & Tutoriais]( https://hadelrachid.github.io/domain-system/) | [🔍 Auditoria Arquitetural](docs/auditoria.md)
 
-## 🌐 O Que é o Domain System?
+## 🧠 O Que é o Domain System?
 
-O **Domain System** evoluiu. Ele deixou de ser um sistema engessado para se tornar um **verdadeiro Sistema Operacional Web (SaaS Core)**, escrito puramente em PHP e com arquitetura limpa (SOLID e Injeção de Dependência). Ele é uma alternativa moderna e ultra-rápida ao WordPress e frameworks como Laravel.
+O **Domain System** não é apenas mais um CMS ou Framework de prateleira. Ele nasceu com o objetivo ambicioso de ser uma alternativa leve e poderosa ao ecossistema do WordPress e do Laravel, ocupando atualmente apenas **~26.2 MB** de espaço no servidor.
 
-O limite é a sua imaginação! Você pode rodar **absolutamente qualquer aplicação** em cima dele:
-- O **Núcleo (Micro-Kernel)** fornece a infraestrutura de baixo nível, completamente agnóstica: Banco de Dados, Roteamento Dinâmico, Segurança CSRF, Sessão, Multi-tenant (Subdomínios isolados) e Despachante de Eventos (Event-Driven).
-- Toda a **lógica de negócio** (seja um sistema jurídico, uma loja virtual, ou um blog) é injetada através de **Plugins** independentes. O núcleo nunca sabe o que a aplicação faz, ele apenas orquestra!
+Construído sob a rigorosa cartilha do **SOLID** e utilizando puramente **Injeção de Dependências**, ele se comporta como um **Verdadeiro Sistema Operacional Web**.
+O limite é a sua imaginação:
+- O **Núcleo (Micro-Kernel)** fornece a infraestrutura de baixo nível, completamente agnóstica: Conexão com Banco de Dados, Roteamento Dinâmico, Telemetria, Segurança (Anti-CSRF, Gatekeeper) e Gerenciamento de Processos (PIDs).
+- Toda a **lógica de negócio** é injetada através de **Módulos (Ring 0 / Ring 3)**. O núcleo nunca sabe o que a aplicação faz, ele apenas orquestra o ciclo de vida!
 
-## ✨ Principais Diferenciais
+## ⚡ Principais Diferenciais
 
-### ⚡ 1. Arquitetura Multi-Tenant Nativa
-O OS está preparado para ser a fundação de um SaaS (Software as a Service). Através do mapeamento de subdomínios (`tenants.json`), o Kernel roteia clientes diferentes para bancos de dados totalmente isolados, dividindo recursos de forma eficiente e segura sem misturar os dados.
+### 🛡️ 1. Arquitetura Ring 0 / Ring 3 (Privilégios Isolados)
+Inspirado em Sistemas Operacionais reais (como Linux/Windows), o sistema isola suas extensões em dois anéis de privilégios. **SystemApps (Ring 0)** são componentes vitais do sistema (ex: Banco de Dados, Auth, Admin) que não podem ser excluídos ou desativados. **UserPlugins (Ring 3)** são adições de terceiros que rodam com privilégios limitados e são monitorados estritamente.
 
-### 🛡️ 2. No-Break Shield (O Disjuntor Imortal)
-Esqueça a "Tela Branca da Morte" (WSOD). O Domain System roda com o **No-Break Shield**: um *Circuit Breaker* em nível de Kernel que intercepta falhas fatais geradas por plugins malfeitos, desativa a execução defeituosa, exibe um painel de telemetria rico (Supervisão de Erros com códigos padronizados) e mantém o resto do SO operando perfeitamente.
+### 🛡️ 2. Gatekeeper (O Guardião de Instalação)
+Proteção total contra ZIPs maliciosos. O instalador não confia cegamente em uploads; ele extrai o pacote em uma área de quarentena, escaneia o código fonte (procurando por vulnerabilidades de Path Traversal/Zip-Slip) e impede qualquer tentativa de Escalação de Privilégios (ex: plugins tentando usurpar o namespace do Ring 0).
 
-### 🎨 3. Builder-Flex e Motor de Páginas Dinâmico
-Com o plugin `pages` e a engine de temas, o sistema converte requisições dinamicamente baseadas na URI, acoplando templates front-end do seu tema a blocos de dados. O terreno está preparado para a introdução do **Builder-Flex** (um construtor visual drag-and-drop completo).
+### 🧯 3. No-Break Shield (O Disjuntor Imortal)
+Esqueça a "Tela Branca da Morte" (WSOD). O Domain System roda com o **No-Break Shield**: um *Circuit Breaker* em nível de Kernel que intercepta falhas fatais geradas por plugins malfeitos. Se um plugin do Ring 3 causa um erro sintático ou de lógica grave, ele é ejetado da memória em tempo de execução, e o restante do painel continua vivo.
 
-### 🔐 4. Autenticação de 2 Fatores (2FA) Global e RBAC
-O núcleo de segurança (plugin `Auth`) inclui suporte nativo ao Google Authenticator (TOTP) e controle de acesso baseado em roles universais (`admin`, `manager`, `subscriber`, `user`), permitindo construir qualquer hierarquia de permissões de forma genérica.
+### 🏗️ 4. Builder Flex Integrado e Hub de Temas
+O sistema de temas não é apenas para carregar CSS. A Engine FlexTheme atua como um hub visual poderoso, integrando o **Builder Flex**, um construtor de páginas drag-and-drop limpo e modularizado que se comunica diretamente com a API do SO.
 
-### 🌑 5. Instalação Zero-Friction e Skin Engine
-Instalador assistido via browser (Wizard) que auto-destrói suas próprias rotas após configurar o banco. No Painel Administrativo, você navega em uma interface alimentada por uma *Skin Engine* Cyberpunk baseada em variáveis CSS e modo Dark-First nativo.
-
----
+### 🔐 5. Segurança Anti-CSRF e 2FA (TOTP)
+O núcleo foi auditado por inteligências artificiais para bloquear ataques CSRF com validação forçada em todas as requisições (incluindo rotas via API). Além disso, o módulo nativo de Auth inclui suporte ao Google Authenticator, blindando o acesso administrativo.
 
 ## 🚀 Como Instalar
 
@@ -48,37 +48,15 @@ Instalador assistido via browser (Wizard) que auto-destrói suas próprias rotas
 
 2. **Permissões (Linux/Mac):** Certifique-se de que a pasta tenha permissões de escrita para o servidor web.
    ```bash
-   chmod -R 777 domain-system/storage
-   chmod -R 777 domain-system/config
+   chmod -R 755 domain-system
    ```
 
-3. **Abra no Navegador:**
-   Acesse `http://localhost/domain-system` (ou o seu domínio).
+3. **Inicie o Instalador:** Acesse a pasta do projeto pelo seu navegador (ex: `http://localhost/domain-system`). Você será redirecionado para o **Assistente de Instalação (Setup)**.
 
-4. **Instalador Wizard:**
-   O sistema detectará que não está configurado (`config/installed.lock` ausente) e o guiará pelo **Assistente de Instalação**. Siga os passos (banco de dados, usuário admin), e o SO estará pronto para uso!
+4. **Siga os Passos:** Insira os dados do seu banco de dados MySQL ou escolha SQLite. Crie seu usuário Master, e pronto. O Setup se auto-destruirá após a configuração por questões de segurança.
 
----
+## 🛠️ Para Desenvolvedores (SDK)
 
-## 📂 Arquitetura (Visão Geral)
-
-```text
-/
-├── config/              # Central de Tenants, Configurações de Plugins e DB
-├── public/              # Diretório público (assets, entrypoint index.php)
-├── storage/             # Arquivos persistentes (logs de erro, cache)
-└── src/
-    ├── Core/            # Micro-Kernel do SO (Router, Eventos, Container, Shield)
-    └── Plugins/         # Ecossistema de extensões de negócio
-        ├── auth/        # Sistema base de RBAC e 2FA 
-        ├── pages/       # Gerador dinâmico de páginas web 
-        ├── system-admin/# Interface de controle do OS (Painel e Widgets)
-        └── installer/   # Assistente de instalação inteligente
-```
-
-## 🛠️ Contribuindo e Tutoriais
-
-Nosso objetivo é padronizar e unificar o desenvolvimento web no PHP. 
-Acesse o nosso **[Guia do Desenvolvedor (DEVELOPER_GUIDE.md)](DEVELOPER_GUIDE.md)** para dominar a Injeção de Dependências e a criação de hooks no OS. A pasta `docs/` recebe constantemente manuais e dicionários de arquitetura.
-
-Feito com ☕ e forjado na resiliência arquitetural.
+O SO possui um sistema massivo de **Hooks (Event-Driven)** para você alterar o fluxo do sistema sem encostar no código-fonte do Kernel.
+A arquitetura foi inteiramente varrida para remover Anti-Patterns (como `Service Locator` / `Application::getInstance()`), forçando injeções de dependência declarativas e interfaces puras.
+Para criar o seu próprio componente, consulte o nosso [Guia de Desenvolvimento de Plugins](DEVELOPER_GUIDE.md).
