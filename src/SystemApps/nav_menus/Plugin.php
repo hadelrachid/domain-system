@@ -54,7 +54,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // Shortcode para injetar um menu no layout (Consumido pelo flextheme)
             $sm->add('nav_menu', function($attrs) {
                 $location = $attrs['location'] ?? 'header';
-                return \DomainSystem\SystemApps\nav_menus\Controllers\MenuAdminController::renderNavMenu($location);
+                $controller = $this->container->make(\DomainSystem\SystemApps\nav_menus\Controllers\MenuAdminController::class); return $controller->renderNavMenu($location);
             }, 'Renderiza um menu criado no painel. Ex: [nav_menu location="header"]');
         });
     }
