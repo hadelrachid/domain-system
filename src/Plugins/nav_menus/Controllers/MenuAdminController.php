@@ -5,14 +5,14 @@ namespace DomainSystem\Plugins\nav_menus\Controllers;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Plugins\Database\Connection;
-use DomainSystem\Plugins\SystemAdmin\Contracts\AdminThemeInterface;
+use DomainSystem\Core\Theme\ThemeManager;
 
 class MenuAdminController
 {
     private $db;
     private $theme;
 
-    public function __construct(Connection $conn, AdminThemeInterface $theme)
+    public function __construct(Connection $conn, ThemeManager $theme)
     {
         $this->db = $conn->getPdo();
         $this->theme = $theme;
