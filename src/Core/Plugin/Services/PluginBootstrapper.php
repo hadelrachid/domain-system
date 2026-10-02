@@ -108,16 +108,32 @@ class PluginBootstrapper
      *
      * @param array<string, PluginInterface> $plugins Pilha ordenada de plugins
      */
-    public function bootPlugins(array $systemApps, array $userPlugins = []): void
+    public function bootPlugins(array $systemApps, array $userPlugins): void
     {
+        $totalRequested = count($systemApps) + count($userPlugins);
+
         $resolvedSystemApps = $this->resolveDependencies($systemApps);
         $allPlugins = array_merge($systemApps, $userPlugins);
         $resolvedUserPlugins = $this->resolveDependencies($allPlugins);
         $filteredUserPlugins = array_filter($resolvedUserPlugins, function($name) use ($systemApps) { 
             return !isset($systemApps[$name]); 
         });
+        
         $orderedPlugins = array_merge($resolvedSystemApps, $filteredUserPlugins);
         $plugins = $allPlugins;
+
+        // Telemetria: Verifica se a resolução topológica descartou algum módulo (ex: dependência cíclica ou ausente)
+        if (count($orderedPlugins) < $totalRequested) {
+            $missing = $totalRequested - count($orderedPlugins);
+            try {
+                $this->handlePluginCrash('Kernel', 'OS-WARN-DEPENDENCY', new Exception(
+                    "Alerta de Infraestrutura: {$missing} módulo(s) não foram inicializados " .
+                    "devido a dependências cíclicas, dependências não instaladas ou falha silenciosa de parâmetros."
+                ));
+            } catch (\Throwable $e) {
+                // Silencia se o mecanismo de crash falhar tão cedo
+            }
+        }
 
         // Prepara o sistema de migrações
         $migrationsPath = $this->basePath . '/temp/migrations.json';
