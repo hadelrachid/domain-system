@@ -18,6 +18,10 @@
                     <p style="color:var(--text-muted); font-size:13px;">Nenhuma página dinâmica encontrada.</p>
                 <?php else: ?>
                     <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 10px; margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:12px; cursor:pointer; font-weight:bold; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                            <input type="checkbox" onchange="document.querySelectorAll('.page-checkbox').forEach(cb => cb.checked = this.checked)"> 
+                            Selecionar todos os itens
+                        </label>
                         <?php foreach($pages as $p): ?>
                             <label style="display:block; margin-bottom:8px; cursor:pointer;">
                                 <input type="checkbox" class="page-checkbox" data-id="<?= $p['id'] ?>" data-title="<?= htmlspecialchars($p['title']) ?>" data-slug="<?= htmlspecialchars($p['slug']) ?>"> 
@@ -172,6 +176,11 @@
             list.appendChild(li);
             cb.checked = false; // reset
         });
+        
+        // Reset select-all se existir
+        const selectAll = document.querySelector('input[onchange*="selectAll"]');
+        if (selectAll) selectAll.checked = false;
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
 
     function addCustomLink() {
