@@ -487,8 +487,8 @@
                 
                 if (linkPath === currentPath) {
                     link.parentElement.classList.add('current');
-                    let parentUl = link.closest('ul[style*="none"]');
-                    if(parentUl) {
+                    let parentUl = link.parentElement.parentElement;
+                    if(parentUl && parentUl.tagName === 'UL' && parentUl.id !== 'adminmenu') {
                         parentUl.style.display = 'block';
                         localStorage.setItem('openMenu_' + parentUl.previousElementSibling.textContent.trim(), 'open');
                         activeLinkFound = true;
