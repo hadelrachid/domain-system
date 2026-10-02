@@ -3,5 +3,5 @@
     "description": "Construtor dinâmico de menus arrastar-e-soltar para o Frontend.",
     "version": "1.0.0",
     "author": "Domain System",
-    "is_core": true
+    "core": true
 }
