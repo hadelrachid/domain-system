@@ -20,6 +20,17 @@ class MenuAdminController
 
     public function index(Request $request): Response
     {
+                // Auto-seed: Garante que os menus padrão existam
+        $stmt = $this->db->query("SELECT location FROM theme_menus");
+        $existingLocations = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        
+        if (!in_array('header', $existingLocations)) {
+            $this->db->query("INSERT INTO theme_menus (name, location) VALUES ('Menu Principal', 'header')");
+        }
+        if (!in_array('footer', $existingLocations)) {
+            $this->db->query("INSERT INTO theme_menus (name, location) VALUES ('Menu do Rodapé', 'footer')");
+        }
+
         $menus = $this->db->query("SELECT * FROM theme_menus ORDER BY name ASC")->fetchAll();
         $pages = $this->db->query("SELECT id, title, slug FROM pages ORDER BY title ASC")->fetchAll();
         

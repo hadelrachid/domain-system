@@ -61,13 +61,14 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <a href="<?= BASE_URL ?>/admin/themes/menus?menu_id=new" class="text-primary" style="text-decoration:none; font-size:13px;">ou criar um novo menu</a>
+                    
                 </form>
             </div>
 
             <form id="menu-settings-form" onsubmit="saveMenuSettings(event, '<?= BASE_URL ?>/admin/themes/menus/store')">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="id" value="<?= $activeMenu['id'] ?? '' ?>">
+<input type="hidden" name="location" value="<?= $activeMenu['location'] ?? '' ?>">
                 
                 <div style="display: flex; gap: 20px; margin-bottom: 20px;">
                     <div style="flex: 1;">
@@ -76,10 +77,11 @@
                     </div>
                     <div style="flex: 1;">
                         <label style="display:block; margin-bottom:5px;">Posição do Tema (Location)</label>
-                        <select name="location" required style="width: 100%;">
+                        <select name="location" disabled style="width: 100%; background: var(--bg-deep); opacity: 0.7; cursor: not-allowed;">
                             <option value="header" <?= ($activeMenu['location'] ?? '') == 'header' ? 'selected' : '' ?>>Main Header (Cabeçalho)</option>
                             <option value="footer" <?= ($activeMenu['location'] ?? '') == 'footer' ? 'selected' : '' ?>>Footer (Rodapé)</option>
                         </select>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">A posição deste menu de sistema é fixa.</p>
                     </div>
                 </div>
 
