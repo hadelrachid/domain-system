@@ -2,20 +2,13 @@
     <h1 style="display: flex; align-items: center; gap: 10px; color: #fff; margin-bottom: 20px;">
         <i class="fas fa-sitemap text-primary"></i> Gerenciador de Menus
     </h1>
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
-    <?php if (isset($_SESSION['admin_success'])): ?>
-        <div style="background: rgba(40, 167, 69, 0.1); border-left: 4px solid #28a745; color: #28a745; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            <?= htmlspecialchars($_SESSION['admin_success']) ?>
-            <?php unset($_SESSION['admin_success']); ?>
-        </div>
-    <?php endif; ?>
 
-    <?php if (isset($_SESSION['admin_error'])): ?>
-        <div style="background: rgba(220, 53, 69, 0.1); border-left: 4px solid #dc3545; color: #dc3545; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            <?= htmlspecialchars($_SESSION['admin_error']) ?>
-            <?php unset($_SESSION['admin_error']); ?>
-        </div>
-    <?php endif; ?>
+    
+
+    
 
     <div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
         <!-- COLUNA ESQUERDA: PÁGINAS E LINKS -->
@@ -69,7 +62,7 @@
                 </form>
             </div>
 
-            <form method="POST" action="<?= BASE_URL ?>/admin/themes/menus/store">
+            <form id="menu-settings-form" onsubmit="saveMenuSettings(event, '<?= BASE_URL ?>/admin/themes/menus/store')">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="id" value="<?= $activeMenu['id'] ?? '' ?>">
                 
@@ -90,7 +83,7 @@
                 <div style="margin-bottom: 20px;">
                     <button type="submit" class="btn btn-primary">Salvar Configurações do Menu</button>
                     <?php if ($activeMenu): ?>
-                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="if(confirm('Tem certeza?')) { document.getElementById('delete-menu-form').submit(); }">Excluir Menu</button>
+                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="deleteMenuData('<?= BASE_URL ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>')">Excluir Menu</button>
                     <?php endif; ?>
                 </div>
             </form>
@@ -115,12 +108,17 @@
                                     <?= $item['page_id'] ? 'Página Dinâmica' : 'Link Personalizado (' . htmlspecialchars($item['url']) . ')' ?>
                                 </span>
                             </div>
-                            <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
+                            
+    <div>
+        <button type="button" style="background:transparent; border:none; color:var(--primary); cursor:pointer; margin-right: 10px;" onclick="editItemTitle(this)">Editar</button>
+        <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
+    </div>
+
                         </li>
                     <?php endforeach; ?>
                 </ul>
 
-                <button type="button" class="btn btn-primary" onclick="saveMenuItems()" style="margin-top: 20px; width: 100%; text-align: center;">Salvar Estrutura</button>
+                <button type="button" class="btn btn-primary" onclick="saveMenuItems('<?= BASE_URL ?>/admin/themes/menus/items')" style="margin-top: 20px; width: 100%; text-align: center;">Salvar Estrutura</button>
             </form>
             <?php endif; ?>
 
@@ -129,9 +127,7 @@
 </div>
 
 <?php if ($activeMenu): ?>
-<form id="delete-menu-form" method="POST" action="<?= BASE_URL ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>" style="display:none;">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-</form>
+
 <?php endif; ?>
 
 <!-- Script ultra leve para Drag and Drop e manipulação de DOM -->
@@ -165,10 +161,13 @@
             li.style = 'background: var(--bg-deep); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: grab;';
             li.innerHTML = `
                 <div>
-                    <strong style="color: #fff;">${title}</strong>
-                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">Página Dinâmica</span>
+                    <strong style="color: #fff;">${title || text}</strong>
+                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${pageId ? "Página Dinâmica" : "Link Personalizado (" + url + ")"}</span>
                 </div>
-                <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
+                <div>
+                    <button type="button" style="background:transparent; border:none; color:var(--primary); cursor:pointer; margin-right: 10px;" onclick="editItemTitle(this)">Editar</button>
+                    <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
+                </div>
             `;
             list.appendChild(li);
             cb.checked = false; // reset
@@ -197,22 +196,71 @@
         li.dataset.url = url;
         li.style = 'background: var(--bg-deep); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; cursor: grab;';
         li.innerHTML = `
-            <div>
-                <strong style="color: #fff;">${text}</strong>
-                <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">Link Personalizado (${url})</span>
-            </div>
-            <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
-        `;
+                <div>
+                    <strong style="color: #fff;">${title || text}</strong>
+                    <span style="color: var(--text-muted); font-size: 12px; margin-left: 10px;">${pageId ? "Página Dinâmica" : "Link Personalizado (" + url + ")"}</span>
+                </div>
+                <div>
+                    <button type="button" style="background:transparent; border:none; color:var(--primary); cursor:pointer; margin-right: 10px;" onclick="editItemTitle(this)">Editar</button>
+                    <button type="button" style="background:transparent; border:none; color:#dc3545; cursor:pointer;" onclick="this.closest('.menu-item').remove()">Excluir</button>
+                </div>
+            `;
         list.appendChild(li);
         
         urlInput.value = '';
         textInput.value = '';
     }
 
-    function saveMenuItems() {
+    <script>
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const bg = type === 'success' ? '#28a745' : '#dc3545';
+        toast.style = `background: ${bg}; color: white; padding: 15px 25px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(50px); transition: all 0.3s ease;`;
+        toast.innerText = message;
+        container.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(0)';
+        });
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(50px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    async function saveMenuSettings(e, url) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const resData = await response.json();
+            if (resData.success) {
+                showToast(resData.message, 'success');
+                if (!data.id) { // Foi criado um novo
+                    setTimeout(() => window.location.href = '?menu_id=' + resData.id, 1000);
+                }
+            } else {
+                showToast(resData.message, 'error');
+            }
+        } catch (err) {
+            showToast('Erro ao salvar as configurações.', 'error');
+        }
+    }
+
+    async function saveMenuItems(url) {
         const listItems = document.querySelectorAll('.menu-item');
         const items = [];
-        
         listItems.forEach(li => {
             items.push({
                 title: li.dataset.title,
@@ -221,8 +269,55 @@
             });
         });
 
-        document.getElementById('items-json').value = JSON.stringify(items);
-        document.getElementById('items-form').submit();
+        const menuId = document.querySelector('input[name="menu_id"]').value;
+        const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ menu_id: menuId, items: items, csrf_token: csrf })
+            });
+            const resData = await response.json();
+            if (resData.success) {
+                showToast(resData.message, 'success');
+            } else {
+                showToast(resData.message, 'error');
+            }
+        } catch (err) {
+            showToast('Erro ao salvar a estrutura do menu.', 'error');
+        }
+    }
+
+    async function deleteMenuData(url) {
+        if (!confirm('Tem certeza absoluta que deseja excluir este menu?')) return;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const resData = await response.json();
+            if (resData.success) {
+                showToast(resData.message, 'success');
+                setTimeout(() => window.location.href = '?deleted=1', 1000);
+            } else {
+                showToast(resData.message, 'error');
+            }
+        } catch (err) {
+            showToast('Erro ao excluir.', 'error');
+        }
+    }
+
+    function editItemTitle(btn) {
+        const li = btn.closest('.menu-item');
+        const titleEl = li.querySelector('strong');
+        const currentTitle = li.dataset.title;
+        const newTitle = prompt('Digite o novo texto para o link:', currentTitle);
+        if (newTitle && newTitle.trim() !== '') {
+            li.dataset.title = newTitle.trim();
+            titleEl.innerText = newTitle.trim();
+        }
     }
 </script>
 <style>

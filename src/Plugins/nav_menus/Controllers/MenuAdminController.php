@@ -37,98 +37,83 @@ class MenuAdminController
             $menuItems = $stmt->fetchAll();
         }
 
-        return $this->theme->render('admin_menus', [
+        $html = $this->theme->render('admin_menus', [
             'menus' => $menus,
             'pages' => $pages,
             'activeMenuId' => $activeMenuId,
             'activeMenu' => $activeMenu,
             'menuItems' => $menuItems
         ], dirname(__DIR__) . '/views');
+        return new Response($html);
     }
 
     public function storeMenu(Request $request): Response
     {
-        $name = $request->input('name');
-        $location = $request->input('location');
-        $id = $request->input('id');
+        $jsonBody = json_decode(file_get_contents('php://input'), true);
+        $name = $jsonBody['name'] ?? $request->input('name');
+        $location = $jsonBody['location'] ?? $request->input('location');
+        $id = $jsonBody['id'] ?? $request->input('id');
 
         if (empty($name) || empty($location)) {
-            $_SESSION['admin_error'] = 'Nome e Localização são obrigatórios.';
-            header("Location: " . BASE_URL . "/admin/themes/menus");
-            exit;
+            return Response::json(['success' => false, 'message' => 'Nome e Localização são obrigatórios.'], 400);
         }
 
         if ($id) {
-            $stmt = $this->db->prepare("UPDATE theme_menus SET name = ?, location = ? WHERE id = ?");
+            $stmt = $this->db->prepare('UPDATE theme_menus SET name = ?, location = ? WHERE id = ?');
             $stmt->execute([$name, $location, $id]);
-            $_SESSION['admin_success'] = 'Menu atualizado com sucesso.';
+            return Response::json(['success' => true, 'message' => 'Menu atualizado com sucesso.', 'id' => $id]);
         } else {
-            // Se já existe um menu na location (header/footer), avisa (por ser unique)
-            $stmt = $this->db->prepare("SELECT id FROM theme_menus WHERE location = ?");
+            $stmt = $this->db->prepare('SELECT id FROM theme_menus WHERE location = ?');
             $stmt->execute([$location]);
             if ($stmt->fetch()) {
-                $_SESSION['admin_error'] = "Já existe um menu atribuído à localização '{$location}'.";
-                header("Location: " . BASE_URL . "/admin/themes/menus");
-                exit;
+                return Response::json(['success' => false, 'message' => 'Já existe um menu atribuído a esta localização.'], 400);
             }
 
-            $stmt = $this->db->prepare("INSERT INTO theme_menus (name, location) VALUES (?, ?)");
+            $stmt = $this->db->prepare('INSERT INTO theme_menus (name, location) VALUES (?, ?)');
             $stmt->execute([$name, $location]);
             $id = $this->db->lastInsertId();
-            $_SESSION['admin_success'] = 'Menu criado com sucesso.';
+            return Response::json(['success' => true, 'message' => 'Menu criado com sucesso.', 'id' => $id]);
         }
-
-        header("Location: " . BASE_URL . "/admin/themes/menus?menu_id=" . $id);
-        exit;
     }
 
     public function storeItems(Request $request): Response
     {
-        $menuId = $request->input('menu_id');
-        $itemsData = $request->input('items'); // Array JSON de itens
+        $jsonBody = json_decode(file_get_contents('php://input'), true);
+        $menuId = $jsonBody['menu_id'] ?? $request->input('menu_id');
+        $items = $jsonBody['items'] ?? [];
         
         if (!$menuId) {
-            header("Location: " . BASE_URL . "/admin/themes/menus");
-            exit;
+            return Response::json(['success' => false, 'message' => 'ID do menu não informado.'], 400);
         }
 
-        // Limpa itens antigos deste menu
-        $stmt = $this->db->prepare("DELETE FROM theme_menu_items WHERE menu_id = ?");
+        $stmt = $this->db->prepare('DELETE FROM theme_menu_items WHERE menu_id = ?');
         $stmt->execute([$menuId]);
 
-        if (!empty($itemsData)) {
-            $items = json_decode($itemsData, true);
-            if (is_array($items)) {
-                $stmt = $this->db->prepare("INSERT INTO theme_menu_items (menu_id, title, url, page_id, order_index) VALUES (?, ?, ?, ?, ?)");
-                foreach ($items as $index => $item) {
-                    $pageId = !empty($item['page_id']) ? $item['page_id'] : null;
-                    $url = !empty($item['url']) ? $item['url'] : null;
-                    $stmt->execute([$menuId, $item['title'], $url, $pageId, $index]);
-                }
+        if (is_array($items) && !empty($items)) {
+            $stmt = $this->db->prepare('INSERT INTO theme_menu_items (menu_id, title, url, page_id, order_index) VALUES (?, ?, ?, ?, ?)');
+            foreach ($items as $index => $item) {
+                $pageId = !empty($item['page_id']) ? $item['page_id'] : null;
+                $url = !empty($item['url']) ? $item['url'] : null;
+                $stmt->execute([$menuId, $item['title'], $url, $pageId, $index]);
             }
         }
 
-        $_SESSION['admin_success'] = 'Estrutura do menu salva com sucesso!';
-        header("Location: " . BASE_URL . "/admin/themes/menus?menu_id=" . $menuId);
-        exit;
+        return Response::json(['success' => true, 'message' => 'Estrutura do menu salva com sucesso!']);
     }
 
     public function deleteMenu(Request $request, array $vars): Response
     {
         $id = $vars['id'];
         
-        $stmt = $this->db->prepare("DELETE FROM theme_menu_items WHERE menu_id = ?");
+        $stmt = $this->db->prepare('DELETE FROM theme_menu_items WHERE menu_id = ?');
         $stmt->execute([$id]);
 
-        $stmt = $this->db->prepare("DELETE FROM theme_menus WHERE id = ?");
+        $stmt = $this->db->prepare('DELETE FROM theme_menus WHERE id = ?');
         $stmt->execute([$id]);
 
-        $_SESSION['admin_success'] = 'Menu excluído com sucesso.';
-        header("Location: " . BASE_URL . "/admin/themes/menus");
-        exit;
+        return Response::json(['success' => true, 'message' => 'Menu excluído com sucesso.']);
     }
 
-    // Método estático para ser chamado pelo Shortcode [nav_menu location="header"]
     public static function renderNavMenu(string $location): string
     {
         try {
