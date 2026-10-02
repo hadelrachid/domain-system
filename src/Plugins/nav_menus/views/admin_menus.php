@@ -210,9 +210,6 @@
         textInput.value = '';
     }
 
-    <script>
-    
-
     async function saveMenuSettings(e, url) {
         e.preventDefault();
         const form = e.target;
