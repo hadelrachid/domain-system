@@ -61,7 +61,7 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <a href="<?= BASE_URL ?>/admin/themes/menus" class="text-primary" style="text-decoration:none; font-size:13px;">ou criar um novo menu</a>
+                    <a href="<?= BASE_URL ?>/admin/themes/menus?menu_id=new" class="text-primary" style="text-decoration:none; font-size:13px;">ou criar um novo menu</a>
                 </form>
             </div>
 

@@ -31,7 +31,13 @@ class MenuAdminController
             'is_home' => true
         ]);
         
-        $activeMenuId = $request->input('menu_id') ?: ($menus[0]['id'] ?? null);
+        $activeMenuIdRaw = $request->input('menu_id');
+        
+        if ($activeMenuIdRaw === 'new') {
+            $activeMenuId = null;
+        } else {
+            $activeMenuId = $activeMenuIdRaw ?: ($menus[0]['id'] ?? null);
+        }
         
         $menuItems = [];
         $activeMenu = null;
