@@ -750,12 +750,16 @@
         let notifQueue = [];
         let unreadCount = <?= !empty($unreadNotifs) ? count($unreadNotifs) : 0 ?>;
         
-        // Exibe a badge no load inicial se houver não lidas
+        // Exibe a badge no load inicial se houver não lidas e abre o painel
         window.addEventListener('DOMContentLoaded', () => {
             if (unreadCount > 0) {
                 const b = document.getElementById('os-notif-badge');
                 b.innerText = unreadCount;
                 b.style.display = 'block';
+                // Abre o hub automaticamente se houver mensagens na fila ao entrar no admin
+                setTimeout(() => {
+                    window.OS.toggleHub();
+                }, 800);
             }
         });
 
@@ -891,11 +895,13 @@
                 <?php endforeach; ?>
             <?php endif; ?>
 
-            // Dispara toast apenas para as NAO LIDAS (skipHub = true para não duplicar na lista)
+            // Dispara toast de destaque APENAS para Sucesso ou Erro Crítico (Instalação/Quebra)
             <?php foreach (array_reverse($unreadNotifs) as $n): ?>
+            <?php if ($n['type'] === 'error' || $n['type'] === 'success'): ?>
             setTimeout(() => {
                 OS.notify(<?= json_encode($n['message']) ?>, <?= json_encode($n['type']) ?>, true);
             }, 500);
+            <?php endif; ?>
             <?php endforeach; ?>
         });
     </script>
