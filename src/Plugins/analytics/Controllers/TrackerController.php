@@ -22,7 +22,7 @@ class TrackerController
         $hash = hash('sha256', $ip . $ua . date('Y-m-d')); // Único por dia
         
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
             $stmt = $db->prepare("INSERT INTO analytics_events (event_type, event_source, session_hash) VALUES (?, ?, ?)");
             $stmt->execute([$type, $source, $hash]);

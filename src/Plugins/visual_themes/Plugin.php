@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\visual_themes;
+namespace DomainSystem\SystemApps\visual_themes;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Events\EventDispatcher;

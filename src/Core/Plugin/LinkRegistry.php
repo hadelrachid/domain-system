@@ -52,7 +52,7 @@ class LinkRegistry
             return $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
         }
         if ($linkName === 'core.db') {
-            return $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+            return $this->container->make(\DomainSystem\SystemApps\Database\Connection::class);
         }
         if ($linkName === 'core.router') {
             return $this->container->make(\DomainSystem\Core\Contracts\RouterInterface::class);

@@ -10,22 +10,22 @@ class CoreServiceProvider
     public function register(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath): void
     {
         // 1. Database
-        $container->singleton(\DomainSystem\Plugins\Database\Connection::class, function() use ($basePath) {
+        $container->singleton(\DomainSystem\SystemApps\Database\Connection::class, function() use ($basePath) {
             $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite:' . $basePath . '/database.sqlite';
             $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
             $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
-            return new \DomainSystem\Plugins\Database\Connection($dsn, $user, $pass);
+            return new \DomainSystem\SystemApps\Database\Connection($dsn, $user, $pass);
         });
         
-        $container->singleton(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class, function($c) {
-            return new \DomainSystem\Plugins\Database\Schema\SchemaBuilder($c->make(\DomainSystem\Plugins\Database\Connection::class));
+        $container->singleton(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class, function($c) {
+            return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(\DomainSystem\SystemApps\Database\Connection::class));
         });
 
         // 2. Auth (Session-based)
-        $container->singleton(\DomainSystem\Plugins\auth\AuthManager::class, function($c) {
+        $container->singleton(\DomainSystem\SystemApps\auth\AuthManager::class, function($c) {
             $session = $c->make(\DomainSystem\Core\Http\SessionManager::class);
-            $db = $c->make(\DomainSystem\Plugins\Database\Connection::class);
-            return new \DomainSystem\Plugins\auth\AuthManager($session, $db);
+            $db = $c->make(\DomainSystem\SystemApps\Database\Connection::class);
+            return new \DomainSystem\SystemApps\auth\AuthManager($session, $db);
         });
 
         // Plugin Services

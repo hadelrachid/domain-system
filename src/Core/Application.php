@@ -415,6 +415,11 @@ class Application
         // ─────────────────────────────────────────────────────────────────
         // Descobre os plugins (lê a pasta e valida os manifestos)
         // ─────────────────────────────────────────────────────────────────
+        // 1. Carrega os Aplicativos do Sistema (Protegidos/Core)
+        $systemAppsPath = dirname(__DIR__) . '/SystemApps';
+        $this->pluginManager->discoverPlugins($systemAppsPath, $configPath, true);
+
+        // 2. Carrega os Plugins de Usuário
         $this->pluginManager->discoverPlugins($pluginsPath, $configPath);
 
         // ─────────────────────────────────────────────────────────────────

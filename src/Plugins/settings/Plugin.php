@@ -1,11 +1,11 @@
 <?php
 
-namespace DomainSystem\Plugins\settings;
+namespace DomainSystem\SystemApps\settings;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Events\EventDispatcher;
-use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
@@ -63,14 +63,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function activate(): void
     {
-        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
         $schema->create('settings', function ($table) {
             $table->string('key_name', 100)->primary();
             $table->text('key_value')->nullable();
         });
 
-        /** @var \DomainSystem\Plugins\Database\Connection $connection */
-        $connection = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
+        /** @var \DomainSystem\SystemApps\Database\Connection $connection */
+        $connection = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class);
         $db = $connection->getPdo();
 
         // Inserir valores padro se a tabela estiver vazia

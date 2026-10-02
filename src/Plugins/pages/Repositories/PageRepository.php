@@ -2,7 +2,7 @@
 
 namespace DomainSystem\Plugins\pages\Repositories;
 
-use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use PDOException;
 use PDO;

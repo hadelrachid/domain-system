@@ -1,5 +1,5 @@
 <?php
-namespace DomainSystem\Plugins\nobreak_shield;
+namespace DomainSystem\SystemApps\nobreak_shield;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\OsExtensionInterface;

@@ -13,7 +13,7 @@ class CourseAdminController
     {
         $this->db = \DomainSystem\Core\Application::getInstance()
             ->getContainer()
-            ->make(\DomainSystem\Plugins\Database\Connection::class)
+            ->make(\DomainSystem\SystemApps\Database\Connection::class)
             ->getPdo();
     }
 
@@ -21,7 +21,7 @@ class CourseAdminController
     {
         // Auto-migração silenciosa para Hostinger (MySQL) / Local (SQLite)
         try {
-            $schema = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+            $schema = \DomainSystem\Core\Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
             $schema->create('academy_courses', function ($table) {
                 $table->id();
                 $table->string('title');

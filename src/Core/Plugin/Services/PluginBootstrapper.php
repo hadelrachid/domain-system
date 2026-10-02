@@ -88,7 +88,7 @@ class PluginBootstrapper
                     if (method_exists($plugin, 'getMigrations')) {
                         $migrations = $plugin->getMigrations();
                         if (!empty($migrations)) {
-                            $pdo = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+                            $pdo = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
                             foreach ($migrations as $name => $sql) {
                                 $key = $pluginName . '_' . $name;
                                 if (!in_array($key, $migrated)) {

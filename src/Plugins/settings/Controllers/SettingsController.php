@@ -1,6 +1,6 @@
 <?php
 
-namespace DomainSystem\Plugins\settings\Controllers;
+namespace DomainSystem\SystemApps\settings\Controllers;
 
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Theme\ThemeManager;
@@ -133,8 +133,8 @@ class SettingsController
         try {
             // Drop all tables
             $app = \DomainSystem\Core\Application::getInstance();
-            if ($app && $app->getContainer()->has(\DomainSystem\Plugins\Database\Connection::class)) {
-                $db = $app->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            if ($app && $app->getContainer()->has(\DomainSystem\SystemApps\Database\Connection::class)) {
+                $db = $app->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
                 if ($db) {
                     $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
                     if ($driver === 'mysql') {

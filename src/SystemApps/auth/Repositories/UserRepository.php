@@ -1,0 +1,85 @@
+<?php
+namespace DomainSystem\SystemApps\auth\Repositories;
+
+use DomainSystem\SystemApps\Database\Connection;
+use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
+
+class UserRepository implements UserRepositoryInterface
+{
+    private \PDO $db;
+
+    public function __construct(Connection $connection)
+    {
+        $this->db = $connection->getPdo();
+    }
+
+    public function findByEmail(string $email): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+        $stmt->execute([":email" => $email]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function findById(int $id): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute([":id" => $id]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+
+    public function updateTwoFactor(int $userId, string $type, ?string $secret): void
+    {
+        $stmt = $this->db->prepare("UPDATE users SET two_factor_type = :type, two_factor_secret = :secret WHERE id = :id");
+        $stmt->execute([":type" => $type, ":secret" => $secret, ":id" => $userId]);
+    }
+
+    public function getAllUsers(): array
+    {
+        $stmt = $this->db->query("SELECT * FROM users");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
+
+    public function createUser(array $data): int
+    {
+        $fields = implode(", ", array_keys($data));
+        $placeholders = ":" . implode(", :", array_keys($data));
+        $stmt = $this->db->prepare("INSERT INTO users ($fields) VALUES ($placeholders)");
+        $params = [];
+        foreach ($data as $k => $v) {
+            $params[":$k"] = $v;
+        }
+        $stmt->execute($params);
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function updateTwoFactorSecret(int $userId, ?string $secret): void
+    {
+        $stmt = $this->db->prepare("UPDATE users SET two_factor_secret = :secret WHERE id = :id");
+        $stmt->execute([":secret" => $secret, ":id" => $userId]);
+    }
+
+    public function updatePassword(int $userId, string $hash): void
+    {
+        $stmt = $this->db->prepare("UPDATE users SET password = :password WHERE id = :id");
+        $stmt->execute([":password" => $hash, ":id" => $userId]);
+    }
+
+    public function updateProfile(int $userId, array $data): void
+    {
+        if (empty($data)) return;
+        $setParts = [];
+        $params = [":id" => $userId];
+        foreach ($data as $key => $val) {
+            $setParts[] = "$key = :$key";
+            $params[":$key"] = $val;
+        }
+        $setClause = implode(", ", $setParts);
+        $stmt = $this->db->prepare("UPDATE users SET $setClause WHERE id = :id");
+        $stmt->execute($params);
+    }
+}

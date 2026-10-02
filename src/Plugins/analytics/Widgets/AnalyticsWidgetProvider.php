@@ -29,7 +29,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
     public function renderWidget(string $widgetId): string
     {
         try {
-            $db = Application::getInstance()->getContainer()->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            $db = Application::getInstance()->getContainer()->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
             $startOfMonth = date('Y-m-01 00:00:00');
             $endOfMonth = date('Y-m-t 23:59:59');

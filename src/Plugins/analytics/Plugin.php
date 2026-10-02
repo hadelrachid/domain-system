@@ -67,7 +67,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(): void
     {
         try {
-            $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+            $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
             $schema->create('analytics_events', function ($table) {
                 $table->id();
                 $table->string('event_type', 50); // pageview, click

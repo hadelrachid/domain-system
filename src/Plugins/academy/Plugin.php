@@ -54,7 +54,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(): void
     {
         // Criação da tabela de cursos
-        $schema = $this->container->make(\DomainSystem\Plugins\Database\Schema\SchemaBuilder::class);
+        $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
         $schema->create('academy_courses', function ($table) {
             $table->id();
             $table->string('title');
@@ -70,7 +70,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     private function renderHub(): string
     {
         try {
-            $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class)->getPdo();
+            $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             $stmt = $db->query("SELECT * FROM academy_courses WHERE status IN ('published', 'soon') ORDER BY id DESC");
             $courses = $stmt->fetchAll();
             
