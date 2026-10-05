@@ -29,6 +29,7 @@
 {
     public function register(): void;
     public function boot(): void;
+    public function osBoot(OsRuntimeInterface $runtime): void;
     public function activate(): void;
     public function deactivate(): void;
     public function uninstall(): void;
@@ -37,7 +38,7 @@
         <h3>Explicação dos Métodos:</h3>
         <ul>
             <li><strong>register():</strong> O lugar certo para registrar Rotas, Listeners de Eventos, e Menus no painel. Executado a cada requisição.</li>
-            <li><strong>boot():</strong> Executado após todos os plugins terminarem de se registrar.</li>
+            <li><strong>boot():</strong> Executado após todos os plugins terminarem de se registrar. O osBoot é a versão 2.0 para acesso ao Kernel.</li>
             <li><strong>activate():</strong> Rodado <strong>apenas uma vez</strong> quando você liga o Plugin no Painel (Ideal para Migrations e criação de tabelas).</li>
             <li><strong>deactivate() / uninstall():</strong> Usados para limpar os rastros que o plugin deixou quando for desativado ou deletado.</li>
         </ul>
@@ -45,3 +46,4 @@
     </div>
 </body>
 </html>
+

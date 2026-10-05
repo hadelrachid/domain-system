@@ -25,9 +25,9 @@
         <h2>Core Components</h2>
         <ul>
             <li><strong>SessionManager:</strong> The single authority over user memory storage (prevents loose superglobals like $_SESSION across the code).</li>
-            <li><strong>Router (Gatekeeper):</strong> Maps URLs to Controllers and acts as a Bouncer (ACL), validating roles even before instantiating controllers.</li>
+            <li><strong>Router (Gatekeeper):</strong> Maps URLs to Controllers and acts as a Bouncer (ACL), validating Privileges (Capabilities) via IdentityManager even before instantiating controllers.</li>
             <li><strong>EventDispatcher (Triggers):</strong> Manages Actions (Hooks) and Filters. If a plugin wants to change the menu, it "listens" to the <code>admin.menu</code> event.</li>
-            <li><strong>PluginManager:</strong> Reads the <code>src/Plugins/</code> folder, validates <code>plugin.json</code>, and calls the <code>register()</code> method of each active plugin.</li>
+            <li><strong>PluginManager:</strong> Reads the <code>src/SystemApps/</code> and <code>src/Plugins/</code> folders, validates <code>plugin.json</code>, and calls the <code>register()</code> method of each active plugin.</li>
             <li><strong>ThemeManager:</strong> Manages the Front-end. Intercepts requests that are not from the API or Dashboard, and delivers visuals using Server-Side Rendering (SSR).</li>
         </ul>
 
@@ -45,3 +45,4 @@
     </div>
 </body>
 </html>
+

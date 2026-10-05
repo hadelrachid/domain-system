@@ -30,10 +30,10 @@
         <h2>Componentes Core</h2>
         <ul>
             <li><strong>SessionManager (Gerenciador de Sessões):</strong> Autoridade única sobre o armazenamento em memória do usuário (evita superglobais como $_SESSION soltas pelo código).</li>
-            <li><strong>Router (Roteador Gatekeeper):</strong> Mapeia URLs para Controllers e age como Porteiro (ACL), validando papéis antes mesmo de chamar os controladores.</li>
+            <li><strong>Router (Roteador Gatekeeper):</strong> Mapeia URLs para Controllers e age como Porteiro (ACL), validando Privilégios (Capabilities) através do IdentityManager antes mesmo de chamar os controladores.</li>
             <li><strong>EventDispatcher (Gatilhos):</strong> Gerencia Ações (Hooks) e Filtros. Se um plugin quer alterar
                 o menu, ele "escuta" o evento <code>admin.menu</code>.</li>
-            <li><strong>PluginManager:</strong> Lê a pasta <code>src/Plugins/</code>, valida o <code>plugin.json</code>
+            <li><strong>PluginManager:</strong> Lê as pastas <code>src/SystemApps/</code> e <code>src/Plugins/</code>, valida o <code>plugin.json</code>
                 e chama o método <code>register()</code> de cada plugin ativo.</li>
             <li><strong>ThemeManager:</strong> Gerencia o Front-end. Intercepta as requisições que não são da API ou do
                 Painel, e entrega visual usando Server-Side Rendering (SSR).</li>
