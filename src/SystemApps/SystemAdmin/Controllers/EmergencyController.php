@@ -6,6 +6,7 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 
 class EmergencyController
@@ -21,7 +22,7 @@ class EmergencyController
 
     public function index()
     {
-        return $this->theme->render('emergency');
+        return new ViewResponse($this->theme->render('emergency'), false);
     }
 
     public function login(Request $request)
