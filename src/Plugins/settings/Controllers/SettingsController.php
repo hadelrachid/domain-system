@@ -5,6 +5,7 @@ namespace DomainSystem\Plugins\settings\Controllers;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;

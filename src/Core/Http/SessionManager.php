@@ -9,6 +9,20 @@ class SessionManager implements SessionManagerInterface
     public function start(): void
     {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
+                        (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+            
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path' => '/',
+                'domain' => '',
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]);
+            
+            ini_set('session.use_strict_mode', 1);
+
             // Isola a sessão por pasta para evitar que diferentes cópias do sistema no mesmo XAMPP compartilhem login
             session_name('DS_SESS_' . substr(md5(__DIR__), 0, 8));
             session_start();

@@ -32,9 +32,11 @@ class BuilderAdminController
     /**
      * Renderiza a view do editor visual (Full Site Editing).
      */
-    public function index()
+    public function index(): \DomainSystem\Core\Http\Responses\ViewResponse
     {
+        ob_start();
         include dirname(__DIR__) . '/views/builder_editor.php';
+        return new \DomainSystem\Core\Http\Responses\ViewResponse(ob_get_clean(), false);
     }
 
     /**

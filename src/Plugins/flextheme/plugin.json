@@ -1,9 +1,9 @@
 {
     "name": "flextheme",
-    "version": "2.0.0",
-    "description": "Motor de renderização de vitrines e temas (Frontend CMS)",
+    "version": "2.1.0",
+    "description": "Motor de renderiza\u00e7\u00e3o de vitrines e temas (Frontend CMS)",
     "author": "Hadel Rachid",
     "dependencies": [],
     "entry": "DomainSystem\\Plugins\\FlexTheme\\Plugin",
-    "os_version": "2.0"
+    "os_version": "2.1"
 }

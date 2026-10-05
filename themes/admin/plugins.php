@@ -126,7 +126,16 @@
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         
                         <?php if ($plugin['is_core']): ?>
-                            <button type="button" class="btn btn-core" disabled style="opacity: 0.5;">Núcleo</button>
+                            <?php if ($plugin['is_disarmed']): ?>
+                                <?php if ($isDevMode ?? false): ?>
+                                    <input type="hidden" name="action" value="enable">
+                                    <button type="submit" class="btn btn-activate" style="background-color: var(--accent-orange); border-color: var(--accent-orange);">Reativar (Dev Mode)</button>
+                                <?php else: ?>
+                                    <a href="<?= BASE_URL ?>/admin/dev-mode?redirect=<?= urlencode(BASE_URL . '/admin/plugins') ?>" class="btn" style="color: var(--accent-orange); border-color: var(--accent-orange); text-decoration: none; display: inline-block; padding: 6px 12px;">Habilitar Dev Mode</a>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <button type="button" class="btn btn-core" disabled style="opacity: 0.5;">Núcleo</button>
+                            <?php endif; ?>
                         <?php elseif ($plugin['is_active']): ?>
                             <input type="hidden" name="action" value="disable">
                             <button type="submit" class="btn">Desativar</button>
@@ -224,7 +233,16 @@
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         
                         <?php if ($plugin['is_core']): ?>
-                            <button type="button" class="btn btn-core" disabled style="opacity: 0.5;">Núcleo</button>
+                            <?php if ($plugin['is_disarmed']): ?>
+                                <?php if ($isDevMode ?? false): ?>
+                                    <input type="hidden" name="action" value="enable">
+                                    <button type="submit" class="btn btn-activate" style="background-color: var(--accent-orange); border-color: var(--accent-orange);">Reativar (Dev Mode)</button>
+                                <?php else: ?>
+                                    <a href="<?= BASE_URL ?>/admin/dev-mode?redirect=<?= urlencode(BASE_URL . '/admin/plugins') ?>" class="btn" style="color: var(--accent-orange); border-color: var(--accent-orange); text-decoration: none; display: inline-block; padding: 6px 12px;">Habilitar Dev Mode</a>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <button type="button" class="btn btn-core" disabled style="opacity: 0.5;">Núcleo</button>
+                            <?php endif; ?>
                         <?php elseif ($plugin['is_active']): ?>
                             <input type="hidden" name="action" value="disable">
                             <button type="submit" class="btn">Desativar</button>

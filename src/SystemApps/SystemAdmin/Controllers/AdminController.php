@@ -100,10 +100,13 @@ class AdminController
             $this->session->remove('plugin_crashes');
         }
 
+        $isDevMode = $this->session->get('dev_mode') === true && $this->session->get('dev_mode_expires') > time();
+
         try {
             return $this->theme->render('plugins', [
                 'plugins' => $allPlugins,
-                'crashes' => $crashes
+                'crashes' => $crashes,
+                'isDevMode' => $isDevMode
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar painel administrativo: " . $e->getMessage();
@@ -117,7 +120,22 @@ class AdminController
         $action = $request->input('action');
 
         if ($pluginName && $action) {
+            $isDevMode = $this->session->get('dev_mode') === true && $this->session->get('dev_mode_expires') > time();
+            $basePath = dirname(__DIR__, 4);
+            $isSystemApp = is_dir($basePath . '/src/SystemApps/' . $pluginName);
+            
+            $isCoreFlag = false;
+            if (file_exists($basePath . '/src/Plugins/' . $pluginName . '/plugin.json')) {
+                $meta = json_decode(file_get_contents($basePath . '/src/Plugins/' . $pluginName . '/plugin.json'), true);
+                $isCoreFlag = !empty($meta['core']);
+            }
+            $isCore = $isSystemApp || $isCoreFlag || $this->manager->isCore($pluginName);
+
             if ($action === 'enable') {
+                if ($isCore && !$isDevMode) {
+                    $this->session->setFlash('error', '❌ Acesso Negado: É necessário o Modo Desenvolvedor para reativar módulos vitais.');
+                    return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/plugins");
+                }
                 $this->manager->enable($pluginName);
                 
                 // Remove from disarmed if exists
@@ -130,10 +148,10 @@ class AdminController
                     }
                 }
 
-                $this->session->setFlash('success', '✅ Plugin ativado com sucesso!');
+                $this->session->setFlash('success', 'âœ… Plugin ativado com sucesso!');
             } elseif ($action === 'disable') {
                 $this->manager->disable($pluginName);
-                $this->session->setFlash('success', '✔️ Plugin desativado com sucesso.');
+                $this->session->setFlash('success', 'âœ”ï¸ Plugin desativado com sucesso.');
             }
         }
 
@@ -148,9 +166,9 @@ class AdminController
         if ($file && $file['error'] === UPLOAD_ERR_OK) {
             try {
                 $this->manager->installFromZip($file['tmp_name']);
-                $this->session->setFlash('success', '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.');
+                $this->session->setFlash('success', 'âœ”ï¸ Plugin instalado com sucesso! A descompactaÃ§Ã£o e ligaÃ§Ã£o foram concluÃ­das.');
             } catch (\Exception $e) {
-                $this->session->setFlash('error', '❌ Erro na instalação: ' . $e->getMessage());
+                $this->session->setFlash('error', 'âŒ Erro na instalaÃ§Ã£o: ' . $e->getMessage());
             }
         }
 
@@ -168,7 +186,7 @@ class AdminController
             $pluginFolder = basename($pluginFolder);
             try {
                 $this->manager->delete($pluginName, $pluginFolder);
-                $this->session->setFlash('success', '✅ Plugin excluído e removido do servidor.');
+                $this->session->setFlash('success', 'âœ… Plugin excluÃ­do e removido do servidor.');
             } catch (\Exception $e) {
                 $this->session->setFlash('error', $e->getMessage());
             }
@@ -286,7 +304,7 @@ class AdminController
         $themes[] = [
             'folder' => '',
             'name' => 'Criar Novo Tema',
-            'description' => 'Crie uma nova interface pública ou isolada do zero.',
+            'description' => 'Crie uma nova interface pÃºblica ou isolada do zero.',
             'version' => '',
             'author' => '',
             'screenshot' => '',
@@ -317,12 +335,12 @@ class AdminController
                 $extractor = \DomainSystem\Core\Utils\Archive\ExtractorFactory::create();
                 $extractor->extract($file['tmp_name'], $themesPath, 'theme.json');
                 
-                $this->session->setFlash('success', '✅ Tema instalado com sucesso! A descompactação foi concluída.');
+                $this->session->setFlash('success', 'âœ… Tema instalado com sucesso! A descompactaÃ§Ã£o foi concluÃ­da.');
             } catch (\Exception $e) {
-                $this->session->setFlash('error', '❌ Erro na instalação do tema: ' . $e->getMessage());
+                $this->session->setFlash('error', 'âŒ Erro na instalaÃ§Ã£o do tema: ' . $e->getMessage());
             }
         } else {
-            $this->session->setFlash('error', '❌ Erro no upload do arquivo.');
+            $this->session->setFlash('error', 'âŒ Erro no upload do arquivo.');
         }
 
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
@@ -346,7 +364,7 @@ class AdminController
         }
 
         if (!is_dir($themeDir)) {
-            $this->session->setFlash('error', 'Tema não encontrado para preview.');
+            $this->session->setFlash('error', 'Tema nÃ£o encontrado para preview.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -374,7 +392,7 @@ class AdminController
         $author = $request->input('theme_author', '');
         
         if (empty($name)) {
-            $this->session->setFlash('error', 'Nome do tema é obrigatório.');
+            $this->session->setFlash('error', 'Nome do tema Ã© obrigatÃ³rio.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -385,7 +403,7 @@ class AdminController
         $themeDir = $basePath . '/themes/' . $folder;
         
         if (is_dir($themeDir)) {
-            $this->session->setFlash('error', 'Já existe um tema com esse nome/pasta.');
+            $this->session->setFlash('error', 'JÃ¡ existe um tema com esse nome/pasta.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -416,12 +434,12 @@ class AdminController
         $folder = $request->input('theme_folder', '');
         $folder = basename(trim($folder));
         if ($folder === '.' || $folder === '..') {
-            $this->session->setFlash('error', '❌ Nome de pasta inválido.');
+            $this->session->setFlash('error', 'âŒ Nome de pasta invÃ¡lido.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
         if (empty($folder) || in_array($folder, ['admin', 'manager', 'subscriber', 'user', 'default'])) {
-            $this->session->setFlash('error', '❌ Não é permitido excluir temas core vitais do sistema.');
+            $this->session->setFlash('error', 'âŒ NÃ£o Ã© permitido excluir temas core vitais do sistema.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -430,9 +448,9 @@ class AdminController
         
         if (is_dir($themeDir)) {
             $this->deleteDirectory($themeDir);
-            $this->session->setFlash('success', '✅ Tema excluído com segurança e apagado do disco.');
+            $this->session->setFlash('success', 'âœ… Tema excluÃ­do com seguranÃ§a e apagado do disco.');
         } else {
-            $this->session->setFlash('error', 'Tema não encontrado.');
+            $this->session->setFlash('error', 'Tema nÃ£o encontrado.');
         }
         
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
@@ -459,7 +477,7 @@ class AdminController
                 'shortcodes' => $shortcodes
             ]);
         } catch (Exception $e) {
-            return "Erro ao renderizar catálogo de shortcodes: " . $e->getMessage();
+            return "Erro ao renderizar catÃ¡logo de shortcodes: " . $e->getMessage();
         }
     }
 }

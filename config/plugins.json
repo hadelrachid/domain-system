@@ -1,5 +1,5 @@
 {
-    "academy": false,
+    "academy": true,
     "RachidD Analytics": true,
     "auth": true,
     "database": true,

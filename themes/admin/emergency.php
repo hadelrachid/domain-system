@@ -116,7 +116,7 @@
             <button type="submit">> INITIATE OVERRIDE</button>
         </form>
         <div style="margin-top:20px; font-size:12px; opacity:0.7; text-align:center;">
-            Domain System // Core Protection Service v2.0
+            Domain System // Core Protection Service v<?= DS_VERSION ?>
         </div>
     </div>
 </body>
