@@ -114,11 +114,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     private function bootBuilderFlex(OsRuntimeInterface $runtime): void
     {
         // 1. Injeção de Dependência: Vincula a interface ao gerenciador concreto
-        $this->container->singleton(WidgetManagerInterface::class, WidgetManager::class);
+        $runtime->singleton(WidgetManagerInterface::class, WidgetManager::class);
 
         // 2. Resolve a instância do gerenciador
         /** @var WidgetManagerInterface $manager */
-        $manager = $this->container->make(WidgetManagerInterface::class);
+        $manager = $runtime->make(WidgetManagerInterface::class);
 
         // 3. Registra os widgets nativos
         //    Futuramente, outros plugins poderão injetar widgets via hook 'builder.register_widgets'
@@ -127,7 +127,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $manager->registerWidget(new LogoWidget());
 
         // 4. Integra com o motor de Shortcodes
-        $shortcodeManager = $this->container->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        $shortcodeManager = $runtime->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
         $manager->bootShortcodes($shortcodeManager);
 
                 // 5. Adiciona o botão do Builder no menu administrativo (DENTRO DO MENU TEMAS)

@@ -26,15 +26,15 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osBoot(OsRuntimeInterface $runtime): void
     {
         // 1. Registra os serviços Nativos de SEO na Injeção de Dependência
-        $this->container->singleton(
+        $runtime->singleton(
             \DomainSystem\Plugins\seo\Contracts\AssetMinifierInterface::class,
             \DomainSystem\Plugins\seo\Services\NativeAssetMinifier::class
         );
-        $this->container->singleton(
+        $runtime->singleton(
             \DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class,
             \DomainSystem\Plugins\seo\Services\SeoManager::class
         );
-        $this->container->singleton(
+        $runtime->singleton(
             \DomainSystem\Plugins\seo\Contracts\HtmlOptimizerInterface::class,
             \DomainSystem\Plugins\seo\Services\HtmlOptimizer::class
         );

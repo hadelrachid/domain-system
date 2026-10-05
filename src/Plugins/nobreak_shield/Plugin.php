@@ -75,11 +75,11 @@ HTML;
         exit(1);
     }
 
-    public function activate(): void
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
     }
 
-    public function deactivate(): void
+    public function deactivate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
     }
 }

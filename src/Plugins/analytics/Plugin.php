@@ -59,16 +59,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // 3. Adicionar Widgets no Dashboard
         try {
-            $registry = $this->container->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
-            $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $registry = $runtime->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
+            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             $registry->registerProvider(new \DomainSystem\Plugins\analytics\Widgets\AnalyticsWidgetProvider($db));
         } catch (\Exception $e) {}
     }
 
-    public function activate(): void
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
             $schema->create('analytics_events', function ($table) {
                 $table->id();
                 $table->string('event_type', 50); // pageview, click

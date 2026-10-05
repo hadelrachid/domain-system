@@ -29,7 +29,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface::class,
             \DomainSystem\Plugins\settings\Repositories\SettingRepository::class
         );
@@ -61,16 +61,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 
-    public function activate(): void
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
-        $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+        $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
         $schema->create('settings', function ($table) {
             $table->string('key_name', 100)->primary();
             $table->text('key_value')->nullable();
         });
 
         /** @var \DomainSystem\SystemApps\Database\Connection $connection */
-        $connection = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class);
+        $connection = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class);
         $db = $connection->getPdo();
 
         // Inserir valores padro se a tabela estiver vazia

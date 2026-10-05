@@ -31,7 +31,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,
             \DomainSystem\Plugins\pages\Repositories\PageRepository::class
         );
@@ -81,10 +81,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 
-    public function activate(): void
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
             $schema->create('pages', function ($table) {
                 $table->id();
                 $table->string('slug')->unique();
@@ -96,7 +96,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             });
             
             // Seed default pages
-            $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
             $defaults = [
                 ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>'],
