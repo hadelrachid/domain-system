@@ -17,7 +17,7 @@ class DatabasePluginTest extends TestCase
         // Mock environment variables for test
         putenv('DB_DSN=sqlite::memory:');
         
-        $plugin = new Plugin($container, __DIR__ . '/../../src/SystemApps/database', new EventDispatcher());
+        $plugin = new Plugin($container, __DIR__ . '/../../src/SystemApps/Database', new EventDispatcher());
         
         $this->assertEquals('database', $plugin->getName());
         $plugin->setActive(true);
