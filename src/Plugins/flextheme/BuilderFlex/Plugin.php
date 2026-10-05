@@ -41,8 +41,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $manager->registerWidget(new LogoWidget());
 
         // 4. Integra com o motor de Shortcodes do OS
-        $shortcodeManager = $this->container->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
-        $manager->bootShortcodes($shortcodeManager);
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) use ($manager) {
+            $manager->bootShortcodes($sm);
+        });
 
         // 5. Adiciona o botão do Builder Flex no menu administrativo
         $runtime->onHook('admin.menu', function($menus, $role) {

@@ -127,8 +127,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $manager->registerWidget(new LogoWidget());
 
         // 4. Integra com o motor de Shortcodes
-        $shortcodeManager = $runtime->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
-        $manager->bootShortcodes($shortcodeManager);
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) use ($manager) {
+            $manager->bootShortcodes($sm);
+        });
 
                 // 5. Adiciona o botão do Builder no menu administrativo (DENTRO DO MENU TEMAS)
         $runtime->onHook('admin.menu', function($menus, $role) {

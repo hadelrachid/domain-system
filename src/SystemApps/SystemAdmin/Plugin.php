@@ -82,7 +82,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         }, 999);
 
         try {
-            $registry = $runtime->make(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class);
+            $registry = $runtime->getLink('core.dashboard.widgets');
             $registry->registerProvider(new \DomainSystem\SystemApps\SystemAdmin\Widgets\SystemWidgetProvider());
         } catch (\Exception $e) {}
 
