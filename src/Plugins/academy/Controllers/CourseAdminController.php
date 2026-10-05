@@ -5,6 +5,9 @@ namespace DomainSystem\Plugins\academy\Controllers;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Core\Http\Responses\JsonResponse;
+use DomainSystem\Core\Http\Responses\RedirectResponse;
 
 class CourseAdminController
 {
@@ -21,7 +24,7 @@ class CourseAdminController
         $this->schema = $schema;
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         // Auto-migração silenciosa para Hostinger (MySQL) / Local (SQLite)
         try {
@@ -142,10 +145,10 @@ class CourseAdminController
 
         <?php
         $html = ob_get_clean();
-        return new Response($html);
+        return new ViewResponse($html);
     }
 
-    public function store(Request $request): Response
+    public function store(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         // Validação CSRF
         $token = $request->input('csrf_token');
@@ -165,7 +168,7 @@ class CourseAdminController
         return Response::redirect(BASE_URL . '/admin/academy');
     }
 
-    public function delete($id): Response
+    public function delete($id): \DomainSystem\Core\Contracts\ResponseInterface
     {
         // Validação CSRF
         $token = $request->input('csrf_token') ?? '';

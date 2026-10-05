@@ -22,7 +22,7 @@ class SettingsController
         $this->settingRepo = $settingRepo;
     }
 
-    public function index(Request $request): \DomainSystem\Core\Http\Response
+    public function index(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         $rows = $this->settingRepo->getAll();
         $settings = [];
@@ -30,12 +30,12 @@ class SettingsController
             $settings[$row['key_name']] = $row['key_value'];
         }
 
-        return new \DomainSystem\Core\Http\Response($this->theme->render('admin_settings', [
+        return new ViewResponse($this->theme->render('admin_settings', [
             'settings' => $settings
         ], __DIR__ . '/../views'));
     }
 
-    public function save(Request $request): \DomainSystem\Core\Http\Response
+    public function save(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         $allowedKeys = ['site_name', 'site_cnpj', 'site_slogan', 'site_address', 'site_phone', 'site_whatsapp'];
         
@@ -64,7 +64,7 @@ class SettingsController
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin/settings?success=1');
     }
 
-    public function toggleMaintenance(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
+    public function toggleMaintenance(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         $lockFile = dirname(__DIR__, 4) . '/.maintenance';
         $action = $request->input('action');
@@ -76,7 +76,7 @@ class SettingsController
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin/settings?success=1#tab-avancado');
     }
 
-    public function factoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
+    public function factoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         ob_start();
         ?>
@@ -130,10 +130,10 @@ class SettingsController
         </script>
         <?php
         $html = ob_get_clean();
-        return new \DomainSystem\Core\Http\Response($html);
+        return new ViewResponse($html);
     }
 
-    public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Response
+    public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         try {
             // Drop all tables

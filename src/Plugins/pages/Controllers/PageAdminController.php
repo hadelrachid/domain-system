@@ -7,6 +7,9 @@ use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Core\Http\Responses\JsonResponse;
+use DomainSystem\Core\Http\Responses\RedirectResponse;
 
 class PageAdminController
 {
@@ -98,7 +101,7 @@ class PageAdminController
     {
         $themeName = $request->input('theme');
         if (!$themeName) {
-            return new Response(json_encode([]), 200, ['Content-Type' => 'application/json']);
+            return new ViewResponse(json_encode([]), 200, ['Content-Type' => 'application/json']);
         }
         
         $templates = $this->theme->getAvailableTemplates($themeName);
@@ -108,7 +111,7 @@ class PageAdminController
             'templates' => $templates,
             'pages' => $pages
         ];
-        return new Response(json_encode($data), 200, ['Content-Type' => 'application/json']);
+        return new ViewResponse(json_encode($data), 200, ['Content-Type' => 'application/json']);
     }
 
     public function delete(string $id)

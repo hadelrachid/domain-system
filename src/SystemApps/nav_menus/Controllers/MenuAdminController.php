@@ -6,6 +6,9 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Core\Http\Responses\JsonResponse;
+use DomainSystem\Core\Http\Responses\RedirectResponse;
 use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\Core\Theme\ThemeManager;
 
@@ -20,7 +23,7 @@ class MenuAdminController
         $this->theme = $theme;
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
                 // Auto-seed: Garante que os menus padrão existam
         $stmt = $this->db->query("SELECT location FROM theme_menus");
@@ -71,10 +74,10 @@ class MenuAdminController
             'activeMenu' => $activeMenu,
             'menuItems' => $menuItems
         ], dirname(__DIR__) . '/views');
-        return new Response($html);
+        return new ViewResponse($html);
     }
 
-    public function storeMenu(Request $request): Response
+    public function storeMenu(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         $jsonBody = json_decode(file_get_contents('php://input'), true);
         $name = $jsonBody['name'] ?? $request->input('name');
@@ -103,7 +106,7 @@ class MenuAdminController
         }
     }
 
-    public function storeItems(Request $request): Response
+    public function storeItems(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         $jsonBody = json_decode(file_get_contents('php://input'), true);
         $menuId = $jsonBody['menu_id'] ?? $request->input('menu_id');
@@ -128,7 +131,7 @@ class MenuAdminController
         return Response::json(['success' => true, 'message' => 'Estrutura do menu salva com sucesso!']);
     }
 
-    public function deleteMenu(Request $request, string $id): Response
+    public function deleteMenu(Request $request, string $id): \DomainSystem\Core\Contracts\ResponseInterface
     {
         
         
