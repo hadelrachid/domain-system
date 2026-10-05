@@ -91,14 +91,19 @@ try {
     // Se o controller retornou string em vez de objeto Response, nós o convertemos automaticamente
     if (!$response instanceof \DomainSystem\Core\Http\Response) {
         if (is_array($response) || is_object($response)) {
-            $response = \DomainSystem\Core\Http\Response::json($response);
+            $response = new \DomainSystem\Core\Http\Responses\JsonResponse($response);
         } else {
-            $response = new \DomainSystem\Core\Http\Response((string)$response);
+            // Conversão de legado para o novo padrão:
+            $wrap = false;
+            if (strpos($uri, '/admin') === 0 && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
+                $wrap = true;
+            }
+            $response = new \DomainSystem\Core\Http\Responses\ViewResponse((string)$response, $wrap);
         }
     }
     
     // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-        // O Kernel envelopa a resposta apenas se for um ViewResponse e ele pedir explicitamente (shouldWrapLayout)
+    // O Kernel envelopa a resposta apenas se for um ViewResponse e ele pedir explicitamente (shouldWrapLayout)
     if ($response instanceof \DomainSystem\Core\Http\Responses\ViewResponse && $response->shouldWrapLayout()) {
         $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
         $role = $session->get('user_role', 'admin');
