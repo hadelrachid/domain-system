@@ -22,6 +22,8 @@ if (!defined('DOMAIN_SYSTEM_ROOT')) exit;
     <p style="color: #64748b;">Nesta tela você define quais Privilégios (Capabilities) pertencem a cada Cargo (Role). O Motor de Identidade usará isso para liberar ou bloquear recursos.</p>
 
     <form method="POST" action="<?= BASE_URL ?>/admin/acl/save">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                 <thead>
