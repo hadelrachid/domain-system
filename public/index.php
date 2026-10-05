@@ -98,15 +98,11 @@ try {
     }
     
     // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-    // IMPORTANTE: Rotas de API (/api/) e respostas JSON NÃO devem ser embrulhadas no layout!
-    $isApiRoute = str_contains($uri, '/api/');
-    $isJsonResponse = $response instanceof \DomainSystem\Core\Http\Response && str_contains($response->getHeader('Content-Type') ?? '', 'application/json');
-    
-    if (strpos($uri, '/admin') === 0 && !in_array($response->getStatusCode(), [301, 302, 303, 307, 308]) && !$isApiRoute && !$isJsonResponse && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/emergency') && !str_starts_with($uri, '/admin/themes/preview') && !str_starts_with($uri, '/admin/ai-hub/test') && !str_starts_with($uri, '/admin/terminal/execute') && !str_starts_with($uri, '/admin/builder')) {
+        // O Kernel envelopa a resposta apenas se for um ViewResponse e ele pedir explicitamente (shouldWrapLayout)
+    if ($response instanceof \DomainSystem\Core\Http\Responses\ViewResponse && $response->shouldWrapLayout()) {
         $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
         $role = $session->get('user_role', 'admin');
         $workspace = $app->getWorkspaceManager()->getWorkspace($role);
-        // O Workspace envolve a string HTML de dentro do Response
         $wrappedContent = $workspace->wrap($response->getContent());
         $response->setContent($wrappedContent);
     }

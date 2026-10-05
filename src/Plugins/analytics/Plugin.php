@@ -60,9 +60,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // 3. Adicionar Widgets no Dashboard
         try {
-            $registry = $runtime->getLink('core.dashboard.widgets');
+            
             $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
-            $registry->registerProvider(new \DomainSystem\Plugins\analytics\Widgets\AnalyticsWidgetProvider($db));
+            $runtime->onHook('dashboard.register_widgets', function($registry) use ($db) {
+                $registry->registerProvider(new \DomainSystem\Plugins\analytics\Widgets\AnalyticsWidgetProvider($db));
+            });
         } catch (\Exception $e) {}
     }
 

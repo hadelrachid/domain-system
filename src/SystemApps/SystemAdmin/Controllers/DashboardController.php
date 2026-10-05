@@ -7,6 +7,7 @@ use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Application;
 use DomainSystem\Core\Registry\DashboardWidgetRegistry;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\EventDispatcherInterface;
 use Exception;
 
 class DashboardController
@@ -15,13 +16,15 @@ class DashboardController
     private \PDO $db;
     private DashboardWidgetRegistry $registry;
     private SessionManagerInterface $session;
+    private EventDispatcherInterface $events;
 
-    public function __construct(ThemeManagerInterface $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry, SessionManagerInterface $session)
+    public function __construct(ThemeManagerInterface $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry, SessionManagerInterface $session, EventDispatcherInterface $events)
     {
         $this->theme = $theme;
         $this->db = $connection->getPdo();
         $this->registry = $registry;
         $this->session = $session;
+        $this->events = $events;
     }
 
     public function index(\DomainSystem\Core\Http\Request $request)
@@ -34,6 +37,7 @@ class DashboardController
         try {
             $db = $this->db;
             
+            $this->events->dispatch('dashboard.register_widgets', $this->registry);
             // 1. Carrega as preferências do usuário
             $stmt = $db->prepare("SELECT dashboard_layout FROM users WHERE id = ?");
             $stmt->execute([$userId]);

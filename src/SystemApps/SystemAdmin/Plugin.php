@@ -86,6 +86,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $registry->registerProvider(new \DomainSystem\SystemApps\SystemAdmin\Widgets\SystemWidgetProvider());
         } catch (\Exception $e) {}
 
+                $runtime->onHook('dashboard.register_widgets', function($registry) {
+            $registry->registerProvider(new \DomainSystem\SystemApps\SystemAdmin\Widgets\SystemWidgetProvider());
+        });
+
         // O Plugue (Macho) se conectando à Régua de Tomadas!
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $shortcodes) {
             $shortcodes->add('info_sistema', function($attr) {
