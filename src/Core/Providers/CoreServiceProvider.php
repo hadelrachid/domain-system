@@ -26,6 +26,11 @@ class CoreServiceProvider
             return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(\DomainSystem\SystemApps\Database\Connection::class));
         });
 
+        // 1.4 Password Policy
+        $container->singleton(\DomainSystem\Core\Contracts\PasswordPolicyInterface::class, function() {
+            return new \DomainSystem\Core\Security\PasswordPolicy();
+        });
+
         // 1.5 Security & ACL Engine
         $container->singleton(\DomainSystem\Core\Security\IdentityManager::class, function($c) {
             return new \DomainSystem\Core\Security\IdentityManager($c);

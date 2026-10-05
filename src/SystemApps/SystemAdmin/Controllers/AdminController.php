@@ -94,9 +94,9 @@ class AdminController
         // Capture crashes from session
         $crashes = [];
 
-        if (!empty($_SESSION['plugin_crashes'])) {
-            $crashes = $_SESSION['plugin_crashes'];
-            unset($_SESSION['plugin_crashes']);
+        if ($this->session->has('plugin_crashes')) {
+            $crashes = $this->session->get('plugin_crashes');
+            $this->session->remove('plugin_crashes');
         }
 
         try {
@@ -129,10 +129,10 @@ class AdminController
                     }
                 }
 
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Plugin ativado com sucesso!'];
+                $this->session->setFlash('success', '✅ Plugin ativado com sucesso!');
             } elseif ($action === 'disable') {
                 $this->manager->disable($pluginName);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin desativado com sucesso.'];
+                $this->session->setFlash('success', '✔️ Plugin desativado com sucesso.');
             }
         }
 
@@ -147,9 +147,9 @@ class AdminController
         if ($file && $file['error'] === UPLOAD_ERR_OK) {
             try {
                 $this->manager->installFromZip($file['tmp_name']);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.'];
+                $this->session->setFlash('success', '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.');
             } catch (\Exception $e) {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação: ' . $e->getMessage()];
+                $this->session->setFlash('error', '❌ Erro na instalação: ' . $e->getMessage());
             }
         }
 
@@ -167,9 +167,9 @@ class AdminController
             $pluginFolder = basename($pluginFolder);
             try {
                 $this->manager->delete($pluginName, $pluginFolder);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Plugin excluído e removido do servidor.'];
+                $this->session->setFlash('success', '✅ Plugin excluído e removido do servidor.');
             } catch (\Exception $e) {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => $e->getMessage()];
+                $this->session->setFlash('error', $e->getMessage());
             }
         }
 
@@ -316,12 +316,12 @@ class AdminController
                 $extractor = \DomainSystem\Core\Utils\Archive\ExtractorFactory::create();
                 $extractor->extract($file['tmp_name'], $themesPath, 'theme.json');
                 
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema instalado com sucesso! A descompactação foi concluída.'];
+                $this->session->setFlash('success', '✅ Tema instalado com sucesso! A descompactação foi concluída.');
             } catch (\Exception $e) {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro na instalação do tema: ' . $e->getMessage()];
+                $this->session->setFlash('error', '❌ Erro na instalação do tema: ' . $e->getMessage());
             }
         } else {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Erro no upload do arquivo.'];
+            $this->session->setFlash('error', '❌ Erro no upload do arquivo.');
         }
 
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
@@ -345,7 +345,7 @@ class AdminController
         }
 
         if (!is_dir($themeDir)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado para preview.'];
+            $this->session->setFlash('error', 'Tema não encontrado para preview.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -373,7 +373,7 @@ class AdminController
         $author = $request->input('theme_author', '');
         
         if (empty($name)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Nome do tema é obrigatório.'];
+            $this->session->setFlash('error', 'Nome do tema é obrigatório.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -384,7 +384,7 @@ class AdminController
         $themeDir = $basePath . '/themes/' . $folder;
         
         if (is_dir($themeDir)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Já existe um tema com esse nome/pasta.'];
+            $this->session->setFlash('error', 'Já existe um tema com esse nome/pasta.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -404,7 +404,7 @@ class AdminController
         $layoutHtml = "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>{$safeName}</title>\n</head>\n<body>\n    <h1>{$safeName}</h1>\n    <?= \$content ?? '' ?>\n</body>\n</html>";
         file_put_contents($themeDir . '/layout.php', $layoutHtml);
         
-        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Tema scaffolding criado com sucesso!'];
+        $this->session->setFlash('success', 'Tema scaffolding criado com sucesso!');
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
     }
 
@@ -415,12 +415,12 @@ class AdminController
         $folder = $request->input('theme_folder', '');
         $folder = basename(trim($folder));
         if ($folder === '.' || $folder === '..') {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Nome de pasta inválido.'];
+            $this->session->setFlash('error', '❌ Nome de pasta inválido.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
         if (empty($folder) || in_array($folder, ['admin', 'manager', 'subscriber', 'user', 'default'])) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => '❌ Não é permitido excluir temas core vitais do sistema.'];
+            $this->session->setFlash('error', '❌ Não é permitido excluir temas core vitais do sistema.');
             return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
         }
         
@@ -429,9 +429,9 @@ class AdminController
         
         if (is_dir($themeDir)) {
             $this->deleteDirectory($themeDir);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '✅ Tema excluído com segurança e apagado do disco.'];
+            $this->session->setFlash('success', '✅ Tema excluído com segurança e apagado do disco.');
         } else {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Tema não encontrado.'];
+            $this->session->setFlash('error', 'Tema não encontrado.');
         }
         
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");

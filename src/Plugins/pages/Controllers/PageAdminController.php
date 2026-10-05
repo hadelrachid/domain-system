@@ -5,6 +5,7 @@ namespace DomainSystem\Plugins\pages\Controllers;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Response;
 
 class PageAdminController
@@ -51,7 +52,7 @@ class PageAdminController
                 $manualSlug = $request->input('slug');
 
         if (empty($title)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'O Título é obrigatório.'];
+            $this->session->setFlash('error', 'O Título é obrigatório.');
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
 
@@ -73,7 +74,7 @@ class PageAdminController
                 'theme' => $theme,
                 'template_file' => $template_file
             ]);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página atualizada!'];
+            $this->session->setFlash('success', 'Página atualizada!');
         } else {
             $exists = $this->pageRepo->findBySlug($slug);
             if ($exists) {
@@ -87,7 +88,7 @@ class PageAdminController
                 'theme' => $theme,
                 'template_file' => $template_file
             ]);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página criada!'];
+            $this->session->setFlash('success', 'Página criada!');
         }
 
         return Response::redirect(\BASE_URL . '/admin/pages');
@@ -113,7 +114,7 @@ class PageAdminController
     public function delete(string $id)
     {
         $this->pageRepo->delete((int)$id);
-        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Página excluída com sucesso!'];
+        $this->session->setFlash('success', 'Página excluída com sucesso!');
         return Response::redirect(\BASE_URL . '/admin/pages');
     }
 }

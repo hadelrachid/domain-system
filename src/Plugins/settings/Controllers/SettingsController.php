@@ -5,6 +5,7 @@ namespace DomainSystem\Plugins\settings\Controllers;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;
 
@@ -13,7 +14,9 @@ class SettingsController
     private ThemeManagerInterface $theme;
     private SettingRepositoryInterface $settingRepo;
 
-    private \PDO $db; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
+    private \PDO $db;
+    private SessionManagerInterface $session; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
+        $this->session = $session;
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;
     }
@@ -110,7 +113,7 @@ class SettingsController
                         document.getElementById('progress-status').innerText = steps[steps.length - 1];
                         
                         const formData = new FormData();
-                        formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+                        formData.append('csrf_token', '<?= $this->session->getCsrfToken() ?>');
 
                         fetch('<?= BASE_URL ?>/admin/settings/factory-reset/execute', { 
                             method: 'POST',

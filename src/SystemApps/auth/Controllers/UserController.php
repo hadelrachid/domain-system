@@ -3,6 +3,8 @@
 namespace DomainSystem\SystemApps\auth\Controllers;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\PasswordPolicyInterface;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
@@ -19,6 +21,8 @@ class UserController
         $this->theme = $theme;
         $this->userRepo = $userRepo;
         $this->twoFactor = $twoFactor;
+        $this->session = $session;
+        $this->passwordPolicy = $passwordPolicy;
     }
 
     public function index()
@@ -33,17 +37,17 @@ class UserController
 
     public function store()
     {
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $name = $request->input('name') ?? '';
+        $email = $request->input('email') ?? '';
+        $password = $request->input('password') ?? '';
         $allowedRoles = ['admin', 'manager', 'user', 'subscriber'];
-        $role = in_array($_POST['role'] ?? '', $allowedRoles) ? $_POST['role'] : 'user';
+        $role = in_array($request->input('role') ?? '', $allowedRoles) ? $request->input('role') : 'user';
 
         if (empty($name) || empty($email) || empty($password)) {
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Preencha nome, email e senha.'];
-        } elseif (!\DomainSystem\Core\Security\PasswordAnalyzer::isAcceptable($password)) {
-            $missing = implode(' ', \DomainSystem\Core\Security\PasswordAnalyzer::getMissingRequirements($password));
-            $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A senha não atende aos requisitos de segurança: ' . $missing];
+            $this->session->setFlash('error', 'Preencha nome, email e senha.');
+        } elseif (!$this->passwordPolicy->isAcceptable($password)) {
+            $missing = implode(' ', $this->passwordPolicy->getMissingRequirements($password));
+            $this->session->setFlash('error', 'A senha não atende aos requisitos de segurança: ' . $missing);
         } else {
             try {
                 $this->userRepo->createUser([
@@ -52,9 +56,9 @@ class UserController
                     'password' => password_hash($password, PASSWORD_DEFAULT),
                     'role' => $role
                 ]);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Usuário criado com sucesso!'];
+                $this->session->setFlash('success', 'Usuário criado com sucesso!');
             } catch (\Exception $e) {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro (O E-mail já existe?). Detalhes: ' . $e->getMessage()];
+                $this->session->setFlash('error', 'Erro (O E-mail já existe?). Detalhes: ' . $e->getMessage());
             }
         }
 
@@ -66,7 +70,7 @@ class UserController
     {
 
         
-        $user_id = $_GET['id'] ?? null;
+        $user_id = $request->input('id') ?? null;
         if (!$user_id) {
             header("Location: " . BASE_URL . "/admin/users");
             exit;
@@ -97,17 +101,17 @@ class UserController
     {
 
 
-        $user_id = $_POST['user_id'] ?? null;
-        $secret = $_POST['secret'] ?? null;
-        $code = $_POST['code'] ?? null;
+        $user_id = $request->input('user_id') ?? null;
+        $secret = $request->input('secret') ?? null;
+        $code = $request->input('code') ?? null;
 
         if ($user_id && $secret && $code) {
             $appProvider = $this->twoFactor->getProvider('app');
             if ($appProvider->verify(['two_factor_secret' => $secret], $code)) {
                 $this->userRepo->updateTwoFactorSecret($user_id, $secret);
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '2FA ativado com sucesso!'];
+                $this->session->setFlash('success', '2FA ativado com sucesso!');
             } else {
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Código inválido. Tente novamente.'];
+                $this->session->setFlash('error', 'Código inválido. Tente novamente.');
             }
         }
 
@@ -119,10 +123,10 @@ class UserController
     {
 
 
-        $user_id = $_POST['id'] ?? null;
+        $user_id = $request->input('id') ?? null;
         if ($user_id) {
             $this->userRepo->updateTwoFactorSecret($user_id, null);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => '2FA desativado.'];
+            $this->session->setFlash('success', '2FA desativado.');
         }
 
         header("Location: " . BASE_URL . "/admin/users");
@@ -133,12 +137,12 @@ class UserController
     {
 
 
-        $user_id = $_POST['user_id'] ?? null;
-        $two_factor_type = $_POST['two_factor_type'] ?? 'none';
+        $user_id = $request->input('user_id') ?? null;
+        $two_factor_type = $request->input('two_factor_type') ?? 'none';
 
         if ($user_id) {
             $this->userRepo->updateTwoFactor($user_id, $two_factor_type, null);
-            $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Método de 2FA atualizado!'];
+            $this->session->setFlash('success', 'Método de 2FA atualizado!');
         }
 
         header("Location: " . BASE_URL . "/admin/users");
@@ -149,16 +153,16 @@ class UserController
     {
 
 
-        $user_id = $_POST['user_id'] ?? null;
-        $new_password = $_POST['new_password'] ?? '';
+        $user_id = $request->input('user_id') ?? null;
+        $new_password = $request->input('new_password') ?? '';
 
         if ($user_id && !empty($new_password)) {
-            if (!\DomainSystem\Core\Security\PasswordAnalyzer::isAcceptable($new_password)) {
-                $missing = implode(' ', \DomainSystem\Core\Security\PasswordAnalyzer::getMissingRequirements($new_password));
-                $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'A senha não atende aos requisitos de segurança: ' . $missing];
+            if (!$this->passwordPolicy->isAcceptable($new_password)) {
+                $missing = implode(' ', $this->passwordPolicy->getMissingRequirements($new_password));
+                $this->session->setFlash('error', 'A senha não atende aos requisitos de segurança: ' . $missing);
             } else {
                 $this->userRepo->updatePassword($user_id, password_hash($new_password, PASSWORD_DEFAULT));
-                $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Senha do usuário redefinida com sucesso!'];
+                $this->session->setFlash('success', 'Senha do usuário redefinida com sucesso!');
             }
         }
 
@@ -168,19 +172,19 @@ class UserController
 
     public function delete()
     {
-        $user_id = $_POST['user_id'] ?? null;
+        $user_id = $request->input('user_id') ?? null;
         
         if ($user_id) {
             $user = $this->userRepo->findById($user_id);
             if ($user) {
                 if ($user['role'] === 'admin') {
-                    $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Não é permitido excluir um Administrador Geral.'];
+                    $this->session->setFlash('error', 'Não é permitido excluir um Administrador Geral.');
                 } else {
                     try {
                         $this->userRepo->deleteUser($user_id);
-                        $_SESSION['flash_message'] = ['type' => 'success', 'msg' => 'Usuário excluído com sucesso!'];
+                        $this->session->setFlash('success', 'Usuário excluído com sucesso!');
                     } catch (\Exception $e) {
-                        $_SESSION['flash_message'] = ['type' => 'error', 'msg' => 'Erro ao excluir usuário: ' . $e->getMessage()];
+                        $this->session->setFlash('error', 'Erro ao excluir usuário: ' . $e->getMessage());
                     }
                 }
             }

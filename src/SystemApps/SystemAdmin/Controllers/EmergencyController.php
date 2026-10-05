@@ -6,14 +6,17 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 
 class EmergencyController
 {
     private ThemeManagerInterface $theme;
+    private SessionManagerInterface $session;
 
-    public function __construct(ThemeManagerInterface $theme)
+    public function __construct(ThemeManagerInterface $theme, SessionManagerInterface $session)
     {
         $this->theme = $theme;
+        $this->session = $session;
     }
 
     public function index()
@@ -43,9 +46,9 @@ class EmergencyController
             if (session_status() === PHP_SESSION_NONE) {
 
             }
-            $_SESSION['user_id'] = 9999;
-            $_SESSION['user_role'] = 'admin';
-            $_SESSION['user_name'] = 'EMERGENCY_ADMIN';
+            $this->session->set('user_id', 9999);
+            $this->session->set('user_role', 'admin');
+            $this->session->set('user_name', 'EMERGENCY_ADMIN');
             
             $msg = "[$timestamp] [CRITICAL_ACCESS_GRANTED] IP: $ip ativou a Escotilha de Emergencia.\n";
             file_put_contents($logFile, $msg, FILE_APPEND);

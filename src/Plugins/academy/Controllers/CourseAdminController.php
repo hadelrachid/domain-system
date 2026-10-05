@@ -3,11 +3,13 @@
 namespace DomainSystem\Plugins\academy\Controllers;
 
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Response;
 
 class CourseAdminController
 {
     private \PDO $db;
+    private SessionManagerInterface $session;
     private \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema;
 
     public function __construct(
@@ -15,6 +17,7 @@ class CourseAdminController
         \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema
     ) {
         $this->db = $connection->getPdo();
+        $this->session = $session;
         $this->schema = $schema;
     }
 
@@ -77,7 +80,7 @@ class CourseAdminController
                                 </td>
                                 <td style="padding: 15px; text-align: right;">
                                     <form method="POST" action="<?= BASE_URL ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline;" onsubmit="event.preventDefault(); const f = this; OS.confirm('Excluir curso?', () => f.submit());">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="csrf_token" value="<?= $this->session->getCsrfToken() ?>">
                                         <button type="submit" style="background:transparent; border:none; color:#dc3232; cursor:pointer;"><i class="fas fa-trash"></i></button>
                                     </form>
                                 </td>
@@ -102,7 +105,7 @@ class CourseAdminController
                 <h3 style="margin-top:0; color:#fff;">Cadastrar Curso</h3>
                 
                 <form method="POST" action="<?= BASE_URL ?>/admin/academy/store">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $this->session->getCsrfToken() ?>">
                     
                     <div style="margin-bottom:15px;">
                         <label style="display:block; margin-bottom:5px;">Título do Curso</label>
@@ -146,7 +149,7 @@ class CourseAdminController
     {
         // Validação CSRF
         $token = $request->input('csrf_token');
-        if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+        if (empty($token) || $token !== $this->session->getCsrfToken()) {
             return Response::redirect(BASE_URL . '/admin/academy');
         }
 
@@ -165,8 +168,8 @@ class CourseAdminController
     public function delete($id): Response
     {
         // Validação CSRF
-        $token = $_POST['csrf_token'] ?? '';
-        if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+        $token = $request->input('csrf_token') ?? '';
+        if (empty($token) || $token !== $this->session->getCsrfToken()) {
             return Response::redirect(BASE_URL . '/admin/academy');
         }
 

@@ -6,6 +6,7 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Core\Application;
 use DomainSystem\Core\Registry\DashboardWidgetRegistry;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 use Exception;
 
 class DashboardController
@@ -13,17 +14,19 @@ class DashboardController
     private ThemeManagerInterface $theme;
     private \PDO $db;
     private DashboardWidgetRegistry $registry;
+    private SessionManagerInterface $session;
 
-    public function __construct(ThemeManagerInterface $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry)
+    public function __construct(ThemeManagerInterface $theme, \DomainSystem\SystemApps\Database\Connection $connection, DashboardWidgetRegistry $registry, SessionManagerInterface $session)
     {
         $this->theme = $theme;
         $this->db = $connection->getPdo();
         $this->registry = $registry;
+        $this->session = $session;
     }
 
     public function index(\DomainSystem\Core\Http\Request $request)
     {
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = $this->session->get('user_id');
         if (!$userId) {
             return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/login');
         }
@@ -91,15 +94,15 @@ class DashboardController
 
     public function clearCrashes(\DomainSystem\Core\Http\Request $request)
     {
-        if (isset($_SESSION['plugin_crashes'])) {
-            unset($_SESSION['plugin_crashes']);
+        if ($this->session->has('plugin_crashes')) {
+            $this->session->remove('plugin_crashes');
         }
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin');
     }
 
     public function saveLayout(\DomainSystem\Core\Http\Request $request)
     {
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = $this->session->get('user_id');
         if (!$userId) return \DomainSystem\Core\Http\Response::json(['error' => 'Not logged in'], 401);
 
         $widgets = $request->input('widgets') ?? [];
