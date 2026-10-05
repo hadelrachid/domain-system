@@ -51,6 +51,7 @@ class AdminControllerTest extends TestCase
 
         $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
         $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $dispatcherMock->method('applyFilters')->willReturnCallback(function($hook, $val) { return $val; });
 
         $requestMock = $this->createMock(\DomainSystem\Core\Http\Request::class);
 
@@ -61,4 +62,5 @@ class AdminControllerTest extends TestCase
     }
 
     }
+
 
