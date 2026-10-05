@@ -55,7 +55,8 @@ class AdminControllerTest extends TestCase
 
         $requestMock = $this->createMock(\DomainSystem\Core\Http\Request::class);
 
-        $controller = new AdminController($pluginManagerMock, $themeManager, $shortcodesMock, $dispatcherMock);
+        $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $controller = new AdminController($pluginManagerMock, $themeManager, $shortcodesMock, $dispatcherMock, $sessionMock);
         $html = $controller->listPlugins($requestMock);
         
         $this->assertStringContainsString('<html>', $html);

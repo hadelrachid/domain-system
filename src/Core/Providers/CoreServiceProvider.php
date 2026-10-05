@@ -31,6 +31,11 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Security\PasswordPolicy();
         });
 
+        // 1.45 Session Manager
+        $container->singleton(\DomainSystem\Core\Contracts\SessionManagerInterface::class, function() {
+            return new \DomainSystem\Core\Http\SessionManager();
+        });
+
         // 1.5 Security & ACL Engine
         $container->singleton(\DomainSystem\Core\Security\IdentityManager::class, function($c) {
             return new \DomainSystem\Core\Security\IdentityManager($c);

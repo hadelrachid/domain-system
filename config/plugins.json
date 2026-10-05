@@ -1,9 +1,9 @@
 {
-    "academy": true,
+    "academy": false,
     "RachidD Analytics": true,
     "auth": true,
     "database": true,
-    "flextheme": true,
+    "flextheme": false,
     "installer": true,
     "No-Break Shield": true,
     "pages": true,

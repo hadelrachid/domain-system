@@ -15,12 +15,13 @@ class AdminController
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodes;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
 
-    public function __construct(PluginManager $manager, ThemeManagerInterface $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher)
+    public function __construct(PluginManager $manager, ThemeManagerInterface $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher, \DomainSystem\Core\Contracts\SessionManagerInterface $session)
     {
         $this->manager = $manager;
         $this->theme = $theme;
         $this->shortcodes = $shortcodes;
         $this->dispatcher = $dispatcher;
+        $this->session = $session;
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
