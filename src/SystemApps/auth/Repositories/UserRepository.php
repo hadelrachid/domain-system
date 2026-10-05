@@ -54,7 +54,16 @@ class UserRepository implements UserRepositoryInterface
             $params[":$k"] = $v;
         }
         $stmt->execute($params);
-        return (int)$this->db->lastInsertId();
+                $userId = (int)$this->db->lastInsertId();
+        if (isset($data['role'])) {
+            $stmtRole = $this->db->prepare('SELECT id FROM roles WHERE slug = ?');
+            $stmtRole->execute([$data['role']]);
+            $roleId = $stmtRole->fetchColumn();
+            if ($roleId) {
+                $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)' )->execute([$userId, $roleId]);
+            }
+        }
+        return $userId;
     }
 
     public function updateTwoFactorSecret(int $userId, ?string $secret): void
