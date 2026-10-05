@@ -8,23 +8,14 @@ use Exception;
 
 abstract class AbstractPlugin implements PluginInterface
 {
-    protected ContainerInterface $container;
+    
     protected string $path;
     protected array $metadata = [];
     protected bool $isActive = false;
     
-    private EventDispatcherInterface $events;
+    
 
-    public function __construct(
-        ContainerInterface $container, 
-        string $path, 
-        EventDispatcherInterface $events
-    ) {
-        $this->container = $container;
-        $this->path = rtrim($path, '/\\');
-        $this->events = $events;
-        $this->loadMetadata();
-    }
+    public function __construct(string $path) { $this->path = rtrim($path, "/\\"); $this->loadMetadata(); }
 
     private function loadMetadata(): void
     {
@@ -72,18 +63,15 @@ abstract class AbstractPlugin implements PluginInterface
         $this->isActive = $active;
     }
 
-    protected function events(): EventDispatcherInterface
-    {
-        return $this->events;
-    }
+    
 
     abstract public function register(): void;
     
     // Lifecycle hooks defaults
     public function boot(): void {}
-    public function activate(): void {}
-    public function deactivate(): void {}
-    public function uninstall(): void {}
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
+    public function deactivate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
+    public function uninstall(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
 
     public function getSubPluginsPath(): ?string
     {

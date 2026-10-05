@@ -17,7 +17,7 @@ class DatabasePluginTest extends TestCase
         // Mock environment variables for test
         putenv('DB_DSN=sqlite::memory:');
         
-        $plugin = new Plugin($container, __DIR__ . '/../../src/SystemApps/Database', new EventDispatcher());
+        $plugin = new Plugin(__DIR__ . '/../../src/SystemApps/Database');
         
         $this->assertEquals('database', $plugin->getName());
         $plugin->setActive(true);
@@ -25,7 +25,14 @@ class DatabasePluginTest extends TestCase
         $this->assertEmpty($plugin->getDependencies());
 
         // Emulando o ciclo do OS 2.0
-        $plugin->osBoot($this->createMock(\DomainSystem\Core\Contracts\OsRuntimeInterface::class));
+                $runtime = $this->createMock(\DomainSystem\Core\Contracts\OsRuntimeInterface::class);
+        $runtime->method('bind')->willReturnCallback(function($abstract, $concrete) use ($container) {
+            $container->bind($abstract, $concrete);
+        });
+        $runtime->method('singleton')->willReturnCallback(function($abstract, $concrete) use ($container) {
+            $container->singleton($abstract, $concrete);
+        });
+        $plugin->osBoot($runtime);
 
         $connection = $container->make(Connection::class);
         $this->assertInstanceOf(Connection::class, $connection);

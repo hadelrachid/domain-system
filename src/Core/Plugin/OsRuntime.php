@@ -98,4 +98,22 @@ class OsRuntime implements OsRuntimeInterface
         
         return $value;
     }
+
+    public function bind(string $abstract, callable|string $concrete): void
+    {
+        $this->container->bind($abstract, $concrete);
+    }
+
+    public function singleton(string $abstract, callable|string $concrete): void
+    {
+        $this->container->singleton($abstract, $concrete);
+    }
+
+    public function make(string $class)
+    {
+        if (str_starts_with($class, 'DomainSystem\\Core\\')) {
+            throw new \Exception("Auditoria de Seguranca: Um Plugin Ring 3 nao pode instanciar Core classes diretamente. Use getLink().");
+        }
+        return $this->container->make($class);
+    }
 }

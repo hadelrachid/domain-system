@@ -29,9 +29,9 @@ class FakePlugin implements PluginInterface, OsExtensionInterface
 
     public function register(): void { $this->registered = true; }
     public function boot(): void { $this->booted = true; }
-    public function activate(): void {}
-    public function deactivate(): void {}
-    public function uninstall(): void {}
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
+    public function deactivate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
+    public function uninstall(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void {}
 
     public function getName(): string { return $this->name; }
     public function getVersion(): string { return '1.0.0'; }

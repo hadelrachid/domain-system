@@ -36,27 +36,27 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osBoot(OsRuntimeInterface $runtime): void
     {
         // 1. Registra os Contratos de Segurança no Container (Local do Plugin)
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface::class,
             \DomainSystem\SystemApps\auth\Repositories\UserRepository::class
         );
 
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface::class,
             \DomainSystem\SystemApps\auth\Repositories\TwoFactorCodeStore::class
         );
 
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\AuthenticatorInterface::class,
             \DomainSystem\SystemApps\auth\Services\GoogleAuthenticatorAdapter::class
         );
 
-        $this->container->bind(
+        $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface::class,
             \DomainSystem\SystemApps\auth\Services\PhpMailSender::class
         );
 
-        $this->container->singleton(
+        $runtime->singleton(
             \DomainSystem\SystemApps\auth\Services\TwoFactorService::class,
             function($container) {
                 $service = new \DomainSystem\SystemApps\auth\Services\TwoFactorService();
@@ -107,10 +107,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 
-    public function activate(): void
+    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $this->container->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
             $schema->create('users', function ($table) {
                 $table->id();
                 $table->string('name');
@@ -157,7 +157,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             });
             
             // Seed base Roles and migrate existing Admins
-            $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
             
             // 1. Create Admin Role if not exists
             $stmt = $db->query("SELECT id FROM roles WHERE slug = 'admin'");
@@ -184,7 +184,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         } catch (\Exception $e) {}
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
-        $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+        $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
         try { $db->exec("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'admin'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}

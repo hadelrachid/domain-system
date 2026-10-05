@@ -80,7 +80,7 @@ class PluginDiscoverer
 
                 if (class_exists($pluginClass)) {
                     /** @var PluginInterface $plugin */
-                    $plugin = new $pluginClass($this->container, $dir, $this->dispatcher);
+                    $plugin = new $pluginClass($dir);
                     $plugin->setActive(true);
                     $discovered[$plugin->getName()] = $plugin;
                     $newlyDiscovered[] = $plugin;
