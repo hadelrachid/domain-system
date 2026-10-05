@@ -160,3 +160,6 @@ Isso fica visível no "Gerenciador de Tarefas" do painel Administrativo (`/admin
 
 ### 3. No-Break Shield (Interceptação de Fatal Errors)
 Se você escrever um código que causaria uma "Tela Branca" ou `Fatal Error` (como tentar ler um método de um objeto `null`), o sistema usa o *No-Break Shield* para isolar o erro na sandbox do seu plugin. Um Toast de aviso aparecerá no topo do painel, o "sino" registrará o stack trace, e seu plugin será desativado até você corrigir o código. O Frontend continuará intacto.
+## 🛡️ Tratamento de Falhas e Modo Desenvolvedor (v2.1.0)
+Na versão 2.1.0, se um módulo crítico falhar, o **Circuit Breaker** irá isolá-lo.
+Para reativar e testar sua correção, acesse a interface e utilize o **Modo Desenvolvedor** fornecendo sua senha de Administrador.
