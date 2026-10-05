@@ -50,7 +50,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/themes/menus/delete/{id}', [\DomainSystem\SystemApps\nav_menus\Controllers\MenuAdminController::class, 'deleteMenu'], 'nav_menus', ['admin']);
         });
 
-        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) {
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) use ($runtime) {
             // Shortcode para injetar um menu no layout (Consumido pelo flextheme)
             $sm->add('nav_menu', function($attrs) {
                 $location = $attrs['location'] ?? 'header';
