@@ -60,3 +60,4 @@ The core has been audited by artificial intelligences to block CSRF attacks with
 The OS features a massive system of **Hooks (Event-Driven)** for you to alter the system flow without touching the Kernel's source code.
 The architecture has been entirely swept to remove Anti-Patterns (such as `Service Locator` / `Application::getInstance()`), enforcing declarative dependency injections and pure interfaces.
 To create your own component, consult our [Plugin Development Guide](DEVELOPER_GUIDE.md).
+

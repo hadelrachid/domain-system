@@ -1,6 +1,6 @@
 > **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
 > 
-> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> O Domain System **NÃO** é mais um sistema de "SaaS Multi-Tenant". Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente** e puro.
 > 
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
@@ -91,3 +91,4 @@ Este documento descreve a visão de futuro para o **Domain System OS**. As prior
 - **Zero downtime** durante falhas de código ou ativação de plugins.
 - **Tempo de resposta** < 150ms para renderização de páginas front-end públicas.
 - **Ecossistema:** Ter a mesma facilidade de criar temas e extensões que o WordPress oferece aos seus desenvolvedores.
+
