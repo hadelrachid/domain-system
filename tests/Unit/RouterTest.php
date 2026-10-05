@@ -4,6 +4,7 @@ namespace DomainSystem\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Container\Container;
 use Exception;
 
@@ -28,7 +29,7 @@ class RouterTest extends TestCase
             return 'Static Route OK';
         });
 
-        $result = $router->dispatch('GET', '/test');
+        $result = $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/test']));
         $this->assertEquals('Static Route OK', $result);
     }
 
@@ -41,7 +42,7 @@ class RouterTest extends TestCase
             return "User: " . $id;
         });
 
-        $result = $router->dispatch('GET', '/users/123');
+        $result = $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/users/123']));
         $this->assertEquals('User: 123', $result);
     }
 
@@ -53,8 +54,8 @@ class RouterTest extends TestCase
         $router->addRoute('GET', '/ctrl', [DummyController::class, 'index']);
         $router->addRoute('GET', '/ctrl/{id}', [DummyController::class, 'show']);
 
-        $result1 = $router->dispatch('GET', '/ctrl');
-        $result2 = $router->dispatch('GET', '/ctrl/999');
+        $result1 = $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/ctrl']));
+        $result2 = $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/ctrl/999']));
 
         $this->assertEquals('Hello World', $result1);
         $this->assertEquals('Showing 999', $result2);
@@ -68,7 +69,7 @@ class RouterTest extends TestCase
         $container = new Container();
         $router = new Router($container);
 
-        $router->dispatch('GET', '/does-not-exist');
+        $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/does-not-exist']));
     }
 
     public function testMethodNotAllowedButRouteExistsIsConsideredNotFoundForNow()
@@ -81,6 +82,20 @@ class RouterTest extends TestCase
 
         $router->addRoute('POST', '/only-post', function() { return 'OK'; });
 
-        $router->dispatch('GET', '/only-post');
+        $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/only-post']));
+    }
+
+    public function testRouteCollisionThrowsException()
+    {
+        $this->expectException(\DomainSystem\Core\Exceptions\RouteAlreadyRegisteredException::class);
+
+        $container = new Container();
+        $router = new Router($container);
+
+        // Registro original (Simulando Ring 0 / App do Sistema)
+        $router->addRoute('GET', '/login', function() { return 'Core Login'; }, 'core_auth');
+
+        // Tentativa de sequestro da rota (Simulando Ring 3 / Plugin de Usuário)
+        $router->addRoute('GET', '/login', function() { return 'Fake Login'; }, 'malicious_plugin');
     }
 }

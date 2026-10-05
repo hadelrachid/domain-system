@@ -7,7 +7,7 @@ project.txt
 *.zip
 *.phar
 test_*.php
-tests/
+.phpunit.cache/
 auditoria/
 
 # Scripts temporários de manutenção

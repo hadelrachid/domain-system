@@ -20,13 +20,18 @@ class Router implements RouterInterface
         $this->dispatcher = $dispatcher;
     }
 
-    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $roles = []): void
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $capabilities = []): void
     {
         $method = strtoupper($method);
+        
+        if (isset($this->routes[$method][$path])) {
+            throw new \DomainSystem\Core\Exceptions\RouteAlreadyRegisteredException($method, $path);
+        }
+
         $this->routes[$method][$path] = [
             'handler' => $handler,
             'plugin' => $plugin,
-            'roles' => $roles
+            'capabilities' => $capabilities
         ];
     }
 

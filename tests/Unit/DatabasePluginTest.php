@@ -3,10 +3,11 @@
 namespace DomainSystem\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use DomainSystem\Plugins\Database\Plugin;
-use DomainSystem\Plugins\Database\Connection;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\SystemApps\Database\Plugin;
+use DomainSystem\SystemApps\Database\Connection;
+use DomainSystem\SystemApps\Database\QueryBuilder;
 use DomainSystem\Core\Container\Container;
+use DomainSystem\Core\Events\EventDispatcher;
 
 class DatabasePluginTest extends TestCase
 {
@@ -16,14 +17,15 @@ class DatabasePluginTest extends TestCase
         // Mock environment variables for test
         putenv('DB_DSN=sqlite::memory:');
         
-        $plugin = new Plugin($container, __DIR__ . '/../../src/Plugins/Database');
+        $plugin = new Plugin($container, __DIR__ . '/../../src/SystemApps/database', new EventDispatcher());
         
         $this->assertEquals('database', $plugin->getName());
         $plugin->setActive(true);
         $this->assertTrue($plugin->isActive());
         $this->assertEmpty($plugin->getDependencies());
 
-        $plugin->register();
+        // Emulando o ciclo do OS 2.0
+        $plugin->osBoot($this->createMock(\DomainSystem\Core\Contracts\OsRuntimeInterface::class));
 
         $connection = $container->make(Connection::class);
         $this->assertInstanceOf(Connection::class, $connection);
@@ -32,3 +34,5 @@ class DatabasePluginTest extends TestCase
         $this->assertInstanceOf(QueryBuilder::class, $qb);
     }
 }
+
+

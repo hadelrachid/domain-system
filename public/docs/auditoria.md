@@ -1,8 +1,15 @@
+> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
+> 
+> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> 
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+
 # 🛡️ Auditoria Arquitetural e de Segurança (Domain System OS v2.0)
 
 **Última Atualização:** 01 de Outubro de 2026
 
-Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Sistema Operacional SaaS multi-tenant puro**.
+Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Sistema Operacional Web independente**.
 
 ---
 
@@ -29,7 +36,7 @@ O núcleo do sistema sofreu uma reformulação profunda em todos os seus pilares
 Baseado em auditorias externas (incluindo varreduras rigorosas focadas em OWASP), as seguintes medidas de proteção foram integradas definitivamente ao SO:
 
 ### 1. No-Break Shield (Circuit Breaker Inteligente)
-Implementado em nível de Kernel, esse design pattern previne o "Efeito Dominó" e a "Tela Branca da Morte" (WSOD). Se um plugin apresentar um Fatal Error ou vazamento de memória, o disjuntor intercepta a chamada, isola o componente em milissegundos e renderiza um dashboard imutável para o Super Admin sem afetar os processos dos outros Tenants no servidor.
+Implementado em nível de Kernel, esse design pattern previne o "Efeito Dominó" e a "Tela Branca da Morte" (WSOD). Se um plugin apresentar um Fatal Error ou vazamento de memória, o disjuntor intercepta a chamada, isola o componente em milissegundos e renderiza um dashboard imutável para o Super Admin sem afetar os processos dos outras instâncias ou aplicativos virtuais no servidor.
 
 ### 2. Blindagem contra "Zip Slip"
 - **Falha Anterior:** Instalação de plugins via `.zip` sem validação de caminho, permitindo sobrescrita do núcleo.
@@ -46,3 +53,4 @@ Criação do artefato de Troubleshooting (`ERROR_DICTIONARY.md`), empacotando ex
 ## 📈 Conclusão
 
 O **Domain System OS** atinge na versão 2.0 a categoria "Enterprise-Ready". Seu Micro-Kernel agnóstico está limpo, coeso e blindado contra quedas em cascata, pronto para se firmar como uma alternativa leve, rápida e moderna aos frameworks tradicionais do mercado.
+

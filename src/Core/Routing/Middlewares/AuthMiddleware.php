@@ -5,48 +5,68 @@ namespace DomainSystem\Core\Routing\Middlewares;
 use DomainSystem\Core\Contracts\MiddlewareInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\SessionManager;
+use DomainSystem\Core\Security\IdentityManager;
 use Closure;
 
 /**
- * ────────────────────────────────────────────────────────────────────────────
- * CLASSE: AuthMiddleware
- * ────────────────────────────────────────────────────────────────────────────
- * SRP: Sua ÚNICA responsabilidade é verificar se o usuário tem a "Role" certa
- * para acessar a rota.
+ * Motor de Interceptação (Catraca) do Web OS
+ * Verifica se a Identidade logada possui a Capability (Privilégio) exigida para a rota.
  */
 class AuthMiddleware implements MiddlewareInterface
 {
     private SessionManager $session;
+    private IdentityManager $identity;
 
-    public function __construct(SessionManager $session)
+    public function __construct(SessionManager $session, IdentityManager $identity)
     {
         $this->session = $session;
+        $this->identity = $identity;
     }
 
     public function handle(Request $request, Closure $next, array $routeConfig = []): mixed
     {
-        $roles = $routeConfig['roles'] ?? [];
+        // Aceita 'capabilities' ou cai pra 'roles' (legado de plugins ainda não atualizados)
+        $capabilities = $routeConfig['capabilities'] ?? $routeConfig['roles'] ?? [];
 
-        // Se a rota não exige nenhuma role (pública), deixa passar livremente
-        if (empty($roles)) {
+        // Se a rota for pública (sem capabilities exigidas), passa a bola
+        if (empty($capabilities)) {
             return $next($request);
         }
 
-        $userRole = $this->session->get('user_role', '');
+        $userId = $this->session->get('user_id');
 
-        // Se a role do usuário não está na lista de permitidas para esta rota
-        if (!in_array($userRole, $roles)) {
-            http_response_code(403);
-            $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
-                  . '<h2 style="color:#d63638;">Acesso Negado 🛑</h2>'
-                  . '<p>O seu perfil (' . htmlspecialchars($userRole ?: 'Visitante') . ') não tem permissão para acessar esta área.</p>'
-                  . '<a href="javascript:history.back()" style="display:inline-block; margin-top:10px; padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px;">Voltar</a>'
-                  . '</div>';
-            echo $html;
-            exit;
+        // Se não estiver logado
+        if (!$userId) {
+            $this->blockAccess('Visitante Anônimo');
         }
 
-        // Se tem permissão, passa a bola para o próximo.
+        $hasAccess = false;
+        foreach ($capabilities as $cap) {
+            // Verifica se a identity possui a capability exata (ex: 'core.plugin.install') 
+            // OU se é a string de uma role legada autorizada (ex: 'admin')
+            if ($this->identity->userCan($userId, $cap) || $this->identity->hasRole($userId, $cap)) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
+            $userName = $this->session->get('user_name', 'Usuário ' . $userId);
+            $this->blockAccess($userName);
+        }
+
         return $next($request);
+    }
+    
+    private function blockAccess(string $identityName): void
+    {
+        http_response_code(403);
+        $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
+              . '<h2 style="color:#d63638;">Acesso Negado 🛡️</h2>'
+              . '<p>Sua identidade (' . htmlspecialchars($identityName) . ') não possui os privilégios necessários para executar esta ação no sistema.</p>'
+              . '<a href="javascript:history.back()" style="display:inline-block; margin-top:10px; padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px;">Voltar com Segurança</a>'
+              . '</div>';
+        echo $html;
+        exit;
     }
 }

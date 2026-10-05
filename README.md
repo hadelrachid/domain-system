@@ -1,3 +1,10 @@
+> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
+> 
+> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> 
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
   <img src="https://img.shields.io/badge/Version-2.0.0-blueviolet?style=for-the-badge" alt="Version 2.0.0">
@@ -60,3 +67,4 @@ O núcleo foi auditado por inteligências artificiais para bloquear ataques CSRF
 O SO possui um sistema massivo de **Hooks (Event-Driven)** para você alterar o fluxo do sistema sem encostar no código-fonte do Kernel.
 A arquitetura foi inteiramente varrida para remover Anti-Patterns (como `Service Locator` / `Application::getInstance()`), forçando injeções de dependência declarativas e interfaces puras.
 Para criar o seu próprio componente, consulte o nosso [Guia de Desenvolvimento de Plugins](DEVELOPER_GUIDE.md).
+

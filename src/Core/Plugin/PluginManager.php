@@ -76,6 +76,11 @@ class PluginManager
     /**
      * Executa o Boot de todos os plugins na ordem da Pilha (Ring 0 → Ring 3).
      */
+        /**
+     * ATENÇÃO ARQUITETURAL:
+     * Esta delegação envia explícita e separadamente os plugins do Ring 0 e Ring 3.
+     * Não mescle os arrays antes do Bootstrapper, a segurança do sistema depende dessa separação.
+     */
     public function bootPlugins(): void
     {
         $this->bootstrapper->bootPlugins(

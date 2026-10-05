@@ -61,6 +61,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     'icon' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg>'
                 ];
             }
+                            $menus[] = [
+                    'title' => 'Controle de Acessos',
+                    'url' => '/admin/acl',
+                    'icon' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>'
+                ];
             return $menus;
         });
 
@@ -92,22 +97,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
 
         $runtime->onHook('router.register', function(Router $router) use ($sessionManager) {
-            // Redireciona a raiz para o admin ou cockpit
-            $router->addRoute('GET', '/', function() use ($sessionManager) {
-                if ($sessionManager->has('user_role')) {
-                    if ($this->container()->has(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class)) {
-                        $registry = $app->getContainer()->make(\DomainSystem\Core\Contracts\CockpitRegistryInterface::class);
-                        $provider = $registry->getProviderForRole($sessionManager->get('user_role'));
-                        if ($provider) {
-                            header("Location: " . BASE_URL . $provider->getDashboardRoute());
-                            exit;
-                        }
-                    }
-                }
-                header("Location: " . BASE_URL . "/admin");
-                exit;
-            });
-
             // Rota de Emergência (Independente de Auth)
             $router->addRoute('GET', '/admin/emergency', [\DomainSystem\SystemApps\SystemAdmin\Controllers\EmergencyController::class, 'index']);
             $router->addRoute('POST', '/admin/emergency', [\DomainSystem\SystemApps\SystemAdmin\Controllers\EmergencyController::class, 'login']);
@@ -126,6 +115,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin'], 'system-admin', ['admin']);
+
+            // ACL Panel
+            $router->addRoute('GET', '/admin/acl', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'index'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/acl/save', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'save'], 'system-admin', ['admin']);
         });
     }
 }

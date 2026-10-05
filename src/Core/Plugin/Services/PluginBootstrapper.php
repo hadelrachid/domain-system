@@ -108,6 +108,13 @@ class PluginBootstrapper
      *
      * @param array<string, PluginInterface> $plugins Pilha ordenada de plugins
      */
+        /**
+     * ATENÇÃO ARQUITETURAL:
+     * NÃO forneça valor default para os arrays! A separação estrutural entre Ring 0 (systemApps)
+     * e Ring 3 (userPlugins) DEVE ser explícita.
+     * Se os argumentos forem omitidos, o PHP lançará ArgumentCountError, o que bloqueia
+     * o boot e alerta sobre a falha (evitando perda silenciosa de plugins).
+     */
     public function bootPlugins(array $systemApps, array $userPlugins): void
     {
         $totalRequested = count($systemApps) + count($userPlugins);

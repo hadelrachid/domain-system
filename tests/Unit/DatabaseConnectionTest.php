@@ -3,7 +3,7 @@
 namespace DomainSystem\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use DomainSystem\Plugins\Database\Connection;
+use DomainSystem\SystemApps\Database\Connection;
 use PDO;
 
 class DatabaseConnectionTest extends TestCase
@@ -30,3 +30,5 @@ class DatabaseConnectionTest extends TestCase
         $this->assertEquals(1, $result['val']);
     }
 }
+
+

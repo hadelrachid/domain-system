@@ -1,3 +1,10 @@
+> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
+> 
+> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> 
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+
 # 🗺️ Roteiro de Desenvolvimento — Domain System OS v2.0
 
 Este documento descreve a visão de futuro para o **Domain System OS**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema para bater de frente com as ferramentas consolidadas no mercado (WordPress, Laravel).
@@ -30,17 +37,22 @@ Este documento descreve a visão de futuro para o **Domain System OS**. As prior
 - [ ] **Widgets Customizáveis:** Permitir que o usuário final adicione, remova e arraste widgets criados por plugins na tela inicial.
 - [ ] **Telemetria Centralizada:** Gráficos mostrando uso de RAM, requisições por segundo e relatórios de uptime baseados no log do No-Break Shield.
 
+### 2.4. View & Response Engine (Contratos de Renderização)
+- [ ] **Interfaces de Resposta:** Padronização das saídas HTTP (ViewResponse, JsonResponse, RedirectResponse) para que *Controllers* não retornem strings cruas.
+- [ ] **Renderização Previsível (Fim do Inception):** O Kernel definirá o envelopamento (Layout/Sidebar) estritamente baseado no Contrato retornado (ex: `LayoutResponseInterface`), economizando código e automatizando menus e layouts corretamente.
+
 ---
 
-## 🔵 Fase 3: Escalabilidade e Multi-Tenant SaaS (3 a 6 Meses)
 
-### 3.1. Arquitetura de Subdomínios (Tenant Engine)
+## 🔵 Fase 3: Escalabilidade e Virtualização de Serviços (3 a 6 Meses)
+
+### 3.1. Arquitetura de Subdomínios (Virtual Instance Engine)
 - [ ] **Roteador Avançado:** Consolidar a leitura dinâmica do `tenants.json` no boot do sistema para separar o banco de dados antes que qualquer plugin inicie.
 - [ ] **Tenant Provisioner Plugin:** Um plugin oficial que permite criar um novo ambiente (banco de dados + subdomínio) com 1 clique a partir de um painel Super Admin.
 - [ ] **Gestão de Assinaturas (Stripe):** Bloqueio ou liberação de tenants baseado no status da fatura do cliente.
 
 ### 3.2. Abstração Total de Banco de Dados
-- [ ] **Schema Builder:** Em vez de arquivos `.sql` ou queries hardcoded, os plugins usarão uma classe `Schema` para criar tabelas que funcione tanto no MySQL (Produção Hostinger) quanto no SQLite (Testes).
+- [x] **Schema Builder:** Em vez de arquivos `.sql` ou queries hardcoded, os plugins usarão uma classe `Schema` para criar tabelas que funcione tanto no MySQL (Produção Hostinger) quanto no SQLite (Testes).
 - [ ] **Migrações Automáticas:** O Kernel comparará o Schema desejado pelo plugin com a tabela real no banco e aplicará as alterações (ALTER TABLE) sem intervenção humana.
 
 ### 3.3. API Pública (REST & Webhooks)
@@ -67,7 +79,7 @@ Este documento descreve a visão de futuro para o **Domain System OS**. As prior
 | Item | Prioridade | Status |
 |------|------------|--------|
 | Implementar Padronização Completa de Erros (Dicionário de Códigos) | P0 (Crítico) | 🟢 Concluído |
-| Expurgo Absoluto de Dependências de Negócio (Desacoplamento do SaaS) | P0 (Crítico) | 🟢 Concluído |
+| Expurgo Absoluto de Dependências de Negócio (Desacoplamento para Web OS) | P0 (Crítico) | 🟢 Concluído |
 | Decompor `ErrorHandler` nativo e mesclar com o No-Break Shield | P1 (Alta) | 🟡 Em Progresso |
 | Migrar Queries Manuais para um QueryBuilder unificado | P2 (Média) | 🕒 Pendente |
 

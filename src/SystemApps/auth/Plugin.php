@@ -126,6 +126,61 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $table->text('dashboard_layout')->nullable();
                 $table->timestamps();
             });
+
+            // ACL & Identity Management Tables
+            $schema->create('roles', function ($table) {
+                $table->id();
+                $table->string('slug', 50)->unique();
+                $table->string('name', 100);
+                $table->string('description', 255)->nullable();
+                $table->boolean('is_system_locked')->default('1');
+            });
+
+            $schema->create('capabilities', function ($table) {
+                $table->id();
+                $table->string('slug', 100)->unique();
+                $table->string('context', 100)->nullable();
+            });
+
+            $schema->create('role_capabilities', function ($table) {
+                $table->integer('role_id');
+                $table->integer('capability_id');
+                $table->foreign('role_id', 'id', 'roles');
+                $table->foreign('capability_id', 'id', 'capabilities');
+            });
+
+            $schema->create('user_roles', function ($table) {
+                $table->integer('user_id');
+                $table->integer('role_id');
+                $table->foreign('user_id', 'id', 'users');
+                $table->foreign('role_id', 'id', 'roles');
+            });
+            
+            // Seed base Roles and migrate existing Admins
+            $db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            
+            // 1. Create Admin Role if not exists
+            $stmt = $db->query("SELECT id FROM roles WHERE slug = 'admin'");
+            $adminRole = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$adminRole) {
+                $db->exec("INSERT INTO roles (slug, name, description, is_system_locked) VALUES ('admin', 'Administrador Global', 'Acesso total ao sistema', 1)");
+                $adminRoleId = $db->lastInsertId();
+            } else {
+                $adminRoleId = $adminRole['id'];
+            }
+            
+            // 2. Migrate existing users that have 'admin' in legacy role column
+            $stmt = $db->query("SELECT id FROM users WHERE role = 'admin'");
+            $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($users as $user) {
+                $check = $db->prepare("SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = ?");
+                $check->execute([$user['id'], $adminRoleId]);
+                if (!$check->fetch()) {
+                    $insert = $db->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+                    $insert->execute([$user['id'], $adminRoleId]);
+                }
+            }
+
         } catch (\Exception $e) {}
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)

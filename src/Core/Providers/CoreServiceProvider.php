@@ -9,6 +9,11 @@ class CoreServiceProvider
 {
     public function register(ContainerInterface $container, EventDispatcherInterface $dispatcher, string $basePath): void
     {
+        // 0. Bind the passed Dispatcher
+        $container->singleton(\DomainSystem\Core\Contracts\EventDispatcherInterface::class, function() use ($dispatcher) {
+            return $dispatcher;
+        });
+
         // 1. Database
         $container->singleton(\DomainSystem\SystemApps\Database\Connection::class, function() use ($basePath) {
             $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite:' . $basePath . '/database.sqlite';
@@ -19,6 +24,11 @@ class CoreServiceProvider
         
         $container->singleton(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class, function($c) {
             return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(\DomainSystem\SystemApps\Database\Connection::class));
+        });
+
+        // 1.5 Security & ACL Engine
+        $container->singleton(\DomainSystem\Core\Security\IdentityManager::class, function($c) {
+            return new \DomainSystem\Core\Security\IdentityManager($c);
         });
 
                 // Core Monitoring Services

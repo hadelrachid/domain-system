@@ -9,7 +9,7 @@ interface RouterInterface
     /**
      * Registra uma nova rota no sistema.
      */
-    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $roles = []): void;
+    public function addRoute(string $method, string $path, callable|array $handler, string $plugin = '', array $capabilities = []): void;
 
     /**
      * Processa a requisição atual e executa o handler da rota correspondente.

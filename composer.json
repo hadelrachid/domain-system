@@ -24,6 +24,8 @@
         }
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:arch": "phpunit --testsuite Architecture"
     }
 }

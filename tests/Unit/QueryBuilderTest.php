@@ -3,8 +3,8 @@
 namespace DomainSystem\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use DomainSystem\Plugins\Database\Connection;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\SystemApps\Database\Connection;
+use DomainSystem\SystemApps\Database\QueryBuilder;
 
 class QueryBuilderTest extends TestCase
 {
@@ -74,3 +74,5 @@ class QueryBuilderTest extends TestCase
         $this->assertCount(2, $users);
     }
 }
+
+

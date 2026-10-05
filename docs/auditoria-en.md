@@ -1,3 +1,10 @@
+> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
+> 
+> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> 
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+
 # 🛡️ Architectural and Security Audit (Domain System OS v2.0)
 
 **Last Updated:** October 1, 2026
@@ -29,7 +36,7 @@ The system's core underwent a deep overhaul across all its structural pillars to
 Based on external audits (including rigorous OWASP-focused scans), the following protection measures have been definitively integrated into the OS:
 
 ### 1. No-Break Shield (Smart Circuit Breaker)
-Implemented at the Kernel level, this design pattern prevents the "Domino Effect" and the "White Screen of Death" (WSOD). If a plugin causes a Fatal Error or a memory leak, the breaker intercepts the call, isolates the component in milliseconds, and renders an immutable dashboard for the Super Admin without affecting the processes of other Tenants on the server.
+Implemented at the Kernel level, this design pattern prevents the "Domino Effect" and the "White Screen of Death" (WSOD). If a plugin causes a Fatal Error or a memory leak, the breaker intercepts the call, isolates the component in milliseconds, and renders an immutable dashboard for the Super Admin without affecting the processes of other virtual applications or instances on the server.
 
 ### 2. "Zip Slip" Protection
 - **Previous Flaw:** Plugin installation via `.zip` without path validation, allowing core overwriting.
@@ -46,4 +53,5 @@ Creation of the Troubleshooting artifact (`ERROR_DICTIONARY.md`), packaging raw 
 ## 📈 Conclusion
 
 The **Domain System OS** reaches the "Enterprise-Ready" category in version 2.0. Its agnostic Micro-Kernel is clean, cohesive, and shielded against cascading crashes, ready to establish itself as a lightweight, fast, and modern alternative to traditional market frameworks.
+
 
