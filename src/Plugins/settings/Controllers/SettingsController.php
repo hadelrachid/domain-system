@@ -15,7 +15,8 @@ class SettingsController
     private SettingRepositoryInterface $settingRepo;
 
     private \PDO $db;
-    private SessionManagerInterface $session; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection) { $this->db = $connection->getPdo();
+    private SessionManagerInterface $session; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection, \DomainSystem\Core\Contracts\SessionManagerInterface $session)
+    { $this->db = $connection->getPdo();
         $this->session = $session;
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;

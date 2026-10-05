@@ -16,7 +16,7 @@ class UserController
     private UserRepositoryInterface $userRepo;
     private TwoFactorService $twoFactor;
 
-    public function __construct(ThemeManagerInterface $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor)
+    public function __construct(ThemeManagerInterface $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor, SessionManagerInterface $session, PasswordPolicyInterface $passwordPolicy)
     {
         $this->theme = $theme;
         $this->userRepo = $userRepo;
@@ -35,7 +35,7 @@ class UserController
         ], __DIR__ . '/../views');
     }
 
-    public function store()
+    public function store(\DomainSystem\Core\Http\Request $request)
     {
         $name = $request->input('name') ?? '';
         $email = $request->input('email') ?? '';
@@ -66,7 +66,7 @@ class UserController
         exit;
     }
 
-    public function generate2fa()
+    public function generate2fa(\DomainSystem\Core\Http\Request $request)
     {
 
         
@@ -97,7 +97,7 @@ class UserController
         ], __DIR__ . '/../views');
     }
 
-    public function confirm2fa()
+    public function confirm2fa(\DomainSystem\Core\Http\Request $request)
     {
 
 
@@ -119,7 +119,7 @@ class UserController
         exit;
     }
 
-    public function disable2fa()
+    public function disable2fa(\DomainSystem\Core\Http\Request $request)
     {
 
 
@@ -133,7 +133,7 @@ class UserController
         exit;
     }
 
-    public function change2faType()
+    public function change2faType(\DomainSystem\Core\Http\Request $request)
     {
 
 
@@ -149,7 +149,7 @@ class UserController
         exit;
     }
 
-    public function resetPassword()
+    public function resetPassword(\DomainSystem\Core\Http\Request $request)
     {
 
 
@@ -170,7 +170,7 @@ class UserController
         exit;
     }
 
-    public function delete()
+    public function delete(\DomainSystem\Core\Http\Request $request)
     {
         $user_id = $request->input('user_id') ?? null;
         
