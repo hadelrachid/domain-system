@@ -43,9 +43,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
 
         // 3. Shortcode: [hub_de_cursos]
-        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $manager) {
-            $manager->add('hub_de_cursos', function($attrs) {
-                return $this->renderHub();
+        $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $manager) use ($runtime) {
+            $manager->add('hub_de_cursos', function($attrs) use ($runtime) {
+                return $this->renderHub($runtime);
             });
         });
     }
@@ -66,7 +66,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 
-    private function renderHub(): string
+    private function renderHub(OsRuntimeInterface $runtime): string
     {
         try {
             $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();

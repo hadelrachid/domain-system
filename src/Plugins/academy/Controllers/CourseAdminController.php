@@ -17,7 +17,8 @@ class CourseAdminController
 
     public function __construct(
         \DomainSystem\SystemApps\Database\Connection $connection,
-        \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema
+        \DomainSystem\SystemApps\Database\Schema\SchemaBuilder $schema,
+        SessionManagerInterface $session
     ) {
         $this->db = $connection->getPdo();
         $this->session = $session;
@@ -168,7 +169,7 @@ class CourseAdminController
         return Response::redirect(BASE_URL . '/admin/academy');
     }
 
-    public function delete($id): \DomainSystem\Core\Contracts\ResponseInterface
+    public function delete(Request $request, $id): \DomainSystem\Core\Contracts\ResponseInterface
     {
         // Validação CSRF
         $token = $request->input('csrf_token') ?? '';
