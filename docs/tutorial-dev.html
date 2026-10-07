@@ -2,462 +2,133 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System | Guia do Desenvolvedor</title>
+    <title>Tutorial: Criando Plugins Modernos - Domain System OS</title>
     <style>
-        :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #38bdf8;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
-            --border-color: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            line-height: 1.6;
-        }
-
-        header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            padding: 60px 20px;
-            text-align: center;
-            border-bottom: 2px solid var(--accent-blue);
-            box-shadow: 0 4px 30px rgba(56, 189, 248, 0.2);
-            position: relative;
-        }
-
-        .lang-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 5px;
-            background: rgba(0,0,0,0.3);
-            padding: 5px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .lang-switch button {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 5px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .lang-switch button:hover {
-            color: var(--text-main);
-        }
-
-        .lang-switch button.active {
-            background: var(--accent-blue);
-            color: #fff;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: -webkit-linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        /* Prerequisite Alert */
-        .alert-warning {
-            background: rgba(239, 68, 68, 0.1);
-            border-left: 4px solid var(--accent-red);
-            padding: 20px;
-            border-radius: 4px;
-            margin-bottom: 40px;
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .alert-warning svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--accent-red);
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        /* Tabs System */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            overflow-x: auto;
-        }
-
-        .tab-btn {
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .tab-btn.active {
-            color: var(--accent-blue);
-            background: rgba(56, 189, 248, 0.1);
-            box-shadow: inset 0 -2px 0 var(--accent-blue);
-        }
-
-        .tab-content {
-            display: none;
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            animation: fadeIn 0.4s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 { margin-bottom: 15px; color: var(--accent-blue); }
-        h3 { margin: 25px 0 10px; color: var(--accent-green); }
-        p { margin-bottom: 15px; color: var(--text-muted); }
-        
-        .highlight { color: var(--text-main); font-weight: bold; }
-
-        /* Code Blocks */
-        .code-block {
-            background: #000;
-            border-radius: 8px;
-            padding: 15px;
-            position: relative;
-            margin: 20px 0;
-            overflow-x: auto;
-            border: 1px solid #1f2937;
-        }
-
-        .code-block pre {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9rem;
-            color: #e5e7eb;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: var(--bg-card);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: 0.2s;
-        }
-
-        .copy-btn:hover {
-            color: var(--text-main);
-            border-color: var(--accent-blue);
-        }
-
-        /* Keyword Highlights for PHP */
-        .k { color: #c678dd; } /* Keyword */
-        .f { color: #61afef; } /* Function */
-        .v { color: #e06c75; } /* Variable */
-        .s { color: #98c379; } /* String */
-        .c { color: #5c6370; font-style: italic; } /* Comment */
-
+        body { font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        h2 { color: #10b981; margin-top: 30px; }
+        p { font-size: 16px; color: #cbd5e1; }
+        pre { background: #0b1120; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: Consolas, monospace; font-size: 14px; border: 1px solid #334155; color: #e2e8f0; }
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .variable { color: #e06c75; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .alert { background: #451a03; color: #fde047; padding: 15px; border-left: 4px solid #eab308; border-radius: 4px; margin: 20px 0; }
     </style>
 </head>
 <body>
-
-    <header>
-        <div class="lang-switch">
-            <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
-            <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
-        </div>
-        <h1 data-i18n="title">Domain-System</h1>
-        <p style="color: var(--accent-blue); font-size: 1.1rem;" data-i18n="subtitle">Official Extension Building Guide (Themes & Plugins)</p>
-    </header>
-
     <div class="container">
-        
-        <div class="alert-warning">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            <div>
-                <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">Critical Prerequisite</h3>
-                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">To build for Domain-System, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.</p>
-            </div>
+        <h1>Construindo Apps no Web OS (v2.1)</h1>
+        <p>O <strong>Domain System</strong> agora orquestra Plugins no Ring 3 usando estritamente Contratos e Interfaces. Siga este tutorial definitivo para criar o seu primeiro App (Plugin) moderno, completo com Widgets de Dashboard e Permissões de Segurança (ACL).</p>
+
+        <div class="alert">
+            <strong>Atenção:</strong> Nunca injete HTML sujo nos Hooks do sistema (como era feito no antigo OS 1.0). Todos os componentes vitais agora exigem <em>Providers</em> e <em>Interfaces</em>.
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('tab1')" data-i18n="tab1_btn">1. The Contract</button>
-            <button class="tab-btn" onclick="openTab('tab2')" data-i18n="tab2_btn">2. Negotiation (osRegister)</button>
-            <button class="tab-btn" onclick="openTab('tab3')" data-i18n="tab3_btn">3. Execution (osBoot)</button>
-            <button class="tab-btn" onclick="openTab('tab4')" data-i18n="tab4_btn">4. Full Example</button>
-        </div>
-
-        <!-- TAB 1 -->
-        <div id="tab1" class="tab-content active">
-            <h2 data-i18n="tab1_h2">The End of Global Mess</h2>
-            <p data-i18n="tab1_p1">If you come from WordPress, you are used to creating a <code class="highlight">functions.php</code> and using global functions. In Domain-System, this is strictly prohibited.</p>
-            <p data-i18n="tab1_p2">Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class="highlight">OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.</p>
-            
-            <h3 data-i18n="tab1_h3">Dependency Injection (The Waiter)</h3>
-            <p data-i18n="tab1_p3">Here, you don't hunt for system resources by instantiating random variables globally. The system works on a "Waiter" model: you sit down, ask for what you want (Phase 1), and the Operating System <strong class="highlight">injects</strong> the ready tool right into your hands (Phase 2).</p>
-        </div>
-
-        <!-- TAB 2 -->
-        <div id="tab2" class="tab-content">
-            <h2 data-i18n="tab2_h2">Phase 1: Negotiation (osRegister)</h2>
-            <p data-i18n="tab2_p1">Before running any business logic, you use the <code class="highlight">OsConnector</code> object to notify the Operating System what you will need to use. If you do not request permission here, you will be blocked in Phase 2.</p>
-            
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+        <h2>Passo 1: A Estrutura Base (plugin.json)</h2>
+        <p>Crie uma pasta em <code>src/Plugins/meu_app</code> e adicione o <code>plugin.json</code>:</p>
+<pre>
 {
-    <span class="c">// 1. LINKS (Tools/Services)</span>
-    <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.db'</span>);
-    
-    <span class="c">// 2. SLOTS (Visual injection)</span>
-    <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
+    <span class="string">"name"</span>: <span class="string">"meu_app"</span>,
+    <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+    <span class="string">"description"</span>: <span class="string">"Um App Moderno para o Web OS"</span>,
+    <span class="string">"author"</span>: <span class="string">"Sua Empresa"</span>,
+    <span class="string">"os_version"</span>: <span class="string">"2.1"</span>
+}
+</pre>
 
-    <span class="c">// 3. HOOKS (Events/Triggers)</span>
-    <span class="v">$os</span>-><span class="f">listenHook</span>(<span class="s">'patient.created'</span>);
-}</pre>
-            </div>
-        </div>
+        <h2>Passo 2: A Classe Plugin (O Coração)</h2>
+        <p>O arquivo <code>Plugin.php</code> deve implementar a fase de <strong>Negociação (Gatekeeper)</strong>, <strong>Execução (Boot)</strong> e <strong>Instalação (Activate)</strong>.</p>
+<pre>
+<span class="keyword">namespace</span> DomainSystem\Plugins\meu_app;
 
-        <!-- TAB 3 -->
-        <div id="tab3" class="tab-content">
-            <h2 data-i18n="tab3_h2">Phase 2: Execution (osBoot)</h2>
-            <p data-i18n="tab3_p1">After approving your contract, the OS hands you the <code class="highlight">OsRuntime</code>. This is where you actually work, receiving the requested resources strictly via Dependency Injection.</p>
-            
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+<span class="keyword">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
+<span class="keyword">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
+<span class="keyword">use</span> DomainSystem\Core\Contracts\OsConnectorInterface;
+<span class="keyword">use</span> DomainSystem\Core\Contracts\OsRuntimeInterface;
+
+<span class="keyword">class</span> Plugin <span class="keyword">extends</span> AbstractPlugin <span class="keyword">implements</span> OsExtensionInterface
 {
-    <span class="c">// 1. GETTING TOOLS</span>
-    <span class="v">$db</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.db'</span>);
-    
-    <span class="c">// 2. INJECTING VISUALS</span>
-    <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
-        <span class="s">'message'</span> => <span class="s">'Plugin successfully booted!'</span>
-    ]);
+    <span class="keyword">public function</span> <span class="function">register</span>(): <span class="keyword">void</span> {}
 
-    <span class="c">// 3. LISTENING TO EVENTS</span>
-    <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'patient.created'</span>, <span class="k">function</span>(<span class="v">$patientId</span>) <span class="k">use</span> (<span class="v">$db</span>) {
-        <span class="c">// Safe to execute logic here!</span>
-    });
-}</pre>
-            </div>
-        </div>
-
-        <!-- TAB 4 -->
-        <div id="tab4" class="tab-content">
-            <h2 data-i18n="tab4_h2">Complete Extension Structure</h2>
-            <p data-i18n="tab4_p1">Every extension needs two files to exist: the Manifest (JSON) and the Contract (PHP Class).</p>
-            
-            <h3 style="color: var(--accent-purple);" data-i18n="tab4_json_title">1. The Manifest (plugin.json or theme.json)</h3>
-            <p data-i18n="tab4_json_desc">This file acts as the passport for your extension. It tells the OS who you are before any PHP code runs.</p>
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre>{
-    <span class="s">"name"</span>: <span class="s">"test_os"</span>,
-    <span class="s">"version"</span>: <span class="s">"1.0.0"</span>,
-    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Ambiente Operacional Web"</span>,
-    <span class="s">"core"</span>: <span class="v">false</span>,
-    <span class="s">"dependencies"</span>: []
-}</pre>
-            </div>
-
-            <h3 style="color: var(--accent-blue);" data-i18n="tab4_php_title">2. The Contract (Plugin.php)</h3>
-            <p data-i18n="tab4_php_desc">Just create your class implementing the Interface. The Kernel will automatically handle the rest.</p>
-            
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><span class="k">namespace</span> DomainSystem\Plugins\meu_plugin;
-
-<span class="c">// 1. Importação Obrigatória dos Módulos do OS</span>
-<span class="k">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
-<span class="k">use</span> DomainSystem\Core\Contracts\OsExtensionInterface;
-<span class="k">use</span> DomainSystem\Core\Plugin\OsConnector;
-<span class="k">use</span> DomainSystem\Core\Plugin\OsRuntime;
-
-<span class="k">class</span> <span class="f">Plugin</span> <span class="k">extends</span> AbstractPlugin <span class="k">implements</span> OsExtensionInterface
-{
-    <span class="c">// Método legado (Ignorado pelo OS Novo, mas exigido pela classe Abstrata)</span>
-    <span class="k">public function</span> <span class="f">register</span>(): <span class="k">void</span> {}
-
-    <span class="c">// ==========================================</span>
-    <span class="c">// FASE 1: NEGOCIAÇÃO</span>
-    <span class="c">// ==========================================</span>
-    <span class="k">public function</span> <span class="f">osRegister</span>(OsConnector <span class="v">$os</span>): <span class="k">void</span>
+    <span class="comment">// FASE 1: NEGOCIAÇÃO</span>
+    <span class="keyword">public function</span> <span class="function">osRegister</span>(OsConnectorInterface <span class="variable">$os</span>): <span class="keyword">void</span>
     {
-        <span class="v">$os</span>-><span class="f">requireLink</span>(<span class="s">'core.db'</span>);
-        <span class="v">$os</span>-><span class="f">requestSlot</span>(<span class="s">'admin.dashboard.alerts'</span>);
-        <span class="v">$os</span>-><span class="f">listenHook</span>(<span class="s">'patient.created'</span>);
+        <span class="variable">$os</span>-><span class="function">requireLink</span>(<span class="string">'core.identity'</span>); <span class="comment">// Pede permissão à ACL</span>
+        <span class="variable">$os</span>-><span class="function">listenHook</span>(<span class="string">'dashboard.register_widgets'</span>); <span class="comment">// Pede para criar um Widget</span>
     }
 
-    <span class="c">// ==========================================</span>
-    <span class="c">// FASE 2: EXECUÇÃO</span>
-    <span class="c">// ==========================================</span>
-    <span class="k">public function</span> <span class="f">osBoot</span>(OsRuntime <span class="v">$runtime</span>): <span class="k">void</span>
+    <span class="comment">// FASE 2: EXECUÇÃO (Runtime)</span>
+    <span class="keyword">public function</span> <span class="function">osBoot</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span>
     {
-        <span class="v">$db</span> = <span class="v">$runtime</span>-><span class="f">getLink</span>(<span class="s">'core.db'</span>);
+        <span class="variable">$identity</span> = <span class="variable">$runtime</span>-><span class="function">getLink</span>(<span class="string">'core.identity'</span>);
         
-        <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
-            <span class="s">'type'</span> => <span class="s">'success'</span>,
-            <span class="s">'message'</span> => <span class="s">'O novo Ambiente Operacional Web está operante!'</span>
-        ]);
-
-        <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'patient.created'</span>, <span class="k">function</span>(<span class="v">$patientId</span>) <span class="k">use</span> (<span class="v">$db</span>) {
-            <span class="v">$db</span>-><span class="f">query</span>(<span class="s">"INSERT INTO log..."</span>);
+        <span class="variable">$runtime</span>-><span class="function">onHook</span>(<span class="string">'dashboard.register_widgets'</span>, <span class="keyword">function</span>(<span class="variable">$registry</span>) <span class="keyword">use</span> (<span class="variable">$identity</span>) {
+            <span class="variable">$registry</span>-><span class="function">registerProvider</span>(<span class="keyword">new</span> MeuWidgetProvider(<span class="variable">$identity</span>));
         });
     }
-}</pre>
-            </div>
-        </div>
 
-    </div>
+    <span class="comment">// FASE 3: INSTALAÇÃO (Só roda quando o Admin clica em Instalar)</span>
+    <span class="keyword">public function</span> <span class="function">activate</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span>
+    {
+        <span class="comment">// Cria a permissão no Banco de Dados para o menu "Controle de Acessos"</span>
+        <span class="variable">$runtime</span>-><span class="function">registerCapability</span>(<span class="string">'meu_app.acessar'</span>, <span class="string">'Módulo Meu App'</span>);
+    }
+}
+</pre>
 
-    <script>
-        const translations = {
-            en: {
-                title: "Domain-System",
-                subtitle: "Official Extension Building Guide (Themes & Plugins)",
-                alert_title: "Critical Prerequisite",
-                alert_desc: "To build for Domain-System, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.",
-                tab1_btn: "1. The Contract",
-                tab2_btn: "2. Negotiation (osRegister)",
-                tab3_btn: "3. Execution (osBoot)",
-                tab4_btn: "4. Full Example",
-                tab1_h2: "The End of Global Mess",
-                tab1_p1: "If you come from WordPress, you are used to creating a <code class='highlight'>functions.php</code> and using global functions. In Domain-System, this is strictly prohibited.",
-                tab1_p2: "Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class='highlight'>OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.",
-                tab1_h3: "Dependency Injection (The Waiter)",
-                tab1_p3: "Here, you don't hunt for system resources by instantiating random variables globally. The system works on a 'Waiter' model: you sit down, ask for what you want (Phase 1), and the Operating System <strong class='highlight'>injects</strong> the ready tool right into your hands (Phase 2).",
-                tab2_h2: "Phase 1: Negotiation (osRegister)",
-                tab2_p1: "Before running any business logic, you use the <code class='highlight'>OsConnector</code> object to notify the Operating System what you will need to use. If you do not request permission here, you will be blocked in Phase 2.",
-                tab3_h2: "Phase 2: Execution (osBoot)",
-                tab3_p1: "After approving your contract, the OS hands you the <code class='highlight'>OsRuntime</code>. This is where you actually work, receiving the requested resources strictly via Dependency Injection.",
-                tab4_h2: "Complete Extension Structure",
-                tab4_p1: "Every extension needs two files to exist: the Manifest (JSON) and the Contract (PHP Class).",
-                tab4_json_title: "1. The Manifest (plugin.json or theme.json)",
-                tab4_json_desc: "This file acts as the passport for your extension. It tells the OS who you are before any PHP code runs.",
-                tab4_php_title: "2. The Contract (Plugin.php)",
-                tab4_php_desc: "Just create your class implementing the Interface. The Domain-System Kernel will automatically handle the rest."
-            },
-            pt: {
-                title: "Domain-System",
-                subtitle: "Guia Oficial de Construção de Extensões (Temas e Plugins)",
-                alert_title: "Pré-requisito Crítico",
-                alert_desc: "Para construir para o Domain-System, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.",
-                tab1_btn: "1. O Contrato",
-                tab2_btn: "2. A Negociação (osRegister)",
-                tab3_btn: "3. A Execução (osBoot)",
-                tab4_btn: "4. Exemplo Completo",
-                tab1_h2: "O Fim da Bagunça Global",
-                tab1_p1: "Se você vem do WordPress, está acostumado a criar um <code class='highlight'>functions.php</code> e usar funções globais. No Domain-System, isso é proibido.",
-                tab1_p2: "Toda Extensão (Plugin ou Tema) é uma Classe que deve assinar um contrato chamado <code class='highlight'>OsExtensionInterface</code>. Esse contrato divide a vida do seu plugin em duas fases de segurança.",
-                tab1_h3: "A Injeção de Dependências (O Garçom)",
-                tab1_p3: "Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo 'Garçom': você senta, pede o que quer (Fase 1), e o Ambiente Operacional <strong class='highlight'>injeta</strong> a ferramenta pronta na sua mão (Fase 2).",
-                tab2_h2: "Fase 1: Negociação (osRegister)",
-                tab2_p1: "Antes de rodar qualquer regra de negócio, você usa o objeto <code class='highlight'>OsConnector</code> para avisar ao Ambiente Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.",
-                tab3_h2: "Fase 2: Execução (osBoot)",
-                tab3_p1: "Depois de aprovar seu contrato, o Ambiente Operacional te passa o <code class='highlight'>OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.",
-                tab4_h2: "Estrutura Completa da Extensão",
-                tab4_p1: "Toda extensão precisa de dois arquivos para existir: o Manifesto (JSON) e o Contrato (Classe PHP).",
-                tab4_json_title: "1. O Manifesto (plugin.json ou theme.json)",
-                tab4_json_desc: "Esse arquivo age como o passaporte da sua extensão. Ele avisa ao SO quem você é antes de qualquer código PHP rodar.",
-                tab4_php_title: "2. O Contrato (Plugin.php)",
-                tab4_php_desc: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System fará todo o resto automaticamente."
+        <h2>Passo 3: Criando o Widget Profissional (O Provider)</h2>
+        <p>No novo padrão corporativo do OS, você não ejeta HTML no vazio. Você cria um Contrato de Fornecedor de Widgets (<code>DashboardWidgetProviderInterface</code>). Crie o arquivo <code>MeuWidgetProvider.php</code> na pasta do seu plugin:</p>
+
+<pre>
+<span class="keyword">namespace</span> DomainSystem\Plugins\meu_app;
+
+<span class="keyword">use</span> DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
+<span class="keyword">use</span> DomainSystem\Core\Security\IdentityManager;
+
+<span class="keyword">class</span> MeuWidgetProvider <span class="keyword">implements</span> DashboardWidgetProviderInterface
+{
+    <span class="keyword">private</span> IdentityManager <span class="variable">$identity</span>;
+
+    <span class="keyword">public function</span> <span class="function">__construct</span>(IdentityManager <span class="variable">$identity</span>)
+    {
+        <span class="variable">$this</span>->identity = <span class="variable">$identity</span>;
+    }
+
+    <span class="keyword">public function</span> <span class="function">getProviderName</span>(): <span class="keyword">string</span>
+    {
+        <span class="keyword">return</span> <span class="string">'Meu App Widgets'</span>;
+    }
+
+    <span class="keyword">public function</span> <span class="function">getAvailableWidgets</span>(): <span class="keyword">array</span>
+    {
+        <span class="keyword">return</span> [
+            <span class="string">'meu_grafico'</span> => [
+                <span class="string">'title'</span> => <span class="string">'Gráfico de Vendas'</span>,
+                <span class="string">'description'</span> => <span class="string">'Visualização de Vendas Mensais'</span>
+            ]
+        ];
+    }
+
+    <span class="keyword">public function</span> <span class="function">renderWidget</span>(<span class="keyword">string</span> <span class="variable">$widgetId</span>): <span class="keyword">string</span>
+    {
+        <span class="keyword">if</span> (<span class="variable">$widgetId</span> === <span class="string">'meu_grafico'</span>) {
+            <span class="variable">$userId</span> = <span class="variable">$_SESSION</span>[<span class="string">'auth_user_id'</span>] ?? <span class="string">0</span>;
+            
+            <span class="keyword">if</span> (!<span class="variable">$this</span>->identity-><span class="function">userCan</span>(<span class="variable">$userId</span>, <span class="string">'meu_app.acessar'</span>)) {
+                <span class="keyword">return</span> <span class="string">'&lt;div class="error"&gt;Acesso Negado pela ACL&lt;/div&gt;'</span>;
             }
-        };
-
-        function setLanguage(lang) {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.innerHTML = translations[lang][key];
-                }
-            });
             
-            // Update buttons
-            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-            document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
-            
-            // Update copy buttons text
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.innerText = lang === 'en' ? 'Copy' : 'Copiar';
-            });
+            <span class="keyword">return</span> <span class="string">'&lt;h3&gt;Seu gráfico aqui!&lt;/h3&gt;'</span>;
         }
+        <span class="keyword">return</span> <span class="string">''</span>;
+    }
+}
+</pre>
 
-        function openTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        function copyCode(btn) {
-            const code = btn.nextElementSibling.innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                const originalText = btn.innerText;
-                const isEnglish = document.getElementById('btn-en').classList.contains('active');
-                btn.innerText = isEnglish ? 'Copied!' : 'Copiado!';
-                btn.style.color = '#10b981';
-                btn.style.borderColor = '#10b981';
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.color = '';
-                    btn.style.borderColor = '';
-                }, 2000);
-            });
-        }
-        
-        // Initialize Default English
-        setLanguage('en');
-    </script>
+        <p>E pronto! O seu plugin é um cidadão de primeira classe do Web OS, perfeitamente blindado, validado e documentado.</p>
+    </div>
 </body>
 </html>

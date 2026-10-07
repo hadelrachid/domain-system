@@ -1,165 +1,170 @@
-# Guia do Desenvolvedor: Como criar Plugins e Temas
+# Guia do Desenvolvedor: Domain System Web OS
 
-O **Domain System** é um Framework Universal (CMS) onde tudo é extensível. O sistema de sistema médica incluído por padrão é apenas um exemplo do que a plataforma pode rodar. 
+Bem-vindo ao **Ambiente Operacional Web (Web OS)** definitivo. O Domain System deixou de ser um simples CMS para se tornar um Kernel puro (Ring 0) que orquestra Plugins de Nível de Usuário (Ring 3).
 
-Ele foi desenhado para ser infinitamente extensível, mantendo uma clara separação entre **Lógica (Plugins)** e **Apresentação (Temas)**.
-
-Este guia prático ensinará você a construir aplicações robustas, de qualquer nicho de mercado, sem nunca precisar tocar no Kernel (Core) do sistema.
+Este guia oficial foi atualizado para a versão **2.1** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
 
 ---
 
-## 🧩 Como criar um Plugin
+## 🏗️ A Estrutura de um Plugin (Ring 3)
 
-Um Plugin é onde toda a sua Regra de Negócios e acesso ao Banco de Dados devem morar.
+Um Plugin é onde reside a regra de negócios. Ele não pode acessar o Banco de Dados diretamente sem pedir permissão ao SO, e não pode quebrar o sistema se falhar (graças ao Gatekeeper).
 
-### 1. Estrutura de Pastas
-Para criar um novo plugin, crie uma pasta dentro de `src/Plugins/` com o nome do seu plugin (ex: `patients`).
+Crie uma pasta em `src/Plugins/nome_do_plugin/` contendo:
+- `plugin.json`: Metadados.
+- `Plugin.php`: O "Motor" do seu aplicativo.
 
-```text
-src/Plugins/patients/
-├── plugin.json       # Metadados essenciais
-├── Plugin.php        # A classe principal de Inicialização
-└── Controllers/      # (Opcional) Seus controladores
-```
-
-### 2. O Arquivo `plugin.json`
-Este arquivo diz ao sistema como carregar o seu plugin. Ele é obrigatório.
-
+### O Arquivo `plugin.json`
 ```json
 {
-    "name": "patients",
+    "name": "meu_app",
     "version": "1.0.0",
-    "description": "Módulo de gestão de usuários",
-    "dependencies": ["auth", "database", "system-admin"],
-    "namespace": "DomainSystem\\Plugins\\Patients\\"
+    "description": "Um aplicativo de exemplo",
+    "author": "Sua Empresa",
+    "core": false,
+    "os_version": "2.1"
 }
 ```
 
-### 3. A Classe `Plugin.php`
-Todo plugin deve ter uma classe `Plugin` que estende `AbstractPlugin`. Ela deve implementar o método `register()`.
+### A Classe `Plugin.php` (O Padrão Ouro)
+
+Todo plugin moderno deve estender `AbstractPlugin` e implementar a interface `OsExtensionInterface`.
+A inicialização acontece em **3 Fases distintas**:
 
 ```php
 <?php
-namespace DomainSystem\Plugins\Patients;
+namespace DomainSystem\Plugins\meu_app;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
-use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Contracts\OsConnectorInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
 
-class Plugin extends AbstractPlugin
+class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
-    public function register(): void
+    // Ignorado na V2 (Retrocompatibilidade)
+    public function register(): void {}
+
+    // ==========================================
+    // FASE 1: NEGOCIAÇÃO (Gatekeeper)
+    // ==========================================
+    public function osRegister(OsConnectorInterface $os): void
     {
-        // 1. Escute o evento de roteamento para adicionar suas URLs
-        $this->dispatcher->addListener('router.register', function(Router $router) {
-            
-            // Defina uma rota e aponte para um Controller que você irá criar
-            $router->get('/admin/patients', [PatientController::class, 'index']);
-            
+        // Declare suas intenções de uso do Kernel!
+        $os->requireLink('core.db.schema'); // Permissão para criar tabelas
+        $os->requireLink('core.identity');  // Permissão para validar ACL
+        $os->listenHook('dashboard.register_widgets'); // Permissão para injetar widgets
+    }
+
+    // ==========================================
+    // FASE 2: EXECUÇÃO (Boot)
+    // ==========================================
+    public function osBoot(OsRuntimeInterface $runtime): void
+    {
+        // Aqui o SO concedeu as permissões. Execute sua lógica!
+        $identity = $runtime->getLink('core.identity');
+        
+        $runtime->onHook('dashboard.register_widgets', function($registry) use ($identity) {
+            // Veja a seção "Criando Widgets" abaixo
+            $registry->registerProvider(new MeuWidgetProvider($identity));
+        });
+    }
+
+    // ==========================================
+    // FASE 3: ATIVAÇÃO/INSTALAÇÃO (Chamado 1 vez)
+    // ==========================================
+    public function activate(OsRuntimeInterface $runtime): void
+    {
+        // 1. Crie Tabelas no Banco
+        $schema = $runtime->getLink('core.db.schema');
+        $schema->create('minha_tabela', function($table) {
+            $table->id();
+            $table->string('nome');
         });
 
-        // 2. Se precisar de Banco de Dados, crie suas tabelas aqui:
-        $db = $this->container->make(\DomainSystem\Plugins\Database\Connection::class);
-        $db->getPdo()->exec("
-            CREATE TABLE IF NOT EXISTS patients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(255) NOT NULL
-            )
-        ");
+        // 2. Registre Permissões de Segurança (ACL) Oficialmente
+        $runtime->registerCapability('meu_app.gerenciar', 'Aplicativo Meu App');
     }
 }
 ```
 
-### 4. Boas Práticas para Plugins
-- **Nunca gere HTML (echo, \<html>) dentro do Plugin.** Use o `ThemeManager` para repassar os dados para o tema ativo.
-- **Injeção de Dependências:** Peça dependências no construtor dos seus Controllers, o `Container` do Kernel irá injetá-las magicamente para você.
+---
+
+## 🔒 Segurança e Capabilities (ACL)
+
+O sistema de permissões abandonou o modelo rígido de "Cargos" por um modelo microscópico de **Capabilities**.
+Sempre que seu plugin for instalado, ele deve registrar suas Capabilities no método `activate()`, usando:
+
+```php
+$runtime->registerCapability('slug_da_permissao', 'Nome Visível no Painel');
+```
+O SysAdmin poderá, através da interface do sistema, atrelar essa permissão a qualquer grupo (Admin, Editor, Visitante).
+Para testar se o usuário atual tem a permissão, puxe o `core.identity` e chame:
+
+```php
+$identity = $runtime->getLink('core.identity');
+$userId = $_SESSION['auth_user_id'] ?? 0;
+
+if (!$identity->userCan($userId, 'slug_da_permissao')) {
+    die("Acesso Negado!");
+}
+```
 
 ---
 
-## 🎨 Como criar Telas (Temas)
+## 🧩 Criando Widgets para o Dashboard Profissional
 
-Temas vivem na pasta `themes/`. O tema padrão atual é o `default`. 
-Os temas apenas recebem os dados vindos dos Plugins e exibem na tela.
+No Painel Administrativo (`/admin`), os Widgets **não** são strings HTML cruas injetadas num hook. Eles seguem um Contrato estrito para permitir customização drag-and-drop.
 
-### 1. Chamando uma View pelo Plugin
-Dentro do seu `PatientController`, você fará o seguinte:
+Você deve criar uma classe separada implementando `DashboardWidgetProviderInterface`:
 
 ```php
 <?php
-// ... namespace e uses ...
-use DomainSystem\Core\Theme\ThemeManager;
+namespace DomainSystem\Plugins\meu_app;
 
-class PatientController
+use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
+
+class MeuWidgetProvider implements DashboardWidgetProviderInterface
 {
-    private ThemeManager $theme;
-
-    public function __construct(ThemeManager $theme)
-    {
-        $this->theme = $theme;
+    public function getProviderName(): string {
+        return 'Módulo de Relatórios';
     }
 
-    public function index()
-    {
-        // Pega dados do banco usando o Plugin Database
-        $patients = [...]; 
-        
-        // Renderiza a view 'admin/patients/index' enviando os dados
-        return $this->theme->render('admin/patients/index', ['usuários' => $patients]);
+    public function getAvailableWidgets(): array {
+        return [
+            'grafico_vendas' => [
+                'title' => 'Gráfico de Vendas Mensal',
+                'description' => 'Exibe o faturamento do mês atual'
+            ]
+        ];
+    }
+
+    public function renderWidget(string $widgetId): string {
+        if ($widgetId === 'grafico_vendas') {
+            return '<div class="widget-box">HTML do seu gráfico aqui</div>';
+        }
+        return '';
     }
 }
 ```
+Lembre-se de instanciar e registrar esse Provider lá dentro do Hook `dashboard.register_widgets` no seu `Plugin.php`.
 
-### 2. Criando o Arquivo HTML no Tema
-Como você chamou `admin/patients/index`, o `ThemeManager` procurará o arquivo físico em:
-`themes/default/admin/patients/index.php`
+---
 
+## 🎨 Como criar Temas Visuais
+
+Os Temas vivem em `themes/nome_do_tema/` e devem focar apenas na **Renderização Front-end**. Toda a lógica de negócios pertence aos plugins.
+
+A view principal do painel administrativo, por exemplo, deve usar a engine de rotas para renderizar as saídas. Quando um Plugin emite:
 ```php
-<!-- themes/default/admin/patients/index.php -->
-<?= $this->getHeader() ?> <!-- Traz o topo do site (navbar, css) -->
-
-<div class="container">
-    <h1>Lista de usuários</h1>
-    
-    <ul>
-        <?php foreach ($usuários as $usuário): ?>
-            <li><?= htmlspecialchars($usuário['name']) ?></li>
-        <?php endforeach; ?>
-    </ul>
-</div>
-
-<?= $this->getFooter() ?> <!-- Traz o rodapé (scripts de fechamento) -->
+return $this->theme->render('admin/dashboard_modular', ['dados' => $dados]);
 ```
+O arquivo procurado será `themes/admin/dashboard_modular.php`.
+
+### Dicas para Temas:
+- **Segurança XSS:** Sempre use `htmlspecialchars($var)` antes de imprimir qualquer variável na tela.
+- **Isolamento:** Temas não devem fazer `SELECT` direto no banco de dados. Deixe os Repositórios do SO fazerem o trabalho pesado.
 
 ---
 
-## 🛡️ Tratamento Amigável de Erros
-
-O Kernel possui proteção Anti-Crash no carregamento (`boot`).
-Se o seu `Plugin.php` quebrar por algum motivo (um erro de sintaxe ou erro no Banco), o Kernel irá:
-1. Capturar o Erro Fatal (Throw).
-2. Desativar o plugin defeituoso automaticamente.
-3. Gravar um Log amigável no Servidor Apache (`error.log`).
-4. Continuar carregando o resto do sistema normalmente (O site não sai do ar!).
-
-**Regra de Ouro:** Lance Exceções (`throw new Exception("Mensagem")`) sempre que o seu Plugin encontrar um cenário impossível de continuar. O Kernel cuida do resto!
-
----
-
-## 🛡️ Entendendo a Arquitetura de OS Virtual
-
-O Domain System não é um CMS tradicional. Ele emula conceitos de Sistemas Operacionais modernos em PHP:
-
-### 1. Anéis de Proteção (Rings 0 e 3)
-*   **SystemApps (Ring 0):** Módulos vitais do sistema (Ex: Database, Roteador). Ficam em `src/SystemApps/`. Se um deles falhar, o sistema entra em modo de segurança (Degraded Mode).
-*   **UserPlugins (Ring 3):** Seus plugins de negócio. Ficam em `src/Plugins/`. Se um deles falhar, o Kernel o isola, aborta o carregamento, mas o restante do site continua funcionando ileso.
-
-### 2. Gerenciador de Processos (PIDs e Memória)
-Cada plugin que você constrói ganha um **PID** (Identificador de Processo) único a cada requisição. O **Process Registry** monitora:
-*   Tempo exato em milissegundos que o método `register()` e o boot interno levam.
-*   Consumo de Memória RAM (Δ) gasto pelas operações pesadas do seu plugin.
-Isso fica visível no "Gerenciador de Tarefas" do painel Administrativo (`/admin/monitor`). Seu código não afeta o desempenho do Core silenciosamente!
-
-### 3. No-Break Shield (Interceptação de Fatal Errors)
-Se você escrever um código que causaria uma "Tela Branca" ou `Fatal Error` (como tentar ler um método de um objeto `null`), o sistema usa o *No-Break Shield* para isolar o erro na sandbox do seu plugin. Um Toast de aviso aparecerá no topo do painel, o "sino" registrará o stack trace, e seu plugin será desativado até você corrigir o código. O Frontend continuará intacto.
-## 🛡️ Tratamento de Falhas e Modo Desenvolvedor (v2.1.0)
-Na versão 2.1.0, se um módulo crítico falhar, o **Circuit Breaker** irá isolá-lo.
-Para reativar e testar sua correção, acesse a interface e utilize o **Modo Desenvolvedor** fornecendo sua senha de Administrador.
+O seu código é isolado em Sandboxes. Use Exceções à vontade. O **No-Break Shield** garantirá que um erro de lógica no seu Plugin não derrube o sistema inteiro, apenas exiba um aviso elegante ao administrador!
