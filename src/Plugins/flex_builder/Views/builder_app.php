@@ -8,38 +8,166 @@ $registry->registerComponent(new ButtonWidget());
 $schemaJson = $registry->exportSchemaForFrontend();
 ?>
 
-<div class="ds-card">
-    <div class="ds-card-header">
-        <h2><i class="fas fa-object-group" style="color: #38bdf8; margin-right: 10px;"></i> Flex-Builder (VCL)</h2>
-        <p style="color: #94a3b8; font-size: 13px;">O Motor de Renderização Orientado a Objetos</p>
-    </div>
+<style>
+    /* Resetando o layout do painel admin para o construtor ocupar a tela inteira, se necessário, ou usar um layout flex rígido */
+    .ds-builder-layout {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 100px); /* Ajuste para não quebrar no admin do OS */
+        background-color: #0f172a;
+        color: #f8fafc;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #1e293b;
+    }
     
-    <div class="ds-card-body" style="display: flex; gap: 20px; height: 600px;">
+    /* Barra Horizontal Superior (Navegação/Ações) */
+    .ds-builder-topbar {
+        height: 50px;
+        background-color: #020617;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+    }
+
+    .ds-builder-topbar-tools {
+        display: flex;
+        gap: 15px;
+    }
+
+    .ds-builder-btn {
+        background: #1e293b;
+        color: #94a3b8;
+        border: 1px solid #334155;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: 0.2s;
+    }
+    .ds-builder-btn:hover { background: #334155; color: #fff; }
+    .ds-builder-btn-primary { background: #38bdf8; color: #0f172a; border: none; font-weight: bold; }
+    .ds-builder-btn-primary:hover { background: #0284c7; }
+
+    /* Área Inferior (Paletas e Palco) */
+    .ds-builder-workspace {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Barra Vertical Esquerda (Componentes) */
+    .ds-builder-sidebar-left {
+        width: 260px;
+        background-color: #0f172a;
+        border-right: 1px solid #1e293b;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Palco Central (Onde o tema ganha vida) */
+    .ds-builder-canvas {
+        flex: 1;
+        background-color: #e2e8f0; /* Fundo claro para contrastar o site */
+        background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1), 
+                          linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        overflow-y: auto;
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .ds-canvas-paper {
+        background: #ffffff;
+        width: 100%;
+        max-width: 1200px;
+        min-height: 800px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        border: 1px solid #94a3b8;
+    }
+
+    /* Barra Vertical Direita (Object Inspector) */
+    .ds-builder-sidebar-right {
+        width: 300px;
+        background-color: #0f172a;
+        border-left: 1px solid #1e293b;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ds-sidebar-header {
+        padding: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #1e293b;
+        color: #94a3b8;
+        background: #020617;
+    }
+</style>
+
+<div class="ds-builder-layout">
+    
+    <!-- Barra Horizontal de Navegação -->
+    <div class="ds-builder-topbar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-layer-group" style="color: #38bdf8; font-size: 20px;"></i>
+            <strong style="font-size: 15px;">Flex Theme Builder</strong>
+            
+            <div style="border-left: 1px solid #334155; margin-left: 10px; padding-left: 20px; display: flex; gap: 10px;">
+                <button class="ds-builder-btn"><i class="fas fa-desktop"></i></button>
+                <button class="ds-builder-btn"><i class="fas fa-tablet-alt"></i></button>
+                <button class="ds-builder-btn"><i class="fas fa-mobile-alt"></i></button>
+            </div>
+        </div>
+
+        <div class="ds-builder-topbar-tools">
+            <select class="ds-builder-btn" style="appearance: auto;">
+                <option>Editando: Cabeçalho (Header)</option>
+                <option>Editando: Rodapé (Footer)</option>
+                <option>Editando: Página Inicial</option>
+            </select>
+            <button class="ds-builder-btn"><i class="fas fa-cog"></i> Configurações do Tema</button>
+            <button class="ds-builder-btn ds-builder-btn-primary"><i class="fas fa-save"></i> Salvar Tema</button>
+        </div>
+    </div>
+
+    <!-- Espaço de Trabalho (Workspace) -->
+    <div class="ds-builder-workspace">
         
-        <!-- Painel Lateral: Paleta de Componentes -->
-        <div style="width: 250px; background: #0f172a; border-right: 1px solid #1e293b; padding: 15px; border-radius: 8px;">
-            <h3 style="font-size: 14px; margin-top: 0; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 10px;">Paleta de Blocos</h3>
-            <div id="component-palette" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        <!-- Barra Vertical Esquerda: Paleta Delphi -->
+        <div class="ds-builder-sidebar-left">
+            <div class="ds-sidebar-header"><i class="fas fa-cubes"></i> VCL Components</div>
+            <div id="component-palette" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;">
                 <!-- Preenchido via JS -->
             </div>
         </div>
 
-        <!-- Área Central: Palco de Edição -->
-        <div style="flex: 1; background: #ffffff; border-radius: 8px; border: 2px dashed #64748b; padding: 20px; overflow-y: auto; position: relative;">
-            <div id="builder-stage" style="min-height: 100%;">
-                <!-- Área de arrastar e soltar -->
+        <!-- Palco Central -->
+        <div class="ds-builder-canvas">
+            <div class="ds-canvas-paper" id="builder-stage">
+                <!-- Dropzone de montagem visual -->
                 <div style="text-align: center; color: #94a3b8; margin-top: 200px;">
-                    <i class="fas fa-arrows-alt" style="font-size: 30px; margin-bottom: 15px;"></i>
-                    <p>Arraste um componente para cá</p>
+                    <i class="fas fa-tools" style="font-size: 40px; margin-bottom: 20px;"></i>
+                    <h3 style="margin:0;">Canvas do Tema</h3>
+                    <p style="font-size: 13px;">Arraste os componentes VCL para construir o layout.</p>
                 </div>
             </div>
         </div>
-        
-        <!-- Painel Direito: Inspetor de Objetos (Object Inspector) -->
-        <div style="width: 300px; background: #0f172a; border-left: 1px solid #1e293b; padding: 15px; border-radius: 8px; overflow-y: auto;">
-            <h3 style="font-size: 14px; margin-top: 0; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 10px;">Object Inspector</h3>
-            <div id="object-inspector" style="margin-top: 15px;">
-                <p style="color: #64748b; font-size: 12px; text-align: center; margin-top: 50px;">Selecione um bloco no palco para editar suas propriedades.</p>
+
+        <!-- Barra Vertical Direita: Object Inspector -->
+        <div class="ds-builder-sidebar-right">
+            <div class="ds-sidebar-header"><i class="fas fa-sliders-h"></i> Object Inspector</div>
+            <div id="object-inspector" style="padding: 15px; overflow-y: auto;">
+                <div style="text-align: center; color: #475569; margin-top: 50px;">
+                    <i class="fas fa-mouse-pointer" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p style="font-size: 12px;">Selecione um bloco no palco para editar (Cores, Fontes, Margens).</p>
+                </div>
             </div>
         </div>
 
@@ -48,19 +176,19 @@ $schemaJson = $registry->exportSchemaForFrontend();
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Carrega o Schema injetado pelo PHP
     const componentSchema = <?= $schemaJson ?>;
     const palette = document.getElementById("component-palette");
 
-    // Popula a Paleta com os Blocos disponíveis
     for (const [id, config] of Object.entries(componentSchema)) {
         let btn = document.createElement("button");
-        btn.innerHTML = `<i class="fas fa-cube"></i> ${config.name}`;
-        btn.style.cssText = "background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 10px; border-radius: 4px; cursor: grab; text-align: left; font-size: 12px;";
+        btn.innerHTML = `<i class="fas fa-cube" style="margin-right:8px; color: #38bdf8;"></i> ${config.name}`;
+        btn.style.cssText = "background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 12px; border-radius: 6px; cursor: grab; text-align: left; font-size: 13px; display: flex; align-items: center; transition: background 0.2s;";
         
-        // Simulação simples de clique para "adicionar" ao palco
+        btn.onmouseover = () => btn.style.background = "#334155";
+        btn.onmouseout = () => btn.style.background = "#1e293b";
+
         btn.onclick = () => {
-            alert("Em breve: Você adicionou o bloco '" + config.name + "' ao palco. O Object Inspector será preenchido com as " + Object.keys(config.properties).length + " propriedades (width, height, color, etc).");
+            alert("Ação Drag & Drop em Desenvolvimento: Você selecionou a VCL [" + config.name + "].");
         };
 
         palette.appendChild(btn);
