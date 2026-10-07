@@ -13,5 +13,6 @@
     "SystemMonitor": true,
     "Temas Visuais (Visual Themes)": true,
     "nav_menus": true,
-    "Crash Test (Simulador)": false
+    "Crash Test (Simulador)": false,
+    "clock_widget": false
 }

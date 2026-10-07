@@ -1,0 +1,8 @@
+{
+    "name": "clock_widget",
+    "version": "1.0.0",
+    "description": "Um widget de relógio simples para provar a injeção de Capabilities no Web OS.",
+    "author": "Antigravity",
+    "core": false,
+    "os_version": "2.1"
+}

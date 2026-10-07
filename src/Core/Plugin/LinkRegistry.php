@@ -54,6 +54,9 @@ class LinkRegistry
         if ($linkName === 'core.db') {
             return $this->container->make(\DomainSystem\SystemApps\Database\Connection::class);
         }
+        if ($linkName === 'core.identity') {
+            return $this->container->make(\DomainSystem\Core\Security\IdentityManager::class);
+        }
         if ($linkName === 'core.router') {
             return $this->container->make(\DomainSystem\Core\Contracts\RouterInterface::class);
         }
