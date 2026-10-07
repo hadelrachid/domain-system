@@ -16,6 +16,11 @@ class Plugin extends AbstractPlugin
         return __DIR__;
     }
 
+    public function register(\DomainSystem\Core\Container $container): void
+    {
+        // Registro de dependências no container, se houver
+    }
+
     public function registerRoutes(RouteRegistry $registry): void
     {
         // Rota protegida do painel admin para o construtor Flex
