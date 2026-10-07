@@ -55,9 +55,12 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
             $html .= '</select>';
             $html .= '</div>';
             
-            // Input de Texto para URL Personalizada (Novo!)
-            $html .= '<div style="margin-bottom: 15px;">';
-            $html .= '<input type="url" id="radio-custom-url" placeholder="Cole o link HTTPS do streaming aqui..." style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; outline: none; font-size: 12px; display: none;" value="https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" />';
+            // Input de Texto para URL Personalizada e Botão Salvar
+            $html .= '<div id="radio-custom-group" style="margin-bottom: 15px; display: none;">';
+            $html .= '<div style="display: flex; gap: 5px;">';
+            $html .= '<input type="url" id="radio-custom-url" placeholder="Cole o link HTTPS aqui..." style="flex: 1; background: #0f172a; color: #fff; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; outline: none; font-size: 12px;" value="" />';
+            $html .= '<button id="radio-save-btn" style="background: #38bdf8; color: #0f172a; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Salvar Estação"><i class="fas fa-plus"></i></button>';
+            $html .= '</div>';
             $html .= '</div>';
 
             // Controles de Play/Pause e Volume
@@ -86,7 +89,9 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                     let audio = document.getElementById("radio-audio-element");
                     let btn = document.getElementById("radio-play-btn");
                     let select = document.getElementById("radio-station-select");
+                    let customGroup = document.getElementById("radio-custom-group");
                     let customUrlInput = document.getElementById("radio-custom-url");
+                    let saveBtn = document.getElementById("radio-save-btn");
                     let volume = document.getElementById("radio-volume");
                     let icon = document.getElementById("radio-icon");
                     let status = document.getElementById("radio-status");
@@ -95,6 +100,15 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
 
                     if(audio && btn && select && customUrlInput) {
                         
+                        // Carregar estações salvas do LocalStorage
+                        let savedStations = JSON.parse(localStorage.getItem("domain_radio_stations") || "[]");
+                        savedStations.forEach(url => {
+                            let option = document.createElement("option");
+                            option.value = url;
+                            option.text = "⭐ " + url.replace("https://", "").replace("http://", "").substring(0, 25) + "...";
+                            select.insertBefore(option, select.lastElementChild);
+                        });
+
                         // Handler de Volume
                         volume.addEventListener("input", (e) => {
                             audio.volume = e.target.value;
@@ -103,16 +117,16 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                         // Lógica de Sincronia entre Combobox e Input Text
                         select.addEventListener("change", () => {
                             if (select.value === "custom") {
-                                customUrlInput.style.display = "block";
+                                customGroup.style.display = "block";
                                 customUrlInput.value = "";
                                 customUrlInput.focus();
                             } else {
-                                customUrlInput.style.display = "none";
+                                customGroup.style.display = "none";
                                 customUrlInput.value = select.value;
                             }
                             
                             if(isPlaying) {
-                                audio.src = customUrlInput.value;
+                                audio.src = select.value === "custom" ? customUrlInput.value : select.value;
                                 if(audio.src) {
                                     audio.play();
                                     status.innerText = "Sintonizando nova estação...";
@@ -120,20 +134,25 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                             }
                         });
 
-                        // Se o usuário digitar algo na URL Customizada enquanto toca, atualiza a rádio
-                        customUrlInput.addEventListener("change", () => {
-                            if(isPlaying && customUrlInput.value.trim() !== "") {
-                                audio.src = customUrlInput.value;
-                                audio.play();
-                                status.innerText = "Sintonizando url manual...";
+                        // Salvar Estação no LocalStorage
+                        saveBtn.addEventListener("click", () => {
+                            let url = customUrlInput.value.trim();
+                            if (url && !savedStations.includes(url)) {
+                                savedStations.push(url);
+                                localStorage.setItem("domain_radio_stations", JSON.stringify(savedStations));
+                                
+                                let option = document.createElement("option");
+                                option.value = url;
+                                option.text = "⭐ " + url.replace("https://", "").replace("http://", "").substring(0, 25) + "...";
+                                select.insertBefore(option, select.lastElementChild);
+                                select.value = url;
+                                customGroup.style.display = "none";
+                                status.innerText = "Estação salva com sucesso!";
                             }
                         });
 
                         btn.addEventListener("click", () => {
-                            let targetUrl = customUrlInput.value.trim();
-                            if (!targetUrl && select.value !== "custom") {
-                                targetUrl = select.value;
-                            }
+                            let targetUrl = (select.value === "custom") ? customUrlInput.value.trim() : select.value;
                             
                             if (isPlaying) {
                                 audio.pause();
@@ -155,7 +174,7 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 btn.innerHTML = \'<i class="fas fa-stop"></i>\';
                                 icon.style.color = "#38bdf8";
                                 icon.classList.add("fa-fade");
-                                status.innerText = "Conectando... (Streaming HTTPS)";
+                                status.innerText = "Conectando... (Streaming HTTPS/HTTP)";
                             }
                         });
                         
