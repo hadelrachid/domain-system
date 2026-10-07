@@ -22,6 +22,10 @@ abstract class AbstractVisualWidget implements VisualComponentInterface
             'border_radius' => ['type' => 'string', 'default' => '0px', 'label' => 'Bordas Arredondadas'],
             'margin' => ['type' => 'string', 'default' => '0px', 'label' => 'Margem Externa'],
             'padding' => ['type' => 'string', 'default' => '0px', 'label' => 'Espaçamento Interno'],
+            
+            // Controle de Profundidade e Camadas (Traz para a Frente / Envia para Trás)
+            'position' => ['type' => 'select', 'default' => 'relative', 'options' => ['relative', 'absolute', 'fixed'], 'label' => 'Tipo de Posição'],
+            'z_index' => ['type' => 'number', 'default' => 1, 'label' => 'Camada (Z-Index)']
         ];
 
         return array_merge($universalSchema, $this->getCustomSchema());
@@ -51,6 +55,13 @@ abstract class AbstractVisualWidget implements VisualComponentInterface
     private function buildBaseStyle(array $properties): string
     {
         $css = "";
+        
+        // Posição e Camadas (Z-Index)
+        $position = $properties['position'] ?? 'relative';
+        $css .= "position: {$position}; ";
+        if (isset($properties['z_index'])) $css .= "z-index: {$properties['z_index']}; ";
+
+        // Dimensões e Visual
         if (!empty($properties['width'])) $css .= "width: {$properties['width']}; ";
         if (!empty($properties['height'])) $css .= "height: {$properties['height']}; ";
         if (!empty($properties['bg_color'])) $css .= "background-color: {$properties['bg_color']}; ";
