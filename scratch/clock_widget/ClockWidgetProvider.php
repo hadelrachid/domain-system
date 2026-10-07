@@ -37,11 +37,26 @@ class ClockWidgetProvider implements DashboardWidgetProviderInterface
         $userId = $_SESSION['user_id'] ?? 0;
         
         if ($this->identity->userCan($userId, 'clock.view')) {
-            $html = '<div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #10b981; padding: 25px; border-radius: 12px; text-align: center; font-family: monospace; font-size: 28px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">';
+            $time = date('H:i:s');
+            $html = '<div id="clock-widget-container" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #10b981; padding: 25px; border-radius: 12px; text-align: center; font-family: monospace; font-size: 28px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">';
             $html .= '<i class="far fa-clock" style="color: #4ade80; margin-right: 10px;"></i>';
-            $html .= date('H:i:s');
+            $html .= '<span id="live-clock-text">' . $time . '</span>';
             $html .= '<div style="font-size: 12px; color: #64748b; margin-top: 5px;">Relógio Mundial Seguro (via ACL)</div>';
             $html .= '</div>';
+            
+            // The magic to make it ALIVE (Client-side JS)
+            $html .= '<script>
+                (function() {
+                    let el = document.getElementById("live-clock-text");
+                    if(el) {
+                        setInterval(() => {
+                            let now = new Date();
+                            el.innerHTML = now.toLocaleTimeString("pt-BR", {hour12: false});
+                        }, 1000);
+                    }
+                })();
+            </script>';
+            
             return $html;
         }
 
