@@ -48,11 +48,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                 $unique = $row['unique_visits'] ?? 0;
 
                 return "
-                <div class='widget-card' data-id='anl_pageviews_month'>
-                    <div class='widget-header'>
-                        <h3 class='widget-title'>Tráfego em " . date('M/Y') . "</h3>
-                    </div>
-                    <div class='widget-body' style='text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
+                <div style style='text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
                         <h1 style='font-size: 46px; margin: 0; color: var(--accent-blue);'>{$total}</h1>
                         <p style='color: var(--text-muted); font-size: 13px; margin-top: 5px;'>Visualizações Totais</p>
                         
@@ -70,11 +66,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                 $clicks = $stmt->fetchAll();
 
                 $html = "
-                <div class='widget-card' data-id='anl_clicks_month'>
-                    <div class='widget-header'>
-                        <h3 class='widget-title'>Cliques & Conversões</h3>
-                    </div>
-                    <div class='widget-body'>
+                <div style>
                         <ul style='list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;'>";
                 
                 if (empty($clicks)) {
@@ -101,7 +93,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                     }
                 }
 
-                $html .= "</ul></div></div>";
+                $html .= "</ul></div>";
                 return $html;
             }
 

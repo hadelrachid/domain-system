@@ -28,9 +28,14 @@
                 <p>O seu painel está vazio. Clique em "Adicionar Widget" para personalizá-lo.</p>
             </div>
         <?php else: ?>
-            <?php foreach ($renderedWidgets as $html): ?>
-                <div class="widget-wrapper" style="width: 100%;">
-                    <?= $html ?>
+            <?php foreach ($renderedWidgets as $widget): ?>
+                <div class="widget-card" data-id="<?= htmlspecialchars($widget['id']) ?>">
+                    <div class="widget-header">
+                        <h3 class="widget-title"><?= htmlspecialchars($widget['title']) ?></h3>
+                    </div>
+                    <div class="widget-body">
+                        <?= $widget['body'] ?>
+                    </div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

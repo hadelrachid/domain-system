@@ -70,7 +70,12 @@ class DashboardController
             foreach ($userWidgets as $uw) {
                 $prov = $registry->getProvider($uw['provider']);
                 if ($prov) {
-                    $renderedWidgets[] = $prov->renderWidget($uw['id']);
+                    $meta = $prov->getAvailableWidgets()[$uw['id']] ?? ['title' => 'Widget'];
+                    $renderedWidgets[] = [
+                        'id' => $uw['id'],
+                        'title' => $meta['title'],
+                        'body' => $prov->renderWidget($uw['id'])
+                    ];
                 }
             }
             

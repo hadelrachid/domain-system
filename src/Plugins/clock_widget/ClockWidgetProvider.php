@@ -34,7 +34,7 @@ class ClockWidgetProvider implements DashboardWidgetProviderInterface
             return '';
         }
 
-        $userId = $_SESSION['auth_user_id'] ?? 0;
+        $userId = $_SESSION['user_id'] ?? 0;
         
         if ($this->identity->userCan($userId, 'clock.view')) {
             $html = '<div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #10b981; padding: 25px; border-radius: 12px; text-align: center; font-family: monospace; font-size: 28px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">';

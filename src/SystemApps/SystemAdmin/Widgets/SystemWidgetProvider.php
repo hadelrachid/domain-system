@@ -30,11 +30,7 @@ class SystemWidgetProvider implements DashboardWidgetProviderInterface
         switch ($widgetId) {
             case 'sys_welcome':
                 return "
-                <div class='widget-card' data-id='sys_welcome'>
-                    <div class='widget-header'>
-                        <h3 class='widget-title'>Central de Controle</h3>
-                    </div>
-                    <div class='widget-body' style='text-align: center;'>
+                <div style style='text-align: center;'>
                         <svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='var(--accent-blue)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
                             <rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect>
                             <line x1='8' y1='21' x2='16' y2='21'></line>
@@ -49,11 +45,7 @@ class SystemWidgetProvider implements DashboardWidgetProviderInterface
                 $php = phpversion();
                 $os = PHP_OS;
                 return "
-                <div class='widget-card' data-id='sys_info'>
-                    <div class='widget-header'>
-                        <h3 class='widget-title'>Status do Servidor</h3>
-                    </div>
-                    <div class='widget-body'>
+                <div style>
                         <div style='display: flex; flex-direction: column; gap: 10px;'>
                             <div style='display: flex; justify-content: space-between;'>
                                 <span style='color: var(--text-muted);'>PHP Version</span>
