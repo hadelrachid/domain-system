@@ -185,13 +185,91 @@ $schemaJson = $registry->exportSchemaForFrontend();
     </div>
 </div>
 
-<script src="/domain-system/src/Plugins/flex_builder/public/js/builder_engine.js"></script>
 <script>
+/**
+ * Flex-Builder JS Engine
+ * O Cérebro Front-End do Construtor de Layouts
+ */
+class BuilderEngine {
+    constructor(schema) {
+        this.schema = schema;
+        this.virtualDom = [];
+        this.selectedWidgetId = null;
+        
+        this.stageElement = document.getElementById("builder-stage");
+        this.paletteElement = document.getElementById("component-palette");
+        
+        this.init();
+    }
+
+    init() {
+        console.log("🚀 Flex-Builder JS Engine Iniciada!");
+        this.renderPalette();
+        this.setupDragAndDrop();
+    }
+
+    renderPalette() {
+        this.paletteElement.innerHTML = "";
+
+        for (const [widgetId, config] of Object.entries(this.schema)) {
+            let btn = document.createElement("button");
+            btn.innerHTML = `<i class="fas fa-cube" style="margin-right:8px; color: #38bdf8;"></i> ${config.name}`;
+            btn.className = "vcl-palette-item";
+            
+            btn.style.cssText = "background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 12px; border-radius: 6px; cursor: grab; text-align: left; font-size: 13px; display: flex; align-items: center; transition: background 0.2s;";
+            btn.onmouseover = () => btn.style.background = "#334155";
+            btn.onmouseout = () => btn.style.background = "#1e293b";
+
+            btn.draggable = true;
+            btn.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', widgetId);
+                btn.style.opacity = '0.5';
+            });
+            btn.addEventListener('dragend', (e) => {
+                btn.style.opacity = '1';
+            });
+
+            this.paletteElement.appendChild(btn);
+        }
+    }
+
+    setupDragAndDrop() {
+        this.stageElement.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.stageElement.style.border = "2px dashed #38bdf8";
+        });
+
+        this.stageElement.addEventListener('dragleave', (e) => {
+            this.stageElement.style.border = "1px solid #94a3b8";
+        });
+
+        this.stageElement.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.stageElement.style.border = "1px solid #94a3b8";
+            
+            const droppedWidgetId = e.dataTransfer.getData('text/plain');
+            if (this.schema[droppedWidgetId]) {
+                this.addComponentToStage(droppedWidgetId);
+            }
+        });
+    }
+
+    addComponentToStage(widgetId) {
+        const config = this.schema[widgetId];
+        
+        let fakeNode = document.createElement("div");
+        fakeNode.style.cssText = "padding: 20px; background: #f1f5f9; border: 1px solid #cbd5e1; margin-bottom: 10px; cursor: pointer;";
+        fakeNode.innerHTML = `<strong>${config.name}</strong> [Simulação]`;
+        
+        const emptyMsg = this.stageElement.querySelector('.empty-stage-msg');
+        if (emptyMsg) emptyMsg.remove();
+
+        this.stageElement.appendChild(fakeNode);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-    // Carrega o Schema injetado pelo PHP no topo do arquivo
     const componentSchema = <?= $schemaJson ?>;
-    
-    // Liga os motores!
     window.Builder = new BuilderEngine(componentSchema);
 });
 </script>
