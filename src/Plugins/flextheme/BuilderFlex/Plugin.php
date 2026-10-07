@@ -62,6 +62,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // Será o Controller que carregará o seu frontend protótipo!
             $router->addRoute('GET', '/admin/builder', [BuilderAdminController::class, 'index']);
             $router->addRoute('GET', '/admin/builder/api/schema', [BuilderAdminController::class, 'getSchema']);
+            $router->addRoute('GET', '/admin/builder/assets/builder.js', [BuilderAdminController::class, 'script']);
+            $router->addRoute('GET', '/admin/builder/assets/builder.css', [BuilderAdminController::class, 'style']);
         });
     }
 

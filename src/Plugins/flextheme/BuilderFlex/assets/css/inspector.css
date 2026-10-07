@@ -1,0 +1,24 @@
+/* Object Inspector (Right) */
+.builder-inspector { width: 300px; background: var(--bg-panel); border-left: 1px solid var(--border-glass-strong); display: flex; flex-direction: column; z-index: 10; }
+.inspector-header { padding: 15px; font-weight: bold; border-bottom: 1px solid var(--border-glass); color: var(--text-primary); }
+.inspector-body { flex: 1; overflow-y: auto; padding: 15px; }
+.inspector-empty { text-align: center; color: var(--text-secondary); padding: 20px; font-size: 13px; }
+
+.inspector-title { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-glass); }
+.inspector-title strong { color: var(--accent-neon); }
+.inspector-type { color: #666; font-size: 10px; }
+.inspector-id { color: #444; font-size: 9px; margin-top: 2px; }
+
+.inspector-section { margin-bottom: 15px; }
+.inspector-section-title { font-weight: bold; color: var(--text-primary); font-size: 11px; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+.prop-group { margin-bottom: 15px; }
+.prop-group label { display: block; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px; }
+.prop-input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-primary); font-family: monospace; font-size: 12px; box-sizing: border-box; }
+
+/* Comboboxes: fundo sólido (a lista aberta não herda transparência) + texto de alto contraste */
+select.prop-input { background-color: #0b0f19; color: #ffffff; color-scheme: dark; cursor: pointer; }
+select.prop-input:focus { outline: none; border-color: var(--accent-neon); }
+select.prop-input option { background-color: #0b0f19; color: #ffffff; padding: 6px; }
+select.prop-input option:checked,
+select.prop-input option:hover { background-color: #1d4ed8; color: #ffffff; }

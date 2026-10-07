@@ -1,0 +1,6 @@
+/* Modal de exportação */
+.modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+.modal-box { background: var(--bg-panel); padding: 30px; border-radius: 12px; width: 600px; border: 1px solid var(--border-glass); }
+.modal-box h3 { margin-top: 0; color: var(--text-primary); }
+.modal-box textarea { width: 100%; height: 300px; background: #121212; color: #00ff00; font-family: monospace; padding: 10px; border: 1px solid #333; box-sizing: border-box; }
+.modal-footer { display: flex; justify-content: flex-end; margin-top: 15px; }
