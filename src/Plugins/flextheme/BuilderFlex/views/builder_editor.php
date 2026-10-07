@@ -100,6 +100,13 @@
         .prop-group { margin-bottom: 15px; }
         .prop-group label { display: block; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px; }
         .prop-input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: var(--text-primary); font-family: monospace; font-size: 12px; }
+
+        /* Comboboxes: fundo sólido (a lista aberta não herda transparência) + texto de alto contraste */
+        select.prop-input { background-color: #0b0f19; color: #ffffff; color-scheme: dark; cursor: pointer; }
+        select.prop-input:focus { outline: none; border-color: var(--accent-neon); }
+        select.prop-input option { background-color: #0b0f19; color: #ffffff; padding: 6px; }
+        select.prop-input option:checked,
+        select.prop-input option:hover { background-color: #1d4ed8; color: #ffffff; }
         
         /* Drag Overlay */
         #drag-overlay { position: fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:none; }
