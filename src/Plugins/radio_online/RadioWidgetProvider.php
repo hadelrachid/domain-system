@@ -1,0 +1,185 @@
+<?php
+namespace DomainSystem\Plugins\radio_online;
+
+use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
+use DomainSystem\Core\Security\IdentityManager;
+
+class RadioWidgetProvider implements DashboardWidgetProviderInterface
+{
+    private IdentityManager $identity;
+
+    public function __construct(IdentityManager $identity)
+    {
+        $this->identity = $identity;
+    }
+
+    public function getProviderName(): string
+    {
+        return 'App Rádio Online';
+    }
+
+    public function getAvailableWidgets(): array
+    {
+        return [
+            'radio_player' => [
+                'title' => 'Rádio Web Station',
+                'description' => 'Player interativo com estações online e personalizadas.'
+            ]
+        ];
+    }
+
+    public function renderWidget(string $widgetId): string
+    {
+        if ($widgetId !== 'radio_player') {
+            return '';
+        }
+
+        $userId = $_SESSION['user_id'] ?? 0;
+        
+        if ($this->identity->userCan($userId, 'radio.listen')) {
+            $html = '<div id="radio-widget-container" style="background: linear-gradient(135deg, #1f2937, #111827); color: #38bdf8; padding: 20px; border-radius: 12px; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">';
+            
+            // Ícone animado
+            $html .= '<div style="font-size: 36px; margin-bottom: 10px;">';
+            $html .= '<i class="fas fa-broadcast-tower" id="radio-icon" style="color: #64748b; transition: color 0.3s;"></i>';
+            $html .= '</div>';
+            
+            // Combobox de Estações Rápidas
+            $html .= '<div style="margin-bottom: 8px;">';
+            $html .= '<select id="radio-station-select" style="width: 100%; background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 8px; border-radius: 4px; outline: none; cursor: pointer; font-size: 13px;">';
+            $html .= '<option value="https://stream.live.vc.bbcmedia.co.uk/bbc_world_service">BBC World Service (News)</option>';
+            $html .= '<option value="https://icecast.vrtcdn.be/stubru-high.mp3">Studio Brussel (Rock/Alt)</option>';
+            $html .= '<option value="https://jazz.streamr.ru/jazz-128.mp3">Smooth Jazz 24/7</option>';
+            $html .= '<option value="https://icecast.omroep.nl/radio1-bb-mp3">NPO Radio 1 (Holanda)</option>';
+            $html .= '<option value="custom">-- Digitar URL Customizada --</option>';
+            $html .= '</select>';
+            $html .= '</div>';
+            
+            // Input de Texto para URL Personalizada (Novo!)
+            $html .= '<div style="margin-bottom: 15px;">';
+            $html .= '<input type="url" id="radio-custom-url" placeholder="Cole o link HTTPS do streaming aqui..." style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; outline: none; font-size: 12px; display: none;" value="https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" />';
+            $html .= '</div>';
+
+            // Controles de Play/Pause e Volume
+            $html .= '<div style="display: flex; justify-content: center; align-items: center; gap: 15px;">';
+            $html .= '<button id="radio-play-btn" style="background: #38bdf8; color: #0f172a; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s;"><i class="fas fa-play"></i></button>';
+            
+            $html .= '<div style="display: flex; align-items: center; gap: 5px; color: #94a3b8; font-size: 12px;">';
+            $html .= '<i class="fas fa-volume-down"></i>';
+            $html .= '<input type="range" id="radio-volume" min="0" max="1" step="0.1" value="0.5" style="width: 80px;">';
+            $html .= '<i class="fas fa-volume-up"></i>';
+            $html .= '</div>';
+            
+            $html .= '</div>';
+            
+            // Texto de Status
+            $html .= '<div id="radio-status" style="font-size: 11px; color: #64748b; margin-top: 15px;">Parado.</div>';
+            
+            // Audio tag invisível
+            $html .= '<audio id="radio-audio-element" preload="none"></audio>';
+            
+            $html .= '</div>';
+            
+            // The magic to make it ALIVE (Client-side JS)
+            $html .= '<script>
+                (function() {
+                    let audio = document.getElementById("radio-audio-element");
+                    let btn = document.getElementById("radio-play-btn");
+                    let select = document.getElementById("radio-station-select");
+                    let customUrlInput = document.getElementById("radio-custom-url");
+                    let volume = document.getElementById("radio-volume");
+                    let icon = document.getElementById("radio-icon");
+                    let status = document.getElementById("radio-status");
+                    
+                    let isPlaying = false;
+
+                    if(audio && btn && select && customUrlInput) {
+                        
+                        // Handler de Volume
+                        volume.addEventListener("input", (e) => {
+                            audio.volume = e.target.value;
+                        });
+                        
+                        // Lógica de Sincronia entre Combobox e Input Text
+                        select.addEventListener("change", () => {
+                            if (select.value === "custom") {
+                                customUrlInput.style.display = "block";
+                                customUrlInput.value = "";
+                                customUrlInput.focus();
+                            } else {
+                                customUrlInput.style.display = "none";
+                                customUrlInput.value = select.value;
+                            }
+                            
+                            if(isPlaying) {
+                                audio.src = customUrlInput.value;
+                                if(audio.src) {
+                                    audio.play();
+                                    status.innerText = "Sintonizando nova estação...";
+                                }
+                            }
+                        });
+
+                        // Se o usuário digitar algo na URL Customizada enquanto toca, atualiza a rádio
+                        customUrlInput.addEventListener("change", () => {
+                            if(isPlaying && customUrlInput.value.trim() !== "") {
+                                audio.src = customUrlInput.value;
+                                audio.play();
+                                status.innerText = "Sintonizando url manual...";
+                            }
+                        });
+
+                        btn.addEventListener("click", () => {
+                            let targetUrl = customUrlInput.value.trim();
+                            if (!targetUrl && select.value !== "custom") {
+                                targetUrl = select.value;
+                            }
+                            
+                            if (isPlaying) {
+                                audio.pause();
+                                audio.src = ""; // Corta o buffer de download
+                                isPlaying = false;
+                                btn.innerHTML = \'<i class="fas fa-play"></i>\';
+                                icon.style.color = "#64748b";
+                                icon.classList.remove("fa-fade");
+                                status.innerText = "Parado.";
+                            } else {
+                                if (!targetUrl) {
+                                    status.innerText = "Coloque uma URL válida!";
+                                    return;
+                                }
+                                audio.src = targetUrl;
+                                audio.volume = volume.value;
+                                audio.play();
+                                isPlaying = true;
+                                btn.innerHTML = \'<i class="fas fa-stop"></i>\';
+                                icon.style.color = "#38bdf8";
+                                icon.classList.add("fa-fade");
+                                status.innerText = "Conectando... (Streaming HTTPS)";
+                            }
+                        });
+                        
+                        audio.addEventListener("playing", () => {
+                            status.innerText = "Tocando ao vivo agora!";
+                        });
+                        
+                        audio.addEventListener("error", () => {
+                            status.innerText = "Erro ao conectar. A URL é HTTPS e tem CORS liberado?";
+                            isPlaying = false;
+                            btn.innerHTML = \'<i class="fas fa-play"></i>\';
+                            icon.style.color = "#ef4444";
+                            icon.classList.remove("fa-fade");
+                        });
+                    }
+                })();
+            </script>';
+            
+            return $html;
+        }
+
+        $html = '<div style="background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 8px; font-size: 14px; text-align: center; border: 1px solid #f87171;">';
+        $html .= '<i class="fas fa-lock"></i> Você não tem o Privilégio <strong>radio.listen</strong> para ouvir streaming.';
+        $html .= '</div>';
+        return $html;
+    }
+}
