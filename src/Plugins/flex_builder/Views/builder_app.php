@@ -51,6 +51,7 @@ $schemaJson = $registry->exportSchemaForFrontend();
         cursor: pointer;
         font-size: 13px;
         transition: 0.2s;
+        color-scheme: dark; /* Força o navegador a desenhar os controles do OS em modo escuro */
     }
     .ds-builder-btn:hover { background: #334155; color: #fff; }
     .ds-builder-btn-primary { background: #38bdf8; color: #0f172a; border: none; font-weight: bold; }
