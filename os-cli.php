@@ -25,17 +25,22 @@ if (empty($args)) {
 }
 
 $command = strtolower($args[0]);
-$basePath = __DIR__;
+$basePath = __DIR__ . '/workstation';
 
-// Função auxiliar para sanitizar caminhos e prevenir sair do diretório raiz
+// Cria a pasta workstation se não existir
+if (!is_dir($basePath)) {
+    mkdir($basePath, 0777, true);
+}
+
+// Função auxiliar para sanitizar caminhos e prevenir sair do diretório workstation
 function sanitizePath($base, $path) {
     $realBase = realpath($base);
     $target = $base . '/' . ltrim($path, '/');
     $realTarget = realpath(dirname($target)) . '/' . basename($target);
     
-    // Se o caminho tentar sair da raiz do projeto, bloqueia
+    // Se o caminho tentar sair da raiz da workstation, bloqueia
     if (strpos(realpath(dirname($target)), $realBase) !== 0) {
-         die("Erro de Segurança: Caminho fora da Sandbox permitido.");
+         die("Erro de Segurança: Caminho fora do Laboratório (workstation) permitido.");
     }
     return $target;
 }
@@ -51,16 +56,16 @@ switch ($command) {
                 }
             }
         } else {
-            echo "Erro: Diretório não encontrado.\n";
+            echo "Erro: Diretório não encontrado no workstation.\n";
         }
         break;
 
     case 'mkdir':
-        if (!isset($args[1])) die("Erro: Falta o nome da pasta (ex: mkdir src/Plugins/X)\n");
+        if (!isset($args[1])) die("Erro: Falta o nome da pasta (ex: mkdir meu_plugin)\n");
         $dir = sanitizePath($basePath, $args[1]);
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
-            echo "Diretório criado: {$args[1]}\n";
+            echo "Diretório criado no workstation: {$args[1]}\n";
         } else {
             echo "Aviso: Diretório já existe.\n";
         }
@@ -72,21 +77,20 @@ switch ($command) {
         if (file_exists($file) && is_file($file)) {
             echo file_get_contents($file) . "\n";
         } else {
-            echo "Erro: Arquivo não encontrado.\n";
+            echo "Erro: Arquivo não encontrado no workstation.\n";
         }
         break;
 
     case 'rm':
         if (!isset($args[1])) die("Erro: Faltou o nome do arquivo/pasta.\n");
         // Simulação super simplificada de remoção
-        $target = sanitizePath($basePath, end($args)); // Pega o último argumento ignorando flags como -rf por enquanto
+        $target = sanitizePath($basePath, end($args)); 
         if (file_exists($target)) {
             if (is_dir($target)) {
-                // Necessitaria de função recursiva, omitida aqui por segurança/simplicidade inicial
                 echo "Use comandos mais específicos do PHP para remover pastas por agora.\n";
             } else {
                 unlink($target);
-                echo "Arquivo removido: " . end($args) . "\n";
+                echo "Arquivo removido do workstation: " . end($args) . "\n";
             }
         } else {
             echo "Erro: Alvo não encontrado.\n";
@@ -96,18 +100,19 @@ switch ($command) {
     case 'make:plugin':
         if (!isset($args[1])) die("Erro: Qual o nome do plugin? (ex: make:plugin radio_online)\n");
         $pluginName = preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($args[1]));
-        $dir = $basePath . '/src/Plugins/' . $pluginName;
+        $dir = sanitizePath($basePath, $pluginName);
         if (!is_dir($dir)) mkdir($dir, 0777, true);
         
         // Gera plugin.json
         file_put_contents($dir . '/plugin.json', json_encode([
             "name" => $pluginName,
             "version" => "1.0.0",
-            "author" => "CLI",
+            "author" => "CLI-Workstation",
             "type" => "module"
         ], JSON_PRETTY_PRINT));
         
-        echo "✅ Plugin Scaffolded com sucesso: {$pluginName}\n";
+        echo "✅ Plugin Scaffolded com sucesso no Workstation: {$pluginName}\n";
+        echo "Após terminar o desenvolvimento, compacte e instale pelo painel!\n";
         break;
 
     default:
