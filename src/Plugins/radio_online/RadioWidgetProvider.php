@@ -58,8 +58,8 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
             // Input de Texto para URL Personalizada e Botão Salvar
             $html .= '<div id="radio-custom-group" style="margin-bottom: 15px; display: none;">';
             $html .= '<div style="display: flex; gap: 5px;">';
-            $html .= '<input type="url" id="radio-custom-url" placeholder="Cole o link HTTPS aqui..." style="flex: 1; background: #0f172a; color: #fff; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; outline: none; font-size: 12px;" value="" />';
-            $html .= '<button id="radio-save-btn" style="background: #38bdf8; color: #0f172a; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Salvar Estação"><i class="fas fa-plus"></i></button>';
+            $html .= '<input type="url" id="radio-custom-url" placeholder="Cole o link HTTPS aqui..." style="flex: 1; min-width: 0; background: #0f172a; color: #fff; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; outline: none; font-size: 12px;" value="" />';
+            $html .= '<button id="radio-save-btn" style="background: #38bdf8; color: #0f172a; border: none; width: 36px; height: 35px; flex-shrink: 0; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;" title="Salvar Estação"><i class="fas fa-plus"></i></button>';
             $html .= '</div>';
             $html .= '</div>';
 
