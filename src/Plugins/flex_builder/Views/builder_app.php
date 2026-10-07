@@ -9,16 +9,19 @@ $schemaJson = $registry->exportSchemaForFrontend();
 ?>
 
 <style>
-    /* Resetando o layout do painel admin para o construtor ocupar a tela inteira, se necessário, ou usar um layout flex rígido */
+    /* Resetando o layout do painel admin para o construtor ocupar a tela inteira de verdade (Escondendo o menu lateral do OS) */
     .ds-builder-layout {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 99999; /* Sobrepõe tudo */
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 100px); /* Ajuste para não quebrar no admin do OS */
         background-color: #0f172a;
         color: #f8fafc;
-        border-radius: 8px;
         overflow: hidden;
-        border: 1px solid #1e293b;
     }
     
     /* Barra Horizontal Superior (Navegação/Ações) */
@@ -65,27 +68,30 @@ $schemaJson = $registry->exportSchemaForFrontend();
         border-right: 1px solid #1e293b;
         display: flex;
         flex-direction: column;
+        overflow-y: auto; /* Rolagem na paleta */
     }
 
     /* Palco Central (Onde o tema ganha vida) */
     .ds-builder-canvas {
         flex: 1;
-        background-color: #e2e8f0; /* Fundo claro para contrastar o site */
+        background-color: #e2e8f0; 
         background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1), 
                           linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1);
         background-size: 20px 20px;
         background-position: 0 0, 10px 10px;
-        overflow-y: auto;
+        overflow: auto; /* IMPORTANTE: Rolagem horizontal e vertical ativada */
         padding: 40px;
         display: flex;
+        align-items: flex-start; /* Permite rolar até o topo perfeitamente */
         justify-content: center;
     }
 
     .ds-canvas-paper {
         background: #ffffff;
         width: 100%;
+        min-width: 800px; /* Garante rolagem horizontal se a tela for pequena */
         max-width: 1200px;
-        min-height: 800px;
+        min-height: 1000px; /* Garante rolagem vertical abundante */
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         border: 1px solid #94a3b8;
     }
@@ -97,6 +103,7 @@ $schemaJson = $registry->exportSchemaForFrontend();
         border-left: 1px solid #1e293b;
         display: flex;
         flex-direction: column;
+        overflow-y: auto; /* Rolagem no inspetor de objetos */
     }
 
     .ds-sidebar-header {
@@ -116,6 +123,7 @@ $schemaJson = $registry->exportSchemaForFrontend();
     <!-- Barra Horizontal de Navegação -->
     <div class="ds-builder-topbar">
         <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="/domain-system/admin" style="color: #ef4444; text-decoration: none; font-size: 20px; margin-right: 10px;" title="Sair do Construtor"><i class="fas fa-times-circle"></i></a>
             <i class="fas fa-layer-group" style="color: #38bdf8; font-size: 20px;"></i>
             <strong style="font-size: 15px;">Flex Theme Builder</strong>
             
