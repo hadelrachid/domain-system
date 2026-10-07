@@ -79,21 +79,22 @@ $schemaJson = $registry->exportSchemaForFrontend();
                           linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1);
         background-size: 20px 20px;
         background-position: 0 0, 10px 10px;
-        overflow: auto; /* IMPORTANTE: Rolagem horizontal e vertical ativada */
+        overflow: auto; /* Rolagem horizontal e vertical ativada */
         padding: 40px;
-        display: flex;
-        align-items: flex-start; /* Permite rolar até o topo perfeitamente */
-        justify-content: center;
+        /* Usando block e margin auto no filho para evitar corte de scroll do flexbox */
+        display: block;
     }
 
     .ds-canvas-paper {
         background: #ffffff;
+        margin: 0 auto; /* Centraliza a folha horizontalmente */
         width: 100%;
         min-width: 800px; /* Garante rolagem horizontal se a tela for pequena */
         max-width: 1200px;
-        min-height: 1000px; /* Garante rolagem vertical abundante */
+        min-height: 1200px; /* Garante rolagem vertical abundante para o stage */
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         border: 1px solid #94a3b8;
+        position: relative;
     }
 
     /* Barra Vertical Direita (Object Inspector) */
