@@ -62,6 +62,21 @@ class AclRepositoriesTest extends TestCase
         $this->assertEquals('blog', $cap['context']);
     }
 
+    public function testRegisterCapabilityUpsert()
+    {
+        // 1. Should create a new capability
+        $id1 = $this->caps->registerCapability('forum.post', 'Forum');
+        $this->assertGreaterThan(0, $id1);
+        
+        // 2. Should NOT throw an error for unique constraint, should return existing ID
+        $id2 = $this->caps->registerCapability('forum.post', 'Forum Novo Contexto');
+        $this->assertEquals($id1, $id2);
+        
+        // Check DB has only 1
+        $all = $this->caps->findAll();
+        $this->assertCount(1, $all);
+    }
+
     public function testUserRoleAndCapabilityResolution()
     {
         $roleId = $this->roles->create(['slug' => 'admin', 'name' => 'Admin', 'is_system_locked' => 1]);

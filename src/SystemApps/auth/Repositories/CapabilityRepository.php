@@ -68,6 +68,15 @@ class CapabilityRepository implements CapabilityRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function registerCapability(string $slug, string $context = ''): int
+    {
+        $existing = $this->findBySlug($slug);
+        if ($existing) {
+            return $existing['id'];
+        }
+        return $this->create(['slug' => $slug, 'context' => $context]);
+    }
+
     public function userHasCapability(int $userId, string $capabilitySlug): bool
     {
         // User is directly checked if any of their roles has this capability or the master '*' capability
