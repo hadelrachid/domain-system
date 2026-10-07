@@ -22,7 +22,7 @@
         <button id="addWidgetBtn" class="button button-primary">➕ Adicionar Widget</button>
     </div>
 
-    <div class="dashboard-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    <div class="dashboard-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
         <?php if (empty($renderedWidgets)): ?>
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #1d2327; color: #8c8f94; border-radius: 8px;">
                 <p>O seu painel está vazio. Clique em "Adicionar Widget" para personalizá-lo.</p>
