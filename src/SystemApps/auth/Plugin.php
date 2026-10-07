@@ -24,7 +24,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Pede os serviços vitais
         $os->requireLink('core.db');
         $os->requireLink('core.session');
-        $os->provideLink('core.identity');
 
         // Pede permissão para ouvir eventos do Kernel
         $os->listenHook('router.register');

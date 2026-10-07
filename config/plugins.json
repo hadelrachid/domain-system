@@ -1,7 +1,7 @@
 {
     "academy": true,
     "RachidD Analytics": true,
-    "auth": true,
+    "auth": false,
     "database": true,
     "flextheme": true,
     "installer": true,
@@ -14,5 +14,5 @@
     "Temas Visuais (Visual Themes)": true,
     "nav_menus": true,
     "Crash Test (Simulador)": false,
-    "clock_widget": false
+    "clock_widget": true
 }
