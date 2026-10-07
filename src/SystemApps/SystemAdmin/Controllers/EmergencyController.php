@@ -54,8 +54,7 @@ class EmergencyController
             $msg = "[$timestamp] [CRITICAL_ACCESS_GRANTED] IP: $ip ativou a Escotilha de Emergencia.\n";
             file_put_contents($logFile, $msg, FILE_APPEND);
 
-            header("Location: " . BASE_URL . "/admin/plugins");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/plugins");
         }
 
         $msg = "[$timestamp] [FAILED_ATTEMPT] IP: $ip falhou ao tentar abrir a Escotilha de Emergencia.\n";

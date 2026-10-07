@@ -62,8 +62,7 @@ class UserController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
     public function generate2fa(\DomainSystem\Core\Http\Request $request)
@@ -72,14 +71,12 @@ class UserController
         
         $user_id = $request->input('id') ?? null;
         if (!$user_id) {
-            header("Location: " . BASE_URL . "/admin/users");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
         }
 
         $user = $this->userRepo->findById($user_id);
         if (!$user) {
-            header("Location: " . BASE_URL . "/admin/users");
-            exit;
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
         }
 
         $appProvider = $this->twoFactor->getProvider('app');
@@ -115,8 +112,7 @@ class UserController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
     public function disable2fa(\DomainSystem\Core\Http\Request $request)
@@ -129,8 +125,7 @@ class UserController
             $this->session->setFlash('success', '2FA desativado.');
         }
 
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
     public function change2faType(\DomainSystem\Core\Http\Request $request)
@@ -145,8 +140,7 @@ class UserController
             $this->session->setFlash('success', 'Método de 2FA atualizado!');
         }
 
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
     public function resetPassword(\DomainSystem\Core\Http\Request $request)
@@ -166,8 +160,7 @@ class UserController
             }
         }
 
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
     public function delete(\DomainSystem\Core\Http\Request $request)
@@ -190,8 +183,7 @@ class UserController
             }
         }
         
-        header("Location: " . BASE_URL . "/admin/users");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 }
 

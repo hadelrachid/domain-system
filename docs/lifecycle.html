@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System OS | Ciclo de Vida</title>
+    <title>Domain-System | Ciclo de Vida</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -201,7 +201,7 @@
 
     <div class="container">
         <p class="intro" data-i18n="intro">
-            Como o Domain-System OS impede que um plugin quebre o sistema inteiro? Ele não executa códigos cegamente. O Kernel segue um rigoroso <strong>processo de alfândega em 3 etapas</strong>. Clique nas etapas abaixo para entender a mágica.
+            Como o Domain-System impede que um plugin quebre o sistema inteiro? Ele não executa códigos cegamente. O Kernel segue um rigoroso <strong>processo de alfândega em 3 etapas</strong>. Clique nas etapas abaixo para entender a mágica.
         </p>
 
         <div class="timeline">
@@ -216,7 +216,7 @@
 <pre>{
     <span class="s">"name"</span>: <span class="s">"test_os"</span>,
     <span class="s">"version"</span>: <span class="s">"1.0.0"</span>,
-    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Sistema Operacional Web"</span>,
+    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Ambiente Operacional Web"</span>,
     <span class="s">"core"</span>: <span class="v">false</span>,
     <span class="s">"dependencies"</span>: []
 }</pre>
@@ -298,7 +298,7 @@
         
         <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
             <span class="s">'type'</span> => <span class="s">'success'</span>,
-            <span class="s">'message'</span> => <span class="s">'O novo Sistema Operacional Web está operante!'</span>
+            <span class="s">'message'</span> => <span class="s">'O novo Ambiente Operacional Web está operante!'</span>
         ]);
     }
 }</pre>
@@ -314,7 +314,7 @@
             en: {
                 title: "The Plugin Lifecycle",
                 subtitle: "Understanding the Kernel's abstraction through the Immigration analogy.",
-                intro: "How does the Domain-System OS prevent a plugin from crashing the entire system? It doesn't run code blindly. The Kernel follows a strict <strong>3-step customs process</strong>. Click the steps below to understand the magic.",
+                intro: "How does the Domain-System prevent a plugin from crashing the entire system? It doesn't run code blindly. The Kernel follows a strict <strong>3-step customs process</strong>. Click the steps below to understand the magic.",
                 step1_title: "<span>🛂</span> 1. The Passport (JSON)",
                 step1_subtitle: "Identity verification before code execution.",
                 step1_desc: "The very first thing the Kernel does is read the <code style='color:var(--accent-purple)'>plugin.json</code> file. Not a single line of PHP code has been executed yet. The Kernel just looks at the document and evaluates: <em>'Who are you? What is your version? Do you need another plugin to work?'</em>. If anything is corrupted, it denies entry right here, preventing the famous 'White Screen of Death'.",
@@ -331,7 +331,7 @@
             pt: {
                 title: "O Fluxo de Vida do Plugin",
                 subtitle: "Entendendo a abstração do Kernel através da analogia da Imigração.",
-                intro: "Como o Domain-System OS impede que um plugin quebre o sistema inteiro? Ele não executa códigos cegamente. O Kernel segue um rigoroso <strong>processo de alfândega em 3 etapas</strong>. Clique nas etapas abaixo para entender a mágica.",
+                intro: "Como o Domain-System impede que um plugin quebre o sistema inteiro? Ele não executa códigos cegamente. O Kernel segue um rigoroso <strong>processo de alfândega em 3 etapas</strong>. Clique nas etapas abaixo para entender a mágica.",
                 step1_title: "<span>🛂</span> 1. O Passaporte (JSON)",
                 step1_subtitle: "A verificação de identidade antes do código.",
                 step1_desc: "A primeira coisa que o Kernel faz é ler o arquivo <code style='color:var(--accent-purple)'>plugin.json</code>. Nenhuma linha de código PHP foi executada ainda. O Kernel apenas olha o documento e avalia: <em>'Quem é você? Qual sua versão? Você precisa de outro plugin para funcionar?'</em>. Se algo estiver corrompido, ele barra a entrada aqui, evitando a famosa 'Tela Branca da Morte'.",

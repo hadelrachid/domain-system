@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System OS | Manifesto O Contrato do Sistema</title>
+    <title>Domain-System | Manifesto O Contrato do Sistema</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -174,14 +174,14 @@
             <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
             <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
         </div>
-        <h1 data-i18n="title">O Contrato do Sistema Operacional</h1>
+        <h1 data-i18n="title">O Contrato do Ambiente Operacional</h1>
         <p style="color: var(--accent-blue); font-size: 1.1rem;" data-i18n="subtitle">Manifesto de Injeção de Dependências e Arquitetura</p>
     </header>
 
     <div class="container">
         
         <div class="content-card">
-            <p data-i18n="intro1">Bem-vindo ao coração do <strong class="highlight">Domain-System OS</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.</p>
+            <p data-i18n="intro1">Bem-vindo ao coração do <strong class="highlight">Domain-System</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.</p>
             <p data-i18n="intro2">Aqui, nós não escrevemos código "solto" torcendo para não dar conflito. Nós assinamos um <strong class="highlight">Contrato de Execução</strong>.</p>
             <p data-i18n="intro3">Este manual explicará passo a passo como o motor do sistema funciona e introduzirá um dos conceitos mais poderosos (e muitas vezes mal compreendidos) da engenharia de software: a <strong class="highlight">Injeção de Dependências</strong>.</p>
         </div>
@@ -189,7 +189,7 @@
         <h2 data-i18n="h2_1">1. Por que um Contrato? (A Morte do functions.php)</h2>
         <div class="content-card">
             <p data-i18n="p1_1">Em sistemas antigos, os plugins usam funções globais para modificar o sistema. Isso é como ter um quadro elétrico com os fios soltos: se dois plugins tentarem usar a mesma "tomada", o sistema entra em curto (Fatal Error) e sai do ar.</p>
-            <p data-i18n="p1_2">No <strong class="highlight">Domain-System OS</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class="highlight">OsExtensionInterface</code>.</p>
+            <p data-i18n="p1_2">No <strong class="highlight">Domain-System</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class="highlight">OsExtensionInterface</code>.</p>
             <p data-i18n="p1_3">Esta interface funciona como um disjuntor inteligente. Ela divide a vida do seu plugin em duas fases isoladas: <strong class="highlight">Negociação</strong> e <strong class="highlight">Execução</strong>.</p>
             
             <div class="code-block">
@@ -203,7 +203,7 @@
 
         <h2 data-i18n="h2_2">2. Fase 1: A Negociação (osRegister)</h2>
         <div class="content-card">
-            <p data-i18n="p2_1">Antes de deixar o seu código rodar, o Sistema Operacional pergunta: <em>"O que você precisa para trabalhar e o que você oferece em troca?"</em></p>
+            <p data-i18n="p2_1">Antes de deixar o seu código rodar, o Ambiente Operacional pergunta: <em>"O que você precisa para trabalhar e o que você oferece em troca?"</em></p>
             <p data-i18n="p2_2">Você usa o objeto <code class="highlight">$os</code> (A Ponte de Negociação) para declarar formalmente as suas intenções. Nenhuma regra de banco de dados ou lógica complexa deve ser colocada aqui.</p>
 
             <div class="code-block">
@@ -225,7 +225,7 @@
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                 <div>
                     <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">Segurança em Primeiro Lugar</h3>
-                    <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Sistema Operacional bloqueará o seu plugin por violação de segurança.</strong></p>
+                    <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Ambiente Operacional bloqueará o seu plugin por violação de segurança.</strong></p>
                 </div>
             </div>
         </div>
@@ -244,12 +244,12 @@
 
             <h3 data-i18n="h3_3_2">O Jeito Moderno (Certo): Injeção de Dependências</h3>
             <p data-i18n="p3_4">Injeção de Dependências é, de forma simples, o conceito do <strong class="highlight">"Garçom"</strong>. Você não vai até a cozinha preparar o prato. Você senta na mesa e o garçom <em>traz (injeta)</em> a comida pronta para você.</p>
-            <p data-i18n="p3_5">Em vez de você ir caçar a ferramenta, o Sistema Operacional "Injeta" a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!</p>
+            <p data-i18n="p3_5">Em vez de você ir caçar a ferramenta, o Ambiente Operacional "Injeta" a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!</p>
         </div>
 
         <h2 data-i18n="h2_4">4. Fase 2: A Execução (osBoot)</h2>
         <div class="content-card">
-            <p data-i18n="p4_1">Aqui o seu plugin acorda e começa a trabalhar. E como o Sistema Operacional sabe que o seu plugin é "confiável" (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class="highlight">$runtime</code>.</p>
+            <p data-i18n="p4_1">Aqui o seu plugin acorda e começa a trabalhar. E como o Ambiente Operacional sabe que o seu plugin é "confiável" (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class="highlight">$runtime</code>.</p>
             <p data-i18n="p4_2">O <code class="highlight">$runtime</code> carrega uma bandeja <strong class="highlight">contendo estritamente as coisas que você pediu</strong>, através de <strong class="highlight">Injeção de Dependências</strong>.</p>
 
             <div class="code-block">
@@ -287,12 +287,12 @@
             en: {
                 title: "The Operating System Contract",
                 subtitle: "Dependency Injection and Architecture Manifesto",
-                intro1: "Welcome to the heart of <strong class='highlight'>Domain-System OS</strong>. If you are used to creating themes and plugins for systems like WordPress, prepare for a paradigm shift.",
+                intro1: "Welcome to the heart of <strong class='highlight'>Domain-System</strong>. If you are used to creating themes and plugins for systems like WordPress, prepare for a paradigm shift.",
                 intro2: "Here, we don't write 'loose' code hoping it won't conflict. We sign an <strong class='highlight'>Execution Contract</strong>.",
                 intro3: "This manual will explain step-by-step how the system engine works and introduce one of the most powerful (and often misunderstood) concepts in software engineering: <strong class='highlight'>Dependency Injection</strong>.",
                 h2_1: "1. Why a Contract? (The Death of functions.php)",
                 p1_1: "In legacy systems, plugins use global functions to modify the system. This is like having an electrical panel with loose wires: if two plugins try to use the same 'socket', the system short-circuits (Fatal Error) and crashes.",
-                p1_2: "In <strong class='highlight'>Domain-System OS</strong>, every Extension (whether a visual Theme or a backend Plugin) is required to sign the <code class='highlight'>OsExtensionInterface</code>.",
+                p1_2: "In <strong class='highlight'>Domain-System</strong>, every Extension (whether a visual Theme or a backend Plugin) is required to sign the <code class='highlight'>OsExtensionInterface</code>.",
                 p1_3: "This interface acts as a smart circuit breaker. It divides the life of your plugin into two isolated phases: <strong class='highlight'>Negotiation</strong> and <strong class='highlight'>Execution</strong>.",
                 h2_2: "2. Phase 1: Negotiation (osRegister)",
                 p2_1: "Before letting your code run, the Operating System asks: <em>'What do you need to work and what do you offer in return?'</em>",
@@ -320,20 +320,20 @@
                 welcome: "Welcome to the new era of modular PHP!"
             },
             pt: {
-                title: "O Contrato do Sistema Operacional",
+                title: "O Contrato do Ambiente Operacional",
                 subtitle: "Manifesto de Injeção de Dependências e Arquitetura",
-                intro1: "Bem-vindo ao coração do <strong class='highlight'>Domain-System OS</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.",
+                intro1: "Bem-vindo ao coração do <strong class='highlight'>Domain-System</strong>. Se você está acostumado a criar temas e plugins para sistemas como WordPress, prepare-se para uma quebra de paradigma.",
                 intro2: "Aqui, nós não escrevemos código 'solto' torcendo para não dar conflito. Nós assinamos um <strong class='highlight'>Contrato de Execução</strong>.",
                 intro3: "Este manual explicará passo a passo como o motor do sistema funciona e introduzirá um dos conceitos mais poderosos (e muitas vezes mal compreendidos) da engenharia de software: a <strong class='highlight'>Injeção de Dependências</strong>.",
                 h2_1: "1. Por que um Contrato? (A Morte do functions.php)",
                 p1_1: "Em sistemas antigos, os plugins usam funções globais para modificar o sistema. Isso é como ter um quadro elétrico com os fios soltos: se dois plugins tentarem usar a mesma 'tomada', o sistema entra em curto (Fatal Error) e sai do ar.",
-                p1_2: "No <strong class='highlight'>Domain-System OS</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class='highlight'>OsExtensionInterface</code>.",
+                p1_2: "No <strong class='highlight'>Domain-System</strong>, toda Extensão (seja um Tema visual ou um Plugin de retaguarda) é obrigada a assinar a <code class='highlight'>OsExtensionInterface</code>.",
                 p1_3: "Esta interface funciona como um disjuntor inteligente. Ela divide a vida do seu plugin em duas fases isoladas: <strong class='highlight'>Negociação</strong> e <strong class='highlight'>Execução</strong>.",
                 h2_2: "2. Fase 1: A Negociação (osRegister)",
-                p2_1: "Antes de deixar o seu código rodar, o Sistema Operacional pergunta: <em>'O que você precisa para trabalhar e o que você oferece em troca?'</em>",
+                p2_1: "Antes de deixar o seu código rodar, o Ambiente Operacional pergunta: <em>'O que você precisa para trabalhar e o que você oferece em troca?'</em>",
                 p2_2: "Você usa o objeto <code class='highlight'>$os</code> (A Ponte de Negociação) para declarar formalmente as suas intenções. Nenhuma regra de banco de dados ou lógica complexa deve ser colocada aqui.",
                 alert_title: "Segurança em Primeiro Lugar",
-                alert_desc: "Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Sistema Operacional bloqueará o seu plugin por violação de segurança.</strong>",
+                alert_desc: "Se você tentar usar um recurso na Fase 2 que não foi pedido aqui na Fase 1, o <strong>Ambiente Operacional bloqueará o seu plugin por violação de segurança.</strong>",
                 h2_3: "3. A Magia da Injeção de Dependências (O que é isso?)",
                 p3_1: "Antes de irmos para a Fase 2, precisamos desmistificar um termo que assusta muita gente: <strong class='highlight'>Injeção de Dependências (Dependency Injection)</strong>.",
                 h3_3_1: "O Jeito Antigo (Errado): A Caça ao Tesouro",
@@ -341,9 +341,9 @@
                 p3_3: "O problema é que o plugin se torna 'xereta'. Ele entra onde não deve, procura as coisas sozinho, e se o nome do Banco de Dados mudar, o plugin quebra.",
                 h3_3_2: "O Jeito Moderno (Certo): Injeção de Dependências",
                 p3_4: "Injeção de Dependências é, de forma simples, o conceito do <strong class='highlight'>'Garçom'</strong>. Você não vai até a cozinha preparar o prato. Você senta na mesa e o garçom <em>traz (injeta)</em> a comida pronta para você.",
-                p3_5: "Em vez de você ir caçar a ferramenta, o Sistema Operacional 'Injeta' a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!",
+                p3_5: "Em vez de você ir caçar a ferramenta, o Ambiente Operacional 'Injeta' a ferramenta diretamente na sua mão. E é exatamente isso que acontece na Fase 2!",
                 h2_4: "4. Fase 2: A Execução (osBoot)",
-                p4_1: "Aqui o seu plugin acorda e começa a trabalhar. E como o Sistema Operacional sabe que o seu plugin é 'confiável' (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class='highlight'>$runtime</code>.",
+                p4_1: "Aqui o seu plugin acorda e começa a trabalhar. E como o Ambiente Operacional sabe que o seu plugin é 'confiável' (pois negociou tudo na Fase 1), ele envia o garçom: o objeto <code class='highlight'>$runtime</code>.",
                 p4_2: "O <code class='highlight'>$runtime</code> carrega uma bandeja <strong class='highlight'>contendo estritamente as coisas que você pediu</strong>, através de <strong class='highlight'>Injeção de Dependências</strong>.",
                 h3_4_1: "Resumo dos Benefícios",
                 li1_strong: "Sem Erros Fatais:",

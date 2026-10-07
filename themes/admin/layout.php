@@ -527,19 +527,10 @@
         });
     </script>
         <?php
-        $unreadNotifs = [];
-        $allNotifs = [];
-        try {
-            $app = \DomainSystem\Core\Application::getInstance();
-            if ($app->getContainer()->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
-                $notifManager = $app->getContainer()->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
-                $unreadNotifs = $notifManager->getUnread();
-                $allNotifs = $notifManager->getAll();
-                if (!empty($unreadNotifs)) {
-                    $notifManager->markAsRead();
-                }
-            }
-        } catch (\Throwable $e) {}
+        // Notificações agora são injetadas pelo Workspace Wrapper
+    if (!isset($unreadNotifs)) $unreadNotifs = [];
+    if (!isset($allNotifs)) $allNotifs = [];
+    // Nota: O markAsRead() foi transferido ou deve ser gerenciado por API/Background.
     ?>
     <!-- OS Notification System (Hub & Toasts) -->
     <style>
@@ -793,7 +784,8 @@
 
             const item = document.createElement('div');
             item.className = 'os-notif-item ' + type;
-            item.innerHTML = `<strong>${type.toUpperCase()}</strong><br>${message}<span class="os-notif-time">Agora mesmo</span>`;
+            item.innerHTML = `<strong>${type.toUpperCase()}</strong><br><span class="os-msg-content"></span><span class="os-notif-time">Agora mesmo</span>`;
+            item.querySelector('.os-msg-content').textContent = message;
             
             // Add to top
             list.prepend(item);

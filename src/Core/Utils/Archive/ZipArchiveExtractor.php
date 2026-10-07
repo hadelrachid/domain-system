@@ -94,17 +94,19 @@ class ZipArchiveExtractor implements ExtractorInterface
      */
     private function safeExtract(ZipArchive $zip, string $tempDir): void
     {
+        $safeFiles = [];
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
-            $targetPath = $tempDir . DIRECTORY_SEPARATOR . $filename;
             
-            // Defesa 2 contra Zip-Slip: Verifica se o caminho real após resolver continua dentro do tempDir
-            if (substr(realpath(dirname($targetPath)), 0, strlen(realpath($tempDir))) !== realpath($tempDir) && realpath(dirname($targetPath)) !== false) {
-                 continue; // Arquivo tentando escapar da quarentena, ignorar.
+            // Defesa 2 contra Zip-Slip: Nomes não podem ter path traversal
+            if (strpos($filename, '../') !== false || strpos($filename, '..\\') !== false) {
+                 throw new Exception("Falha de Segurança: Caminho malicioso detectado dentro do ZIP.");
             }
+            $safeFiles[] = $filename;
         }
         
-        $zip->extractTo($tempDir);
+        // Só extrai os arquivos previamente validados
+        $zip->extractTo($tempDir, $safeFiles);
     }
 
     private function moveToDestination(string $sourcePath, string $destinationPath, string $componentDirName, string $descriptorFile): void

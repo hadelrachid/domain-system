@@ -14,6 +14,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->listenHook('router.register');
         $os->listenHook('shortcodes.register');
@@ -62,7 +63,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->getLink('core.db.schema');
             
             $schema->create('theme_menus', function ($table) {
                 $table->id();

@@ -51,8 +51,7 @@ class MonitorController
             unlink($disarmedPath);
         }
 
-        header("Location: " . BASE_URL . "/admin/monitor?cleared=1");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/monitor?cleared=1");
     }
 
     public function getStackApi()
@@ -64,13 +63,11 @@ class MonitorController
             $processes = json_decode(file_get_contents($stackPath), true) ?: [];
             $lastModified = filemtime($stackPath);
         }
-        header('Content-Type: application/json');
-        echo json_encode([
+        return new \DomainSystem\Core\Http\Responses\JsonResponse([
             'success'      => true,
             'processes'    => $processes,
             'lastModified' => $lastModified,
         ]);
-        exit;
     }
 
     public function clearApi()
@@ -79,13 +76,9 @@ class MonitorController
             if ($this->notifManager) {
                 $this->notifManager->clear();
             }
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true]);
-            exit;
+            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => true]);
         } catch (\Throwable $e) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false]);
-            exit;
+            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => false]);
         }
     }
 }

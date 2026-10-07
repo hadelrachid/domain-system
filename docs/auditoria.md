@@ -1,15 +1,15 @@
 > **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
 > 
-> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
+> O Domain System **NÃO** é mais um sistema Ambiente Operacional Web. Ele evoluiu para se tornar um **Ambiente Operacional Web (WOE) independente**.
 > 
-> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🛡️ Auditoria Arquitetural e de Segurança (Domain System OS v2.1)
+# 🛡️ Auditoria Arquitetural e de Segurança (Domain System v2.1)
 
 **Última Atualização:** 05 de Outubro de 2026
 
-Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Sistema Operacional Web estruturado em SOLID**.
+Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Ambiente Operacional Web estruturado em SOLID**.
 
 ---
 
@@ -74,6 +74,6 @@ Criação do artefato de Troubleshooting (`ERROR_DICTIONARY.md`), empacotando ex
 
 ## 📈 Conclusão
 
-O **Domain System OS v2.1.0** eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por testes unitários e CI (GitHub Actions), selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web OS Enterprise-Ready**.
+O **Domain System v2.1.0** eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por testes unitários e CI (GitHub Actions), selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web Platform Enterprise-Ready**.
 
 

@@ -17,6 +17,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db');
+        $os->requireLink('core.db.schema');
         // O Plugin Database grita para o OS: "Eu forneço essas 3 ferramentas para o sistema!"
         $os->provideLink('core.db', Connection::class);
         $os->provideLink('core.db.query', QueryBuilder::class);

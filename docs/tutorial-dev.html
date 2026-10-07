@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System OS | Guia do Desenvolvedor</title>
+    <title>Domain-System | Guia do Desenvolvedor</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -216,7 +216,7 @@
             <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
             <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
         </div>
-        <h1 data-i18n="title">Domain-System OS</h1>
+        <h1 data-i18n="title">Domain-System</h1>
         <p style="color: var(--accent-blue); font-size: 1.1rem;" data-i18n="subtitle">Official Extension Building Guide (Themes & Plugins)</p>
     </header>
 
@@ -226,7 +226,7 @@
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             <div>
                 <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">Critical Prerequisite</h3>
-                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">To build for Domain-System OS, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.</p>
+                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">To build for Domain-System, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.</p>
             </div>
         </div>
 
@@ -240,7 +240,7 @@
         <!-- TAB 1 -->
         <div id="tab1" class="tab-content active">
             <h2 data-i18n="tab1_h2">The End of Global Mess</h2>
-            <p data-i18n="tab1_p1">If you come from WordPress, you are used to creating a <code class="highlight">functions.php</code> and using global functions. In Domain-System OS, this is strictly prohibited.</p>
+            <p data-i18n="tab1_p1">If you come from WordPress, you are used to creating a <code class="highlight">functions.php</code> and using global functions. In Domain-System, this is strictly prohibited.</p>
             <p data-i18n="tab1_p2">Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class="highlight">OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.</p>
             
             <h3 data-i18n="tab1_h3">Dependency Injection (The Waiter)</h3>
@@ -305,7 +305,7 @@
 <pre>{
     <span class="s">"name"</span>: <span class="s">"test_os"</span>,
     <span class="s">"version"</span>: <span class="s">"1.0.0"</span>,
-    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Sistema Operacional Web"</span>,
+    <span class="s">"description"</span>: <span class="s">"Plugin de Teste para o novo Ambiente Operacional Web"</span>,
     <span class="s">"core"</span>: <span class="v">false</span>,
     <span class="s">"dependencies"</span>: []
 }</pre>
@@ -348,7 +348,7 @@
         
         <span class="v">$runtime</span>-><span class="f">contributeTo</span>(<span class="s">'admin.dashboard.alerts'</span>, [
             <span class="s">'type'</span> => <span class="s">'success'</span>,
-            <span class="s">'message'</span> => <span class="s">'O novo Sistema Operacional Web está operante!'</span>
+            <span class="s">'message'</span> => <span class="s">'O novo Ambiente Operacional Web está operante!'</span>
         ]);
 
         <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'patient.created'</span>, <span class="k">function</span>(<span class="v">$patientId</span>) <span class="k">use</span> (<span class="v">$db</span>) {
@@ -364,16 +364,16 @@
     <script>
         const translations = {
             en: {
-                title: "Domain-System OS",
+                title: "Domain-System",
                 subtitle: "Official Extension Building Guide (Themes & Plugins)",
                 alert_title: "Critical Prerequisite",
-                alert_desc: "To build for Domain-System OS, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.",
+                alert_desc: "To build for Domain-System, <strong>you must understand Object-Oriented Programming (OOP) concepts</strong>. The system does not use loose global functions. Everything is based on Interfaces, Contracts, Classes, and Encapsulation.",
                 tab1_btn: "1. The Contract",
                 tab2_btn: "2. Negotiation (osRegister)",
                 tab3_btn: "3. Execution (osBoot)",
                 tab4_btn: "4. Full Example",
                 tab1_h2: "The End of Global Mess",
-                tab1_p1: "If you come from WordPress, you are used to creating a <code class='highlight'>functions.php</code> and using global functions. In Domain-System OS, this is strictly prohibited.",
+                tab1_p1: "If you come from WordPress, you are used to creating a <code class='highlight'>functions.php</code> and using global functions. In Domain-System, this is strictly prohibited.",
                 tab1_p2: "Every Extension (Plugin or Theme) is a Class that must sign a contract called <code class='highlight'>OsExtensionInterface</code>. This contract divides your plugin's lifecycle into two isolated security phases.",
                 tab1_h3: "Dependency Injection (The Waiter)",
                 tab1_p3: "Here, you don't hunt for system resources by instantiating random variables globally. The system works on a 'Waiter' model: you sit down, ask for what you want (Phase 1), and the Operating System <strong class='highlight'>injects</strong> the ready tool right into your hands (Phase 2).",
@@ -386,32 +386,32 @@
                 tab4_json_title: "1. The Manifest (plugin.json or theme.json)",
                 tab4_json_desc: "This file acts as the passport for your extension. It tells the OS who you are before any PHP code runs.",
                 tab4_php_title: "2. The Contract (Plugin.php)",
-                tab4_php_desc: "Just create your class implementing the Interface. The Domain-System OS Kernel will automatically handle the rest."
+                tab4_php_desc: "Just create your class implementing the Interface. The Domain-System Kernel will automatically handle the rest."
             },
             pt: {
-                title: "Domain-System OS",
+                title: "Domain-System",
                 subtitle: "Guia Oficial de Construção de Extensões (Temas e Plugins)",
                 alert_title: "Pré-requisito Crítico",
-                alert_desc: "Para construir para o Domain-System OS, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.",
+                alert_desc: "Para construir para o Domain-System, <strong>você precisa entender os conceitos de Programação Orientada a Objetos (POO)</strong>. O sistema não utiliza funções globais soltas. Tudo é baseado em Interfaces, Contratos, Classes e Encapsulamento.",
                 tab1_btn: "1. O Contrato",
                 tab2_btn: "2. A Negociação (osRegister)",
                 tab3_btn: "3. A Execução (osBoot)",
                 tab4_btn: "4. Exemplo Completo",
                 tab1_h2: "O Fim da Bagunça Global",
-                tab1_p1: "Se você vem do WordPress, está acostumado a criar um <code class='highlight'>functions.php</code> e usar funções globais. No Domain-System OS, isso é proibido.",
+                tab1_p1: "Se você vem do WordPress, está acostumado a criar um <code class='highlight'>functions.php</code> e usar funções globais. No Domain-System, isso é proibido.",
                 tab1_p2: "Toda Extensão (Plugin ou Tema) é uma Classe que deve assinar um contrato chamado <code class='highlight'>OsExtensionInterface</code>. Esse contrato divide a vida do seu plugin em duas fases de segurança.",
                 tab1_h3: "A Injeção de Dependências (O Garçom)",
-                tab1_p3: "Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo 'Garçom': você senta, pede o que quer (Fase 1), e o Sistema Operacional <strong class='highlight'>injeta</strong> a ferramenta pronta na sua mão (Fase 2).",
+                tab1_p3: "Aqui, você não procura por recursos do sistema instanciando variáveis aleatórias. O sistema funciona no modelo 'Garçom': você senta, pede o que quer (Fase 1), e o Ambiente Operacional <strong class='highlight'>injeta</strong> a ferramenta pronta na sua mão (Fase 2).",
                 tab2_h2: "Fase 1: Negociação (osRegister)",
-                tab2_p1: "Antes de rodar qualquer regra de negócio, você usa o objeto <code class='highlight'>OsConnector</code> para avisar ao Sistema Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.",
+                tab2_p1: "Antes de rodar qualquer regra de negócio, você usa o objeto <code class='highlight'>OsConnector</code> para avisar ao Ambiente Operacional o que você vai precisar usar. Se você não pedir permissão aqui, será bloqueado na Fase 2.",
                 tab3_h2: "Fase 2: Execução (osBoot)",
-                tab3_p1: "Depois de aprovar seu contrato, o Sistema Operacional te passa o <code class='highlight'>OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.",
+                tab3_p1: "Depois de aprovar seu contrato, o Ambiente Operacional te passa o <code class='highlight'>OsRuntime</code>. É aqui que você trabalha, recebendo os recursos que requisitou com Injeção de Dependências.",
                 tab4_h2: "Estrutura Completa da Extensão",
                 tab4_p1: "Toda extensão precisa de dois arquivos para existir: o Manifesto (JSON) e o Contrato (Classe PHP).",
                 tab4_json_title: "1. O Manifesto (plugin.json ou theme.json)",
                 tab4_json_desc: "Esse arquivo age como o passaporte da sua extensão. Ele avisa ao SO quem você é antes de qualquer código PHP rodar.",
                 tab4_php_title: "2. O Contrato (Plugin.php)",
-                tab4_php_desc: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System OS fará todo o resto automaticamente."
+                tab4_php_desc: "Basta criar a sua classe implementando a Interface. O Kernel do Domain-System fará todo o resto automaticamente."
             }
         };
 

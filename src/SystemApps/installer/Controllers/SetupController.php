@@ -26,9 +26,7 @@ class SetupController
     {
         $path = DOMAIN_SYSTEM_ROOT . '/public/assets/img/site-home/logo-rd.svg';
         if (file_exists($path)) {
-            header('Content-Type: image/svg+xml');
-            readfile($path);
-            exit;
+            return new \DomainSystem\Core\Http\Responses\Response(file_get_contents($path), 200, ['Content-Type' => 'image/svg+xml']);
         }
         return new Response('', 404);
     }
@@ -127,15 +125,14 @@ class SetupController
             $session->remove('auth_error'); // Limpa qualquer erro de login fantasma
         } catch (\Exception $e) {
             // Em vez de engolir o erro, mostre-o para debug!
-            die("Erro crítico ao criar usuário: " . $e->getMessage());
+            throw $e;
         }
 
         // O redirecionamento após o sucesso fará o kernel reavaliar a existência do Admin no banco.
         
         file_put_contents(DOMAIN_SYSTEM_ROOT . '/config/installed.lock', date('Y-m-d H:i:s'));
         // Redirect to admin
-        header("Location: " . BASE_URL . "/admin");
-        exit;
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin");
     }
 }
 

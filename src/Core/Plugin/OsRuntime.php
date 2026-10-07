@@ -19,8 +19,10 @@ class OsRuntime implements OsRuntimeInterface
     private LinkRegistry $linkRegistry;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher;
     
-    public function __construct(ContainerInterface $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher)
-    {
+    private string $pluginNamespace = '';
+
+    public function __construct(ContainerInterface $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher, string $pluginNamespace = '') {
+        $this->pluginNamespace = $pluginNamespace;
         $this->container = $container;
         $this->connectorManifest = $connectorManifest;
         $this->linkRegistry = $linkRegistry;
@@ -113,6 +115,11 @@ class OsRuntime implements OsRuntimeInterface
     {
         if (str_starts_with($class, 'DomainSystem\\Core\\')) {
             throw new \Exception("Auditoria de Seguranca: Um Plugin Ring 3 nao pode instanciar Core classes diretamente. Use getLink().");
+        }
+        if (str_starts_with($class, 'DomainSystem\\SystemApps\\') || str_starts_with($class, 'DomainSystem\\Plugins\\')) {
+            if (empty($this->pluginNamespace) || !str_starts_with($class, $this->pluginNamespace)) {
+                throw new \Exception("Auditoria de Seguranca: Isolamento quebrado. Nao e permitido instanciar classes de outros plugins ou SystemApps diretamente ($class). Use getLink().");
+            }
         }
         return $this->container->make($class);
     }

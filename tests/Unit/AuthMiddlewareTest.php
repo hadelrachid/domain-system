@@ -38,8 +38,30 @@ class AuthMiddlewareTest extends TestCase
         $this->assertEquals('passed', $result);
     }
     
-    // Testa o die() por reflection ou processo separado é complexo. 
-    // Em vez disso testaremos pelo menos o comportamento de permissão.
+    public function testMiddlewareBlocksAccessWhenDenied()
+    {
+        $this->sessionMock->method('get')->willReturnMap([
+            ['user_id', null, 5],
+            ['user_name', 'Usuário 5', 'Tester']
+        ]);
+        
+        $this->identityMock->method('userCan')->willReturn(false);
+        $this->identityMock->method('hasRole')->willReturn(false);
+        
+        $middleware = new AuthMiddleware($this->sessionMock, $this->identityMock);
+        
+        $called = false;
+        $next = function($req) use (&$called) {
+            $called = true;
+            return 'passed';
+        };
+
+        $result = $middleware->handle($this->requestMock, $next, ['capabilities' => ['core.manage']]);
+        
+        $this->assertFalse($called);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $result);
+        $this->assertEquals(403, $result->getStatusCode());
+    }
     
     public function testMiddlewareAllowsAccessWhenUserHasCapability()
     {

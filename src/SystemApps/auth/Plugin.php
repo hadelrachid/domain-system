@@ -20,6 +20,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db.schema');
         // Pede os serviços vitais
         $os->requireLink('core.db');
         $os->requireLink('core.session');
@@ -40,6 +41,15 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             \DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface::class,
             \DomainSystem\SystemApps\auth\Repositories\UserRepository::class
         );
+        $runtime->bind(
+            \DomainSystem\SystemApps\auth\Contracts\RoleRepositoryInterface::class,
+            \DomainSystem\SystemApps\auth\Repositories\RoleRepository::class
+        );
+        $runtime->bind(
+            \DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface::class,
+            \DomainSystem\SystemApps\auth\Repositories\CapabilityRepository::class
+        );
+
 
         $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface::class,
@@ -110,7 +120,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->getLink('core.db.schema');
             $schema->create('users', function ($table) {
                 $table->id();
                 $table->string('name');
@@ -157,7 +167,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             });
             
             // Seed base Roles and migrate existing Admins
-            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->getLink('core.db')->getPdo();
             
             // 1. Create Admin Role if not exists
             $stmt = $db->query("SELECT id FROM roles WHERE slug = 'admin'");
@@ -184,7 +194,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         } catch (\Exception $e) {}
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
-        $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+        $db = $runtime->getLink('core.db')->getPdo();
         try { $db->exec("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'admin'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}

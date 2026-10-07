@@ -19,6 +19,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db');
+        $os->requireLink('core.db.schema');
         $os->requireLink('core.session');
         $os->listenHook('router.register');
         $os->listenHook('admin.menu');
@@ -63,14 +65,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
-        $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+        $schema = $runtime->getLink('core.db.schema');
         $schema->create('settings', function ($table) {
             $table->string('key_name', 100)->primary();
             $table->text('key_value')->nullable();
         });
 
         /** @var \DomainSystem\SystemApps\Database\Connection $connection */
-        $connection = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class);
+        $connection = $runtime->getLink('core.db');
         $db = $connection->getPdo();
 
         // Inserir valores padro se a tabela estiver vazia

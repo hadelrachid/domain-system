@@ -172,13 +172,9 @@ class SettingsController
             // Destruir sessão
             session_destroy();
             
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true]);
-            exit;
+            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => true]);
         } catch (\Exception $e) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Erro ao redefinir: ' . $e->getMessage()]);
-            exit;
+            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => false, 'error' => 'Erro ao redefinir: ' . $e->getMessage()]);
         }
     }
 }

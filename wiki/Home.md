@@ -4,7 +4,7 @@
 
 # 🇧🇷 Bem-vindo ao Domain-System (Cockpit) 🚀
 
-O **Domain-System** não é apenas um sistema de sistema. Ele é um autêntico **Sistema Operacional Web** (CMS / Framework Universal). O "pacote de sistema médica" é apenas um exemplo do que ele pode rodar. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
+O **Domain-System** não é apenas um sistema de sistema. Ele é um autêntico **Ambiente Operacional Web** (CMS / Framework Universal). O "pacote de sistema médica" é apenas um exemplo do que ele pode rodar. É uma plataforma **Event-Driven (Orientada a Eventos)** altamente modular, resiliente e desenhada sob os rigorosos princípios da arquitetura **SOLID**. 
 
 Inspirado nas engrenagens de grandes ecossistemas (como o WordPress e sistemas operacionais de missão crítica), o projeto foi concebido para ser altamente escalável, permitindo que componentes sejam conectados ou desconectados em tempo real sem afetar o núcleo do sistema.
 
@@ -15,7 +15,7 @@ Inspirado nas engrenagens de grandes ecossistemas (como o WordPress e sistemas o
 A arquitetura do Domain-System é dividida em três pilares principais:
 
 ### 1. O Kernel (SystemAdmin) e o Event Dispatcher
-No coração do sistema, não existe regra de negócio (usuários, Prontuários, Finanças). O Kernel atua puramente como um **Sistema Operacional**. Sua principal ferramenta é o **Event Dispatcher** (Despachante de Eventos).
+No coração do sistema, não existe regra de negócio (usuários, Prontuários, Finanças). O Kernel atua puramente como um **Ambiente Operacional**. Sua principal ferramenta é o **Event Dispatcher** (Despachante de Eventos).
 - O Kernel não chama os módulos. Ele apenas "grita" eventos no sistema (ex: `router.register`, `admin.menu`, `appointment.created`).
 - Os módulos (Plugins), que estão "escutando" essas frequências, reagem e injetam seus dados no Kernel. Isso garante **desacoplamento absoluto**.
 

@@ -1,13 +1,13 @@
 > **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
 > 
-> O Domain System **NÃO** é mais um sistema de "SaaS Multi-Tenant". Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente** e puro.
+> O Domain System **NÃO** é mais um sistema de "SaaS Multi-Tenant". Ele evoluiu para se tornar um **Ambiente Operacional Web (WOE) independente** e puro.
 > 
-> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
+> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🗺️ Roteiro de Desenvolvimento — Domain System OS v2.0
+# 🗺️ Roteiro de Desenvolvimento — Domain System v2.0
 
-Este documento descreve a visão de futuro para o **Domain System OS**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema para bater de frente com as ferramentas consolidadas no mercado (WordPress, Laravel).
+Este documento descreve a visão de futuro para o **Domain System**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema para bater de frente com as ferramentas consolidadas no mercado (WordPress, Laravel).
 
 ---
 
@@ -79,7 +79,7 @@ Este documento descreve a visão de futuro para o **Domain System OS**. As prior
 | Item | Prioridade | Status |
 |------|------------|--------|
 | Implementar Padronização Completa de Erros (Dicionário de Códigos) | P0 (Crítico) | 🟢 Concluído |
-| Expurgo Absoluto de Dependências de Negócio (Desacoplamento para Web OS) | P0 (Crítico) | 🟢 Concluído |
+| Expurgo Absoluto de Dependências de Negócio (Desacoplamento para Web Platform) | P0 (Crítico) | 🟢 Concluído |
 | Decompor `ErrorHandler` nativo e mesclar com o No-Break Shield | P1 (Alta) | 🟡 Em Progresso |
 | Migrar Queries Manuais para um QueryBuilder unificado | P2 (Média) | 🕒 Pendente |
 

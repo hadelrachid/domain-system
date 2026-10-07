@@ -49,7 +49,11 @@ class CsrfMiddleware implements MiddlewareInterface
 
         if (!$this->session->validateCsrfToken($token)) {
             // Log failed CSRF
-            file_put_contents(DOMAIN_SYSTEM_ROOT . '/temp/csrf_debug.log', date('Y-m-d H:i:s') . " - CSRF Failed. Passed: $token, Expected: " . $this->session->get('csrf_token') . "\n", FILE_APPEND);
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $uri = $request->uri();
+            $method = $request->method();
+            $tokenPresent = empty($token) ? 'no' : 'yes';
+            file_put_contents(DOMAIN_SYSTEM_ROOT . '/temp/csrf_debug.log', date('Y-m-d H:i:s') . " - CSRF Failed. route=$uri method=$method IP=$ip token_present=$tokenPresent\n", FILE_APPEND);
             
             http_response_code(403);
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';

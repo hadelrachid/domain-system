@@ -70,6 +70,13 @@ class SessionManager implements SessionManagerInterface
             
             // Finalmente, inicia a sessão no PHP.
             session_start();
+
+            /* ============================================================================
+             * Resumindo: "Antes de iniciar a sessão PHP, verifique se ela ainda não 
+             * existe e se ainda podemos enviar headers; depois configure o cookie com 
+             * algumas proteções de segurança, ative o modo estrito, dê um nome específico 
+             * à sessão e finalmente inicie-a."
+            =============================================================================== */
         }
 
         // ---------------------------------------------------------------------

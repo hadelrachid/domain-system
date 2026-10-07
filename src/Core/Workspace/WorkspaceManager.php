@@ -38,7 +38,11 @@ class WorkspaceManager
         if (isset($this->workspaces[$role])) {
             $workspace = $this->workspaces[$role];
         } else {
-            $workspace = new DefaultWorkspace($this->theme);
+            $notifManager = null;
+            if ($this->container->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)) {
+                $notifManager = $this->container->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class);
+            }
+            $workspace = new DefaultWorkspace($this->theme, $notifManager);
         }
 
         // Troca automaticamente a fiação do motor de renderização para o CockPIT atual!

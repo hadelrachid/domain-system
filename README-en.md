@@ -1,63 +1,68 @@
+> **ARCHITECTURAL ALIGNMENT / PARADIGM SHIFT (2026-10-07)**
+> 
+> The Domain System has evolved its conceptual identity. It is a **Web Application Execution Platform** and an **Ecosystem Framework**. 
+> It acts primarily as a **Web Page Manager (Advanced CMS)** and a **Service and API Orchestrator**. 
+> Although it adopts the *architecture and jargon* of Operating Systems (Micro-Kernel, Protection Rings, Process Isolation, IPC), it is not a bare-metal OS (like Linux/Windows), but rather a **Web Operating Environment** running on top of the PHP/Linux stack.
+
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-2.0.0-blueviolet?style=for-the-badge" alt="Version 2.0.0">
+  <img src="https://img.shields.io/badge/Version-2.1.0-blueviolet?style=for-the-badge" alt="Version 2.1.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Weight-~26MB-orange?style=for-the-badge" alt="Weight">
   <br><br>
-  <h1>⚙️ Domain System OS (v2.0)</h1>
-  <p><strong>A 26MB Web Operating System. A clean, hyper-resilient, SOLID-structured alternative to replace giants like WordPress and monolithic frameworks.</strong></p>
+  <h1>🛸 Domain System (v2.1)</h1>
+  <p><strong>A hyper-resilient Web Platform built on SOLID principles to replace giants like WordPress and monolithic frameworks.</strong></p>
 </div>
 
 ---
 
-[🇧🇷 Ler em Português](README.md) | [📚 Documentation & Tutorials]( https://hadelrachid.github.io/domain-system/) | [🔍 Architectural Audit](docs/auditoria-en.md)
+[🇧🇷 Ler em Português](README.md) | [📖 Documentation & Tutorials]( https://hadelrachid.github.io/domain-system/) | [🛡️ Architectural Audit](docs/auditoria.md)
 
-## 🧠 What is the Domain System?
+## 🧠 What is Domain System?
 
-The **Domain System** is not just another off-the-shelf CMS or Framework. It was born with the ambitious goal of being a lightweight and powerful alternative to the WordPress and Laravel ecosystems, currently taking up only **~26.2 MB** of server space.
+**Domain System** is not just another off-the-shelf CMS or Framework. It was born with the ambitious goal of being a lightweight and armored alternative to the WordPress and Laravel ecosystem, currently occupying only **~26.2 MB** of server space.
 
-Built under strict **SOLID** principles and using pure **Dependency Injection**, it behaves like a **True Web Operating System**.
+Built under the strict rules of **SOLID** and purely utilizing **Dependency Injection**, it behaves as a **Web Operating Environment**.
 The limit is your imagination:
-- The **Core (Micro-Kernel)** provides the low-level, completely agnostic infrastructure: Database Connection, Dynamic Routing, Telemetry, Security (Anti-CSRF, Gatekeeper) and Process Management (PIDs).
-- All **business logic** is injected through **Modules (Ring 0 / Ring 3)**. The core never knows what the application does, it merely orchestrates the lifecycle!
+- The **Core (Micro-Kernel)** provides low-level, completely agnostic infrastructure: Database Connection, Dynamic Routing, Telemetry, Capability-based Security (ACL, Anti-CSRF), and Lifecycle Management.
+- All **business logic** and **page/service management** is injected through **Modules**. The kernel never knows what the application does; it merely orchestrates the events!
 
-## ⚡ Key Features
+## 🚀 Key Features
 
 ### 🛡️ 1. Ring 0 / Ring 3 Architecture (Isolated Privileges)
-Inspired by real Operating Systems (like Linux/Windows), the system isolates its extensions into two privilege rings. **SystemApps (Ring 0)** are vital system components (e.g., Database, Auth, Admin) that cannot be deleted or disabled. **UserPlugins (Ring 3)** are third-party additions that run with limited privileges and are strictly monitored.
+Inspired by real Operating System security, the system isolates its extensions into two privilege rings. **SystemApps (Ring 0)** are vital system components (e.g., Database, Identity/Auth, Admin Panel) that manage essential services. **UserPlugins (Ring 3)** are third-party additions running with limited privileges and are prevented from injecting or hijacking core instances.
 
-### 🛡️ 2. Gatekeeper (The Installation Guardian)
-Full protection against malicious ZIPs. The installer doesn't blindly trust uploads; it extracts the package into a quarantine area, scans the source code (looking for Path Traversal/Zip-Slip vulnerabilities) and prevents any Privilege Escalation attempts (e.g., plugins trying to usurp the Ring 0 namespace).
+### 🛡️ 2. Gatekeeper (Installation Guardian)
+Total protection against malicious ZIPs. The installer does not blindly trust uploads; it extracts the package into a quarantine area, scans the source code (looking for Path Traversal/Zip-Slip vulnerabilities), and prevents any Privilege Escalation attempt (e.g., plugins trying to usurp the Ring 0 namespace).
 
-### 🧯 3. No-Break Shield (The Immortal Circuit Breaker)
-Forget the "White Screen of Death" (WSOD). The Domain System runs with the **No-Break Shield**: a Kernel-level *Circuit Breaker* that intercepts fatal crashes generated by poorly written plugins. If a Ring 3 plugin causes a severe logical or syntax error, it is ejected from memory at runtime, and the rest of the panel remains alive.
+### 🔋 3. No-Break Shield (The Immortal Breaker)
+Forget the "White Screen of Death" (WSOD). Domain System runs with the **No-Break Shield**: a centralized *Circuit Breaker* that intercepts fatal flaws generated by poorly coded plugins. If a Ring 3 plugin causes a synthetic or severe logic error, it is isolated, and the rest of the panel stays alive.
 
-### 🏗️ 4. Integrated Builder Flex and Theme Hub
-The theme system isn't just for loading CSS. The FlexTheme Engine acts as a powerful visual hub, integrating the **Builder Flex**, a clean and modularized drag-and-drop page builder that communicates directly with the OS API.
+### 🎨 4. Content and Services Manager
+The system has the flexibility to manage web pages (CMS) using the built-in **Builder Flex**, in addition to providing routes for RESTful APIs, allowing the platform to operate not just as a website, but as a backend for modern services.
 
-### 🔐 5. Anti-CSRF Security and 2FA (TOTP)
-The core has been audited by artificial intelligences to block CSRF attacks with forced validation on all requests (including API routes). Additionally, the native Auth module includes support for Google Authenticator, shielding administrative access.
+### 🔐 5. Anti-CSRF Security and Access Control (ACL)
+The core was rigorously audited to block CSRF and Cross-Site Scripting (XSS) attacks. Identity management is based on a robust **Capability Security** engine, where Privileges are intercepted in Middleware prior to execution. Native support for 2FA (Google Authenticator) protects the administrative layer.
 
-## 🚀 How to Install
+## ⚙️ How to Install
 
-1. **Clone the repository** into your Apache/Nginx public server folder (e.g., `htdocs` or `www`):
+1. **Clone the repository** into the public folder of your Apache/Nginx server (e.g., `htdocs` or `www`):
    ```bash
    git clone https://github.com/hadelrachid/domain-system.git
    ```
 
-2. **Permissions (Linux/Mac):** Make sure the folder has write permissions for the web server.
+2. **Permissions (Linux/Mac):** Ensure the folder has write permissions for the web server.
    ```bash
    chmod -R 755 domain-system
    ```
 
-3. **Start the Installer:** Access the project folder through your browser (e.g., `http://localhost/domain-system`). You will be redirected to the **Setup Wizard**.
+3. **Start the Installer:** Access the project folder via your browser (e.g., `http://localhost/domain-system`). You will be redirected to the **Setup Wizard**.
 
-4. **Follow the Steps:** Enter your MySQL database details or choose SQLite. Create your Master user, and you're done. The Setup will self-destruct after configuration for security reasons.
+4. **Follow the Steps:** Enter your database details (MySQL natively supported via PDO) or choose SQLite. Create your Master user, and you're done. The Setup will self-destruct after configuration for security reasons.
 
-## 🛠️ For Developers (SDK)
+## 👨‍💻 For Developers (SDK)
 
-The OS features a massive system of **Hooks (Event-Driven)** for you to alter the system flow without touching the Kernel's source code.
-The architecture has been entirely swept to remove Anti-Patterns (such as `Service Locator` / `Application::getInstance()`), enforcing declarative dependency injections and pure interfaces.
-To create your own component, consult our [Plugin Development Guide](DEVELOPER_GUIDE.md).
-
+The system features a massive **Hooks (Event-Driven)** engine allowing you to alter the flow without touching the Kernel source code.
+The architecture was entirely swept to remove Anti-Patterns (such as `Service Locator`), enforcing declarative dependency injections and pure interfaces.
+To create your own component, refer to our [Plugin Development Guide](DEVELOPER_GUIDE.md).

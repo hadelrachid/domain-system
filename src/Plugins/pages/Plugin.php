@@ -20,6 +20,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->listenHook('admin.menu');
         $os->listenHook('shortcodes.register');
@@ -84,7 +85,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->getLink('core.db.schema');
             $schema->create('pages', function ($table) {
                 $table->id();
                 $table->string('slug')->unique();
@@ -96,7 +97,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             });
             
             // Seed default pages
-            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->getLink('core.db')->getPdo();
             
             $defaults = [
                 ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>'],

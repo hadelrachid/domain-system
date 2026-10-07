@@ -15,6 +15,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->listenHook('admin.menu');
         $os->listenHook('router.register');
@@ -53,7 +54,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         // Criação da tabela de cursos
-        $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+        $schema = $runtime->getLink('core.db.schema');
         $schema->create('academy_courses', function ($table) {
             $table->id();
             $table->string('title');
@@ -69,7 +70,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     private function renderHub(OsRuntimeInterface $runtime): string
     {
         try {
-            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->getLink('core.db')->getPdo();
             $stmt = $db->query("SELECT * FROM academy_courses WHERE status IN ('published', 'soon') ORDER BY id DESC");
             $courses = $stmt->fetchAll();
             

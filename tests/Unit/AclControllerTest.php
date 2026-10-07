@@ -1,58 +1,73 @@
 <?php
-
 namespace DomainSystem\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use DomainSystem\SystemApps\SystemAdmin\Controllers\AclController;
-use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\SystemApps\Database\Connection;
+use DomainSystem\Core\Http\Request;
+use DomainSystem\SystemApps\auth\Contracts\RoleRepositoryInterface;
+use DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface;
+use DomainSystem\Core\Http\Response;
 
 class AclControllerTest extends TestCase
 {
     private $themeMock;
-    private $pdoMock;
-    private $dbMock;
-    
+    private $rolesMock;
+    private $capsMock;
+
     protected function setUp(): void
     {
         $this->themeMock = $this->createMock(ThemeManager::class);
-        $this->themeMock->method('render')->willReturn('<h1>Controle de Acessos (ACL)</h1>');
-        
-        $this->pdoMock = $this->createMock(\PDO::class);
-        $stmtMock = $this->createMock(\PDOStatement::class);
-        $stmtMock->method('fetchAll')->willReturn([]);
-        $this->pdoMock->method('query')->willReturn($stmtMock);
-
-        $this->dbMock = $this->createMock(Connection::class);
-        $this->dbMock->method('getPdo')->willReturn($this->pdoMock);
+        $this->rolesMock = $this->createMock(RoleRepositoryInterface::class);
+        $this->capsMock = $this->createMock(CapabilityRepositoryInterface::class);
     }
 
     public function testAclControllerExistsAndCanRenderIndex()
     {
-        $controller = new AclController($this->themeMock, $this->dbMock);
-        $requestMock = $this->createMock(Request::class);
+        $this->rolesMock->method('findAll')->willReturn([
+            ['id' => 1, 'slug' => 'admin', 'name' => 'Admin']
+        ]);
+        $this->capsMock->method('findAll')->willReturn([
+            ['id' => 1, 'slug' => 'write.post']
+        ]);
+        $this->capsMock->method('getCapabilitiesForRole')->willReturn([
+            ['id' => 1, 'slug' => 'write.post']
+        ]);
+
+        $this->themeMock->expects($this->once())
+            ->method('render')
+            ->with('acl_panel', $this->anything())
+            ->willReturn('html');
+
+        $controller = new AclController($this->themeMock, $this->rolesMock, $this->capsMock);
         
-        $response = $controller->index($requestMock);
-        $this->assertStringContainsString('Controle de Acessos (ACL)', $response);
+        $requestMock = clone $this->createMock(Request::class);
+        $res = $controller->index($requestMock);
+        
+        $this->assertEquals('html', $res);
     }
-    
+
     public function testAclControllerCanSaveCapabilities()
     {
-        $controller = new AclController($this->themeMock, $this->dbMock);
-        $requestMock = $this->createMock(Request::class);
-        $requestMock->expects($this->any())->method('input')->willReturnMap([
-            ['permissions', [], [
-                1 => [2, 3], // role_id = 1, tem capabilities 2 e 3
-                2 => [3]     // role_id = 2, tem capability 3
-            ]]
+        $this->rolesMock->method('findAll')->willReturn([
+            ['id' => 1, 'slug' => 'admin', 'name' => 'Admin']
         ]);
         
-        $stmtMock = $this->createMock(\PDOStatement::class);
-        $stmtMock->method('execute')->willReturn(true);
-        $this->pdoMock->method('prepare')->willReturn($stmtMock);
+        $this->capsMock->method('getCapabilitiesForRole')->willReturn([
+            ['id' => 5]
+        ]);
+
+        $this->rolesMock->expects($this->once())->method('revokeCapability')->with(1, 5);
+        $this->rolesMock->expects($this->once())->method('grantCapability')->with(1, 10);
+
+        $requestMock = clone $this->createMock(Request::class);
+        $requestMock->expects($this->any())->method('input')->willReturn([
+            1 => [10]
+        ]);
+
+        $controller = new AclController($this->themeMock, $this->rolesMock, $this->capsMock);
+        $res = $controller->save($requestMock);
         
-        $response = $controller->save($requestMock);
-        $this->assertNotNull($response);
+        $this->assertEquals('saved', $res);
     }
 }

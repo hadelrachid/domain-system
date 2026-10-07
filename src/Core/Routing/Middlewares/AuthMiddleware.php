@@ -37,7 +37,7 @@ class AuthMiddleware implements MiddlewareInterface
 
         // Se não estiver logado
         if (!$userId) {
-            $this->blockAccess('Visitante Anônimo');
+            return $this->blockAccess('Visitante Anônimo');
         }
 
         $hasAccess = false;
@@ -52,21 +52,15 @@ class AuthMiddleware implements MiddlewareInterface
 
         if (!$hasAccess) {
             $userName = $this->session->get('user_name', 'Usuário ' . $userId);
-            $this->blockAccess($userName);
+            return $this->blockAccess($userName);
         }
 
         return $next($request);
     }
     
-    private function blockAccess(string $identityName): void
+    private function blockAccess(string $identityName): \DomainSystem\Core\Http\Response
     {
-        http_response_code(403);
-        $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;">'
-              . '<h2 style="color:#d63638;">Acesso Negado 🛡️</h2>'
-              . '<p>Sua identidade (' . htmlspecialchars($identityName) . ') não possui os privilégios necessários para executar esta ação no sistema.</p>'
-              . '<a href="javascript:history.back()" style="display:inline-block; margin-top:10px; padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px;">Voltar com Segurança</a>'
-              . '</div>';
-        echo $html;
-        exit;
+        $html = '<div style="padding:20px; text-align:center; font-family:sans-serif;"><h2 style="color:#d63638;">Acesso Negado 🛑</h2><p>Sua identidade (' . htmlspecialchars($identityName) . ') não possui os privilégios necessários para executar esta ação no sistema.</p><a href="javascript:history.back()" style="display:inline-block; margin-top:10px; padding:10px 20px; background:#2271b1; color:#fff; text-decoration:none; border-radius:3px;">Voltar com Segurança</a></div>';
+        return new \DomainSystem\Core\Http\Response($html, 403);
     }
 }

@@ -231,11 +231,13 @@ class PluginBootstrapper
                 // OS Boot (Para plugins que implementam OsExtensionInterface)
                 if ($plugin instanceof \DomainSystem\Core\Contracts\OsExtensionInterface) {
                     $connector = $connectors[$pluginName] ?? new \DomainSystem\Core\Plugin\OsConnector();
-                    $runtime   = new \DomainSystem\Core\Plugin\OsRuntime(
+                    $pluginNamespace = implode('\\', array_slice(explode('\\', get_class($plugin)), 0, 3));
+                    $runtime = new \DomainSystem\Core\Plugin\OsRuntime(
                         $this->container,
                         $connector,
                         $this->linkRegistry,
-                        $this->dispatcher
+                        $this->dispatcher,
+                        $pluginNamespace
                     );
                     $plugin->osBoot($runtime);
                 }

@@ -14,6 +14,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->requireLink('core.db.schema');
         $os->requireLink('core.dashboard.widgets');
         $os->requireLink('core.db');
         $os->listenHook('router.register');
@@ -61,7 +62,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // 3. Adicionar Widgets no Dashboard
         try {
             
-            $db = $runtime->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $db = $runtime->getLink('core.db')->getPdo();
             $runtime->onHook('dashboard.register_widgets', function($registry) use ($db) {
                 $registry->registerProvider(new \DomainSystem\Plugins\analytics\Widgets\AnalyticsWidgetProvider($db));
             });
@@ -71,7 +72,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
         try {
-            $schema = $runtime->make(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+            $schema = $runtime->getLink('core.db.schema');
             $schema->create('analytics_events', function ($table) {
                 $table->id();
                 $table->string('event_type', 50); // pageview, click

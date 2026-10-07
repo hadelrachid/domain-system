@@ -1,6 +1,6 @@
 # Plano de Ação - Resolução da Auditoria V3 (AI Hub)
 
-Este documento centraliza as diretrizes arquiteturais levantadas pelas inteligências (ChatGPT, Claude e DeepSeek) sobre a versão atual do **Domain System OS**. O objetivo é transformar o sistema de "funcional" para "intocável" e puramente fiel à sua promessa de Sistema Operacional Web.
+Este documento centraliza as diretrizes arquiteturais levantadas pelas inteligências (ChatGPT, Claude e DeepSeek) sobre a versão atual do **Domain System**. O objetivo é transformar o sistema de "funcional" para "intocável" e puramente fiel à sua promessa de Ambiente Operacional Web.
 
 ## 🔴 Prioridade 1: A Falsa Sandbox (ChatGPT)
 **O Problema:** A classe AbstractPlugin exige permissões via OsRuntime, mas o construtor injeta o Container inteiro nas mãos do Plugin. Com o Container, qualquer plugin malicioso pode invocar $this->container->make(...) e obter privilégios de Root (Ring 0), burlando completamente as travas de segurança.
