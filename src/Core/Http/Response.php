@@ -15,6 +15,18 @@ class Response implements ResponseInterface
         $this->content = $content;
         $this->statusCode = $statusCode;
         $this->headers = $headers;
+        
+        // Ensure default charset for HTML responses to prevent mojibake
+        $hasContentType = false;
+        foreach (array_keys($this->headers) as $k) {
+            if (strtolower($k) === 'content-type') {
+                $hasContentType = true;
+                break;
+            }
+        }
+        if (!$hasContentType) {
+            $this->headers['Content-Type'] = 'text/html; charset=utf-8';
+        }
     }
 
     public function setContent(string $content): self
@@ -47,7 +59,10 @@ class Response implements ResponseInterface
 
     public function getHeader(string $name): ?string
     {
-        return $this->headers[$name] ?? null;
+        foreach ($this->headers as $k => $v) {
+            if (strtolower($k) === strtolower($name)) return $v;
+        }
+        return null;
     }
 
     public function send(): void
@@ -63,7 +78,7 @@ class Response implements ResponseInterface
 
     public static function json($data, int $status = 200): self
     {
-        return new self(json_encode($data), $status, ['Content-Type' => 'application/json']);
+        return new self(json_encode($data), $status, ['Content-Type' => 'application/json; charset=utf-8']);
     }
 
     public static function redirect(string $url, int $status = 302): self
