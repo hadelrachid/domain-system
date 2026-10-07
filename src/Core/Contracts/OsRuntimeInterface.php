@@ -13,4 +13,7 @@ interface OsRuntimeInterface
     public function bind(string $abstract, callable|string $concrete): void;
     public function singleton(string $abstract, callable|string $concrete): void;
     public function make(string $class);
+    
+    // ACL Helper
+    public function registerCapability(string $slug, string $context = ''): void;
 }

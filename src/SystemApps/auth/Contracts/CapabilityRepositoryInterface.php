@@ -14,4 +14,7 @@ interface CapabilityRepositoryInterface
     // Check access
     public function getCapabilitiesForRole(int $roleId): array;
     public function userHasCapability(int $userId, string $capabilitySlug): bool;
+    
+    // Register (Upsert)
+    public function registerCapability(string $slug, string $context = ''): int;
 }

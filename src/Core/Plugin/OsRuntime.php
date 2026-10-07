@@ -123,4 +123,14 @@ class OsRuntime implements OsRuntimeInterface
         }
         return $this->container->make($class);
     }
+    
+    public function registerCapability(string $slug, string $context = ''): void
+    {
+        try {
+            $repo = $this->container->make(\DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface::class);
+            $repo->registerCapability($slug, $context);
+        } catch (\Exception $e) {
+            // Silently ignore if Auth plugin is not active/available yet
+        }
+    }
 }
