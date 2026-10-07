@@ -15,5 +15,6 @@
     "nav_menus": true,
     "Crash Test (Simulador)": false,
     "clock_widget": true,
-    "radio_online": true
+    "radio_online": true,
+    "flex_builder": true
 }
