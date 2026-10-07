@@ -1,10 +1,12 @@
 <?php
 use DomainSystem\Plugins\flex_builder\src\Widgets\ButtonWidget;
+use DomainSystem\Plugins\flex_builder\src\Widgets\ContainerWidget;
 use DomainSystem\Plugins\flex_builder\src\Registry\ComponentRegistry;
 
-// Inicializa o Registry e registra o botão (No futuro isso virá de um Bootstrapper)
+// Inicializa o Registry e registra o botão e o painel (No futuro isso virá de um Bootstrapper)
 $registry = ComponentRegistry::getInstance();
 $registry->registerComponent(new ButtonWidget());
+$registry->registerComponent(new ContainerWidget());
 $schemaJson = $registry->exportSchemaForFrontend();
 ?>
 
