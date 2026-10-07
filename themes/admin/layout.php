@@ -408,11 +408,17 @@
         ::selection { background: var(--accent-blue); color: #fff; }
 
         /* WIDGETS */
-        .widget-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; height: 100%; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+        .widget-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; max-height: 380px; min-height: 200px; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
         .widget-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); border-color: var(--accent-blue); }
-        .widget-header { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 5px; }
+        .widget-header { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 5px; flex-shrink: 0; }
         .widget-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .widget-body { flex: 1; font-size: 14px; }
+        .widget-body { flex: 1; font-size: 14px; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+        
+        /* Custom Scrollbar for Widgets */
+        .widget-body::-webkit-scrollbar { width: 6px; }
+        .widget-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .widget-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .widget-body::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
     </style>
     <!-- JS Kernel (DS) -->
     <script>window.DS_BASE_URL = '<?= BASE_URL ?>/';</script>
