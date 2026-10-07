@@ -24,7 +24,7 @@ class Plugin extends AbstractPlugin
     public function registerRoutes(RouteRegistry $registry): void
     {
         // Rota protegida do painel admin para o construtor Flex
-        $registry->get('/admin/flex-builder', 'DomainSystem\Plugins\flex_builder\Controllers\BuilderController@index', ['admin']);
+        $registry->get('/admin/builder', 'DomainSystem\Plugins\flex_builder\Controllers\BuilderController@index', ['admin']);
     }
 
     public function boot(): void
@@ -38,7 +38,7 @@ class Plugin extends AbstractPlugin
         add_action('admin_menu', function ($menus) {
             $menus[] = [
                 'title' => 'Construtor Flex',
-                'url' => '/admin/flex-builder',
+                'url' => '/admin/builder',
                 'icon' => 'fas fa-object-group',
                 'order' => 15
             ];
