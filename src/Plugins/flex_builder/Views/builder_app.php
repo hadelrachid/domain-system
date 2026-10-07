@@ -163,7 +163,7 @@ $schemaJson = $registry->exportSchemaForFrontend();
         <div class="ds-builder-canvas">
             <div class="ds-canvas-paper" id="builder-stage">
                 <!-- Dropzone de montagem visual -->
-                <div style="text-align: center; color: #94a3b8; margin-top: 200px;">
+                <div class="empty-stage-msg" style="text-align: center; color: #94a3b8; margin-top: 200px;">
                     <i class="fas fa-tools" style="font-size: 40px; margin-bottom: 20px;"></i>
                     <h3 style="margin:0;">Canvas do Tema</h3>
                     <p style="font-size: 13px;">Arraste os componentes VCL para construir o layout.</p>
@@ -185,24 +185,13 @@ $schemaJson = $registry->exportSchemaForFrontend();
     </div>
 </div>
 
+<script src="/domain-system/src/Plugins/flex_builder/public/js/builder_engine.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Carrega o Schema injetado pelo PHP no topo do arquivo
     const componentSchema = <?= $schemaJson ?>;
-    const palette = document.getElementById("component-palette");
-
-    for (const [id, config] of Object.entries(componentSchema)) {
-        let btn = document.createElement("button");
-        btn.innerHTML = `<i class="fas fa-cube" style="margin-right:8px; color: #38bdf8;"></i> ${config.name}`;
-        btn.style.cssText = "background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 12px; border-radius: 6px; cursor: grab; text-align: left; font-size: 13px; display: flex; align-items: center; transition: background 0.2s;";
-        
-        btn.onmouseover = () => btn.style.background = "#334155";
-        btn.onmouseout = () => btn.style.background = "#1e293b";
-
-        btn.onclick = () => {
-            alert("Ação Drag & Drop em Desenvolvimento: Você selecionou a VCL [" + config.name + "].");
-        };
-
-        palette.appendChild(btn);
-    }
+    
+    // Liga os motores!
+    window.Builder = new BuilderEngine(componentSchema);
 });
 </script>
