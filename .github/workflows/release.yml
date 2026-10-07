@@ -1,0 +1,48 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Dispara quando uma tag v* é enviada (ex: v2.1.0)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v3
+
+      - name: Preparar Ambiente PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          
+      - name: Instalar Dependências (Composer)
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Limpar Arquivos de Desenvolvimento
+        run: |
+          rm -rf .git .github tests scratch .gitignore composer.lock convert_md.py
+          rm -f refactor_widgets.php fix_divs.php
+
+      - name: Criar Pacote ZIP do Sistema
+        run: zip -r domain-system-core.zip .
+
+      - name: Empacotar Plugins Separados
+        run: |
+          cd src/Plugins
+          zip -r ../../radio_online.zip radio_online/
+          zip -r ../../clock_widget.zip clock_widget/
+          cd ../..
+
+      - name: Criar Release e Fazer Upload dos Arquivos
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            domain-system-core.zip
+            radio_online.zip
+            clock_widget.zip
+          generate_release_notes: true
