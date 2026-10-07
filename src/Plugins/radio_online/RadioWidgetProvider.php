@@ -75,8 +75,36 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
             
             $html .= '</div>';
             
-            // Texto de Status
-            $html .= '<div id="radio-status" style="font-size: 11px; color: #64748b; margin-top: 15px;">Parado.</div>';
+            // Texto de Status com Animação (Marquee Digital)
+            $html .= '<style>
+                @keyframes radioMarquee {
+                    0%   { transform: translateX(100%); }
+                    100% { transform: translateX(-100%); }
+                }
+                .radio-display-screen {
+                    background: #020617; 
+                    color: #10b981; 
+                    font-family: monospace; 
+                    font-size: 11px; 
+                    margin-top: 15px; 
+                    padding: 5px; 
+                    border-radius: 4px; 
+                    border: 1px solid #334155; 
+                    overflow: hidden; 
+                    position: relative;
+                    height: 20px;
+                }
+                .radio-marquee-text {
+                    position: absolute;
+                    white-space: nowrap;
+                    animation: radioMarquee 7s linear infinite;
+                    will-change: transform;
+                }
+            </style>';
+            
+            $html .= '<div class="radio-display-screen">';
+            $html .= '<div id="radio-status" class="radio-marquee-text">SISTEMA PRONTO. AGUARDANDO SINTONIA.</div>';
+            $html .= '</div>';
             
             // Audio tag invisível
             $html .= '<audio id="radio-audio-element" preload="none"></audio>';
@@ -97,6 +125,14 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                     let status = document.getElementById("radio-status");
                     
                     let isPlaying = false;
+
+                    function updateDisplay(text) {
+                        status.innerText = text;
+                        // Reset animation to re-trigger
+                        status.style.animation = "none";
+                        void status.offsetWidth; 
+                        status.style.animation = "radioMarquee 7s linear infinite";
+                    }
 
                     if(audio && btn && select && customUrlInput) {
                         
@@ -129,7 +165,7 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 audio.src = select.value === "custom" ? customUrlInput.value : select.value;
                                 if(audio.src) {
                                     audio.play();
-                                    status.innerText = "Sintonizando nova estação...";
+                                    updateDisplay("SINTONIZANDO: " + select.options[select.selectedIndex].text.toUpperCase());
                                 }
                             }
                         });
@@ -147,7 +183,7 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 select.insertBefore(option, select.lastElementChild);
                                 select.value = url;
                                 customGroup.style.display = "none";
-                                status.innerText = "Estação salva com sucesso!";
+                                updateDisplay("ESTAÇÃO SALVA NA MEMÓRIA!");
                             }
                         });
 
@@ -161,10 +197,10 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 btn.innerHTML = \'<i class="fas fa-play"></i>\';
                                 icon.style.color = "#64748b";
                                 icon.classList.remove("fa-fade");
-                                status.innerText = "Parado.";
+                                updateDisplay("SISTEMA PARADO.");
                             } else {
                                 if (!targetUrl) {
-                                    status.innerText = "Coloque uma URL válida!";
+                                    updateDisplay("ERRO: COLOQUE UMA URL VÁLIDA!");
                                     return;
                                 }
                                 audio.src = targetUrl;
@@ -174,16 +210,17 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 btn.innerHTML = \'<i class="fas fa-stop"></i>\';
                                 icon.style.color = "#38bdf8";
                                 icon.classList.add("fa-fade");
-                                status.innerText = "Conectando... (Streaming HTTPS/HTTP)";
+                                let stationName = select.value === "custom" ? "URL CUSTOMIZADA" : select.options[select.selectedIndex].text;
+                                updateDisplay("CONECTANDO: " + stationName.toUpperCase());
                             }
                         });
                         
                         audio.addEventListener("playing", () => {
-                            status.innerText = "Tocando ao vivo agora!";
+                            updateDisplay("FM STEREO AO VIVO: " + (select.value === "custom" ? "TRANSMISSÃO PERSONALIZADA" : select.options[select.selectedIndex].text.toUpperCase()));
                         });
                         
                         audio.addEventListener("error", () => {
-                            status.innerText = "Erro ao conectar. A URL é HTTPS e tem CORS liberado?";
+                            updateDisplay("ERRO DE SINAL (VERIFIQUE CORS OU URL)");
                             isPlaying = false;
                             btn.innerHTML = \'<i class="fas fa-play"></i>\';
                             icon.style.color = "#ef4444";
