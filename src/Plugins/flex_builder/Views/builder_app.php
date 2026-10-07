@@ -138,10 +138,10 @@ $schemaJson = $registry->exportSchemaForFrontend();
         </div>
 
         <div class="ds-builder-topbar-tools">
-            <select class="ds-builder-btn" style="appearance: auto;">
-                <option style="background: #0f172a; color: #f8fafc;">Editando: Cabeçalho (Header)</option>
-                <option style="background: #0f172a; color: #f8fafc;">Editando: Rodapé (Footer)</option>
-                <option style="background: #0f172a; color: #f8fafc;">Editando: Página Inicial</option>
+            <select class="ds-builder-btn" style="appearance: auto; cursor: pointer;">
+                <option style="background: #020617; color: #f8fafc;">Editando: Cabeçalho (Header)</option>
+                <option style="background: #020617; color: #f8fafc;">Editando: Rodapé (Footer)</option>
+                <option style="background: #020617; color: #f8fafc;">Editando: Página Inicial</option>
             </select>
             <button class="ds-builder-btn"><i class="fas fa-cog"></i> Configurações do Tema</button>
             <button class="ds-builder-btn ds-builder-btn-primary"><i class="fas fa-save"></i> Salvar Tema</button>
