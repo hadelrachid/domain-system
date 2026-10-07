@@ -36,7 +36,6 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
     public function renderWidget(string $widgetId): string
     {
         try {
-            
             $startOfMonth = date('Y-m-01 00:00:00');
             $endOfMonth = date('Y-m-t 23:59:59');
 
@@ -48,14 +47,13 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                 $unique = $row['unique_visits'] ?? 0;
 
                 return "
-                <div style style='text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-                        <h1 style='font-size: 46px; margin: 0; color: var(--accent-blue);'>{$total}</h1>
-                        <p style='color: var(--text-muted); font-size: 13px; margin-top: 5px;'>Visualizações Totais</p>
-                        
-                        <div style='margin-top: 15px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;'>
-                            <span style='font-size: 16px; font-weight: bold; color: var(--accent-green);'>{$unique}</span>
-                            <span style='font-size: 12px; color: var(--text-muted);'> Visitantes Únicos</span>
-                        </div>
+                <div style='text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
+                    <h1 style='font-size: 46px; margin: 0; color: var(--accent-blue);'>{$total}</h1>
+                    <p style='color: var(--text-muted); font-size: 13px; margin-top: 5px;'>Visualizações Totais</p>
+                    
+                    <div style='margin-top: 15px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;'>
+                        <span style='font-size: 16px; font-weight: bold; color: var(--accent-green);'>{$unique}</span>
+                        <span style='font-size: 12px; color: var(--text-muted);'> Visitantes Únicos</span>
                     </div>
                 </div>";
             }
@@ -65,9 +63,7 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                 $stmt->execute([$startOfMonth, $endOfMonth]);
                 $clicks = $stmt->fetchAll();
 
-                $html = "
-                <div style>
-                        <ul style='list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;'>";
+                $html = "<ul style='list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;'>";
                 
                 if (empty($clicks)) {
                     $html .= "<li style='color: var(--text-muted); text-align: center; font-size: 12px; margin-top: 20px;'>Nenhum clique registrado ainda.</li>";
@@ -76,7 +72,6 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                         $source = htmlspecialchars($c['event_source']);
                         $qtd = $c['cliq'];
                         
-                        // Icon definition
                         $iconColor = 'var(--text-muted)';
                         if (str_contains(strtolower($source), 'amazon')) $iconColor = '#FF9900';
                         if (str_contains(strtolower($source), 'hotmart')) $iconColor = '#F04E23';
@@ -92,16 +87,12 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
                         </li>";
                     }
                 }
-
-                $html .= "</ul></div>";
+                $html .= "</ul>";
                 return $html;
             }
-
         } catch (\Exception $e) {
-            return "<div class='widget-card'>Erro no DB: " . $e->getMessage() . "</div>";
+            return "<div>Erro no DB: " . $e->getMessage() . "</div>";
         }
-
         return "";
     }
 }
-
