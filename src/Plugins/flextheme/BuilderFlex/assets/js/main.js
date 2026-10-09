@@ -5,15 +5,17 @@
     const boot = () => {
         const byId = id => document.getElementById(id);
 
-        FlexBuilder.editor = new FlexBuilder.Editor({
+        BuilderFlex.editor = new BuilderFlex.Editor({
             canvasRoot:    byId('canvas-root'),
             dragOverlay:   byId('drag-overlay'),
             paletteList:   byId('palette-list'),
+            layerList:     byId('layer-list'),
             inspectorBody: byId('inspector-body'),
             exportModal:   byId('modalExport'),
-            exportOutput:  byId('exportJsonOutput')
+            exportOutput:  byId('exportJsonOutput'),
+            contextMenu:   byId('context-menu')
         });
-        FlexBuilder.editor.start();
+        BuilderFlex.editor.start();
     };
 
     if (document.readyState === 'loading') {

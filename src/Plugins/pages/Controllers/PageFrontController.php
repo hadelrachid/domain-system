@@ -73,15 +73,26 @@ class PageFrontController
             }
         } else {
             // Renderiza o fallback de conteúdo de banco de dados
-            $safeTitle = htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8');
-            $html = "<div class='container' style='padding: 60px 20px; min-height: 70vh;'>
-                        <article class='glass-panel' style='padding: 40px; margin-top: 20px;'>
-                            <h1 class='text-primary' style='font-size: 2.5rem; border-bottom: 1px solid rgba(69, 243, 255, 0.2); padding-bottom: 20px; margin-bottom: 30px;'>{$safeTitle}</h1>
-                            <div class='page-content' style='font-size: 1.1rem; line-height: 1.8; color: var(--text-main);'>
-                                {$page['content']}
-                            </div>
-                        </article>
-                     </div>";
+            if (!empty($page['content']) && str_starts_with(trim($page['content']), '[')) {
+                $tree = json_decode($page['content'], true);
+                if (is_array($tree)) {
+                    $app = \DomainSystem\Core\Application::getInstance();
+                    $renderer = $app->make(\DomainSystem\Plugins\flextheme\BuilderFlex\Core\JsonRenderer::class);
+                    $html = $renderer->renderTree($tree);
+                } else {
+                    $html = $page['content'];
+                }
+            } else {
+                $safeTitle = htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8');
+                $html = "<div class='container' style='padding: 60px 20px; min-height: 70vh;'>
+                            <article class='glass-panel' style='padding: 40px; margin-top: 20px;'>
+                                <h1 class='text-primary' style='font-size: 2.5rem; border-bottom: 1px solid rgba(69, 243, 255, 0.2); padding-bottom: 20px; margin-bottom: 30px;'>{$safeTitle}</h1>
+                                <div class='page-content' style='font-size: 1.1rem; line-height: 1.8; color: var(--text-main);'>
+                                    {$page['content']}
+                                </div>
+                            </article>
+                         </div>";
+            }
         }
 
         // Processa os shortcodes no HTML final!

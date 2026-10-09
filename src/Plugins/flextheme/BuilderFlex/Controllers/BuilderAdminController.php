@@ -23,19 +23,37 @@ class BuilderAdminController
 {
     private ThemeManagerInterface $theme;
     private WidgetManagerInterface $widgetManager;
+    private \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface $pageRepo;
 
-    public function __construct(ThemeManagerInterface $theme, WidgetManagerInterface $widgetManager)
+    public function __construct(ThemeManagerInterface $theme, WidgetManagerInterface $widgetManager, \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface $pageRepo)
     {
         $this->theme         = $theme;
         $this->widgetManager = $widgetManager;
+        $this->pageRepo = $pageRepo;
     }
 
     /**
      * Renderiza a view do editor visual (Full Site Editing).
      */
-    public function index(): \DomainSystem\Core\Http\Responses\ViewResponse
+    public function index(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Responses\ViewResponse
     {
+        $pageId = $request->input('page_id');
+        $pageContent = '';
+        
+        if ($pageId) {
+            $page = $this->pageRepo->findById((int)$pageId);
+            if ($page && !empty($page['content'])) {
+                $pageContent = $page['content'];
+            }
+        }
+
         ob_start();
+        // Passar os dados para a view
+        $builderData = [
+            'page_id' => $pageId,
+            'content' => $pageContent
+        ];
+        extract($builderData);
         include dirname(__DIR__) . '/views/builder_editor.php';
         return new \DomainSystem\Core\Http\Responses\ViewResponse(ob_get_clean(), false);
     }
@@ -86,5 +104,22 @@ class BuilderAdminController
             200,
             ['Content-Type' => 'application/json']
         );
+    }
+
+    public function save(\DomainSystem\Core\Http\Request $request)
+    {
+        $pageId = $request->input('page_id');
+        $content = $request->input('content');
+
+        if (!$pageId || empty($content)) {
+            return new Response(json_encode(['success' => false, 'error' => 'Missing page_id or content']), 400, ['Content-Type' => 'application/json']);
+        }
+
+        try {
+            $this->pageRepo->update((int)$pageId, ['content' => $content]);
+            return new Response(json_encode(['success' => true]), 200, ['Content-Type' => 'application/json']);
+        } catch (\Exception $e) {
+            return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
+        }
     }
 }

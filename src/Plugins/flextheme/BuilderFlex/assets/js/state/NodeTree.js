@@ -1,7 +1,7 @@
 /**
  * NodeTree — operações puras sobre a árvore de componentes (busca/remoção).
  */
-FlexBuilder.NodeTree = {
+BuilderFlex.NodeTree = {
     find(tree, id) {
         for (const node of tree) {
             if (node.id === id) return node;

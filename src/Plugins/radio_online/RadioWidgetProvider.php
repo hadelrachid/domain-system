@@ -46,13 +46,14 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
             
             // Combobox de Estações Rápidas
             $html .= '<div style="margin-bottom: 8px;">';
-            $html .= '<select id="radio-station-select" style="width: 100%; background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 8px; border-radius: 4px; outline: none; cursor: pointer; font-size: 13px;">';
+            $html .= '<select id="radio-station-select" style="width: 100%; margin-bottom: 5px; background: #0f172a; color: #38bdf8; border: 1px solid #334155; padding: 8px; border-radius: 4px; outline: none; cursor: pointer; font-size: 13px;">';
             $html .= '<option value="https://stream.live.vc.bbcmedia.co.uk/bbc_world_service">BBC World Service (News)</option>';
             $html .= '<option value="https://icecast.vrtcdn.be/stubru-high.mp3">Studio Brussel (Rock/Alt)</option>';
             $html .= '<option value="https://jazz.streamr.ru/jazz-128.mp3">Smooth Jazz 24/7</option>';
             $html .= '<option value="https://icecast.omroep.nl/radio1-bb-mp3">NPO Radio 1 (Holanda)</option>';
             $html .= '<option value="custom">-- Digitar URL Customizada --</option>';
             $html .= '</select>';
+            $html .= '<button id="radio-delete-btn" style="display: none; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.5); width: 100%; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Excluir Estação Salva"><i class="fas fa-trash"></i> Remover esta rádio da memória</button>';
             $html .= '</div>';
             
             // Input de Texto para URL Personalizada e Botão Salvar
@@ -123,6 +124,7 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                     let volume = document.getElementById("radio-volume");
                     let icon = document.getElementById("radio-icon");
                     let status = document.getElementById("radio-status");
+                    let deleteBtn = document.getElementById("radio-delete-btn");
                     
                     let isPlaying = false;
 
@@ -152,6 +154,14 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                         
                         // Lógica de Sincronia entre Combobox e Input Text
                         select.addEventListener("change", () => {
+                            if (deleteBtn) {
+                                if (savedStations.includes(select.value)) {
+                                    deleteBtn.style.display = "block";
+                                } else {
+                                    deleteBtn.style.display = "none";
+                                }
+                            }
+                            
                             if (select.value === "custom") {
                                 customGroup.style.display = "block";
                                 customUrlInput.value = "";
@@ -186,6 +196,27 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
                                 updateDisplay("ESTAÇÃO SALVA NA MEMÓRIA!");
                             }
                         });
+
+                        if (deleteBtn) {
+                            deleteBtn.addEventListener("click", () => {
+                                let url = select.value;
+                                if (!url || !savedStations.includes(url)) return;
+                                
+                                savedStations = savedStations.filter(s => s !== url);
+                                localStorage.setItem("domain_radio_stations", JSON.stringify(savedStations));
+                                
+                                for (let i = 0; i < select.options.length; i++) {
+                                    if (select.options[i].value === url) {
+                                        select.remove(i);
+                                        break;
+                                    }
+                                }
+                                
+                                select.selectedIndex = 0;
+                                select.dispatchEvent(new Event("change"));
+                                updateDisplay("ESTAÇÃO EXCLUÍDA DA MEMÓRIA.");
+                            });
+                        }
 
                         btn.addEventListener("click", () => {
                             let targetUrl = (select.value === "custom") ? customUrlInput.value.trim() : select.value;

@@ -1,0 +1,47 @@
+/* Breakpoint Tabs no Inspector */
+.bp-tabs {
+    display: flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    padding: 3px;
+    margin-top: 10px;
+}
+
+.bp-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.bp-tab:hover { color: var(--accent-neon); }
+
+.bp-tab.active {
+    background: var(--accent-neon);
+    color: #0b0f19;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+/* Indicador de override no label */
+.bp-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-neon);
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Campo responsivo com override */
+.prop-responsive input.prop-input:focus,
+.prop-responsive select.prop-input:focus {
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+}

@@ -1,7 +1,7 @@
 /**
  * ButtonWidget — o "TButton".
  */
-FlexBuilder.ButtonWidget = class ButtonWidget extends FlexBuilder.BaseWidget {
+BuilderFlex.ButtonWidget = class ButtonWidget extends BuilderFlex.BaseWidget {
     constructor(id) {
         super(id);
         this.type = 'ButtonWidget';
@@ -15,7 +15,7 @@ FlexBuilder.ButtonWidget = class ButtonWidget extends FlexBuilder.BaseWidget {
     tagName() { return 'a'; }
 
     attributes() {
-        return `href="${FlexBuilder.escape(this.props.link)}"`;
+        return `href="${BuilderFlex.escape(this.props.link)}"`;
     }
 
     extraStyles() {
@@ -24,10 +24,10 @@ FlexBuilder.ButtonWidget = class ButtonWidget extends FlexBuilder.BaseWidget {
     }
 
     content() {
-        return FlexBuilder.escape(this.props.text);
+        return BuilderFlex.escape(this.props.text);
     }
 };
 
-FlexBuilder.WidgetRegistry.register('ButtonWidget', FlexBuilder.ButtonWidget, {
+BuilderFlex.WidgetRegistry.register('ButtonWidget', BuilderFlex.ButtonWidget, {
     label: 'TButton (Botão)', icon: 'fa-mouse-pointer', palette: true
 });

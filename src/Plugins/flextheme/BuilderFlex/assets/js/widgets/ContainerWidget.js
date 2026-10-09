@@ -1,19 +1,34 @@
 /**
  * ContainerWidget — o "TPanel": único tipo que aceita filhos.
  */
-FlexBuilder.ContainerWidget = class ContainerWidget extends FlexBuilder.BaseWidget {
+BuilderFlex.ContainerWidget = class ContainerWidget extends BuilderFlex.BaseWidget {
     constructor(id) {
         super(id);
         this.type = 'ContainerWidget';
-        this.isContainer = true;
         Object.assign(this.props, {
-            name: 'TPanel', width: 300, height: 200,
+            layout: 'absolute',
+            name: 'TPanel', width: '100%', height: 200,
             backgroundColor: '#ffffff', border: '1px solid #cccccc',
-            padding: '15px', display: 'flex', flexDirection: 'column', gap: '10px'
+            padding: '0px', display: 'block', gap: '0px',
+            overflow: 'hidden'
         });
+        
+        // Inicializa children array porque extends BaseWidget diretamente
+        this.children = [];
+    }
+
+    canHaveChildren() { return true; }
+    canAccept(child) { return true; }
+    
+    addChild(widget, index = null) {
+        if (index !== null && index >= 0 && index <= this.children.length) {
+            this.children.splice(index, 0, widget);
+        } else {
+            this.children.push(widget);
+        }
     }
 };
 
-FlexBuilder.WidgetRegistry.register('ContainerWidget', FlexBuilder.ContainerWidget, {
+BuilderFlex.WidgetRegistry.register('ContainerWidget', BuilderFlex.ContainerWidget, {
     label: 'TPanel (Container)', icon: 'fa-box', palette: true
 });

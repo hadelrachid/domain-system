@@ -1,7 +1,7 @@
 /**
  * ImageWidget — o "TImage".
  */
-FlexBuilder.ImageWidget = class ImageWidget extends FlexBuilder.BaseWidget {
+BuilderFlex.ImageWidget = class ImageWidget extends BuilderFlex.BaseWidget {
     constructor(id) {
         super(id);
         this.type = 'ImageWidget';
@@ -16,7 +16,7 @@ FlexBuilder.ImageWidget = class ImageWidget extends FlexBuilder.BaseWidget {
     isVoid()   { return true; }
 
     attributes() {
-        return `src="${FlexBuilder.escape(this.props.src)}" draggable="false"`;
+        return `src="${BuilderFlex.escape(this.props.src)}" draggable="false"`;
     }
 
     extraStyles() {
@@ -24,6 +24,6 @@ FlexBuilder.ImageWidget = class ImageWidget extends FlexBuilder.BaseWidget {
     }
 };
 
-FlexBuilder.WidgetRegistry.register('ImageWidget', FlexBuilder.ImageWidget, {
+BuilderFlex.WidgetRegistry.register('ImageWidget', BuilderFlex.ImageWidget, {
     label: 'TImage (Imagem)', icon: 'fa-image', palette: true
 });

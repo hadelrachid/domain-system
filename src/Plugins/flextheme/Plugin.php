@@ -92,7 +92,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             // Rotas do Builder Flex (Editor Visual)
             $router->addRoute('GET', '/admin/builder', [BuilderAdminController::class, 'index'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/save', [BuilderAdminController::class, 'save'], 'flextheme', ['admin']);
             $router->addRoute('GET', '/admin/builder/api/schema', [BuilderAdminController::class, 'getSchema'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/assets/builder.js', [BuilderAdminController::class, 'script'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/assets/builder.css', [BuilderAdminController::class, 'style'], 'flextheme', ['admin']);
         });
 
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) {

@@ -6,7 +6,7 @@
  *
  * meta: { label, icon, palette: bool }  (palette=false => não aparece na paleta)
  */
-FlexBuilder.WidgetRegistry = (function () {
+BuilderFlex.WidgetRegistry = (function () {
     const entries = {};
 
     return {
@@ -14,9 +14,13 @@ FlexBuilder.WidgetRegistry = (function () {
             entries[type] = { ctor, meta };
         },
 
+        get(type) {
+            return entries[type]?.meta || null;
+        },
+
         createInstance(type, id = null) {
             const entry = entries[type];
-            return entry ? new entry.ctor(id) : new FlexBuilder.BaseWidget(id);
+            return entry ? new entry.ctor(id) : new BuilderFlex.BaseWidget(id);
         },
 
         /** Itens que devem aparecer na paleta de componentes (ordem de registro). */

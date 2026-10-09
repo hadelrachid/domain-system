@@ -1,7 +1,7 @@
 /**
  * TextWidget — o "TLabel".
  */
-FlexBuilder.TextWidget = class TextWidget extends FlexBuilder.BaseWidget {
+BuilderFlex.TextWidget = class TextWidget extends BuilderFlex.BaseWidget {
     constructor(id) {
         super(id);
         this.type = 'TextWidget';
@@ -12,17 +12,17 @@ FlexBuilder.TextWidget = class TextWidget extends FlexBuilder.BaseWidget {
         });
     }
 
-    extraStyles() {
-        const p = this.props;
-        return `color: ${p.color}; font-size: ${p.fontSize}px; font-family: ${p.fontFamily}; `
-            + `font-weight: ${p.fontWeight}; text-align: ${p.textAlign}; display: flex; align-items: center;`;
+    extraStyles(bp = 'base') {
+        const get = key => this.getProp(key, bp);
+        return `color: ${get('color')}; font-size: ${get('fontSize')}px; font-family: ${get('fontFamily')}; `
+            + `font-weight: ${get('fontWeight')}; text-align: ${get('textAlign')}; display: flex; align-items: center;`;
     }
 
     content() {
-        return FlexBuilder.escape(this.props.text);
+        return BuilderFlex.escape(this.getProp('text', 'base')); // Text doesn't usually change by breakpoint, but let's read from base for now
     }
 };
 
-FlexBuilder.WidgetRegistry.register('TextWidget', FlexBuilder.TextWidget, {
+BuilderFlex.WidgetRegistry.register('TextWidget', BuilderFlex.TextWidget, {
     label: 'TLabel (Texto)', icon: 'fa-font', palette: true
 });

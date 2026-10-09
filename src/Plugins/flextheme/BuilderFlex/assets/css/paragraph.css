@@ -1,0 +1,103 @@
+/* PARAGRAPH WIDGET */
+
+.widget-node[data-node-id] .paragraph-content {
+    outline: none;
+    min-height: 40px;
+    height: 100%;
+    width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    overflow-y: auto;
+    transition: background 0.2s ease;
+    user-select: text;
+    cursor: text;
+}
+
+.widget-node.active .paragraph-content {
+    background: rgba(0, 229, 255, 0.03);
+}
+
+.widget-node.active .paragraph-content:focus {
+    background: rgba(0, 229, 255, 0.06);
+}
+
+/* Placeholder */
+.paragraph-content:empty::before {
+    content: 'Escreva seu texto aqui...';
+    color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+
+/* TOOLBAR */
+.paragraph-toolbar {
+    display: none;
+    position: absolute;
+    top: -44px;
+    left: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    padding: 4px;
+    gap: 2px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+.widget-node.active .paragraph-toolbar {
+    display: inline-flex;
+}
+
+.paragraph-toolbar button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+.paragraph-toolbar button:hover {
+    background: rgba(0, 229, 255, 0.15);
+    color: var(--accent-neon);
+}
+
+.paragraph-toolbar button[data-cmd="formatBlock"] {
+    font-size: 11px;
+    font-weight: bold;
+    width: 30px;
+}
+
+.paragraph-toolbar .toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-glass);
+    margin: 0 4px;
+    align-self: center;
+}
+
+/* CONTEÚDO */
+.paragraph-content p { margin: 0 0 8px 0; }
+.paragraph-content p:last-child { margin-bottom: 0; }
+.paragraph-content h1 { font-size: 2em; margin: 8px 0; font-weight: 700; }
+.paragraph-content h2 { font-size: 1.5em; margin: 8px 0; font-weight: 700; }
+.paragraph-content h3 { font-size: 1.17em; margin: 8px 0; font-weight: 700; }
+.paragraph-content ul,
+.paragraph-content ol { margin: 8px 0; padding-left: 24px; }
+.paragraph-content a { color: var(--accent-neon); text-decoration: underline; }
+.paragraph-content strong { font-weight: 700; }
+.paragraph-content em { font-style: italic; }
+.paragraph-content blockquote {
+    border-left: 3px solid var(--accent-neon);
+    padding-left: 12px;
+    margin: 8px 0;
+    opacity: 0.85;
+}

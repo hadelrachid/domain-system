@@ -26,3 +26,5 @@ config/installed.lock
 
 # Temas Privados
 src/Plugins/flextheme/themes/rachidd
+scratch/
+bundle.*

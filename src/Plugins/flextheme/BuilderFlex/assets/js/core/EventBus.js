@@ -8,7 +8,7 @@
  *  - selection:changed  outro componente foi selecionado
  *  - node:moved         um componente foi arrastado (payload: node)
  */
-FlexBuilder.EventBus = class EventBus {
+BuilderFlex.EventBus = class EventBus {
     constructor() {
         this.handlers = {};
     }

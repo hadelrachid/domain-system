@@ -10,16 +10,7 @@ class ContainerWidget extends AbstractWidget
     public function render(array $attributes, string $content = ''): string
     {
         $commonAttrs = $this->extractCommonAttributes($attributes);
-        $flexDir = $attributes['direction'] ?? 'column';
-        $align = $attributes['align'] ?? 'flex-start';
-        
-        return sprintf(
-            '<div %s style="display:flex; flex-direction:%s; align-items:%s;">%s</div>',
-            htmlspecialchars($flexDir),
-            htmlspecialchars($align),
-            $commonAttrs,
-            $content
-        );
+        return sprintf('<div %s>%s</div>', $commonAttrs, $content);
     }
 
     public function getControls(): array

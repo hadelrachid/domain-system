@@ -1,7 +1,7 @@
 /**
  * ExportModal — janela que exibe o JSON exportado.
  */
-FlexBuilder.ExportModal = class ExportModal {
+BuilderFlex.ExportModal = class ExportModal {
     constructor(modalElement, outputElement) {
         this.modal = modalElement;
         this.output = outputElement;
