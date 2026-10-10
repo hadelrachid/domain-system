@@ -297,7 +297,10 @@
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('input[name="csrf_token"]').value
+                }
             });
             const resData = await response.json();
             if (resData.success) {
