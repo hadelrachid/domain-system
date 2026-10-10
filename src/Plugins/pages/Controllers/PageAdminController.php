@@ -15,11 +15,13 @@ class PageAdminController
 {
     private ThemeManagerInterface $theme;
     private PageRepositoryInterface $pageRepo;
+    private SessionManagerInterface $session;
 
-    public function __construct(ThemeManagerInterface $theme, PageRepositoryInterface $pageRepo)
+    public function __construct(ThemeManagerInterface $theme, PageRepositoryInterface $pageRepo, SessionManagerInterface $session)
     {
         $this->theme = $theme;
         $this->pageRepo = $pageRepo;
+        $this->session = $session;
     }
 
     public function index()
@@ -101,7 +103,7 @@ class PageAdminController
     {
         $themeName = $request->input('theme');
         if (!$themeName) {
-            return new ViewResponse(json_encode([]), 200, ['Content-Type' => 'application/json']);
+            return new JsonResponse([]);
         }
         
         $templates = $this->theme->getAvailableTemplates($themeName);
@@ -111,7 +113,7 @@ class PageAdminController
             'templates' => $templates,
             'pages' => $pages
         ];
-        return new ViewResponse(json_encode($data), 200, ['Content-Type' => 'application/json']);
+        return new JsonResponse($data);
     }
 
     public function delete(string $id)

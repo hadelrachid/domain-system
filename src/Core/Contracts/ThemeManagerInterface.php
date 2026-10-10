@@ -22,4 +22,11 @@ interface ThemeManagerInterface
      * @return array
      */
     public function getAvailableTemplates(?string $themeName = null): array;
+
+    /**
+     * Retorna a lista de páginas estáticas disponíveis em um tema.
+     * @param string|null $themeName Se nulo, usa o tema ativo.
+     * @return array
+     */
+    public function getAvailablePages(?string $themeName = null): array;
 }

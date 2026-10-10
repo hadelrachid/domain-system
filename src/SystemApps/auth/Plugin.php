@@ -191,7 +191,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 }
             }
 
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) { throw new \RuntimeException('Falha ao criar o schema de autenticação: ' . $e->getMessage(), 0, $e); } // activate() só roda no instalador: engolir o erro gerava instalação "ok" sem tabelas
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
         $db = $runtime->getLink('core.db')->getPdo();

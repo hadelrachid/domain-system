@@ -186,7 +186,7 @@ if (file_exists($envFile)) {
              * @example '"valor"' → 'valor'
              * @example "'valor'" → 'valor'
              */
-            $value = trim($value, '"\'');
+            if (strlen($value) >= 2 && ($value[0] === '"' || $value[0] === "'") && substr($value, -1) === $value[0]) { $value = substr($value, 1, -1); } // só um par correspondente: senha terminada em " não pode ser corrompida
 
             /**
              * Define a variável via putenv() — acessível via getenv().

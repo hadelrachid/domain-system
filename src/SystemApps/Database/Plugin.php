@@ -33,11 +33,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // 1. Configuramos os singletons no Container do Kernel
         // Isso atende os "Providers" oficiais do OS 2.0 e MANTÉM retrocompatibilidade com plugins legados!
         $runtime->singleton(Connection::class, function($c) {
-            $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite:' . dirname(__DIR__, 4) . '/database.sqlite';
-            $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
-            $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
-            
-            return new Connection($dsn, $user, $pass);
+            $config = $c->make(\DomainSystem\Core\Config\DatabaseConfig::class);
+            return new Connection($config->getDsn(), $config->getUser(), $config->getPass());
         });
 
         $runtime->bind(QueryBuilder::class, function($c) {

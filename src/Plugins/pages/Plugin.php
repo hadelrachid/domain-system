@@ -100,13 +100,13 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $db = $runtime->getLink('core.db')->getPdo();
             
             $defaults = [
-                ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>'],
-                ['sobre', 'Sobre Mim', '<h1>Sobre Rachid</h1><p>Sou o criador do Domain-System OS.</p>'],
-                ['termos', 'Termos de Uso', '<h1>Termos de Uso</h1><p>Estes são os termos de uso.</p>'],
-                ['privacidade', 'Política de Privacidade', '<h1>Política de Privacidade</h1><p>Respeitamos seus dados.</p>']
+                ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>', 'pages/index.php'],
+                ['sobre', 'Sobre Mim', '<h1>Sobre Rachid</h1><p>Sou o criador do Domain-System OS.</p>', 'templates/sobre.php'],
+                ['termos', 'Termos de Uso', '<h1>Termos de Uso</h1><p>Estes são os termos de uso.</p>', 'templates/termos.php'],
+                ['privacidade', 'Política de Privacidade', '<h1>Política de Privacidade</h1><p>Respeitamos seus dados.</p>', 'templates/privacidade.php']
             ];
             
-            $stmt = $db->prepare("INSERT INTO pages (slug, title, content, theme, template_file) VALUES (?, ?, ?, 'rachidd', 'pages/index.php')");
+            $stmt = $db->prepare("INSERT INTO pages (slug, title, content, theme, template_file) VALUES (?, ?, ?, 'rachidd', ?)");
             foreach ($defaults as $p) {
                 $stmt->execute($p);
             }

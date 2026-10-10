@@ -28,10 +28,11 @@
                 <p>O seu painel está vazio. Clique em "Adicionar Widget" para personalizá-lo.</p>
             </div>
         <?php else: ?>
-            <?php foreach ($renderedWidgets as $widget): ?>
-                <div class="widget-card" data-id="<?= htmlspecialchars($widget['id']) ?>">
-                    <div class="widget-header">
-                        <h3 class="widget-title"><?= htmlspecialchars($widget['title']) ?></h3>
+            <?php foreach ($renderedWidgets as $index => $widget): ?>
+                <div class="widget-card" data-id="<?= htmlspecialchars($widget['id']) ?>" data-index="<?= $index ?>" style="position: relative;">
+                    <div class="widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="widget-title" style="margin: 0;"><?= htmlspecialchars($widget['title']) ?></h3>
+                        <button onclick="removeWidget(<?= $index ?>)" style="background: transparent; border: none; color: #8c8f94; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 5px;" title="Remover Widget">&times;</button>
                     </div>
                     <div class="widget-body">
                         <?= $widget['body'] ?>
@@ -154,4 +155,32 @@ addWidgetForm.addEventListener('submit', function(e) {
     document.body.appendChild(form);
     form.submit();
 });
+
+// Remove um widget da array pelo index e salva o layout
+function removeWidget(index) {
+    // Remove o widget do index específico
+    currentUserWidgets.splice(index, 1);
+    
+    // Cria o form para salvar
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= BASE_URL ?>/admin/dashboard/save-layout';
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
+    form.appendChild(csrfInput);
+
+    currentUserWidgets.forEach(w => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'widgets[]';
+        input.value = JSON.stringify(w);
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>

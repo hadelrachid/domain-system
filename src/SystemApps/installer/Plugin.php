@@ -47,7 +47,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             $runtime->onHook('router.register', function(Router $router) {
                 $router->addRoute('GET', '/setup', [SetupController::class, 'step1']);
-                $router->addRoute('GET', '/setup/logo', [SetupController::class, 'logo']);
                 $router->addRoute('POST', '/setup/database', [SetupController::class, 'step2_database']);
                 $router->addRoute('POST', '/setup/install', [SetupController::class, 'step3_install']);
             });

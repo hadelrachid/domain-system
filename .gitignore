@@ -28,3 +28,5 @@ config/installed.lock
 src/Plugins/flextheme/themes/rachidd
 scratch/
 bundle.*
+token/
+public/migrate_pages.php

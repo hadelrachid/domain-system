@@ -34,17 +34,38 @@
 
 <div class="setup-box">
     <div class="logo-container">
-        <img src="<?= BASE_URL ?>/setup/logo" alt="Logo" style="max-width: 150px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
+        <img src="<?= BASE_URL ?>/assets/img/logo.png" alt="Logo" style="max-width: 150px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
     </div>
     <h1>1. Conexão com Banco de Dados</h1>
     <p>Bem-vindo! Antes de iniciarmos, precisamos configurar o seu banco de dados.</p>
     
+    <?php if (!empty($preflight)): ?>
+        <div class="alert" style="text-align: left;">
+            <strong>⚠ Requisitos do servidor:</strong>
+            <ul style="margin: 8px 0 0 18px; padding: 0;">
+                <?php foreach ($preflight as $problem): ?>
+                    <li><?= htmlspecialchars($problem) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($error)): ?>
         <div class="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" action="<?= BASE_URL ?>/setup/database">
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
+        <div class="alert" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: #93c5fd; text-align: center;">
+            <strong>Proteção de Instalação 🛡️</strong><br>
+            Abra o arquivo <code style="color: #fff;">token/setup.token</code> no servidor e cole o código abaixo.
+        </div>
+
+        <div class="form-group">
+            <label for="setup_token">Chave de Segurança (Setup Token)</label>
+            <input type="text" name="setup_token" id="setup_token" placeholder="ex: A1B2-C3D4" required style="font-family: monospace; letter-spacing: 2px; text-align: center; font-size: 1.2rem; font-weight: bold; color: #60a5fa;">
+        </div>
 
         <div class="form-group">
             <label for="db_driver">Tipo de Banco de Dados</label>

@@ -22,7 +22,7 @@
 
 <div class="setup-box">
     <div class="logo-container">
-        <img src="<?= BASE_URL ?>/setup/logo" alt="Logo" style="max-width: 150px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
+        <img src="<?= BASE_URL ?>/assets/img/logo.png" alt="Logo" style="max-width: 150px; height: auto; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));">
     </div>
     <h1>✅ Conexão Estabelecida!</h1>
     <p>O banco de dados respondeu perfeitamente. O arquivo <b>.env</b> foi gerado com sucesso.</p>

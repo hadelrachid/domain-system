@@ -150,6 +150,11 @@ class ThemeManager implements ThemeManagerInterface
             return false;
         }
 
+        // 5. pages/ é Obrigatório (Páginas estáticas autônomas, por contrato OS 2.0)
+        if (!is_dir($themePath . '/pages')) {
+            return false;
+        }
+
         return true;
     }
 

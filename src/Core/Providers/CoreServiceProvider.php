@@ -14,16 +14,12 @@ class CoreServiceProvider
             return $dispatcher;
         });
 
-        // 1. Database
-        $container->singleton(\DomainSystem\SystemApps\Database\Connection::class, function() use ($basePath) {
-            $dsn = $_ENV['DB_DSN'] ?? getenv('DB_DSN') ?: 'sqlite:' . $basePath . '/database.sqlite';
-            $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: '';
-            $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
-            return new \DomainSystem\SystemApps\Database\Connection($dsn, $user, $pass);
-        });
-        
-        $container->singleton(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class, function($c) {
-            return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(\DomainSystem\SystemApps\Database\Connection::class));
+        // 1. Database Configuration (Agnostic - DIP Compliant)
+        $container->singleton(\DomainSystem\Core\Config\DatabaseConfig::class, function() use ($basePath) {
+            $dsn = $_ENV["DB_DSN"] ?? getenv("DB_DSN") ?: "sqlite:" . $basePath . "/database.sqlite";
+            $user = $_ENV["DB_USER"] ?? getenv("DB_USER") ?: "";
+            $pass = $_ENV["DB_PASS"] ?? getenv("DB_PASS") ?: "";
+            return new \DomainSystem\Core\Config\DatabaseConfig($dsn, $user, $pass);
         });
 
         // 1.4 Password Policy

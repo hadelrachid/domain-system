@@ -6,7 +6,7 @@
     "flextheme": true,
     "installer": true,
     "No-Break Shield": true,
-    "pages": true,
+    "pages": false,
     "SEO & Theme Engine": true,
     "settings": false,
     "system-admin": true,
