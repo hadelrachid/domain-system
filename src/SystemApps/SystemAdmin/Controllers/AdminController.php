@@ -574,6 +574,18 @@ class AdminController
             return "Erro ao renderizar catálogo de shortcodes: " . $e->getMessage();
         }
     }
+
+    public function manual(\DomainSystem\Core\Http\Request $request)
+    {
+        try {
+            return $this->theme->render('manual', [
+                'baseUrl' => defined('BASE_URL') ? BASE_URL : '',
+                'version' => defined('DS_VERSION') ? DS_VERSION : '2.2.0'
+            ]);
+        } catch (Exception $e) {
+            return "Erro ao renderizar manual de instruções: " . $e->getMessage();
+        }
+    }
 }
 
 

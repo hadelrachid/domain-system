@@ -60,6 +60,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     'url' => '/admin/plugins',
                     'icon' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg>'
                 ];
+                $menus[] = [
+                    'title' => 'Manual de Instruções',
+                    'url' => '/admin/manual',
+                    'icon' => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="16" y2="7"></line><line x1="9" y1="11" x2="16" y2="11"></line><line x1="9" y1="15" x2="13" y2="15"></line></svg>'
+                ];
             }
                             $menus[] = [
                     'title' => 'Controle de Acessos',
@@ -126,6 +131,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // ACL Panel
             $router->addRoute('GET', '/admin/acl', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'index'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/acl/save', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'save'], 'system-admin', ['admin']);
+
+            // Manual de Instruções & Testabilidade
+            $router->addRoute('GET', '/admin/manual', [AdminController::class, 'manual'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
         });
     }
 }
