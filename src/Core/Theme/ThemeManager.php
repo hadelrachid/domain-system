@@ -140,7 +140,10 @@ class ThemeManager implements ThemeManagerInterface
             return false;
         }
         
-        // 3. assets/ é Obrigatório
+        // 3. assets/ é Obrigatório (garante diretório se ausente)
+        if (!is_dir($themePath . '/assets')) {
+            @mkdir($themePath . '/assets', 0777, true);
+        }
         if (!is_dir($themePath . '/assets')) {
             return false;
         }

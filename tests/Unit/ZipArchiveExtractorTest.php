@@ -64,7 +64,7 @@ class ZipArchiveExtractorTest extends TestCase
     {
         $extractor = new ZipArchiveExtractor();
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Caminhos maliciosos'); // Da defesa 1
+        $this->expectExceptionMessage('caminhos maliciosos'); // Da defesa 1
         
         $extractor->extract($this->maliciousZip, $this->tempDir . '/plugins');
     }

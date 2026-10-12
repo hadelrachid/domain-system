@@ -48,7 +48,10 @@ class ZipArchiveExtractor implements ExtractorInterface
         }
         
         // 2. PREPARAÇÃO DA QUARENTENA
-        $tempDir = dirname($destinationPath, 2) . '/temp/quarentena_zip_' . uniqid();
+        $baseTemp = defined('DOMAIN_SYSTEM_ROOT') && is_dir(DOMAIN_SYSTEM_ROOT . '/temp')
+            ? DOMAIN_SYSTEM_ROOT . '/temp'
+            : sys_get_temp_dir();
+        $tempDir = $baseTemp . '/quarentena_zip_' . uniqid();
         @mkdir($tempDir, 0777, true);
 
         // Se o ZIP não tem pasta raiz (os arquivos estão soltos)
@@ -111,6 +114,10 @@ class ZipArchiveExtractor implements ExtractorInterface
 
     private function moveToDestination(string $sourcePath, string $destinationPath, string $componentDirName, string $descriptorFile): void
     {
+        if (!is_dir($destinationPath)) {
+            @mkdir($destinationPath, 0777, true);
+        }
+
         $targetPath = $destinationPath . '/' . $componentDirName;
         
         // Proteção Ring 0 (Segurança Básica - o Installer fará validações mais profundas)
@@ -122,8 +129,35 @@ class ZipArchiveExtractor implements ExtractorInterface
             }
         }
 
-        if (file_exists($targetPath)) $this->deleteDirectory($targetPath);
-        rename($sourcePath, $targetPath);
+        if (file_exists($targetPath)) {
+            $this->deleteDirectory($targetPath);
+        }
+
+        if (!@rename($sourcePath, $targetPath)) {
+            $this->copyDirectory($sourcePath, $targetPath);
+            $this->deleteDirectory($sourcePath);
+        }
+    }
+
+    private function copyDirectory(string $source, string $dest): void
+    {
+        if (!is_dir($dest)) {
+            @mkdir($dest, 0777, true);
+        }
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ($iterator as $item) {
+            $target = $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathname();
+            if ($item->isDir()) {
+                if (!is_dir($target)) {
+                    @mkdir($target, 0777, true);
+                }
+            } else {
+                copy($item->getPathname(), $target);
+            }
+        }
     }
 
     private function deleteDirectory(string $dir): bool
