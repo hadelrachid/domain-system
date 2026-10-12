@@ -161,21 +161,63 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
             <h2 style="margin: 0; font-size: 18px; color: #fff;">4. Gerenciador de Menus & Associação com Páginas</h2>
             <a href="<?= $baseUrl ?>/admin/menus" class="button" style="font-size: 12px;">Ir para Menus →</a>
         </div>
-        <p style="color: var(--text-main); font-size: 14px; line-height: 1.6;">
-            <strong>O que foi solucionado:</strong> A persistência de itens do menu foi blindada com transação atômica PDO e desacoplada da tabela de páginas através da interface <code>PageLookupInterface</code>.
+
+        <h3 style="color: #45f3ff; font-size: 15px; margin: 0 0 10px;">Como Funciona o Ciclo de Menus no Domain System (Estilo WordPress & SOLID)</h3>
+        <p style="color: var(--text-main); font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
+            O sistema divide a navegação em <strong>3 etapas desacopladas</strong>:
         </p>
-        <div style="background: rgba(0, 210, 132, 0.08); border-left: 4px solid var(--accent-green); padding: 12px 16px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 13px;">
-            <strong>Como provar que funciona:</strong> Acesse <code>/admin/menus</code> e verifique que as páginas prontas (Início, Blog, Sobre, Termos, Privacidade, Tutoriais) estão listadas. Adicionar itens e salvar grava sem perda de dados e sem falhas de CSRF.
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px 15px;">
+                <div style="color: #06b6d4; font-weight: 700; font-size: 13px; margin-bottom: 4px;">1. As Páginas & Templates</div>
+                <div style="color: var(--text-muted); font-size: 12px; line-height: 1.5;">
+                    Cada página (Início, Blog, Sobre, Tutoriais) tem seu <em>slug</em> e seu arquivo PHP de template (ex: <code>templates/home.php</code>).
+                </div>
+            </div>
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px 15px;">
+                <div style="color: #00d284; font-weight: 700; font-size: 13px; margin-bottom: 4px;">2. A Estrutura do Menu</div>
+                <div style="color: var(--text-muted); font-size: 12px; line-height: 1.5;">
+                    Em <code>/admin/menus</code>, você monta a árvore para um local (Header/Footer), arrasta para reordenar e cria submenus/dropdowns.
+                </div>
+            </div>
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px 15px;">
+                <div style="color: #8b5cf6; font-weight: 700; font-size: 13px; margin-bottom: 4px;">3. Exibição Pública</div>
+                <div style="color: var(--text-muted); font-size: 12px; line-height: 1.5;">
+                    O tema renderiza o menu via shortcode <code>[nav_menu location="header"]</code>, gerando HTML semântico com classes ativas.
+                </div>
+            </div>
         </div>
+
+        <h4 style="color: #fff; font-size: 14px; margin: 15px 0 8px;">Tutorial Passo a Passo de Operação:</h4>
+        <ol style="color: var(--text-main); font-size: 13px; line-height: 1.8; margin-left: 20px; margin-bottom: 15px;">
+            <li><strong>Selecione o Menu:</strong> No topo de <code>/admin/menus</code>, escolha <em>Menu Principal (Header)</em> ou <em>Menu Rodapé (Footer)</em> e clique em <em>Selecionar</em>.</li>
+            <li><strong>Adicione Itens:</strong> Na coluna esquerda ("Páginas Disponíveis"), marque as páginas desejadas e clique em <em>"Adicionar ao Menu"</em>. Para links externos (redes sociais), use o acordeão <em>"Links Personalizados"</em>.</li>
+            <li><strong>Organize a Ordem e Crie Submenus:</strong> Arraste os cards para cima/baixo para ordenar. Arraste ligeiramente para a direita para transformar um item em <strong>subitem</strong> (criando um menu dropdown).</li>
+            <li><strong>Salve com Atomicidade:</strong> Clique em <em>"Salvar Itens"</em>. O sistema dispara uma requisição segura via transação PDO no banco (sem risco de apagar itens caso ocorra erro).</li>
+            <li><strong>Renderize no Tema:</strong> Use o shortcode <code>[nav_menu location="header"]</code> no cabeçalho ou nas páginas para exibir a navegação pública.</li>
+        </ol>
+
+        <div style="background: rgba(0, 210, 132, 0.08); border-left: 4px solid var(--accent-green); padding: 12px 16px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 13px;">
+            <strong>Blindagem de Arquitetura (SOLID):</strong> O módulo de menus nunca consulta diretamente a tabela de páginas (DIP); ele conversa exclusivamente através da interface <code>PageLookupInterface</code>. Em caso de falha no salvamento, o <code>PdoMenuRepository</code> realiza um <code>ROLLBACK</code> automático preservando o menu anterior intacto.
+        </div>
+
         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-top: 15px;">
             <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Checklist de Validação</div>
             <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
                 <input type="checkbox" data-test-id="menu-load-pages">
                 <span style="font-size: 13px;">Lista de páginas pronta para seleção no painel de menus.</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
+                <input type="checkbox" data-test-id="menu-add-page-item">
+                <span style="font-size: 13px;">Adicionar itens de página na coluna da direita e organizar hierarquia.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
                 <input type="checkbox" data-test-id="menu-save-atomic">
-                <span style="font-size: 13px;">Salvar itens do menu completa com mensagem verde de sucesso.</span>
+                <span style="font-size: 13px;">Salvar itens do menu completa com notificação verde de sucesso.</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" data-test-id="menu-shortcode">
+                <span style="font-size: 13px;">Shortcode <code>[nav_menu location="header"]</code> gera o HTML do menu na visualização pública.</span>
             </label>
         </div>
     </div>

@@ -843,37 +843,126 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
                     <span class="section-num">4</span>
                     <h2 class="section-title">Gerenciador de Menus & Associação com Páginas</h2>
                 </div>
-                <span class="section-tag">Navigation</span>
+                <span class="section-tag">Navigation Architecture</span>
             </div>
-            <div class="test-card">
-                <div class="card-subhead">Desacoplamento SOLID & Transações Atômicas</div>
-                <h3 class="card-title">Gestão de Menus Hierárquicos com Proteção contra Falhas</h3>
+            
+            <!-- GUIA CONCEITUAL -->
+            <div class="test-card" style="margin-bottom: 24px;">
+                <div class="card-subhead">Guia Conceitual: Como Funciona o Sistema de Menus?</div>
+                <h3 class="card-title">O Ciclo de 3 Fases: Páginas ➔ Menus ➔ Renderização Pública</h3>
                 <p class="card-desc">
-                    O gerenciador de menus utiliza <code>PdoMenuRepository</code> com transações PDO (evitando exclusão acidental de itens em falhas) e conecta-se a páginas via <code>PageLookupInterface</code>.
-                </p>
-                <p style="margin-bottom: 12px;">
-                    <span class="shortcut-badge">Atalho de Acesso:</span>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/admin/menus" target="_blank" style="font-weight:600; text-decoration:underline;">/admin/menus</a>
+                    Assim como no WordPress, mas com arquitetura limpa em camadas (SOLID), o Domain System separa a criação de conteúdo, a estrutura de navegação e a exibição visual em três etapas completamente independentes:
                 </p>
 
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 20px 0;">
+                    <div style="background: rgba(9, 13, 22, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <span style="background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); font-weight:700; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px;">1</span>
+                            <strong style="color:#fff; font-size:14px;">Entidades de Página</strong>
+                        </div>
+                        <p style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                            Primeiro existem as <strong>Páginas</strong> (ex: Início, Blog, Sobre, Tutoriais). Cada página possui um <em>título</em>, um <em>slug</em> (URL amigável) e um <em>template PHP</em> associado (ex: <code>templates/home.php</code>).
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(9, 13, 22, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <span style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green); font-weight:700; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px;">2</span>
+                            <strong style="color:#fff; font-size:14px;">Estrutura de Menus</strong>
+                        </div>
+                        <p style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                            Em <code>/admin/menus</code>, você monta a árvore de navegação para um local (ex: <strong>Header</strong> ou <strong>Footer</strong>), selecionando páginas ou links customizados e definindo ordem e submenus.
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(9, 13, 22, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                            <span style="background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); font-weight:700; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px;">3</span>
+                            <strong style="color:#fff; font-size:14px;">Renderização no Tema</strong>
+                        </div>
+                        <p style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                            O tema consome o menu via shortcode <code>[nav_menu location="header"]</code>. O <code>MenuRenderer</code> gera o HTML semântico com tags <code>&lt;nav&gt;</code>, dropdowns e classes ativas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TUTORIAL PASSO A PASSO -->
+            <div class="test-card" style="margin-bottom: 24px;">
+                <div class="card-subhead">Tutorial Operacional Passo a Passo</div>
+                <h3 class="card-title">Como Montar e Publicar um Menu Hierárquico</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 15px;">
+                    <div>
+                        <strong style="color: #45f3ff; font-size: 14px;">Passo 1: Certifique-se das Páginas Criadas</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            No banco de dados já existem as 6 páginas padrão criadas pelo seeder:
+                            <code>inicio</code> (Home), <code>blog</code> (Blog), <code>sobre</code> (Sobre), <code>termos</code> (Termos), <code>privacidade</code> (Privacidade) e <code>tutoriais</code> (Tutoriais/Academy). Cada uma está associada ao seu arquivo de template dentro de <code>themes/default/templates/</code>.
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong style="color: #45f3ff; font-size: 14px;">Passo 2: Acesse o Gerenciador de Menus</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Acesse <a href="<?= htmlspecialchars($baseUrl) ?>/admin/menus" target="_blank" style="text-decoration:underline;">/admin/menus</a>. No topo, selecione qual menu deseja editar (ex: <strong>Menu Principal (Header)</strong> ou <strong>Menu Rodapé (Footer)</strong>) e clique em "Selecionar".
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong style="color: #45f3ff; font-size: 14px;">Passo 3: Adicionar Páginas ou Links Customizados</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Na coluna esquerda, abra a sanfona <strong>"Páginas"</strong>, marque as caixas das páginas desejadas e clique em <strong>"Adicionar ao Menu"</strong>. Elas serão inseridas instantaneamente na coluna da direita como novos cards. Se desejar um link externo (como redes sociais ou WhatsApp), utilize o acordeão <strong>"Links Personalizados"</strong> informando a URL e o texto do link.
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong style="color: #45f3ff; font-size: 14px;">Passo 4: Definir Hierarquia (Submenus e Dropdowns)</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Você pode reordenar qualquer item arrastando-o para cima ou para baixo. Para transformar um item em <strong>subitem</strong> (criando um menu suspenso/dropdown): arraste o card ligeiramente para a direita, encaixando-o sob o item pai desejado.
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong style="color: #45f3ff; font-size: 14px;">Passo 5: Salvar e Persistir via Transação Atômica</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Clique no botão <strong>"Salvar Itens"</strong>. O painel envia a árvore completa via requisição assíncrona (com token <code>X-CSRF-TOKEN</code>). O repositório abre uma transação PDO com <code>BEGIN TRANSACTION</code>, sincroniza a árvore e faz <code>COMMIT</code>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="code-box">
+                    # Como exibir o menu em qualquer página, template ou post:
+                    [nav_menu location="header"]
+                    
+                    # Para o rodapé:
+                    [nav_menu location="footer"]
+                    <button class="btn-copy" onclick="copyCode(this)">Copiar</button>
+                </div>
+
                 <div class="info-box proof">
-                    <strong>Prova de Resolutividade:</strong>
-                    A lista de páginas no menu lateral inclui as páginas prontas (Início, Blog, Sobre, Termos, Privacidade, Tutoriais). O shortcode <code>[nav_menu location="header"]</code> renderiza o menu hierárquico com sanitização de URLs.
+                    <strong>Blindagem de Arquitetura (SOLID aplicada):</strong><br>
+                    • <strong>DIP (Inversão de Dependência):</strong> O módulo de menus nunca toca diretamente na tabela <code>pages</code>; ele consome o contrato <code>PageLookupInterface</code> provido pelo módulo de páginas.<br>
+                    • <strong>Atomicidade de Dados:</strong> O <code>PdoMenuRepository</code> garante que se ocorrer qualquer erro no meio da lista, é feito um <code>ROLLBACK</code> completo, garantindo que o menu anterior nunca seja apagado por acidente.<br>
+                    • <strong>Segurança Ring 0:</strong> URLs maliciosas como <code>javascript:...</code> são desarmadas automaticamente pelo <code>MenuRenderer</code> antes da renderização pública.
                 </div>
 
                 <div class="checklist-group">
-                    <div class="checklist-title">Checklist de Teste — Menus</div>
+                    <div class="checklist-title">Checklist de Validação — Gerenciamento de Menus</div>
                     <label class="check-item">
                         <input type="checkbox" data-test-id="menu-load-pages">
-                        <span class="check-text">Acessar <code>/admin/menus</code> e constatar que a lista de páginas está preenchida e disponível para seleção.</span>
+                        <span class="check-text">Acessar <code>/admin/menus</code> e constatar que a lista de páginas está preenchida com as páginas prontas (Início, Blog, Sobre, etc.).</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-test-id="menu-add-page-item">
+                        <span class="check-text">Marcar uma ou mais páginas e clicar em "Adicionar ao Menu". Verificar que os cards correspondentes aparecem na coluna da direita.</span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" data-test-id="menu-save-atomic">
-                        <span class="check-text">Adicionar páginas ao menu, reordenar e clicar em "Salvar Itens". Verificar mensagem de sucesso sem erros 403 de CSRF.</span>
+                        <span class="check-text">Reordenar os cards e clicar em "Salvar Itens". Verificar a notificação verde de sucesso sem erros de CSRF (HTTP 403).</span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" data-test-id="menu-shortcode">
-                        <span class="check-text">Confirmar que uma página com o shortcode <code>[nav_menu location="header"]</code> exibe a estrutura de links formatada.</span>
+                        <span class="check-text">Abrir uma página com o shortcode <code>[nav_menu location="header"]</code> e confirmar a renderização semântica dos links e títulos.</span>
                     </label>
                 </div>
             </div>
