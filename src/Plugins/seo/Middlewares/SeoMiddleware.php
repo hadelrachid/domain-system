@@ -36,9 +36,14 @@ class SeoMiddleware
             // 2. Verifica se o HTML retornado é apenas um fragmento (não tem tag <html>)
             if (stripos($content, '<html') === false && !empty(trim($content))) {
                 
-                $themeName = trim(empty($_ENV['ACTIVE_THEME']) ? 'rachidd' : $_ENV['ACTIVE_THEME']);
-                // Caminho absoluto para o tema do FlexTheme
-                $themeDir = __DIR__ . '/../../flextheme/themes/' . $themeName;
+                $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
+                $themeName = $siteState->getActiveTheme();
+                $baseRoot = dirname(__DIR__, 4);
+                $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver([
+                    $baseRoot . '/themes',
+                    $baseRoot . '/src/Plugins/flextheme/themes'
+                ]);
+                $themeDir = $resolver->resolveThemePath($themeName);
                 
                 if (file_exists($themeDir . '/layouts/main.php')) {
                     $seo = $this->seo;

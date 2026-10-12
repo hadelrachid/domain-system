@@ -112,6 +112,10 @@ try {
         $response->setContent($wrappedContent);
     }
 
+    // Aplicação da política anti-cache para rotas administrativas, autenticação e proxies
+    $cachePolicy = new \DomainSystem\Core\Http\CachePolicy();
+    $response = $cachePolicy->apply($request, $response);
+
     $response->send();
     
 } catch (Exception $e) {

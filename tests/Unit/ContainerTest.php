@@ -14,8 +14,24 @@ class DummyService {
     }
 }
 
+class DummyWithUnionType {
+    public DummyDependency|string $dep;
+    public function __construct(DummyDependency|string $dep) {
+        $this->dep = $dep;
+    }
+}
+
 class ContainerTest extends TestCase
 {
+    public function testAutoWiringWithUnionType()
+    {
+        $container = new Container();
+        $service = $container->make(DummyWithUnionType::class);
+
+        $this->assertInstanceOf(DummyWithUnionType::class, $service);
+        $this->assertInstanceOf(DummyDependency::class, $service->dep);
+    }
+
     public function testBindAndMake()
     {
         $container = new Container();

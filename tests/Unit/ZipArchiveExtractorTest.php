@@ -14,6 +14,10 @@ class ZipArchiveExtractorTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!extension_loaded('zip') || !class_exists(\ZipArchive::class)) {
+            $this->markTestSkipped('Extensão PHP ZipArchive não habilitada neste ambiente.');
+        }
+
         $this->tempDir = DOMAIN_SYSTEM_ROOT . '/temp/test_zips';
         if (!is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0777, true);

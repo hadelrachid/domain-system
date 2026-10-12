@@ -26,21 +26,26 @@ class SetupController
 {
     private PluginManager $manager;
     private ContainerInterface $container;
+    private \DomainSystem\SystemApps\installer\Services\InstallerService $service;
 
     /** Tabelas sem as quais o sistema não sobe (criadas por SystemApps\auth). */
     private const ESSENTIAL_TABLES = ['users', 'roles', 'user_roles', 'capabilities'];
 
-    public function __construct(PluginManager $manager, ContainerInterface $container)
-    {
+    public function __construct(
+        PluginManager $manager,
+        ContainerInterface $container,
+        ?\DomainSystem\SystemApps\installer\Services\InstallerService $service = null
+    ) {
         $this->manager = $manager;
         $this->container = $container;
+        $this->service = $service ?? new \DomainSystem\SystemApps\installer\Services\InstallerService();
     }
 
     public function step1(Request $request): Response
     {
-        $service = new \DomainSystem\SystemApps\installer\Services\InstallerService();
+        \DomainSystem\Core\Bootstrap\RuntimeDirectories::ensure(DOMAIN_SYSTEM_ROOT);
         try {
-            $service->getOrCreateSetupToken();
+            $this->service->getOrCreateSetupToken();
         } catch (\Exception $e) {
             return $this->renderStep('step1', $e->getMessage());
         }
@@ -53,10 +58,9 @@ class SetupController
     // =====================================================================
     public function step2_database(Request $request): Response
     {
-        $service = new \DomainSystem\SystemApps\installer\Services\InstallerService();
         $token = $request->input('setup_token', '');
         
-        if (!$service->validateSetupToken($token)) {
+        if (!$this->service->validateSetupToken($token)) {
             return $this->renderStep('step1', 'O Setup Token inserido é inválido. Verifique o arquivo token/setup.token.');
         }
 
@@ -86,7 +90,7 @@ class SetupController
 
         try {
             // Delega a montagem e teste da conexão
-            $result = $service->testConnection($driver, $host, $port, $name, $user, $pass);
+            $result = $this->service->testConnection($driver, $host, $port, $name, $user, $pass);
             $dsn = $result['dsn'];
         } catch (\InvalidArgumentException $e) {
             return $this->renderStep('step1', $e->getMessage());
@@ -97,7 +101,7 @@ class SetupController
 
         // 2) Grava o .env de forma segura
         try {
-            $service->writeEnvFile($dsn, $user, $pass);
+            $this->service->writeEnvFile($dsn, $user, $pass);
         } catch (\RuntimeException $e) {
             return $this->renderStep('step1', $e->getMessage());
         }

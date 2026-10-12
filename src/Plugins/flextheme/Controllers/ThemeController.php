@@ -9,19 +9,59 @@ class ThemeController
 {
     public function renderHome(Request $request): Response
     {
-        // Em arquitetura Single-Tenant, o tema pode vir de um arquivo config.json ou env.
-        $themeName = trim(empty($_ENV['ACTIVE_THEME']) ? 'rachidd' : $_ENV['ACTIVE_THEME']);
+        $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
+        $baseRoot = dirname(__DIR__, 4);
+        $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver([
+            $baseRoot . '/themes',
+            __DIR__ . '/../themes'
+        ]);
+
+        $previewTheme = $request->input('preview_theme');
+        if (!empty($previewTheme) && $resolver->themeExists($previewTheme)) {
+            $themeDir = $resolver->resolveThemePath($previewTheme);
+            $themePath = file_exists($themeDir . '/templates/home.php') 
+                ? $themeDir . '/templates/home.php' 
+                : $themeDir . '/index.php';
+            
+            if (file_exists($themePath)) {
+                ob_start();
+                $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                $siteName = 'Domain-System OS';
+                require $themePath;
+                $html = ob_get_clean();
+                return new Response($html);
+            }
+        }
+
+        // 1. Estado: Em Breve (Coming Soon)
+        if ($siteState->isComingSoon()) {
+            $response = new Response($this->renderComingSoonPage(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+            $response->setHeader('X-Robots-Tag', 'noindex, nofollow');
+            return $response;
+        }
+
+        // 2. Estado: Manutenção (Maintenance)
+        if ($siteState->isMaintenance()) {
+            $response = new Response($this->renderMaintenancePage(), 503, ['Content-Type' => 'text/html; charset=utf-8']);
+            $response->setHeader('Retry-After', '3600');
+            return $response;
+        }
+
+        // 3. Estado: Live
+        $themeName = $siteState->getActiveTheme();
+        $themeDir = $resolver->resolveThemePath($themeName);
         
-        $themeDir = __DIR__ . '/../themes/' . $themeName;
         $themePath = file_exists($themeDir . '/templates/home.php') 
             ? $themeDir . '/templates/home.php' 
             : $themeDir . '/index.php';
         
         if (!file_exists($themePath)) {
-            return new Response("Tema não encontrado: " . htmlspecialchars($themeName), 404);
+            return new Response("Tema não encontrado em: " . htmlspecialchars($themeDir), 404);
         }
 
         ob_start();
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $siteName = 'Domain-System OS';
         require $themePath;
         $html = ob_get_clean();
 
@@ -29,10 +69,62 @@ class ThemeController
         return new Response($html);
     }
 
+    private function renderComingSoonPage(): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Em Breve - Novo Site</title>
+    <style>
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #f8fafc; text-align: center; }
+        .card { max-width: 500px; padding: 2.5rem; background: #1e293b; border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border: 1px solid #334155; margin: 1rem; }
+        h1 { margin-top: 0; color: #38bdf8; font-size: 2rem; }
+        p { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; }
+        .badge { display: inline-block; padding: 0.35rem 0.75rem; background: #0369a1; color: #e0f2fe; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <span class="badge">Site em Preparação</span>
+        <h1>Em Breve na Web</h1>
+        <p>Este domínio foi configurado com sucesso e uma nova experiência está sendo preparada para publicação.</p>
+        <p><small style="color: #64748b;">Administradores podem gerenciar e ativar o site oficial através do painel /admin.</small></p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    private function renderMaintenancePage(): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"><title>Manutenção</title>
+    <style>body { font-family: sans-serif; text-align: center; padding: 50px; background: #f8fafc; color: #334155; }</style>
+</head>
+<body>
+    <h1>Estamos em Manutenção Programada</h1>
+    <p>Retornaremos em instantes. Por favor tente novamente mais tarde.</p>
+</body>
+</html>
+HTML;
+    }
+
     public function renderDoc(Request $request, string $slug): Response
     {
-        $themeName = trim(empty($_ENV['ACTIVE_THEME']) ? 'rachidd' : $_ENV['ACTIVE_THEME']);
-        $themeDir = __DIR__ . '/../themes/' . $themeName;
+        $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
+        $themeName = $siteState->getActiveTheme();
+        $baseRoot = dirname(__DIR__, 4);
+        $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver([
+            $baseRoot . '/themes',
+            __DIR__ . '/../themes'
+        ]);
+        $themeDir = $resolver->resolveThemePath($themeName);
         
         // Evitar directory traversal hacker
         if (strpos($slug, '..') !== false) {

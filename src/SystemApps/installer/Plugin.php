@@ -43,7 +43,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     header("Location: " . BASE_URL . "/setup");
                     exit;
                 }
-            }, 1000);
+            }, \DomainSystem\Core\Events\HookPriority::HIGHEST);
 
             $runtime->onHook('router.register', function(Router $router) {
                 $router->addRoute('GET', '/setup', [SetupController::class, 'step1']);

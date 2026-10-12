@@ -147,12 +147,16 @@
         }
     </style>
 </head>
+<?php
+$baseUrl = defined('BASE_URL') ? BASE_URL : '';
+$displaySiteName = $siteName ?? 'Domain-System OS';
+?>
 <body>
     <div class="container">
         <div class="badge">FlexTheme OS 2.0</div>
-        <h1><?= htmlspecialchars($siteName) ?></h1>
+        <h1><?= htmlspecialchars($displaySiteName) ?></h1>
         <p>A arquitetura web do futuro está ativa. Este portal está sendo renderizado nativamente pelo Domain-System OS com integração direta e segura ao Kernel.</p>
-        <a href="<?= BASE_URL ?>/login" class="btn-glow">Acessar Painel</a>
+        <a href="<?= $baseUrl ?>/login" class="btn-glow">Acessar Painel</a>
     </div>
 </body>
 </html>

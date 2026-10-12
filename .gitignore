@@ -23,6 +23,8 @@ all_core_code.txt
 
 database.sqlite
 config/installed.lock
+config/active_theme.json
+storage/
 
 # Temas Privados
 src/Plugins/flextheme/themes/rachidd

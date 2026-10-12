@@ -115,6 +115,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dev-mode/auth', [\DomainSystem\SystemApps\SystemAdmin\Controllers\DevModeController::class, 'authenticate'], 'system-admin', ['admin']);
             $router->addRoute('GET', '/admin/themes', [AdminController::class, 'listThemes'], 'system-admin', ['admin']);
             $router->addRoute('GET', '/admin/themes/preview', [AdminController::class, 'previewTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/activate', [AdminController::class, 'activateTheme'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/themes/upload', [AdminController::class, 'uploadTheme'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme'], 'system-admin', ['admin']);

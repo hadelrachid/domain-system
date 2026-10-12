@@ -2,9 +2,7 @@
     <h1 class="wp-heading-inline">Painel de Temas</h1>
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('createThemeModal').style.display='block'; return false;">Criar Novo Tema</a>
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('uploadThemeModal').style.display='block'; return false;">Instalar Tema (.zip)</a>
-    <p style="color: var(--text-muted); margin-bottom: 25px;">Aqui você pode ver e criar interfaces dinâmicas (CockPITs) instaladas no sistema. Cada tema isola a interface de um perfil de usuário.</p>
-
-
+    <p style="color: var(--text-muted); margin-bottom: 25px;">Gerencie e ative o tema visual do site público. O tema ativo define a identidade visual e os templates do seu domínio.</p>
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
         <?php foreach ($themes as $t): ?>
@@ -19,11 +17,20 @@
                     <p style="margin: 0; font-size: 13px; color: var(--text-muted) !important;">Iniciar um layout totalmente em branco para o projeto.</p>
                 </div>
             <?php else: ?>
+                <?php 
+                    $isActive = !empty($t['is_active']);
+                    $cardBorder = $isActive ? 'border: 2px solid #00a32a !important; box-shadow: 0 0 15px rgba(0,163,42,0.25);' : '';
+                    $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                ?>
                 <!-- Card de Tema -->
-                <div class="card" style="width: 300px; padding: 20px; display: flex; flex-direction: column; position: relative;">
+                <div class="card" style="width: 300px; padding: 20px; display: flex; flex-direction: column; position: relative; <?= $cardBorder ?>">
                     
+                    <?php if ($isActive): ?>
+                        <span style="position: absolute; top: 12px; right: 12px; background: #00a32a; color: #fff; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 2;">✓ Ativo</span>
+                    <?php endif; ?>
+
                     <?php if (!empty($t['screenshot'])): ?>
-                        <div style="width: 100%; height: 150px; background: url('<?= BASE_URL ?>/themes/<?= htmlspecialchars($t['folder']) ?>/<?= htmlspecialchars($t['screenshot']) ?>') center/cover; border-radius: 4px; margin-bottom: 15px; border: 1px solid var(--border);"></div>
+                        <div style="width: 100%; height: 150px; background: url('<?= $baseUrl ?>/themes/<?= htmlspecialchars($t['folder']) ?>/<?= htmlspecialchars($t['screenshot']) ?>') center/cover; border-radius: 4px; margin-bottom: 15px; border: 1px solid var(--border);"></div>
                     <?php else: ?>
                         <div style="width: 100%; height: 150px; background: var(--bg-deep); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; border: 1px solid var(--border);">
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -46,35 +53,39 @@
                         <div style="flex-grow: 1;"></div>
                     <?php endif; ?>
 
-                    <p style="margin: 0 0 15px; font-size: 11px; color: var(--text-muted) !important;">Dir: <code style="font-size:10px; padding:2px 4px;"><?= $t['is_bundled'] ? '/src/Plugins/'.$t['plugin'].'/themes/' : '/themes/' ?><?= htmlspecialchars($t['folder']) ?></code></p>
+                    <p style="margin: 0 0 15px; font-size: 11px; color: var(--text-muted) !important;">Pasta: <code style="font-size:10px; padding:2px 4px;"><?= htmlspecialchars($t['folder']) ?></code></p>
                     
                     <div style="border-top: 1px solid var(--border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                        <span style="font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: <?= $t['is_core'] ? 'var(--accent-orange)' : ($t['is_bundled'] ? 'var(--accent-green)' : 'var(--accent-blue)') ?>;">
-                            <?= $t['is_core'] ? 'SYSTEM CORE' : ($t['is_bundled'] ? 'PLUGIN BUNDLE' : 'ISOLADO') ?>
+                        <span style="font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: <?= $isActive ? '#00a32a' : ($t['is_core'] ? 'var(--accent-orange)' : ($t['is_bundled'] ? 'var(--accent-green)' : 'var(--accent-blue)')) ?>;">
+                            <?= $isActive ? 'TEMA ATIVO' : ($t['is_core'] ? 'SYSTEM CORE' : ($t['is_bundled'] ? 'PLUGIN BUNDLE' : 'TEMA DISPONÍVEL')) ?>
                         </span>
 
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <?php if ($t['is_bundled'] && !empty($t['preview_url'])): ?>
-                                <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" class="btn btn-activate" title="Visualizar Cockpit">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    Ver
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <?php if ($isActive): ?>
+                                <a href="<?= $baseUrl !== '' ? $baseUrl : '/' ?>" target="_blank" class="btn" style="background: rgba(0,163,42,0.15); border: 1px solid #00a32a; color: #00a32a; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px; font-weight: 600;" title="Ver Site no Navegador">
+                                    Ver Site ↗
                                 </a>
-                            <?php elseif (!$t['is_core'] && !$t['is_bundled']): ?>
-                                <a href="<?= BASE_URL ?>/admin/themes/preview?theme=<?= htmlspecialchars($t['folder']) ?>" target="_blank" class="btn btn-activate" title="Visualizar Tema">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    Ver
-                                </a>
-                                <form method="POST" action="<?= BASE_URL ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0;">
+                            <?php else: ?>
+                                <!-- Botão ATIVAR TEMA (Estilo WordPress) -->
+                                <form method="POST" action="<?= $baseUrl ?>/admin/themes/activate" style="margin: 0;">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                    <button type="submit" class="btn btn-deactivate" style="padding: 6px 12px !important; font-size:11px !important;">Excluir</button>
+                                    <button type="submit" class="btn button-primary" style="padding: 6px 12px !important; font-size: 12px !important; background: #2271b1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" title="Ativar este tema no site">Ativar</button>
                                 </form>
+
+                                <?php if (!empty($t['preview_url'])): ?>
+                                    <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" class="btn btn-activate" style="padding: 6px 10px; font-size: 12px;" title="Visualizar Tema">
+                                        Ver
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if (!$t['is_core'] && !$t['is_bundled']): ?>
+                                    <form method="POST" action="<?= $baseUrl ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
+                                        <button type="submit" class="btn btn-deactivate" style="padding: 6px 10px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
+                                    </form>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -88,7 +99,7 @@
 <div id="createThemeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999;">
     <div class="card" style="width: 400px; margin: 100px auto; padding: 25px;">
         <h2 style="margin-top: 0; color: var(--accent-green) !important;">Criar Novo Tema</h2>
-        <form method="POST" action="<?= BASE_URL ?>/admin/themes/create">
+        <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/create">
             <div style="margin-bottom: 15px;">
                 <label style="display: block; font-weight: 600; margin-bottom: 5px;">Nome do Tema <span style="color:var(--accent-orange);">*</span></label>
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
@@ -115,15 +126,14 @@
 <div id="uploadThemeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999;">
     <div class="card" style="width: 400px; margin: 100px auto; padding: 25px;">
         <h2 style="margin-top: 0; color: var(--accent-blue) !important;">Fazer Upload de Tema</h2>
-        <p style="font-size: 13px;">Se você tem um tema em um formato .zip, você pode instalá-lo fazendo o upload aqui.</p>
+        <p style="font-size: 13px;">Se você tem um tema em formato .zip contendo um arquivo <code>theme.json</code>, você pode instalá-lo aqui.</p>
         
-        <form method="POST" action="<?= BASE_URL ?>/admin/themes/upload" enctype="multipart/form-data">
-            <div style="margin-bottom: 25px; margin-top: 20px;">
-                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                <input type="file" name="theme_zip" accept=".zip" required id="theme_zip_input">
+        <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/upload" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <div style="margin: 20px 0;">
+                <input type="file" name="theme_zip" accept=".zip" required style="width: 100%;">
             </div>
-            
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; margin-top: 25px;">
                 <button type="button" class="btn" onclick="document.getElementById('uploadThemeModal').style.display='none';">Cancelar</button>
                 <button type="submit" class="btn button-primary">Instalar Agora</button>
             </div>

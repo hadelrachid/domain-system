@@ -8,20 +8,33 @@ use DomainSystem\Core\Plugin\PluginManager;
 use DomainSystem\Core\Theme\ThemeManager;
 use Exception;
 
+use DomainSystem\Core\Contracts\ThemeActivatorInterface;
+use DomainSystem\Core\Theme\ThemeActivator;
+
 class AdminController
 {
     private PluginManager $manager;
     private ThemeManagerInterface $theme;
     private \DomainSystem\Core\Theme\ShortcodeManager $shortcodes;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
+    private \DomainSystem\Core\Contracts\SessionManagerInterface $session;
+    private ThemeActivatorInterface $themeActivator;
 
-    public function __construct(PluginManager $manager, ThemeManagerInterface $theme, \DomainSystem\Core\Theme\ShortcodeManager $shortcodes, \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher, \DomainSystem\Core\Contracts\SessionManagerInterface $session)
-    {
+    public function __construct(
+        PluginManager $manager,
+        ThemeManagerInterface $theme,
+        \DomainSystem\Core\Theme\ShortcodeManager $shortcodes,
+        \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher,
+        \DomainSystem\Core\Contracts\SessionManagerInterface $session,
+        ?ThemeActivatorInterface $themeActivator = null
+    ) {
         $this->manager = $manager;
         $this->theme = $theme;
         $this->shortcodes = $shortcodes;
         $this->dispatcher = $dispatcher;
         $this->session = $session;
+        $basePath = dirname(__DIR__, 4);
+        $this->themeActivator = $themeActivator ?? new ThemeActivator($basePath, null, $dispatcher);
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
@@ -199,9 +212,12 @@ class AdminController
     {
         $basePath = dirname(__DIR__, 4);
         $themesPath = $basePath . '/themes';
+        $activeTheme = $this->themeActivator->getActiveTheme();
         
         $themes = [];
-        // 1. Temas do FlexTheme
+        $seenFolders = [];
+
+        // 1. Temas do diretório raiz /themes
         if (is_dir($themesPath)) {
             $directories = glob($themesPath . '/*', GLOB_ONLYDIR);
             foreach ($directories as $dir) {
@@ -213,7 +229,7 @@ class AdminController
                 $version = '1.0.0';
                 $author = '';
                 $screenshot = '';
-                $isCore = in_array($folder, ['admin', 'manager', 'subscriber', 'user', 'default']);
+                $isCore = in_array($folder, ['admin', 'manager', 'subscriber', 'user'], true);
                 
                 if (file_exists($jsonPath)) {
                     $meta = json_decode(file_get_contents($jsonPath), true);
@@ -225,8 +241,13 @@ class AdminController
                 }
                 
                 if ($isCore) {
-                    continue; // Oculta temas Core (como admin) da interface
+                    continue; // Oculta temas de workspace interno (admin/cockpits de sistema)
                 }
+
+                $seenFolders[$folder] = true;
+                $isActive = ($folder === $activeTheme);
+                $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                $previewUrl = $isActive ? ($baseUrl !== '' ? $baseUrl : '/') : ($baseUrl . '/admin/themes/preview?theme=' . urlencode($folder));
                 
                 $themes[] = [
                     'folder' => $folder,
@@ -235,16 +256,17 @@ class AdminController
                     'version' => $version,
                     'author' => $author,
                     'screenshot' => $screenshot,
-                    'is_core' => $isCore,
+                    'is_core' => false,
                     'is_bundled' => false,
                     'is_add_new' => false,
+                    'is_active' => $isActive,
                     'plugin' => null,
-                    'preview_url' => \BASE_URL . '/admin' // Ajustar depois para prever
+                    'preview_url' => $previewUrl
                 ];
             }
         }
         
-        // 2. Temas empacotados dentro de Plugins Ativos (Bundled Themes)
+        // 2. Temas empacotados dentro de Plugins Ativos (Bundled Themes, ex: flextheme)
         $pluginsPath = $basePath . '/src/Plugins';
         $configPath = $basePath . '/config/plugins.json';
         $activeStates = file_exists($configPath) ? (json_decode(file_get_contents($configPath), true) ?? []) : [];
@@ -257,6 +279,11 @@ class AdminController
                     if (is_dir($pluginThemesPath)) {
                         foreach (glob($pluginThemesPath . '/*', GLOB_ONLYDIR) as $themeDir) {
                             $folder = basename($themeDir);
+                            if (isset($seenFolders[$folder])) {
+                                continue;
+                            }
+                            $seenFolders[$folder] = true;
+
                             $jsonPath = $themeDir . '/theme.json';
                             
                             $name = ucfirst($folder);
@@ -274,12 +301,9 @@ class AdminController
                                 $screenshot = $meta['screenshot'] ?? '';
                             }
                             
-                            $previewUrl = \BASE_URL . '/cockpit/' . str_replace('_cockpit', '', str_replace('cockpit_', '', $folder));
-                            if ($pluginName === 'flextheme') {
-                                $previewUrl = \BASE_URL . '/';
-                            } elseif ($folder === 'public_booking') {
-                                $previewUrl = \BASE_URL . '/agendamento';
-                            }
+                            $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                            $isActive = ($folder === $activeTheme);
+                            $previewUrl = $isActive ? ($baseUrl !== '' ? $baseUrl : '/') : ($baseUrl . '/admin/themes/preview?theme=' . urlencode($folder));
 
                             $themes[] = [
                                 'folder' => $folder,
@@ -291,6 +315,7 @@ class AdminController
                                 'is_core' => false,
                                 'is_bundled' => true,
                                 'is_add_new' => false,
+                                'is_active' => $isActive,
                                 'plugin' => $pluginName,
                                 'preview_url' => $previewUrl
                             ];
@@ -311,17 +336,39 @@ class AdminController
             'is_core' => false,
             'is_bundled' => false,
             'is_add_new' => true,
+            'is_active' => false,
             'plugin' => null,
             'preview_url' => '#'
         ];
         
         try {
             return $this->theme->render('themes_panel', [
-                'themes' => $themes
+                'themes' => $themes,
+                'active_theme' => $activeTheme
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar painel de temas: " . $e->getMessage();
         }
+    }
+
+    public function activateTheme(\DomainSystem\Core\Http\Request $request)
+    {
+        $themeFolder = (string)$request->input('theme_folder', '');
+
+        if (empty($themeFolder)) {
+            $this->session->setFlash('error', 'Nome do tema não informado.');
+            return \DomainSystem\Core\Http\Response::redirect((defined('BASE_URL') ? BASE_URL : '') . "/admin/themes");
+        }
+
+        $result = $this->themeActivator->activate($themeFolder);
+
+        if ($result['success']) {
+            $this->session->setFlash('success', "✅ " . $result['message']);
+        } else {
+            $this->session->setFlash('error', "❌ " . $result['message']);
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect((defined('BASE_URL') ? BASE_URL : '') . "/admin/themes");
     }
 
     public function uploadTheme(\DomainSystem\Core\Http\Request $request)
@@ -346,41 +393,88 @@ class AdminController
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
     }
 
-    public function previewTheme(\DomainSystem\Core\Http\Request $request)
+    public function previewTheme(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
-        $themeFolder = $request->input('theme', '');
+        $themeFolder = (string)$request->input('theme', '');
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         if (empty($themeFolder)) {
-            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/themes");
         }
         
-        $basePath = dirname(__DIR__, 4);
-        $themeDir = $basePath . '/themes/' . basename($themeFolder);
-        if (!is_dir($themeDir)) {
-            // Fallback para temas em plugins (ex: flextheme)
-            $themeDirPlugin = $basePath . '/src/Plugins/flextheme/themes/' . basename($themeFolder);
-            if (is_dir($themeDirPlugin)) {
-                $themeDir = $themeDirPlugin;
-            }
+        $resolver = ($this->themeActivator instanceof \DomainSystem\Core\Theme\ThemeActivator)
+            ? $this->themeActivator->getResolver()
+            : new \DomainSystem\Core\Theme\SafeThemeResolver([
+                dirname(__DIR__, 4) . '/themes',
+                dirname(__DIR__, 4) . '/src/Plugins/flextheme/themes'
+            ]);
+
+        if (!$resolver->themeExists($themeFolder)) {
+            $this->session->setFlash('error', "Tema '{$themeFolder}' não foi encontrado para visualização.");
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/themes");
         }
 
-        if (!is_dir($themeDir)) {
-            $this->session->setFlash('error', 'Tema não encontrado para preview.');
-            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/themes");
-        }
-        
-        // Temporarily set active theme to the requested preview theme
-        $this->theme->setActiveThemePath($themeDir);
-        
-        try {
-            // Render index if it exists, otherwise layout
-            if (file_exists($themeDir . '/index.php')) {
-                return $this->theme->render('index', []);
+        $themeDir = $resolver->resolveThemePath($themeFolder);
+        $csrfToken = $this->session->getCsrfToken();
+
+        // Determina o arquivo principal de entrada do tema
+        $html = '';
+        if (file_exists($themeDir . '/index.php')) {
+            ob_start();
+            $siteName = 'Domain-System OS';
+            require $themeDir . '/index.php';
+            $html = ob_get_clean();
+        } elseif (file_exists($themeDir . '/templates/home.php')) {
+            ob_start();
+            $siteName = 'Domain-System OS';
+            require $themeDir . '/templates/home.php';
+            $innerContent = ob_get_clean();
+
+            if (file_exists($themeDir . '/layouts/main.php')) {
+                $content = $innerContent;
+                ob_start();
+                require $themeDir . '/layouts/main.php';
+                $html = ob_get_clean();
             } else {
-                return $this->theme->render('layout', ['content' => '<div style="padding: 50px; text-align: center; font-family: sans-serif;"><h1>Preview do Tema: ' . htmlspecialchars($themeFolder) . '</h1><p>Nenhuma view index.php foi encontrada para este tema.</p></div>']);
+                $html = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><title>Preview - " . htmlspecialchars($themeFolder) . "</title></head><body>" . $innerContent . "</body></html>";
             }
-        } catch (\Exception $e) {
-            return "Erro ao renderizar preview do tema: " . $e->getMessage();
+        } else {
+            $html = "<div style='padding:50px; text-align:center; font-family:sans-serif;'><h1>Tema: " . htmlspecialchars($themeFolder) . "</h1><p>Nenhum index.php ou templates/home.php encontrado.</p></div>";
         }
+
+        // Processa shortcodes no HTML do tema (ex: [hub_de_cursos], [nav_menu])
+        if ($this->shortcodes !== null) {
+            $html = $this->shortcodes->parse($html);
+        }
+
+        // Barra flutuante de visualização (WordPress-style Live Preview)
+        $previewBar = "
+        <div id='ds-preview-topbar' style='position:fixed; top:0; left:0; width:100%; height:46px; background:#1d2327; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box; z-index:99999999; font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif; font-size:13px; border-bottom:2px solid #2271b1; box-shadow:0 2px 10px rgba(0,0,0,0.6);'>
+            <div style='display:flex; align-items:center; gap:12px;'>
+                <span style='background:#2271b1; color:#fff; padding:3px 8px; border-radius:3px; font-weight:700; font-size:11px; text-transform:uppercase;'>Preview Ativo</span>
+                <span>Visualizando tema: <strong style='color:#45f3ff;'>" . htmlspecialchars($themeFolder) . "</strong></span>
+                <span style='color:#8c8f94; font-size:12px;'>(Este tema ainda não é o padrão público do site)</span>
+            </div>
+            <div style='display:flex; gap:10px; align-items:center;'>
+                <form method='POST' action='{$baseUrl}/admin/themes/activate' style='margin:0;'>
+                    <input type='hidden' name='csrf_token' value='{$csrfToken}'>
+                    <input type='hidden' name='theme_folder' value='" . htmlspecialchars($themeFolder, ENT_QUOTES, 'UTF-8') . "'>
+                    <button type='submit' style='background:#00a32a; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-weight:600; cursor:pointer; font-size:12px; transition:opacity 0.2s;' onmouseover=\"this.style.opacity='0.9'\" onmouseout=\"this.style.opacity='1'\">
+                        ✓ Ativar este Tema
+                    </button>
+                </form>
+                <a href='{$baseUrl}/admin/themes' style='color:#fff; text-decoration:none; padding:6px 12px; background:rgba(255,255,255,0.12); border-radius:4px; font-size:12px;'>✕ Fechar e Voltar</a>
+            </div>
+        </div>
+        <div style='height:46px;'></div>
+        ";
+
+        if (stripos($html, '<body') !== false) {
+            $html = preg_replace('/<body([^>]*)>/i', '<body$1>' . $previewBar, $html, 1);
+        } else {
+            $html = $previewBar . $html;
+        }
+
+        return new \DomainSystem\Core\Http\Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
     }
 
     public function createTheme(\DomainSystem\Core\Http\Request $request)

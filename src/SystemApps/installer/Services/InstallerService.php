@@ -108,15 +108,21 @@ class InstallerService
             }
         }
         
-        // Sobrescreve apenas as de banco e o tema
+        // Sobrescreve apenas as de banco, estado inicial e tema
         $existing['DB_DSN'] = $dsn;
         $existing['DB_USER'] = $user;
         $existing['DB_PASS'] = $pass;
-        $existing['ACTIVE_THEME'] = 'rachidd';
+        $existing['SITE_STATUS'] = $existing['SITE_STATUS'] ?? 'coming_soon';
+        $existing['ACTIVE_THEME'] = $existing['ACTIVE_THEME'] ?? 'default';
         
         // Garante a APP_KEY
         if (empty($existing['APP_KEY'])) {
             $existing['APP_KEY'] = bin2hex(random_bytes(16));
+        }
+
+        // Garante a EMERGENCY_KEY para chave de recuperação do sistema
+        if (empty($existing['EMERGENCY_KEY'])) {
+            $existing['EMERGENCY_KEY'] = bin2hex(random_bytes(24));
         }
 
         $lines = [];

@@ -10,9 +10,9 @@ class DatabaseConfig
 
     public function __construct(string $dsn = '', string $user = '', string $pass = '')
     {
-        $this->dsn = $dsn;
-        $this->user = $user;
-        $this->pass = $pass;
+        $this->dsn = $dsn ?: (getenv('DB_DSN') ?: ($_ENV['DB_DSN'] ?? 'sqlite::memory:'));
+        $this->user = $user ?: (getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ''));
+        $this->pass = $pass ?: (getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ''));
     }
 
     public function getDsn(): string

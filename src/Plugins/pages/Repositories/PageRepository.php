@@ -4,16 +4,27 @@ namespace DomainSystem\Plugins\pages\Repositories;
 
 use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
+use DomainSystem\Core\Contracts\PageLookupInterface;
 use PDOException;
 use PDO;
 
-class PageRepository implements PageRepositoryInterface
+class PageRepository implements PageRepositoryInterface, PageLookupInterface
 {
     private PDO $db;
 
-    public function __construct(Connection $connection)
+    public function __construct(Connection|PDO $connection)
     {
-        $this->db = $connection->getPdo();
+        $this->db = $connection instanceof Connection ? $connection->getPdo() : $connection;
+    }
+
+    public function getSelectablePages(): array
+    {
+        try {
+            $stmt = $this->db->query("SELECT id, title, slug FROM pages ORDER BY title ASC");
+            return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        } catch (PDOException $e) {
+            return [];
+        }
     }
 
     public function getAll(): array

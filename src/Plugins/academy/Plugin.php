@@ -1,13 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\academy;
 
-use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
-use DomainSystem\Core\Contracts\OsRuntimeInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
+use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
-use DomainSystem\Core\Theme\ShortcodeManager;
+use DomainSystem\Plugins\academy\Contracts\CourseImageStorageInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
+use DomainSystem\Plugins\academy\Controllers\CourseAdminController;
+use DomainSystem\Plugins\academy\Repositories\PdoCourseRepository;
+use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
+use DomainSystem\Plugins\academy\Services\CourseService;
+use DomainSystem\Plugins\academy\Services\LocalCourseImageStorage;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -24,100 +32,70 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        // 1. Menu Administrativo
+        // 1. Injeção de Dependências no Container
+        $runtime->singleton(CourseRepositoryInterface::class, function() use ($runtime) {
+            $db = $runtime->getLink('core.db')->getPdo();
+            return new PdoCourseRepository($db);
+        });
+
+        $runtime->singleton(CourseImageStorageInterface::class, function() {
+            $uploadDir = defined('DOMAIN_SYSTEM_ROOT') 
+                ? DOMAIN_SYSTEM_ROOT . '/uploads' 
+                : dirname(__DIR__, 3) . '/uploads';
+            return new LocalCourseImageStorage($uploadDir);
+        });
+
+        $runtime->singleton(CourseService::class, function() use ($runtime) {
+            return new CourseService(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseImageStorageInterface::class)
+            );
+        });
+
+        $runtime->singleton(CourseCatalogRenderer::class, function() use ($runtime) {
+            return new CourseCatalogRenderer(
+                $runtime->make(CourseRepositoryInterface::class)
+            );
+        });
+
+        // 2. Menu Administrativo
         $runtime->onHook('admin.menu', function($menus, $role = 'guest') {
             if ($role === 'admin') {
                 $menus[] = [
                     'title' => 'Academy (Cursos)',
-                    'url' => '/admin/academy',
-                    'icon' => '🎓'
+                    'url'   => '/admin/academy',
+                    'icon'  => '🎓'
                 ];
             }
             return $menus;
         });
 
-        // 2. Rotas do Painel
+        // 3. Rotas Administrativas (CRUD Completo)
         $runtime->onHook('router.register', function(Router $router) {
-            $router->addRoute('GET', '/admin/academy', [\DomainSystem\Plugins\academy\Controllers\CourseAdminController::class, 'index'], 'academy', ['admin']);
-            $router->addRoute('POST', '/admin/academy/store', [\DomainSystem\Plugins\academy\Controllers\CourseAdminController::class, 'store'], 'academy', ['admin']);
-            $router->addRoute('POST', '/admin/academy/delete/{id}', [\DomainSystem\Plugins\academy\Controllers\CourseAdminController::class, 'delete'], 'academy', ['admin']);
+            $router->addRoute('GET', '/admin/academy', [CourseAdminController::class, 'index'], 'academy', ['admin']);
+            $router->addRoute('GET', '/admin/academy/edit/{id}', [CourseAdminController::class, 'edit'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/store', [CourseAdminController::class, 'store'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/update/{id}', [CourseAdminController::class, 'update'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/delete/{id}', [CourseAdminController::class, 'delete'], 'academy', ['admin']);
         });
 
-        // 3. Shortcode: [hub_de_cursos]
+        // 4. Shortcode: [hub_de_cursos]
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $manager) use ($runtime) {
-            $manager->add('hub_de_cursos', function($attrs) use ($runtime) {
-                return $this->renderHub($runtime);
+            $manager->add('hub_de_cursos', function($attrs = []) use ($runtime) {
+                try {
+                    /** @var CourseCatalogRenderer $renderer */
+                    $renderer = $runtime->make(CourseCatalogRenderer::class);
+                    return $renderer->render(is_array($attrs) ? $attrs : []);
+                } catch (\Throwable $e) {
+                    return "<div style='text-align:center; padding:30px; background:rgba(255,255,255,0.03); border-radius:8px; color:var(--text-muted, #8c8f94);'>Hub de Cursos em configuração.</div>";
+                }
             });
         });
     }
 
-    public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
+    public function activate(OsRuntimeInterface $runtime): void
     {
-        // Criação da tabela de cursos
-        $schema = $runtime->getLink('core.db.schema');
-        $schema->create('academy_courses', function ($table) {
-            $table->id();
-            $table->string('title');
-            $table->string('slug')->unique();
-            $table->string('thumbnail')->nullable();
-            $table->text('description')->nullable();
-            $table->string('status')->default('draft'); // published, draft, soon
-            $table->string('link')->nullable(); // Link para comprar ou assistir
-            $table->datetime('created_at')->nullable()->default('CURRENT_TIMESTAMP');
-        });
-    }
-
-    private function renderHub(OsRuntimeInterface $runtime): string
-    {
-        try {
-            $db = $runtime->getLink('core.db')->getPdo();
-            $stmt = $db->query("SELECT * FROM academy_courses WHERE status IN ('published', 'soon') ORDER BY id DESC");
-            $courses = $stmt->fetchAll();
-            
-            if (empty($courses)) {
-                return "<div style='text-align:center; padding:40px; background:var(--surface); border-radius:12px; border:1px dashed var(--primary);'>Nenhum curso disponível no momento.</div>";
-            }
-
-            // A grade HTML
-            $html = "<div class='academy-grid' style='display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; margin-top: 30px;'>";
-            
-            foreach ($courses as $course) {
-                $statusBadge = '';
-                if ($course['status'] === 'soon') {
-                    $statusBadge = "<span style='position:absolute; top:15px; right:15px; background:var(--primary); color:#0b0c10; font-size:11px; font-weight:bold; padding:4px 10px; border-radius:20px; box-shadow:0 0 10px rgba(69, 243, 255, 0.5);'>EM BREVE</span>";
-                }
-
-                $thumbUrl = htmlspecialchars($course['thumbnail'] ?: (defined('BASE_URL') ? BASE_URL : '') . '/assets/img/default-course.jpg', ENT_QUOTES, 'UTF-8');
-                $link = htmlspecialchars($course['link'] ?: '#', ENT_QUOTES, 'UTF-8');
-                
-                $html .= "
-                <a href='{$link}' style='text-decoration:none; display:block;'>
-                    <div class='glass-panel course-card' style='position:relative; overflow:hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;'>
-                        {$statusBadge}
-                        <div style='height: 180px; background-image: url({$thumbUrl}); background-size: cover; background-position: center; border-bottom: 1px solid rgba(69, 243, 255, 0.1);'></div>
-                        <div style='padding: 25px;'>
-                            <h3 style='color: #fff; margin-bottom: 10px; font-size: 1.2rem;'>".htmlspecialchars($course['title'] ?? '')."</h3>
-                            <p style='color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin:0;'>".htmlspecialchars($course['description'] ?? '')."</p>
-                        </div>
-                    </div>
-                </a>";
-            }
-
-            $html .= "</div>";
-            
-            // Hover effect injected locally for the shortcode
-            $html .= "
-            <style>
-                .course-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 15px 30px rgba(0,0,0,0.5), 0 0 15px rgba(69, 243, 255, 0.2);
-                }
-            </style>";
-
-            return $html;
-        } catch (\Exception $e) {
-            // Se a tabela não existir ou o BD falhar, não expomos erro SQL pro usuário
-            return "<div style='text-align:center; padding:40px; background:var(--surface); border-radius:12px; border:1px dashed rgba(255,255,255,0.1); color: var(--text-muted);'>Hub de Cursos em configuração. Volte em breve.</div>";
-        }
+        $db = $runtime->getLink('core.db')->getPdo();
+        new PdoCourseRepository($db);
     }
 }

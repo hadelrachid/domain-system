@@ -36,10 +36,29 @@ class ErrorHandler
 
     public function handleError(int $level, string $message, string $file, int $line): bool
     {
-        if (error_reporting() & $level) {
+        if (!(error_reporting() & $level)) {
+            return false;
+        }
+
+        $isFatalLevel = in_array($level, [
+            E_ERROR,
+            E_PARSE,
+            E_CORE_ERROR,
+            E_COMPILE_ERROR,
+            E_USER_ERROR,
+            E_RECOVERABLE_ERROR
+        ], true);
+
+        $isDevelopment = (getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'production')) === 'development';
+
+        if ($isFatalLevel || $isDevelopment) {
             $e = new \ErrorException($message, 0, $level, $file, $line);
             $this->handleException($e);
+            return true;
         }
+
+        // Em produção, registra avisos e depreciações no log silenciosamente sem derrubar o sistema
+        $this->logger->log(new \ErrorException($message, 0, $level, $file, $line));
         return true;
     }
 

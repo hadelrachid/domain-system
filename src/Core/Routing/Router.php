@@ -11,6 +11,7 @@ use DomainSystem\Core\Contracts\ContainerInterface;
 
 class Router implements RouterInterface
 {
+    private ContainerInterface $container;
     private array $routes = [];
     private ?\DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
 

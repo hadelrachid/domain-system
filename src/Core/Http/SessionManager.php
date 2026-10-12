@@ -44,8 +44,7 @@ class SessionManager implements SessionManagerInterface
             // -----------------------------------------------------------------
             // Verifica se a conexão é HTTPS para definir a flag 'secure' do cookie.
             // Isso impede que o cookie de sessão seja trafegado em texto puro.
-            $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
-                        (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+            $isSecure = $this->isSecureRequest();
             
             session_set_cookie_params([
                 'lifetime' => 0,          // Sessão expira quando o navegador fecha
@@ -165,11 +164,56 @@ class SessionManager implements SessionManagerInterface
      *
      * Usado no logout, por exemplo.
      */
+    /**
+     * Destrói completamente a sessão atual: limpa a memória, expira o cookie no cliente e destrói os dados no servidor.
+     */
     public function destroy(): void
     {
-        if (session_status() !== PHP_SESSION_NONE) {
+        // 1. Limpa o array em memória para a requisição corrente
+        $_SESSION = [];
+
+        // 2. Remove o cookie do navegador no cliente
+        if (ini_get('session.use_cookies') && !headers_sent()) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'] ?? '/',
+                $params['domain'] ?? '',
+                (bool)($params['secure'] ?? false),
+                (bool)($params['httponly'] ?? true)
+            );
+        }
+
+        // 3. Destrói o arquivo/registro no servidor se a sessão estiver ativa
+        if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }
+    }
+
+    /**
+     * Detecta se a requisição é HTTPS, com suporte a proxies reversos e CDNs (Cloudflare / Hostinger).
+     */
+    public function isSecureRequest(): bool
+    {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            return true;
+        }
+
+        if (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) {
+            return true;
+        }
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+            return true;
+        }
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

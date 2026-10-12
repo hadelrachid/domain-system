@@ -76,15 +76,38 @@ class Container implements ContainerInterface
 
         foreach ($parameters as $parameter) {
             $type = $parameter->getType();
+            $resolved = false;
+            $dependency = null;
 
-            if (!$type || $type->isBuiltin()) {
-                if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
-                } else {
-                    throw new Exception("Cannot resolve parameter [{$parameter->name}] in class [$abstract].");
+            if ($type instanceof \ReflectionNamedType) {
+                if (!$type->isBuiltin()) {
+                    try {
+                        $dependency = $this->make($type->getName());
+                        $resolved = true;
+                    } catch (\Throwable $e) {
+                        // Permite tentar valor padrão se a resolução falhar
+                    }
                 }
+            } elseif ($type instanceof \ReflectionUnionType) {
+                foreach ($type->getTypes() as $subType) {
+                    if ($subType instanceof \ReflectionNamedType && !$subType->isBuiltin()) {
+                        try {
+                            $dependency = $this->make($subType->getName());
+                            $resolved = true;
+                            break;
+                        } catch (\Throwable $e) {
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            if ($resolved) {
+                $dependencies[] = $dependency;
+            } elseif ($parameter->isDefaultValueAvailable()) {
+                $dependencies[] = $parameter->getDefaultValue();
             } else {
-                $dependencies[] = $this->make($type->getName());
+                throw new Exception("Cannot resolve parameter [{$parameter->name}] in class [$abstract].");
             }
         }
 

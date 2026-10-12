@@ -36,6 +36,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class,
             \DomainSystem\Plugins\pages\Repositories\PageRepository::class
         );
+        $runtime->bind(
+            \DomainSystem\Core\Contracts\PageLookupInterface::class,
+            \DomainSystem\Plugins\pages\Repositories\PageRepository::class
+        );
 
         // Adiciona ao Menu do Painel
         $runtime->onHook('admin.menu', function($menus, $role = 'admin') {
@@ -98,18 +102,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             
             // Seed default pages
             $db = $runtime->getLink('core.db')->getPdo();
-            
-            $defaults = [
-                ['tutoriais', 'Tutoriais e Cursos', '<h1>Central de Conhecimento</h1><p>Em breve nosso hub de cursos.</p>', 'pages/index.php'],
-                ['sobre', 'Sobre Mim', '<h1>Sobre Rachid</h1><p>Sou o criador do Domain-System OS.</p>', 'templates/sobre.php'],
-                ['termos', 'Termos de Uso', '<h1>Termos de Uso</h1><p>Estes são os termos de uso.</p>', 'templates/termos.php'],
-                ['privacidade', 'Política de Privacidade', '<h1>Política de Privacidade</h1><p>Respeitamos seus dados.</p>', 'templates/privacidade.php']
-            ];
-            
-            $stmt = $db->prepare("INSERT INTO pages (slug, title, content, theme, template_file) VALUES (?, ?, ?, 'rachidd', ?)");
-            foreach ($defaults as $p) {
-                $stmt->execute($p);
-            }
+            \DomainSystem\Plugins\pages\Services\DefaultPagesSeeder::seed($db);
         } catch (\Exception $e) {}
     }
 }

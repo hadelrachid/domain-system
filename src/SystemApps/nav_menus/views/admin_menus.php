@@ -65,7 +65,7 @@
                 </form>
             </div>
 
-            <form id="menu-settings-form" onsubmit="saveMenuSettings(event, '<?= BASE_URL ?>/admin/themes/menus/store')">
+            <form id="menu-settings-form" onsubmit="saveMenuSettings(event, '<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/menus/store')">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="id" value="<?= $activeMenu['id'] ?? '' ?>">
 <input type="hidden" name="location" value="<?= $activeMenu['location'] ?? '' ?>">
@@ -88,7 +88,7 @@
                 <div style="margin-bottom: 20px;">
                     <button type="submit" class="btn btn-primary">Salvar Configurações do Menu</button>
                     <?php if ($activeMenu): ?>
-                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="deleteMenuData(event, '<?= BASE_URL ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>')">Excluir Menu</button>
+                        <button type="button" class="btn" style="background:#dc3545; border-color:#dc3545;" onclick="deleteMenuData(event, '<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/menus/delete/<?= $activeMenu['id'] ?>')">Excluir Menu</button>
                     <?php endif; ?>
                 </div>
             </form>
@@ -99,7 +99,7 @@
             <h3 style="margin-top:0; color:#fff; margin-bottom: 20px;">Estrutura do Menu</h3>
             <p style="color:var(--text-muted); font-size:13px;">Arraste os itens para reordená-los.</p>
 
-            <form method="POST" action="<?= BASE_URL ?>/admin/themes/menus/items" id="items-form">
+            <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/menus/items" id="items-form">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="menu_id" value="<?= $activeMenu['id'] ?>">
                 <input type="hidden" name="items" id="items-json" value="">
@@ -123,7 +123,7 @@
                     <?php endforeach; ?>
                 </ul>
 
-                <button type="button" class="btn btn-primary" onclick="saveMenuItems('<?= BASE_URL ?>/admin/themes/menus/items')" style="margin-top: 20px; width: 100%; text-align: center;">Salvar Estrutura</button>
+                <button type="button" class="btn btn-primary" onclick="saveMenuItems('<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/menus/items')" style="margin-top: 20px; width: 100%; text-align: center;">Salvar Estrutura</button>
             </form>
             <?php endif; ?>
 
@@ -229,11 +229,15 @@
         const form = e.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+        const csrf = document.querySelector('input[name="csrf_token"]')?.value || '';
 
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrf
+                },
                 body: JSON.stringify(data)
             });
             const resData = await response.json();
@@ -267,7 +271,10 @@
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrf
+                },
                 body: JSON.stringify({ menu_id: menuId, items: items, csrf_token: csrf })
             });
             const resData = await response.json();

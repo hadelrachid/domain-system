@@ -33,9 +33,10 @@ class CsrfMiddlewareTest extends TestCase
         // This will block and set a 403, maybe die or output.
         // The current middleware might send a view or die if not ajax.
         // Let's just catch the output or execution.
-        ob_start();
-        $middleware->handle($request, function($req) { return true; }, ['roles' => ['admin']]);
-        ob_get_clean();
+        $response = $middleware->handle($request, function($req) { return true; }, ['capabilities' => ['admin']]);
+        
+        $this->assertInstanceOf(\DomainSystem\Core\Contracts\ResponseInterface::class, $response);
+        $this->assertEquals(403, $response->getStatusCode());
 
         $logFile = DOMAIN_SYSTEM_ROOT . '/temp/csrf_debug.log';
         $this->assertFileExists($logFile);
@@ -49,5 +50,26 @@ class CsrfMiddlewareTest extends TestCase
         // Must contain safe metadata
         $this->assertStringContainsString('token_present=yes', $logContent);
         $this->assertStringContainsString('route=/admin/test', $logContent);
+    }
+
+    public function testCsrfFailureOnAjaxReturnsJsonResponse()
+    {
+        $sessionMock = $this->createMock(SessionManager::class);
+        $sessionMock->method('validateCsrfToken')->willReturn(false);
+
+        $middleware = new CsrfMiddleware($sessionMock);
+        
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/save';
+        $_SERVER['HTTP_X_REQUESTED_WITH'] = 'xmlhttprequest';
+        $_POST = [];
+        
+        $request = Request::capture();
+        
+        $response = $middleware->handle($request, function($req) { return true; }, ['capabilities' => ['admin']]);
+        
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\JsonResponse::class, $response);
+        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertStringContainsString('"csrf"', $response->getContent());
     }
 }

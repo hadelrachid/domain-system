@@ -29,15 +29,19 @@ class PageFrontController
         $page = $this->pageRepo->findBySlug($slug);
 
         if (!$page) {
-            return new \DomainSystem\Core\Http\Response("<h1>404 - Página não encontrada</h1>", 404);
+            return new \DomainSystem\Core\Http\Response("<h1>404 - Página não encontrada</h1><p>Buscando pelo slug: [" . htmlspecialchars($slug) . "]</p>", 404);
         }
 
         $this->seo->setTitle($page['title'] . ' | Rachid');
         $this->seo->setDescription(mb_substr(strip_tags($page['content'] ?? ''), 0, 150) . '...');
 
+        $html = null;
+
         // Se a página tem um template PHP ou página estática linkada
         if (!empty($page['theme']) && !empty($page['template_file'])) {
-            $themeRoot = DOMAIN_SYSTEM_ROOT . '/src/Plugins/flextheme/themes/' . basename($page['theme']);
+            $themesBaseDir = DOMAIN_SYSTEM_ROOT . '/src/Plugins/flextheme/themes';
+            $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver($themesBaseDir);
+            $themeRoot = $resolver->resolveThemePath((string)$page['theme']);
             $templateFile = $page['template_file'];
             
             // Backward compatibility: se não tiver prefixo, assume templates/
@@ -48,15 +52,15 @@ class PageFrontController
             if (str_starts_with($templateFile, 'pages/')) {
                 // MODO PÁGINA ESTÁTICA (Bypassa o renderizador de templates)
                 $filePath = $themeRoot . '/' . $templateFile;
+                if (!file_exists($filePath)) {
+                    return new \DomainSystem\Core\Http\Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
+                }
+
                 $realPath = realpath($filePath);
                 $realThemeRoot = realpath($themeRoot);
                 
                 if ($realPath === false || $realThemeRoot === false || !str_starts_with($realPath, $realThemeRoot)) {
                     return new \DomainSystem\Core\Http\Response("<h1>403 - Tentativa de acesso inválido</h1>", 403);
-                }
-                
-                if (!file_exists($realPath)) {
-                    return new \DomainSystem\Core\Http\Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
                 }
                 
                 ob_start();
@@ -65,13 +69,21 @@ class PageFrontController
                 $html = ob_get_clean();
             } else {
                 // MODO TEMPLATE (Usa o ThemeManager)
-                // Remove o prefixo 'templates/' e '.php' para o render()
                 $templateName = str_replace('templates/', '', preg_replace('/\.php$/', '', $templateFile));
-                
-                // Força o ThemeManager a procurar na pasta templates/ do tema selecionado
-                $html = $this->themeManager->render($templateName, ['page' => $page], $themeRoot . '/templates');
+                $templatesDir = $themeRoot . '/templates';
+                $candidateFile = $templatesDir . '/' . basename($templateName) . '.php';
+
+                if (file_exists($candidateFile)) {
+                    try {
+                        $html = $this->themeManager->render($templateName, ['page' => $page], $templatesDir);
+                    } catch (\Throwable $e) {
+                        $html = null;
+                    }
+                }
             }
-        } else {
+        }
+
+        if ($html === null) {
             // Renderiza o fallback de conteúdo de banco de dados
             if (!empty($page['content']) && str_starts_with(trim($page['content']), '[')) {
                 $tree = json_decode($page['content'], true);

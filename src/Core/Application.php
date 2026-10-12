@@ -373,6 +373,14 @@ class Application
     /**
      * Retorna o Gerenciador de Workspaces.
      */
+    /**
+     * Resolve uma dependência através do Container do Kernel.
+     */
+    public function make(string $abstract, array $parameters = []): mixed
+    {
+        return $this->container->make($abstract, $parameters);
+    }
+
     public function getWorkspaceManager(): WorkspaceManager
     {
         return $this->workspaceManager;
@@ -406,6 +414,7 @@ class Application
     public function boot(): void
     {
         // Inicia a sessão nativa do Kernel antes de qualquer plugin
+        \DomainSystem\Core\Bootstrap\RuntimeDirectories::ensure($this->basePath);
         $this->sessionManager->start();
 
         // ─────────────────────────────────────────────────────────────────

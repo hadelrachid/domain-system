@@ -10,6 +10,7 @@ use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\RedirectResponse;
+use DomainSystem\Plugins\pages\Services\PageSlugHelper;
 
 class PageAdminController
 {
@@ -61,9 +62,12 @@ class PageAdminController
             return Response::redirect(\BASE_URL . '/admin/pages');
         }
 
-        $slug = !empty($manualSlug) 
-            ? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $manualSlug)))
-            : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
+        $rawSlug = !empty($manualSlug) ? (string)$manualSlug : (string)$title;
+        $slug = PageSlugHelper::slugify($rawSlug);
+
+        if (!empty($template_file) && empty($theme)) {
+            $theme = 'default';
+        }
 
         if ($id) {
             // Verificar colisão de slug na edição

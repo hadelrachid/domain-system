@@ -114,7 +114,16 @@ class CoreServiceProvider
             return $c->make(\DomainSystem\Core\Theme\ThemeManager::class);
         });
 
-        // 4.1. Navigation Manager
+        // 4.1. Theme Activator & Site State
+        $container->singleton(\DomainSystem\Core\Contracts\ThemeActivatorInterface::class, function($c) use ($basePath, $dispatcher) {
+            return new \DomainSystem\Core\Theme\ThemeActivator($basePath, null, $dispatcher);
+        });
+
+        $container->singleton(\DomainSystem\Core\Contracts\SiteStateInterface::class, function() {
+            return new \DomainSystem\Core\Theme\EnvSiteState();
+        });
+
+        // 4.2. Navigation Manager
         $container->singleton(\DomainSystem\Core\Contracts\NavigationManagerInterface::class, function($c) {
             return new \DomainSystem\Core\Theme\NavigationManager();
         });
