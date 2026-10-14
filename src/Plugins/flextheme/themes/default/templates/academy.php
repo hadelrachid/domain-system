@@ -25,6 +25,9 @@ $safeTitle = htmlspecialchars($page['title'] ?? 'Tutoriais & Cursos', ENT_QUOTES
         <!-- Container principal onde os Shortcodes do Academy Cursos vão injetar os cards -->
         <div class="academy-courses-grid">
             <?= $page['content'] ?? '' ?>
+            <?php if (empty($page['content']) || strpos($page['content'], '[hub_de_cursos]') === false): ?>
+                [hub_de_cursos]
+            <?php endif; ?>
         </div>
         
     </div>
