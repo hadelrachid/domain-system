@@ -46,7 +46,8 @@ class CourseCatalogRenderer
         foreach ($courses as $course) {
             $title = htmlspecialchars((string)($course['title'] ?? ''), ENT_QUOTES, 'UTF-8');
             $desc = htmlspecialchars((string)($course['description'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $link = !empty($course['link']) ? htmlspecialchars((string)$course['link'], ENT_QUOTES, 'UTF-8') : '#';
+            $defaultCourseUrl = $baseUrl . '/cursos/' . urlencode((string)($course['slug'] ?? ''));
+            $link = !empty($course['link']) ? htmlspecialchars((string)$course['link'], ENT_QUOTES, 'UTF-8') : htmlspecialchars($defaultCourseUrl, ENT_QUOTES, 'UTF-8');
 
             if (!empty($course['thumbnail'])) {
                 $rawThumb = (string)$course['thumbnail'];
@@ -65,15 +66,15 @@ class CourseCatalogRenderer
             }
 
             $html .= "
-            <div class='course-card glass-panel' style='background:var(--bg-panel, #1d2327); border:1px solid rgba(69, 243, 255, 0.15); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative; transition: transform 0.25s ease, box-shadow 0.25s ease;'>
-                <div style='position:relative; width:100%; aspect-ratio:16/9; background:#0b0c10; overflow:hidden;'>
-                    <img src='{$thumbUrl}' alt='{$title}' style='width:100%; height:100%; object-fit:cover; display:block;' loading='lazy'>
+            <div class=\"course-card glass-panel\" style=\"background:var(--bg-panel, #1d2327); border:1px solid rgba(69, 243, 255, 0.15); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; position:relative; transition: transform 0.25s ease, box-shadow 0.25s ease;\">
+                <div style=\"position:relative; width:100%; aspect-ratio:16/9; background:#0b0c10; overflow:hidden;\">
+                    <img src=\"{$thumbUrl}\" alt=\"{$title}\" style=\"width:100%; height:100%; object-fit:cover; display:block;\" loading=\"lazy\">
                     {$badge}
                 </div>
-                <div style='padding:20px; display:flex; flex-direction:column; flex-grow:1;'>
-                    <h3 style='margin:0 0 10px 0; font-size:1.2rem; color:var(--text-main, #ffffff); line-height:1.4;'>{$title}</h3>
-                    <p style='margin:0 0 18px 0; color:var(--text-muted, #8c8f94); font-size:0.95rem; line-height:1.5; flex-grow:1;'>{$desc}</p>
-                    <a href='{$link}' style='display:inline-block; text-align:center; padding:10px 18px; border-radius:6px; background:var(--primary, #45f3ff); color:#0b0c10; font-weight:600; text-decoration:none; transition:opacity 0.2s;' onmouseover=\"this.style.opacity='0.85'\" onmouseout=\"this.style.opacity='1'\">
+                <div style=\"padding:20px; display:flex; flex-direction:column; flex-grow:1;\">
+                    <h3 style=\"margin:0 0 10px 0; font-size:1.2rem; color:var(--text-main, #ffffff); line-height:1.4;\">{$title}</h3>
+                    <p style=\"margin:0 0 18px 0; color:var(--text-muted, #8c8f94); font-size:0.95rem; line-height:1.5; flex-grow:1;\">{$desc}</p>
+                    <a href=\"{$link}\" style=\"display:inline-block; text-align:center; padding:10px 18px; border-radius:6px; background:var(--primary, #45f3ff); color:#0b0c10; font-weight:600; text-decoration:none; transition:opacity 0.2s;\" onmouseover=\"this.style.opacity='0.85'\" onmouseout=\"this.style.opacity='1'\">
                         Acessar Conteúdo &rarr;
                     </a>
                 </div>

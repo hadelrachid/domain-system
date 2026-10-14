@@ -6,10 +6,12 @@ namespace DomainSystem\Plugins\academy\Controllers;
 
 use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use Throwable;
 
@@ -18,15 +20,21 @@ class CourseAdminController
     private CourseRepositoryInterface $repository;
     private CourseService $service;
     private SessionManagerInterface $session;
+    private ?CourseStructureRepositoryInterface $structureRepo;
+    private ?ThemeManagerInterface $themeManager;
 
     public function __construct(
         CourseRepositoryInterface $repository,
         CourseService $service,
-        SessionManagerInterface $session
+        SessionManagerInterface $session,
+        ?CourseStructureRepositoryInterface $structureRepo = null,
+        ?ThemeManagerInterface $themeManager = null
     ) {
         $this->repository = $repository;
         $this->service = $service;
         $this->session = $session;
+        $this->structureRepo = $structureRepo;
+        $this->themeManager = $themeManager;
     }
 
     public function index(Request $request): ResponseInterface
@@ -282,9 +290,282 @@ class CourseAdminController
                 </div>
             </form>
         </div>
+
+        <?php if ($this->structureRepo !== null): ?>
+            <?php
+            $modules = $this->structureRepo->getModules((int)$course['id']);
+            $allLessons = $this->structureRepo->getLessons((int)$course['id']);
+            $availablePages = $this->themeManager ? $this->themeManager->getAvailablePages() : [];
+
+            $lessonsByMod = [];
+            $standaloneLessons = [];
+            foreach ($allLessons as $l) {
+                $mId = $l['module_id'] !== null ? (int)$l['module_id'] : null;
+                if ($mId !== null && $mId > 0) {
+                    $lessonsByMod[$mId][] = $l;
+                } else {
+                    $standaloneLessons[] = $l;
+                }
+            }
+
+            // Monta estrutura inicial para o JS
+            $initialStructure = [];
+            foreach ($modules as $m) {
+                $mId = (int)$m['id'];
+                $initialStructure[] = [
+                    'title'    => (string)$m['title'],
+                    'position' => (int)$m['position'],
+                    'lessons'  => array_map(function($les) {
+                        return [
+                            'title'       => (string)$les['title'],
+                            'slug'        => (string)$les['slug'],
+                            'source_type' => (string)$les['source_type'],
+                            'source'      => (string)($les['source'] ?? ''),
+                            'content'     => (string)($les['content'] ?? ''),
+                        ];
+                    }, $lessonsByMod[$mId] ?? []),
+                ];
+            }
+            if (!empty($standaloneLessons)) {
+                $initialStructure[] = [
+                    'title'    => 'Módulo Geral',
+                    'position' => 999,
+                    'lessons'  => array_map(function($les) {
+                        return [
+                            'title'       => (string)$les['title'],
+                            'slug'        => (string)$les['slug'],
+                            'source_type' => (string)$les['source_type'],
+                            'source'      => (string)($les['source'] ?? ''),
+                            'content'     => (string)($les['content'] ?? ''),
+                        ];
+                    }, $standaloneLessons),
+                ];
+            }
+            ?>
+            <div style="margin-top:35px; background:var(--bg-panel, #1d2327); padding:30px; border-radius:8px; border: 1px solid var(--border, rgba(255,255,255,0.1)); max-width: 900px; color:var(--text-main, #fff);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:15px; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h2 style="margin:0; font-size:1.3rem; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-sitemap" style="color:var(--accent-blue, #45f3ff);"></i> Estrutura do Curso (Módulos &amp; Aulas)
+                        </h2>
+                        <p style="margin:5px 0 0 0; color:var(--text-muted, #8c8f94); font-size:13px;">
+                            Organize os módulos e vincule as aulas a arquivos de tema (ex: <code>pages/tutoriais/*.php</code>) ou conteúdo direto.
+                        </p>
+                    </div>
+                    <a href="<?= $baseUrl ?>/cursos/<?= urlencode((string)$course['slug']) ?>" target="_blank" class="btn btn-outline" style="padding:8px 14px; border:1px solid rgba(69,243,255,0.3); color:var(--accent-blue, #45f3ff); border-radius:6px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-external-link-alt"></i> Ver no Site
+                    </a>
+                </div>
+
+                <form method="POST" action="<?= $baseUrl ?>/admin/academy/structure/<?= $course['id'] ?>" id="formCourseStructure">
+                    <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+                    <input type="hidden" name="structure_json" id="structure_json_input" value="">
+
+                    <div id="modulesContainer" style="display:flex; flex-direction:column; gap:20px;"></div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:15px;">
+                        <button type="button" onclick="addModule()" class="btn btn-outline" style="padding:9px 16px; border:1px dashed var(--accent-blue, #45f3ff); color:var(--accent-blue, #45f3ff); border-radius:6px; cursor:pointer; background:transparent;">
+                            <i class="fas fa-plus"></i> Adicionar Módulo
+                        </button>
+                        <button type="submit" onclick="return prepareStructureJson()" class="btn btn-activate" style="padding:10px 22px; font-weight:600; cursor:pointer;">
+                            <i class="fas fa-save"></i> Salvar Estrutura do Curso
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+            (function() {
+                var structure = <?= json_encode($initialStructure, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> || [];
+                var availablePages = <?= json_encode($availablePages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> || [];
+
+                function renderModules() {
+                    var container = document.getElementById('modulesContainer');
+                    container.innerHTML = '';
+
+                    if (structure.length === 0) {
+                        container.innerHTML = '<div style="padding:24px; text-align:center; background:rgba(0,0,0,0.2); border-radius:6px; color:#8c8f94; border:1px dashed rgba(255,255,255,0.1);">Nenhum módulo criado ainda. Clique em "Adicionar Módulo" para começar.</div>';
+                        return;
+                    }
+
+                    structure.forEach(function(mod, modIdx) {
+                        var modCard = document.createElement('div');
+                        modCard.style.cssText = 'background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:18px;';
+
+                        // Header do Módulo
+                        var modHeader = document.createElement('div');
+                        modHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px;';
+                        modHeader.innerHTML = `
+                            <div style="flex:1; display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:12px; font-weight:bold; color:var(--accent-blue, #45f3ff); text-transform:uppercase;">Módulo ` + (modIdx + 1) + `</span>
+                                <input type="text" value="` + escapeHtml(mod.title || '') + `" placeholder="Título do Módulo" onchange="updateModTitle(` + modIdx + `, this.value)" style="flex:1; padding:8px 12px; border-radius:4px; border:1px solid #4a545a; background:#14191c; color:#fff; font-weight:600;">
+                            </div>
+                            <button type="button" onclick="removeModule(` + modIdx + `)" style="background:transparent; border:none; color:#e06c75; cursor:pointer; font-size:14px;" title="Excluir Módulo">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                        modCard.appendChild(modHeader);
+
+                        // Lista de Aulas
+                        var lessonsList = document.createElement('div');
+                        lessonsList.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-left:15px; border-left:2px solid rgba(69,243,255,0.2); padding-left:15px;';
+
+                        (mod.lessons || []).forEach(function(lesson, lesIdx) {
+                            var lesRow = document.createElement('div');
+                            lesRow.style.cssText = 'background:#14191c; border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:8px;';
+
+                            // Opções de páginas do tema para o select
+                            var optionsHtml = '<option value="">-- Selecione arquivo de tema (opcional) --</option>';
+                            availablePages.forEach(function(p) {
+                                var selected = (lesson.source === p) ? 'selected' : '';
+                                optionsHtml += '<option value="' + escapeHtml(p) + '" ' + selected + '>' + escapeHtml(p) + '</option>';
+                            });
+
+                            lesRow.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                                    <div style="flex:1; display:flex; gap:10px;">
+                                        <input type="text" value="` + escapeHtml(lesson.title || '') + `" placeholder="Título da Aula" onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'title', this.value)" style="flex:2; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:13px;">
+                                        <input type="text" value="` + escapeHtml(lesson.slug || '') + `" placeholder="slug-da-aula" onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'slug', this.value)" style="flex:1; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#8c8f94; font-family:monospace; font-size:12px;">
+                                    </div>
+                                    <button type="button" onclick="removeLesson(` + modIdx + `, ` + lesIdx + `)" style="background:transparent; border:none; color:#e06c75; cursor:pointer;" title="Excluir Aula">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <span style="font-size:12px; color:#8c8f94;">Origem:</span>
+                                    <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'source', this.value)" style="flex:1; padding:6px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px; font-family:monospace;">
+                                        ` + optionsHtml + `
+                                    </select>
+                                </div>
+                            `;
+                            lessonsList.appendChild(lesRow);
+                        });
+
+                        // Botão Adicionar Aula ao Módulo
+                        var addLessonBtn = document.createElement('button');
+                        addLessonBtn.type = 'button';
+                        addLessonBtn.className = 'btn btn-outline';
+                        addLessonBtn.style.cssText = 'padding:6px 12px; border:1px dashed rgba(255,255,255,0.2); color:#8c8f94; font-size:12px; border-radius:4px; cursor:pointer; background:transparent; align-self:flex-start; margin-top:4px;';
+                        addLessonBtn.innerHTML = '<i class="fas fa-plus"></i> Adicionar Aula';
+                        addLessonBtn.onclick = function() { addLesson(modIdx); };
+                        lessonsList.appendChild(addLessonBtn);
+
+                        modCard.appendChild(lessonsList);
+                        container.appendChild(modCard);
+                    });
+                }
+
+                function escapeHtml(str) {
+                    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                }
+
+                window.addModule = function() {
+                    structure.push({
+                        title: 'Novo Módulo',
+                        position: structure.length + 1,
+                        lessons: []
+                    });
+                    renderModules();
+                };
+
+                window.removeModule = function(modIdx) {
+                    if (confirm('Deseja excluir este módulo e todas as suas aulas?')) {
+                        structure.splice(modIdx, 1);
+                        renderModules();
+                    }
+                };
+
+                window.updateModTitle = function(modIdx, val) {
+                    if (structure[modIdx]) {
+                        structure[modIdx].title = val;
+                    }
+                };
+
+                window.addLesson = function(modIdx) {
+                    if (structure[modIdx]) {
+                        var lesCount = (structure[modIdx].lessons || []).length + 1;
+                        structure[modIdx].lessons.push({
+                            title: 'Aula ' + lesCount,
+                            slug: 'aula-' + lesCount,
+                            source_type: 'theme_file',
+                            source: '',
+                            content: ''
+                        });
+                        renderModules();
+                    }
+                };
+
+                window.removeLesson = function(modIdx, lesIdx) {
+                    if (structure[modIdx] && structure[modIdx].lessons) {
+                        structure[modIdx].lessons.splice(lesIdx, 1);
+                        renderModules();
+                    }
+                };
+
+                window.updateLessonField = function(modIdx, lesIdx, field, val) {
+                    if (structure[modIdx] && structure[modIdx].lessons && structure[modIdx].lessons[lesIdx]) {
+                        structure[modIdx].lessons[lesIdx][field] = val;
+                    }
+                };
+
+                window.prepareStructureJson = function() {
+                    document.getElementById('structure_json_input').value = JSON.stringify(structure);
+                    return true;
+                };
+
+                renderModules();
+            })();
+            </script>
+        <?php endif; ?>
         <?php
         $html = ob_get_clean();
         return new ViewResponse($html);
+    }
+
+    public function updateStructure(Request $request, $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $courseId = (int)$id;
+
+        $token = $request->input('csrf_token') ?? '';
+        if (empty($token) || $token !== $this->session->getCsrfToken()) {
+            $this->session->setFlash('error', "Token de segurança CSRF inválido.");
+            return Response::redirect($baseUrl . '/admin/academy/edit/' . $courseId);
+        }
+
+        $course = $this->repository->findById($courseId);
+        if (!$course) {
+            $this->session->setFlash('error', "Curso não encontrado.");
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+
+        if ($this->structureRepo === null) {
+            $this->session->setFlash('error', "Repositório de estrutura não disponível.");
+            return Response::redirect($baseUrl . '/admin/academy/edit/' . $courseId);
+        }
+
+        $rawJson = $request->input('structure_json');
+        if (!empty($rawJson)) {
+            $structure = json_decode((string)$rawJson, true);
+            if (!is_array($structure)) {
+                $this->session->setFlash('error', "Formato da estrutura inválido.");
+                return Response::redirect($baseUrl . '/admin/academy/edit/' . $courseId);
+            }
+        } else {
+            $structure = $request->input('structure', []);
+            if (!is_array($structure)) {
+                $structure = [];
+            }
+        }
+
+        try {
+            $this->structureRepo->replaceCourseStructure($courseId, $structure);
+            $this->session->setFlash('success', "Estrutura do curso atualizada com sucesso!");
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Erro ao atualizar estrutura: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/academy/edit/' . $courseId);
     }
 
     public function store(Request $request): ResponseInterface

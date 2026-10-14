@@ -258,6 +258,8 @@ class AcademyCourseTest extends TestCase
         $this->assertStringContainsString('Aprenda a construir APIs com padrões PSR.', $html);
         $this->assertStringContainsString('EM BREVE', $html);
         $this->assertStringContainsString('Curso de Docker e DevOps', $html);
+        $this->assertStringContainsString('href="/tutoriais/apis"', $html);
+        $this->assertStringContainsString('href="/cursos/curso-de-docker-e-devops"', $html);
         $this->assertStringContainsString('aspect-ratio:16/9', $html);
     }
 
@@ -321,5 +323,65 @@ class AcademyCourseTest extends TestCase
         $deleteResponse = $controller->delete($deleteReq, $courseId);
         $this->assertSame(302, $deleteResponse->getStatusCode());
         $this->assertNull($repo->findById($courseId));
+    }
+
+    public function testCourseAdminControllerCanManageCourseStructure(): void
+    {
+        $repo = new PdoCourseRepository($this->pdo);
+        $storage = new LocalCourseImageStorage($this->tempUploadDir);
+        $service = new CourseService($repo, $storage);
+        $structureRepo = new \DomainSystem\Plugins\academy\Repositories\PdoCourseStructureRepository($this->pdo);
+        $themeMock = $this->createMock(\DomainSystem\Core\Contracts\ThemeManagerInterface::class);
+        $themeMock->method('getAvailablePages')->willReturn(['pages/tutoriais/01-instalacao.php']);
+
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('getCsrfToken')->willReturn('valid_csrf_token');
+
+        $controller = new CourseAdminController($repo, $service, $sessionMock, $structureRepo, $themeMock);
+
+        $courseId = $repo->create([
+            'title'       => 'Curso Arquitetura de Microsserviços',
+            'slug'        => 'curso-microsservicos',
+            'status'      => 'published',
+        ]);
+
+        // 1. Edit exibe a seção de estrutura e os arquivos de tema disponíveis
+        $editResponse = $controller->edit(new Request(), $courseId);
+        $this->assertSame(200, $editResponse->getStatusCode());
+        $this->assertStringContainsString('Estrutura do Curso (Módulos &amp; Aulas)', $editResponse->getContent());
+        $this->assertStringContainsString('pages/tutoriais/01-instalacao.php', $editResponse->getContent());
+
+        // 2. Salva estrutura via updateStructure
+        $structurePayload = [
+            [
+                'title'   => 'Módulo 1: Setup do Ambiente',
+                'lessons' => [
+                    [
+                        'title'       => '01 - Instalação do Ambiente',
+                        'slug'        => '01-instalacao',
+                        'source_type' => 'theme_file',
+                        'source'      => 'pages/tutoriais/01-instalacao.php',
+                    ],
+                ],
+            ],
+        ];
+
+        $updateReq = new Request([], [
+            'csrf_token'     => 'valid_csrf_token',
+            'structure_json' => json_encode($structurePayload),
+        ]);
+
+        $response = $controller->updateStructure($updateReq, $courseId);
+        $this->assertSame(302, $response->getStatusCode());
+
+        $modules = $structureRepo->getModules($courseId);
+        $this->assertCount(1, $modules);
+        $this->assertSame('Módulo 1: Setup do Ambiente', $modules[0]['title']);
+
+        $lessons = $structureRepo->getLessons($courseId);
+        $this->assertCount(1, $lessons);
+        $this->assertSame('01 - Instalação do Ambiente', $lessons[0]['title']);
+        $this->assertSame('01-instalacao', $lessons[0]['slug']);
+        $this->assertSame('pages/tutoriais/01-instalacao.php', $lessons[0]['source']);
     }
 }

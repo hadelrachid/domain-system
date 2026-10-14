@@ -7,15 +7,23 @@ namespace DomainSystem\Plugins\academy;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\academy\Contracts\CourseImageStorageInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseNavigationInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Controllers\CourseAdminController;
+use DomainSystem\Plugins\academy\Controllers\CourseFrontController;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseRepository;
+use DomainSystem\Plugins\academy\Repositories\PdoCourseStructureRepository;
 use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
+use DomainSystem\Plugins\academy\Services\CourseNavigationService;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use DomainSystem\Plugins\academy\Services\LocalCourseImageStorage;
+use DomainSystem\Plugins\seo\Contracts\SeoManagerInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -38,6 +46,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoCourseRepository($db);
         });
 
+        $runtime->singleton(CourseStructureRepositoryInterface::class, function() use ($runtime) {
+            $db = $runtime->getLink('core.db')->getPdo();
+            return new PdoCourseStructureRepository($db);
+        });
+
         $runtime->singleton(CourseImageStorageInterface::class, function() {
             $uploadDir = defined('DOMAIN_SYSTEM_ROOT') 
                 ? DOMAIN_SYSTEM_ROOT . '/uploads' 
@@ -52,9 +65,39 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(CourseNavigationInterface::class, function() use ($runtime) {
+            $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+            return new CourseNavigationService(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseStructureRepositoryInterface::class),
+                $baseUrl
+            );
+        });
+
         $runtime->singleton(CourseCatalogRenderer::class, function() use ($runtime) {
             return new CourseCatalogRenderer(
                 $runtime->make(CourseRepositoryInterface::class)
+            );
+        });
+
+        $runtime->singleton(CourseAdminController::class, function() use ($runtime) {
+            return new CourseAdminController(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseService::class),
+                $runtime->make(SessionManagerInterface::class),
+                $runtime->make(CourseStructureRepositoryInterface::class),
+                $runtime->make(ThemeManagerInterface::class)
+            );
+        });
+
+        $runtime->singleton(CourseFrontController::class, function() use ($runtime) {
+            return new CourseFrontController(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseStructureRepositoryInterface::class),
+                $runtime->make(CourseNavigationInterface::class),
+                $runtime->make(CourseCatalogRenderer::class),
+                $runtime->make(SeoManagerInterface::class),
+                $runtime->make(ThemeManagerInterface::class)
             );
         });
 
@@ -70,13 +113,20 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return $menus;
         });
 
-        // 3. Rotas Administrativas (CRUD Completo)
+        // 3. Rotas Administrativas e Públicas
         $runtime->onHook('router.register', function(Router $router) {
+            // Administrativas
             $router->addRoute('GET', '/admin/academy', [CourseAdminController::class, 'index'], 'academy', ['admin']);
             $router->addRoute('GET', '/admin/academy/edit/{id}', [CourseAdminController::class, 'edit'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/store', [CourseAdminController::class, 'store'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/update/{id}', [CourseAdminController::class, 'update'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/structure/{id}', [CourseAdminController::class, 'updateStructure'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/delete/{id}', [CourseAdminController::class, 'delete'], 'academy', ['admin']);
+
+            // Públicas
+            $router->addRoute('GET', '/cursos', [CourseFrontController::class, 'index'], 'academy');
+            $router->addRoute('GET', '/cursos/{courseSlug}', [CourseFrontController::class, 'showCourse'], 'academy');
+            $router->addRoute('GET', '/cursos/{courseSlug}/{lessonSlug}', [CourseFrontController::class, 'showLesson'], 'academy');
         });
 
         // 4. Shortcode: [hub_de_cursos]
@@ -97,5 +147,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     {
         $db = $runtime->getLink('core.db')->getPdo();
         new PdoCourseRepository($db);
+        $structureRepo = new PdoCourseStructureRepository($db);
+        $structureRepo->ensureTables();
     }
 }
