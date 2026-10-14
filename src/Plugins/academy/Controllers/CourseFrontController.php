@@ -21,16 +21,16 @@ class CourseFrontController
     private CourseStructureRepositoryInterface $structureRepo;
     private CourseNavigationInterface $navService;
     private CourseCatalogRenderer $catalogRenderer;
-    private SeoManagerInterface $seo;
-    private ThemeManagerInterface $themeManager;
+    private ?SeoManagerInterface $seo;
+    private ?ThemeManagerInterface $themeManager;
 
     public function __construct(
         CourseRepositoryInterface $courseRepo,
         CourseStructureRepositoryInterface $structureRepo,
         CourseNavigationInterface $navService,
         CourseCatalogRenderer $catalogRenderer,
-        SeoManagerInterface $seo,
-        ThemeManagerInterface $themeManager
+        ?SeoManagerInterface $seo = null,
+        ?ThemeManagerInterface $themeManager = null
     ) {
         $this->courseRepo = $courseRepo;
         $this->structureRepo = $structureRepo;
@@ -45,15 +45,17 @@ class CourseFrontController
      */
     public function index(Request $request): Response
     {
-        $this->seo->setTitle('Cursos & Tutoriais | Rachid')
-            ->setDescription('Explore os cursos e tutoriais de arquitetura de software, PHP e engenharia de sistemas.');
+        if ($this->seo !== null) {
+            $this->seo->setTitle('Cursos & Tutoriais | Rachid')
+                ->setDescription('Explore os cursos e tutoriais de arquitetura de software, PHP e engenharia de sistemas.');
+        }
 
         $catalogHtml = $this->catalogRenderer->render();
 
         $themePath = $this->resolveActiveThemePath();
         $academyTemplateCandidate = $themePath . '/templates/academy.php';
 
-        if (file_exists($academyTemplateCandidate)) {
+        if ($this->themeManager !== null && file_exists($academyTemplateCandidate)) {
             try {
                 $html = $this->themeManager->render('templates/academy', [
                     'page' => [
@@ -101,8 +103,10 @@ class CourseFrontController
         $title = htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8');
         $desc = htmlspecialchars((string)($course['description'] ?? ''), ENT_QUOTES, 'UTF-8');
 
-        $this->seo->setTitle($title . ' | Academy Rachid')
-            ->setDescription(mb_substr(strip_tags((string)($course['description'] ?? '')), 0, 150) . '...');
+        if ($this->seo !== null) {
+            $this->seo->setTitle($title . ' | Academy Rachid')
+                ->setDescription(mb_substr(strip_tags((string)($course['description'] ?? '')), 0, 150) . '...');
+        }
 
         $navHtml = $this->navService->renderCourseNav($courseSlug);
         $tree = $this->navService->getCourseTree($courseSlug);
@@ -161,8 +165,10 @@ class CourseFrontController
         $lessonTitle = htmlspecialchars((string)$lesson['title'], ENT_QUOTES, 'UTF-8');
         $courseTitle = htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8');
 
-        $this->seo->setTitle($lessonTitle . ' - ' . $courseTitle . ' | Academy Rachid')
-            ->setDescription(mb_substr(strip_tags((string)($lesson['content'] ?? $course['description'] ?? '')), 0, 150) . '...');
+        if ($this->seo !== null) {
+            $this->seo->setTitle($lessonTitle . ' - ' . $courseTitle . ' | Academy Rachid')
+                ->setDescription(mb_substr(strip_tags((string)($lesson['content'] ?? $course['description'] ?? '')), 0, 150) . '...');
+        }
 
         $navHtml = $this->navService->renderCourseNav($courseSlug, $lessonSlug);
         $adjacent = $this->navService->getAdjacentLessons($courseSlug, $lessonSlug);
@@ -349,9 +355,11 @@ class CourseFrontController
 
     private function resolveActiveThemePath(): string
     {
-        $activePath = $this->themeManager->getActiveThemePath();
-        if (!empty($activePath) && is_dir($activePath)) {
-            return $activePath;
+        if ($this->themeManager !== null) {
+            $activePath = $this->themeManager->getActiveThemePath();
+            if (!empty($activePath) && is_dir($activePath)) {
+                return $activePath;
+            }
         }
 
         $baseRoot = defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4);

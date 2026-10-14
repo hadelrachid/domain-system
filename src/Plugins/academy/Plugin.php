@@ -7,8 +7,6 @@ namespace DomainSystem\Plugins\academy;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
-use DomainSystem\Core\Contracts\SessionManagerInterface;
-use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Plugins\academy\Contracts\CourseImageStorageInterface;
@@ -23,7 +21,6 @@ use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
 use DomainSystem\Plugins\academy\Services\CourseNavigationService;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use DomainSystem\Plugins\academy\Services\LocalCourseImageStorage;
-use DomainSystem\Plugins\seo\Contracts\SeoManagerInterface;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -77,27 +74,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(CourseCatalogRenderer::class, function() use ($runtime) {
             return new CourseCatalogRenderer(
                 $runtime->make(CourseRepositoryInterface::class)
-            );
-        });
-
-        $runtime->singleton(CourseAdminController::class, function() use ($runtime) {
-            return new CourseAdminController(
-                $runtime->make(CourseRepositoryInterface::class),
-                $runtime->make(CourseService::class),
-                $runtime->make(SessionManagerInterface::class),
-                $runtime->make(CourseStructureRepositoryInterface::class),
-                $runtime->make(ThemeManagerInterface::class)
-            );
-        });
-
-        $runtime->singleton(CourseFrontController::class, function() use ($runtime) {
-            return new CourseFrontController(
-                $runtime->make(CourseRepositoryInterface::class),
-                $runtime->make(CourseStructureRepositoryInterface::class),
-                $runtime->make(CourseNavigationInterface::class),
-                $runtime->make(CourseCatalogRenderer::class),
-                $runtime->make(SeoManagerInterface::class),
-                $runtime->make(ThemeManagerInterface::class)
             );
         });
 
