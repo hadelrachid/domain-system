@@ -48,15 +48,15 @@ class ProcessRegistry
 
     /**
      * Inicia o monitoramento de um processo (plugin).
-     * Gera um PID único baseado no nome + timestamp para evitar colisão.
+     * Gera um PID único e determinístico baseado no nome do módulo para rastreabilidade estável.
      *
      * @param string $name        Nome do plugin (ex: 'database', 'academy')
      * @param bool   $isSystemApp true = Ring 0 (SystemApp), false = Ring 3 (UserPlugin)
-     * @return string O PID gerado (ex: 'PID-8A92B3')
+     * @return string O PID gerado (ex: 'PID-53DA96')
      */
     public function startProcess(string $name, bool $isSystemApp): string
     {
-        $pid = 'PID-' . strtoupper(substr(hash('crc32', $name . microtime()), 0, 6));
+        $pid = 'PID-' . strtoupper(substr(hash('crc32', ($isSystemApp ? 'sys_' : 'usr_') . $name), 0, 6));
 
         $this->processes[$pid] = [
             'pid'            => $pid,

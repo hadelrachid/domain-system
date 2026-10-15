@@ -268,7 +268,10 @@ class PluginBootstrapper
 
         // Salva a pilha de processos para o Gerenciador de Tarefas
         if ($this->processRegistry) {
-            $this->processRegistry->saveSnapshot($this->basePath);
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            if (!str_contains($uri, '/api/os/monitor/stack')) {
+                $this->processRegistry->saveSnapshot($this->basePath);
+            }
         }
     }
 
