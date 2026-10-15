@@ -81,7 +81,7 @@ class CourseAdminController
                         <th style="padding: 15px; text-align: left;">Título</th>
                         <th style="padding: 15px; text-align: left;">Slug</th>
                         <th style="padding: 15px; text-align: left; width: 120px;">Status</th>
-                        <th style="padding: 15px; text-align: right; width: 140px;">Ações</th>
+                        <th style="padding: 15px; text-align: right; width: 220px;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -122,15 +122,19 @@ class CourseAdminController
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 15px; text-align: right; white-space: nowrap;">
-                                    <a href="<?= $baseUrl ?>/admin/academy/edit/<?= $c['id'] ?>" class="btn btn-outline" style="display:inline-block; padding: 6px 12px; font-size: 13px; text-decoration:none; margin-right: 6px; border:1px solid #4a545a; border-radius:4px; color:#fff;" title="Editar Curso">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form method="POST" action="<?= $baseUrl ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir o curso <?= htmlspecialchars(addslashes((string)$c['title'])) ?>?');">
-                                        <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-                                        <button type="submit" style="background:transparent; border:1px solid rgba(220,50,50,0.4); color:#dc3232; padding:6px 12px; border-radius:4px; cursor:pointer;" title="Excluir Curso">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end;">
+                                        <a href="<?= $baseUrl ?>/admin/academy/edit/<?= $c['id'] ?>" class="btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px !important; font-size: 11px !important; font-weight: 600; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;" title="Editar Curso">
+                                            <i class="fas fa-edit" style="font-size: 11px;"></i>
+                                            <span>Editar</span>
+                                        </a>
+                                        <form method="POST" action="<?= $baseUrl ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline; margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o curso <?= htmlspecialchars(addslashes((string)$c['title'])) ?>?');">
+                                            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+                                            <button type="submit" class="btn btn-deactivate" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px !important; font-size: 11px !important; font-weight: 600; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" title="Excluir Curso">
+                                                <i class="fas fa-trash-alt" style="font-size: 11px;"></i>
+                                                <span>Excluir</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
