@@ -65,13 +65,19 @@ class MonitorController
 
     public function getStackApi()
     {
-        $stackPath = dirname(__DIR__, 4) . '/temp/process_stack.json';
+        $app = Application::getInstance();
         $processes = [];
-        $lastModified = 0;
-        if (file_exists($stackPath)) {
-            $processes = json_decode(file_get_contents($stackPath), true) ?: [];
-            $lastModified = filemtime($stackPath);
+        if ($app) {
+            $processes = $app->getProcessRegistry()->getProcesses();
         }
+
+        $stackPath = dirname(__DIR__, 4) . '/temp/process_stack.json';
+        if (empty($processes) && file_exists($stackPath)) {
+            $processes = json_decode(file_get_contents($stackPath), true) ?: [];
+        }
+
+        $lastModified = file_exists($stackPath) ? filemtime($stackPath) : time();
+
         return new \DomainSystem\Core\Http\Responses\JsonResponse([
             'success'       => true,
             'processes'     => $processes,

@@ -238,7 +238,7 @@
                             <span class="badge" style="background: rgba(245,110,40,0.1); color: var(--accent-orange); border: 1px solid var(--accent-orange);">Ring 3 (User)</span>
                         <?php endif; ?>
                     </td>
-                    <td>
+                    <td class="proc-mem-cell">
                         <span class="proc-mem-val" style="font-weight: 600; color: <?= $memUsed > 5000 ? '#ef4444' : 'var(--text-main)' ?>;">
                             <?= number_format($memUsed, 2) ?> KB
                         </span>
@@ -248,13 +248,13 @@
                             <span class="proc-delta-badge" style="font-size: 11px; margin-left: 6px; padding: 1px 5px; border-radius: 3px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">▼ <?= number_format($delta, 2) ?> KB</span>
                         <?php endif; ?>
                     </td>
-                    <td style="color: #94a3b8; font-size: 12px;">
+                    <td class="proc-peak-cell" style="color: #94a3b8; font-size: 12px;">
                         <?= number_format($peakMem, 2) ?> KB
                     </td>
-                    <td style="color: <?= $proc['duration_ms'] > 100 ? '#ef4444' : 'var(--accent-green)' ?>;">
+                    <td class="proc-time-cell" style="color: <?= $proc['duration_ms'] > 100 ? '#ef4444' : 'var(--accent-green)' ?>; font-family: monospace; font-weight: 500;">
                         <?= number_format($proc['duration_ms'], 2) ?> ms
                     </td>
-                    <td>
+                    <td class="proc-status-cell">
                         <?php if($proc['status'] === 'Running'): ?>
                             <span style="color: var(--accent-green);">● Estável</span>
                         <?php else: ?>
@@ -510,18 +510,19 @@ function openSysTab(evt, tabId) {
         }
     }
 
+    const previousDurationMap = {};
+
     function renderProcessTable(processes) {
         const tbody = document.getElementById('process-table-body');
         const table = document.getElementById('os-process-table');
         const empty = document.getElementById('os-empty-stack');
         if (!tbody) return;
 
-        let html = '';
+        let hasProcesses = false;
         for (let pid in processes) {
+            hasProcesses = true;
             let p = processes[pid];
-            let ring = p.type === 'SystemApp'
-                ? '<span class="badge" style="background:rgba(88,166,255,0.1);color:var(--accent-blue);border:1px solid var(--accent-blue);">Ring 0 (Core)</span>'
-                : '<span class="badge" style="background:rgba(245,110,40,0.1);color:var(--accent-orange);border:1px solid var(--accent-orange);">Ring 3 (User)</span>';
+            let row = document.getElementById('proc-row-' + p.pid);
 
             let curMem = parseFloat(p.memory_used_kb || 0);
             let prevMem = previousMemoryMap[pid] !== undefined ? previousMemoryMap[pid] : curMem;
@@ -533,6 +534,10 @@ function openSysTab(evt, tabId) {
                 delta = parseFloat(p.memory_delta_kb);
             }
 
+            let curDuration = parseFloat(p.duration_ms || 0);
+            let prevDuration = previousDurationMap[pid] !== undefined ? previousDurationMap[pid] : curDuration;
+            previousDurationMap[pid] = curDuration;
+
             let deltaBadge = '';
             if (delta > 0) {
                 deltaBadge = `<span class="proc-delta-badge" style="font-size:11px; margin-left:6px; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3);">▲ +${delta.toFixed(2)} KB</span>`;
@@ -542,27 +547,61 @@ function openSysTab(evt, tabId) {
 
             let memC = curMem > 5000 ? '#ef4444' : 'var(--text-main)';
             let peakMem = parseFloat(p.peak_memory_kb || curMem).toFixed(2);
-            let timeC = parseFloat(p.duration_ms) > 100 ? '#ef4444' : 'var(--accent-green)';
+            let timeC = curDuration > 100 ? '#ef4444' : 'var(--accent-green)';
             let st = p.status === 'Running'
                 ? '<span style="color:var(--accent-green);">● Estável</span>'
                 : '<span style="color:#ef4444;font-weight:bold;">✖ Crashed</span>';
 
-            html += `<tr id="proc-row-${p.pid}">
-                <td style="font-family:monospace;font-weight:bold;color:var(--accent-blue);">${p.pid}</td>
-                <td><strong>${p.name}</strong></td>
-                <td>${ring}</td>
-                <td>
-                    <span class="proc-mem-val" style="font-weight:600; color:${memC};">${curMem.toFixed(2)} KB</span>
-                    ${deltaBadge}
-                </td>
-                <td style="color:#94a3b8; font-size:12px;">${peakMem} KB</td>
-                <td style="color:${timeC};">${parseFloat(p.duration_ms).toFixed(2)} ms</td>
-                <td>${st}</td>
-            </tr>`;
+            let ring = p.type === 'SystemApp'
+                ? '<span class="badge" style="background:rgba(88,166,255,0.1);color:var(--accent-blue);border:1px solid var(--accent-blue);">Ring 0 (Core)</span>'
+                : '<span class="badge" style="background:rgba(245,110,40,0.1);color:var(--accent-orange);border:1px solid var(--accent-orange);">Ring 3 (User)</span>';
+
+            if (row) {
+                const memCell = row.querySelector('.proc-mem-cell');
+                if (memCell) {
+                    memCell.innerHTML = `<span class="proc-mem-val" style="font-weight:600; color:${memC};">${curMem.toFixed(2)} KB</span> ${deltaBadge}`;
+                }
+                const peakCell = row.querySelector('.proc-peak-cell');
+                if (peakCell) {
+                    peakCell.textContent = peakMem + ' KB';
+                }
+                const timeCell = row.querySelector('.proc-time-cell');
+                if (timeCell) {
+                    timeCell.style.color = timeC;
+                    timeCell.textContent = curDuration.toFixed(2) + ' ms';
+                    if (Math.abs(curDuration - prevDuration) > 0.01) {
+                        timeCell.style.transition = 'text-shadow 0.3s ease';
+                        timeCell.style.textShadow = '0 0 10px rgba(16, 185, 129, 0.9)';
+                        setTimeout(() => { timeCell.style.textShadow = 'none'; }, 600);
+                    }
+                }
+                const statusCell = row.querySelector('.proc-status-cell');
+                if (statusCell) {
+                    statusCell.innerHTML = st;
+                }
+            } else {
+                const tr = document.createElement('tr');
+                tr.id = 'proc-row-' + p.pid;
+                tr.innerHTML = `
+                    <td style="font-family:monospace;font-weight:bold;color:var(--accent-blue);">${p.pid}</td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${ring}</td>
+                    <td class="proc-mem-cell">
+                        <span class="proc-mem-val" style="font-weight:600; color:${memC};">${curMem.toFixed(2)} KB</span>
+                        ${deltaBadge}
+                    </td>
+                    <td class="proc-peak-cell" style="color:#94a3b8; font-size:12px;">${peakMem} KB</td>
+                    <td class="proc-time-cell" style="color:${timeC}; font-family: monospace; font-weight: 500;">${curDuration.toFixed(2)} ms</td>
+                    <td class="proc-status-cell">${st}</td>
+                `;
+                tbody.appendChild(tr);
+            }
         }
-        tbody.innerHTML = html;
-        if (table) table.style.display = '';
-        if (empty) empty.style.display = 'none';
+
+        if (hasProcesses) {
+            if (table) table.style.display = '';
+            if (empty) empty.style.display = 'none';
+        }
     }
 
     function poll() {
