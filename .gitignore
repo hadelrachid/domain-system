@@ -1,5 +1,6 @@
 temp/
 public/uploads/
+uploads/
 vendor/
 update_project.py
 project.txt

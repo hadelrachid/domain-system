@@ -86,6 +86,14 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
         if (file_exists($fullPath)) {
             @unlink($fullPath);
         }
+
+        $legacyDir = dirname($this->uploadDir, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'academy';
+        if ($legacyDir !== $this->uploadDir) {
+            $legacyFile = $legacyDir . DIRECTORY_SEPARATOR . $basename;
+            if (file_exists($legacyFile)) {
+                @unlink($legacyFile);
+            }
+        }
     }
 
     public function getUploadDir(): string

@@ -49,9 +49,12 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
 
         $runtime->singleton(CourseImageStorageInterface::class, function() {
-            $uploadDir = defined('DOMAIN_SYSTEM_ROOT') 
-                ? DOMAIN_SYSTEM_ROOT . '/uploads' 
-                : dirname(__DIR__, 3) . '/uploads';
+            $base = defined('DOMAIN_SYSTEM_ROOT') 
+                ? DOMAIN_SYSTEM_ROOT 
+                : dirname(__DIR__, 3);
+            $uploadDir = is_dir($base . '/public') 
+                ? $base . '/public/uploads' 
+                : $base . '/uploads';
             return new LocalCourseImageStorage($uploadDir);
         });
 
