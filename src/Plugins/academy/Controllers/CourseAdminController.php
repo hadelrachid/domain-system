@@ -122,14 +122,14 @@ class CourseAdminController
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 15px; text-align: right; white-space: nowrap;">
-                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end;">
-                                        <a href="<?= $baseUrl ?>/admin/academy/edit/<?= $c['id'] ?>" class="btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px !important; font-size: 11px !important; font-weight: 600; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;" title="Editar Curso">
+                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end; vertical-align: middle;">
+                                        <a href="<?= $baseUrl ?>/admin/academy/edit/<?= $c['id'] ?>" class="btn" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px; height: 32px !important; padding: 0 14px !important; box-sizing: border-box !important; line-height: 1 !important; font-size: 11px !important; font-weight: 600; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 !important; vertical-align: middle !important;" title="Editar Curso">
                                             <i class="fas fa-edit" style="font-size: 11px;"></i>
                                             <span>Editar</span>
                                         </a>
-                                        <form method="POST" action="<?= $baseUrl ?>/admin/academy/delete/<?= $c['id'] ?>" style="display:inline; margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o curso <?= htmlspecialchars(addslashes((string)$c['title'])) ?>?');">
+                                        <form method="POST" action="<?= $baseUrl ?>/admin/academy/delete/<?= $c['id'] ?>" style="display: inline-flex; margin: 0; padding: 0; vertical-align: middle; align-items: center;" onsubmit="return confirm('Tem certeza que deseja excluir o curso <?= htmlspecialchars(addslashes((string)$c['title'])) ?>?');">
                                             <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
-                                            <button type="submit" class="btn btn-deactivate" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px !important; font-size: 11px !important; font-weight: 600; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" title="Excluir Curso">
+                                            <button type="submit" class="btn btn-deactivate" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px; height: 32px !important; padding: 0 14px !important; box-sizing: border-box !important; line-height: 1 !important; font-size: 11px !important; font-weight: 600; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 !important; vertical-align: middle !important;" title="Excluir Curso">
                                                 <i class="fas fa-trash-alt" style="font-size: 11px;"></i>
                                                 <span>Excluir</span>
                                             </button>
