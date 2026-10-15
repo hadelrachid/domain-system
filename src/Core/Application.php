@@ -318,6 +318,42 @@ class Application
         return self::$instance;
     }
 
+    /**
+     * Encerra o ciclo de vida do Kernel Singleton ("Morte da Rainha").
+     * Limpa a instância estática e encerra o ciclo de vida dos PIDs de processos.
+     * O próximo ciclo de inicialização nascerá com um novo ID e novos PIDs aleatórios.
+     */
+    public static function kill(): void
+    {
+        $basePath = self::$instance?->basePath;
+        self::$instance = null;
+        \DomainSystem\Core\Plugin\Services\ProcessRegistry::killSingleton($basePath);
+    }
+
+    /**
+     * Alias para encerramento do Singleton.
+     */
+    public static function reset(): void
+    {
+        self::kill();
+    }
+
+    /**
+     * Retorna o caminho base do projeto.
+     */
+    public function getBasePath(): string
+    {
+        return $this->basePath;
+    }
+
+    /**
+     * Retorna o Gerenciador de Processos (ProcessRegistry) do Kernel.
+     */
+    public function getProcessRegistry(): \DomainSystem\Core\Plugin\Services\ProcessRegistry
+    {
+        return $this->pluginManager->getProcessRegistry();
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // 5️⃣ GETTERS — ACESSO AOS SERVIÇOS DO KERNEL
     // ═══════════════════════════════════════════════════════════════════════

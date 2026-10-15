@@ -43,20 +43,47 @@ namespace DomainSystem\Core\Plugin\Services;
  */
 class ProcessRegistry
 {
+    /** @var string|null ID único do ciclo de vida do Singleton ativo (ex: 'KRN-8F12A0') */
+    private static ?string $activeSingletonId = null;
+
+    /** @var array<string, string> Mapa de pluginName => PID específico alocado para o Singleton */
+    private static array $singletonPids = [];
+
     /** @var array<string, array> Mapa de PIDs ativos nesta requisição */
     private array $processes = [];
 
+    /** @var string|null Caminho base da aplicação */
+    private ?string $basePath = null;
+
+    /**
+     * Construtor do ProcessRegistry.
+     *
+     * @param string|null $basePath Caminho base do sistema para persistência do ciclo de vida
+     */
+    public function __construct(?string $basePath = null)
+    {
+        $this->basePath = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : null);
+    }
+
     /**
      * Inicia o monitoramento de um processo (plugin).
-     * Gera um PID único e determinístico baseado no nome do módulo para rastreabilidade estável.
+     * Quando o Singleton nasce, cada plugin recebe um PID aleatório, porém específico para aquele módulo.
+     * O PID permanece 100% estável enquanto este Singleton estiver vivo.
      *
      * @param string $name        Nome do plugin (ex: 'database', 'academy')
      * @param bool   $isSystemApp true = Ring 0 (SystemApp), false = Ring 3 (UserPlugin)
-     * @return string O PID gerado (ex: 'PID-53DA96')
+     * @return string O PID alocado (ex: 'PID-8A92B3')
      */
     public function startProcess(string $name, bool $isSystemApp): string
     {
-        $pid = 'PID-' . strtoupper(substr(hash('crc32', ($isSystemApp ? 'sys_' : 'usr_') . $name), 0, 6));
+        $this->ensureSingletonLifecycle();
+
+        if (!isset(self::$singletonPids[$name])) {
+            self::$singletonPids[$name] = $this->generateRandomPid();
+            $this->persistLifecycle();
+        }
+
+        $pid = self::$singletonPids[$name];
 
         $this->processes[$pid] = [
             'pid'            => $pid,
@@ -73,6 +100,136 @@ class ProcessRegistry
     }
 
     /**
+     * Garante que o ciclo de vida do Singleton esteja inicializado.
+     * Restaura do arquivo temp/kernel_singleton.json se disponível ou cria um novo ciclo de vida.
+     */
+    private function ensureSingletonLifecycle(): void
+    {
+        if (self::$activeSingletonId !== null) {
+            return;
+        }
+
+        $file = $this->getLifecycleFilePath();
+        if ($file && file_exists($file)) {
+            $content = @file_get_contents($file);
+            $data = $content ? json_decode($content, true) : null;
+            if (is_array($data) && !empty($data['singleton_id']) && isset($data['pids']) && is_array($data['pids'])) {
+                self::$activeSingletonId = (string) $data['singleton_id'];
+                self::$singletonPids = $data['pids'];
+                return;
+            }
+        }
+
+        // Quando nasce o Singleton, gera um ID de ciclo de vida único
+        self::$activeSingletonId = 'KRN-' . strtoupper(bin2hex(random_bytes(3)));
+        self::$singletonPids = [];
+        $this->persistLifecycle();
+    }
+
+    /**
+     * Gera um PID aleatório único garantindo não colidir com outros PIDs já alocados neste Singleton.
+     */
+    private function generateRandomPid(): string
+    {
+        do {
+            $pid = 'PID-' . strtoupper(bin2hex(random_bytes(3)));
+        } while (in_array($pid, self::$singletonPids, true));
+
+        return $pid;
+    }
+
+    /**
+     * Persiste o estado do ciclo de vida do Singleton em disco.
+     */
+    private function persistLifecycle(): void
+    {
+        $file = $this->getLifecycleFilePath();
+        if (!$file) {
+            return;
+        }
+
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $payload = [
+            'singleton_id' => self::$activeSingletonId,
+            'born_at'      => microtime(true),
+            'pids'         => self::$singletonPids,
+        ];
+
+        @file_put_contents($file, json_encode($payload, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Retorna o caminho do arquivo de persistência do Singleton.
+     */
+    private function getLifecycleFilePath(): ?string
+    {
+        $base = $this->basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : null);
+        if (!$base) {
+            return null;
+        }
+        return rtrim($base, '/\\') . '/temp/kernel_singleton.json';
+    }
+
+    /**
+     * Encerra o ciclo de vida do Singleton atual ("Morte do Singleton").
+     * Limpa o estado em memória e remove o arquivo de persistência.
+     * Na próxima inicialização, um novo Singleton nascerá com novos PIDs aleatórios.
+     */
+    public static function killSingleton(?string $basePath = null): void
+    {
+        self::$activeSingletonId = null;
+        self::$singletonPids = [];
+
+        $base = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : null);
+        if ($base) {
+            $file = rtrim($base, '/\\') . '/temp/kernel_singleton.json';
+            if (file_exists($file)) {
+                @unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Alias para killSingleton().
+     */
+    public static function resetLifecycle(?string $basePath = null): void
+    {
+        self::killSingleton($basePath);
+    }
+
+    /**
+     * Retorna o ID do Singleton ativo no momento.
+     */
+    public function getSingletonId(): string
+    {
+        $this->ensureSingletonLifecycle();
+        return self::$activeSingletonId ?? '';
+    }
+
+    /**
+     * Retorna o ID estático do Singleton ativo (se inicializado).
+     */
+    public static function getActiveSingletonId(): ?string
+    {
+        return self::$activeSingletonId;
+    }
+
+    /**
+     * Retorna todos os PIDs específicos alocados para o Singleton ativo.
+     *
+     * @return array<string, string>
+     */
+    public function getSingletonPids(): array
+    {
+        $this->ensureSingletonLifecycle();
+        return self::$singletonPids;
+    }
+
+    /**
      * Finaliza o monitoramento de um processo, calculando o delta de 
      * memória RAM e o tempo total de Boot em milissegundos.
      *
@@ -86,10 +243,35 @@ class ProcessRegistry
         }
 
         $p = &$this->processes[$pid];
-        $p['status']         = $finalStatus;
-        $memDiff             = memory_get_usage() - $p['start_memory'];
-        $p['memory_used_kb'] = round($memDiff / 1024, 2);
-        $p['duration_ms']    = round((microtime(true) - $p['start_time']) * 1000, 2);
+        $p['status']          = $finalStatus;
+        $memDiff              = memory_get_usage() - $p['start_memory'];
+        $kb                   = round(max(0.01, $memDiff / 1024), 2);
+        $p['memory_used_kb']  = $kb;
+        $p['peak_memory_kb']  = $kb;
+        $p['memory_delta_kb'] = 0;
+        $p['duration_ms']     = round((microtime(true) - $p['start_time']) * 1000, 2);
+    }
+
+    /**
+     * Atualiza o consumo ou liberação de memória de um processo ativo.
+     * Permite registrar oscilações dinâmicas de consumo (+ delta) e liberação (- delta).
+     *
+     * @param string $nameOrPid Nome do módulo ou PID
+     * @param float  $memoryUsedKb Consumo atual em KB
+     */
+    public function updateProcessMemory(string $nameOrPid, float $memoryUsedKb): void
+    {
+        foreach ($this->processes as $pid => &$proc) {
+            if ($pid === $nameOrPid || $proc['name'] === $nameOrPid) {
+                $oldMem = $proc['memory_used_kb'] ?? 0;
+                $proc['memory_delta_kb'] = round($memoryUsedKb - $oldMem, 2);
+                $proc['memory_used_kb']  = round($memoryUsedKb, 2);
+                $currentPeak             = $proc['peak_memory_kb'] ?? 0;
+                $proc['peak_memory_kb']  = round(max($currentPeak, $memoryUsedKb), 2);
+                $proc['last_updated']    = microtime(true);
+                return;
+            }
+        }
     }
 
     /**
@@ -117,10 +299,41 @@ class ProcessRegistry
     /**
      * Tira uma "fotografia" do estado final dos processos e salva em disco
      * para que o painel de administração (Frontend) possa exibir a tabela.
+     * Mantém o histórico de picos e calcula o delta de consumo/liberação de memória.
      */
     public function saveSnapshot(string $basePath): void
     {
+        if ($this->basePath === null) {
+            $this->basePath = $basePath;
+        }
         $file = rtrim($basePath, '/\\') . '/temp/process_stack.json';
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $previous = [];
+        if (file_exists($file)) {
+            $content = @file_get_contents($file);
+            $previous = $content ? (json_decode($content, true) ?: []) : [];
+        }
+
+        foreach ($this->processes as $pid => &$proc) {
+            if (isset($previous[$pid])) {
+                $prevMem = $previous[$pid]['memory_used_kb'] ?? $proc['memory_used_kb'];
+                $proc['memory_delta_kb'] = round($proc['memory_used_kb'] - $prevMem, 2);
+                $prevPeak = $previous[$pid]['peak_memory_kb'] ?? $proc['memory_used_kb'];
+                $proc['peak_memory_kb'] = round(max($prevPeak, $proc['memory_used_kb']), 2);
+            } else {
+                if (!isset($proc['peak_memory_kb'])) {
+                    $proc['peak_memory_kb'] = $proc['memory_used_kb'];
+                }
+                if (!isset($proc['memory_delta_kb'])) {
+                    $proc['memory_delta_kb'] = 0;
+                }
+            }
+        }
+
         file_put_contents($file, json_encode($this->processes, JSON_PRETTY_PRINT));
     }
 
@@ -129,6 +342,9 @@ class ProcessRegistry
      */
     public function loadSnapshot(string $basePath): array
     {
+        if ($this->basePath === null) {
+            $this->basePath = $basePath;
+        }
         $file = rtrim($basePath, '/\\') . '/temp/process_stack.json';
         if (file_exists($file)) {
             return json_decode(file_get_contents($file), true) ?: [];
