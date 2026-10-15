@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Services;
 
+use DomainSystem\Core\Contracts\PublicStorageInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 
 class CourseCatalogRenderer
 {
     private CourseRepositoryInterface $repository;
+    private ?PublicStorageInterface $storage;
 
-    public function __construct(CourseRepositoryInterface $repository)
+    public function __construct(CourseRepositoryInterface $repository, ?PublicStorageInterface $storage = null)
     {
         $this->repository = $repository;
+        $this->storage = $storage;
     }
 
     /**
@@ -51,7 +54,9 @@ class CourseCatalogRenderer
 
             if (!empty($course['thumbnail'])) {
                 $rawThumb = (string)$course['thumbnail'];
-                if (str_starts_with($rawThumb, 'http://') || str_starts_with($rawThumb, 'https://') || str_starts_with($rawThumb, 'data:')) {
+                if ($this->storage !== null) {
+                    $thumbUrl = htmlspecialchars($this->storage->getPublicUrl($rawThumb), ENT_QUOTES, 'UTF-8');
+                } elseif (str_starts_with($rawThumb, 'http://') || str_starts_with($rawThumb, 'https://') || str_starts_with($rawThumb, 'data:')) {
                     $thumbUrl = htmlspecialchars($rawThumb, ENT_QUOTES, 'UTF-8');
                 } else {
                     $thumbUrl = htmlspecialchars($baseUrl . '/' . ltrim($rawThumb, '/'), ENT_QUOTES, 'UTF-8');

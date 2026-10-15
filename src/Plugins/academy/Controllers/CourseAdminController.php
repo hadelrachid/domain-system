@@ -12,6 +12,7 @@ use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
+use DomainSystem\Core\Contracts\PublicStorageInterface;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use Throwable;
 
@@ -22,19 +23,22 @@ class CourseAdminController
     private SessionManagerInterface $session;
     private ?CourseStructureRepositoryInterface $structureRepo;
     private ?ThemeManagerInterface $themeManager;
+    private ?PublicStorageInterface $storage;
 
     public function __construct(
         CourseRepositoryInterface $repository,
         CourseService $service,
         SessionManagerInterface $session,
         ?CourseStructureRepositoryInterface $structureRepo = null,
-        ?ThemeManagerInterface $themeManager = null
+        ?ThemeManagerInterface $themeManager = null,
+        ?PublicStorageInterface $storage = null
     ) {
         $this->repository = $repository;
         $this->service = $service;
         $this->session = $session;
         $this->structureRepo = $structureRepo;
         $this->themeManager = $themeManager;
+        $this->storage = $storage;
     }
 
     public function index(Request $request): ResponseInterface
@@ -89,8 +93,9 @@ class CourseAdminController
                                 <td style="padding: 15px; color: var(--text-muted, #8c8f94);">#<?= $c['id'] ?></td>
                                 <td style="padding: 15px;">
                                     <?php if (!empty($c['thumbnail'])): ?>
+                                        <?php $thumbSrc = $this->storage ? $this->storage->getPublicUrl((string)$c['thumbnail']) : $baseUrl . '/' . ltrim((string)$c['thumbnail'], '/'); ?>
                                         <div style="width: 80px; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.1);">
-                                            <img src="<?= htmlspecialchars($baseUrl . '/' . ltrim((string)$c['thumbnail'], '/')) ?>" alt="" style="width:100%; height:100%; object-fit:cover;">
+                                            <img src="<?= htmlspecialchars($thumbSrc) ?>" alt="" style="width:100%; height:100%; object-fit:cover;">
                                         </div>
                                     <?php else: ?>
                                         <div style="width: 80px; aspect-ratio: 16/9; border-radius: 4px; background: rgba(255,255,255,0.05); display: flex; align-items:center; justify-content:center; color: var(--text-muted, #8c8f94); font-size: 11px;">
@@ -270,9 +275,10 @@ class CourseAdminController
                     <label style="display:block; margin-bottom:8px; font-weight:500;">Imagem de Capa (Card)</label>
                     
                     <?php if (!empty($course['thumbnail'])): ?>
+                        <?php $thumbSrc = $this->storage ? $this->storage->getPublicUrl((string)$course['thumbnail']) : $baseUrl . '/' . ltrim((string)$course['thumbnail'], '/'); ?>
                         <div style="margin-bottom: 12px; display:flex; align-items:center; gap:15px;">
                             <div style="width: 140px; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.15);">
-                                <img src="<?= htmlspecialchars($baseUrl . '/' . ltrim((string)$course['thumbnail'], '/')) ?>" alt="" style="width:100%; height:100%; object-fit:cover;">
+                                <img src="<?= htmlspecialchars($thumbSrc) ?>" alt="" style="width:100%; height:100%; object-fit:cover;">
                             </div>
                             <span style="font-size:12px; color:#8c8f94;">Capa atual configurada.<br>Envie um novo arquivo abaixo para substituir.</span>
                         </div>

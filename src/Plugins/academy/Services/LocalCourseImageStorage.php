@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Services;
 
+use DomainSystem\Core\Contracts\PublicStorageInterface;
+use DomainSystem\Core\Storage\LocalPublicStorage;
 use DomainSystem\Plugins\academy\Contracts\CourseImageStorageInterface;
 
 class LocalCourseImageStorage implements CourseImageStorageInterface
 {
-    private string $uploadDir;
-    private string $publicUrlPrefix;
+    private PublicStorageInterface $storage;
     private const MAX_BYTES = 2097152; // 2 MB
     private const ALLOWED_MIMES = [
         'image/jpeg' => 'jpg',
@@ -17,12 +18,15 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
         'image/webp' => 'webp',
     ];
 
-    public function __construct(string $publicUploadDir, string $publicUrlPrefix = 'uploads/academy')
+    /**
+     * @param PublicStorageInterface|string $storage Instância do PublicStorage do Core ou caminho para retrocompatibilidade
+     */
+    public function __construct(PublicStorageInterface|string $storage)
     {
-        $this->uploadDir = rtrim($publicUploadDir, '/\\') . DIRECTORY_SEPARATOR . 'academy';
-        $this->publicUrlPrefix = trim($publicUrlPrefix, '/\\');
-        if (!is_dir($this->uploadDir)) {
-            @mkdir($this->uploadDir, 0755, true);
+        if (is_string($storage)) {
+            $this->storage = new LocalPublicStorage($storage);
+        } else {
+            $this->storage = $storage;
         }
     }
 
@@ -64,7 +68,7 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
 
         $extension = self::ALLOWED_MIMES[$realMime];
         $safeName = 'course_' . bin2hex(random_bytes(10)) . '.' . $extension;
-        $destination = $this->uploadDir . DIRECTORY_SEPARATOR . $safeName;
+        $destination = $this->storage->getUploadPath('academy/' . $safeName);
 
         if (is_uploaded_file($fileInfo['tmp_name'])) {
             if (!move_uploaded_file($fileInfo['tmp_name'], $destination)) {
@@ -76,28 +80,21 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
             }
         }
 
-        return $this->publicUrlPrefix . '/' . $safeName;
+        return 'uploads/academy/' . $safeName;
     }
 
     public function deleteFile(string $relativePath): void
     {
-        $basename = basename($relativePath);
-        $fullPath = $this->uploadDir . DIRECTORY_SEPARATOR . $basename;
-        if (file_exists($fullPath)) {
-            @unlink($fullPath);
-        }
-
-        $legacyDir = dirname($this->uploadDir, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'academy';
-        if ($legacyDir !== $this->uploadDir) {
-            $legacyFile = $legacyDir . DIRECTORY_SEPARATOR . $basename;
-            if (file_exists($legacyFile)) {
-                @unlink($legacyFile);
-            }
-        }
+        $this->storage->delete($relativePath);
     }
 
     public function getUploadDir(): string
     {
-        return $this->uploadDir;
+        return $this->storage->getUploadPath('academy');
+    }
+
+    public function getStorage(): PublicStorageInterface
+    {
+        return $this->storage;
     }
 }

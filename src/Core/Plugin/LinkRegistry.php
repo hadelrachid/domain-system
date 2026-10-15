@@ -63,6 +63,9 @@ class LinkRegistry
         if ($linkName === 'core.theme') {
             return $this->container->make(\DomainSystem\Core\Contracts\ThemeManagerInterface::class);
         }
+        if ($linkName === 'core.storage') {
+            return $this->container->make(\DomainSystem\Core\Contracts\PublicStorageInterface::class);
+        }
 
         throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
     }

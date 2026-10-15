@@ -42,6 +42,14 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Monitoring\NotificationManager($basePath);
         });
 
+        // 1.6 Public Storage (Agnostic - XAMPP / Hostinger / Cloud)
+        $container->singleton(\DomainSystem\Core\Contracts\PublicStorageInterface::class, function() use ($basePath) {
+            $baseUrlProvider = function() {
+                return defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+            };
+            return new \DomainSystem\Core\Storage\LocalPublicStorage($basePath, $baseUrlProvider);
+        });
+
         // 2. Auth (Session-based)
         $container->singleton(\DomainSystem\SystemApps\auth\AuthManager::class, function($c) {
             $session = $c->make(\DomainSystem\Core\Http\SessionManager::class);

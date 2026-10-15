@@ -384,4 +384,28 @@ class AcademyCourseTest extends TestCase
         $this->assertSame('01-instalacao', $lessons[0]['slug']);
         $this->assertSame('pages/tutoriais/01-instalacao.php', $lessons[0]['source']);
     }
+
+    public function testStorageWithPublicStorageInterface(): void
+    {
+        $publicStorage = new \DomainSystem\Core\Storage\LocalPublicStorage($this->tempUploadDir, '/base-site');
+        $courseStorage = new LocalCourseImageStorage($publicStorage);
+
+        $imgPath = $this->createDummyImage(1280, 720);
+        $fileInfo = [
+            'name'     => 'test.png',
+            'type'     => 'image/png',
+            'tmp_name' => $imgPath,
+            'error'    => UPLOAD_ERR_OK,
+            'size'     => filesize($imgPath),
+        ];
+
+        $relativePath = $courseStorage->storeUpload($fileInfo);
+        $this->assertStringStartsWith('uploads/academy/course_', $relativePath);
+
+        $uploadDir = $courseStorage->getUploadDir();
+        $this->assertDirectoryExists($uploadDir);
+
+        $courseStorage->deleteFile($relativePath);
+        $this->assertFalse($publicStorage->exists($relativePath));
+    }
 }

@@ -30,6 +30,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     {
         $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
+        $os->requireLink('core.storage');
         $os->listenHook('admin.menu');
         $os->listenHook('router.register');
         $os->listenHook('shortcodes.register');
@@ -48,14 +49,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoCourseStructureRepository($db);
         });
 
-        $runtime->singleton(CourseImageStorageInterface::class, function() {
-            $base = defined('DOMAIN_SYSTEM_ROOT') 
-                ? DOMAIN_SYSTEM_ROOT 
-                : dirname(__DIR__, 3);
-            $uploadDir = is_dir($base . '/public') 
-                ? $base . '/public/uploads' 
-                : $base . '/uploads';
-            return new LocalCourseImageStorage($uploadDir);
+        $runtime->singleton(CourseImageStorageInterface::class, function() use ($runtime) {
+            $storage = $runtime->getLink('core.storage');
+            return new LocalCourseImageStorage($storage);
         });
 
         $runtime->singleton(CourseService::class, function() use ($runtime) {
@@ -76,7 +72,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         $runtime->singleton(CourseCatalogRenderer::class, function() use ($runtime) {
             return new CourseCatalogRenderer(
-                $runtime->make(CourseRepositoryInterface::class)
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->getLink('core.storage')
             );
         });
 
