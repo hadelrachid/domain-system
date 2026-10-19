@@ -1,0 +1,25 @@
+{
+    "tag_name": "v2.4.0",
+    "name": "Domain-System OS v2.4.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-10-19T15:30:00Z",
+    "body": "### Novidades da v2.4.0\n- Atualizador por contrato no painel admin\n- Verificação automática de schema",
+    "assets": [
+        {
+            "name": "domain-system-core.zip",
+            "size": 15204352,
+            "browser_download_url": "https://github.com/hadelrachid/domain-system/releases/download/v2.4.0/domain-system-core.zip"
+        },
+        {
+            "name": "domain-system-2.4.0.zip",
+            "size": 15204800,
+            "browser_download_url": "https://github.com/hadelrachid/domain-system/releases/download/v2.4.0/domain-system-2.4.0.zip"
+        },
+        {
+            "name": "domain-system-2.4.0.zip.sha256",
+            "size": 91,
+            "browser_download_url": "https://github.com/hadelrachid/domain-system/releases/download/v2.4.0/domain-system-2.4.0.zip.sha256"
+        }
+    ]
+}

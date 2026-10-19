@@ -1,0 +1,6 @@
+{
+    "core_repository": "hadelrachid/domain-system",
+    "channel": "stable",
+    "check_ttl_hours": 12,
+    "auto_rollback": true
+}
