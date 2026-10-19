@@ -22,7 +22,7 @@ Com a entrega da versão `2.3.0`, o **Domain-System** consolidou pilares arquite
 
 ---
 
-## 🚀 2. Os 5 Pilares do Próximo Ciclo (`v2.4.0`)
+## 🚀 2. Os 6 Pilares do Próximo Ciclo (`v2.4.0`)
 
 ### Pilar 1: Escrita Atômica e Concorrência Segura (`AtomicJsonStore`)
 - **Problema Identificado:** Arquivos críticos de estado do sistema (`config/plugins.json`, `temp/disarmed.json`, `temp/error_logs.json`, `temp/metrics.json`) utilizam `file_put_contents()` direto. Sob requisições simultâneas (ex: *polling* de telemetria em tempo real concorrendo com salvamento de configurações), existe risco de *race condition* ou leitura de JSON truncado.
@@ -70,7 +70,25 @@ Com a entrega da versão `2.3.0`, o **Domain-System** consolidou pilares arquite
 
 ---
 
-### Pilar 5: Snapshot & Rollback Instantâneo no Cockpit + Expansão dos Manuais Auto-Descobertos
+### Pilar 5: Fábrica Automática de Pastas e Arquivos PHP de Aulas via Contrato (`LessonFileScaffolderInterface`)
+- **Problema Identificado:** Hoje, para usar o modo `📄 Arquivo PHP do Tema`, o desenvolvedor/administrador precisa criar manualmente a pasta e os arquivos `.php` no diretório do tema ativo (`themes/.../pages/`) antes de importá-los ou vinculá-los no Academy.
+- **Solução Arquitetural (`src/Plugins/academy/Contracts/LessonFileScaffolderInterface.php`):**
+  1. **Contrato de Fabricação (`LessonFileScaffolderInterface` & `ThemeLessonFileScaffolder`):**
+     - Permite que o próprio painel do **Academy** fabrique automaticamente as pastas (módulos/cursos) e os arquivos `.php` das aulas diretamente dentro da pasta `pages/` do tema ativo, com validação estrita de segurança (`realpath` e sanitização de slug para impedir *Path Traversal*).
+  2. **Arquivos `.php` Pré-Configurados (Boilerplate Responsivo Desktop & Mobile + Edição em Blocos):**
+     - Cada arquivo `.php` fabricado já nasce com a estrutura padrão pré-configurada (CSS e JS responsivos para as resoluções **Desktop**, **Mobile** e **Tablet**, cabeçalho/rodapé integrados e marcação compatível com o **Editor de Blocos**).
+     - Quando o usuário editar a aula pelo **Editor de Blocos** e salvar, o serviço sincroniza/atualiza automaticamente tanto o JSON estruturado no banco quanto o arquivo `.php` pré-configurado no disco!
+  3. **Fluxo no Painel (`Botão Criar Pasta / Módulo` + `Auto-Geração de Arquivo ao Salvar Aula`):**
+     - **Botão "📁 Criar Pasta (ou Módulo)":** Cria fisicamente o diretório da pasta/módulo em `pages/` (caso o usuário deseje agrupar em subpasta) ou permite usar a raiz `pages/`.
+     - **Geração Automática pelo Título:** Quando o usuário digitar o título da aula ou página — por exemplo, **"Estrutura de Dados"** — e clicar em salvar:
+       - O sistema converte automaticamente o título em slug (`estrutura-de-dados`),
+       - Fabrica o arquivo físico `estrutura-de-dados.php`,
+       - Registra o caminho relativo `pages/estrutura-de-dados.php` (ou `pages/{pasta}/estrutura-de-dados.php`),
+       - E disponibiliza imediatamente a rota amigável pública (ex: `http://localhost/domain-system/cursos/estrutura-de-dados` ou `http://localhost/domain-system/cursos/{curso}/estrutura-de-dados`).
+
+---
+
+### Pilar 6: Snapshot & Rollback Instantâneo no Cockpit + Expansão dos Manuais Auto-Descobertos
 - **Snapshot de Segurança Automático:**
   - Antes de operações críticas no Cockpit (instalação/remoção de plugin ZIP, ativação em massa, execução de migrations), gerar um snapshot automático em `temp/snapshots/` (`plugins.json` + backup compacto do estado).
   - Adicionar botão **"⏪ Restaurar Último Ponto Estável"** no Painel de Supervisão (`/admin/supervision`).
@@ -87,6 +105,7 @@ Com a entrega da versão `2.3.0`, o **Domain-System** consolidou pilares arquite
 - [ ] **Etapa 2:** Integrar `AtomicJsonStore` no `CircuitBreaker`, `ErrorLogger`, `RequestMetricsRecorder` e configuração de plugins.
 - [ ] **Etapa 3:** Implementar rastreamento de exceções de rota por plugin e política de *Threshold* no `HttpKernel` / `CircuitBreaker`.
 - [ ] **Etapa 4:** Criar o scanner automático de `migrations/` para todos os plugins e adicionar o diagnóstico **Schema Doctor** no Cockpit.
-- [ ] **Etapa 5:** Extrair as views do plugin `academy` para `src/Plugins/academy/views/` e adicionar os novos perfis de layout Mobile (*Bottom Sheet* e *Modo Cinema Sticky Video*).
-- [ ] **Etapa 6:** Criar os módulos `manual/module.php` (`ManualModuleInterface`) para `flextheme`, `pages` e `seo`.
-- [ ] **Etapa 7:** Implementar o sistema de **Snapshot & Rollback Rápido** no Painel de Supervisão e publicar a versão **`v2.4.0`**.
+- [ ] **Etapa 5:** Implementar o contrato `LessonFileScaffolderInterface` (`ThemeLessonFileScaffolder`) no plugin `academy` com o botão **"📁 Criar Pasta/Módulo"** e a fabricação automática de arquivos `.php` pré-configurados (Desktop/Mobile + Editor de Blocos) a partir do Título (ex: `"Estrutura de Dados"` $\rightarrow$ `pages/estrutura-de-dados.php`).
+- [ ] **Etapa 6:** Extrair as views do plugin `academy` para `src/Plugins/academy/views/` e adicionar os novos perfis de layout Mobile (*Bottom Sheet* e *Modo Cinema Sticky Video*).
+- [ ] **Etapa 7:** Criar os módulos `manual/module.php` (`ManualModuleInterface`) para `flextheme`, `pages` e `seo`.
+- [ ] **Etapa 8:** Implementar o sistema de **Snapshot & Rollback Rápido** no Painel de Supervisão e publicar a versão **`v2.4.0`**.
