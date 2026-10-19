@@ -1,0 +1,92 @@
+# 🛡️ Plano de Melhoria: Estabilidade, Resiliência e Evolução do Cockpit (v2.4.0)
+
+> **Status Atual:** Planejado (Pós-Lançamento `v2.3.0`)  
+> **Base Atual:** `Domain-System v2.3.0` (`180 testes`, `713 asserções` passando no PHPUnit)  
+> **Objetivo:** Elevar o **Domain-System Cockpit** a um nível de resiliência industrial (Zero Corrupção de Estado, Auto-Cura de Banco de Dados, Tolerância a Falhas por Threshold, Desacoplamento Total de Views e Auto-Descoberta Universal de Migrations e Manuais).
+
+---
+
+## 📊 1. Diagnóstico do Sistema Atual (`v2.3.0`)
+
+Com a entrega da versão `2.3.0`, o **Domain-System** consolidou pilares arquiteturais fundamentais:
+1. **Isolamento Ring 0 / Ring 3:** O Micro-Kernel (`Application`, `HttpKernel`, `CoreServiceProvider`) é 100% agnóstico das regras de negócio.
+2. **Guardrails Arquiteturais Automatizados (`tests/Architecture/`):**
+   - `Psr4CaseSensitivityTest`: Garante compatibilidade estrita de namespaces e diretórios entre Windows e Linux.
+   - `NoSuperglobalsInControllersTest`: Impede qualquer uso direto de `$_SESSION`, `$_POST` ou `$_GET` nos Controllers.
+   - `NoExitOrHeaderTest`: Garante que todo fluxo HTTP retorne objetos `Response` puros.
+   - `RingIsolationTest`: Impede que plugins do Ring 3 instanciem ou violem classes exclusivas do Ring 0.
+3. **Padrão Ouro com o Plugin Academy (`v2.3.0`):**
+   - Editor Híbrido (HTML/PHP do Tema + Editor em Blocos com Preview em Tempo Real e Simulador Multi-Dispositivos para Desktop, 3 Celulares e 2 Tablets).
+4. **Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`):**
+   - O `PluginManualScanner` varre automaticamente `src/Plugins/*/manual/module.php` e acopla tutoriais e itens de QA ao menu **Manual de Instruções (`/admin/manual`)** do Cockpit.
+
+---
+
+## 🚀 2. Os 5 Pilares do Próximo Ciclo (`v2.4.0`)
+
+### Pilar 1: Escrita Atômica e Concorrência Segura (`AtomicJsonStore`)
+- **Problema Identificado:** Arquivos críticos de estado do sistema (`config/plugins.json`, `temp/disarmed.json`, `temp/error_logs.json`, `temp/metrics.json`) utilizam `file_put_contents()` direto. Sob requisições simultâneas (ex: *polling* de telemetria em tempo real concorrendo com salvamento de configurações), existe risco de *race condition* ou leitura de JSON truncado.
+- **Solução Arquitetural (`src/Core/Storage/AtomicJsonStore.php`):**
+  1. Implementar contrato `JsonStoreInterface` e classe `AtomicJsonStore`.
+  2. Gravar sempre em arquivo temporário no mesmo diretório (`arquivo.json.tmp.{pid}`) com bloqueio exclusivo (`LOCK_EX` e `fflush()`).
+  3. Executar `rename()` atômico para o arquivo destino, garantindo que nenhuma leitura concorrente enxergue um arquivo incompleto.
+  4. Injetar `AtomicJsonStore` em `CircuitBreaker`, `ErrorLogger`, `RequestMetricsRecorder` e `PluginConfigManager`.
+
+---
+
+### Pilar 2: Circuit Breaker Inteligente em Tempo de Execução (Threshold & Isolamento por Rota)
+- **Problema Identificado:** O `PluginBootstrapper` protege a fase de inicialização (`osRegister` e `osBoot`), e o `ErrorHandler` intercepta erros fatais globais no `shutdown`. Porém, quando uma exceção ocorre durante a execução de um Controller específico no `Router`, um único erro transitório não deve derrubar o plugin se for isolado, mas erros repetitivos em uma rota precisam ser rastreados e contidos.
+- **Solução Arquitetural:**
+  1. **Rastreamento de Origem por Namespace no `HttpKernel`:** Identificar automaticamente qual plugin (`DomainSystem\Plugins\{slug}`) originou a exceção durante o despacho da rota.
+  2. **Política de Threshold (Limite de Tolerância):** Registrar falhas consecutivas por plugin em janela de tempo (ex: 3 falhas fatais/exceções não tratadas em 60 segundos desarmam o plugin automaticamente no `CircuitBreaker`, enquanto 1 falha isolada apenas registra o incidente no Painel de Supervisão e exibe tela de erro amigável).
+  3. **Health-Check Pré-Ativação no Cockpit:** Antes de religar um plugin desarmado em `/admin/supervision`, rodar um *Dry-Run (Smoke Test)* em sandbox para validar sintaxe e dependências antes de persistir a reativação.
+
+---
+
+### Pilar 3: Auto-Descoberta de Migrations & "Schema Doctor" (Auto-Cura do Banco)
+- **Problema Identificado:** Enquanto o plugin `academy` já utiliza `src/Plugins/academy/migrations/` com o `MigrationRunner`, plugins anteriores (`pages`, `settings`, `nav_menus`, `auth`) ainda possuem `CREATE TABLE IF NOT EXISTS` espalhados em métodos `activate()` ou repositórios.
+- **Solução Arquitetural:**
+  1. **Padronização Universal da Pasta `migrations/`:** Assim como fizemos com a pasta `manual/`, todo `SystemApp` e `Plugin` terá sua pasta `migrations/` escaneada automaticamente pelo `MigrationRunner`.
+  2. **Painel "Schema Doctor" no Cockpit (`/admin/monitor` ou `/admin/supervision`):**
+     - Verifica em tempo real se há migrations pendentes em qualquer plugin ativo.
+     - Botão **"🔧 Verificar e Reparar Estrutura do Banco (Auto-Heal)"** que executa migrations pendentes com transação segura e exibe o relatório de integridade das tabelas.
+
+---
+
+### Pilar 4: Desacoplamento Total de Views no Plugin Academy & Novos Perfis Mobile
+- **Problema Identificado:** Os Controllers `LessonAdminController`, `CourseAdminController` e `CourseFrontController` possuem lógica de negócio limpa, mas ainda concentram blocos extensos de HTML/CSS/JS inline.
+- **Solução Arquitetural:**
+  1. **Extração para Camada de Views (`src/Plugins/academy/views/`):**
+     - `views/admin/course_list.php`
+     - `views/admin/course_edit.php`
+     - `views/admin/lesson_editor.php`
+     - `views/front/course_show.php`
+     - `views/front/lesson_show.php`
+  2. **Perfis de Layout Mobile Selecionáveis (`Mobile Layout Profiles`):**
+     - Permitir escolher o perfil visual mobile do curso/aula no Editor:
+       - **Perfil 1 — Drawer Clássico (Off-Canvas):** Menu hambúrguer + gaveta lateral deslizante (padrão atual).
+       - **Perfil 2 — App Bar Inferior (Bottom Sheet Estilo App Nativo):** Barra fixa no rodapé do celular com botões rápidos (*Anterior*, *Índice em Bottom-Sheet*, *Modo Leitura Focado*, *Próxima*).
+       - **Perfil 3 — Modo Cinema / Vídeo-First:** Otimizado para cursos em vídeo, mantendo o player 16:9 fixo (*sticky*) no topo da tela do celular enquanto o aluno rola o texto e os blocos de código abaixo.
+
+---
+
+### Pilar 5: Snapshot & Rollback Instantâneo no Cockpit + Expansão dos Manuais Auto-Descobertos
+- **Snapshot de Segurança Automático:**
+  - Antes de operações críticas no Cockpit (instalação/remoção de plugin ZIP, ativação em massa, execução de migrations), gerar um snapshot automático em `temp/snapshots/` (`plugins.json` + backup compacto do estado).
+  - Adicionar botão **"⏪ Restaurar Último Ponto Estável"** no Painel de Supervisão (`/admin/supervision`).
+- **Manuais Auto-Descobertos (`ManualModuleInterface`) para os Demais Módulos:**
+  - Criar `src/Plugins/flextheme/manual/module.php` (Guia do Builder Flex & Temas Visuais).
+  - Criar `src/Plugins/pages/manual/module.php` (Guia de Páginas, Hierarquia e Shortcodes).
+  - Criar `src/Plugins/seo/manual/module.php` (Guia de SEO, Meta Tags e Indexação).
+
+---
+
+## ✅ 3. Checklist de Execução (Roadmap `v2.4.0`)
+
+- [ ] **Etapa 1:** Implementar `JsonStoreInterface` + `AtomicJsonStore` com testes de concorrência em `tests/Unit/AtomicJsonStoreTest.php`.
+- [ ] **Etapa 2:** Integrar `AtomicJsonStore` no `CircuitBreaker`, `ErrorLogger`, `RequestMetricsRecorder` e configuração de plugins.
+- [ ] **Etapa 3:** Implementar rastreamento de exceções de rota por plugin e política de *Threshold* no `HttpKernel` / `CircuitBreaker`.
+- [ ] **Etapa 4:** Criar o scanner automático de `migrations/` para todos os plugins e adicionar o diagnóstico **Schema Doctor** no Cockpit.
+- [ ] **Etapa 5:** Extrair as views do plugin `academy` para `src/Plugins/academy/views/` e adicionar os novos perfis de layout Mobile (*Bottom Sheet* e *Modo Cinema Sticky Video*).
+- [ ] **Etapa 6:** Criar os módulos `manual/module.php` (`ManualModuleInterface`) para `flextheme`, `pages` e `seo`.
+- [ ] **Etapa 7:** Implementar o sistema de **Snapshot & Rollback Rápido** no Painel de Supervisão e publicar a versão **`v2.4.0`**.
