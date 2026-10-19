@@ -99,13 +99,44 @@ Com a entrega da versão `2.3.0`, o **Domain-System** consolidou pilares arquite
 
 ---
 
-## ✅ 3. Checklist de Execução (Roadmap `v2.4.0`)
+## 🔍 3. Consolidação das Auditorias Multi-IA (`auditoria/ChatGPT.txt`, `DeepSeek.txt` e `Kilo.md`)
 
-- [ ] **Etapa 1:** Implementar `JsonStoreInterface` + `AtomicJsonStore` com testes de concorrência em `tests/Unit/AtomicJsonStoreTest.php`.
-- [ ] **Etapa 2:** Integrar `AtomicJsonStore` no `CircuitBreaker`, `ErrorLogger`, `RequestMetricsRecorder` e configuração de plugins.
-- [ ] **Etapa 3:** Implementar rastreamento de exceções de rota por plugin e política de *Threshold* no `HttpKernel` / `CircuitBreaker`.
-- [ ] **Etapa 4:** Criar o scanner automático de `migrations/` para todos os plugins e adicionar o diagnóstico **Schema Doctor** no Cockpit.
-- [ ] **Etapa 5:** Implementar o contrato `LessonFileScaffolderInterface` (`ThemeLessonFileScaffolder`) no plugin `academy` com o botão **"📁 Criar Pasta/Módulo"** e a fabricação automática de arquivos `.php` pré-configurados (Desktop/Mobile + Editor de Blocos) a partir do Título (ex: `"Estrutura de Dados"` $\rightarrow$ `pages/estrutura-de-dados.php`).
-- [ ] **Etapa 6:** Extrair as views do plugin `academy` para `src/Plugins/academy/views/` e adicionar os novos perfis de layout Mobile (*Bottom Sheet* e *Modo Cinema Sticky Video*).
-- [ ] **Etapa 7:** Criar os módulos `manual/module.php` (`ManualModuleInterface`) para `flextheme`, `pages` e `seo`.
-- [ ] **Etapa 8:** Implementar o sistema de **Snapshot & Rollback Rápido** no Painel de Supervisão e publicar a versão **`v2.4.0`**.
+As auditorias independentes realizadas pelo **ChatGPT**, **DeepSeek** e **Kilo Code (NVIDIA)** convergiram exatamente com o nosso diagnóstico e trouxeram apontamentos cirúrgicos linha-a-linha para elevar o plugin **Academy** de **7/10 para 9.5+/10 (Padrão Ouro Definitivo)**:
+
+### 🔴 P0 — Correções Cirúrgicas Imediatas (Zero Efeitos Colaterais e DI Pura)
+1. **`LessonAdminController` (Remoção de Dependências Mortas):**
+   - Remover `?ThemeManagerInterface $themeManager` e `?LessonBlockRenderer $blockRenderer` do construtor de `LessonAdminController`, pois não são utilizados no corpo da classe, e eliminar o anti-pattern `?? new LessonBlockRenderer()`.
+2. **`CourseFrontController::resolveActiveThemePath()` (Fim de `new` Interno no Controller):**
+   - Remover a instanciação direta `new SafeThemeResolver(...)` e `new EnvSiteState()` de dentro do `CourseFrontController`. Injetar a resolução via Container/Contrato (`ThemeManagerInterface`).
+3. **Fonte Única de Verdade para o Schema (Migrations vs `ensureTableExists`):**
+   - Eliminar o *side-effect* `ensureTableExists()` / `ensureTables()` de dentro dos construtores de `PdoCourseRepository` e `PdoCourseStructureRepository`.
+   - Consolidar toda a criação de tabelas (`academy_courses`, `academy_modules`, `academy_lessons`) exclusivamente via `migrations/` + `MigrationRunner`.
+4. **Blindagem Defensiva de Escaping (`CourseAdminController`):**
+   - Aplicar `htmlspecialchars($thumbSrc, ENT_QUOTES, 'UTF-8')` nas saídas de `$this->storage->getPublicUrl(...)` (linhas 96 e 306) e substituir `onsubmit` com `addslashes()` por atributos `data-confirm-title` + listener JS limpo.
+
+### 🟠 P1 — Desacoplamento de Views e Contratos de Renderização
+5. **Extração Completa das Views Inline (`src/Plugins/academy/views/`):**
+   - Mover todo o HTML/CSS/JS inline de `CourseAdminController` (`index`, `edit`), `LessonAdminController` (`editor`) e `CourseFrontController` (`index`, `showCourse`, `showLesson`) para arquivos de template dedicados em `src/Plugins/academy/views/`.
+6. **Contratos para Renderizadores e Storage Obrigatório:**
+   - Criar `CourseCatalogRendererInterface` e `LessonBlockRendererInterface` para injeção por contrato no `CourseFrontController`.
+   - Tornar `PublicStorageInterface` obrigatório no construtor de `CourseCatalogRenderer` e `LocalCourseImageStorage`.
+
+### 🟡 P2 — Alta Coesão e Segregação de Interfaces (ISP & SRP)
+7. **Extração do Sincronizador de Estrutura (`CourseStructureSynchronizer`):**
+   - Retirar a lógica pesada de diff/merge (`syncCourseStructure`) de dentro de `PdoCourseStructureRepository` para um serviço de domínio dedicado (`CourseStructureSynchronizer`), mantendo o repositório focado apenas em persistência.
+8. **Extração do Resolvedor de Páginas do Tema (`ThemePageResolver`):**
+   - Mover `resolvePublicThemePages()` do `CourseAdminController` para um serviço dedicado injetado via contrato.
+9. **Separação de Controllers Administrativos:**
+   - Dividir `CourseAdminController` em `CourseAdminController` (CRUD do curso) e `CourseStructureAdminController` (gestão de módulos, aulas e auto-importação/fabricação de pastas).
+
+---
+
+## ✅ 4. Checklist de Execução (Roadmap `v2.4.0`)
+
+- [ ] **Etapa 1 (P0 Academy):** Limpar dependências mortas de `LessonAdminController`, remover `new SafeThemeResolver`/`EnvSiteState` de `CourseFrontController`, aplicar `htmlspecialchars($thumbSrc)` e unificar o schema exclusivamente nas `migrations/` (removendo `ensureTableExists` dos construtores).
+- [ ] **Etapa 2 (P1 Academy Views & Contratos):** Extrair todas as views inline do `academy` para `src/Plugins/academy/views/`, criar `CourseCatalogRendererInterface` / `LessonBlockRendererInterface`, `CourseStructureSynchronizer` e `ThemePageResolver`, e adicionar os novos perfis de layout Mobile (*Bottom Sheet* e *Modo Cinema Sticky Video*).
+- [ ] **Etapa 3 (Pilar 5 — Fábrica de Aulas PHP):** Implementar o contrato `LessonFileScaffolderInterface` (`ThemeLessonFileScaffolder`) no plugin `academy` com o botão **"📁 Criar Pasta/Módulo"** e a fabricação automática de arquivos `.php` pré-configurados (Desktop/Mobile + Editor de Blocos) a partir do Título (ex: `"Estrutura de Dados"` $\rightarrow$ `pages/estrutura-de-dados.php`).
+- [ ] **Etapa 4 (Pilar 1 — Core Storage):** Implementar `JsonStoreInterface` + `AtomicJsonStore` com testes de concorrência em `tests/Unit/AtomicJsonStoreTest.php` e integrá-lo no `CircuitBreaker`, `ErrorLogger`, `RequestMetricsRecorder` e configuração de plugins.
+- [ ] **Etapa 5 (Pilar 2 — Core Resiliência):** Implementar rastreamento de exceções de rota por plugin e política de *Threshold* no `HttpKernel` / `CircuitBreaker`.
+- [ ] **Etapa 6 (Pilar 3 — Schema Doctor):** Criar o scanner automático de `migrations/` para todos os plugins e adicionar o diagnóstico **Schema Doctor** no Cockpit.
+- [ ] **Etapa 7 (Pilar 6 — Manuais & Snapshot):** Criar os módulos `manual/module.php` (`ManualModuleInterface`) para `flextheme`, `pages` e `seo`, implementar o sistema de **Snapshot & Rollback Rápido** no Painel de Supervisão e publicar a versão **`v2.4.0`**.
