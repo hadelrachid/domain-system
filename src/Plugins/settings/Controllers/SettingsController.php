@@ -3,10 +3,12 @@
 namespace DomainSystem\Plugins\settings\Controllers;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\Update\MaintenanceModeInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Update\Infrastructure\FileMaintenanceMode;
 use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;
 
 class SettingsController
@@ -40,19 +42,22 @@ class SettingsController
     private \PDO $db;
     private SessionManagerInterface $session;
     private string $basePath;
+    private MaintenanceModeInterface $maintenanceMode;
 
     public function __construct(
         ThemeManagerInterface $theme,
         SettingRepositoryInterface $settingRepo,
         \DomainSystem\SystemApps\Database\Connection $connection,
         SessionManagerInterface $session,
-        ?string $basePath = null
+        ?string $basePath = null,
+        ?MaintenanceModeInterface $maintenanceMode = null
     ) {
         $this->db = $connection->getPdo();
         $this->session = $session;
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;
         $this->basePath = rtrim($basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4)), '/\\');
+        $this->maintenanceMode = $maintenanceMode ?? new FileMaintenanceMode($this->basePath);
     }
 
     public function index(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
@@ -99,12 +104,11 @@ class SettingsController
 
     public function toggleMaintenance(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
-        $lockFile = $this->basePath . '/.maintenance';
         $action = $request->input('action');
         if ($action === 'on') {
-            file_put_contents($lockFile, 'maintenance');
+            $this->maintenanceMode->enable('maintenance');
         } elseif ($action === 'off') {
-            if (file_exists($lockFile)) unlink($lockFile);
+            $this->maintenanceMode->disable();
         }
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . '/admin/settings?success=1#tab-avancado');
     }
