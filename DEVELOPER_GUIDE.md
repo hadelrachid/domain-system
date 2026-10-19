@@ -23,7 +23,7 @@ Crie uma pasta em `src/Plugins/nome_do_plugin/` contendo:
     "description": "Um aplicativo de exemplo",
     "author": "Sua Empresa",
     "core": false,
-    "os_version": "2.3"
+    "os_version": "2.4"
 }
 ```
 

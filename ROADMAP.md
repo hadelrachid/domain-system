@@ -56,6 +56,7 @@ Este documento descreve a evolução e visão de futuro para o **Domain System**
 ### 3.2. Abstração Total de Banco de Dados & Atualizador Automático por Contrato
 - [x] **Schema Builder:** Em vez de arquivos `.sql` ou queries hardcoded, os plugins usarão uma classe `Schema` para criar tabelas que funcione tanto no MySQL (Produção Hostinger) quanto no SQLite (Testes).
 - [x] **Atualizador Automático via GitHub Releases (`SystemUpdater` / `CoreUpdater` — Modelo A):** Verificação semântica com ETag, pacote assinado SHA-256 + `manifest.json`, pré-checagem, backup de código/banco (`SqliteDatabaseBackup`/`MysqlDatabaseBackup`), migrações aditivas verificadas por contrato (`SchemaPlanner`/`SchemaVerifier`), health-check em duas fases e rollback automático.
+- [ ] **Atualização Individual de Plugins (Milestone M3):** Suporte à atualização seletiva de plugins do Ring 3 a partir de releases independentes mantendo compatibilidade de contrato (`os_version`).
 
 ### 3.3. API Pública (REST & Webhooks)
 - [ ] **Central de Webhooks (Event Gateway):** Um ponto único e seguro onde serviços externos disparam eventos no OS.

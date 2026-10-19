@@ -23,7 +23,8 @@ final class ExtensionsCheck implements PreflightCheckInterface
     {
         $this->extensionLoadedDetector = $extensionLoadedDetector !== null
             ? Closure::fromCallable($extensionLoadedDetector)
-            : static fn(string $ext): bool => extension_loaded($ext);
+            : static fn(string $ext): bool => extension_loaded($ext)
+                || ($ext === 'zip' && class_exists(\PharData::class) && extension_loaded('zlib'));
     }
 
     public function id(): string

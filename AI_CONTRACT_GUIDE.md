@@ -43,7 +43,7 @@ When asked to create a plugin named `<slug>` (e.g., `blog` or `store`), always g
 
 ```text
 src/Plugins/<slug>/
-├── plugin.json                        # Plugin manifest (name, version, author, description, os_version: "2.3")
+├── plugin.json                        # Plugin manifest (name, version, author, description, os_version: "2.4")
 ├── Plugin.php                         # Implements OsExtensionInterface (osRegister & osBoot)
 ├── Contracts/
 │   └── <PascalSlug>RepositoryInterface.php
@@ -77,7 +77,7 @@ src/Plugins/<slug>/
     "author": "Developer",
     "description": "Clean Ring 3 module following Domain-System SOLID contracts.",
     "core": false,
-    "os_version": "2.3"
+    "os_version": "2.4"
 }
 ```
 

@@ -138,6 +138,8 @@ final class UpdateController
 
     public function advance(Request $request): ResponseInterface
     {
+        @set_time_limit(300);
+
         if (!$this->isAdmin()) {
             return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
         }
@@ -174,6 +176,8 @@ final class UpdateController
 
     public function rollback(Request $request): ResponseInterface
     {
+        @set_time_limit(300);
+
         if (!$this->isAdmin()) {
             return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
         }

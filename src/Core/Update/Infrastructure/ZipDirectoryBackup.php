@@ -84,29 +84,50 @@ final class ZipDirectoryBackup implements BackupInterface
         }
 
         $zipPath = $scopeDir . '/code.zip';
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            throw new RuntimeException(sprintf('Não foi possível criar arquivo ZIP de backup: "%s".', $zipPath));
-        }
 
         $filesToBackup = $scope->kind === UpdateKind::Core
             ? $this->collectCoreFiles()
             : $this->collectPluginFiles($scope->slug);
 
-        foreach ($filesToBackup as $relPath) {
-            $fullPath = $this->rootPath . '/' . $relPath;
-            if (is_file($fullPath) && !is_link($fullPath)) {
-                $zip->addFile($fullPath, $relPath);
+        if (class_exists(ZipArchive::class)) {
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new RuntimeException(sprintf('Não foi possível criar arquivo ZIP de backup: "%s".', $zipPath));
             }
-        }
 
-        // Garante que o arquivo ZIP seja gravado mesmo se a árvore tiver apenas marcador vazio
-        if ($filesToBackup === []) {
-            $zip->addFromString('.ds_empty_backup', '');
-        }
+            foreach ($filesToBackup as $relPath) {
+                $fullPath = $this->rootPath . '/' . $relPath;
+                if (is_file($fullPath) && !is_link($fullPath)) {
+                    $zip->addFile($fullPath, $relPath);
+                }
+            }
 
-        if (!$zip->close()) {
-            throw new RuntimeException('Falha ao finalizar gravação do arquivo code.zip no backup.');
+            // Garante que o arquivo ZIP seja gravado mesmo se a árvore tiver apenas marcador vazio
+            if ($filesToBackup === []) {
+                $zip->addFromString('.ds_empty_backup', '');
+            }
+
+            if (!$zip->close()) {
+                throw new RuntimeException('Falha ao finalizar gravação do arquivo code.zip no backup.');
+            }
+        } elseif (class_exists(\PharData::class)) {
+            @unlink($zipPath);
+            $phar = new \PharData($zipPath, 0, null, \Phar::ZIP);
+            $fileMap = [];
+            foreach ($filesToBackup as $relPath) {
+                $fullPath = $this->rootPath . '/' . $relPath;
+                if (is_file($fullPath) && !is_link($fullPath)) {
+                    $fileMap[$relPath] = $fullPath;
+                }
+            }
+
+            if ($fileMap === []) {
+                $phar->addFromString('.ds_empty_backup', '');
+            } else {
+                $phar->buildFromIterator(new \ArrayIterator($fileMap));
+            }
+        } else {
+            throw new RuntimeException('A extensão PHP "zip" ou PharData é obrigatória para criar backups.');
         }
 
         $record = new BackupRecord(
@@ -406,7 +427,12 @@ final class ZipDirectoryBackup implements BackupInterface
             return true;
         }
 
-        if (str_ends_with($normalized, '.phar') || str_ends_with($normalized, '.sqlite')) {
+        if (
+            str_ends_with($normalized, '.phar')
+            || str_ends_with($normalized, '.sqlite')
+            || str_ends_with($normalized, '.zip')
+            || str_ends_with($normalized, '.sha256')
+        ) {
             return true;
         }
 

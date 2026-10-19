@@ -44,6 +44,14 @@ final class ZipPackageExtractor
             throw new PackageIntegrityException(sprintf('Arquivo ZIP de pacote não encontrado ou ilegível: %s', $archivePath));
         }
 
+        if (!class_exists(ZipArchive::class)) {
+            if (class_exists(\PharData::class)) {
+                $this->extractWithPharData($archivePath, $destinationDir);
+                return;
+            }
+            throw new PackageIntegrityException('A extensão PHP "zip" (ZipArchive) ou PharData é obrigatória para extrair pacotes de atualização.');
+        }
+
         $zip = new ZipArchive();
         $openResult = $zip->open($archivePath, ZipArchive::RDONLY);
         if ($openResult !== true) {
@@ -221,6 +229,122 @@ final class ZipPackageExtractor
         }
 
         $zip->close();
+    }
+
+    private function extractWithPharData(string $archivePath, string $destinationDir): void
+    {
+        if (!is_dir($destinationDir) && !@mkdir($destinationDir, 0755, true) && !is_dir($destinationDir)) {
+            throw new PackageIntegrityException(sprintf('Não foi possível criar diretório de quarentena: %s', $destinationDir));
+        }
+
+        try {
+            $phar = new \PharData($archivePath);
+            $iterator = new RecursiveIteratorIterator($phar, RecursiveIteratorIterator::LEAVES_ONLY);
+            $fileCount = 0;
+            $totalUncompressedBytes = 0;
+            $seenLowerPaths = [];
+
+            foreach ($iterator as $entry) {
+                $fileCount++;
+                if ($fileCount > $this->maxFiles) {
+                    throw new PackageIntegrityException(sprintf(
+                        'O pacote excede o limite máximo de entradas permitido (%d > %d).',
+                        $fileCount,
+                        $this->maxFiles
+                    ));
+                }
+
+                $entryName = ltrim(str_replace('\\', '/', $iterator->getSubPathName()), '/');
+
+                $this->assertSafeRelativePath($entryName);
+
+                $lowerKey = strtolower($entryName);
+                if (isset($seenLowerPaths[$lowerKey])) {
+                    throw new PackageIntegrityException(sprintf(
+                        'Colisão de caminhos case-insensitive detectada no pacote: "%s" e "%s".',
+                        $seenLowerPaths[$lowerKey],
+                        $entryName
+                    ));
+                }
+                $seenLowerPaths[$lowerKey] = $entryName;
+
+                $declaredUncompressed = (int)$entry->getSize();
+                if (($totalUncompressedBytes + $declaredUncompressed) > $this->maxTotalBytes) {
+                    throw new PackageIntegrityException(sprintf(
+                        'O pacote excede o limite máximo de tamanho descompactado (%d bytes).',
+                        $this->maxTotalBytes
+                    ));
+                }
+
+                $targetFile = $destinationDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $entryName);
+                $parentDir = dirname($targetFile);
+                if (!is_dir($parentDir) && !@mkdir($parentDir, 0755, true) && !is_dir($parentDir)) {
+                    throw new PackageIntegrityException(sprintf('Não foi possível criar diretório pai para "%s".', $entryName));
+                }
+
+                $stream = @fopen($entry->getPathname(), 'rb');
+                if (!is_resource($stream)) {
+                    throw new PackageIntegrityException(sprintf('Não foi possível abrir stream da entrada "%s".', $entryName));
+                }
+
+                $out = @fopen($targetFile, 'wb');
+                if (!is_resource($out)) {
+                    fclose($stream);
+                    throw new PackageIntegrityException(sprintf('Não foi possível criar arquivo extraído "%s".', $entryName));
+                }
+
+                $writtenForFile = 0;
+                try {
+                    while (!feof($stream)) {
+                        $chunk = fread($stream, 65536);
+                        if ($chunk === false) {
+                            throw new PackageIntegrityException(sprintf('Erro de leitura ao extrair "%s".', $entryName));
+                        }
+                        $chunkLen = strlen($chunk);
+                        if ($chunkLen === 0) {
+                            break;
+                        }
+                        $writtenForFile += $chunkLen;
+                        $totalUncompressedBytes += $chunkLen;
+
+                        if ($totalUncompressedBytes > $this->maxTotalBytes) {
+                            throw new PackageIntegrityException(sprintf(
+                                'Limite máximo descompactado (%d bytes) excedido durante a extração de "%s".',
+                                $this->maxTotalBytes,
+                                $entryName
+                            ));
+                        }
+
+                        $written = fwrite($out, $chunk);
+                        if ($written === false || $written !== $chunkLen) {
+                            throw new PackageIntegrityException(sprintf('Erro de escrita ao extrair "%s".', $entryName));
+                        }
+                    }
+                } finally {
+                    fclose($out);
+                    fclose($stream);
+                }
+
+                if ($writtenForFile !== $declaredUncompressed) {
+                    throw new PackageIntegrityException(sprintf(
+                        'Tamanho extraído (%d) diverge do cabeçalho ZIP (%d) para "%s".',
+                        $writtenForFile,
+                        $declaredUncompressed,
+                        $entryName
+                    ));
+                }
+
+                if (is_link($targetFile)) {
+                    throw new PackageIntegrityException(sprintf('Link simbólico detectado após extração: "%s".', $entryName));
+                }
+            }
+        } catch (\Throwable $e) {
+            self::removeDirectory($destinationDir);
+            if ($e instanceof PackageIntegrityException) {
+                throw $e;
+            }
+            throw new PackageIntegrityException('Erro ao extrair pacote ZIP: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**

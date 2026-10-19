@@ -57,7 +57,7 @@ Qualquer plugin em `src/Plugins/<slug>/manual/module.php` que implemente a inter
 Gerencie páginas web (CMS), Menus Dinâmicos Atômicos, SEO OpenGraph/Schema.org e Controle de Acesso baseado em **Capabilities** com proteção nativa Anti-CSRF, Anti-XSS e suporte a 2FA.
 
 ### 🔄 8. Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` — Modelo A)
-Notificação automática de novas versões (painel, widget e sino), download em streaming com validação dupla SHA-256 + `manifest.json`, pré-checagem, backup automático de código e banco, aplicação atômica preservando `.env`/`config/`/`storage/`, execução de migrations verificadas por contrato (`SchemaVerifier`) e rollback automático em 1 clique ou via CLI (`php os-cli.php system:update`).
+Notificação automática de novas versões (painel, widget e sino), download em streaming com validação dupla SHA-256 + `manifest.json`, pré-checagem, backup automático de código e banco (MySQL/SQLite com fallback `\PharData` para ambientes Windows/XAMPP), aplicação atômica preservando `.env`/`config/`/`storage/`, execução de migrations verificadas por contrato (`SchemaVerifier`) e rollback automático em 1 clique ou via CLI (`php os-cli.php system:update`). Saiba mais em [wiki/Atualizacoes.md](wiki/Atualizacoes.md).
 
 ## ⚙️ Como Instalar
 

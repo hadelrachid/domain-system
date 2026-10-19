@@ -57,7 +57,7 @@ Any plugin providing `src/Plugins/<slug>/manual/module.php` implementing `Manual
 Manage web pages (CMS), Atomic Dynamic Menus, OpenGraph/Schema.org SEO, and **Capability Security (ACL)** with native Anti-CSRF, Anti-XSS, and 2FA protection.
 
 ### 🔄 8. Contract-Driven GitHub Releases Self-Updater (`SystemUpdater` — Model A)
-Automatic new-version notifications (Global Settings tab, dashboard widget, and notification bell), streaming download with dual SHA-256 + `manifest.json` verification, preflight checks, automatic code and database backups, atomic file replacement preserving `.env`/`config/`/`storage/`, contract-verified additive migrations (`SchemaVerifier`), and automatic rollback via UI or CLI (`php os-cli.php system:update`).
+Automatic new-version notifications (Global Settings tab, dashboard widget, and notification bell), streaming download with dual SHA-256 + `manifest.json` verification, preflight checks, automatic code and database backups (MySQL/SQLite with intelligent `\PharData` fallback for Windows/XAMPP), atomic file replacement preserving `.env`/`config/`/`storage/`, contract-verified additive migrations (`SchemaVerifier`), and automatic rollback via UI or CLI (`php os-cli.php system:update`). Learn more in [wiki/Atualizacoes.md](wiki/Atualizacoes.md).
 
 ## ⚙️ How to Install
 

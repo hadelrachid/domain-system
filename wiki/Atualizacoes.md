@@ -8,7 +8,7 @@ O **Domain System** possui um subsistema nativo de verificação e atualização
 
 Todo o fluxo de atualização é governado pelos **25 contratos** em `src/Core/Contracts/Update/`:
 - **Isolamento de Infraestrutura:** Os serviços de domínio (`src/Core/Update/Service/`) e o aplicativo de sistema (`src/SystemApps/SystemUpdater/`) não contêm chamadas diretas a `PDO`, `curl_*`, `ZipArchive` ou superglobais (`$_GET`, `$_POST`, `$_SESSION`), sendo auditados automaticamente por `UpdateArchitectureTest`.
-- **Modelo A (Monorepo Oficial):** O núcleo e os 17 plugins/SystemApps oficiais compartilham a mesma versão (`2.3.0`) e são distribuídos em um pacote único assinado por SHA-256 (`domain-system-X.Y.Z.zip` + `domain-system-X.Y.Z.zip.sha256`).
+- **Modelo A (Monorepo Oficial):** O núcleo e os 18 plugins/SystemApps oficiais compartilham a mesma versão (`2.4.0`) e são distribuídos em um pacote único assinado por SHA-256 (`domain-system-X.Y.Z.zip` + `domain-system-X.Y.Z.zip.sha256`).
 
 ---
 

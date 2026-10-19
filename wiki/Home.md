@@ -29,9 +29,10 @@ Pensando na escalabilidade ilimitada (com todo o ecossistema descompactado ocupa
 - **Fábrica Automática de Pastas e Aulas `.php` (`LessonFileScaffolderInterface`):** Cria subpastas de módulos e fabrica automaticamente arquivos `.php` físicos no tema ativo (ex: `themes/<tema>/pages/estrutura-de-dados.php`) acessíveis em `/cursos/estrutura-de-dados`.
 - **4 Modos de Aula & 3 Perfis Mobile (`drawer`, `bottom_bar`, `cinema`):** Edição híbrida de aulas (HTML/Markdown puro, Editor em Blocos com 8 blocos, Aulas `.php` fabricadas com código ou blocos, e Páginas do Tema) com Preview Dinâmico e Simulador Multi-Dispositivos (5 viewports).
 
-### 4. Auto-Descoberta de Manuais (`ManualModuleInterface`) e "Vibe Coding nos Trilhos" (`AI_CONTRACT_GUIDE.md`)
-Na **v2.3.0**, o Cockpit possui:
-- **Rastreador Automático de Manuais (`PluginManualScanner`):** Varre `src/Plugins/*/manual/module.php` (incluindo `academy`, `flextheme`, `pages`, `seo`) e acopla automaticamente seus guias e checklists ao **Manual de Instruções (`/admin/manual`)**.
+### 4. Auto-Descoberta de Manuais (`ManualModuleInterface`), Atualizador GitHub (`SystemUpdater`) e "Vibe Coding nos Trilhos" (`AI_CONTRACT_GUIDE.md`)
+Na **v2.4.0**, o Cockpit possui:
+- **Atualizador Automático via GitHub Releases (`SystemUpdater` / `CoreUpdater` — Modelo A):** Notificações de nova versão, validação dupla SHA-256 + manifesto, backup automático de código e banco (MySQL/SQLite) e auto-rollback em 1 clique ou via CLI (`php os-cli.php system:update`).
+- **Rastreador Automático de Manuais (`PluginManualScanner`):** Varre `src/Plugins/*/manual/module.php` (incluindo `academy`, `flextheme`, `pages`, `seo`, `SystemUpdater`) e acopla automaticamente seus guias e checklists ao **Manual de Instruções (`/admin/manual`)**.
 - **Guia Mestre de Contratos para IA (`AI_CONTRACT_GUIDE.md`):** Regras nativas (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) e gerador CLI (`php os-cli.php make:plugin <slug>`) para que qualquer IA programe em alta velocidade (*Vibe Coding*) respeitando 100% os contratos do Ring 3.
 
 ---
@@ -56,8 +57,9 @@ Para manter os princípios **SOLID** (Single Responsibility Principle) e evitar 
 ---
 
 ## 📖 Como navegar (Links e Documentação Oficial)
-A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/` e no guia oficial para IA. Recomendamos fortemente a leitura da arquitetura **OS 2.3.0**:
+A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/` e no guia oficial para IA. Recomendamos fortemente a leitura da arquitetura **OS 2.4.0**:
 
+- 🔄 **[Sistema de Atualizações Automáticas](Atualizacoes.md)** - O fluxo de atualização contínua via GitHub Releases.
 - 🤖 **[AI Contract Guide (`AI_CONTRACT_GUIDE.md`)](../AI_CONTRACT_GUIDE.md)** - O Guia Mestre para IAs (*Vibe Coding on Rails*).
 - 🚀 **[Guia Interativo de Extensões (Temas e Plugins)](../docs/tutorial-dev.html)** - O padrão de Injeção de Dependências e `ManualModuleInterface`.
 - 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.html)** - Uma alternativa leve e resiliente baseada em Contratos e Injeção de Dependências.
@@ -95,9 +97,10 @@ Thinking about unlimited scalability (with the entire unpacked folder occupying 
 - **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderInterface`):** Automatically creates module folders and physical `.php` lesson files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php`) routed at `/cursos/estrutura-de-dados`.
 - **4 Lesson Modes & 3 Mobile Layout Profiles (`drawer`, `bottom_bar`, `cinema`):** Hybrid lesson authoring (Raw HTML/Markdown, 8-block Visual Editor, Fabricated `.php` Lessons with code or blocks, and Theme Pages) with Real-Time Preview and a 5-Viewport Multi-Device Simulator.
 
-### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface`) & "Vibe Coding on Rails" (`AI_CONTRACT_GUIDE.md`)
-In **v2.3.0**, the Cockpit includes:
-- **Automatic Manual Scanner (`PluginManualScanner`):** Inspects `src/Plugins/*/manual/module.php` (`academy`, `flextheme`, `pages`, `seo`) and mounts their interactive tutorials and QA checklists into the **Instruction Manual (`/admin/manual`)**.
+### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface`), Self-Updater (`SystemUpdater`) & "Vibe Coding on Rails" (`AI_CONTRACT_GUIDE.md`)
+In **v2.4.0**, the Cockpit includes:
+- **Automatic GitHub Releases Self-Updater (`SystemUpdater` / `CoreUpdater` — Model A):** New version alerts, dual SHA-256 + manifest verification, automatic code & database backup (MySQL/SQLite), and 1-click or CLI auto-rollback (`php os-cli.php system:update`).
+- **Automatic Manual Scanner (`PluginManualScanner`):** Inspects `src/Plugins/*/manual/module.php` (`academy`, `flextheme`, `pages`, `seo`, `SystemUpdater`) and mounts their interactive tutorials and QA checklists into the **Instruction Manual (`/admin/manual`)**.
 - **Master AI Contract Guide (`AI_CONTRACT_GUIDE.md`):** Native IDE rule files (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) and CLI generator (`php os-cli.php make:plugin <slug>`) enabling high-speed AI-assisted coding (*Vibe Coding on Rails*) with zero spaghetti code.
 
 ---
@@ -122,8 +125,9 @@ To maintain **SOLID** principles (Single Responsibility Principle) and avoid spa
 ---
 
 ## 📖 How to navigate (Links and Official Docs)
-The main system documentation has evolved and is now centralized in our `docs/` folder and the official AI guide. We strongly recommend reading about the **OS 2.3.0** architecture:
+The main system documentation has evolved and is now centralized in our `docs/` folder and the official AI guide. We strongly recommend reading about the **OS 2.4.0** architecture:
 
+- 🔄 **[Automatic Update System](Atualizacoes.md)** - Continuous delivery and update pipeline via GitHub Releases.
 - 🤖 **[AI Contract Guide (`AI_CONTRACT_GUIDE.md`)](../AI_CONTRACT_GUIDE.md)** - The Master Guide for AI Assistants (*Vibe Coding on Rails*).
 - 🚀 **[Interactive Extension Guide (Themes & Plugins)](../docs/tutorial-dev.html)** - The Dependency Injection and `ManualModuleInterface` standard.
 - 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.html)** - A lightweight, resilient alternative built on Contracts and Dependency Injection.
