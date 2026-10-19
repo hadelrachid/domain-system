@@ -44,13 +44,29 @@ class SetupController
     public function step1(Request $request): Response
     {
         \DomainSystem\Core\Bootstrap\RuntimeDirectories::ensure(DOMAIN_SYSTEM_ROOT);
-        try {
-            $this->service->getOrCreateSetupToken();
-        } catch (\Exception $e) {
-            return $this->renderStep('step1', $e->getMessage());
+        $infoMessage = null;
+
+        if ($request->input('action') === 'regenerate_token') {
+            try {
+                $this->service->regenerateSetupToken();
+                $infoMessage = 'Token gerado/atualizado com sucesso no servidor! Lembre-se: no Gerenciador de Arquivos da Hostinger/cPanel, recarregue a lista (ícone 🔄 ou F5) para a pasta "token" aparecer.';
+            } catch (\Exception $e) {
+                return $this->renderStep('step1', $e->getMessage());
+            }
+        } else {
+            try {
+                $this->service->getOrCreateSetupToken();
+            } catch (\Exception $e) {
+                return $this->renderStep('step1', $e->getMessage());
+            }
         }
-        
-        return $this->renderStep('step1');
+
+        $tokenExists = file_exists(DOMAIN_SYSTEM_ROOT . '/token/setup.token');
+
+        return $this->renderStep('step1', null, [
+            'tokenExists' => $tokenExists,
+            'infoMessage' => $infoMessage,
+        ]);
     }
 
     // =====================================================================

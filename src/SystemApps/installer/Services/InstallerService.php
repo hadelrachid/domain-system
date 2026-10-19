@@ -23,20 +23,29 @@ class InstallerService implements InstallerServiceInterface
             return trim(file_get_contents($this->tokenFile));
         }
 
+        return $this->regenerateSetupToken();
+    }
+
+    /**
+     * Força a criação ou recriação do token de instalação e garante a pasta/permissões.
+     */
+    public function regenerateSetupToken(): string
+    {
         // Garante que a pasta existe
         $tokenDir = dirname($this->tokenFile);
         if (!is_dir($tokenDir)) {
-            mkdir($tokenDir, 0755, true);
-            file_put_contents($tokenDir . '/.htaccess', 'Deny from all');
+            if (!@mkdir($tokenDir, 0755, true) && !is_dir($tokenDir)) {
+                throw new \RuntimeException("Não foi possível criar a pasta token/ no servidor. Verifique as permissões de escrita do diretório raiz.");
+            }
+            @file_put_contents($tokenDir . '/.htaccess', 'Deny from all');
         }
-
 
         // Gera um token no formato XXXX-XXXX
         $token = strtoupper(bin2hex(random_bytes(2)) . '-' . bin2hex(random_bytes(2)));
         
         // Tenta salvar o token
-        if (file_put_contents($this->tokenFile, $token) === false) {
-            throw new \RuntimeException("Não foi possível gerar o arquivo de segurança em: temp/setup_token.txt. Verifique as permissões da pasta temp/.");
+        if (@file_put_contents($this->tokenFile, $token) === false) {
+            throw new \RuntimeException("Não foi possível gravar o arquivo token/setup.token. Verifique as permissões de escrita na pasta token/.");
         }
 
         return $token;

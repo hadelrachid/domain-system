@@ -1,3 +1,7 @@
+<?php
+$tokenExists = $tokenExists ?? (defined('DOMAIN_SYSTEM_ROOT') && file_exists(DOMAIN_SYSTEM_ROOT . '/token/setup.token'));
+$infoMessage = $infoMessage ?? null;
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -54,12 +58,37 @@
         <div class="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
+    <?php if (!empty($infoMessage)): ?>
+        <div class="alert" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #86efac; text-align: left;">
+            <strong>✓ Informação:</strong><br>
+            <?= htmlspecialchars($infoMessage) ?>
+        </div>
+    <?php endif; ?>
+
     <form method="POST" action="<?= BASE_URL ?>/setup/database">
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
-        <div class="alert" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: #93c5fd; text-align: center;">
-            <strong>Proteção de Instalação 🛡️</strong><br>
-            Abra o arquivo <code style="color: #fff;">token/setup.token</code> no servidor e cole o código abaixo.
+        <div class="alert" style="background: rgba(30, 58, 138, 0.3); border-color: rgba(59, 130, 246, 0.4); color: #bfdbfe; text-align: left; font-size: 0.88rem; line-height: 1.5;">
+            <div style="font-weight: 600; color: #60a5fa; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                <span>🛡️ Proteção de Instalação (Setup Token)</span>
+                <?php if ($tokenExists): ?>
+                    <span style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem;">✔ Token no Servidor</span>
+                <?php endif; ?>
+            </div>
+            
+            <p style="margin: 0 0 10px 0; color: #cbd5e1; font-size: 0.86rem; text-align: left;">
+                Para sua segurança, um código foi gerado no servidor em: <code style="background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #38bdf8;">token/setup.token</code>.
+            </p>
+
+            <div style="background: rgba(15, 23, 42, 0.6); border-left: 3px solid #f59e0b; padding: 8px 10px; margin-bottom: 12px; border-radius: 4px; font-size: 0.82rem; color: #fde68a;">
+                <strong>⚠️ Dica Hostinger / cPanel:</strong> O Gerenciador de Arquivos armazena a listagem em cache. Se a pasta <code style="color: #fff;">token</code> não aparecer de imediato, clique no botão <strong>Recarregar (🔄)</strong> na barra de ferramentas do Gerenciador de Arquivos ou aperte <strong>F5</strong> na tela dos arquivos.
+            </div>
+
+            <div style="text-align: right;">
+                <a href="<?= BASE_URL ?>/setup?action=regenerate_token" style="display: inline-block; font-size: 0.8rem; color: #93c5fd; text-decoration: none; padding: 6px 12px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; transition: all 0.2s;">
+                    🔄 Gerar Novo Token / Forçar Criação
+                </a>
+            </div>
         </div>
 
         <div class="form-group">

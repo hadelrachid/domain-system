@@ -11,6 +11,8 @@ interface InstallerServiceInterface
 {
     public function getOrCreateSetupToken(): string;
 
+    public function regenerateSetupToken(): string;
+
     public function validateSetupToken(string $inputToken): bool;
 
     public function checkRequirements(): array;
