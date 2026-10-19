@@ -27,8 +27,9 @@ interface SchemaDoctorInterface
 
     /**
      * Executa o auto-reparo (Auto-Heal) das estruturas pendentes.
+     * Para na primeira falha de cada plugin e retorna o ponto de parada em `stopped_at`.
      *
-     * @return array{executed: array<string, array<int, string>>, errors: array<string, array<int, string>>}
+     * @return array{executed: array<string, array<int, string>>, errors: array<string, array<int, string>>, stopped_at?: array<string, string>}
      */
     public function healAll(): array;
 }

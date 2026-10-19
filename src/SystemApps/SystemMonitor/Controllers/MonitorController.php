@@ -78,14 +78,20 @@ class MonitorController
     public function healSchema()
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $stoppedParam = '';
         if ($this->schemaDoctor !== null) {
             try {
-                $this->schemaDoctor->healAll();
+                $res = $this->schemaDoctor->healAll();
+                if (!empty($res['stopped_at']) && is_array($res['stopped_at'])) {
+                    $firstPlugin = (string)array_key_first($res['stopped_at']);
+                    $firstMigration = (string)$res['stopped_at'][$firstPlugin];
+                    $stoppedParam = '&stopped_at=' . rawurlencode("{$firstPlugin}:{$firstMigration}");
+                }
             } catch (\Throwable $e) {
                 // Silencioso no redirect
             }
         }
-        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/monitor?healed=1");
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/monitor?healed=1" . $stoppedParam);
     }
 
     public function createSnapshot(Request $request)

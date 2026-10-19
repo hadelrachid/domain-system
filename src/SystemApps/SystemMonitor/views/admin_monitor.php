@@ -297,6 +297,16 @@
                     </form>
                 </div>
 
+                <?php if (!empty($_GET['stopped_at'])): ?>
+                    <div style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; padding: 10px 12px; margin-bottom: 14px; border-left: 4px solid #ef4444; border-radius: 4px; font-size: 12px;">
+                        ⚠️ Auto-Heal interrompido na primeira falha (<code><?= htmlspecialchars((string)$_GET['stopped_at']) ?></code>). As migrations seguintes não foram executadas.
+                    </div>
+                <?php elseif (isset($_GET['healed'])): ?>
+                    <div style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; padding: 10px 12px; margin-bottom: 14px; border-left: 4px solid #10b981; border-radius: 4px; font-size: 12px;">
+                        ✔ Auto-Heal executado com sucesso.
+                    </div>
+                <?php endif; ?>
+
                 <?php if (empty($schema_report)): ?>
                     <p style="color: #94a3b8; font-size: 13px;">Nenhuma migration de plugin detectada.</p>
                 <?php else: ?>

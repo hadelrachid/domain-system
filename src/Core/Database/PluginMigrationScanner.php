@@ -9,6 +9,11 @@ use DomainSystem\Core\Contracts\SchemaDoctorInterface;
 
 /**
  * Implementação de SchemaDoctorInterface via auto-descoberta de `migrations/*.php` (Pilar 3 v2.4).
+ *
+ * Comportamento do Auto-Heal:
+ *   Ao executar `healAll()`, as migrations pendentes de cada plugin são aplicadas em ordem.
+ *   Se uma migration falhar, o processo daquele plugin é interrompido imediatamente na primeira
+ *   falha (`stopped_at`), sem executar nem registrar as migrations seguintes.
  */
 class PluginMigrationScanner implements SchemaDoctorInterface
 {
@@ -128,20 +133,22 @@ class PluginMigrationScanner implements SchemaDoctorInterface
     }
 
     /**
-     * Executa todas as migrações pendentes de todos os plugins descobertos (Auto-Heal).
+     * Executa todas as migrações pendentes de todos os plugins descobertos (Auto-Heal),
+     * interrompendo na primeira falha de cada plugin (`stopped_at`).
      *
-     * @return array{executed: array<string, array<int, string>>, errors: array<string, array<int, string>>}
+     * @return array{executed: array<string, array<int, string>>, errors: array<string, array<int, string>>, stopped_at: array<string, string>}
      */
     public function healAll(?MigrationRunner $runner = null): array
     {
         $effectiveRunner = $runner ?? $this->createDefaultRunner();
         if ($effectiveRunner === null) {
-            return ['executed' => [], 'errors' => []];
+            return ['executed' => [], 'errors' => [], 'stopped_at' => []];
         }
 
         $discovered = $this->discover();
         $allExecuted = [];
         $allErrors = [];
+        $allStoppedAt = [];
 
         foreach ($discovered as $pluginName => $info) {
             $res = $effectiveRunner->runForPlugin($pluginName, $info['path']);
@@ -151,11 +158,15 @@ class PluginMigrationScanner implements SchemaDoctorInterface
             if (!empty($res['errors'])) {
                 $allErrors[$pluginName] = $res['errors'];
             }
+            if (!empty($res['stopped_at'])) {
+                $allStoppedAt[$pluginName] = (string)$res['stopped_at'];
+            }
         }
 
         return [
-            'executed' => $allExecuted,
-            'errors'   => $allErrors,
+            'executed'   => $allExecuted,
+            'errors'     => $allErrors,
+            'stopped_at' => $allStoppedAt,
         ];
     }
 
