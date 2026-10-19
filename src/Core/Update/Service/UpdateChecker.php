@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Update\Service;
 
 use Closure;
+use DomainSystem\Core\Contracts\NotificationManagerInterface;
 use DomainSystem\Core\Contracts\Update\ReleaseSourceInterface;
 use DomainSystem\Core\Contracts\Update\UpdateCheckerInterface;
 use DomainSystem\Core\Contracts\Update\UpdateStateStoreInterface;
@@ -31,6 +32,7 @@ final class UpdateChecker implements UpdateCheckerInterface
         private readonly UpdateStateStoreInterface $stateStore,
         private readonly int $ttlHours = 12,
         ?Closure $clock = null,
+        private readonly ?NotificationManagerInterface $notifications = null,
     ) {
         $this->clock = $clock ?? static fn(): int => time();
     }
@@ -44,7 +46,9 @@ final class UpdateChecker implements UpdateCheckerInterface
             $state = $this->stateStore->load($target);
 
             if (!$force && $this->isCacheFresh($state->lastCheckAt, $nowTs) && $state->release !== null) {
-                return $this->evaluateRelease($target, $state->release, $state->lastCheckAt ?? $nowIso);
+                $result = $this->evaluateRelease($target, $state->release, $state->lastCheckAt ?? $nowIso);
+                (new UpdateNotifier($this->stateStore, $this->notifications))->notifyIfAvailable($result);
+                return $result;
             }
 
             $knownEtag = $force ? null : $state->etag;
@@ -70,7 +74,9 @@ final class UpdateChecker implements UpdateCheckerInterface
                 );
                 $this->stateStore->save($updatedState);
 
-                return $this->evaluateRelease($target, $state->release, $nowIso);
+                $result = $this->evaluateRelease($target, $state->release, $nowIso);
+                (new UpdateNotifier($this->stateStore, $this->notifications))->notifyIfAvailable($result);
+                return $result;
             }
 
             $updatedState = $state->withRelease(
@@ -81,7 +87,9 @@ final class UpdateChecker implements UpdateCheckerInterface
             );
             $this->stateStore->save($updatedState);
 
-            return $this->evaluateRelease($target, $latest, $nowIso);
+            $result = $this->evaluateRelease($target, $latest, $nowIso);
+            (new UpdateNotifier($this->stateStore, $this->notifications))->notifyIfAvailable($result);
+            return $result;
         } catch (Throwable $e) {
             return new UpdateCheckResult(
                 status: UpdateStatus::Unknown,

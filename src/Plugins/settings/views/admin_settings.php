@@ -97,6 +97,18 @@
 <!-- ABA 2: AVANÇADO -->
 <div id="tab-avancado" class="sys-content" style="padding: 10px 20px;">
     <div style="padding-top: 10px; max-width: 800px;">
+        <div style="border: 1px solid #1e293b; border-radius: 8px; padding: 22px; background: #0f172a; margin-bottom: 30px; color: #f8fafc;">
+            <h4 style="margin-top: 0; font-size: 18px; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                🔄 Atualizações do Sistema (GitHub Release)
+            </h4>
+            <p style="margin: 10px 0 18px; font-size: 14px; color: #94a3b8; line-height: 1.6;">
+                Verifique se há uma nova versão oficial disponível no GitHub e consulte as notas de lançamento.
+            </p>
+            <a href="<?= BASE_URL ?>/admin/settings/updates" class="btn btn-activate" style="background: #0284c7; border-color: #0284c7; color: #fff; text-decoration: none; display: inline-block; padding: 10px 18px; border-radius: 6px; font-weight: 600;">
+                Abrir Painel de Atualizações →
+            </a>
+        </div>
+
         <h3 style="color: #dc3232; margin-top: 0; display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-exclamation-triangle"></i> Zona de Perigo
         </h3>
