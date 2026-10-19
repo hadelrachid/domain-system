@@ -3,33 +3,54 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Dispara quando uma tag v* é enviada (ex: v2.1.0)
+      - 'v*' # Dispara quando uma tag v* é enviada (ex: v2.4.0)
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
+
     steps:
       - name: Checkout Código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Preparar Ambiente PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          
-      - name: Instalar Dependências (Composer)
-        run: composer install --no-dev --optimize-autoloader
+          extensions: pdo, pdo_sqlite, zip, mbstring, openssl, json, curl
 
-      - name: Limpar Arquivos de Desenvolvimento
+      - name: Instalar Dependências (Com Dev para Testes)
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Conferir Consistência de Versão (Tag = DS_VERSION = composer.json)
         run: |
-          rm -rf .git .github tests scratch .gitignore composer.lock convert_md.py
-          rm -f refactor_widgets.php fix_divs.php
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PHP_CHECK=$(php -r '
+            $tag = getenv("TAG_VERSION");
+            $boot = file_get_contents("bootstrap.php");
+            preg_match("/define\(\s*\x27DS_VERSION\x27\s*,\s*\x27([^\x27]+)\x27\s*\)/", $boot, $m);
+            $ds = $m[1] ?? "";
+            $comp = json_decode(file_get_contents("composer.json"), true)["version"] ?? "";
+            if ($tag !== $ds || $ds !== $comp) {
+                fwrite(STDERR, "Divergencia de versao: tag={$tag}, DS_VERSION={$ds}, composer.json={$comp}\n");
+                exit(1);
+            }
+            echo "Versao validada: {$ds}\n";
+          ')
+          echo "$PHP_CHECK"
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
 
-      - name: Criar Pacote ZIP do Sistema
-        run: zip -r domain-system-core.zip .
+      - name: Executar Suíte de Testes (PHPUnit)
+        run: composer test
+
+      - name: Otimizar Dependências para Produção (--no-dev)
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Construir Pacote Oficial do Auto-Updater (ZIP + Manifest + SHA-256)
+        run: php tools/build-release.php
 
       - name: Empacotar Plugins Separados
         run: |
@@ -38,10 +59,16 @@ jobs:
           zip -r ../../clock_widget.zip clock_widget/
           cd ../..
 
+      - name: Criar Pacote ZIP Legado do Sistema
+        run: |
+          cp dist/domain-system-*.zip domain-system-core.zip
+
       - name: Criar Release e Fazer Upload dos Arquivos
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            dist/domain-system-*.zip
+            dist/domain-system-*.zip.sha256
             domain-system-core.zip
             radio_online.zip
             clock_widget.zip
