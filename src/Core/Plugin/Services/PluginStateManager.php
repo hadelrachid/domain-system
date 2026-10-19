@@ -2,24 +2,25 @@
 
 namespace DomainSystem\Core\Plugin\Services;
 
+use DomainSystem\Core\Contracts\JsonStoreInterface;
+use DomainSystem\Core\Storage\AtomicJsonStore;
+
 /**
  * ────────────────────────────────────────────────────────────────────────────
  * CLASSE: PluginStateManager
  * ────────────────────────────────────────────────────────────────────────────
- * Responsabilidade Única (SRP): Gerenciar o estado (ligado/desligado) dos plugins.
- * 
- * Na analogia da colmeia, esta é a operária "Arquivista". Ela não sabe como 
- * iniciar um plugin ou como extrair um ZIP, ela apenas anota no livro de 
- * registros (plugins.json) quem tem permissão para trabalhar.
+ * Responsabilidade Única (SRP): Gerenciar o estado (ligado/desligado) dos plugins
+ * utilizando persistência atômica (AtomicJsonStore) contra race conditions.
  */
 class PluginStateManager
 {
     private string $configPath;
+    private JsonStoreInterface $jsonStore;
 
-    public function __construct(string $basePath)
+    public function __construct(string $basePath, JsonStoreInterface $jsonStore = new AtomicJsonStore())
     {
-        // Define o caminho físico do "livro de registros"
-        $this->configPath = $basePath . '/config/plugins.json';
+        $this->configPath = rtrim($basePath, '/\\') . '/config/plugins.json';
+        $this->jsonStore = $jsonStore;
     }
 
     /**
@@ -27,40 +28,36 @@ class PluginStateManager
      */
     public function getActiveStates(): array
     {
-        if (file_exists($this->configPath)) {
-            return json_decode(file_get_contents($this->configPath), true) ?? [];
-        }
-        return [];
+        return $this->jsonStore->read($this->configPath, []);
     }
 
     /**
-     * Salva o array de estados no arquivo JSON.
+     * Salva o array de estados no arquivo JSON de forma atômica.
      */
     public function saveStates(array $states): void
     {
-        if (!is_dir(dirname($this->configPath))) {
-            mkdir(dirname($this->configPath), 0777, true);
-        }
-        file_put_contents($this->configPath, json_encode($states, JSON_PRETTY_PRINT));
+        $this->jsonStore->write($this->configPath, $states);
     }
 
     /**
-     * Ativa um plugin.
+     * Ativa um plugin de forma atômica.
      */
     public function enable(string $pluginName): void
     {
-        $states = $this->getActiveStates();
-        $states[$pluginName] = true;
-        $this->saveStates($states);
+        $this->jsonStore->update($this->configPath, static function (array $states) use ($pluginName): array {
+            $states[$pluginName] = true;
+            return $states;
+        });
     }
 
     /**
-     * Desativa um plugin.
+     * Desativa um plugin de forma atômica.
      */
     public function disable(string $pluginName): void
     {
-        $states = $this->getActiveStates();
-        $states[$pluginName] = false;
-        $this->saveStates($states);
+        $this->jsonStore->update($this->configPath, static function (array $states) use ($pluginName): array {
+            $states[$pluginName] = false;
+            return $states;
+        });
     }
 }

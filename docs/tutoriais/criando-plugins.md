@@ -55,5 +55,16 @@ return new \DomainSystem\Plugins\meu_plugin\manual\MeuPluginManualModule();
 
 O `PluginManualScanner` do Kernel fará a varredura automática de todas as pastas `src/Plugins/*/manual/module.php` e injetará o módulo na interface do Cockpit sem precisar alterar uma única linha do Kernel! Consulte a implementação completa em `src/Plugins/academy/manual/AcademyManualModule.php`.
 
-## Como Usar IA para Gerar Plugins
-Se você quiser automatizar, basta fornecer a arquitetura SOLID e este contrato para a I.A., e ela gerará a estrutura perfeitamente.
+## Gerador Oficial de Boilerplate via CLI (`os-cli.php`)
+
+Em vez de criar pastas manualmente, use o gerador oficial na raiz do projeto:
+
+```bash
+php os-cli.php make:plugin meu_plugin
+```
+
+Ele gera automaticamente `plugin.json`, `Plugin.php` (`OsExtensionInterface`), `Contracts/`, `Controllers/`, `views/` e `manual/module.php` (`ManualModuleInterface`).
+
+## Como Usar IA para Gerar Plugins ("Vibe Coding nos Trilhos")
+O repositório inclui o guia mestre **[`AI_CONTRACT_GUIDE.md`](../../AI_CONTRACT_GUIDE.md)** na raiz, além dos arquivos automáticos `.github/copilot-instructions.md`, `.cursorrules` e `.clinerules`. Basta apontar qualquer IA para o `AI_CONTRACT_GUIDE.md` (ou clicar no botão **"📋 Copiar Prompt Mestre para IA"** dentro de `/admin/manual`), e ela gerará a estrutura 100% compatível com os contratos do Ring 3.
+

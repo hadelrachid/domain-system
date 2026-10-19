@@ -30,16 +30,22 @@ O núcleo do sistema sofreu uma reformulação profunda em todos os seus pilares
 - **Agora:** Todas as comunicações fluem de maneira imutável e higienizada através da classe `Request` e do contrato `SessionManagerInterface`, validado continuamente pelo teste automatizado `NoSuperglobalsInControllersTest`.
 
 ### 4. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface` - v2.3.0)
-- **Inovação Arquitetural:** O Cockpit (`/admin/manual`) utiliza o `PluginManualScanner` para rastrear automaticamente pastas `manual/module.php` dentro dos plugins instalados. Qualquer plugin que implemente `ManualModuleInterface` injeta seu guia interativo e seus itens de checklist de homologação (QA) sem que o Kernel conheça os detalhes do plugin.
+- **Inovação Arquitetural:** O Cockpit (`/admin/manual` e `/manual/index.php`) utiliza o `PluginManualScanner` para rastrear automaticamente pastas `manual/module.php` dentro dos plugins instalados (`academy`, `flextheme`, `pages`, `seo`). Qualquer plugin que implemente `ManualModuleInterface` injeta seu guia interativo e seus itens de checklist de homologação (QA) sem que o Kernel conheça os detalhes do plugin.
 
-### 5. Arquitetura SOLID Híbrida no Academy LMS (`v2.3.0`)
-- O plugin `academy` consagra o padrão de excelência do ecossistema: separação estrita entre Repositórios (`CourseRepositoryInterface`), Serviços (`CourseFolderImporterService`, `LessonBlockRendererService`, `LessonContentConverterService`) e Controllers, oferecendo suporte híbrido (HTML/Markdown puro + Editor em Blocos com Preview em Tempo Real e Simulador Multi-Dispositivos para Desktop, 3 Celulares e 2 Tablets).
+### 5. Arquitetura SOLID Híbrida no Academy LMS & Fábrica Automática de `.php` (`v2.3.0`)
+- O plugin `academy` consagra o padrão de excelência do ecossistema: separação estrita entre Contratos (`CourseRepositoryInterface`, `LessonFileScaffolderInterface`, `ThemePageResolverInterface`, `LessonBlockRendererInterface`, `HtmlSanitizerInterface`), Serviços e Controllers, oferecendo:
+  - **Fábrica Automática de Pastas e Aulas `.php` (`LessonFileScaffolderService`):** Gera pastas físicas de módulos e arquivos `.php` prontos no tema ativo (`themes/<tema>/pages/estrutura-de-dados.php` $\rightarrow$ `/cursos/estrutura-de-dados`).
+  - **Edição Híbrida (4 Modos, 8 Blocos & 3 Perfis Mobile):** Suporte a HTML/Markdown puro, Editor em Blocos (8 tipos), Aulas `.php` fabricadas com código ou blocos, e 3 perfis de layout mobile (`drawer`, `bottom_bar`, `cinema`) com Simulador Multi-Dispositivos (5 viewports).
+
+### 6. Resiliência Agnóstica a Banco e SO (`SchemaDoctorInterface` & `AtomicJsonStore`) + "Vibe Coding nos Trilhos" (`AI_CONTRACT_GUIDE.md`)
+- **Zero Conhecimento de Banco/SO no Ring 0:** O Kernel e o `MonitorController` operam exclusivamente via contratos (`SchemaDoctorInterface`, `JsonStoreInterface`), sem saber se o driver subjacente é SQLite ou MySQL ou se o SO é Windows, Linux ou macOS.
+- **Guia Oficial para Inteligência Artificial (`AI_CONTRACT_GUIDE.md`):** Conjunto de regras (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) e gerador CLI (`php os-cli.php make:plugin <slug>`) que colocam qualquer IA "nos trilhos" dos contratos SOLID.
 
 ---
 
 ## 🔒 Auditoria Cirúrgica e Hardening (Patch 2.1.0 a 2.3.0 - Out/2026)
 
-Após uma devassa completa no núcleo da aplicação em outubro de 2026, novas diretrizes rígidas foram implementadas para garantir proteção em tempo de execução e no armazenamento:
+Após uma devassa completa no núcleo da aplicação em outubro de 2026 (incluindo auditoria cruzada por ChatGPT, DeepSeek, Kilo Code e Gemini), novas diretrizes rígidas foram implementadas para garantir proteção em tempo de execução e no armazenamento:
 
 ### 1. Proteção de Colisão de Roteador (Ring 0)
 O roteador dinâmico do sistema passou a travar a imutabilidade das rotas primárias. Foi mitigada a falha em que plugins "Ring 3" (camada de usuário) poderiam sequestrar ou sobrescrever rotas críticas do "Ring 0" (como `/login` e painéis de admin). O roteador agora lança `RouteAlreadyRegisteredException` nesses casos de invasão de espaço.
@@ -54,8 +60,10 @@ O motor nativo `SessionManager` blinda a sessão via servidor injetando dinamica
 - `Use Strict Mode`: Bloqueia injeções de *Session Fixation*.
 - Transição automática para `Secure` Cookie quando tráfego SSL é detectado.
 
-### 4. Modo Desenvolvedor do Disjuntor (Emergency Hatch)
-Caso um plugin cause danos irreparáveis e seja isolado pelo *Circuit Breaker*, o Administrador pode reativá-lo temporariamente logando com senha no **Modo Desenvolvedor**, contornando o desligamento apenas na sua sessão de análise, mantendo os usuários isolados do crash durante a correção.
+### 4. Disjuntor Granular por Rota (Threshold), `AtomicJsonStore` & Modo Desenvolvedor
+- **Persistência Atômica (`AtomicJsonStore`):** Todos os arquivos JSON vitais (`config/plugins.json`, `temp/disarmed.json`, `temp/route_breakers.json`) são gravados com `flock(LOCK_EX)` + escrita temporária + `rename()` atômico, eliminando *Race Conditions*.
+- **Isolamento por Rota com Threshold:** Uma falha em uma rota isolada bloqueia apenas aquela rota inicialmente, só ejetando o plugin inteiro após atingir o threshold de falhas consecutivas.
+- **Modo Desenvolvedor do Disjuntor:** Caso um plugin seja isolado pelo *Circuit Breaker*, o Administrador pode reativá-lo temporariamente na sua sessão de análise, mantendo os visitantes isolados do crash durante a correção.
 
 ---
 
@@ -80,6 +88,7 @@ Criação do artefato de Troubleshooting (`ERROR_DICTIONARY.md`), empacotando ex
 
 ## 📈 Conclusão
 
-O **Domain System v2.3.0** eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por 180+ testes unitários e de arquitetura (PHPUnit + GitHub Actions), selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web Platform Enterprise-Ready**.
+O **Domain System v2.3.0** (ocupando apenas **~30MB** descompactado em servidores Linux) eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por **183 testes automatizados (751 asserções)** no PHPUnit, selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web Platform Enterprise-Ready & AI-Ready**.
+
 
 

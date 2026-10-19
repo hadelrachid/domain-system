@@ -100,18 +100,150 @@ switch ($command) {
     case 'make:plugin':
         if (!isset($args[1])) die("Erro: Qual o nome do plugin? (ex: make:plugin radio_online)\n");
         $pluginName = preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($args[1]));
+        $pascalName = str_replace(' ', '', ucwords(str_replace('_', ' ', $pluginName)));
         $dir = sanitizePath($basePath, $pluginName);
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-        
-        // Gera plugin.json
+
+        foreach (['', '/Contracts', '/Controllers', '/views', '/manual'] as $sub) {
+            if (!is_dir($dir . $sub)) {
+                mkdir($dir . $sub, 0777, true);
+            }
+        }
+
+        // 1. plugin.json
         file_put_contents($dir . '/plugin.json', json_encode([
-            "name" => $pluginName,
-            "version" => "1.0.0",
-            "author" => "CLI-Workstation",
-            "type" => "module"
-        ], JSON_PRETTY_PRINT));
-        
-        echo "✅ Plugin Scaffolded com sucesso no Workstation: {$pluginName}\n";
+            "name"        => $pluginName,
+            "version"     => "1.0.0",
+            "author"      => "CLI-Workstation",
+            "description" => "Plugin Ring 3 gerado via OS-CLI com contratos SOLID.",
+            "core"        => false,
+            "os_version"  => "2.3"
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        // 2. Contracts/<Pascal>ServiceInterface.php
+        file_put_contents($dir . "/Contracts/{$pascalName}ServiceInterface.php", <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace DomainSystem\\Plugins\\{$pluginName}\\Contracts;
+
+interface {$pascalName}ServiceInterface
+{
+    public function getTitle(): string;
+}
+PHP
+        );
+
+        // 3. Controllers/<Pascal>Controller.php
+        file_put_contents($dir . "/Controllers/{$pascalName}Controller.php", <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace DomainSystem\\Plugins\\{$pluginName}\\Controllers;
+
+use DomainSystem\\Core\\Contracts\\ResponseInterface;
+use DomainSystem\\Core\\Http\\Request;
+use DomainSystem\\Core\\Http\\Responses\\ViewResponse;
+
+class {$pascalName}Controller
+{
+    public function index(Request \$request): ResponseInterface
+    {
+        ob_start();
+        include dirname(__DIR__) . '/views/index.php';
+        return new ViewResponse((string)ob_get_clean());
+    }
+}
+PHP
+        );
+
+        // 4. views/index.php
+        file_put_contents($dir . '/views/index.php', <<<HTML
+<div class="wrap">
+    <h1>🧩 Módulo: {$pascalName}</h1>
+    <p>Plugin gerado em conformidade com os contratos Ring 3 do Domain-System OS.</p>
+</div>
+HTML
+        );
+
+        // 5. manual/module.php (Auto-descoberto pelo ManualModuleInterface)
+        file_put_contents($dir . '/manual/module.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\\Core\\Contracts\\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string { return '{$pluginName}'; }
+    public function getTitle(): string { return 'Plugin {$pascalName}'; }
+    public function getSubtitle(): string { return 'Módulo gerado via OS-CLI com contrato ManualModuleInterface.'; }
+    public function getBadge(): string { return 'Módulo Auto-Descoberto'; }
+    public function getAccentColor(): string { return '#06b6d4'; }
+    public function getAdminUrl(): ?string { return '/admin/{$pluginName}'; }
+    public function getChecklistItems(): array
+    {
+        return [
+            ['id' => '{$pluginName}-boot', 'label' => 'Validar rota administrativa /admin/{$pluginName} sem erros.'],
+        ];
+    }
+    public function renderContent(string \$baseUrl = ''): string
+    {
+        return '<p>Documentação automática do módulo <strong>{$pascalName}</strong>.</p>';
+    }
+};
+PHP
+        );
+
+        // 6. Plugin.php (OsExtensionInterface)
+        file_put_contents($dir . '/Plugin.php', <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace DomainSystem\\Plugins\\{$pluginName};
+
+use DomainSystem\\Core\\Contracts\\OsConnectorInterface;
+use DomainSystem\\Core\\Contracts\\OsExtensionInterface;
+use DomainSystem\\Core\\Contracts\\OsRuntimeInterface;
+use DomainSystem\\Core\\Plugin\\AbstractPlugin;
+use DomainSystem\\Core\\Routing\\Router;
+use DomainSystem\\Plugins\\{$pluginName}\\Controllers\\{$pascalName}Controller;
+
+class Plugin extends AbstractPlugin implements OsExtensionInterface
+{
+    public function register(): void {}
+
+    public function osRegister(OsConnectorInterface \$os): void
+    {
+        \$os->listenHook('admin.menu');
+        \$os->listenHook('router.register');
+    }
+
+    public function osBoot(OsRuntimeInterface \$runtime): void
+    {
+        \$runtime->onHook('admin.menu', function (array \$menus, string \$role = 'guest'): array {
+            if (\$role === 'admin') {
+                \$menus[] = [
+                    'title' => '{$pascalName}',
+                    'url'   => '/admin/{$pluginName}',
+                    'icon'  => '🧩',
+                ];
+            }
+            return \$menus;
+        });
+
+        \$runtime->onHook('router.register', function (Router \$router): void {
+            \$router->addRoute('GET', '/admin/{$pluginName}', [{$pascalName}Controller::class, 'index'], '{$pluginName}', ['admin']);
+        });
+    }
+}
+PHP
+        );
+
+        echo "✅ Plugin SOLID Scaffolded com sucesso no Workstation: {$pluginName}\n";
+        echo "Estrutura criada: plugin.json, Plugin.php, Contracts/, Controllers/, views/ e manual/module.php\n";
         echo "Após terminar o desenvolvimento, compacte e instale pelo painel!\n";
         break;
 

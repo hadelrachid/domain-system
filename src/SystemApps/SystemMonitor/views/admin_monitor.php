@@ -19,6 +19,7 @@
     <div class="sys-tabs">
         <button class="sys-tab" onclick="openSysTab(event, 'tab-erros')">🪲 Histórico de Crashes</button>
         <button class="sys-tab active" onclick="openSysTab(event, 'tab-processos')">🖥️ Pilha de Serviços & Memória ao Vivo</button>
+        <button class="sys-tab" onclick="openSysTab(event, 'tab-resiliencia')">🩺 Schema Doctor & Snapshots (v2.3)</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════ -->
@@ -276,6 +277,102 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA 3: SCHEMA DOCTOR & SNAPSHOTS (v2.3.0)      -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div id="tab-resiliencia" class="sys-content">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
+            <!-- Painel 1: Schema Doctor -->
+            <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; color: #f8fafc;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="margin: 0; color: #38bdf8; font-size: 16px;">🩺 Schema Doctor (Migrations de Plugins)</h3>
+                        <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">Auto-descoberta de <code>src/Plugins/*/migrations/*.php</code></p>
+                    </div>
+                    <form method="POST" action="<?= BASE_URL ?>/admin/monitor/schema-heal" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <button type="submit" class="button button-primary" style="background: #10b981; border-color: #10b981; color: #fff; font-weight: 600;">⚡ Auto-Heal Schema</button>
+                    </form>
+                </div>
+
+                <?php if (empty($schema_report)): ?>
+                    <p style="color: #94a3b8; font-size: 13px;">Nenhuma migration de plugin detectada.</p>
+                <?php else: ?>
+                    <table class="wp-list-table" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Plugin</th>
+                                <th>Migrations</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($schema_report as $item): ?>
+                                <tr>
+                                    <td><strong><?= htmlspecialchars($item['plugin'] ?? '') ?></strong></td>
+                                    <td style="font-family: monospace; font-size: 12px; color: #cbd5e1;">
+                                        <?= count($item['executed'] ?? []) ?>/<?= (int)($item['total'] ?? 0) ?> aplicadas
+                                    </td>
+                                    <td>
+                                        <?php if (($item['status'] ?? '') === 'ok'): ?>
+                                            <span style="color: #10b981; font-weight: 600;">✔ Íntegro</span>
+                                        <?php else: ?>
+                                            <span style="color: #f59e0b; font-weight: 600;">⏳ <?= count($item['pending'] ?? []) ?> Pendente(s)</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+
+            <!-- Painel 2: Snapshot & Rollback 1-Clique -->
+            <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; color: #f8fafc;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="margin: 0; color: #a855f7; font-size: 16px;">📸 Snapshot & Rollback 1-Clique</h3>
+                        <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">Pontos de restauração de estado do Kernel e Plugins</p>
+                    </div>
+                    <form method="POST" action="<?= BASE_URL ?>/admin/monitor/snapshot/create" style="margin: 0; display: flex; gap: 6px;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <input type="text" name="label" placeholder="Rótulo (ex: pre-deploy)" style="background: #1e293b; border: 1px solid #334155; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; width: 140px;">
+                        <button type="submit" class="button" style="background: #a855f7; border-color: #a855f7; color: #fff; font-weight: 600;">+ Criar Snapshot</button>
+                    </form>
+                </div>
+
+                <?php if (empty($snapshots)): ?>
+                    <p style="color: #94a3b8; font-size: 13px;">Nenhum snapshot salvo até o momento.</p>
+                <?php else: ?>
+                    <table class="wp-list-table" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Snapshot ID</th>
+                                <th>Criado em</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($snapshots as $snap): ?>
+                                <tr>
+                                    <td style="font-family: monospace; font-size: 12px; color: #38bdf8;"><?= htmlspecialchars($snap['id'] ?? '') ?></td>
+                                    <td style="font-size: 12px; color: #94a3b8;"><?= htmlspecialchars($snap['created_at'] ?? '') ?></td>
+                                    <td>
+                                        <form method="POST" action="<?= BASE_URL ?>/admin/monitor/snapshot/restore" style="margin: 0;">
+                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                            <input type="hidden" name="snapshot_id" value="<?= htmlspecialchars($snap['id'] ?? '') ?>">
+                                            <button type="submit" class="button" style="background: #334155; color: #f8fafc; border: 1px solid #475569; font-size: 11px; padding: 2px 8px;">⏪ Restaurar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -79,6 +79,11 @@ if (!isset($pluginManuals) || !is_array($pluginManuals)) {
             <div style="font-weight: 600; color: #fff; font-size: 15px;">Instalador & Hostinger</div>
             <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Pastas runtime, .htaccess e tolerância a erros.</div>
         </a>
+        <a href="<?= $baseUrl ?>/admin/manual#item-ai-contracts" style="background: var(--bg-panel); border: 1px solid rgba(0, 210, 132, 0.4); border-radius: 8px; padding: 15px; text-decoration: none; color: inherit; transition: all 0.2s; display: block;" onmouseover="this.style.borderColor='#00d284'" onmouseout="this.style.borderColor='rgba(0, 210, 132, 0.4)'">
+            <div style="color: #00d284; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🤖 Capítulo 6 • IA</div>
+            <div style="font-weight: 600; color: #fff; font-size: 15px;">Vibe Coding on Rails (IAs)</div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Prompt mestre de Contratos SOLID para ChatGPT, Claude, DeepSeek e Copilot.</div>
+        </a>
         <?php foreach ($pluginManuals as $mKey => $manualMod): 
             if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
         ?>
@@ -250,6 +255,43 @@ if (!isset($pluginManuals) || !is_array($pluginManuals)) {
         </div>
     </div>
 
+    <!-- CAPÍTULO 6: VIBE CODING ON RAILS (GUIA OFICIAL PARA IAs) -->
+    <?php
+        $aiGuidePath = (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 2)) . '/AI_CONTRACT_GUIDE.md';
+        $aiGuideContent = is_file($aiGuidePath) ? (string)file_get_contents($aiGuidePath) : '';
+    ?>
+    <div id="item-ai-contracts" class="postbox" style="margin-bottom: 30px; padding: 25px; border: 1px solid rgba(0, 210, 132, 0.4);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <span style="display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #00d284; margin-bottom: 4px;">
+                    🤖 DX para Inteligência Artificial • AI_CONTRACT_GUIDE.md
+                </span>
+                <h2 style="margin: 0; font-size: 19px; color: #fff;">6. Vibe Coding sobre Trilhos: Contratos para IAs (ChatGPT, Claude, DeepSeek, Copilot, Cursor)</h2>
+            </div>
+            <button type="button" class="button button-primary" onclick="copyAiMasterPrompt(this)" style="background: #00d284; border-color: #00d284; color: #090d16; font-weight: 700; font-size: 12px;">
+                📋 Copiar Prompt Mestre para IA
+            </button>
+        </div>
+        <p style="color: var(--text-main); font-size: 14px; line-height: 1.7;">
+            O <strong>Domain-System OS</strong> permite que qualquer desenvolvedor programe em alta velocidade com auxílio de IA (<em>Vibe Coding</em>) sem jamais gerar código espaguete. Os arquivos <code>AI_CONTRACT_GUIDE.md</code>, <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code> e <code>.clinerules</code> na raiz do projeto funcionam como os <strong>trilhos do trem</strong>: eles obrigam qualquer LLM a respeitar a separação <strong>Ring 0 / Ring 3</strong>, a injeção de dependência pura por interfaces (<code>Contracts/</code>), zero superglobais nos Controllers e auto-descoberta via <code>ManualModuleInterface</code>.
+        </p>
+        <div style="background: rgba(0, 210, 132, 0.08); border-left: 4px solid #00d284; padding: 12px 16px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 13px;">
+            <strong>Scaffolding Instantâneo via Terminal (OS-CLI):</strong> Execute <code>php os-cli.php make:plugin nome_do_plugin</code> para gerar automaticamente toda a árvore de pastas Ring 3 com <code>Plugin.php</code> (<code>OsExtensionInterface</code>), <code>Contracts/</code>, <code>Controllers/</code>, <code>views/</code> e <code>manual/module.php</code> (<code>ManualModuleInterface</code>).
+        </div>
+        <textarea id="ds-ai-master-prompt" style="display:none;"><?= htmlspecialchars($aiGuideContent) ?></textarea>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-top: 15px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Checklist de Validação — IA &amp; Contratos</div>
+            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
+                <input type="checkbox" data-test-id="ai-contract-guide-copy">
+                <span style="font-size: 13px;">Clicar em "📋 Copiar Prompt Mestre para IA" e validar a cópia das 10 Leis do Ring 3 (<code>AI_CONTRACT_GUIDE.md</code>).</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" data-test-id="ai-cli-scaffold">
+                <span style="font-size: 13px;">Validar geração de esqueleto de plugin via <code>php os-cli.php make:plugin</code> respeitando os contratos SOLID.</span>
+            </label>
+        </div>
+    </div>
+
     <!-- MÓDULOS DE INSTRUÇÃO DE PLUGINS (AUTO-DESCOBERTOS VIA CONTRATO ManualModuleInterface) -->
     <?php foreach ($pluginManuals as $mKey => $manualMod):
         if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
@@ -345,6 +387,16 @@ if (!isset($pluginManuals) || !is_array($pluginManuals)) {
             localStorage.removeItem(ADMIN_CHECKLIST_KEY);
             loadAdminChecklist();
         }
+    }
+
+    function copyAiMasterPrompt(btn) {
+        const el = document.getElementById('ds-ai-master-prompt');
+        if (!el) return;
+        navigator.clipboard.writeText(el.value).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = '✓ Prompt Mestre Copiado!';
+            setTimeout(() => { btn.textContent = orig; }, 2200);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {

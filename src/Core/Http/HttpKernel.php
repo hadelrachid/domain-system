@@ -6,15 +6,18 @@ use DomainSystem\Core\Contracts\ContainerInterface;
 use DomainSystem\Core\Contracts\RouterInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\SiteStateInterface;
+use DomainSystem\Core\Error\CircuitBreaker;
+use DomainSystem\Core\Exceptions\HttpResponseException;
 use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Monitoring\RequestMetricsRecorder;
 use DomainSystem\Core\Workspace\WorkspaceManager;
+use Throwable;
 
 /**
  * Orquestrador HTTP do Kernel (SRP & Testabilidade E2E).
  * Centraliza o despacho da requisição, política de manutenção, normalização de Response,
- * envelopamento de Workspace, CachePolicy e telemetria.
+ * envelopamento de Workspace, CachePolicy, telemetria e Circuit Breaker de Rotas (Pilar 2 v2.4).
  */
 class HttpKernel
 {
@@ -22,17 +25,20 @@ class HttpKernel
     private ContainerInterface $container;
     private ?WorkspaceManager $workspaceManager;
     private CachePolicy $cachePolicy;
+    private int $routeFailureThreshold;
 
     public function __construct(
         RouterInterface $router,
         ContainerInterface $container,
         ?WorkspaceManager $workspaceManager = null,
-        ?CachePolicy $cachePolicy = null
+        ?CachePolicy $cachePolicy = null,
+        int $routeFailureThreshold = 3
     ) {
         $this->router = $router;
         $this->container = $container;
         $this->workspaceManager = $workspaceManager;
         $this->cachePolicy = $cachePolicy ?? new CachePolicy();
+        $this->routeFailureThreshold = max(1, $routeFailureThreshold);
     }
 
     public function handle(
@@ -48,7 +54,7 @@ class HttpKernel
             if ($this->container->has(SiteStateInterface::class)) {
                 $siteState = $this->container->make(SiteStateInterface::class);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $siteState = null;
         }
 
@@ -57,7 +63,7 @@ class HttpKernel
                 $sessionForState = $this->container->make(SessionManagerInterface::class);
                 $userRole = (string)$sessionForState->get('user_role', '');
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $userRole = '';
         }
 
@@ -67,7 +73,22 @@ class HttpKernel
                 : "<h1 style='text-align:center; font-family:sans-serif; margin-top:50px;'>Manutenção do Sistema. Voltamos em breve.</h1>";
             $response = new Response($maintHtml, 503, ['Retry-After' => '3600']);
         } else {
-            $response = $this->router->dispatch($request);
+            try {
+                $response = $this->router->dispatch($request);
+            } catch (HttpResponseException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                try {
+                    if ($this->container->has(CircuitBreaker::class)) {
+                        /** @var CircuitBreaker $breaker */
+                        $breaker = $this->container->make(CircuitBreaker::class);
+                        $breaker->recordRouteException($e, $this->routeFailureThreshold);
+                    }
+                } catch (Throwable $inner) {
+                    // Ignora erro interno do registrador de falhas
+                }
+                throw $e;
+            }
         }
 
         if (!$response instanceof Response) {
@@ -87,7 +108,7 @@ class HttpKernel
             if ($workspaceManager === null) {
                 try {
                     $workspaceManager = $this->container->make(WorkspaceManager::class);
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $workspaceManager = null;
                 }
             }
@@ -107,7 +128,7 @@ class HttpKernel
                 $metricsRecorder = $this->container->make(RequestMetricsRecorder::class);
                 $metricsRecorder->record($uri, $request->method());
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Não interrompe a resposta caso a gravação de métricas falhe
         }
 

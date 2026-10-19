@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Repositories;
 
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use InvalidArgumentException;
 use PDO;
@@ -13,6 +14,7 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
 {
     private const VALID_STATUSES = ['draft', 'published'];
     private const VALID_SOURCE_TYPES = ['theme_file', 'content'];
+    private const VALID_MOBILE_PROFILES = ['drawer', 'bottom_bar', 'cinema'];
 
     private static array $accentMap = [
         'á'=>'a','à'=>'a','ã'=>'a','â'=>'a','ä'=>'a',
@@ -32,10 +34,15 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
     private PDO $pdo;
     private bool $tablesEnsured = false;
 
-    public function __construct(PDO $pdo)
+    public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = true)
     {
-        $this->pdo = $pdo;
-        $this->ensureTables();
+        $this->pdo = $connection instanceof DatabaseConnectionInterface
+            ? $connection->getPdo()
+            : $connection;
+
+        if ($autoEnsureSchema) {
+            $this->ensureTables();
+        }
     }
 
     public function getModules(int $courseId): array
@@ -49,13 +56,13 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    public function createModule(int $courseId, string $title, int $position = 0): int
+    public function createModule(int $courseId, string $title, int $position = 0, ?string $folderSlug = null): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO academy_modules (course_id, title, position) 
-            VALUES (?, ?, ?)
+            INSERT INTO academy_modules (course_id, title, position, folder_slug) 
+            VALUES (?, ?, ?, ?)
         ");
-        $stmt->execute([$courseId, $title, $position]);
+        $stmt->execute([$courseId, $title, $position, $folderSlug]);
         return (int)$this->pdo->lastInsertId();
     }
 
@@ -71,6 +78,10 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
         if (isset($data['position'])) {
             $fields[] = 'position = ?';
             $values[] = (int)$data['position'];
+        }
+        if (array_key_exists('folder_slug', $data)) {
+            $fields[] = 'folder_slug = ?';
+            $values[] = $data['folder_slug'];
         }
 
         if (empty($fields)) {
@@ -138,10 +149,26 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
         return $row ?: null;
     }
 
+    public function findPublishedLessonGloballyBySlug(string $slug): ?array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM academy_lessons 
+            WHERE slug = ? AND status = 'published' 
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt->execute([$slug]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function createLesson(array $data): int
     {
         $sourceType = (string)($data['source_type'] ?? 'theme_file');
         $status = (string)($data['status'] ?? 'published');
+        $mobileProfile = (string)($data['mobile_profile'] ?? 'drawer');
+        if (!in_array($mobileProfile, self::VALID_MOBILE_PROFILES, true)) {
+            $mobileProfile = 'drawer';
+        }
 
         $this->assertValidLessonEnums($sourceType, $status);
 
@@ -151,8 +178,8 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
 
         $stmt = $this->pdo->prepare("
             INSERT INTO academy_lessons (
-                course_id, module_id, title, slug, source_type, source, content, position, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                course_id, module_id, title, slug, source_type, source, content, mobile_profile, position, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
@@ -163,6 +190,7 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
             $sourceType,
             $data['source'] ?? null,
             $data['content'] ?? null,
+            $mobileProfile,
             $data['position'] ?? 0,
             $status,
         ]);
@@ -178,11 +206,16 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
             $this->assertValidLessonEnums($sourceType, $status);
         }
 
+        if (array_key_exists('mobile_profile', $data)) {
+            $mp = (string)$data['mobile_profile'];
+            $data['mobile_profile'] = in_array($mp, self::VALID_MOBILE_PROFILES, true) ? $mp : 'drawer';
+        }
+
         if (array_key_exists('slug', $data)) {
             $data['slug'] = $this->sanitizeSlug((string)$data['slug'], (int)($data['position'] ?? 1));
         }
 
-        $allowed = ['title', 'slug', 'module_id', 'source_type', 'source', 'content', 'position', 'status'];
+        $allowed = ['title', 'slug', 'module_id', 'source_type', 'source', 'content', 'mobile_profile', 'position', 'status'];
         $fields = [];
         $values = [];
 
@@ -248,16 +281,20 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
                 if ($modTitle === '') {
                     $modTitle = 'Módulo Geral';
                 }
+                $folderSlug = isset($modData['folder_slug']) && trim((string)$modData['folder_slug']) !== ''
+                    ? trim((string)$modData['folder_slug'])
+                    : null;
 
                 $candidateModId = isset($modData['id']) ? (int)$modData['id'] : 0;
                 if ($candidateModId > 0 && isset($existingModules[$candidateModId]) && !in_array($candidateModId, $keptModuleIds, true)) {
                     $this->updateModule($candidateModId, [
-                        'title'    => $modTitle,
-                        'position' => $modulePos++,
+                        'title'       => $modTitle,
+                        'position'    => $modulePos++,
+                        'folder_slug' => $folderSlug ?? ($existingModules[$candidateModId]['folder_slug'] ?? null),
                     ]);
                     $moduleId = $candidateModId;
                 } else {
-                    $moduleId = $this->createModule($courseId, $modTitle, $modulePos++);
+                    $moduleId = $this->createModule($courseId, $modTitle, $modulePos++, $folderSlug);
                 }
                 $keptModuleIds[] = $moduleId;
 
@@ -301,16 +338,19 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
                         $tmpStmt->execute(['__tmp_' . $conflictId . '_' . bin2hex(random_bytes(3)), $conflictId]);
                     }
 
+                    $mobileProfile = (string)($lesson['mobile_profile'] ?? ($matchedLessonId > 0 ? ($existingLessonsById[$matchedLessonId]['mobile_profile'] ?? 'drawer') : 'drawer'));
+
                     $lessonPayload = [
-                        'course_id'   => $courseId,
-                        'module_id'   => $moduleId,
-                        'title'       => $title,
-                        'slug'        => $slug,
-                        'source_type' => $sourceType,
-                        'source'      => $lesson['source'] ?? $lesson['theme_file'] ?? null,
-                        'content'     => $lesson['content'] ?? ($matchedLessonId > 0 ? ($existingLessonsById[$matchedLessonId]['content'] ?? null) : null),
-                        'position'    => $pos,
-                        'status'      => $status,
+                        'course_id'      => $courseId,
+                        'module_id'      => $moduleId,
+                        'title'          => $title,
+                        'slug'           => $slug,
+                        'source_type'    => $sourceType,
+                        'source'         => $lesson['source'] ?? $lesson['theme_file'] ?? $lesson['file_path'] ?? null,
+                        'content'        => $lesson['content'] ?? ($matchedLessonId > 0 ? ($existingLessonsById[$matchedLessonId]['content'] ?? null) : null),
+                        'mobile_profile' => $mobileProfile,
+                        'position'       => $pos,
+                        'status'         => $status,
                     ];
 
                     if ($matchedLessonId > 0) {
@@ -359,61 +399,12 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
             return;
         }
 
-        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-
-        if ($driver === 'sqlite') {
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS academy_modules (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    course_id INTEGER NOT NULL,
-                    title TEXT NOT NULL,
-                    position INTEGER NOT NULL DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-
-                CREATE TABLE IF NOT EXISTS academy_lessons (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    course_id INTEGER NOT NULL,
-                    module_id INTEGER NULL,
-                    title TEXT NOT NULL,
-                    slug TEXT NOT NULL,
-                    source_type TEXT NOT NULL DEFAULT 'theme_file',
-                    source TEXT NULL,
-                    content TEXT NULL,
-                    position INTEGER NOT NULL DEFAULT 0,
-                    status TEXT NOT NULL DEFAULT 'published',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_acad_less_slug ON academy_lessons (course_id, slug);
-            ");
-        } else {
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS academy_modules (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    course_id INT NOT NULL,
-                    title VARCHAR(255) NOT NULL,
-                    position INT NOT NULL DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_acad_mod_course (course_id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-                CREATE TABLE IF NOT EXISTS academy_lessons (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    course_id INT NOT NULL,
-                    module_id INT NULL,
-                    title VARCHAR(255) NOT NULL,
-                    slug VARCHAR(255) NOT NULL,
-                    source_type VARCHAR(50) NOT NULL DEFAULT 'theme_file',
-                    source VARCHAR(255) NULL,
-                    content LONGTEXT NULL,
-                    position INT NOT NULL DEFAULT 0,
-                    status VARCHAR(50) NOT NULL DEFAULT 'published',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_acad_less_course (course_id),
-                    UNIQUE INDEX idx_acad_less_slug (course_id, slug)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-            ");
+        $migrationFile = dirname(__DIR__) . '/migrations/2026_10_15_000002_create_academy_structure.php';
+        if (is_file($migrationFile)) {
+            $migration = require $migrationFile;
+            if (is_array($migration) && isset($migration['up']) && is_callable($migration['up'])) {
+                ($migration['up'])($this->pdo);
+            }
         }
 
         $this->tablesEnsured = true;

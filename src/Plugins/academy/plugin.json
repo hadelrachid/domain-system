@@ -2,7 +2,7 @@
     "name": "academy",
     "version": "2.3.0",
     "author": "Rachid",
-    "description": "LMS Híbrido (HTML/MD + Editor em Blocos com Preview Multi-Dispositivos) e Hub de Cursos para o Domain-System OS.",
+    "description": "LMS Híbrido (HTML/MD + Editor em Blocos + Fábrica Automática de Páginas PHP + 3 Perfis Mobile) para o Domain-System OS.",
     "core": false,
     "os_version": "2.3"
 }

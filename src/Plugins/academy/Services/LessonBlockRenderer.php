@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Services;
 
+use DomainSystem\Plugins\academy\Contracts\LessonBlockRendererInterface;
+
 /**
  * Renderizador de Conteúdo em Blocos para Aulas do Academy (SOLID - SRP).
  *
@@ -11,7 +13,7 @@ namespace DomainSystem\Plugins\academy\Services;
  * em HTML semântico, responsivo, seguro (anti-XSS) e perfeitamente integrado
  * ao design Dark/Cyberpunk do sistema.
  */
-class LessonBlockRenderer
+class LessonBlockRenderer implements LessonBlockRendererInterface
 {
     private const ALLOWED_INLINE_TAGS = '<strong><b><em><i><code><a><mark><kbd><br><small><u><del>';
 

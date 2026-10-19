@@ -1,0 +1,10 @@
+# Cline / Kilo Code AI Rules — Domain-System OS (v2.3)
+# Read AI_CONTRACT_GUIDE.md for full templates and architectural contracts.
+
+1. Every PHP file MUST start with `declare(strict_types=1);`.
+2. Respect Ring 0 (`src/Core`, `src/SystemApps`) vs Ring 3 (`src/Plugins/<slug>`) isolation. The OS (Ring 0) is 100% database-agnostic and communicates only via Contracts (`src/Core/Contracts/*Interface.php`).
+3. Match PSR-4 namespace casing to exact directory names (e.g. `src/Plugins/academy/Controllers` -> `DomainSystem\Plugins\academy\Controllers`).
+4. NEVER use `$_GET`, `$_POST`, `$_SESSION`, or `$_FILES` in Controllers or Services. Use `DomainSystem\Core\Http\Request` and `SessionManagerInterface`.
+5. NEVER put inline HTML in Controllers. Render templates from `views/*.php` and return `ViewResponse`.
+6. Every plugin in `src/Plugins/<slug>` must implement `OsExtensionInterface` in `Plugin.php` and provide `manual/module.php` implementing `ManualModuleInterface`.
+7. Run `php -dextension=zip phpunit.phar` to verify `ArchitectureGuardrailTest` and `Psr4CaseSensitivityTest`.

@@ -209,9 +209,36 @@ return $this->theme->render('admin/dashboard_modular', ['dados' => $dados]);
 O arquivo procurado será `themes/admin/dashboard_modular.php`.
 
 ### Dicas para Temas:
-- **Segurança XSS:** Sempre use `htmlspecialchars($var)` antes de imprimir qualquer variável na tela.
-- **Isolamento:** Temas não devem fazer `SELECT` direto no banco de dados. Deixe os Repositórios do SO fazerem o trabalho pesado.
+- **Segurança XSS:** Sempre use `htmlspecialchars($var, ENT_QUOTES, 'UTF-8')` antes de imprimir qualquer variável na tela.
+- **Isolamento:** Temas não devem fazer `SELECT` direto no banco de dados. Deixe os Repositórios do plugin fazerem o trabalho pesado via Contratos.
+
+---
+
+## 🏭 Fábrica Automática de Pastas e Aulas PHP (`LessonFileScaffolderInterface`)
+
+No plugin **Academy**, a criação e vinculação de páginas físicas `.php` dentro do tema ativo é governada por dois contratos principais:
+1. **`ThemePageResolverInterface`**: Resolve de forma segura (`realpath`) o diretório do tema público ativo e lista páginas disponíveis em `pages/`.
+2. **`LessonFileScaffolderInterface`**: Fabrica pastas (`createFolder`) e arquivos `.php` pré-configurados (`fabricateLessonFile`) com CSS/JS responsivos (Desktop, Tablet e Mobile) e estado de blocos embutido (`DS_BLOCKS_B64`).
+   - Exemplo: Ao salvar uma aula intitulada **"Estrutura de Dados"**, o arquivo `pages/estrutura-de-dados.php` é gerado automaticamente e responde na rota `/cursos/estrutura-de-dados`.
+
+---
+
+## 🤖 "Vibe Coding sobre Trilhos": Programando com IAs no Domain-System
+
+O Domain-System OS (ocupando apenas **~30 MB** descompactado em servidores Linux) foi desenhado para que você possa usar assistentes de Inteligência Artificial (ChatGPT, Claude, DeepSeek, Gemini, GitHub Copilot, Cursor, Cline, Kilo Code) em velocidade máxima **sem gerar código espaguete**:
+
+1. **Documento Mestre Universal ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md))**:
+   - Na raiz do repositório encontra-se o guia canônico para LLMs contendo as **10 Leis Inegociáveis do Ring 3**, árvores de diretórios e templates prontos.
+   - Os arquivos `.github/copilot-instructions.md`, `.cursorrules` e `.clinerules` carregam essas regras automaticamente no seu editor.
+2. **Gerador de Boilerplate SOLID via Terminal (`os-cli.php`)**:
+   ```bash
+   php os-cli.php make:plugin nome_do_plugin
+   ```
+   Esse comando já cria automaticamente `plugin.json`, `Plugin.php` (`OsExtensionInterface`), `Contracts/`, `Controllers/`, `views/` e `manual/module.php` (`ManualModuleInterface`).
+3. **Agnosticismo Total do SO (Ring 0)**:
+   - O Sistema Operacional (Ring 0) nunca conhece detalhes de SGBDs (MySQL, SQLite, PostgreSQL) ou de sistemas operacionais (Windows, Linux, macOS). Toda comunicação entre o Kernel e os módulos ocorre exclusivamente via **Injeção de Dependências e Contratos** (`SchemaDoctorInterface`, `JsonStoreInterface`, `DatabaseConnectionInterface`), validada por **183 testes automatizados (751 asserções)**.
 
 ---
 
 O seu código é isolado em Sandboxes. Use Exceções à vontade. O **No-Break Shield** garantirá que um erro de lógica no seu Plugin não derrube o sistema inteiro, apenas exiba um aviso elegante ao administrador!
+

@@ -3,16 +3,29 @@
  * ════════════════════════════════════════════════════════════════════════════
  * DOMAIN-SYSTEM — MANUAL DE INSTRUÇÕES & TESTABILIDADE
  * ════════════════════════════════════════════════════════════════════════════
- * Guia Oficial de Testabilidade, Resolução e Roteiros Operacionais.
- * Versão: 2.2.0 | Compatível com Acesso Direto e Painel Admin.
+ * Guia Oficial de Testabilidade, Resolução, Módulos Auto-Descobertos e Contratos para IAs.
+ * Versão: 2.3.0 | Compatível com Acesso Direto e Painel Admin.
  */
+
+$rootDir = dirname(__DIR__);
+if (is_file($rootDir . '/vendor/autoload.php')) {
+    require_once $rootDir . '/vendor/autoload.php';
+}
 
 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : (
     (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' .
     ($_SERVER['HTTP_HOST'] ?? 'localhost') .
     preg_replace('#/manual.*$#', '', $_SERVER['SCRIPT_NAME'] ?? '')
 );
-$version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
+$version = defined('DS_VERSION') ? DS_VERSION : '2.3.0';
+
+$pluginManuals = [];
+if (class_exists(\DomainSystem\Core\Manual\PluginManualScanner::class)) {
+    $scanner = new \DomainSystem\Core\Manual\PluginManualScanner($rootDir);
+    $pluginManuals = $scanner->discover();
+}
+$aiGuidePath = $rootDir . '/AI_CONTRACT_GUIDE.md';
+$aiGuideContent = is_file($aiGuidePath) ? (string)file_get_contents($aiGuidePath) : '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -655,8 +668,22 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
             </a>
             <a href="#cap-testes" class="nav-item">
                 <span>🧪 7. Testes Automatizados</span>
-                <span class="nav-badge">100% OK</span>
+                <span class="nav-badge">183 OK</span>
             </a>
+            <a href="#cap-ai-contracts" class="nav-item">
+                <span>🤖 8. Contratos para IAs</span>
+                <span class="nav-badge">Vibe Coding</span>
+            </a>
+            <?php if (!empty($pluginManuals)): ?>
+                <div class="nav-group-title" style="margin-top: 14px;">🔌 Módulos Auto-Descobertos</div>
+                <?php foreach ($pluginManuals as $manualMod):
+                    if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
+                ?>
+                <a href="#cap-mod-<?= htmlspecialchars($manualMod->getId()) ?>" class="nav-item">
+                    <span>🔌 <?= htmlspecialchars($manualMod->getTitle()) ?></span>
+                </a>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </nav>
     </aside>
 
@@ -1080,22 +1107,91 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
 
                 <div class="info-box proof">
                     <strong>Prova de Resolutividade:</strong>
-                    Todos os 119 testes executam e passam com sucesso (387 asserções, 0 falhas). O workflow no GitHub Actions (Linux) roda com 100% de sucesso.
+                    Todos os 183 testes executam e passam com sucesso (751 asserções, 0 falhas), incluindo Guardrails Arquiteturais e Case-Sensitivity PSR-4.
                 </div>
 
                 <div class="checklist-group">
                     <div class="checklist-title">Checklist de Teste — PHPUnit</div>
                     <label class="check-item">
                         <input type="checkbox" data-test-id="phpunit-local-run">
-                        <span class="check-text">Executar <code>php phpunit.phar</code> no terminal e obter o sumário "OK (119 tests, 387 assertions)".</span>
+                        <span class="check-text">Executar <code>php -dextension=zip phpunit.phar</code> no terminal e obter o sumário "OK (183 tests, 751 assertions)".</span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" data-test-id="phpunit-arch-run">
-                        <span class="check-text">Executar <code>php phpunit.phar tests/Architecture</code> e obter "OK (13 tests, 16 assertions)".</span>
+                        <span class="check-text">Executar os testes de Guardrail Arquitetural e Case-Sensitivity PSR-4 sem falhas.</span>
                     </label>
                 </div>
             </div>
         </section>
+
+        <!-- SEÇÃO 8: CONTRATOS PARA IAs (VIBE CODING ON RAILS) -->
+        <section id="cap-ai-contracts" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-num">8</span>
+                    <h2 class="section-title">Vibe Coding sobre Trilhos: Guia de Contratos para IAs (<code>AI_CONTRACT_GUIDE.md</code>)</h2>
+                </div>
+                <span class="section-tag">AI DX</span>
+            </div>
+            <div class="test-card">
+                <div class="card-subhead">AI_CONTRACT_GUIDE.md • .github/copilot-instructions.md • .cursorrules • .clinerules</div>
+                <h3 class="card-title">Programação Assistida por IA com Blindagem SOLID no Ring 3</h3>
+                <p class="card-desc">
+                    O Domain-System OS fornece um conjunto oficial de instruções para que qualquer Inteligência Artificial (ChatGPT, Claude, DeepSeek, Gemini, GitHub Copilot, Cursor, Cline, Kilo Code) gere plugins, aulas e páginas de tema obedecendo rigorosamente aos contratos do sistema (<code>OsExtensionInterface</code>, <code>ManualModuleInterface</code>, <code>LessonFileScaffolderInterface</code>, <code>SchemaDoctorInterface</code>), sem jamais criar código espaguete.
+                </p>
+
+                <div class="code-box">
+                    # Gerar esqueleto completo de plugin SOLID (Ring 3) via OS-CLI:
+                    php os-cli.php make:plugin meu_novo_modulo
+                    <button class="btn-copy" onclick="copyCode(this)">Copiar</button>
+                </div>
+
+                <div class="checklist-group">
+                    <div class="checklist-title">Checklist de Validação — IA &amp; Contratos</div>
+                    <label class="check-item">
+                        <input type="checkbox" data-test-id="ai-contract-guide-copy">
+                        <span class="check-text">Fornecer o arquivo <code>AI_CONTRACT_GUIDE.md</code> para uma IA e validar a geração de código 100% aderente aos contratos Ring 3.</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-test-id="ai-cli-scaffold">
+                        <span class="check-text">Executar <code>php os-cli.php make:plugin</code> e verificar a criação de <code>Plugin.php</code>, <code>Contracts/</code>, <code>Controllers/</code>, <code>views/</code> e <code>manual/module.php</code>.</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÕES DINÂMICAS DOS MÓDULOS DE PLUGINS AUTO-DESCOBERTOS VIA ManualModuleInterface -->
+        <?php foreach ($pluginManuals as $manualMod):
+            if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
+            $modId = $manualMod->getId();
+            $checkItems = $manualMod->getChecklistItems();
+        ?>
+        <section id="cap-mod-<?= htmlspecialchars($modId) ?>" class="manual-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-num">🔌</span>
+                    <h2 class="section-title"><?= htmlspecialchars($manualMod->getTitle()) ?></h2>
+                </div>
+                <span class="section-tag"><?= htmlspecialchars($manualMod->getBadge()) ?></span>
+            </div>
+            <div class="test-card">
+                <div class="card-subhead"><?= htmlspecialchars($manualMod->getSubtitle()) ?></div>
+                <?= $manualMod->renderContent($baseUrl) ?>
+
+                <?php if (!empty($checkItems)): ?>
+                <div class="checklist-group" style="margin-top: 20px;">
+                    <div class="checklist-title">Checklist de Validação — <?= htmlspecialchars($manualMod->getTitle()) ?></div>
+                    <?php foreach ($checkItems as $item): ?>
+                    <label class="check-item">
+                        <input type="checkbox" data-test-id="<?= htmlspecialchars((string)$item['id']) ?>">
+                        <span class="check-text"><?= htmlspecialchars((string)$item['label']) ?></span>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </section>
+        <?php endforeach; ?>
     </main>
 
     <script>

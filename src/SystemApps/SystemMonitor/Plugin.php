@@ -30,6 +30,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/monitor', [MonitorController::class, 'index'], 'SystemMonitor', ['admin']);
             $router->addRoute('POST', '/admin/monitor/clear', [MonitorController::class, 'clear'], 'SystemMonitor', ['admin']);
             $router->addRoute('POST', '/admin/monitor/restart-kernel', [MonitorController::class, 'restartKernel'], 'SystemMonitor', ['admin']);
+            $router->addRoute('POST', '/admin/monitor/schema-heal', [MonitorController::class, 'healSchema'], 'SystemMonitor', ['admin']);
+            $router->addRoute('POST', '/admin/monitor/snapshot/create', [MonitorController::class, 'createSnapshot'], 'SystemMonitor', ['admin']);
+            $router->addRoute('POST', '/admin/monitor/snapshot/restore', [MonitorController::class, 'restoreSnapshot'], 'SystemMonitor', ['admin']);
             $router->addRoute('POST', '/api/os/notifications/clear', [MonitorController::class, 'clearApi'], 'SystemMonitor', ['admin']);
             $router->addRoute('GET', '/api/os/monitor/stack', [MonitorController::class, 'getStackApi'], 'SystemMonitor', ['admin']);
         });

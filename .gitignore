@@ -24,8 +24,10 @@ all_core_code.txt
 
 database.sqlite
 config/installed.lock
+config/*.lock
 config/active_theme.json
 /storage/
+src/Plugins/academy/academy.txt
 
 # Temas Privados
 src/Plugins/flextheme/themes/rachidd

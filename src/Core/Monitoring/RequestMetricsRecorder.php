@@ -4,22 +4,28 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Monitoring;
 
+use DomainSystem\Core\Contracts\JsonStoreInterface;
+use DomainSystem\Core\Storage\AtomicJsonStore;
+
 /**
- * Registra métricas reais de pico de memória e tempo de execução por requisição HTTP (H-05).
- *
- * Em ambientes PHP-FPM / Apache (shared-nothing), o worker de polling do monitor só enxerga
- * sua própria memória (~2 MB) se não houver um agregador compartilhado das requisições recentes.
+ * Registra métricas reais de pico de memória e tempo de execução por requisição HTTP (H-05)
+ * utilizando gravação atômica via AtomicJsonStore (Pilar 1 v2.4).
  */
 class RequestMetricsRecorder
 {
     private string $metricsFile;
     private int $maxEntries;
+    private JsonStoreInterface $jsonStore;
 
-    public function __construct(?string $basePath = null, int $maxEntries = 30)
-    {
+    public function __construct(
+        ?string $basePath = null,
+        int $maxEntries = 30,
+        JsonStoreInterface $jsonStore = new AtomicJsonStore()
+    ) {
         $base = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 3));
         $this->metricsFile = rtrim($base, '/\\') . '/temp/request_metrics.json';
         $this->maxEntries = max(5, $maxEntries);
+        $this->jsonStore = $jsonStore;
     }
 
     /**
@@ -27,18 +33,11 @@ class RequestMetricsRecorder
      */
     public function record(string $uri, string $method = 'GET', ?float $peakMb = null, ?float $allocatedMb = null, ?float $durationMs = null): void
     {
-        // Ignora o próprio endpoint de polling do monitor para não poluir os picos reais
         if (str_contains($uri, '/api/os/monitor/stack')) {
             return;
         }
 
-        $dir = dirname($this->metricsFile);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-
-        $entries = $this->getRecentEntries();
-        $entries[] = [
+        $sample = [
             'uri'          => $uri,
             'method'       => strtoupper($method),
             'peak_mb'      => $peakMb ?? round(memory_get_peak_usage(true) / (1024 * 1024), 2),
@@ -48,22 +47,14 @@ class RequestMetricsRecorder
             'time_str'     => date('H:i:s'),
         ];
 
-        if (count($entries) > $this->maxEntries) {
-            $entries = array_slice($entries, -$this->maxEntries);
-        }
-
-        $json = json_encode($entries, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if ($json === false) {
-            return;
-        }
-
-        $tmpFile = $this->metricsFile . '.tmp.' . bin2hex(random_bytes(4));
-        if (@file_put_contents($tmpFile, $json, LOCK_EX) !== false) {
-            if (!@rename($tmpFile, $this->metricsFile)) {
-                @file_put_contents($this->metricsFile, $json, LOCK_EX);
-                @unlink($tmpFile);
+        $maxEntries = $this->maxEntries;
+        $this->jsonStore->update($this->metricsFile, static function (array $entries) use ($sample, $maxEntries): array {
+            $entries[] = $sample;
+            if (count($entries) > $maxEntries) {
+                $entries = array_slice($entries, -$maxEntries);
             }
-        }
+            return $entries;
+        });
     }
 
     /**
@@ -71,17 +62,7 @@ class RequestMetricsRecorder
      */
     public function getRecentEntries(): array
     {
-        if (!file_exists($this->metricsFile)) {
-            return [];
-        }
-
-        $content = @file_get_contents($this->metricsFile);
-        if (!$content) {
-            return [];
-        }
-
-        $decoded = json_decode($content, true);
-        return is_array($decoded) ? $decoded : [];
+        return $this->jsonStore->read($this->metricsFile, []);
     }
 
     /**

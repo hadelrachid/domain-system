@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\academy\Services;
 
 use DomainSystem\Core\Contracts\PublicStorageInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseCatalogRendererInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 
-class CourseCatalogRenderer
+class CourseCatalogRenderer implements CourseCatalogRendererInterface
 {
     private CourseRepositoryInterface $repository;
     private ?PublicStorageInterface $storage;

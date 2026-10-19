@@ -56,6 +56,37 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Plugin\Services\ProcessRegistry($basePath);
         });
 
+        // 1.55 Atomic JSON Store & Resilience Services (v2.4)
+        $container->singleton(\DomainSystem\Core\Contracts\JsonStoreInterface::class, function() {
+            return new \DomainSystem\Core\Storage\AtomicJsonStore();
+        });
+
+        $container->singleton(\DomainSystem\Core\Error\CircuitBreaker::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Error\CircuitBreaker(
+                $basePath . '/config/plugins.json',
+                $basePath . '/config/disarmed.json',
+                $c->make(\DomainSystem\Core\Contracts\JsonStoreInterface::class)
+            );
+        });
+
+        $container->singleton(\DomainSystem\Core\Database\PluginMigrationScanner::class, function($c) use ($basePath) {
+            $db = $c->has(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class)
+                ? $c->make(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class)
+                : null;
+            return new \DomainSystem\Core\Database\PluginMigrationScanner($basePath, $db);
+        });
+
+        $container->singleton(\DomainSystem\Core\Contracts\SchemaDoctorInterface::class, function($c) {
+            return $c->make(\DomainSystem\Core\Database\PluginMigrationScanner::class);
+        });
+
+        $container->singleton(\DomainSystem\Core\Storage\StateSnapshotManager::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Storage\StateSnapshotManager(
+                $basePath,
+                $c->make(\DomainSystem\Core\Contracts\JsonStoreInterface::class)
+            );
+        });
+
         // 1.6 Public Storage (Agnostic - XAMPP / Hostinger / Cloud)
         $container->singleton(\DomainSystem\Core\Contracts\PublicStorageInterface::class, function() use ($basePath) {
             $baseUrlProvider = function() {
@@ -65,8 +96,11 @@ class CoreServiceProvider
         });
 
         // Plugin Services
-        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginStateManager::class, function() use ($basePath) {
-            return new \DomainSystem\Core\Plugin\Services\PluginStateManager($basePath);
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginStateManager::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Plugin\Services\PluginStateManager(
+                $basePath,
+                $c->make(\DomainSystem\Core\Contracts\JsonStoreInterface::class)
+            );
         });
         
         $container->singleton(\DomainSystem\Core\Plugin\Services\PluginDiscoverer::class, function($c) {

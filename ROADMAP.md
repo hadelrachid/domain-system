@@ -5,41 +5,43 @@
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🗺️ Roteiro de Desenvolvimento — Domain System v2.0
+# 🗺️ Roteiro de Desenvolvimento — Domain System (v2.3)
 
-Este documento descreve a visão de futuro para o **Domain System**. As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na expansão do ecossistema para bater de frente com as ferramentas consolidadas no mercado (WordPress, Laravel).
-
----
-
-## 🟢 Fase 1: Consolidação e Resiliência (Concluída em v1.3.0)
-
-*   [x] **No-Break Shield (Circuit Breaker V2)** — Proteção contra falhas fatais em plugins e painel de telemetria visual.
-*   [x] **Emergency Hatch** — Rota de emergência para recuperação do sistema.
-*   [x] **Dependency Injection Container** — Migração total para injeção de dependências e eliminação de Service Locators.
-*   [x] **RBAC e Auth Nativo** — Limpeza de acoplamentos legados. Criação de Roles universais (Admin, Manager, Subscriber, User).
-*   [x] **Instalador Visual (Zero-Friction)** — Setup wizard com auto-destruição para proteção de rotas, configurando banco e primeiro usuário em segundos.
+Este documento descreve a evolução e visão de futuro para o **Domain System** (~30 MB descompactado em servidores Linux). As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na consolidação de uma **alternativa leve, modular e resiliente** orientada a Contratos (SOLID).
 
 ---
 
-## 🟡 Fase 2: Experiência do Desenvolvedor e do Usuário (Em Andamento)
+## 🟢 Fase 1: Consolidação e Resiliência (Concluída)
 
-### 2.1. Construtor Visual (Builder-Flex)
-- [ ] **Integração com JSON Schema:** Abandonar salvamento de HTML cru no banco; salvar a estrutura do layout das páginas em formato JSON estruturado.
-- [ ] **Editor Drag-and-Drop VCL:** Construtor de blocos visuais reais em JavaScript, com manipulação de propriedades (Object Inspector) no painel administrativo.
-- [ ] **Renderização Dinâmica no Core:** O `PageFrontController` será responsável por ler o JSON e injetar os componentes PHP em tempo de execução.
+*   [x] **No-Break Shield (Circuit Breaker V2 + Limiar por Rota)** — Proteção contra falhas fatais no boot e por rota com painel de telemetria visual.
+*   [x] **Persistência Atômica (`AtomicJsonStore`) & Snapshot/Rollback 1-Clique** — Escrita atômica com `LOCK_EX` e pontos de restauração instantâneos do estado do Kernel.
+*   [x] **Schema Doctor Agnóstico (`SchemaDoctorInterface`)** — Auto-descoberta e auto-reparo de migrações de plugins 100% desacoplado do SO via contrato.
+*   [x] **Dependency Injection Container Puro** — Migração total para injeção de dependências declarativa e eliminação de Service Locators e superglobais em Controllers.
+*   [x] **RBAC / Capabilities e Auth Nativo** — Segurança baseada em Capabilities, Anti-CSRF e 2FA.
+*   [x] **Instalador Visual (Zero-Friction)** — Setup wizard com auto-destruição para proteção de rotas.
 
-### 2.2. Ferramentas para Criação Autônoma (AI Hub)
-- [ ] **Editor de Plugins Code-in-Browser:** Uma mini IDE integrada no painel do OS, permitindo criar a estrutura (`plugin.json`, `Plugin.php`) sem precisar abrir ferramentas externas.
-- [ ] **Integração com IA (LLMs):** Um assistente integrado ao painel capaz de gerar rotas e cruds dinamicamente injetando código no Builder-Flex e no Editor de Plugins.
-- [ ] **Prompt Terminal (CLI Visual):** Linha de comando no Dashboard capaz de entender códigos de erro do `ERROR_DICTIONARY.md` e corrigir automaticamente falhas (Automação Autônoma).
+---
+
+## 🟡 Fase 2: Experiência do Desenvolvedor (IA) e do Usuário (Avançada na v2.3)
+
+### 2.1. Construtor Visual em Blocos & Fábrica Automática de Páginas PHP (Academy LMS)
+- [x] **Editor Visual em 8 Blocos + JSON Estruturado:** Editor completo (`header`, `paragraph`, `video`, `code`, `callout`, `list`, `image`, `delimiter`) com sanitização server-side Anti-XSS.
+- [x] **Fábrica Automática de Pastas e Aulas PHP (`LessonFileScaffolderInterface`):** Botão de criar pasta/módulo e geração automática de arquivos `.php` pré-configurados (Desktop/Mobile) a partir do título da aula (ex: *"Estrutura de Dados"* $\rightarrow$ `pages/estrutura-de-dados.php` $\rightarrow$ `/cursos/estrutura-de-dados`).
+- [x] **Simulador Multi-Dispositivos & 3 Perfis Mobile:** Preview em tempo real em 5 resoluções mobile/tablet e 3 perfis de layout (`drawer`, `bottom_bar`, `cinema` 16:9 sticky).
+- [ ] **Editor Drag-and-Drop VCL Global para todas as páginas do CMS:** Expansão do motor de blocos para o Builder-Flex geral.
+
+### 2.2. Ferramentas para Criação Assistida por IA ("Vibe Coding sobre Trilhos")
+- [x] **Guia Mestre de Contratos para IAs (`AI_CONTRACT_GUIDE.md`):** Regras oficiais para ChatGPT, Claude, DeepSeek, Gemini, GitHub Copilot (`.github/copilot-instructions.md`), Cursor (`.cursorrules`) e Cline/Kilo (`.clinerules`) gerarem código Ring 3 sem espaguete.
+- [x] **Scaffolding Completo via OS-CLI (`make:plugin`):** Geração automática de `Plugin.php`, `Contracts/`, `Controllers/`, `views/` e `manual/module.php`.
+- [x] **Auto-Descoberta de Manuais (`ManualModuleInterface`):** Módulos `manual/module.php` carregados dinamicamente em `/admin/manual` e `/manual`.
+- [ ] **Editor de Plugins Code-in-Browser:** Mini IDE integrada no painel do OS.
 
 ### 2.3. Dashboard Inteligente e Modular
-- [ ] **Widgets Customizáveis:** Permitir que o usuário final adicione, remova e arraste widgets criados por plugins na tela inicial.
-- [ ] **Telemetria Centralizada:** Gráficos mostrando uso de RAM, requisições por segundo e relatórios de uptime baseados no log do No-Break Shield.
+- [x] **Telemetria Centralizada em Tempo Real:** Gráficos ao vivo de consumo/liberação de memória Zend, picos de requisições e PIDs do Kernel Singleton em `/admin/monitor`.
+- [ ] **Widgets Drag-and-Drop Persistentes por Usuário:** Personalização livre da ordem dos cards na tela inicial.
 
 ### 2.4. View & Response Engine (Contratos de Renderização)
-- [ ] **Interfaces de Resposta:** Padronização das saídas HTTP (ViewResponse, JsonResponse, RedirectResponse) para que *Controllers* não retornem strings cruas.
-- [ ] **Renderização Previsível (Fim do Inception):** O Kernel definirá o envelopamento (Layout/Sidebar) estritamente baseado no Contrato retornado (ex: `LayoutResponseInterface`), economizando código e automatizando menus e layouts corretamente.
+- [x] **Interfaces de Resposta (`ResponseInterface`, `ViewResponse`, `JsonResponse`):** Padronização das saídas HTTP nos Controllers com encapsulamento automático pelo `WorkspaceManager`.
 
 ---
 

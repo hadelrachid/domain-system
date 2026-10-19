@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Repositories;
 
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use PDO;
 
@@ -11,10 +12,15 @@ class PdoCourseRepository implements CourseRepositoryInterface
 {
     private PDO $pdo;
 
-    public function __construct(PDO $pdo)
+    public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = true)
     {
-        $this->pdo = $pdo;
-        $this->ensureTableExists();
+        $this->pdo = $connection instanceof DatabaseConnectionInterface
+            ? $connection->getPdo()
+            : $connection;
+
+        if ($autoEnsureSchema) {
+            $this->ensureTableExists();
+        }
     }
 
     public function findAll(): array
@@ -100,35 +106,14 @@ class PdoCourseRepository implements CourseRepositoryInterface
         return $stmt->execute([$id]);
     }
 
-    private function ensureTableExists(): void
+    public function ensureTableExists(): void
     {
-        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver === 'sqlite') {
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS academy_courses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    slug TEXT NOT NULL UNIQUE,
-                    thumbnail TEXT NULL,
-                    description TEXT NULL,
-                    status TEXT NOT NULL DEFAULT 'draft',
-                    link TEXT NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ");
-        } else {
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS academy_courses (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    title VARCHAR(255) NOT NULL,
-                    slug VARCHAR(255) NOT NULL UNIQUE,
-                    thumbnail VARCHAR(255) NULL,
-                    description TEXT NULL,
-                    status VARCHAR(50) NOT NULL DEFAULT 'draft',
-                    link VARCHAR(255) NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            ");
+        $migrationFile = dirname(__DIR__) . '/migrations/2026_10_15_000001_create_academy_courses.php';
+        if (is_file($migrationFile)) {
+            $migration = require $migrationFile;
+            if (is_array($migration) && isset($migration['up']) && is_callable($migration['up'])) {
+                ($migration['up'])($this->pdo);
+            }
         }
     }
 }

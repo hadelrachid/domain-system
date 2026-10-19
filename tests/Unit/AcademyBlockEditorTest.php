@@ -317,12 +317,14 @@ class AcademyBlockEditorTest extends TestCase
             'pages/tutoriais/02-a-escotilha-de-emergencia.php',
         ]);
 
+        $pageResolver = new \DomainSystem\Plugins\academy\Services\ThemePageResolver($themeManager);
+
         $adminController = new CourseAdminController(
             $this->courseRepo,
             $service,
             $session,
             $this->structureRepo,
-            $themeManager
+            $pageResolver
         );
 
         $response = $adminController->edit(new Request(), $courseId);
@@ -330,6 +332,7 @@ class AcademyBlockEditorTest extends TestCase
         $html = $response->getContent();
 
         $this->assertStringContainsString('Importar Pasta do Tema', $html);
+        $this->assertStringContainsString('Criar Pasta (ou Módulo)', $html);
         $this->assertStringContainsString('Editor de Blocos', $html);
         $this->assertStringContainsString('pages/tutoriais/01-instalacao.php', $html);
     }
@@ -362,5 +365,216 @@ class AcademyBlockEditorTest extends TestCase
         $renderedHtml = $academyModule->renderContent('/domain-system');
         $this->assertStringContainsString('Simulador Mobile/Tablet', $renderedHtml);
         $this->assertStringContainsString('ManualModuleInterface', $renderedHtml);
+
+        // Verifica também os outros 3 manuais auto-descobertos na v2.4.0 (flextheme, pages, seo)
+        $discoveredIds = array_map(fn($m) => $m->getId(), $modules);
+        $this->assertContains('flextheme', $discoveredIds);
+        $this->assertContains('pages', $discoveredIds);
+        $this->assertContains('seo', $discoveredIds);
+    }
+
+    public function testLessonFileScaffolderFabricatesPhpFileAndDirectCourseSlugRoute(): void
+    {
+        $tempThemeDir = sys_get_temp_dir() . '/ds_academy_theme_' . uniqid();
+        mkdir($tempThemeDir . '/pages', 0775, true);
+
+        try {
+            $themeManager = $this->createMock(ThemeManagerInterface::class);
+            $themeManager->method('getActiveThemePath')->willReturn($tempThemeDir);
+
+            $pageResolver = new \DomainSystem\Plugins\academy\Services\ThemePageResolver($themeManager);
+            $scaffolder = new \DomainSystem\Plugins\academy\Services\ThemeLessonFileScaffolder(
+                $pageResolver,
+                $this->renderer,
+                $tempThemeDir . '/pages'
+            );
+
+            // 1. Fabrica arquivo PHP na raiz de pages/ a partir do título "Estrutura de Dados"
+            $blocksJson = json_encode([
+                'blocks' => [
+                    ['type' => 'header', 'data' => ['level' => 2, 'text' => 'Árvores Binárias e Grafos']],
+                    ['type' => 'paragraph', 'data' => ['text' => 'Conteúdo pré-configurado para Mobile e Desktop.']],
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+
+            $res = $scaffolder->fabricateLessonFile(
+                'Estrutura de Dados',
+                '',
+                (string)$blocksJson,
+                'cinema'
+            );
+
+            $this->assertSame('estrutura-de-dados', $res['slug']);
+            $this->assertSame('estrutura-de-dados.php', $res['file_name']);
+            $this->assertSame('pages/estrutura-de-dados.php', $res['relative_path']);
+            $this->assertFileExists($res['full_path']);
+
+            // Verifica se o arquivo PHP fabricado contém o CSS/JS responsivo e pode extrair os blocos de volta
+            $extractedJson = $scaffolder->extractBlocksFromFile('pages/estrutura-de-dados.php');
+            $this->assertNotNull($extractedJson);
+            $this->assertStringContainsString('Árvores Binárias e Grafos', $extractedJson);
+
+            // 2. Cria curso e aula vinculada ao arquivo fabricado e testa a rota direta /cursos/estrutura-de-dados
+            $courseId = $this->courseRepo->create([
+                'title'          => 'Ciência da Computação',
+                'slug'           => 'ciencia-da-computacao',
+                'description'    => 'Curso completo',
+                'status'         => 'published',
+                'mobile_profile' => 'cinema',
+            ]);
+
+            $this->structureRepo->replaceCourseStructure($courseId, [
+                [
+                    'title'       => 'Módulo 1',
+                    'folder_slug' => '',
+                    'position'    => 1,
+                    'lessons'     => [
+                        [
+                            'title'          => 'Estrutura de Dados',
+                            'slug'           => $res['slug'],
+                            'source_type'    => 'theme_file',
+                            'file_path'      => $res['relative_path'],
+                            'content'        => $blocksJson,
+                            'mobile_profile' => 'cinema',
+                            'status'         => 'published',
+                        ],
+                    ],
+                ],
+            ]);
+
+            $navService = new CourseNavigationService($this->courseRepo, $this->structureRepo, '');
+            $catalogRenderer = new CourseCatalogRenderer($this->courseRepo);
+
+            $frontController = new CourseFrontController(
+                $this->courseRepo,
+                $this->structureRepo,
+                $navService,
+                $catalogRenderer,
+                null,
+                $themeManager,
+                $this->renderer,
+                $pageResolver
+            );
+
+            // Rota direta: /cursos/estrutura-de-dados (cai em showCourse('estrutura-de-dados') e resolve a aula!)
+            $directResponse = $frontController->showCourse('estrutura-de-dados');
+            $this->assertSame(200, $directResponse->getStatusCode());
+            $html = $directResponse->getContent();
+            $this->assertStringContainsString('Estrutura de Dados', $html);
+            $this->assertStringContainsString('Árvores Binárias e Grafos', $html);
+            $this->assertStringContainsString('ds-mobile-profile-cinema', $html);
+        } finally {
+            $this->removeDirectory($tempThemeDir);
+        }
+    }
+
+    public function testAtomicJsonStoreAndRouteCircuitBreakerThreshold(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/ds_atomic_test_' . uniqid();
+        mkdir($tempDir, 0775, true);
+
+        try {
+            $store = new \DomainSystem\Core\Storage\AtomicJsonStore();
+            $filePath = $tempDir . '/state.json';
+
+            $this->assertTrue($store->write($filePath, ['count' => 1]));
+            $this->assertSame(['count' => 1], $store->read($filePath));
+
+            $updated = $store->update($filePath, function (array $current): array {
+                $current['count'] = ($current['count'] ?? 0) + 1;
+                return $current;
+            });
+            $this->assertSame(2, $updated['count']);
+            $this->assertSame(2, $store->read($filePath)['count']);
+
+            // Testa CircuitBreaker por rota com limiar 3
+            $configPath = $tempDir . '/plugins.json';
+            $disarmedPath = $tempDir . '/disarmed.json';
+            $store->write($configPath, ['rogue_plugin' => true]);
+            $store->write($disarmedPath, []);
+
+            $breaker = new \DomainSystem\Core\Error\CircuitBreaker($configPath, $disarmedPath, $store);
+            $ex = new \RuntimeException('Falha simulada em src/Plugins/rogue_plugin/Controller.php');
+
+            $this->assertNull($breaker->recordRouteException($ex, 3));
+            $this->assertSame(1, $breaker->getRouteFailureCount('rogue_plugin'));
+            $this->assertTrue($store->read($configPath)['rogue_plugin']);
+
+            $this->assertNull($breaker->recordRouteException($ex, 3));
+            $this->assertSame(2, $breaker->getRouteFailureCount('rogue_plugin'));
+            $this->assertTrue($store->read($configPath)['rogue_plugin']);
+
+            // Na 3ª falha consecutiva, desarma!
+            $this->assertSame('rogue_plugin', $breaker->recordRouteException($ex, 3));
+            $this->assertFalse($store->read($configPath)['rogue_plugin']);
+            $this->assertArrayHasKey('rogue_plugin', $store->read($disarmedPath));
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testPluginMigrationScannerAndStateSnapshotManager(): void
+    {
+        $rootDir = dirname(__DIR__, 2);
+        $scanner = new \DomainSystem\Core\Database\PluginMigrationScanner($rootDir);
+
+        $discovered = $scanner->discover();
+        $this->assertArrayHasKey('academy', $discovered);
+        $this->assertCount(2, $discovered['academy']['files']);
+
+        $runner = new \DomainSystem\Core\Database\MigrationRunner($this->pdo);
+        $healResult = $scanner->healAll($runner);
+        $this->assertEmpty($healResult['errors']);
+
+        $statusReport = $scanner->inspectStatus($runner);
+        $this->assertNotEmpty($statusReport);
+        $this->assertSame('ok', $statusReport['academy']['status']);
+        $this->assertCount(2, $statusReport['academy']['executed']);
+
+        // Testa StateSnapshotManager
+        $tempRoot = sys_get_temp_dir() . '/ds_snap_test_' . uniqid();
+        mkdir($tempRoot . '/config', 0775, true);
+        mkdir($tempRoot . '/storage', 0775, true);
+
+        try {
+            $store = new \DomainSystem\Core\Storage\AtomicJsonStore();
+            $store->write($tempRoot . '/config/plugins.json', ['academy' => true, 'seo' => true]);
+
+            $snapshotMgr = new \DomainSystem\Core\Storage\StateSnapshotManager($tempRoot, $store);
+            $snap = $snapshotMgr->createSnapshot('before-change');
+
+            $this->assertNotEmpty($snap['id']);
+            $this->assertCount(1, $snapshotMgr->listSnapshots());
+
+            // Modifica estado atual e restaura snapshot
+            $store->write($tempRoot . '/config/plugins.json', ['academy' => false]);
+            $this->assertFalse($store->read($tempRoot . '/config/plugins.json')['academy']);
+
+            $this->assertTrue($snapshotMgr->restoreSnapshot($snap['id']));
+            $this->assertTrue($store->read($tempRoot . '/config/plugins.json')['academy']);
+        } finally {
+            $this->removeDirectory($tempRoot);
+        }
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $items = scandir($dir) ?: [];
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $item;
+            if (is_dir($path)) {
+                $this->removeDirectory($path);
+            } else {
+                @unlink($path);
+            }
+        }
+        @rmdir($dir);
     }
 }
+

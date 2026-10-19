@@ -1,9 +1,12 @@
 <?php
 namespace DomainSystem\SystemApps\SystemMonitor\Controllers;
 
+use DomainSystem\Core\Contracts\SchemaDoctorInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Monitoring\RequestMetricsRecorder;
 use DomainSystem\Core\Plugin\Services\ProcessRegistry;
+use DomainSystem\Core\Storage\StateSnapshotManager;
 use DomainSystem\Core\Application;
 
 class MonitorController
@@ -13,18 +16,24 @@ class MonitorController
     private ThemeManagerInterface $theme;
     private ?\DomainSystem\Core\Contracts\NotificationManagerInterface $notifManager;
     private RequestMetricsRecorder $metricsRecorder;
+    private ?SchemaDoctorInterface $schemaDoctor;
+    private StateSnapshotManager $snapshotManager;
 
     public function __construct(
         ThemeManagerInterface $theme,
         ?\DomainSystem\Core\Contracts\NotificationManagerInterface $notifManager = null,
         ?RequestMetricsRecorder $metricsRecorder = null,
-        ?string $basePath = null
+        ?string $basePath = null,
+        ?SchemaDoctorInterface $schemaDoctor = null,
+        ?StateSnapshotManager $snapshotManager = null
     ) {
         $this->theme = $theme;
         $this->notifManager = $notifManager;
         $this->basePath = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->logPath = rtrim($this->basePath, '/\\') . '/temp/error_logs.json';
         $this->metricsRecorder = $metricsRecorder ?? new RequestMetricsRecorder($this->basePath);
+        $this->schemaDoctor = $schemaDoctor;
+        $this->snapshotManager = $snapshotManager ?? new StateSnapshotManager($this->basePath);
     }
 
     public function index()
@@ -45,12 +54,64 @@ class MonitorController
         $systemMemory = $this->getSystemMemoryStats();
         $singletonId = ProcessRegistry::getActiveSingletonId() ?: 'KRN-LIVE';
 
+        $schemaReport = [];
+        if ($this->schemaDoctor !== null) {
+            try {
+                $schemaReport = $this->schemaDoctor->inspectStatus();
+            } catch (\Throwable $e) {
+                $schemaReport = [];
+            }
+        }
+
+        $snapshots = $this->snapshotManager->listSnapshots();
+
         return $this->theme->render('admin_monitor', [
             'logs'          => $logs,
             'processes'     => $processes,
             'system_memory' => $systemMemory,
             'singleton_id'  => $singletonId,
+            'schema_report' => $schemaReport,
+            'snapshots'     => $snapshots,
         ], dirname(__DIR__) . '/views');
+    }
+
+    public function healSchema()
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        if ($this->schemaDoctor !== null) {
+            try {
+                $this->schemaDoctor->healAll();
+            } catch (\Throwable $e) {
+                // Silencioso no redirect
+            }
+        }
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/monitor?healed=1");
+    }
+
+    public function createSnapshot(Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $label = (string)($request->input('label') ?? 'Snapshot Manual');
+        try {
+            $this->snapshotManager->createSnapshot($label);
+        } catch (\Throwable $e) {
+            // Silencioso
+        }
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/monitor?snap_created=1");
+    }
+
+    public function restoreSnapshot(Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $snapshotId = (string)($request->input('snapshot_id') ?? '');
+        try {
+            if ($snapshotId !== '') {
+                $this->snapshotManager->restoreSnapshot($snapshotId);
+            }
+        } catch (\Throwable $e) {
+            // Silencioso
+        }
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/monitor?snap_restored=1");
     }
 
     /**

@@ -30,10 +30,16 @@ The system's core underwent a deep overhaul across all its structural pillars to
 - **Now:** All communications flow immutably and sanitized through the `Request` class and `SessionManagerInterface`, continuously enforced by `NoSuperglobalsInControllersTest`.
 
 ### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` - v2.3.0)
-- **Architectural Innovation:** The Cockpit (`/admin/manual`) uses `PluginManualScanner` to automatically scan `manual/module.php` inside installed plugins. Any plugin implementing `ManualModuleInterface` injects its interactive tutorial and QA homologation checklist items with zero Kernel coupling.
+- **Architectural Innovation:** The Cockpit (`/admin/manual` and `/manual/index.php`) uses `PluginManualScanner` to automatically scan `manual/module.php` inside installed plugins (`academy`, `flextheme`, `pages`, `seo`). Any plugin implementing `ManualModuleInterface` injects its interactive tutorial and QA homologation checklist items with zero Kernel coupling.
 
-### 5. Hybrid SOLID Architecture in Academy LMS (`v2.3.0`)
-- The `academy` plugin sets the ecosystem gold standard: strict separation between Repositories (`CourseRepositoryInterface`), Services (`CourseFolderImporterService`, `LessonBlockRendererService`, `LessonContentConverterService`), and Controllers, offering hybrid lesson authoring (Raw HTML/Markdown + Block Editor with Real-Time Preview and Multi-Device Simulator across Desktop, 3 Smartphones, and 2 Tablets).
+### 5. Hybrid SOLID Architecture in Academy LMS & Automatic `.php` Lesson Factory (`v2.3.0`)
+- The `academy` plugin sets the ecosystem gold standard: strict separation between Contracts (`CourseRepositoryInterface`, `LessonFileScaffolderInterface`, `ThemePageResolverInterface`, `LessonBlockRendererInterface`, `HtmlSanitizerInterface`), Services, and Controllers, offering:
+  - **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderService`):** Scaffolds physical module folders and ready-to-use `.php` files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php` $\rightarrow$ `/cursos/estrutura-de-dados`).
+  - **Hybrid Authoring (4 Modes, 8 Blocks & 3 Mobile Profiles):** Supports Raw HTML/Markdown, 8-block Visual Editor, Fabricated `.php` Lessons with code or blocks, and 3 mobile layout profiles (`drawer`, `bottom_bar`, `cinema`) with a 5-Viewport Multi-Device Simulator.
+
+### 6. Database- and OS-Agnostic Resilience (`SchemaDoctorInterface` & `AtomicJsonStore`) + "Vibe Coding on Rails" (`AI_CONTRACT_GUIDE.md`)
+- **Zero Database/OS Coupling in Ring 0:** The Kernel and `MonitorController` operate exclusively through contracts (`SchemaDoctorInterface`, `JsonStoreInterface`), remaining completely oblivious to SQLite/MySQL drivers or Windows/Linux/macOS filesystems.
+- **Official AI Contract Guide (`AI_CONTRACT_GUIDE.md`):** IDE rules (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) and CLI generator (`php os-cli.php make:plugin <slug>`) that guide any AI assistant along strict SOLID contract rails.
 
 ---
 
@@ -42,6 +48,7 @@ The system's core underwent a deep overhaul across all its structural pillars to
 1. **Ring 0 Route Collision Protection:** Core Kernel routes (`/login`, `/admin/*`) are locked against Ring 3 hijacking (`RouteAlreadyRegisteredException`).
 2. **AES-256-GCM Authenticated Encryption:** Upgraded from `AES-256-CBC` to authenticated `AES-256-GCM` with integrity tag verification.
 3. **HTTP Session Hardening & Circuit Breaker Developer Mode:** `HttpOnly`, `SameSite=Strict`, `Strict Mode` session cookies, plus a session-scoped Developer Mode bypass for live debugging of tripped plugins.
+4. **Route-Level Circuit Breaker Threshold, `AtomicJsonStore` & 1-Click Snapshot:** Concurrency-safe JSON storage (`flock` + `rename`), route-level failure isolation before full plugin ejection, and instant state restore points in `/admin/supervision`.
 
 ---
 
@@ -66,6 +73,7 @@ Creation of the Troubleshooting artifact (`ERROR_DICTIONARY.md`), packaging raw 
 
 ## 📈 Conclusion
 
-The **Domain System v2.3.0** reaches the "Enterprise-Ready" benchmark. Its agnostic Micro-Kernel is clean, cohesive, tested by 180+ automated unit and architecture tests, and shielded against cascading crashes.
+The **Domain System v2.3.0** (with an unpacked folder footprint of only **~30MB** on Linux servers) reaches the "Enterprise-Ready & AI-Ready" benchmark. Its agnostic Micro-Kernel is clean, cohesive, tested by **183 automated unit and architecture tests (751 assertions)**, and shielded against cascading crashes.
+
 
 

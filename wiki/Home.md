@@ -24,11 +24,15 @@ Cada funcionalidade do sistema (Triagem, WhatsApp, Prontuários, Jurídico) é u
 Os plugins são independentes, injetam suas próprias rotas, menus e escutam eventos do Kernel.
 - **Injeção de Dependências (DIP):** Os módulos usam Containers e Contratos (Interfaces) para realizar o "trabalho sujo" com o banco de dados via Padrão Repository (Ex: `WhatsAppProviderInterface`). O controlador nunca toca no banco de dados diretamente.
 
-### 3. A Régua de Extensão (Plugin Pack) e o Academy LMS Híbrido
-Pensando na escalabilidade ilimitada, o sistema adotou a filosofia da "Régua de Extensão" (Hub). Em vez de entupir o Menu Principal do Kernel com dezenas de botões, o sistema prevê "Pacotes" (como o `clinic_pack`) e Hubs educacionais como o **Academy LMS (`academy`)**, que traz edição híbrida de aulas (HTML/Markdown puro + Editor em Blocos com Preview Dinâmico e Simulador Multi-Dispositivos para Desktop, Smartphones e Tablets).
+### 3. A Régua de Extensão (Plugin Pack) e o Academy LMS Híbrido (Fábrica de `.php` & 3 Perfis Mobile)
+Pensando na escalabilidade ilimitada (com todo o ecossistema descompactado ocupando apenas **~30MB** em servidores Linux), o sistema adotou a filosofia da "Régua de Extensão" (Hub). Em vez de entupir o Menu Principal do Kernel com dezenas de botões, o sistema prevê "Pacotes" (como o `clinic_pack`) e Hubs educacionais como o **Academy LMS (`academy`)**, que traz:
+- **Fábrica Automática de Pastas e Aulas `.php` (`LessonFileScaffolderInterface`):** Cria subpastas de módulos e fabrica automaticamente arquivos `.php` físicos no tema ativo (ex: `themes/<tema>/pages/estrutura-de-dados.php`) acessíveis em `/cursos/estrutura-de-dados`.
+- **4 Modos de Aula & 3 Perfis Mobile (`drawer`, `bottom_bar`, `cinema`):** Edição híbrida de aulas (HTML/Markdown puro, Editor em Blocos com 8 blocos, Aulas `.php` fabricadas com código ou blocos, e Páginas do Tema) com Preview Dinâmico e Simulador Multi-Dispositivos (5 viewports).
 
-### 4. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
-Na **v2.3**, o Cockpit possui um rastreador automático (`PluginManualScanner`) que varre todas as pastas `src/Plugins/*/manual/module.php`. Qualquer plugin que implemente o contrato `ManualModuleInterface` tem seu guia de instruções e checklist de QA acoplados automaticamente ao menu **Manual de Instruções (`/admin/manual`)**, mantendo o Kernel 100% agnóstico.
+### 4. Auto-Descoberta de Manuais (`ManualModuleInterface`) e "Vibe Coding nos Trilhos" (`AI_CONTRACT_GUIDE.md`)
+Na **v2.3.0**, o Cockpit possui:
+- **Rastreador Automático de Manuais (`PluginManualScanner`):** Varre `src/Plugins/*/manual/module.php` (incluindo `academy`, `flextheme`, `pages`, `seo`) e acopla automaticamente seus guias e checklists ao **Manual de Instruções (`/admin/manual`)**.
+- **Guia Mestre de Contratos para IA (`AI_CONTRACT_GUIDE.md`):** Regras nativas (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) e gerador CLI (`php os-cli.php make:plugin <slug>`) para que qualquer IA programe em alta velocidade (*Vibe Coding*) respeitando 100% os contratos do Ring 3.
 
 ---
 
@@ -36,9 +40,10 @@ Na **v2.3**, o Cockpit possui um rastreador automático (`PluginManualScanner`) 
 
 Como um sistema corporativo lida com dados críticos, implementamos ferramentas de proteção em nível de engenharia avançada:
 
-### O Disjuntor (Circuit Breaker)
-Se um plugin sofre um erro fatal (Ex: estouro de memória ou dependência corrompida), o sistema não exibe tela branca. O **Disjuntor** entra em ação, captura o *Fatal Error*, joga o erro para o Painel de Supervisão e **Desativa o plugin problemático automaticamente**, permitindo que o resto da plataforma continue funcionando perfeitamente.
+### O Disjuntor (Circuit Breaker com Threshold de Rota & AtomicJsonStore)
+Se um plugin sofre um erro fatal (Ex: estouro de memória ou dependência corrompida), o sistema não exibe tela branca. O **Disjuntor** entra em ação, captura o *Fatal Error*, isola apenas a rota falha (só ejetando o plugin inteiro após atingir o threshold de falhas consecutivas), grava o estado atomicamente via `AtomicJsonStore` (`flock` + `rename`) e permite que o resto da plataforma continue funcionando perfeitamente.
 - **Efeito Cascata:** Se o módulo "usuários" depender do módulo "Auth", e o "Auth" cair, o disjuntor entende a árvore de dependências e ejeta o "usuários" em cascata, salvando o boot do servidor.
+- **Schema Doctor (`SchemaDoctorInterface`) & Snapshot 1-Clique:** O Kernel permanece 100% agnóstico a bancos de dados (`PDO`/SQLite/MySQL) e sistemas operacionais (Windows/Linux/macOS), delegando diagnóstico/auto-reparo de tabelas e pontos de restauração instantâneos a contratos injetados.
 
 ### A Escotilha de Emergência (Emergency Hatch)
 Caso uma falha de energia ocorra no núcleo de segurança (`Auth`), ativando o Disjuntor, os administradores não ficam trancados para fora. O Kernel ativa a **Rota de Fuga**. Ao acessar a URL, uma tela de terminal verde de emergência se abre, solicitando a `APP_KEY` do servidor, permitindo acesso provisório (Modo de Segurança) para o administrador religar os disjuntores.
@@ -51,10 +56,11 @@ Para manter os princípios **SOLID** (Single Responsibility Principle) e evitar 
 ---
 
 ## 📖 Como navegar (Links e Documentação Oficial)
-A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/`. Recomendamos fortemente a leitura da arquitetura **OS 2.3**:
+A documentação principal do sistema evoluiu e agora está centralizada em nossa pasta `docs/` e no guia oficial para IA. Recomendamos fortemente a leitura da arquitetura **OS 2.3.0**:
 
+- 🤖 **[AI Contract Guide (`AI_CONTRACT_GUIDE.md`)](../AI_CONTRACT_GUIDE.md)** - O Guia Mestre para IAs (*Vibe Coding on Rails*).
 - 🚀 **[Guia Interativo de Extensões (Temas e Plugins)](../docs/tutorial-dev.html)** - O padrão de Injeção de Dependências e `ManualModuleInterface`.
-- 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.html)** - Por que abandonamos o Padrão WordPress.
+- 📜 **[Manifesto do Contrato do Sistema](../docs/01-o-contrato-do-sistema.html)** - Uma alternativa leve e resiliente baseada em Contratos e Injeção de Dependências.
 - 🤖 **[O Ciclo de Confiança Verificável (IA)](../docs/architecture/01-ciclo-de-confianca-verificavel.html)** - Como preparamos o terreno para a Inteligência Artificial.
 - ⚡ **[O Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)**
 - 🚪 **[A Escotilha de Emergência](Emergency-Hatch.md)**
@@ -84,11 +90,15 @@ Every system feature (Academy LMS, Triage, WhatsApp, Medical Records) is a **Plu
 Plugins are independent—they inject their own routes, menus, and listen to Kernel events.
 - **Dependency Injection (DIP):** The modules use Containers and Contracts (Interfaces) to do the "dirty work" with the database via the Repository Pattern (e.g., `CourseRepositoryInterface`). The controller never touches the database or PHP superglobals directly.
 
-### 3. The Extension Cord (Plugin Pack) & Hybrid Academy LMS
-Thinking about unlimited scalability, the system adopted the "Extension Cord" (Hub) philosophy. Instead of cluttering the Kernel's Main Menu with dozens of buttons, the system supports "Packs" (like `clinic_pack`) and full-featured hubs like **Academy LMS (`academy`)**, featuring hybrid lesson authoring (Raw HTML/Markdown + Block Editor with Real-Time Preview and Multi-Device Simulator for Desktop, Smartphones, and Tablets).
+### 3. The Extension Cord (Plugin Pack) & Hybrid Academy LMS (`.php` Factory & 3 Mobile Profiles)
+Thinking about unlimited scalability (with the entire unpacked folder occupying only **~30MB** on Linux servers), the system adopted the "Extension Cord" (Hub) philosophy. Instead of cluttering the Kernel's Main Menu with dozens of buttons, the system supports "Packs" (like `clinic_pack`) and full-featured hubs like **Academy LMS (`academy`)**, featuring:
+- **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderInterface`):** Automatically creates module folders and physical `.php` lesson files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php`) routed at `/cursos/estrutura-de-dados`.
+- **4 Lesson Modes & 3 Mobile Layout Profiles (`drawer`, `bottom_bar`, `cinema`):** Hybrid lesson authoring (Raw HTML/Markdown, 8-block Visual Editor, Fabricated `.php` Lessons with code or blocks, and Theme Pages) with Real-Time Preview and a 5-Viewport Multi-Device Simulator.
 
-### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface`)
-In **v2.3**, the Cockpit includes an automatic scanner (`PluginManualScanner`) that inspects `src/Plugins/*/manual/module.php`. Any plugin implementing `ManualModuleInterface` has its interactive tutorial and QA checklist automatically mounted into the **Instruction Manual (`/admin/manual`)**, keeping the Kernel 100% decoupled.
+### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface`) & "Vibe Coding on Rails" (`AI_CONTRACT_GUIDE.md`)
+In **v2.3.0**, the Cockpit includes:
+- **Automatic Manual Scanner (`PluginManualScanner`):** Inspects `src/Plugins/*/manual/module.php` (`academy`, `flextheme`, `pages`, `seo`) and mounts their interactive tutorials and QA checklists into the **Instruction Manual (`/admin/manual`)**.
+- **Master AI Contract Guide (`AI_CONTRACT_GUIDE.md`):** Native IDE rule files (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`) and CLI generator (`php os-cli.php make:plugin <slug>`) enabling high-speed AI-assisted coding (*Vibe Coding on Rails*) with zero spaghetti code.
 
 ---
 
@@ -96,9 +106,10 @@ In **v2.3**, the Cockpit includes an automatic scanner (`PluginManualScanner`) t
 
 Because an enterprise system handles critical data, we implemented advanced engineering protection tools:
 
-### The Circuit Breaker
-If a plugin suffers a fatal error (e.g., memory overflow or corrupted dependency), the system doesn't throw a white screen. The **Circuit Breaker** steps in, catches the *Fatal Error*, logs it to the Supervision Panel, and **automatically deactivates the problematic plugin**, allowing the rest of the platform to continue operating perfectly.
+### The Circuit Breaker (Route Threshold & AtomicJsonStore)
+If a plugin suffers a fatal error (e.g., memory overflow or corrupted dependency), the system doesn't throw a white screen. The **Circuit Breaker** steps in, catches the *Fatal Error*, isolates the failing route first (only ejecting the full plugin after reaching the consecutive failure threshold), persists state atomically via `AtomicJsonStore` (`flock` + `rename`), and allows the rest of the platform to continue operating perfectly.
 - **Cascade Effect:** If the "Patients" module relies on the "Auth" module, and "Auth" crashes, the circuit breaker understands the dependency tree and cascades the ejection of "Patients" to save the server boot.
+- **Schema Doctor (`SchemaDoctorInterface`) & 1-Click Snapshot:** The Kernel remains 100% agnostic to databases (`PDO`/SQLite/MySQL) and OS platforms (Windows/Linux/macOS), delegating schema auto-healing and 1-click state rollback to injected contracts.
 
 ### The Emergency Hatch
 If a power failure occurs in the security core (`Auth`), triggering the Circuit Breaker, administrators aren't locked out. The Kernel activates the **Escape Route**. By accessing the URL, an emergency green terminal screen opens, requesting the server's `APP_KEY`, allowing provisional access (Safe Mode) for the administrator to reset the breakers.
@@ -111,10 +122,11 @@ To maintain **SOLID** principles (Single Responsibility Principle) and avoid spa
 ---
 
 ## 📖 How to navigate (Links and Official Docs)
-The main system documentation has evolved and is now centralized in our `docs/` folder. We strongly recommend reading about the **OS 2.3** architecture:
+The main system documentation has evolved and is now centralized in our `docs/` folder and the official AI guide. We strongly recommend reading about the **OS 2.3.0** architecture:
 
+- 🤖 **[AI Contract Guide (`AI_CONTRACT_GUIDE.md`)](../AI_CONTRACT_GUIDE.md)** - The Master Guide for AI Assistants (*Vibe Coding on Rails*).
 - 🚀 **[Interactive Extension Guide (Themes & Plugins)](../docs/tutorial-dev.html)** - The Dependency Injection and `ManualModuleInterface` standard.
-- 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.html)** - Why we abandoned the WordPress Pattern.
+- 📜 **[System Contract Manifesto](../docs/01-o-contrato-do-sistema.html)** - A lightweight, resilient alternative built on Contracts and Dependency Injection.
 - 🤖 **[The Verifiable Trust Cycle (AI)](../docs/architecture/01-ciclo-de-confianca-verificavel.html)** - How we paved the way for Artificial Intelligence.
 - ⚡ **[The Circuit Breaker](Disjuntor-Circuit-Breaker.md)**
 - 🚪 **[The Emergency Hatch](Emergency-Hatch.md)**

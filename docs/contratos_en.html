@@ -42,20 +42,31 @@
             <li><strong>deactivate() / uninstall():</strong> Used to clean up the traces the plugin left when deactivated or deleted.</li>
         </ul>
 
-        <h2>ManualModuleInterface (Manual Auto-Discovery v2.3)</h2>
+        <h2>ManualModuleInterface (Manual Auto-Discovery v2.3.0)</h2>
         <p>Any plugin providing a <code>manual/module.php</code> file returning an instance of <code>ManualModuleInterface</code> is automatically discovered by <code>PluginManualScanner</code> and rendered inside the Cockpit's <strong>Instruction Manual (<code>/admin/manual</code>)</strong>:</p>
         <pre><code>interface ManualModuleInterface
 {
     public function getId(): string;
     public function getTitle(): string;
-    public function getIcon(): string;
+    public function getSubtitle(): string;
     public function getBadge(): string;
-    public function getVersion(): string;
-    public function getOrder(): int;
+    public function getAccentColor(): string;
+    public function getAdminUrl(): ?string;
     public function getChecklistItems(): array;
     public function renderContent(string $baseUrl = ''): string;
 }</code></pre>
-        <p>This enables rich plugins (such as <strong>Academy LMS</strong>) to ship their own interactive documentation and QA homologation checklists with zero coupling to the Kernel source code!</p>
+        <p>This enables plugins (such as <strong>Academy LMS</strong>, <strong>FlexTheme</strong>, <strong>Pages</strong>, and <strong>SEO</strong>) to ship their own interactive documentation and QA homologation checklists with zero coupling to the Kernel source code!</p>
+
+        <h2>SchemaDoctorInterface &amp; JsonStoreInterface (100% DB- &amp; OS-Agnostic Kernel)</h2>
+        <p>In Domain-System v2.3.0, the Kernel (Ring 0) has zero direct knowledge of SQLite, MySQL, Windows, or Linux:</p>
+        <ul>
+            <li><strong><code>SchemaDoctorInterface</code>:</strong> Injected into <code>MonitorController</code> and <code>StateSnapshotManager</code> to diagnose and self-heal (<code>healAll()</code>) plugin migrations using pure ANSI SQL.</li>
+            <li><strong><code>JsonStoreInterface</code> (<code>AtomicJsonStore</code>):</strong> Concurrency-safe atomic persistence using <code>flock(LOCK_EX)</code> + temporary file + atomic <code>rename()</code> across <code>config/*.json</code> and <code>temp/*.json</code>.</li>
+            <li><strong><code>LessonFileScaffolderInterface</code>:</strong> Contract powering the Academy LMS Automatic Factory that creates module folders (<code>createFolder</code>) and fabricates physical <code>.php</code> lesson files inside the active theme (e.g., <code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>).</li>
+        </ul>
+
+        <h2>🤖 AI Contract Guide ("Vibe Coding on Rails")</h2>
+        <p>Refer to <a href="../AI_CONTRACT_GUIDE.md"><code>AI_CONTRACT_GUIDE.md</code></a> in the repository root (along with <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code>, and <code>.clinerules</code>) so any AI assistant generates plugins and pages strictly adhering to these contracts.</p>
 
     </div>
 </body>

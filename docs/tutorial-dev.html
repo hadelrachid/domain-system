@@ -27,6 +27,12 @@
             <strong>Atenção:</strong> Nunca injete HTML sujo nos Hooks do sistema nem acesse superglobais (<code>$_SESSION</code>) diretamente em Controllers. Todos os componentes vitais agora exigem <em>Providers</em> e <em>Interfaces</em>.
         </div>
 
+        <h2>Passo 0 (Atalho Oficial): Gerador de Boilerplate via CLI &amp; IA</h2>
+        <p>Você pode gerar toda a árvore de contratos automaticamente via linha de comando ou usando qualquer Inteligência Artificial guiada pelo <a href="../AI_CONTRACT_GUIDE.md" style="color:#38bdf8;"><code>AI_CONTRACT_GUIDE.md</code></a>:</p>
+<pre>
+php os-cli.php make:plugin meu_app
+</pre>
+
         <h2>Passo 1: A Estrutura Base (plugin.json)</h2>
         <p>Crie uma pasta em <code>src/Plugins/meu_app</code> e adicione o <code>plugin.json</code>:</p>
 <pre>
@@ -80,21 +86,24 @@
 </pre>
 
         <h2>Passo 3: Criando o Widget Profissional (O Provider)</h2>
-        <p>No novo padrão corporativo do OS, você não ejeta HTML no vazio. Você cria um Contrato de Fornecedor de Widgets (<code>DashboardWidgetProviderInterface</code>). Crie o arquivo <code>MeuWidgetProvider.php</code> na pasta do seu plugin:</p>
+        <p>No padrão corporativo do OS, você não ejeta HTML no vazio. Você cria um Contrato de Fornecedor de Widgets (<code>DashboardWidgetProviderInterface</code>) e injeta o <code>SessionManagerInterface</code>:</p>
 
 <pre>
 <span class="keyword">namespace</span> DomainSystem\Plugins\meu_app;
 
 <span class="keyword">use</span> DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
+<span class="keyword">use</span> DomainSystem\Core\Contracts\SessionManagerInterface;
 <span class="keyword">use</span> DomainSystem\Core\Security\IdentityManager;
 
 <span class="keyword">class</span> MeuWidgetProvider <span class="keyword">implements</span> DashboardWidgetProviderInterface
 {
     <span class="keyword">private</span> IdentityManager <span class="variable">$identity</span>;
+    <span class="keyword">private</span> ?SessionManagerInterface <span class="variable">$session</span>;
 
-    <span class="keyword">public function</span> <span class="function">__construct</span>(IdentityManager <span class="variable">$identity</span>)
+    <span class="keyword">public function</span> <span class="function">__construct</span>(IdentityManager <span class="variable">$identity</span>, ?SessionManagerInterface <span class="variable">$session</span> = <span class="keyword">null</span>)
     {
         <span class="variable">$this</span>->identity = <span class="variable">$identity</span>;
+        <span class="variable">$this</span>->session = <span class="variable">$session</span>;
     }
 
     <span class="keyword">public function</span> <span class="function">getProviderName</span>(): <span class="keyword">string</span>
@@ -115,7 +124,7 @@
     <span class="keyword">public function</span> <span class="function">renderWidget</span>(<span class="keyword">string</span> <span class="variable">$widgetId</span>): <span class="keyword">string</span>
     {
         <span class="keyword">if</span> (<span class="variable">$widgetId</span> === <span class="string">'meu_grafico'</span>) {
-            <span class="variable">$userId</span> = <span class="variable">$_SESSION</span>[<span class="string">'auth_user_id'</span>] ?? <span class="string">0</span>;
+            <span class="variable">$userId</span> = (<span class="keyword">int</span>)(<span class="variable">$this</span>->session?-><span class="function">get</span>(<span class="string">'auth_user_id'</span>, <span class="string">0</span>) ?? <span class="string">0</span>);
             
             <span class="keyword">if</span> (!<span class="variable">$this</span>->identity-><span class="function">userCan</span>(<span class="variable">$userId</span>, <span class="string">'meu_app.acessar'</span>)) {
                 <span class="keyword">return</span> <span class="string">'&lt;div class="error"&gt;Acesso Negado pela ACL&lt;/div&gt;'</span>;
@@ -129,14 +138,14 @@
 </pre>
 
         <h2>Passo 4: Auto-Descoberta no Manual de Instruções (manual/module.php)</h2>
-        <p>Na versão <strong>2.3</strong>, basta criar a pasta <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>. O motor <code>PluginManualScanner</code> irá rastreá-la automaticamente e exibir seu tutorial interativo e seus itens de checklist no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit!</p>
+        <p>Na versão <strong>2.3.0</strong>, basta criar a pasta <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>. O motor <code>PluginManualScanner</code> irá rastreá-la automaticamente e exibir seu tutorial interativo e seus itens de checklist no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit!</p>
 <pre>
 <span class="comment">// src/Plugins/meu_app/manual/module.php</span>
 <span class="keyword">require_once</span> __DIR__ . <span class="string">'/MeuAppManualModule.php'</span>;
 <span class="keyword">return new</span> \DomainSystem\Plugins\meu_app\manual\MeuAppManualModule();
 </pre>
 
-        <p>E pronto! O seu plugin é um cidadão de primeira classe do Web OS, perfeitamente blindado, validado e auto-documentado.</p>
+        <p>E pronto! O seu plugin é um cidadão de primeira classe do Web OS (~30MB), perfeitamente blindado, validado e auto-documentado.</p>
     </div>
 </body>
 </html>

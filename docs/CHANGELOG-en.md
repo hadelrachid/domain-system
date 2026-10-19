@@ -8,18 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
 
-## [2.3.0] - 2026-10-18
+## [2.3.0] - 2026-10-19
 ### Added
-- **Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` & `PluginManualScanner`):** Any plugin providing `src/Plugins/<slug>/manual/module.php` implementing `ManualModuleInterface` is now automatically discovered and rendered inside the Cockpit's **Instruction Manual (`/admin/manual`)**, including its QA homologation checklist items.
-- **Hybrid Academy LMS (v2.3.0) & Block Editor with Real-Time Preview:**
-  - Native hybrid support for lessons in **Raw HTML/Markdown** (`content_mode = 'raw'`) and **Structured Block Editor** (`content_mode = 'blocks'`, supporting `heading`, `paragraph`, `code`, `callout`, `video`, `divider`).
-  - **Real-Time Preview Modes:** `✏️ Blocks`, `⚡ Dynamic (Side-by-Side)`, and `👁️ Final Lesson` with live rendering and inline 16:9 embeds for YouTube, Vimeo, and MP4.
-  - **Multi-Device Simulator (Desktop, 3 Smartphones & 2 Tablets):** Switch between `🖥️ Desktop` and `📱 Mobile` across 5 standard viewports (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) with interactive mobile navigation and an Off-Canvas Course Drawer (`📚 Modules & Lessons Index`).
-  - **Automatic Course Folder Import & Re-Import (`CourseFolderImporterService`):** Smart synchronization of `.html`/`.md` files from disk without overwriting panel-edited lessons.
-  - **Interactive Academy Manual (`src/Plugins/academy/manual/`):** Step-by-step tutorial and QA checklist wired via `ManualModuleInterface`.
+- **Master AI Contract Guide ("Vibe Coding on Rails" - `AI_CONTRACT_GUIDE.md`):** Official root guide for LLMs + automatic IDE rule files (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`), a 1-click **"📋 Copy Master Prompt for AI"** button in the System Manual, and an upgraded CLI generator (`php os-cli.php make:plugin <slug>`) that scaffolds the complete Ring 3 contract directory tree.
+- **Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` & `PluginManualScanner`):** Any plugin providing `src/Plugins/<slug>/manual/module.php` (`academy`, `flextheme`, `pages`, `seo`) implementing `ManualModuleInterface` is now automatically discovered and rendered inside both the Cockpit's **Instruction Manual (`/admin/manual`)** and the fullscreen viewer (`/manual/index.php`), including its QA homologation checklist items.
+- **Hybrid Academy LMS (v2.3.0), Automatic `.php` Lesson Factory & 3 Mobile Profiles:**
+  - **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderInterface` / `LessonFileScaffolderService`):** Module folder creation (`createFolder`) and automatic fabrication of physical `.php` files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php` $\rightarrow$ routed at `/cursos/estrutura-de-dados`), with overwrite and path-traversal protection.
+  - **4 Lesson Modes & 8 Block Types:** Hybrid support for **Raw HTML/Markdown** (`raw`), **Structured Block Editor** (`blocks` supporting `heading`, `paragraph`, `code`, `callout`, `video`, `divider`, `image`, `button_cta`), **Auto-Fabricated `.php` Lessons** (code or blocks), and **Existing Theme Pages** (`ThemePageResolverInterface`).
+  - **3 Mobile Layout Profiles (`drawer`, `bottom_bar`, `cinema`) & Multi-Device Simulator:** Switch between `🖥️ Desktop` and `📱 Mobile` across 5 standard viewports (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) and 3 per-lesson mobile layout profiles.
+  - **Safe Sanitization (`HtmlSanitizerService`) & Folder Import (`CourseFolderImporterService`):** Strips XSS vectors (`<script>`, `on*`, `javascript:`) while preserving trusted video iframes and smart disk synchronization.
+- **Advanced Kernel Resilience (100% DB- and OS-Agnostic Ring 0):**
+  - **Atomic Persistence (`JsonStoreInterface` / `AtomicJsonStore`):** Concurrency-safe JSON read/write with `flock(LOCK_EX)` + temporary file + atomic `rename()` across `config/*.json` and `temp/*.json`.
+  - **Route-Level Circuit Breaker with Threshold (`recordRouteFailure`):** Isolates failing routes individually before tripping the entire plugin (default threshold: 3 consecutive failures).
+  - **Schema Doctor (`SchemaDoctorInterface` / `PluginMigrationScanner`):** Automatic discovery and self-healing of plugin migrations using 100% database- and OS-agnostic ANSI SQL.
+  - **1-Click Snapshot & Rollback (`StateSnapshotManager`):** Instant creation and restoration of system state restore points inside `/admin/supervision`.
 
 ### Changed
-- **Default New Course Status:** Changed from `soon` to `published` in the Academy creation modal to prevent accidental 404s when viewing newly created lessons, plus added a warning banner in the lesson editor when the parent course is not yet published.
+- **Ultra-Light Disk Footprint (~30MB on Linux):** The entire unpacked platform folder on Linux servers occupies approximately **30MB**.
+- **Default New Course Status:** Changed from `soon` to `published` in the Academy creation modal to prevent accidental 404s when viewing newly created lessons.
 - **100% Environment-Agnostic Routing (`public/index.php`):** Removed hardcoded subfolder prefixes so the platform runs seamlessly in any subdirectory or root domain.
 
 ## [2.2.0] - 2026-10-12
