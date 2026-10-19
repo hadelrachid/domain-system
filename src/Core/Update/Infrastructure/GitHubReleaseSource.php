@@ -78,6 +78,7 @@ final class GitHubReleaseSource implements ReleaseSourceInterface
 
         $zipAsset = null;
         $shaAsset = null;
+        $fallbackZipAsset = null;
 
         foreach ($assets as $asset) {
             if (!is_array($asset)) {
@@ -88,7 +89,36 @@ final class GitHubReleaseSource implements ReleaseSourceInterface
                 $zipAsset = $asset;
             } elseif ($name === $expectedShaName) {
                 $shaAsset = $asset;
+            } elseif ($fallbackZipAsset === null && str_ends_with(strtolower($name), '.zip')) {
+                $fallbackZipAsset = $asset;
             }
+        }
+
+        $isNewerThanInstalled = $this->versionComparator->isNewer($version, $target->installedVersion);
+
+        if (!$isNewerThanInstalled && ($zipAsset === null || $shaAsset === null)) {
+            $chosenAsset = $zipAsset ?? $fallbackZipAsset;
+            $legacyAssetName = is_array($chosenAsset) && !empty($chosenAsset['name'])
+                ? (string)$chosenAsset['name']
+                : $expectedZipName;
+            $legacyUrl = is_array($chosenAsset) && !empty($chosenAsset['browser_download_url'])
+                ? (string)$chosenAsset['browser_download_url']
+                : ('https://github.com/' . $target->repository . '/releases/tag/' . $tag);
+            $legacySize = is_array($chosenAsset) && (int)($chosenAsset['size'] ?? 0) > 0
+                ? (int)$chosenAsset['size']
+                : 1;
+
+            return new ReleaseInfo(
+                version: $version,
+                tag: $tag,
+                publishedAt: $publishedAt,
+                changelog: $changelog,
+                assetUrl: $legacyUrl,
+                assetName: $legacyAssetName,
+                sizeBytes: $legacySize,
+                sha256: str_repeat('0', 64),
+                etag: $response->etag,
+            );
         }
 
         if ($zipAsset === null) {

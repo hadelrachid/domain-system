@@ -121,6 +121,19 @@ final class GitHubReleaseSourceAndCheckerTest extends TestCase
         $res = $checker->check($target, true);
 
         $this->assertSame(UpdateStatus::UpToDate, $res->status);
+
+        // E também quando a Release no GitHub (ex.: v2.3.0 legada com domain-system-core.zip) é igual à instalada (2.3.0)
+        $noAssetJson = (string)file_get_contents(dirname(__DIR__, 2) . '/Fixtures/github/releases_latest_no_asset.json');
+        $httpLegacySameVer = new ArrayHttpClient([
+            self::API_URL => new HttpResponse(200, [], $noAssetJson),
+        ]);
+        $checkerLegacy = new UpdateChecker(
+            new GitHubReleaseSource($httpLegacySameVer, $comparator),
+            $comparator,
+            new JsonUpdateStateStore($this->tempDir),
+        );
+        $resLegacy = $checkerLegacy->check($target, true);
+        $this->assertSame(UpdateStatus::UpToDate, $resLegacy->status);
     }
 
     public function testCheckerNeverThrowsOnMalformedJsonMissingAssetOrInvalidSha256(): void
