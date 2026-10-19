@@ -4,9 +4,11 @@ namespace DomainSystem\SystemApps\Database;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
+use DomainSystem\Core\Contracts\Update\DatabaseBackupInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\SystemApps\Database\Backup\DatabaseBackupFactory;
 use DomainSystem\SystemApps\Database\Schema\SchemaBuilder;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
@@ -41,6 +43,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         $runtime->singleton(DatabaseConnectionInterface::class, function($c) {
             return $c->make(Connection::class);
+        });
+
+        $runtime->bind(DatabaseBackupInterface::class, function($c) {
+            return DatabaseBackupFactory::create($c->make(Connection::class));
         });
 
         $runtime->bind(QueryBuilder::class, function($c) {
