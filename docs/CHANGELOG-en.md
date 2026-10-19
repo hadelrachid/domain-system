@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
 
-## [Unreleased]
+## [2.4.0] - 2026-10-19
 ### Added
 - **Contract-Driven GitHub Releases Self-Updater (`SystemUpdater` / `CoreUpdater` — Model A):**
   - **25 Contracts in `src/Core/Contracts/Update/` & `UpdateArchitectureTest` Guardrail:** 14-step resumable state machine (`Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Done`) with zero direct `PDO`, `curl_*`, `ZipArchive`, or superglobal usage in services or controllers.
   - **Cryptographic Verification & Anti-Zip-Slip (`Sha256PackageVerifier`, `ZipPackageExtractor`, `HostAllowlist`):** Dual SHA-256 verification (archive + per-file `manifest.json`), isolated quarantine extraction, zip-bomb/symlink defense, and strict HTTPS GitHub host allowlist.
   - **Full Code/Database Backup, Contract Schema Verification & Auto-Rollback (`ZipDirectoryBackup`, `SqliteDatabaseBackup`, `MysqlDatabaseBackup`, `SchemaPlanner`, `SchemaVerifier`):** Automatic pre-apply backups, strict protection for `.env`, `config/`, and `storage/`, two-phase HTTP health check (`CoreHealthCheck`), and automatic rollback on failure.
   - **Global Settings Integration (`/admin/settings/updates`), Dashboard Widget & CLI (`os-cli.php`):** Integrated Updates tab in Global Settings, `System Version` dashboard widget, once-per-version notification, and CLI commands (`system:check`, `system:status`, `system:update`, `system:rollback`, `system:health`).
-  - **Deterministic Release Builder (`ReleaseBuilder` & `tools/build-release.php`):** Automated generation of `dist/domain-system-X.Y.Z.zip` and `.sha256` integrated into `.github/workflows/release.yml`, plus standardization of all 17 official `plugin.json` manifests to `2.3.0`.
+  - **Deterministic Release Builder (`ReleaseBuilder` & `tools/build-release.php`):** Automated generation of `dist/domain-system-X.Y.Z.zip` and `.sha256` integrated into `.github/workflows/release.yml`, plus standardization of all 18 official `plugin.json` manifests to `2.4.0` (`os_version: 2.4`).
 
 ## [2.3.0] - 2026-10-19
 ### Added

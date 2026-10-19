@@ -2,7 +2,7 @@
 
 Bem-vindo ao **Ambiente Operacional Web (Web OS)** definitivo. O Domain System deixou de ser um simples CMS para se tornar um Kernel puro (Ring 0) que orquestra Plugins de Nível de Usuário (Ring 3).
 
-Este guia oficial foi atualizado para a versão **2.3** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
+Este guia oficial foi atualizado para a versão **2.4** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
 
 ---
 

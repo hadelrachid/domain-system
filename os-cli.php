@@ -19,7 +19,7 @@ $args = $argv;
 array_shift($args); // Remove o nome do script
 
 if (empty($args)) {
-    echo "OS-CLI v2.3.0 - Domain System Sandbox\n";
+    echo "OS-CLI v2.4.0 - Domain System Sandbox\n";
     echo "Comandos Suportados: ls, mkdir, rm, cat, touch, make:plugin, make:widget, system:check, system:status, system:update, system:rollback, system:health\n";
     exit;
 }
@@ -116,7 +116,7 @@ switch ($command) {
             "author"      => "CLI-Workstation",
             "description" => "Plugin Ring 3 gerado via OS-CLI com contratos SOLID.",
             "core"        => false,
-            "os_version"  => "2.3"
+            "os_version"  => "2.4"
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         // 2. Contracts/<Pascal>ServiceInterface.php

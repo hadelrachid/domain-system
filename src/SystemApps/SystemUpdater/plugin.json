@@ -1,8 +1,8 @@
 {
     "name": "SystemUpdater",
-    "version": "2.3.0",
-    "description": "Gerenciador de Atualiza\u00e7\u00f5es do N\u00facleo por Contrato (Modelo A).",
+    "version": "2.4.0",
+    "description": "Gerenciador de Atualizações do Núcleo por Contrato (Modelo A).",
     "core": true,
     "entrypoint": "Plugin",
-    "os_version": "2.3"
+    "os_version": "2.4"
 }

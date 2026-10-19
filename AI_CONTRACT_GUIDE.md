@@ -1,4 +1,4 @@
-# 🤖 DOMAIN-SYSTEM OS (v2.3) — AI CONTRACT & ARCHITECTURE GUIDE ("Vibe Coding on Rails")
+# 🤖 DOMAIN-SYSTEM OS (v2.4) — AI CONTRACT & ARCHITECTURE GUIDE ("Vibe Coding on Rails")
 
 > **PURPOSE OF THIS DOCUMENT FOR AI ASSISTANTS (ChatGPT, Claude, DeepSeek, Gemini, GitHub Copilot, Cursor, Cline, Kilo Code):**
 > You are generating or refactoring code for **Domain-System OS**, a micro-kernel Web Operating Environment in PHP 8.2+ built on strict **SOLID**, **Dependency Inversion (DIP)**, **Ring 0 / Ring 3 privilege isolation**, and **Contract-Driven Architecture**.

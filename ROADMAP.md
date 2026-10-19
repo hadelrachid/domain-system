@@ -5,7 +5,7 @@
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🗺️ Roteiro de Desenvolvimento — Domain System (v2.3)
+# 🗺️ Roteiro de Desenvolvimento — Domain System (v2.4)
 
 Este documento descreve a evolução e visão de futuro para o **Domain System** (~30 MB descompactado em servidores Linux). As prioridades são definidas com base no impacto para o usuário final, na resiliência do sistema e na consolidação de uma **alternativa leve, modular e resiliente** orientada a Contratos (SOLID).
 

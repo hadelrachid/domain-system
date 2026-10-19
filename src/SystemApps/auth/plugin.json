@@ -1,11 +1,11 @@
 {
     "name": "auth",
-    "version": "2.3.0",
-    "description": "Sistema central de autentica\u00e7\u00e3o, sess\u00f5es e prote\u00e7\u00e3o de rotas (Middlewares).",
+    "version": "2.4.0",
+    "description": "Sistema central de autenticação, sessões e proteção de rotas (Middlewares).",
     "author": "Antigravity",
     "dependencies": [
         "database"
     ],
-    "os_version": "2.3",
+    "os_version": "2.4",
     "core": true
 }

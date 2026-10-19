@@ -284,10 +284,10 @@ final class PreflightTest extends TestCase
         $root = dirname(__DIR__, 3);
         $state = new FilesystemInstalledState($root);
 
-        $this->assertSame('2.3.0', $state->coreVersion());
+        $this->assertSame('2.4.0', $state->coreVersion());
         $plugins = $state->plugins();
         $this->assertArrayHasKey('settings', $plugins);
-        $this->assertSame('2.3.0', $plugins['settings']->version);
-        $this->assertSame('2.3', $plugins['settings']->osVersion);
+        $this->assertSame('2.4.0', $plugins['settings']->version);
+        $this->assertSame('2.4', $plugins['settings']->osVersion);
     }
 }

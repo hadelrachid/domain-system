@@ -6,12 +6,12 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-2.3.0-blueviolet?style=for-the-badge" alt="Version 2.3.0">
+  <img src="https://img.shields.io/badge/Version-2.4.0-blueviolet?style=for-the-badge" alt="Version 2.4.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Weight-~30MB-orange?style=for-the-badge" alt="Weight">
   <br><br>
-  <h1>🛸 Domain System (v2.3)</h1>
+  <h1>🛸 Domain System (v2.4)</h1>
   <p><strong>A lightweight, modular, and resilient Web Platform alternative built on SOLID principles and Contracts.</strong></p>
 </div>
 
