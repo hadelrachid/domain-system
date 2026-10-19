@@ -2,9 +2,9 @@
     <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
         <?php $baseUrl = defined('BASE_URL') ? BASE_URL : ''; ?>
         <a href="<?= $baseUrl ?>/" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-            <img src="<?= $baseUrl ?>/assets/img/site-home/logo-rd.svg" class="logo-img" alt="RD Logo" style="height: 48px; width: auto;">
-            <div class="logo" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; color: #fff;">
-                Rachid<span class="text-primary">D.com</span>
+            <img src="<?= $baseUrl ?>/assets/img/logo.png" class="logo-img" alt="Logo" style="height: 40px; width: auto;" onerror="this.style.display='none'">
+            <div class="logo" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; color: #fff;">
+                Domain<span class="text-primary">System</span>
             </div>
         </a>
         <button class="mobile-menu-toggle" id="mobile-menu-btn">☰</button>
@@ -26,10 +26,9 @@
             ?>
                 <ul style="list-style: none; gap: 30px; display: flex; flex-direction: inherit; margin:0; padding:0;">
                     <li><a href="<?= $baseUrl ?>/" class="nav-link" style="<?= ($currentUri === $baseUrl . '/' || $currentUri === $baseUrl) ? 'color: var(--primary);' : '' ?>">Início</a></li>
-                    <li><a href="<?= $baseUrl ?>/docs/index" class="nav-link" style="<?= strpos($currentUri, $baseUrl . '/docs') === 0 ? 'color: var(--primary);' : '' ?>">OS Docs</a></li>
-                    <li><a href="<?= $baseUrl ?>/tutoriais" class="nav-link" style="<?= $currentUri === $baseUrl . '/tutoriais' ? 'color: var(--primary);' : '' ?>">Cursos & Tutoriais</a></li>
-                    <li><a href="<?= $baseUrl ?>/#livro" class="nav-link" style="color: var(--text-main);">Livro SOLID</a></li>
+                    <li><a href="<?= $baseUrl ?>/cursos" class="nav-link" style="<?= strpos($currentUri, $baseUrl . '/cursos') === 0 ? 'color: var(--primary);' : '' ?>">Cursos</a></li>
                     <li><a href="<?= $baseUrl ?>/sobre" class="nav-link" style="<?= $currentUri === $baseUrl . '/sobre' ? 'color: var(--primary);' : '' ?>">Sobre</a></li>
+                    <li><a href="<?= $baseUrl ?>/admin" class="nav-link" style="color: var(--text-main);">Painel</a></li>
                 </ul>
             <?php } ?>
         </nav>

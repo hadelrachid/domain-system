@@ -2,13 +2,13 @@
 // Layout Base Principal (Main HTML Shell)
 // O array $seo (SeoManagerInterface) já foi injetado pelo ThemeController
 
-if ($seo->getTitle() === 'Domain System OS') {
-    $seo->setTitle('Rachid | Arquiteto de Software & Autor')
-        ->setDescription('Aprenda Arquitetura SOLID, PHP e Desenvolvimento Avançado com o criador do Domain-System OS.');
-}
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$canonicalUrl = $protocol . $host . $currentUri;
 
-$seo->setCanonical('https://rachidd.com')
-    ->setFavicon((defined('BASE_URL') ? BASE_URL : '') . '/assets/img/site-home/logo-rd.svg')
+$seo->setCanonical($canonicalUrl)
+    ->setFavicon((defined('BASE_URL') ? BASE_URL : '') . '/assets/img/logo.png')
     ->addMeta('theme-color', '#0b0c10');
 
 ?>

@@ -2,12 +2,12 @@
     <div class="container" style="text-align: center; color: var(--text-muted);">
         <?php $baseUrl = defined('BASE_URL') ? BASE_URL : ''; ?>
         <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
-            <img src="<?= $baseUrl ?>/assets/img/site-home/logo-rd.svg" class="logo-img" alt="RD Logo" style="height: 55px; width: auto; opacity: 0.8;">
+            <img src="<?= $baseUrl ?>/assets/img/logo.png" class="logo-img" alt="Logo" style="height: 44px; width: auto; opacity: 0.85;" onerror="this.style.display='none'">
             <div class="logo" style="font-size: 1.5rem; font-weight: 800; color: #fff;">
-                Rachid<span class="text-primary">D.com</span>
+                Domain<span class="text-primary">System</span>
             </div>
         </div>
-        <p style="margin-bottom: 30px;">Construído com extrema otimização sobre o <span class="text-primary">Domain-System OS 2.0</span></p>
+        <p style="margin-bottom: 30px;">Plataforma modular e flexível construída sobre o <span class="text-primary">Domain-System OS</span></p>
                 <?php 
             $dynamicFooterMenu = '';
             if (isset($GLOBALS['app'])) {
@@ -27,7 +27,7 @@
         </div>
         <?php endif; ?>
         <div style="font-size: 0.9rem;">
-            &copy; <?= date('Y') ?> RachidD. Todos os direitos reservados.
+            &copy; <?= date('Y') ?> Domain System. Todos os direitos reservados.
         </div>
     </div>
 </footer>
@@ -62,20 +62,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (acceptBtn) {
         acceptBtn.addEventListener('click', () => {
-            localStorage.setItem('rachidd_privacy_accepted', 'true');
+            localStorage.setItem('ds_privacy_accepted', 'true');
             hideNotice();
         });
     }
 
     if (rejectBtn) {
         rejectBtn.addEventListener('click', () => {
-            sessionStorage.setItem('rachidd_privacy_rejected', 'true');
+            sessionStorage.setItem('ds_privacy_rejected', 'true');
             hideNotice();
         });
     }
 
-    const privacyAccepted = localStorage.getItem('rachidd_privacy_accepted');
-    const privacyRejected = sessionStorage.getItem('rachidd_privacy_rejected');
+    const privacyAccepted = localStorage.getItem('ds_privacy_accepted');
+    const privacyRejected = sessionStorage.getItem('ds_privacy_rejected');
     
     if (privacyAccepted !== 'true' && privacyRejected !== 'true') {
         setTimeout(() => {

@@ -49,7 +49,7 @@ class ThemePageResolver implements ThemePageResolverInterface
             return $this->themeResolver->resolveThemePath($activeTheme);
         }
 
-        $candidates = ['rachidd', 'default'];
+        $candidates = ['default'];
         if ($this->themeResolver !== null) {
             foreach ($candidates as $candidate) {
                 if ($this->themeResolver->themeExists($candidate)) {
@@ -79,7 +79,7 @@ class ThemePageResolver implements ThemePageResolverInterface
             }
 
             if (empty($pages) && $this->themeResolver !== null) {
-                $candidateThemes = array_unique(array_filter([$activePublicTheme, 'rachidd', 'default']));
+                $candidateThemes = array_unique(array_filter([$activePublicTheme, 'default']));
                 foreach ($candidateThemes as $themeName) {
                     if ($this->themeResolver->themeExists($themeName)) {
                         $pagesDir = $this->themeResolver->resolveThemePath($themeName) . '/pages';

@@ -172,7 +172,7 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                 <div id="mobile_site_header" style="display:none; flex-direction:column; background:rgba(11, 12, 16, 0.95); border-bottom:1px solid rgba(69,243,255,0.15);">
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px;">
                         <div style="font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:-0.5px;">
-                            Rachid<span style="color:#45f3ff;">D.com</span>
+                            Domain<span style="color:#45f3ff;">System</span>
                         </div>
                         <button type="button" onclick="toggleMobilePreviewMenu('header')" style="background:rgba(69,243,255,0.1); border:1px solid rgba(69,243,255,0.3); color:#45f3ff; border-radius:6px; padding:4px 9px; font-size:14px; cursor:pointer;" title="Testar Menu Mobile do Header">
                             &#9776;
@@ -180,9 +180,9 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                     </div>
                     <div id="mobile_site_nav_dropdown" style="display:none; flex-direction:column; padding:8px 14px 12px 14px; background:#0b0c10; border-top:1px solid rgba(255,255,255,0.06); gap:6px; font-size:12px;">
                         <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">🏠 Início</div>
-                        <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">📘 OS Docs</div>
-                        <div style="padding:5px 8px; color:#45f3ff; background:rgba(69,243,255,0.1); font-weight:700; border-radius:4px;">🎓 Cursos &amp; Tutoriais (Ativo)</div>
-                        <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">📕 Livro SOLID</div>
+                        <div style="padding:5px 8px; color:#45f3ff; background:rgba(69,243,255,0.1); font-weight:700; border-radius:4px;">🎓 Cursos (Ativo)</div>
+                        <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">ℹ️ Sobre Nós</div>
+                        <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">⚙️ Painel</div>
                         <div style="padding:5px 8px; color:#8c8f94; border-radius:4px;">ℹ️ Sobre</div>
                     </div>
                 </div>
@@ -229,11 +229,11 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                         <?php endif; ?>
 
                         <footer style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.06); text-align:center; color:#64748b; font-size:10px;">
-                            <div style="font-weight:800; color:#fff; font-size:11px; margin-bottom:4px;">Rachid<span style="color:#45f3ff;">D.com</span></div>
+                            <div style="font-weight:800; color:#fff; font-size:11px; margin-bottom:4px;">Domain<span style="color:#45f3ff;">System</span></div>
                             <div style="display:flex; justify-content:center; gap:10px; margin-bottom:6px; color:#8c8f94;">
                                 <span>Sobre Nós</span> &bull; <span>Privacidade</span> &bull; <span>Termos</span>
                             </div>
-                            <div>&copy; <?= date('Y') ?> RachidD. Todos os direitos reservados.</div>
+                            <div>&copy; <?= date('Y') ?> Domain System. Todos os direitos reservados.</div>
                         </footer>
                     </div>
                 </div>

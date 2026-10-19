@@ -54,8 +54,8 @@ class CourseFrontController
     public function index(Request $request): Response
     {
         if ($this->seo !== null) {
-            $this->seo->setTitle('Cursos & Tutoriais | Rachid')
-                ->setDescription('Explore os cursos e tutoriais de arquitetura de software, PHP e engenharia de sistemas.');
+            $this->seo->setTitle('Cursos & Tutoriais | Academy')
+                ->setDescription('Explore os cursos e tutoriais disponíveis na plataforma Academy.');
         }
 
         $catalogHtml = $this->catalogRenderer->render();
@@ -125,7 +125,7 @@ class CourseFrontController
         $desc = htmlspecialchars((string)($course['description'] ?? ''), ENT_QUOTES, 'UTF-8');
 
         if ($this->seo !== null) {
-            $this->seo->setTitle($title . ' | Academy Rachid')
+            $this->seo->setTitle($title . ' | Academy')
                 ->setDescription(mb_substr(strip_tags((string)($course['description'] ?? '')), 0, 150) . '...');
         }
 
@@ -188,7 +188,7 @@ class CourseFrontController
             if ($plainDesc === '') {
                 $plainDesc = strip_tags((string)($course['description'] ?? ''));
             }
-            $this->seo->setTitle($lessonTitle . ' - ' . $courseTitle . ' | Academy Rachid')
+            $this->seo->setTitle($lessonTitle . ' - ' . $courseTitle . ' | Academy')
                 ->setDescription(mb_substr($plainDesc, 0, 150) . '...');
         }
 
