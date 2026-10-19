@@ -116,8 +116,10 @@ final class SystemUpdaterM1Test extends TestCase
             stateStore: $stateStore,
         );
 
-        // 1. GET /admin/settings/updates renderiza view com changelog escapado contra XSS
+        // 1. GET /admin/settings/updates renderiza ViewResponse (envelopado no layout Admin) com changelog escapado contra XSS
         $response = $controller->index(new Request(['checked' => '1']));
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\ViewResponse::class, $response);
+        $this->assertTrue($response->shouldWrapLayout());
         $this->assertSame(200, $response->getStatusCode());
         $html = $response->getContent();
         $this->assertStringContainsString('v2.3.0', $html);

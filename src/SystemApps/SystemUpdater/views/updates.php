@@ -45,19 +45,28 @@ if ($currentState !== null && isset($currentState->context['preflight']['checks'
     }
 }
 ?>
-<div class="wrap" style="max-width: 940px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1 style="margin: 0;">Configurações Globais</h1>
+</div>
+
+<div class="sys-tabs">
+    <a href="<?= $settingsBackUrl ?>" class="sys-tab" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-cog"></i> Geral</a>
+    <a href="<?= $settingsBackUrl ?>#tab-avancado" class="sys-tab" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-tools"></i> Avançado</a>
+    <a href="<?= htmlspecialchars($basePrefix . '/admin/settings/updates', ENT_QUOTES, 'UTF-8') ?>" class="sys-tab active" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-sync-alt"></i> Atualizações</a>
+</div>
+
+<div class="sys-content active" style="padding: 15px 20px; max-width: 940px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
         <div>
-            <h1 style="margin: 0;">🔄 Atualizações do Sistema</h1>
-            <p style="margin: 6px 0 0; color: #94a3b8; font-size: 13px;">
+            <h2 style="margin: 0; font-size: 20px;">🔄 Atualizações do Sistema</h2>
+            <p style="margin: 6px 0 0; color: #64748b; font-size: 13px;">
                 Repositório oficial: <code><?= $repoName ?></code> (canal <code><?= $channelName ?></code>)
             </p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="<?= $settingsBackUrl ?>" class="button" style="text-decoration: none;">← Voltar para Configurações</a>
             <form method="POST" action="<?= $actionCheckUrl ?>" style="margin: 0;">
                 <input type="hidden" name="csrf_token" value="<?= $csrfEscaped ?>">
-                <button type="submit" class="button button-primary" style="background: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600;">
+                <button type="submit" class="btn btn-activate" style="background: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600; cursor: pointer;">
                     🔍 Verificar agora
                 </button>
             </form>

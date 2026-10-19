@@ -42,7 +42,8 @@
 
 <div class="sys-tabs">
     <button class="sys-tab active" onclick="openSysTab(event, 'tab-geral')"><i class="fas fa-cog"></i> Geral</button>
-    <button class="sys-tab" onclick="openSysTab(event, 'tab-avancado')"><i class="fas fa-tools"></i> Avançado</button>
+    <button class="sys-tab" id="btn-tab-avancado" onclick="openSysTab(event, 'tab-avancado')"><i class="fas fa-tools"></i> Avançado</button>
+    <a href="<?= BASE_URL ?>/admin/settings/updates" class="sys-tab" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-sync-alt"></i> Atualizações</a>
 </div>
 
 <!-- ABA 1: GERAL -->
@@ -172,7 +173,13 @@ function openSysTab(evt, tabId) {
     }
     
     document.getElementById(tabId).classList.add("active");
-    evt.currentTarget.classList.add("active");
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+    }
+}
+if (window.location.hash === '#tab-avancado') {
+    var advBtn = document.getElementById('btn-tab-avancado');
+    openSysTab({ currentTarget: advBtn }, 'tab-avancado');
 }
 </script>
 

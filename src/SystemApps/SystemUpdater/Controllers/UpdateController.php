@@ -18,6 +18,7 @@ use DomainSystem\Core\Contracts\Update\UpdateTargetResolverInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\JsonResponse;
+use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Update\Enum\UpdateKind;
 use DomainSystem\Core\Update\Enum\UpdateStep;
 use DomainSystem\Core\Update\Service\UpdateNotifier;
@@ -74,7 +75,7 @@ final class UpdateController
             'base_url'            => defined('BASE_URL') ? rtrim((string)BASE_URL, '/') : '',
         ], dirname(__DIR__) . '/views');
 
-        return new Response($html);
+        return new ViewResponse($html);
     }
 
     public function check(Request $request): ResponseInterface
