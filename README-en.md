@@ -56,6 +56,9 @@ Any plugin providing `src/Plugins/<slug>/manual/module.php` implementing `Manual
 ### 🎨 7. Content Manager, SEO & Anti-CSRF / Capability Security
 Manage web pages (CMS), Atomic Dynamic Menus, OpenGraph/Schema.org SEO, and **Capability Security (ACL)** with native Anti-CSRF, Anti-XSS, and 2FA protection.
 
+### 🔄 8. Contract-Driven GitHub Releases Self-Updater (`SystemUpdater` — Model A)
+Automatic new-version notifications (Global Settings tab, dashboard widget, and notification bell), streaming download with dual SHA-256 + `manifest.json` verification, preflight checks, automatic code and database backups, atomic file replacement preserving `.env`/`config/`/`storage/`, contract-verified additive migrations (`SchemaVerifier`), and automatic rollback via UI or CLI (`php os-cli.php system:update`).
+
 ## ⚙️ How to Install
 
 1. **Clone the repository** into the public folder of your Apache/Nginx server (e.g., `htdocs` or `www`):
@@ -74,7 +77,7 @@ Manage web pages (CMS), Atomic Dynamic Menus, OpenGraph/Schema.org SEO, and **Ca
 
 ## 👨‍💻 For Developers & AI Agents (SDK)
 
-The system features an **Event-Driven Hooks** and **Contracts (`src/Core/Contracts`)** engine verified by **183 automated tests (751 assertions)** in PHPUnit.
+The system features an **Event-Driven Hooks** and **Contracts (`src/Core/Contracts`)** engine verified by **309 automated tests (1,400 assertions)** in PHPUnit.
 To build your own module (manually or with AI), refer to:
 - [Plugin Development Guide (Humans)](DEVELOPER_GUIDE.md)
 - [Official AI Contract Guide (`AI_CONTRACT_GUIDE.md`)](AI_CONTRACT_GUIDE.md)

@@ -53,9 +53,9 @@ Este documento descreve a evolução e visão de futuro para o **Domain System**
 - [ ] **Tenant Provisioner Plugin:** Um plugin oficial que permite criar um novo ambiente (banco de dados + subdomínio) com 1 clique a partir de um painel Super Admin.
 - [ ] **Gestão de Assinaturas (Stripe):** Bloqueio ou liberação de tenants baseado no status da fatura do cliente.
 
-### 3.2. Abstração Total de Banco de Dados
+### 3.2. Abstração Total de Banco de Dados & Atualizador Automático por Contrato
 - [x] **Schema Builder:** Em vez de arquivos `.sql` ou queries hardcoded, os plugins usarão uma classe `Schema` para criar tabelas que funcione tanto no MySQL (Produção Hostinger) quanto no SQLite (Testes).
-- [ ] **Migrações Automáticas:** O Kernel comparará o Schema desejado pelo plugin com a tabela real no banco e aplicará as alterações (ALTER TABLE) sem intervenção humana.
+- [x] **Atualizador Automático via GitHub Releases (`SystemUpdater` / `CoreUpdater` — Modelo A):** Verificação semântica com ETag, pacote assinado SHA-256 + `manifest.json`, pré-checagem, backup de código/banco (`SqliteDatabaseBackup`/`MysqlDatabaseBackup`), migrações aditivas verificadas por contrato (`SchemaPlanner`/`SchemaVerifier`), health-check em duas fases e rollback automático.
 
 ### 3.3. API Pública (REST & Webhooks)
 - [ ] **Central de Webhooks (Event Gateway):** Um ponto único e seguro onde serviços externos disparam eventos no OS.

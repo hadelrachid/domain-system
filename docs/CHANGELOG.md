@@ -8,6 +8,15 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [Unreleased]
+### Added
+- **Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` / `CoreUpdater` — Modelo A):**
+  - **25 Contratos em `src/Core/Contracts/Update/` & Auditoria `UpdateArchitectureTest`:** Máquina de estados de 14 etapas (`Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Done`) 100% desacoplada de infraestrutura (`PDO`, `curl_*`, `ZipArchive` e superglobais banidos fora dos adaptadores).
+  - **Segurança Criptográfica & Anti-Zip-Slip (`Sha256PackageVerifier`, `ZipPackageExtractor`, `HostAllowlist`):** Validação dupla SHA-256 (do pacote `.zip` e de cada arquivo em `manifest.json`), quarentena isolada, proteção contra *zip bomb*/symlinks e allowlist estrita HTTPS para o GitHub.
+  - **Backup Completo, Migrações por Contrato & Auto-Rollback (`ZipDirectoryBackup`, `SqliteDatabaseBackup`, `MysqlDatabaseBackup`, `SchemaPlanner`, `SchemaVerifier`):** Criação automática de ponto de restauração de código e banco antes da aplicação, preservação estrita de `.env`, `config/` e `storage/`, verificação de saúde em duas requisições HTTP (`CoreHealthCheck`) e rollback automático em caso de falha.
+  - **Interface Integrada em Configurações Globais (`/admin/settings/updates`), Widget no Painel & Comandos CLI (`os-cli.php`):** Aba dedicada em Configurações Globais, widget `Versão do Sistema` no Dashboard, notificação única por versão no sino e comandos `system:check`, `system:status`, `system:update`, `system:rollback` e `system:health`.
+  - **Empacotador Determinístico de Releases (`ReleaseBuilder` & `tools/build-release.php`):** Geração automatizada de `dist/domain-system-X.Y.Z.zip` e `.sha256` integrada ao `.github/workflows/release.yml` e padronização de todos os 17 manifestos `plugin.json` oficiais em `2.3.0`.
+
 ## [2.3.0] - 2026-10-19
 ### Added
 - **Guia Mestre de Contratos para IA ("Vibe Coding on Rails" - `AI_CONTRACT_GUIDE.md`):** Documentação oficial para LLMs na raiz + regras automáticas para IDEs (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`), botão 1-clique **"📋 Copiar Prompt Mestre para IA"** no Manual do Sistema e gerador CLI (`php os-cli.php make:plugin <slug>`) que cria a árvore completa de contratos do Ring 3.

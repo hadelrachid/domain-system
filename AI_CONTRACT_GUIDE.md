@@ -175,7 +175,16 @@ return new class implements ManualModuleInterface {
 
 ---
 
-## ✅ 5. PRE-DELIVERY CHECKLIST FOR AI AGENTS
+## 🔄 5. RELEASES & MIGRATIONS (SELF-UPDATER CONTRACT RULES)
+
+1. **Additive Migrations Only (`type: additive`)**: Within the same major version (`2.x`), migrations in `src/Core/Database/migrations/` and `src/Plugins/<slug>/migrations/` must only add tables or columns (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ADD COLUMN`). Never drop or rename columns in minor updates (MySQL implicitly commits DDL).
+2. **Update `release/schema-expects.json`**: Whenever a new migration adds required tables or columns, register them in `release/schema-expects.json` so `SchemaVerifier` can enforce the post-migration schema contract.
+3. **Version Parity (`Tag = DS_VERSION = composer.json`)**: `DS_VERSION` in `bootstrap.php`, `version` in `composer.json`, and all official bundled `plugin.json` manifests must match (`VersionConsistencyTest`).
+4. **Atomic State Persistence (`AtomicJsonStore`)**: Always use `JsonStoreInterface` / `AtomicJsonStore` for JSON state files (`storage/update/`, `config/*.json`).
+
+---
+
+## ✅ 6. PRE-DELIVERY CHECKLIST FOR AI AGENTS
 
 Before returning code to the user, verify:
 - [ ] Does every `.php` file start with `declare(strict_types=1);`?
@@ -184,3 +193,4 @@ Before returning code to the user, verify:
 - [ ] Are all dependencies injected via interfaces (`Contracts/*Interface.php`)?
 - [ ] Is there a `manual/module.php` implementing `ManualModuleInterface`?
 - [ ] Do all tests pass (`php -dextension=zip phpunit.phar`)?
+

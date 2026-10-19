@@ -236,9 +236,21 @@ O Domain-System OS (ocupando apenas **~30 MB** descompactado em servidores Linux
    ```
    Esse comando já cria automaticamente `plugin.json`, `Plugin.php` (`OsExtensionInterface`), `Contracts/`, `Controllers/`, `views/` e `manual/module.php` (`ManualModuleInterface`).
 3. **Agnosticismo Total do SO (Ring 0)**:
-   - O Sistema Operacional (Ring 0) nunca conhece detalhes de SGBDs (MySQL, SQLite, PostgreSQL) ou de sistemas operacionais (Windows, Linux, macOS). Toda comunicação entre o Kernel e os módulos ocorre exclusivamente via **Injeção de Dependências e Contratos** (`SchemaDoctorInterface`, `JsonStoreInterface`, `DatabaseConnectionInterface`), validada por **183 testes automatizados (751 asserções)**.
+   - O Sistema Operacional (Ring 0) nunca conhece detalhes de SGBDs (MySQL, SQLite, PostgreSQL) ou de sistemas operacionais (Windows, Linux, macOS). Toda comunicação entre o Kernel e os módulos ocorre exclusivamente via **Injeção de Dependências e Contratos** (`SchemaDoctorInterface`, `JsonStoreInterface`, `DatabaseConnectionInterface`), validada por **309 testes automatizados (1.400 asserções)**.
+
+---
+
+## 🚀 Releases e Migrations (Regras do Atualizador Automático — Modelo A)
+
+Para que o atualizador automático via GitHub Releases (`SystemUpdater` / `CoreUpdater`) opere com segurança em hospedagens compartilhadas (MySQL/SQLite):
+
+1. **Migrations Estritamente Aditivas:** Dentro da mesma versão maior (`2.x`), toda migration (`src/Core/Database/migrations/*.php` ou `src/Plugins/<slug>/migrations/*.php`) deve ser **aditiva** (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ADD COLUMN`). Nunca remova ou renomeie tabelas/colunas em uma atualização menor, pois o MySQL realiza *implicit commit* em DDL.
+2. **Atualização Obrigatória do Contrato `release/schema-expects.json`:** Sempre que criar uma migration que adicione tabela ou coluna essencial ao sistema, registre-a em `release/schema-expects.json` para que o `SchemaVerifier` valide sua presença após a atualização.
+3. **Consistência de Versão (`Tag = DS_VERSION = composer.json`):** Antes de publicar uma tag `vX.Y.Z`, atualize `DS_VERSION` em `bootstrap.php`, `version` em `composer.json` e os `plugin.json` oficiais. O teste `VersionConsistencyTest` e o workflow `.github/workflows/release.yml` bloqueiam pacotes divergentes.
+4. **Estado Atômico (`AtomicJsonStore`):** Qualquer estado persistido em JSON (`storage/`, `config/`, `temp/`) deve usar escrita atômica com `LOCK_EX` via `JsonStoreInterface`.
 
 ---
 
 O seu código é isolado em Sandboxes. Use Exceções à vontade. O **No-Break Shield** garantirá que um erro de lógica no seu Plugin não derrube o sistema inteiro, apenas exiba um aviso elegante ao administrador!
+
 

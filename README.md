@@ -56,6 +56,9 @@ Qualquer plugin em `src/Plugins/<slug>/manual/module.php` que implemente a inter
 ### 🎨 7. Administrador de Conteúdo, SEO e Segurança Anti-CSRF / ACL
 Gerencie páginas web (CMS), Menus Dinâmicos Atômicos, SEO OpenGraph/Schema.org e Controle de Acesso baseado em **Capabilities** com proteção nativa Anti-CSRF, Anti-XSS e suporte a 2FA.
 
+### 🔄 8. Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` — Modelo A)
+Notificação automática de novas versões (painel, widget e sino), download em streaming com validação dupla SHA-256 + `manifest.json`, pré-checagem, backup automático de código e banco, aplicação atômica preservando `.env`/`config/`/`storage/`, execução de migrations verificadas por contrato (`SchemaVerifier`) e rollback automático em 1 clique ou via CLI (`php os-cli.php system:update`).
+
 ## ⚙️ Como Instalar
 
 1. **Clone o repositório** para a pasta pública do seu servidor Apache/Nginx (ex: `htdocs` ou `www`):
@@ -74,7 +77,7 @@ Gerencie páginas web (CMS), Menus Dinâmicos Atômicos, SEO OpenGraph/Schema.or
 
 ## 👨‍💻 Para Desenvolvedores & IAs (SDK)
 
-O sistema possui uma engine de **Hooks (Event-Driven)** e **Contratos (`src/Core/Contracts`)** validada por **183 testes automatizados (751 asserções)** no PHPUnit.
+O sistema possui uma engine de **Hooks (Event-Driven)** e **Contratos (`src/Core/Contracts`)** validada por **309 testes automatizados (1.400 asserções)** no PHPUnit.
 Para criar seu próprio módulo com ou sem auxílio de IA, consulte:
 - [Guia de Desenvolvimento de Plugins (Humanos)](DEVELOPER_GUIDE.md)
 - [Guia Oficial de Contratos para IAs (`AI_CONTRACT_GUIDE.md`)](AI_CONTRACT_GUIDE.md)
