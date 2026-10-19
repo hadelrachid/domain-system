@@ -8,6 +8,9 @@ use DomainSystem\Core\Contracts\NotificationManagerInterface;
 use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\Update\BackupInterface;
+use DomainSystem\Core\Contracts\Update\CoreUpdaterInterface;
+use DomainSystem\Core\Contracts\Update\DatabaseBackupInterface;
 use DomainSystem\Core\Contracts\Update\HealthCheckInterface;
 use DomainSystem\Core\Contracts\Update\UpdateCheckerInterface;
 use DomainSystem\Core\Contracts\Update\UpdateStateStoreInterface;
@@ -15,7 +18,12 @@ use DomainSystem\Core\Contracts\Update\UpdateTargetResolverInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\JsonResponse;
+use DomainSystem\Core\Update\Enum\UpdateKind;
+use DomainSystem\Core\Update\Enum\UpdateStep;
 use DomainSystem\Core\Update\Service\UpdateNotifier;
+use DomainSystem\Core\Update\Value\BackupScope;
+use DomainSystem\Core\Update\Value\UpdateState;
+use Throwable;
 
 final class UpdateController
 {
@@ -30,6 +38,9 @@ final class UpdateController
         ?NotificationManagerInterface $notifications = null,
         ?UpdateNotifier $notifier = null,
         private readonly ?HealthCheckInterface $healthCheck = null,
+        private readonly ?CoreUpdaterInterface $coreUpdater = null,
+        private readonly ?BackupInterface $backup = null,
+        private readonly ?DatabaseBackupInterface $databaseBackup = null,
     ) {
         $this->notifier = $notifier ?? new UpdateNotifier($this->stateStore, $notifications);
     }
@@ -44,14 +55,23 @@ final class UpdateController
         $checkResult = $this->checker->check($target, false);
         $this->notifier->notifyIfAvailable($checkResult);
 
+        $currentState = $this->stateStore->load($target);
+        $backups = $this->backup !== null
+            ? $this->backup->list(new BackupScope(UpdateKind::Core, 'core'))
+            : [];
+        $dbBackupSupported = $this->databaseBackup === null || $this->databaseBackup->isSupported();
+
         $checkedNow = $request !== null && (string)($request->input('checked') ?? '') === '1';
 
         $html = $this->theme->render('updates', [
-            'target'       => $target,
-            'check_result' => $checkResult,
-            'csrf_token'   => $this->session->getCsrfToken(),
-            'checked_now'  => $checkedNow,
-            'base_url'     => defined('BASE_URL') ? rtrim((string)BASE_URL, '/') : '',
+            'target'              => $target,
+            'check_result'        => $checkResult,
+            'update_state'        => $currentState,
+            'backups'             => $backups,
+            'db_backup_supported' => $dbBackupSupported,
+            'csrf_token'          => $this->session->getCsrfToken(),
+            'checked_now'         => $checkedNow,
+            'base_url'            => defined('BASE_URL') ? rtrim((string)BASE_URL, '/') : '',
         ], dirname(__DIR__) . '/views');
 
         return new Response($html);
@@ -74,6 +94,159 @@ final class UpdateController
 
         $baseUrl = defined('BASE_URL') ? rtrim((string)BASE_URL, '/') : '';
         return Response::redirect($baseUrl . '/admin/settings/updates?checked=1');
+    }
+
+    public function begin(Request $request): ResponseInterface
+    {
+        if (!$this->isAdmin()) {
+            return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
+        }
+
+        $token = (string)($request->input('csrf_token') ?? '');
+        if (!$this->session->validateCsrfToken($token)) {
+            return new JsonResponse(['ok' => false, 'error' => 'Token CSRF inválido.'], 403);
+        }
+
+        if ($this->coreUpdater === null) {
+            return new JsonResponse(['ok' => false, 'error' => 'Orquestrador CoreUpdater não disponível.'], 500);
+        }
+
+        $confirmNoDbBackup = in_array(
+            (string)($request->input('confirm_no_db_backup') ?? ''),
+            ['1', 'true', 'on'],
+            true
+        );
+
+        try {
+            $target = $this->targetResolver->core();
+            $state = $this->coreUpdater->begin($target, [
+                'confirmNoDbBackup' => $confirmNoDbBackup,
+            ]);
+
+            return new JsonResponse([
+                'ok'    => true,
+                'state' => $state->toArray(),
+            ]);
+        } catch (Throwable $e) {
+            return new JsonResponse([
+                'ok'    => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function advance(Request $request): ResponseInterface
+    {
+        if (!$this->isAdmin()) {
+            return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
+        }
+
+        $token = (string)($request->input('csrf_token') ?? '');
+        if (!$this->session->validateCsrfToken($token)) {
+            return new JsonResponse(['ok' => false, 'error' => 'Token CSRF inválido.'], 403);
+        }
+
+        if ($this->coreUpdater === null) {
+            return new JsonResponse(['ok' => false, 'error' => 'Orquestrador CoreUpdater não disponível.'], 500);
+        }
+
+        $updateId = trim((string)($request->input('update_id') ?? ''));
+        if ($updateId === '') {
+            return new JsonResponse(['ok' => false, 'error' => 'O parâmetro update_id é obrigatório.'], 400);
+        }
+
+        try {
+            $state = $this->coreUpdater->advance($updateId);
+            $isOk = !in_array($state->step, [UpdateStep::Failed, UpdateStep::RolledBack], true);
+
+            return new JsonResponse([
+                'ok'    => $isOk,
+                'state' => $state->toArray(),
+            ]);
+        } catch (Throwable $e) {
+            return new JsonResponse([
+                'ok'    => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function rollback(Request $request): ResponseInterface
+    {
+        if (!$this->isAdmin()) {
+            return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
+        }
+
+        $token = (string)($request->input('csrf_token') ?? '');
+        if (!$this->session->validateCsrfToken($token)) {
+            return new JsonResponse(['ok' => false, 'error' => 'Token CSRF inválido.'], 403);
+        }
+
+        $backupId = trim((string)($request->input('backup_id') ?? ''));
+        if ($backupId !== '' && $this->backup !== null) {
+            try {
+                $scope = new BackupScope(UpdateKind::Core, 'core');
+                foreach ($this->backup->list($scope) as $record) {
+                    if ($record->id === $backupId) {
+                        $this->backup->restore($record);
+                        if ($record->dumpPath !== null && $this->databaseBackup !== null) {
+                            $this->databaseBackup->restore($record->dumpPath);
+                        }
+                        return new JsonResponse([
+                            'ok'      => true,
+                            'message' => sprintf('Backup %s restaurado com sucesso.', $record->id),
+                        ]);
+                    }
+                }
+                return new JsonResponse(['ok' => false, 'error' => 'Backup não encontrado.'], 404);
+            } catch (Throwable $e) {
+                return new JsonResponse(['ok' => false, 'error' => $e->getMessage()], 500);
+            }
+        }
+
+        if ($this->coreUpdater === null) {
+            return new JsonResponse(['ok' => false, 'error' => 'Orquestrador CoreUpdater não disponível.'], 500);
+        }
+
+        $target = $this->targetResolver->core();
+        $currentState = $this->stateStore->load($target);
+        $updateId = trim((string)($request->input('update_id') ?? $currentState->updateId));
+
+        try {
+            $state = $this->coreUpdater->rollback($updateId);
+            return new JsonResponse([
+                'ok'    => $state->step === UpdateStep::RolledBack,
+                'state' => $state->toArray(),
+            ]);
+        } catch (Throwable $e) {
+            return new JsonResponse([
+                'ok'    => false,
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function pruneBackups(Request $request): ResponseInterface
+    {
+        if (!$this->isAdmin()) {
+            return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
+        }
+
+        $token = (string)($request->input('csrf_token') ?? '');
+        if (!$this->session->validateCsrfToken($token)) {
+            return new JsonResponse(['ok' => false, 'error' => 'Token CSRF inválido.'], 403);
+        }
+
+        if ($this->backup === null) {
+            return new JsonResponse(['ok' => false, 'error' => 'Serviço de backup não configurado.'], 500);
+        }
+
+        $removed = $this->backup->prune(new BackupScope(UpdateKind::Core, 'core'), 2);
+
+        return new JsonResponse([
+            'ok'      => true,
+            'removed' => $removed,
+        ]);
     }
 
     public function health(Request $request): ResponseInterface
@@ -100,7 +273,7 @@ final class UpdateController
         $context['health_report'] = $report->toArray();
         unset($context['awaiting']);
 
-        $updatedState = new \DomainSystem\Core\Update\Value\UpdateState(
+        $updatedState = new UpdateState(
             updateId: $state->updateId,
             target: $state->target,
             step: $state->step,

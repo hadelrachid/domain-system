@@ -19,8 +19,8 @@ $args = $argv;
 array_shift($args); // Remove o nome do script
 
 if (empty($args)) {
-    echo "OS-CLI v2.1.0 - Domain System Sandbox\n";
-    echo "Comandos Suportados: ls, mkdir, rm, cat, touch, make:plugin, make:widget\n";
+    echo "OS-CLI v2.3.0 - Domain System Sandbox\n";
+    echo "Comandos Suportados: ls, mkdir, rm, cat, touch, make:plugin, make:widget, system:check, system:status, system:update, system:rollback, system:health\n";
     exit;
 }
 
@@ -246,6 +246,31 @@ PHP
         echo "Estrutura criada: plugin.json, Plugin.php, Contracts/, Controllers/, views/ e manual/module.php\n";
         echo "Após terminar o desenvolvimento, compacte e instale pelo painel!\n";
         break;
+
+    case 'system:check':
+    case 'system:status':
+    case 'system:update':
+    case 'system:rollback':
+    case 'system:health':
+        $app = require __DIR__ . '/bootstrap.php';
+        $app->boot();
+        $container = $app->getContainer();
+        \DomainSystem\Core\Update\Infrastructure\UpdateServiceBinder::bind($container, __DIR__);
+
+        $handler = new \DomainSystem\SystemApps\SystemUpdater\Console\UpdateCliCommandHandler(
+            $container->make(\DomainSystem\Core\Contracts\Update\CoreUpdaterInterface::class),
+            $container->make(\DomainSystem\Core\Contracts\Update\UpdateTargetResolverInterface::class),
+            $container->make(\DomainSystem\Core\Contracts\Update\UpdateStateStoreInterface::class),
+            $container->make(\DomainSystem\Core\Contracts\Update\HealthCheckInterface::class),
+            $container->has(\DomainSystem\Core\Contracts\Update\BackupInterface::class)
+                ? $container->make(\DomainSystem\Core\Contracts\Update\BackupInterface::class)
+                : null,
+        );
+
+        $cliArgs = array_values(array_slice($args, 1));
+        $result = $handler->execute($command, $cliArgs);
+        echo $result['output'];
+        exit($result['exitCode']);
 
     default:
         echo "Comando não reconhecido: {$command}\n";

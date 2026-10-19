@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\SystemUpdater;
 
+use DomainSystem\Core\Contracts\NotificationManagerInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\Update\BackupInterface;
+use DomainSystem\Core\Contracts\Update\CoreUpdaterInterface;
+use DomainSystem\Core\Contracts\Update\DatabaseBackupInterface;
+use DomainSystem\Core\Contracts\Update\HealthCheckInterface;
 use DomainSystem\Core\Contracts\Update\UpdateCheckerInterface;
 use DomainSystem\Core\Contracts\Update\UpdateStateStoreInterface;
 use DomainSystem\Core\Contracts\Update\UpdateTargetResolverInterface;
@@ -37,9 +44,29 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
         $rootPath = defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 3);
         UpdateServiceBinder::bind($runtime, $rootPath);
 
+        $runtime->bind(UpdateController::class, static function ($c): UpdateController {
+            return new UpdateController(
+                theme: $c->make(ThemeManagerInterface::class),
+                session: $c->make(SessionManagerInterface::class),
+                checker: $c->make(UpdateCheckerInterface::class),
+                targetResolver: $c->make(UpdateTargetResolverInterface::class),
+                stateStore: $c->make(UpdateStateStoreInterface::class),
+                notifications: self::resolveOptional($c, NotificationManagerInterface::class),
+                notifier: self::resolveOptional($c, UpdateNotifier::class),
+                healthCheck: self::resolveOptional($c, HealthCheckInterface::class),
+                coreUpdater: self::resolveOptional($c, CoreUpdaterInterface::class),
+                backup: self::resolveOptional($c, BackupInterface::class),
+                databaseBackup: self::resolveOptional($c, DatabaseBackupInterface::class),
+            );
+        });
+
         $runtime->onHook('router.register', static function (Router $router): void {
             $router->addRoute('GET', '/admin/settings/updates', [UpdateController::class, 'index'], 'SystemUpdater', ['admin']);
             $router->addRoute('POST', '/admin/settings/updates/core/check', [UpdateController::class, 'check'], 'SystemUpdater', ['admin']);
+            $router->addRoute('POST', '/admin/settings/updates/core/begin', [UpdateController::class, 'begin'], 'SystemUpdater', ['admin']);
+            $router->addRoute('POST', '/admin/settings/updates/core/advance', [UpdateController::class, 'advance'], 'SystemUpdater', ['admin']);
+            $router->addRoute('POST', '/admin/settings/updates/core/rollback', [UpdateController::class, 'rollback'], 'SystemUpdater', ['admin']);
+            $router->addRoute('POST', '/admin/settings/updates/core/backups/prune', [UpdateController::class, 'pruneBackups'], 'SystemUpdater', ['admin']);
             $router->addRoute('GET', '/admin/settings/updates/core/health', [UpdateController::class, 'health'], 'SystemUpdater', ['admin']);
         });
 
@@ -87,5 +114,20 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function activate(OsRuntimeInterface $runtime): void
     {
         $runtime->registerCapability('system.update', 'SystemUpdater');
+    }
+
+    private static function resolveOptional(mixed $container, string $abstract): mixed
+    {
+        if (!is_object($container) || !method_exists($container, 'make')) {
+            return null;
+        }
+        try {
+            if (method_exists($container, 'has') && !$container->has($abstract)) {
+                return null;
+            }
+            return $container->make($abstract);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }
