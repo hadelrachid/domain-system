@@ -156,7 +156,12 @@ if ($currentState !== null && isset($currentState->context['preflight']['checks'
 
             <div style="margin-bottom: 14px; font-size: 12px; color: #94a3b8;">
                 Pacote: <code><?= htmlspecialchars($release->assetName, ENT_QUOTES, 'UTF-8') ?></code>
-                • SHA-256: <code><?= htmlspecialchars($release->sha256, ENT_QUOTES, 'UTF-8') ?></code>
+                • SHA-256:
+                <?php if ($release->sha256 === str_repeat('0', 64)): ?>
+                    <span style="color: #64748b;"><em>Release legada (publicada antes do manifesto SHA-256)</em></span>
+                <?php else: ?>
+                    <code><?= htmlspecialchars($release->sha256, ENT_QUOTES, 'UTF-8') ?></code>
+                <?php endif; ?>
             </div>
 
             <h3 style="font-size: 14px; color: #cbd5e1; margin-bottom: 8px;">Notas de Lançamento (Changelog):</h3>

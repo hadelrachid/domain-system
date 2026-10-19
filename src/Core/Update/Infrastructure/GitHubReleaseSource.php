@@ -89,6 +89,8 @@ final class GitHubReleaseSource implements ReleaseSourceInterface
                 $zipAsset = $asset;
             } elseif ($name === $expectedShaName) {
                 $shaAsset = $asset;
+            } elseif ($name === 'domain-system-core.zip') {
+                $fallbackZipAsset = $asset;
             } elseif ($fallbackZipAsset === null && str_ends_with(strtolower($name), '.zip')) {
                 $fallbackZipAsset = $asset;
             }
