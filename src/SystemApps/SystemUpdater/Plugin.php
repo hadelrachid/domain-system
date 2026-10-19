@@ -34,6 +34,7 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osRegister(OsConnectorInterface $os): void
     {
         $os->requireLink('core.session');
+        $os->requireLink('core.dashboard.widgets');
         $os->listenHook('router.register');
         $os->listenHook('admin.menu');
         $os->listenHook('dashboard.register_widgets');
@@ -60,6 +61,16 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(UpdateWidgetProvider::class, static function ($c): UpdateWidgetProvider {
+            return new UpdateWidgetProvider(
+                checker: $c->make(UpdateCheckerInterface::class),
+                targetResolver: $c->make(UpdateTargetResolverInterface::class),
+                stateStore: self::resolveOptional($c, UpdateStateStoreInterface::class),
+                notifier: self::resolveOptional($c, UpdateNotifier::class),
+                notifications: self::resolveOptional($c, NotificationManagerInterface::class),
+            );
+        });
+
         $runtime->onHook('router.register', static function (Router $router): void {
             $router->addRoute('GET', '/admin/settings/updates', [UpdateController::class, 'index'], 'SystemUpdater', ['admin']);
             $router->addRoute('POST', '/admin/settings/updates/core/check', [UpdateController::class, 'check'], 'SystemUpdater', ['admin']);
@@ -67,6 +78,7 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/settings/updates/core/advance', [UpdateController::class, 'advance'], 'SystemUpdater', ['admin']);
             $router->addRoute('POST', '/admin/settings/updates/core/rollback', [UpdateController::class, 'rollback'], 'SystemUpdater', ['admin']);
             $router->addRoute('POST', '/admin/settings/updates/core/backups/prune', [UpdateController::class, 'pruneBackups'], 'SystemUpdater', ['admin']);
+            $router->addRoute('POST', '/admin/settings/updates/backups/prune', [UpdateController::class, 'pruneBackups'], 'SystemUpdater', ['admin']);
             $router->addRoute('GET', '/admin/settings/updates/core/health', [UpdateController::class, 'health'], 'SystemUpdater', ['admin']);
         });
 
@@ -83,30 +95,17 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
             return $menu;
         }, 98);
 
-        $widgetProviderFactory = static function () use ($runtime): UpdateWidgetProvider {
-            /** @var UpdateCheckerInterface $checker */
-            $checker = $runtime->make(UpdateCheckerInterface::class);
-            /** @var UpdateTargetResolverInterface $resolver */
-            $resolver = $runtime->make(UpdateTargetResolverInterface::class);
-            /** @var UpdateStateStoreInterface $stateStore */
-            $stateStore = $runtime->make(UpdateStateStoreInterface::class);
-            /** @var UpdateNotifier $notifier */
-            $notifier = $runtime->make(UpdateNotifier::class);
-
-            return new UpdateWidgetProvider($checker, $resolver, $stateStore, $notifier);
-        };
-
         try {
             $registry = $runtime->getLink('core.dashboard.widgets');
             if (is_object($registry) && method_exists($registry, 'registerProvider')) {
-                $registry->registerProvider($widgetProviderFactory());
+                $registry->registerProvider($runtime->make(UpdateWidgetProvider::class));
             }
         } catch (Throwable) {
         }
 
-        $runtime->onHook('dashboard.register_widgets', static function ($registry) use ($widgetProviderFactory): void {
+        $runtime->onHook('dashboard.register_widgets', static function ($registry) use ($runtime): void {
             if (is_object($registry) && method_exists($registry, 'registerProvider')) {
-                $registry->registerProvider($widgetProviderFactory());
+                $registry->registerProvider($runtime->make(UpdateWidgetProvider::class));
             }
         });
     }

@@ -301,6 +301,37 @@ final class SystemUpdaterM1Test extends TestCase
         $this->assertSame([['slug' => 'system.update', 'context' => 'SystemUpdater']], $runtime->caps);
     }
 
+    public function testPluginOsBootWithRealOsRuntimeRegistersWidgetWithoutSecurityAuditViolation(): void
+    {
+        $container = new \DomainSystem\Core\Container\Container();
+        $dispatcher = new \DomainSystem\Core\Events\EventDispatcher();
+        $linkRegistry = new \DomainSystem\Core\Plugin\LinkRegistry($container);
+        $widgetRegistry = new \DomainSystem\Core\Registry\DashboardWidgetRegistry();
+
+        $session = $this->createFakeSession('admin', 'csrf-123');
+        $container->singleton(SessionManagerInterface::class, static fn() => $session);
+        $container->singleton(\DomainSystem\Core\Security\SessionManager::class, static fn() => $session);
+        $container->singleton(\DomainSystem\Core\Registry\DashboardWidgetRegistry::class, static fn() => $widgetRegistry);
+
+        $connector = new \DomainSystem\Core\Plugin\OsConnector();
+        $plugin = new Plugin(dirname(__DIR__, 3) . '/src/SystemApps/SystemUpdater');
+        $plugin->osRegister($connector);
+        $linkRegistry->registerConnector('SystemUpdater', $connector);
+
+        $osRuntime = new \DomainSystem\Core\Plugin\OsRuntime(
+            $container,
+            $connector,
+            $linkRegistry,
+            $dispatcher,
+            'DomainSystem\\SystemApps\\SystemUpdater\\'
+        );
+
+        $plugin->osBoot($osRuntime);
+        $dispatcher->dispatch('dashboard.register_widgets', $widgetRegistry);
+
+        $this->assertNotNull($widgetRegistry->getProvider(UpdateWidgetProvider::class));
+    }
+
     private function createFakeSession(string $role, string $csrfToken): SessionManagerInterface
     {
         return new class ($role, $csrfToken) implements SessionManagerInterface {
