@@ -40,6 +40,7 @@ final class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->onHook('router.register', static function (Router $router): void {
             $router->addRoute('GET', '/admin/settings/updates', [UpdateController::class, 'index'], 'SystemUpdater', ['admin']);
             $router->addRoute('POST', '/admin/settings/updates/core/check', [UpdateController::class, 'check'], 'SystemUpdater', ['admin']);
+            $router->addRoute('GET', '/admin/settings/updates/core/health', [UpdateController::class, 'health'], 'SystemUpdater', ['admin']);
         });
 
         $sessionManager = $runtime->getLink('core.session');

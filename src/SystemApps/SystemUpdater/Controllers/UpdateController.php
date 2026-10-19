@@ -8,11 +8,13 @@ use DomainSystem\Core\Contracts\NotificationManagerInterface;
 use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\Update\HealthCheckInterface;
 use DomainSystem\Core\Contracts\Update\UpdateCheckerInterface;
 use DomainSystem\Core\Contracts\Update\UpdateStateStoreInterface;
 use DomainSystem\Core\Contracts\Update\UpdateTargetResolverInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Update\Service\UpdateNotifier;
 
 final class UpdateController
@@ -27,6 +29,7 @@ final class UpdateController
         private readonly UpdateStateStoreInterface $stateStore,
         ?NotificationManagerInterface $notifications = null,
         ?UpdateNotifier $notifier = null,
+        private readonly ?HealthCheckInterface $healthCheck = null,
     ) {
         $this->notifier = $notifier ?? new UpdateNotifier($this->stateStore, $notifications);
     }
@@ -71,6 +74,50 @@ final class UpdateController
 
         $baseUrl = defined('BASE_URL') ? rtrim((string)BASE_URL, '/') : '';
         return Response::redirect($baseUrl . '/admin/settings/updates?checked=1');
+    }
+
+    public function health(Request $request): ResponseInterface
+    {
+        if (!$this->isAdmin()) {
+            return new JsonResponse(['ok' => false, 'error' => 'Acesso restrito a administradores.'], 403);
+        }
+
+        if ($this->healthCheck === null) {
+            return new JsonResponse(['ok' => false, 'error' => 'Serviço HealthCheck não configurado.'], 500);
+        }
+
+        $target = $this->targetResolver->core();
+        $state = $this->stateStore->load($target);
+
+        $requestedId = trim((string)($request->input('update_id') ?? ''));
+        if ($requestedId !== '' && $state->updateId !== $requestedId) {
+            return new JsonResponse(['ok' => false, 'error' => 'update_id inválido ou divergente do estado ativo.'], 400);
+        }
+
+        $report = $this->healthCheck->run($target);
+
+        $context = $state->context;
+        $context['health_report'] = $report->toArray();
+        unset($context['awaiting']);
+
+        $updatedState = new \DomainSystem\Core\Update\Value\UpdateState(
+            updateId: $state->updateId,
+            target: $state->target,
+            step: $state->step,
+            release: $state->release,
+            etag: $state->etag,
+            lastCheckAt: $state->lastCheckAt,
+            context: $context,
+            error: $state->error,
+            updatedAt: gmdate('c'),
+        );
+        $this->stateStore->save($updatedState);
+
+        return new JsonResponse([
+            'ok'     => $report->ok,
+            'report' => $report->toArray(),
+            'state'  => $updatedState->toArray(),
+        ]);
     }
 
     private function isAdmin(): bool
