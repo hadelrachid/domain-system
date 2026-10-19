@@ -67,12 +67,21 @@ class Response implements ResponseInterface
 
     public function send(): void
     {
-        if (!headers_sent()) {
+        $headersSent = headers_sent();
+        if (!$headersSent) {
             http_response_code($this->statusCode);
             foreach ($this->headers as $name => $value) {
                 header($name . ': ' . $value);
             }
         }
+
+        $location = $this->getHeader('Location');
+        if ($location !== null && $headersSent) {
+            $escapedLocation = htmlspecialchars($location, ENT_QUOTES, 'UTF-8');
+            echo "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta http-equiv=\"refresh\" content=\"0;url={$escapedLocation}\"><script>window.location.href=" . json_encode($location) . ";</script></head><body>Redirecionando para <a href=\"{$escapedLocation}\">{$escapedLocation}</a>...</body></html>";
+            return;
+        }
+
         echo $this->content;
     }
 
@@ -83,6 +92,8 @@ class Response implements ResponseInterface
 
     public static function redirect(string $url, int $status = 302): self
     {
-        return new self('', $status, ['Location' => $url]);
+        $escaped = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+        $fallbackBody = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta http-equiv=\"refresh\" content=\"0;url={$escaped}\"><title>Redirecionando...</title></head><body>Redirecionando para <a href=\"{$escaped}\">{$escaped}</a>...<script>window.location.href=" . json_encode($url) . ";</script></body></html>";
+        return new self($fallbackBody, $status, ['Location' => $url]);
     }
 }

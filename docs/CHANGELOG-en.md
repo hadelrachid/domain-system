@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
+
+## [2.3.0] - 2026-10-18
+### Added
+- **Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` & `PluginManualScanner`):** Any plugin providing `src/Plugins/<slug>/manual/module.php` implementing `ManualModuleInterface` is now automatically discovered and rendered inside the Cockpit's **Instruction Manual (`/admin/manual`)**, including its QA homologation checklist items.
+- **Hybrid Academy LMS (v2.3.0) & Block Editor with Real-Time Preview:**
+  - Native hybrid support for lessons in **Raw HTML/Markdown** (`content_mode = 'raw'`) and **Structured Block Editor** (`content_mode = 'blocks'`, supporting `heading`, `paragraph`, `code`, `callout`, `video`, `divider`).
+  - **Real-Time Preview Modes:** `✏️ Blocks`, `⚡ Dynamic (Side-by-Side)`, and `👁️ Final Lesson` with live rendering and inline 16:9 embeds for YouTube, Vimeo, and MP4.
+  - **Multi-Device Simulator (Desktop, 3 Smartphones & 2 Tablets):** Switch between `🖥️ Desktop` and `📱 Mobile` across 5 standard viewports (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) with interactive mobile navigation and an Off-Canvas Course Drawer (`📚 Modules & Lessons Index`).
+  - **Automatic Course Folder Import & Re-Import (`CourseFolderImporterService`):** Smart synchronization of `.html`/`.md` files from disk without overwriting panel-edited lessons.
+  - **Interactive Academy Manual (`src/Plugins/academy/manual/`):** Step-by-step tutorial and QA checklist wired via `ManualModuleInterface`.
+
+### Changed
+- **Default New Course Status:** Changed from `soon` to `published` in the Academy creation modal to prevent accidental 404s when viewing newly created lessons, plus added a warning banner in the lesson editor when the parent course is not yet published.
+- **100% Environment-Agnostic Routing (`public/index.php`):** Removed hardcoded subfolder prefixes so the platform runs seamlessly in any subdirectory or root domain.
+
+## [2.2.0] - 2026-10-12
+### Added
+- **Decoupled Default "Coming Soon" Landing Page:** Fresh installations now start with `active_theme = ''`, displaying the default Coming Soon screen until the administrator explicitly activates a theme in the Cockpit.
+- **Architecture & Security Test Suite (`tests/`):** Automated PHPUnit tests enforcing zero superglobals in Controllers (`NoSuperglobalsInControllersTest`), Ring 0 route protection, and plugin coverage.
+
+## [2.1.0] - 2026-10-05
+### Added
+- **AES-256-GCM Authenticated Encryption:** Migrated from `AES-256-CBC` to `AES-256-GCM` in `src/Core/helpers.php`.
+- **Ring 0 Route Collision Protection:** Prevented Ring 3 plugins from hijacking core Kernel routes (`RouteAlreadyRegisteredException`).
+- **HTTP Session Hardening & Circuit Breaker Developer Mode:** `HttpOnly`, `SameSite=Strict` cookies and session-scoped safe bypass for debugging tripped plugins.
+
 ## [1.2.0] - 2026-08-30
 ### Added
 - **AI Hub:** New dedicated plugin for API keys management (Gemini, ChatGPT, DeepSeek, Claude).

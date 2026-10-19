@@ -4,11 +4,15 @@ namespace DomainSystem\Plugins\flextheme;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Contracts\PageTreeRendererInterface;
 use DomainSystem\Plugins\flextheme\Controllers\ThemeController;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Controllers\BuilderAdminController;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\WidgetManager;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\ContainerWidget;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Core\JsonRenderer;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\TextWidget;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\LogoWidget;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
@@ -86,8 +90,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/docs/{*slug}', [ThemeController::class, 'renderDoc']);
             $router->addRoute('GET', '/docs', function() {
                 $base = defined('BASE_URL') ? BASE_URL : '';
-                header("Location: $base/docs/index");
-                exit;
+                return Response::redirect("$base/docs/index");
             });
 
             // Rotas do Builder Flex (Editor Visual)
@@ -118,6 +121,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     {
         // 1. Injeção de Dependência: Vincula a interface ao gerenciador concreto
         $runtime->singleton(WidgetManagerInterface::class, WidgetManager::class);
+        $runtime->singleton(DtoRenderer::class, fn() => new DtoRenderer());
+        $runtime->singleton(JsonRenderer::class, function($c) {
+            return new JsonRenderer(
+                $c->make(WidgetManagerInterface::class),
+                $c->make(DtoRenderer::class)
+            );
+        });
+        $runtime->singleton(PageTreeRendererInterface::class, function($c) {
+            return $c->make(JsonRenderer::class);
+        });
 
         // 2. Resolve a instância do gerenciador
         /** @var WidgetManagerInterface $manager */

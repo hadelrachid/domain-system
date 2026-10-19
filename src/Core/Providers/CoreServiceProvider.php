@@ -27,9 +27,15 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Security\PasswordPolicy();
         });
 
-        // 1.45 Session Manager
-        $container->singleton(\DomainSystem\Core\Contracts\SessionManagerInterface::class, function() {
+        // 1.45 Session Manager (Consolidado em Core\Security com alias em Core\Http)
+        $container->singleton(\DomainSystem\Core\Security\SessionManager::class, function() {
             return new \DomainSystem\Core\Http\SessionManager();
+        });
+        $container->singleton(\DomainSystem\Core\Http\SessionManager::class, function($c) {
+            return $c->make(\DomainSystem\Core\Security\SessionManager::class);
+        });
+        $container->singleton(\DomainSystem\Core\Contracts\SessionManagerInterface::class, function($c) {
+            return $c->make(\DomainSystem\Core\Security\SessionManager::class);
         });
 
         // 1.5 Security & ACL Engine
@@ -37,9 +43,17 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Security\IdentityManager($c);
         });
 
-                // Core Monitoring Services
+        // Core Monitoring Services
         $container->singleton(\DomainSystem\Core\Contracts\NotificationManagerInterface::class, function() use ($basePath) {
             return new \DomainSystem\Core\Monitoring\NotificationManager($basePath);
+        });
+
+        $container->singleton(\DomainSystem\Core\Monitoring\RequestMetricsRecorder::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Monitoring\RequestMetricsRecorder($basePath);
+        });
+
+        $container->singleton(\DomainSystem\Core\Plugin\Services\ProcessRegistry::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Plugin\Services\ProcessRegistry($basePath);
         });
 
         // 1.6 Public Storage (Agnostic - XAMPP / Hostinger / Cloud)
@@ -48,13 +62,6 @@ class CoreServiceProvider
                 return defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
             };
             return new \DomainSystem\Core\Storage\LocalPublicStorage($basePath, $baseUrlProvider);
-        });
-
-        // 2. Auth (Session-based)
-        $container->singleton(\DomainSystem\SystemApps\auth\AuthManager::class, function($c) {
-            $session = $c->make(\DomainSystem\Core\Http\SessionManager::class);
-            $db = $c->make(\DomainSystem\SystemApps\Database\Connection::class);
-            return new \DomainSystem\SystemApps\auth\AuthManager($session, $db);
         });
 
         // Plugin Services
@@ -76,7 +83,7 @@ class CoreServiceProvider
                 $c->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class),
                 $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class),
                 $basePath,
-                $c->make(\DomainSystem\Core\Http\SessionManager::class)
+                $c->make(\DomainSystem\Core\Security\SessionManager::class)
             );
         });
 

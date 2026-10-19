@@ -49,7 +49,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             \DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface::class,
             \DomainSystem\SystemApps\auth\Repositories\CapabilityRepository::class
         );
-
+        $runtime->bind(
+            \DomainSystem\Core\Contracts\CapabilityRegistrarInterface::class,
+            \DomainSystem\SystemApps\auth\Repositories\CapabilityRepository::class
+        );
 
         $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface::class,
@@ -86,6 +89,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/login', [\DomainSystem\SystemApps\auth\Controllers\AuthController::class, 'showLoginForm']);
             $router->addRoute('POST', '/login', [\DomainSystem\SystemApps\auth\Controllers\AuthController::class, 'authenticate']);
             $router->addRoute('GET', '/logout', [\DomainSystem\SystemApps\auth\Controllers\AuthController::class, 'logout']);
+            $router->addRoute('POST', '/logout', [\DomainSystem\SystemApps\auth\Controllers\AuthController::class, 'logout']);
             $router->addRoute('GET', '/admin/users', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'index'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'store'], 'auth', ['admin']);
             $router->addRoute('GET', '/admin/users/2fa', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'generate2fa'], 'auth', ['admin']);
@@ -110,8 +114,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
             if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
                 if (!$sessionManager->has('user_id')) {
-                    header("Location: " . BASE_URL . "/login");
-                    exit;
+                    $base = defined('BASE_URL') ? BASE_URL : '';
+                    throw new \DomainSystem\Core\Exceptions\HttpResponseException(
+                        \DomainSystem\Core\Http\Response::redirect($base . "/login")
+                    );
                 }
             }
         });
@@ -191,7 +197,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 }
             }
 
-        } catch (\Exception $e) { throw new \RuntimeException('Falha ao criar o schema de autenticação: ' . $e->getMessage(), 0, $e); } // activate() só roda no instalador: engolir o erro gerava instalação "ok" sem tabelas
+        } catch (\Exception $e) { throw new \RuntimeException('Falha ao criar o schema de autenticação: ' . $e->getMessage(), 0, $e); }
 
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
         $db = $runtime->getLink('core.db')->getPdo();

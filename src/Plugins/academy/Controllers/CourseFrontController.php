@@ -13,6 +13,7 @@ use DomainSystem\Plugins\academy\Contracts\CourseNavigationInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
+use DomainSystem\Plugins\academy\Services\LessonBlockRenderer;
 use DomainSystem\Plugins\seo\Contracts\SeoManagerInterface;
 
 class CourseFrontController
@@ -23,6 +24,7 @@ class CourseFrontController
     private CourseCatalogRenderer $catalogRenderer;
     private ?SeoManagerInterface $seo;
     private ?ThemeManagerInterface $themeManager;
+    private LessonBlockRenderer $blockRenderer;
 
     public function __construct(
         CourseRepositoryInterface $courseRepo,
@@ -30,7 +32,8 @@ class CourseFrontController
         CourseNavigationInterface $navService,
         CourseCatalogRenderer $catalogRenderer,
         ?SeoManagerInterface $seo = null,
-        ?ThemeManagerInterface $themeManager = null
+        ?ThemeManagerInterface $themeManager = null,
+        ?LessonBlockRenderer $blockRenderer = null
     ) {
         $this->courseRepo = $courseRepo;
         $this->structureRepo = $structureRepo;
@@ -38,6 +41,7 @@ class CourseFrontController
         $this->catalogRenderer = $catalogRenderer;
         $this->seo = $seo;
         $this->themeManager = $themeManager;
+        $this->blockRenderer = $blockRenderer ?? new LessonBlockRenderer();
     }
 
     /**
@@ -111,12 +115,14 @@ class CourseFrontController
         $navHtml = $this->navService->renderCourseNav($courseSlug);
         $tree = $this->navService->getCourseTree($courseSlug);
 
-        // Identifica a primeira aula para o botão "Começar Agora"
+        // Identifica a primeira aula para o botão "Começar Agora" apenas se o curso estiver publicado
         $firstLessonUrl = null;
-        foreach ($tree as $mod) {
-            if (!empty($mod['lessons'])) {
-                $firstLessonUrl = $mod['lessons'][0]['url'] ?? null;
-                break;
+        if (($course['status'] ?? '') === 'published') {
+            foreach ($tree as $mod) {
+                if (!empty($mod['lessons'])) {
+                    $firstLessonUrl = $mod['lessons'][0]['url'] ?? null;
+                    break;
+                }
             }
         }
 
@@ -153,27 +159,39 @@ class CourseFrontController
     public function showLesson(string $courseSlug, string $lessonSlug): Response
     {
         $course = $this->courseRepo->findBySlug($courseSlug);
-        if (!$course || ($course['status'] ?? '') === 'draft') {
+        if (!$course) {
             return new Response("<h1>404 - Curso não encontrado</h1>", 404);
         }
+        if (($course['status'] ?? '') !== 'published') {
+            $statusLabel = ($course['status'] ?? '') === 'soon' ? 'Em Breve' : 'Rascunho';
+            return new Response(
+                "<h1>404 - Curso não encontrado</h1>" .
+                "<p>O curso <strong>" . htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8') . "</strong> está com o status <strong>{$statusLabel}</strong>. Altere o status do curso para <strong>Publicado</strong> no painel Academy para liberar o acesso às aulas.</p>",
+                404
+            );
+        }
 
-        $lesson = $this->structureRepo->getLessonBySlug((int)$course['id'], $lessonSlug);
-        if (!$lesson) {
-            return new Response("<h1>404 - Aula não encontrada</h1><p>A aula solicitada não existe neste curso.</p>", 404);
+        $lesson = $this->structureRepo->getPublishedLessonBySlug((int)$course['id'], $lessonSlug);
+        if (!$lesson || ($lesson['status'] ?? 'published') !== 'published') {
+            return new Response("<h1>404 - Aula não encontrada</h1><p>A aula solicitada não existe ou está em rascunho neste curso.</p>", 404);
         }
 
         $lessonTitle = htmlspecialchars((string)$lesson['title'], ENT_QUOTES, 'UTF-8');
         $courseTitle = htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8');
 
         if ($this->seo !== null) {
+            $plainDesc = $this->blockRenderer->extractPlainText((string)($lesson['content'] ?? ''));
+            if ($plainDesc === '') {
+                $plainDesc = strip_tags((string)($course['description'] ?? ''));
+            }
             $this->seo->setTitle($lessonTitle . ' - ' . $courseTitle . ' | Academy Rachid')
-                ->setDescription(mb_substr(strip_tags((string)($lesson['content'] ?? $course['description'] ?? '')), 0, 150) . '...');
+                ->setDescription(mb_substr($plainDesc, 0, 150) . '...');
         }
 
         $navHtml = $this->navService->renderCourseNav($courseSlug, $lessonSlug);
         $adjacent = $this->navService->getAdjacentLessons($courseSlug, $lessonSlug);
 
-        // Resolução do conteúdo da aula
+        // Resolução híbrida do conteúdo da aula (Arquivo de Tema vs Editor em Blocos / Conteúdo)
         $bodyContent = '';
         $themeFile = $lesson['source'] ?? $lesson['theme_file'] ?? null;
         if (!empty($themeFile) && ($lesson['source_type'] ?? '') !== 'content') {
@@ -184,7 +202,7 @@ class CourseFrontController
                 'navHtml'  => $navHtml,
             ]);
         } elseif (!empty($lesson['content'])) {
-            $bodyContent = (string)$lesson['content'];
+            $bodyContent = $this->blockRenderer->render((string)$lesson['content']);
         } else {
             $bodyContent = "<div class='ds-academy-empty-lesson' style='padding:40px; text-align:center; color:var(--text-muted);'><p>O conteúdo desta aula está sendo preparado.</p></div>";
         }
@@ -198,10 +216,25 @@ class CourseFrontController
         <section class='ds-academy-classroom' style='padding: 40px 20px; min-height: 80vh;'>
             <div class='container' style='max-width: 1300px; margin: 0 auto;'>
                 
+                <!-- Barra Mobile Interativa de Índice de Aulas (visível apenas em telas <= 900px) -->
+                <div class='ds-academy-mobile-bar'>
+                    <button type='button' class='ds-academy-drawer-toggle' onclick='window.toggleAcademyMobileDrawer(true)' aria-label='Abrir Índice de Aulas'>
+                        <span>📚 Índice de Módulos &amp; Aulas</span>
+                        <span class='ds-drawer-pill'>Ver Aulas &#9776;</span>
+                    </button>
+                </div>
+
+                <!-- Backdrop do Drawer Mobile -->
+                <div id='ds-academy-drawer-backdrop' class='ds-academy-drawer-backdrop' onclick='window.toggleAcademyMobileDrawer(false)'></div>
+
                 <div class='ds-academy-grid' style='display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start;'>
                     
-                    <!-- Sidebar com Navegação do Curso -->
-                    <aside class='ds-academy-sidebar glass-panel' style='padding: 24px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto;'>
+                    <!-- Sidebar / Drawer com Navegação do Curso -->
+                    <aside id='ds-academy-sidebar' class='ds-academy-sidebar glass-panel' style='padding: 24px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto;'>
+                        <div class='ds-academy-drawer-close-bar'>
+                            <span style='font-size:0.8rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--primary, #45f3ff);'>Navegação do Curso</span>
+                            <button type='button' onclick='window.toggleAcademyMobileDrawer(false)' class='ds-academy-drawer-close-btn' aria-label='Fechar menu'>✕</button>
+                        </div>
                         {$navHtml}
                     </aside>
 
@@ -211,7 +244,7 @@ class CourseFrontController
                             <div style='font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;'>
                                 <a href='{$courseUrl}' style='color: var(--primary, #45f3ff); text-decoration: none;'>&larr; {$courseTitle}</a>
                             </div>
-                            <h1 style='color: #fff; font-size: 2.2rem; font-weight: 800; margin: 0;'>{$lessonTitle}</h1>
+                            <h1 class='ds-academy-lesson-h1' style='color: #fff; font-size: 2.2rem; font-weight: 800; margin: 0;'>{$lessonTitle}</h1>
                         </header>
 
                         <div class='ds-academy-lesson-body' style='line-height: 1.8; color: var(--text-main, #c5c6c7);'>
@@ -226,7 +259,75 @@ class CourseFrontController
             </div>
         </section>
 
+        <script>
+            window.toggleAcademyMobileDrawer = function(open) {
+                var sidebar = document.getElementById('ds-academy-sidebar');
+                var backdrop = document.getElementById('ds-academy-drawer-backdrop');
+                if (!sidebar || !backdrop) return;
+                if (open) {
+                    sidebar.classList.add('is-open');
+                    backdrop.classList.add('is-open');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    sidebar.classList.remove('is-open');
+                    backdrop.classList.remove('is-open');
+                    document.body.style.overflow = '';
+                }
+            };
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') window.toggleAcademyMobileDrawer(false);
+            });
+        </script>
+
         <style>
+            .ds-academy-mobile-bar {
+                display: none;
+                margin-bottom: 18px;
+            }
+            .ds-academy-drawer-toggle {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 13px 18px;
+                border-radius: 10px;
+                background: rgba(20, 25, 28, 0.92);
+                border: 1px solid rgba(69, 243, 255, 0.3);
+                color: #fff;
+                font-weight: 700;
+                font-size: 0.95rem;
+                cursor: pointer;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            }
+            .ds-drawer-pill {
+                background: rgba(69, 243, 255, 0.15);
+                color: var(--primary, #45f3ff);
+                padding: 4px 10px;
+                border-radius: 50px;
+                font-size: 0.78rem;
+                font-weight: 800;
+            }
+            .ds-academy-drawer-backdrop {
+                display: none;
+            }
+            .ds-academy-drawer-close-bar {
+                display: none;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 14px;
+                margin-bottom: 14px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .ds-academy-drawer-close-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border: none;
+                color: #fff;
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+            }
             .course-nav {
                 display: flex;
                 flex-direction: column;
@@ -288,12 +389,61 @@ class CourseFrontController
                 opacity: 0.7;
             }
             @media (max-width: 900px) {
+                .ds-academy-classroom {
+                    padding: 20px 12px !important;
+                }
+                .ds-academy-mobile-bar {
+                    display: block;
+                    position: sticky;
+                    top: 72px;
+                    z-index: 80;
+                }
                 .ds-academy-grid {
                     grid-template-columns: 1fr !important;
                 }
                 .ds-academy-sidebar {
-                    position: static !important;
-                    max-height: none !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    bottom: 0 !important;
+                    width: 84vw !important;
+                    max-width: 340px !important;
+                    max-height: 100vh !important;
+                    z-index: 1200 !important;
+                    border-radius: 0 16px 16px 0 !important;
+                    background: #11161b !important;
+                    transform: translateX(-105%);
+                    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: 15px 0 40px rgba(0, 0, 0, 0.75);
+                }
+                .ds-academy-sidebar.is-open {
+                    transform: translateX(0);
+                }
+                .ds-academy-drawer-backdrop.is-open {
+                    display: block;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.65);
+                    backdrop-filter: blur(4px);
+                    z-index: 1150;
+                }
+                .ds-academy-drawer-close-bar {
+                    display: flex;
+                }
+                .ds-academy-main-article {
+                    padding: 22px 16px !important;
+                }
+                .ds-academy-lesson-h1 {
+                    font-size: 1.55rem !important;
+                }
+                .ds-academy-pagination {
+                    flex-direction: column !important;
+                }
+                .ds-academy-pagination > div,
+                .ds-academy-pagination a {
+                    width: 100% !important;
+                    justify-content: center !important;
+                    box-sizing: border-box !important;
                 }
             }
         </style>";
@@ -342,8 +492,9 @@ class CourseFrontController
 
         $realTarget = realpath($target);
         $realTheme = realpath($themePath);
+        $realThemePrefix = $realTheme !== false ? rtrim($realTheme, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
 
-        if ($realTarget === false || $realTheme === false || !str_starts_with($realTarget, $realTheme) || !file_exists($realTarget)) {
+        if ($realTarget === false || $realTheme === false || !str_starts_with($realTarget, $realThemePrefix) || !is_file($realTarget)) {
             return "<div class='alert alert-warning' style='padding:20px; color:#ffb703; background:rgba(255, 183, 3, 0.1); border-radius:8px;'>Arquivo do tema não encontrado ou inacessível: " . htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . "</div>";
         }
 

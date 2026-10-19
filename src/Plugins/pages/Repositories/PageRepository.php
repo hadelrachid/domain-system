@@ -5,16 +5,40 @@ namespace DomainSystem\Plugins\pages\Repositories;
 use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Core\Contracts\PageLookupInterface;
+use InvalidArgumentException;
 use PDOException;
 use PDO;
 
 class PageRepository implements PageRepositoryInterface, PageLookupInterface
 {
+    private const ALLOWED_COLUMNS = [
+        'id',
+        'slug',
+        'title',
+        'content',
+        'theme',
+        'template_file',
+        'created_at',
+    ];
+
     private PDO $db;
 
     public function __construct(Connection|PDO $connection)
     {
         $this->db = $connection instanceof Connection ? $connection->getPdo() : $connection;
+    }
+
+    private function validateColumns(array $data): void
+    {
+        if (empty($data)) {
+            throw new InvalidArgumentException('Nenhum dado fornecido para persistência em pages.');
+        }
+
+        foreach (array_keys($data) as $col) {
+            if (!in_array((string)$col, self::ALLOWED_COLUMNS, true)) {
+                throw new InvalidArgumentException("Coluna inválida não permitida em pages: {$col}");
+            }
+        }
     }
 
     public function getSelectablePages(): array
@@ -63,6 +87,7 @@ class PageRepository implements PageRepositoryInterface, PageLookupInterface
 
     public function create(array $data): void
     {
+        $this->validateColumns($data);
         $fields = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
         $stmt = $this->db->prepare("INSERT INTO pages ($fields) VALUES ($placeholders)");
@@ -75,6 +100,7 @@ class PageRepository implements PageRepositoryInterface, PageLookupInterface
 
     public function update(int $id, array $data): void
     {
+        $this->validateColumns($data);
         $sets = [];
         $params = [":id" => $id];
         foreach ($data as $k => $v) {
@@ -92,4 +118,3 @@ class PageRepository implements PageRepositoryInterface, PageLookupInterface
         $stmt->execute([":id" => $id]);
     }
 }
-

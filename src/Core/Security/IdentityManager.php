@@ -3,6 +3,7 @@
 namespace DomainSystem\Core\Security;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use PDO;
 
 /**
@@ -30,7 +31,7 @@ class IdentityManager
     private function getDb(): PDO
     {
         if ($this->db === null) {
-            $this->db = $this->container->make(\DomainSystem\SystemApps\Database\Connection::class)->getPdo();
+            $this->db = $this->container->make(DatabaseConnectionInterface::class)->getPdo();
         }
         return $this->db;
     }

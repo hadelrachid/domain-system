@@ -7,10 +7,13 @@ class ContainerWidget extends AbstractWidget
     public function getName(): string { return 'Container'; }
     public function getShortcodeTag(): string { return 'flex_container'; }
 
-    public function render(array $attributes, string $content = ''): string
+    public function toDto(array $attributes, array $children = []): array
     {
-        $commonAttrs = $this->extractCommonAttributes($attributes);
-        return sprintf('<div %s>%s</div>', $commonAttrs, $content);
+        $dto = parent::toDto($attributes, $children);
+        $dto['styles']['display'] = 'flex';
+        $dto['styles']['flex-direction'] = $attributes['direction'] ?? ($attributes['flexDirection'] ?? 'column');
+        $dto['styles']['align-items'] = $attributes['align'] ?? ($attributes['alignItems'] ?? 'flex-start');
+        return $dto;
     }
 
     public function getControls(): array
@@ -35,5 +38,4 @@ class ContainerWidget extends AbstractWidget
         ];
         return $parentControls;
     }
-
 }

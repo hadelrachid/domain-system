@@ -41,17 +41,32 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
             throw new \InvalidArgumentException("A imagem deve ter no máximo 2MB.");
         }
 
-        // Validação estrita de MIME type real (finfo)
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $realMime = $finfo->file($fileInfo['tmp_name']);
-        if (!isset(self::ALLOWED_MIMES[$realMime])) {
-            throw new \InvalidArgumentException("Formato inválido. Apenas JPG, PNG ou WEBP são aceitos.");
+        // Validação estrita de MIME type real (finfo com fallbacks resilientes)
+        $realMime = null;
+        if (class_exists('\finfo')) {
+            try {
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $realMime = $finfo->file($fileInfo['tmp_name']);
+            } catch (\Throwable $e) {
+                $realMime = null;
+            }
+        }
+        if (empty($realMime) && function_exists('mime_content_type')) {
+            $realMime = @mime_content_type($fileInfo['tmp_name']);
         }
 
         // Validação de dimensões e aspect ratio
         $imageSize = @getimagesize($fileInfo['tmp_name']);
         if (!$imageSize) {
             throw new \InvalidArgumentException("O arquivo enviado não é uma imagem válida.");
+        }
+
+        if (empty($realMime) && !empty($imageSize['mime'])) {
+            $realMime = $imageSize['mime'];
+        }
+
+        if (empty($realMime) || !isset(self::ALLOWED_MIMES[$realMime])) {
+            throw new \InvalidArgumentException("Formato inválido. Apenas JPG, PNG ou WEBP são aceitos.");
         }
 
         $width = (int)$imageSize[0];
@@ -70,14 +85,21 @@ class LocalCourseImageStorage implements CourseImageStorageInterface
         $safeName = 'course_' . bin2hex(random_bytes(10)) . '.' . $extension;
         $destination = $this->storage->getUploadPath('academy/' . $safeName);
 
+        $destDir = dirname($destination);
+        if (!is_dir($destDir)) {
+            @mkdir($destDir, 0755, true);
+        }
+
+        $moved = false;
         if (is_uploaded_file($fileInfo['tmp_name'])) {
-            if (!move_uploaded_file($fileInfo['tmp_name'], $destination)) {
-                throw new \RuntimeException("Falha ao salvar a imagem no diretório de destino.");
-            }
-        } else {
-            if (!copy($fileInfo['tmp_name'], $destination)) {
-                throw new \RuntimeException("Falha ao salvar a imagem no diretório de destino.");
-            }
+            $moved = @move_uploaded_file($fileInfo['tmp_name'], $destination);
+        }
+        if (!$moved) {
+            $moved = @copy($fileInfo['tmp_name'], $destination);
+        }
+
+        if (!$moved) {
+            throw new \RuntimeException("Falha ao salvar a imagem no diretório de destino ('{$destination}'). Verifique as permissões de escrita na pasta 'uploads/academy'.");
         }
 
         return 'uploads/academy/' . $safeName;

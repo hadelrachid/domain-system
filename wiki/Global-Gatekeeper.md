@@ -24,12 +24,13 @@ $router->addRoute('GET', '/admin/finance', [FinanceController::class, 'index'], 
 $router->addRoute('GET', '/admin/triage', [TriageController::class, 'index'], 'triage', ['admin', 'receptionist', 'doctor']);
 ```
 
-### Bloqueio Antecipado
+### Bloqueio Antecipado & Blindagem Ring 0
 
 Antes do Roteador instanciar o Controlador na memória e processar injeções de dependência, ele age como um "Porteiro":
-1. Lê a matriz de exigências da Rota.
-2. Compara com a sessão ativa no Kernel.
+1. Lê a matriz de exigências da Rota e valida a sessão via `SessionManagerInterface` (acesso direto a `$_SESSION` é banido nos Controllers).
+2. Compara com a sessão ativa e com o `IdentityManager` (Capabilities) no Kernel.
 3. Se o papel não bater, o Roteador exibe um Escudo de Acesso Negado (Status 403 Forbidden).
+4. **Proteção contra Sequestro de Rota (Ring 0 Lock):** O Roteador trava as rotas vitais do Kernel (`/login`, `/admin/*`), lançando `RouteAlreadyRegisteredException` se qualquer plugin do Ring 3 tentar sobrescrevê-las.
 
 O controlador sequer chega a ser acionado. O código flui maravilhosamente limpo e focado 100% no negócio, deixando toda a lógica de segurança para o núcleo do sistema tratar de forma invisível.
 
@@ -57,11 +58,12 @@ $router->addRoute('GET', '/admin/finance', [FinanceController::class, 'index'], 
 $router->addRoute('GET', '/admin/triage', [TriageController::class, 'index'], 'triage', ['admin', 'receptionist', 'doctor']);
 ```
 
-### Preemptive Blocking
+### Preemptive Blocking & Ring 0 Route Lock
 
 Before the Router instantiates the Controller in memory and processes dependency injections, it acts as a "Gatekeeper":
-1. Reads the route's requirement array.
-2. Compares it with the active session in the Kernel.
+1. Reads the route's requirement array and validates the session via `SessionManagerInterface` (direct `$_SESSION` access is banned in Controllers).
+2. Compares it with the active session and `IdentityManager` (Capabilities) in the Kernel.
 3. If the role doesn't match, the Router displays a Denied Access Shield (Status 403 Forbidden).
+4. **Ring 0 Route Collision Protection:** The Router locks core Kernel routes (`/login`, `/admin/*`), throwing `RouteAlreadyRegisteredException` if any Ring 3 plugin attempts to hijack them.
 
 The controller never even gets triggered. The code flows beautifully clean and focused 100% on business logic, leaving all security handling to be processed invisibly by the system's core.

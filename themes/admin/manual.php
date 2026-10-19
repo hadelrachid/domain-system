@@ -3,23 +3,30 @@
  * View do Manual de Instruções & Testabilidade no Painel Admin.
  */
 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
-$version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
+$version = defined('DS_VERSION') ? DS_VERSION : '2.3.0';
+if (!isset($pluginManuals) || !is_array($pluginManuals)) {
+    $scanner = new \DomainSystem\Core\Manual\PluginManualScanner();
+    $pluginManuals = $scanner->discover();
+}
 ?>
 <div class="wrap" style="max-width: 1200px;">
     <!-- HEADER DO MANUAL -->
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
         <div>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
                 <span style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(6, 182, 212, 0.3); text-transform: uppercase;">
                     Documentação & QA
                 </span>
                 <span style="background: #2563eb; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; font-family: monospace;">
                     v<?= htmlspecialchars($version) ?>
                 </span>
+                <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.35);">
+                    🔌 Auto-Descoberta Ativa: <?= count($pluginManuals) ?> módulo(s) <code>manual/</code> conectado(s) via <code>ManualModuleInterface</code>
+                </span>
             </div>
             <h1 style="margin: 0; font-size: 26px; color: #fff; font-weight: 700;">Manual de Instruções e Testabilidade</h1>
             <p style="color: var(--text-muted); margin: 5px 0 0; font-size: 14px;">
-                Guia prático de validação, atalhos do sistema e provas de resolutividade para cada módulo.
+                Guia prático de validação do Kernel e módulos carregados dinamicamente das pastas <code>manual/</code> de cada plugin.
             </p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -67,16 +74,20 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
             <div style="font-weight: 600; color: #fff; font-size: 15px;">Menus & Páginas</div>
             <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Associação de templates e transações atômicas.</div>
         </a>
-        <a href="<?= $baseUrl ?>/admin/manual#item-academy" style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-decoration: none; color: inherit; transition: all 0.2s; display: block;" onmouseover="this.style.borderColor='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="color: #a855f7; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Capítulo 5</div>
-            <div style="font-weight: 600; color: #fff; font-size: 15px;">Plugin Academy (Cursos)</div>
-            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Validação 16:9, finfo e slugs acentuados.</div>
-        </a>
         <a href="<?= $baseUrl ?>/admin/manual#item-instalador" style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-decoration: none; color: inherit; transition: all 0.2s; display: block;" onmouseover="this.style.borderColor='var(--accent-blue)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div style="color: #06b6d4; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Capítulo 6</div>
+            <div style="color: #06b6d4; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Capítulo 5</div>
             <div style="font-weight: 600; color: #fff; font-size: 15px;">Instalador & Hostinger</div>
             <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Pastas runtime, .htaccess e tolerância a erros.</div>
         </a>
+        <?php foreach ($pluginManuals as $mKey => $manualMod): 
+            if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
+        ?>
+        <a href="<?= $baseUrl ?>/admin/manual#item-<?= htmlspecialchars($manualMod->getId()) ?>" style="background: var(--bg-panel); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 8px; padding: 15px; text-decoration: none; color: inherit; transition: all 0.2s; display: block;" onmouseover="this.style.borderColor='<?= htmlspecialchars($manualMod->getAccentColor()) ?>'" onmouseout="this.style.borderColor='rgba(168, 85, 247, 0.35)'">
+            <div style="color: <?= htmlspecialchars($manualMod->getAccentColor()) ?>; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🔌 <?= htmlspecialchars($manualMod->getBadge()) ?></div>
+            <div style="font-weight: 600; color: #fff; font-size: 15px;"><?= htmlspecialchars($manualMod->getTitle()) ?></div>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;"><?= htmlspecialchars($manualMod->getSubtitle()) ?></div>
+        </a>
+        <?php endforeach; ?>
     </div>
 
     <!-- DETALHAMENTO DE CADA CAPÍTULO -->
@@ -222,38 +233,13 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
         </div>
     </div>
 
-    <!-- CAPÍTULO 5: ACADEMY -->
-    <div id="item-academy" class="postbox" style="margin-bottom: 30px; padding: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-            <h2 style="margin: 0; font-size: 18px; color: #fff;">5. Plugin Academy (Cursos & Cards 16:9)</h2>
-            <a href="<?= $baseUrl ?>/admin/academy" class="button" style="font-size: 12px;">Ir para Academy →</a>
-        </div>
-        <p style="color: var(--text-main); font-size: 14px; line-height: 1.6;">
-            <strong>O que foi solucionado:</strong> CRUD completo (rotas de edição e update adicionadas), upload com validação de proporção 16:9 via <code>finfo</code> e remoção automática de imagens órfãs ao substituir capa.
-        </p>
-        <div style="background: rgba(0, 210, 132, 0.08); border-left: 4px solid var(--accent-green); padding: 12px 16px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 13px;">
-            <strong>Como provar que funciona:</strong> Crie um curso com título acentuado (ex: *"Gestão & Inovação Tecnológica"*). O slug será limpo (<code>gestao-inovacao-tecnologica</code>). Teste a edição na rota <code>/admin/academy/edit/{id}</code>.
-        </div>
-        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-top: 15px;">
-            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Checklist de Validação</div>
-            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
-                <input type="checkbox" data-test-id="academy-create-accent">
-                <span style="font-size: 13px;">Criação de curso gera slug sem acentos único no banco de dados.</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                <input type="checkbox" data-test-id="academy-edit-course">
-                <span style="font-size: 13px;">Edição e atualização do curso conclui sem erros.</span>
-            </label>
-        </div>
-    </div>
-
-    <!-- CAPÍTULO 6: INSTALADOR & RUNTIME -->
+    <!-- CAPÍTULO 5: INSTALADOR & RUNTIME -->
     <div id="item-instalador" class="postbox" style="margin-bottom: 30px; padding: 25px;">
         <div style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-            <h2 style="margin: 0; font-size: 18px; color: #fff;">6. Instalador & Runtime Hostinger</h2>
+            <h2 style="margin: 0; font-size: 18px; color: #fff;">5. Instalador & Runtime Agnóstico (XAMPP / Hostinger)</h2>
         </div>
         <p style="color: var(--text-main); font-size: 14px; line-height: 1.6;">
-            <strong>O que foi solucionado:</strong> Pastas de runtime protegidas (<code>temp/</code>, <code>storage/</code>) com <code>.htaccess</code> e tolerância a avisos do PHP no Hostinger.
+            <strong>O que foi solucionado:</strong> Resolução 100% matemática e agnóstica de <code>BASE_URL</code> em <code>public/index.php</code>, pastas de runtime protegidas (<code>temp/</code>, <code>storage/</code>) com <code>.htaccess</code> e estado inicial limpo <code>SITE_STATUS=coming_soon</code>.
         </p>
         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-top: 15px;">
             <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Checklist de Validação</div>
@@ -263,6 +249,42 @@ $version = defined('DS_VERSION') ? DS_VERSION : '2.2.0';
             </label>
         </div>
     </div>
+
+    <!-- MÓDULOS DE INSTRUÇÃO DE PLUGINS (AUTO-DESCOBERTOS VIA CONTRATO ManualModuleInterface) -->
+    <?php foreach ($pluginManuals as $mKey => $manualMod):
+        if (!$manualMod instanceof \DomainSystem\Core\Contracts\ManualModuleInterface) continue;
+        $modId = $manualMod->getId();
+        $adminUrl = $manualMod->getAdminUrl();
+        $checkItems = $manualMod->getChecklistItems();
+    ?>
+    <div id="item-<?= htmlspecialchars($modId) ?>" class="postbox" style="margin-bottom: 30px; padding: 25px; border: 1px solid rgba(168, 85, 247, 0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <span style="display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: <?= htmlspecialchars($manualMod->getAccentColor()) ?>; margin-bottom: 4px;">
+                    🔌 <?= htmlspecialchars($manualMod->getBadge()) ?>
+                </span>
+                <h2 style="margin: 0; font-size: 19px; color: #fff;"><?= htmlspecialchars($manualMod->getTitle()) ?></h2>
+            </div>
+            <?php if ($adminUrl): ?>
+                <a href="<?= $baseUrl . htmlspecialchars($adminUrl) ?>" class="button" style="font-size: 12px;">Abrir Painel do Plugin &rarr;</a>
+            <?php endif; ?>
+        </div>
+
+        <?= $manualMod->renderContent($baseUrl) ?>
+
+        <?php if (!empty($checkItems)): ?>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-top: 18px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;">Checklist de Validação do Módulo</div>
+                <?php foreach ($checkItems as $item): ?>
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" data-test-id="<?= htmlspecialchars((string)$item['id']) ?>">
+                        <span style="font-size: 13px;"><?= htmlspecialchars((string)$item['label']) ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
 </div>
 
 <script>

@@ -15,11 +15,13 @@ use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Controllers\CourseAdminController;
 use DomainSystem\Plugins\academy\Controllers\CourseFrontController;
+use DomainSystem\Plugins\academy\Controllers\LessonAdminController;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseRepository;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseStructureRepository;
 use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
 use DomainSystem\Plugins\academy\Services\CourseNavigationService;
 use DomainSystem\Plugins\academy\Services\CourseService;
+use DomainSystem\Plugins\academy\Services\LessonBlockRenderer;
 use DomainSystem\Plugins\academy\Services\LocalCourseImageStorage;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
@@ -77,6 +79,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(LessonBlockRenderer::class, function() {
+            return new LessonBlockRenderer();
+        });
+
         // 2. Menu Administrativo
         $runtime->onHook('admin.menu', function($menus, $role = 'guest') {
             if ($role === 'admin') {
@@ -91,13 +97,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // 3. Rotas Administrativas e Públicas
         $runtime->onHook('router.register', function(Router $router) {
-            // Administrativas
+            // Administrativas - Cursos
             $router->addRoute('GET', '/admin/academy', [CourseAdminController::class, 'index'], 'academy', ['admin']);
             $router->addRoute('GET', '/admin/academy/edit/{id}', [CourseAdminController::class, 'edit'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/store', [CourseAdminController::class, 'store'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/update/{id}', [CourseAdminController::class, 'update'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/structure/{id}', [CourseAdminController::class, 'updateStructure'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/delete/{id}', [CourseAdminController::class, 'delete'], 'academy', ['admin']);
+
+            // Administrativas - Editor em Blocos de Aulas
+            $router->addRoute('GET', '/admin/academy/lessons/{id}/editor', [LessonAdminController::class, 'editor'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/lessons/{id}/update-content', [LessonAdminController::class, 'updateContent'], 'academy', ['admin']);
 
             // Públicas
             $router->addRoute('GET', '/cursos', [CourseFrontController::class, 'index'], 'academy');

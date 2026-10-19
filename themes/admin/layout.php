@@ -334,14 +334,20 @@
 
         /* UPLOAD DE ARQUIVOS (Procurar) - CYBERPUNK */
         input[type="file"] {
+            box-sizing: border-box !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            display: block !important;
             color: var(--text-muted) !important;
             background: rgba(13, 17, 23, 0.5) !important;
             border: 1px dashed var(--accent-blue) !important;
-            padding: 15px !important;
+            padding: 12px 15px !important;
             border-radius: 6px !important;
-            width: 100%;
             cursor: pointer;
             transition: all 0.3s;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
         }
         input[type="file"]:hover {
             border-color: var(--accent-green) !important;

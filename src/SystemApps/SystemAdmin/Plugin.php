@@ -76,12 +76,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // --- THE EMERGENCY HATCH (REDE DE SEGURANÇA) ---
         // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
-        // Se o plugin Auth estivesse vivo, ele já teria redirecionado e dado EXIT.
+        // Se o plugin Auth estivesse vivo, ele já teria redirecionado via HttpResponseException.
         $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
             if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
                 if (!$sessionManager->has('user_id')) {
-                    header("Location: " . BASE_URL . "/admin/emergency");
-                    exit;
+                    $base = defined('BASE_URL') ? BASE_URL : '';
+                    throw new \DomainSystem\Core\Exceptions\HttpResponseException(
+                        \DomainSystem\Core\Http\Response::redirect($base . "/admin/emergency")
+                    );
                 }
             }
         }, 999);

@@ -51,6 +51,11 @@ interface CourseStructureRepositoryInterface
     public function getLessonBySlug(int $courseId, string $slug): ?array;
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function getPublishedLessonBySlug(int $courseId, string $slug): ?array;
+
+    /**
      * @param array<string, mixed> $data
      */
     public function createLesson(array $data): int;

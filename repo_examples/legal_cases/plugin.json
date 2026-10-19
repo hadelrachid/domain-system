@@ -1,1 +1,8 @@
-{"name": "legal_cases", "version": "1.0.0", "description": "Sistema Jurídico", "core": false}
+{
+    "name": "legal_cases",
+    "version": "2.0.0",
+    "description": "Módulo Jurídico - Modelo de arquitetura SOLID usando OsExtensionInterface.",
+    "core": false,
+    "os_version": "2.2",
+    "dependencies": ["database"]
+}

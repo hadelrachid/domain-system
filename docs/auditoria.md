@@ -5,33 +5,39 @@
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🛡️ Auditoria Arquitetural e de Segurança (Domain System v2.1)
+# 🛡️ Auditoria Arquitetural e de Segurança (Domain System v2.3)
 
-**Última Atualização:** 05 de Outubro de 2026
+**Última Atualização:** 18 de Outubro de 2026
 
 Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Ambiente Operacional Web estruturado em SOLID**.
 
 ---
 
-## 🏛️ Evolução Arquitetural (Da v1.0 à v2.0)
+## 🏛️ Evolução Arquitetural (Da v1.0 à v2.3)
 
 O núcleo do sistema sofreu uma reformulação profunda em todos os seus pilares estruturais para garantir compatibilidade com padrões de mercado (SOLID, PSRs, Design Patterns avançados).
 
 ### 1. Desacoplamento Absoluto (Zero Lógica de Negócio no Core)
 - **Antes (v1.0):** O Kernel e a autenticação conheciam conceitos de negócio (Tabelas de médicos, clínicas, pacientes, e roles hardcoded).
-- **Agora (v2.0):** O Kernel é 100% agnóstico. Roles genéricas (`admin`, `manager`, `subscriber`, `user`) controlam o RBAC universal. Toda a lógica de negócio foi extraída e transferida para a camada de plugins.
+- **Agora (v2.3):** O Kernel é 100% agnóstico. Roles genéricas (`admin`, `manager`, `subscriber`, `user`) controlam o RBAC universal. Toda a lógica de negócio foi extraída e transferida para a camada de plugins.
 
 ### 2. Inversão de Controle e Injeção de Dependências (DIP)
 - **Antes:** Amplo uso de `new Classe()` e Service Locators como `$this->db()` espalhados pelos controllers.
 - **Agora:** O sistema conta com um Container de Injeção de Dependência (DI Container) de alto nível. Controllers e Repositórios declaram contratos (Interfaces) no construtor e o Micro-Kernel injeta a instância concreta automaticamente.
 
-### 3. Eliminação de Superglobais
+### 3. Eliminação de Superglobais (Blindada por Teste de Arquitetura)
 - **Antes:** Amplo acesso bruto à `$_SESSION`, `$_POST`, `$_GET`.
-- **Agora:** Todas as comunicações fluem de maneira imutável e higienizada através da classe `Request` e do gerenciador `SessionManager`, facilitando a criação de testes de unidade e o processamento middleware.
+- **Agora:** Todas as comunicações fluem de maneira imutável e higienizada através da classe `Request` e do contrato `SessionManagerInterface`, validado continuamente pelo teste automatizado `NoSuperglobalsInControllersTest`.
+
+### 4. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface` - v2.3.0)
+- **Inovação Arquitetural:** O Cockpit (`/admin/manual`) utiliza o `PluginManualScanner` para rastrear automaticamente pastas `manual/module.php` dentro dos plugins instalados. Qualquer plugin que implemente `ManualModuleInterface` injeta seu guia interativo e seus itens de checklist de homologação (QA) sem que o Kernel conheça os detalhes do plugin.
+
+### 5. Arquitetura SOLID Híbrida no Academy LMS (`v2.3.0`)
+- O plugin `academy` consagra o padrão de excelência do ecossistema: separação estrita entre Repositórios (`CourseRepositoryInterface`), Serviços (`CourseFolderImporterService`, `LessonBlockRendererService`, `LessonContentConverterService`) e Controllers, oferecendo suporte híbrido (HTML/Markdown puro + Editor em Blocos com Preview em Tempo Real e Simulador Multi-Dispositivos para Desktop, 3 Celulares e 2 Tablets).
 
 ---
 
-## 🔒 Auditoria Cirúrgica e Hardening (Patch 2.1.0 - Out/2026)
+## 🔒 Auditoria Cirúrgica e Hardening (Patch 2.1.0 a 2.3.0 - Out/2026)
 
 Após uma devassa completa no núcleo da aplicação em outubro de 2026, novas diretrizes rígidas foram implementadas para garantir proteção em tempo de execução e no armazenamento:
 
@@ -74,6 +80,6 @@ Criação do artefato de Troubleshooting (`ERROR_DICTIONARY.md`), empacotando ex
 
 ## 📈 Conclusão
 
-O **Domain System v2.1.0** eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por testes unitários e CI (GitHub Actions), selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web Platform Enterprise-Ready**.
+O **Domain System v2.3.0** eleva o padrão de exigência. Seu Micro-Kernel agnóstico está blindado por 180+ testes unitários e de arquitetura (PHPUnit + GitHub Actions), selado contra vazamento de criptografia, protegido contra roubo de sessões e imune a quedas em cascata, solidificando-se como uma plataforma **Web Platform Enterprise-Ready**.
 
 

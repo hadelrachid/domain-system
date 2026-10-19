@@ -13,6 +13,7 @@ use Throwable;
 class PdoMenuRepository implements MenuRepositoryInterface
 {
     private PDO $pdo;
+    private bool $tablesEnsured = false;
 
     public function __construct(Connection|PDO $connection)
     {
@@ -21,6 +22,10 @@ class PdoMenuRepository implements MenuRepositoryInterface
 
     public function ensureTables(): void
     {
+        if ($this->tablesEnsured) {
+            return;
+        }
+
         $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
         $autoIncrement = ($driver === 'sqlite') ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
 
@@ -58,6 +63,8 @@ class PdoMenuRepository implements MenuRepositoryInterface
             $insert = $this->pdo->prepare("INSERT INTO theme_menus (name, location) VALUES (?, ?)");
             $insert->execute(['Menu do Rodapé', 'footer']);
         }
+
+        $this->tablesEnsured = true;
     }
 
     public function getMenus(): array

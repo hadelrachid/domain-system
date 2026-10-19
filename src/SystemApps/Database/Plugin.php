@@ -3,9 +3,11 @@
 namespace DomainSystem\SystemApps\Database;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\SystemApps\Database\Schema\SchemaBuilder;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
@@ -22,7 +24,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // O Plugin Database grita para o OS: "Eu forneço essas 3 ferramentas para o sistema!"
         $os->provideLink('core.db', Connection::class);
         $os->provideLink('core.db.query', QueryBuilder::class);
-        $os->provideLink('core.db.schema', \DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class);
+        $os->provideLink('core.db.schema', SchemaBuilder::class);
     }
 
     // ==========================================
@@ -37,12 +39,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new Connection($config->getDsn(), $config->getUser(), $config->getPass());
         });
 
+        $runtime->singleton(DatabaseConnectionInterface::class, function($c) {
+            return $c->make(Connection::class);
+        });
+
         $runtime->bind(QueryBuilder::class, function($c) {
             return new QueryBuilder($c->make(Connection::class));
         });
 
-        $runtime->bind(\DomainSystem\SystemApps\Database\Schema\SchemaBuilder::class, function($c) {
-            return new \DomainSystem\SystemApps\Database\Schema\SchemaBuilder($c->make(Connection::class));
+        $runtime->bind(SchemaBuilder::class, function($c) {
+            return new SchemaBuilder($c->make(Connection::class));
         });
     }
 }

@@ -9,22 +9,31 @@ class LogoWidget extends AbstractWidget
     public function getName(): string { return 'Logo do Site'; }
     public function getShortcodeTag(): string { return 'flex_logo'; }
 
-    public function render(array $attributes, string $content = ''): string
+    public function toDto(array $attributes, array $children = []): array
     {
-        // Aqui ele vai ler a logo das configurações globais futuramente
+        $dto = parent::toDto($attributes, $children);
         $logoUrl = $attributes['src'] ?? (defined('BASE_URL') ? BASE_URL . '/assets/img/logo-default.png' : '/logo.png');
         $width = $attributes['width'] ?? '150px';
-        $commonAttrs = $this->extractCommonAttributes($attributes);
-        
-        return sprintf(
-            '<a href="%s" %s>
-                <img src="%s" alt="Logo" style="max-width: %s; height: auto;" />
-            </a>',
-            defined('BASE_URL') ? BASE_URL : '/',
-            $commonAttrs,
-            htmlspecialchars($logoUrl),
-            htmlspecialchars($width)
-        );
+
+        $dto['tag'] = 'a';
+        $dto['type'] = 'a';
+        $dto['attrs']['href'] = defined('BASE_URL') && BASE_URL !== '' ? BASE_URL : '/';
+        $dto['children'] = [
+            [
+                'type' => 'img',
+                'tag' => 'img',
+                'attrs' => [
+                    'src' => $logoUrl,
+                    'alt' => 'Logo',
+                ],
+                'styles' => [
+                    'max-width' => is_numeric($width) ? $width . 'px' : $width,
+                    'height' => 'auto',
+                ],
+                'content' => '',
+                'children' => [],
+            ],
+        ];
+        return $dto;
     }
 }
-

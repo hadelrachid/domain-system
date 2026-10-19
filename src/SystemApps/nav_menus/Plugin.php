@@ -71,10 +71,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
     public function activate(\DomainSystem\Core\Contracts\OsRuntimeInterface $runtime): void
     {
-        try {
-            $db = $runtime->getLink('core.db')->getPdo();
-            $repo = new PdoMenuRepository($db);
-            $repo->ensureTables();
-        } catch (\Throwable $e) {}
+        $runtime->bind(MenuRepositoryInterface::class, PdoMenuRepository::class);
+        $repo = $runtime->make(MenuRepositoryInterface::class);
+        $repo->ensureTables();
     }
 }

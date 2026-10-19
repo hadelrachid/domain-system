@@ -26,7 +26,7 @@ class SetupController
 {
     private PluginManager $manager;
     private ContainerInterface $container;
-    private \DomainSystem\SystemApps\installer\Services\InstallerService $service;
+    private \DomainSystem\SystemApps\installer\Contracts\InstallerServiceInterface $service;
 
     /** Tabelas sem as quais o sistema não sobe (criadas por SystemApps\auth). */
     private const ESSENTIAL_TABLES = ['users', 'roles', 'user_roles', 'capabilities'];
@@ -34,11 +34,11 @@ class SetupController
     public function __construct(
         PluginManager $manager,
         ContainerInterface $container,
-        ?\DomainSystem\SystemApps\installer\Services\InstallerService $service = null
+        \DomainSystem\SystemApps\installer\Contracts\InstallerServiceInterface $service
     ) {
         $this->manager = $manager;
         $this->container = $container;
-        $this->service = $service ?? new \DomainSystem\SystemApps\installer\Services\InstallerService();
+        $this->service = $service;
     }
 
     public function step1(Request $request): Response

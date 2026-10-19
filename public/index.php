@@ -5,16 +5,63 @@
  */
 
 // =========================================================================
-// MODO DE MANUTENÇÃO (hPanel / External Panel Integration)
+// RESOLUÇÃO 100% AGNÓSTICA DE BASE_URL E ROTA (Zero Acoplamento a Servidor)
 // =========================================================================
-// Verifica a existência do arquivo de lock físico sem invocar o framework.
-// Isso permite que plataformas como Hostinger hPanel ativem a manutenção 
-// apenas criando este arquivo (padrão da indústria).
+$resolveAgnosticPath = function(?string $explicitRequestUri = null): array {
+    $rawUri = $explicitRequestUri ?? ($_SERVER['REQUEST_URI'] ?? '/');
+    $path = parse_url($rawUri, PHP_URL_PATH);
+    $path = is_string($path) && $path !== '' ? str_replace('\\', '/', $path) : '/';
+
+    // 1. Respeita sobreposição explícita configurada no .env (BASE_URL ou APP_URL)
+    $envBase = getenv('BASE_URL') ?: (getenv('APP_URL') ? parse_url(getenv('APP_URL'), PHP_URL_PATH) : null);
+    if ($envBase !== null && $envBase !== false) {
+        $baseUrl = rtrim((string)$envBase, '/');
+        $route = $path;
+        if ($baseUrl !== '' && str_starts_with($route, $baseUrl)) {
+            $route = substr($route, strlen($baseUrl));
+        }
+        $route = '/' . ltrim($route, '/');
+        return [$baseUrl, $route];
+    }
+
+    // 2. Resolução matemática agnóstica entre SCRIPT_NAME e REQUEST_URI
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $scriptDir = rtrim($scriptDir, '/'); // Ex: "/domain-system/public", "/public", ou ""
+
+    if (str_ends_with($scriptDir, '/public') && !str_starts_with($path, $scriptDir)) {
+        // Rewrite do servidor ou .htaccess ocultou o /public na requisição web
+        $baseUrl = substr($scriptDir, 0, -strlen('/public'));
+    } else {
+        $baseUrl = $scriptDir;
+    }
+
+    $baseUrl = rtrim($baseUrl, '/');
+    $route = $path;
+
+    if ($baseUrl !== '' && str_starts_with($route, $baseUrl)) {
+        $route = substr($route, strlen($baseUrl));
+    }
+
+    // Se o acesso foi feito diretamente com /public no caminho
+    if (str_starts_with($route, '/public/')) {
+        $route = substr($route, strlen('/public'));
+    } elseif ($route === '/public') {
+        $route = '/';
+    }
+
+    $route = '/' . ltrim($route, '/');
+    return [$baseUrl, $route];
+};
+
+// =========================================================================
+// MODO DE MANUTENÇÃO (Lock Físico sem invocar o Kernel)
+// =========================================================================
 $maintenanceFile = dirname(__DIR__) . '/.maintenance';
 if (file_exists($maintenanceFile)) {
-    $uri = $_SERVER['REQUEST_URI'] ?? '/';
-    // Libera a passagem apenas para rotas de sistema crítico (Admin/Login/API/Setup)
-    if (strpos($uri, '/admin') === false && strpos($uri, '/login') === false && strpos($uri, '/api') === false && strpos($uri, '/setup') === false) {
+    [$earlyBase, $cleanPath] = $resolveAgnosticPath();
+
+    // Libera a passagem apenas para rotas de sistema crítico (Admin/Login/Logout/API/Setup)
+    if (!preg_match('#^/(admin|login|logout|api|setup)(/|$)#', $cleanPath)) {
         $maintenancePage = __DIR__ . '/maintenance.php';
         if (file_exists($maintenancePage)) {
             header('Retry-After: 3600');
@@ -25,7 +72,7 @@ if (file_exists($maintenanceFile)) {
             http_response_code(503);
             echo "<h1 style='text-align:center; font-family:sans-serif; margin-top:50px;'>Manutenção do Sistema. Voltamos em breve.</h1>";
         }
-        exit; // Interrompe a execução antes de encostar no Banco ou Autoloader
+        exit;
     }
 }
 // =========================================================================
@@ -49,73 +96,24 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 
 // Dispatch the request
 try {
-    $request = $earlyRequest; // Reutiliza o Request já capturado
-    // Suporte para subdiretórios no XAMPP (ex: /domain-system/admin)
-    $uri = $request->uri();
-    $scriptName = dirname($_SERVER['SCRIPT_NAME']); // ex: /domain-system/public
-    $scriptName = str_replace('\\', '/', $scriptName);
+    $request = $earlyRequest;
     
-    // 1. Remove o scriptName exato se acessaram diretamente /public/index.php
-    if ($scriptName !== '/' && strpos($uri, $scriptName) === 0) {
-        $uri = substr($uri, strlen($scriptName));
-    }
+    // Normalização 100% agnóstica de BASE_URL e Rota
+    [$baseUrl, $routeUri] = $resolveAgnosticPath($request->uri());
     
-    // 2. Calcula o BASE_URL e limpa a URI
-    $baseFolder = '/' . basename(dirname(__DIR__)); // ex: /domain-system
-    $scriptDir = rtrim(dirname($scriptName), '/\\'); // ex: /domain-system ou raiz da hostinger
-    
-    if ($baseFolder !== '/' && strpos($uri, $baseFolder) === 0) {
-        // Acesso local XAMPP: a URL começa com a pasta do projeto
-        $uri = substr($uri, strlen($baseFolder));
-        if (!defined('BASE_URL')) define('BASE_URL', $baseFolder);
-    } else {
-        // Acesso em Produção (Hostinger)
-        $reqUri = $_SERVER['REQUEST_URI'] ?? '';
-        if ($scriptDir !== '' && strpos($reqUri, $scriptDir) !== 0) {
-            // RewriteRule .htaccess ocultou o public
-            if (!defined('BASE_URL')) define('BASE_URL', '');
-        } else {
-            if (!defined('BASE_URL')) define('BASE_URL', rtrim($scriptName, '/'));
-        }
-    }
-    
-    if (empty($uri)) {
-        $uri = '/';
+    if (!defined('BASE_URL')) {
+        define('BASE_URL', $baseUrl);
     }
     
     // Atualiza o Request com a URI limpa para o Router
-    $request->server['REQUEST_URI'] = $uri;
-    
-    $response = $app->getRouter()->dispatch($request);
-    
-    // Se o controller retornou string em vez de objeto Response, nós o convertemos automaticamente
-    if (!$response instanceof \DomainSystem\Core\Http\Response) {
-        if (is_array($response) || is_object($response)) {
-            $response = new \DomainSystem\Core\Http\Responses\JsonResponse($response);
-        } else {
-            // Conversão de legado para o novo padrão:
-            $wrap = false;
-            if (strpos($uri, '/admin') === 0 && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
-                $wrap = true;
-            }
-            $response = new \DomainSystem\Core\Http\Responses\ViewResponse((string)$response, $wrap);
-        }
-    }
-    
-    // Injeção Automática de Layout (Workspace) baseada no Cargo (Role)
-    // O Kernel envelopa a resposta apenas se for um ViewResponse e ele pedir explicitamente (shouldWrapLayout)
-    if ($response instanceof \DomainSystem\Core\Http\Responses\ViewResponse && $response->shouldWrapLayout()) {
-        $session = $app->getContainer()->make(\DomainSystem\Core\Http\SessionManager::class);
-        $role = $session->get('user_role', 'admin');
-        $workspace = $app->getWorkspaceManager()->getWorkspace($role);
-        $wrappedContent = $workspace->wrap($response->getContent());
-        $response->setContent($wrappedContent);
-    }
+    $request->server['REQUEST_URI'] = $routeUri;
 
-    // Aplicação da política anti-cache para rotas administrativas, autenticação e proxies
-    $cachePolicy = new \DomainSystem\Core\Http\CachePolicy();
-    $response = $cachePolicy->apply($request, $response);
-
+    $httpKernel = new \DomainSystem\Core\Http\HttpKernel(
+        $app->getRouter(),
+        $app->getContainer(),
+        $app->getWorkspaceManager()
+    );
+    $response = $httpKernel->handle($request, file_exists($maintenanceFile), __DIR__ . '/maintenance.php');
     $response->send();
     
 } catch (Exception $e) {

@@ -188,7 +188,7 @@ class Application
      * Gerencia o estado do usuário (sessão) de forma abstrata,
      * evitando acesso direto à superglobal $_SESSION.
      */
-    private \DomainSystem\Core\Http\SessionManager $sessionManager;
+    private \DomainSystem\Core\Security\SessionManager $sessionManager;
 
     /**
      * O Registro de Cockpits.
@@ -275,7 +275,7 @@ class Application
         // ─────────────────────────────────────────────────────────────────
         // INSTANCIA AS PROPRIEDADES VIA INJEÇÃO DE DEPENDÊNCIA (DIP)
         // ─────────────────────────────────────────────────────────────────
-        $this->sessionManager = $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+        $this->sessionManager = $this->container->make(\DomainSystem\Core\Security\SessionManager::class);
         $this->pluginManager = $this->container->make(\DomainSystem\Core\Plugin\PluginManager::class);
         $this->router = $this->container->make(\DomainSystem\Core\Contracts\RouterInterface::class);
         $this->shortcodeManager = $this->container->make(\DomainSystem\Core\Theme\ShortcodeManager::class);

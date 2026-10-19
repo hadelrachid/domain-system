@@ -2,7 +2,9 @@
 
 namespace DomainSystem\SystemApps\auth\Contracts;
 
-interface CapabilityRepositoryInterface
+use DomainSystem\Core\Contracts\CapabilityRegistrarInterface;
+
+interface CapabilityRepositoryInterface extends CapabilityRegistrarInterface
 {
     public function findAll(): array;
     public function findById(int $id): ?array;

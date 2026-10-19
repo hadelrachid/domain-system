@@ -1,14 +1,15 @@
 <?php
+
 namespace DomainSystem\Plugins\legal_cases\Workspace;
 
 use DomainSystem\Core\Workspace\WorkspaceInterface;
-use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
 
 class LawyerWorkspace implements WorkspaceInterface
 {
-    private ThemeManager $theme;
+    private ThemeManagerInterface $theme;
 
-    public function __construct(ThemeManager $theme)
+    public function __construct(ThemeManagerInterface $theme)
     {
         $this->theme = $theme;
     }

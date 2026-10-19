@@ -1,14 +1,20 @@
 
 <div class="wrap">
-    <h1 style="display:flex; justify-content:space-between; align-items:center;">
+    <h1 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <span>🚨 Painel de Supervisão e Rastreamento</span>
-        <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;" id="clearLogsForm">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-            <button type="button" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="OS.confirm('Tem certeza que deseja limpar todo o histórico de erros e reiniciar o ciclo do Singleton?', () => document.getElementById('clearLogsForm').submit());">Limpar Logs & Reiniciar Singleton</button>
-        </form>
+        <div style="display:inline-flex; gap:10px; align-items:center;">
+            <form method="POST" action="<?= BASE_URL ?>/admin/monitor/clear" style="margin:0;" id="clearLogsForm">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <button type="button" class="page-title-action" style="color:#d63638; border-color:#d63638;" onclick="OS.confirm('Tem certeza que deseja limpar o histórico de logs e métricas recentes?', () => document.getElementById('clearLogsForm').submit());">Limpar Histórico/Logs</button>
+            </form>
+            <form method="POST" action="<?= BASE_URL ?>/admin/monitor/restart-kernel" style="margin:0;" id="restartKernelForm">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <button type="button" class="page-title-action" style="color:#38bdf8; border-color:#38bdf8;" onclick="OS.confirm('Deseja reiniciar o ciclo do Kernel Singleton (alocando novos PIDs no próximo boot)?', () => document.getElementById('restartKernelForm').submit());">Reiniciar Ciclo do Kernel</button>
+            </form>
+        </div>
     </h1>
     
-    <p>Este painel intercepta falhas protegendo o núcleo do sistema, monitora o ciclo de vida do Kernel Singleton e exibe o consumo de memória ao vivo com gráfico em tempo real.</p>
+    <p>Este painel intercepta falhas protegendo o núcleo do sistema, monitora o ciclo de vida do Kernel Singleton e exibe o consumo de memória do worker e picos de requisições.</p>
 
     <div class="sys-tabs">
         <button class="sys-tab" onclick="openSysTab(event, 'tab-erros')">🪲 Histórico de Crashes</button>
@@ -21,7 +27,12 @@
     <div id="tab-erros" class="sys-content">
         <?php if (isset($_GET['cleared'])): ?>
             <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-left: 4px solid #28a745;">
-                Histórico de erros apagado e ciclo do Kernel Singleton reiniciado com sucesso.
+                Histórico de erros e métricas recentes apagados com sucesso (ciclo do Kernel preservado).
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_GET['restarted'])): ?>
+            <div style="background: #d1ecf1; color: #0c5460; padding: 10px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+                Ciclo do Kernel Singleton reiniciado com sucesso. Novos PIDs alocados.
             </div>
         <?php endif; ?>
 

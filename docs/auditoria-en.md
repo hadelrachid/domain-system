@@ -5,29 +5,43 @@
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🛡️ Architectural and Security Audit (Domain System v2.0)
+# 🛡️ Architectural and Security Audit (Domain System v2.3)
 
-**Last Updated:** October 1, 2026
+**Last Updated:** October 18, 2026
 
-This document reflects the historic architectural transition of the Domain System, evolving from a single-case procedural platform to a **SOLID-structured Web Operating System Micro-Kernel**.
+This document reflects the historic architectural transition of the Domain System, evolving from a single-case procedural platform to a **SOLID-structured Web Operating Environment Micro-Kernel**.
 
 ---
 
-## 🏛️ Architectural Evolution (From v1.0 to v2.0)
+## 🏛️ Architectural Evolution (From v1.0 to v2.3)
 
 The system's core underwent a deep overhaul across all its structural pillars to ensure compatibility with market standards (SOLID, PSRs, advanced Design Patterns).
 
 ### 1. Absolute Decoupling (Zero Business Logic in the Core)
 - **Before (v1.0):** The Kernel and authentication knew business concepts (Doctor, clinic, patient tables, and hardcoded roles).
-- **Now (v2.0):** The Kernel is 100% agnostic. Generic roles (`admin`, `manager`, `subscriber`, `user`) control universal RBAC. All business logic was extracted and transferred to the plugin layer.
+- **Now (v2.3):** The Kernel is 100% agnostic. Generic roles (`admin`, `manager`, `subscriber`, `user`) control universal RBAC. All business logic was extracted and transferred to the plugin layer.
 
 ### 2. Inversion of Control and Dependency Injection (DIP)
 - **Before:** Widespread use of `new Class()` and Service Locators like `$this->db()` scattered throughout controllers.
 - **Now:** The system relies on a high-level Dependency Injection (DI) Container. Controllers and Repositories declare contracts (Interfaces) in the constructor, and the Micro-Kernel automatically injects the concrete instance.
 
-### 3. Elimination of Superglobals
+### 3. Elimination of Superglobals (Enforced by Architecture Tests)
 - **Before:** Broad raw access to `$_SESSION`, `$_POST`, `$_GET`.
-- **Now:** All communications flow immutably and sanitized through the `Request` class and the `SessionManager`, facilitating the creation of unit tests and middleware processing.
+- **Now:** All communications flow immutably and sanitized through the `Request` class and `SessionManagerInterface`, continuously enforced by `NoSuperglobalsInControllersTest`.
+
+### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` - v2.3.0)
+- **Architectural Innovation:** The Cockpit (`/admin/manual`) uses `PluginManualScanner` to automatically scan `manual/module.php` inside installed plugins. Any plugin implementing `ManualModuleInterface` injects its interactive tutorial and QA homologation checklist items with zero Kernel coupling.
+
+### 5. Hybrid SOLID Architecture in Academy LMS (`v2.3.0`)
+- The `academy` plugin sets the ecosystem gold standard: strict separation between Repositories (`CourseRepositoryInterface`), Services (`CourseFolderImporterService`, `LessonBlockRendererService`, `LessonContentConverterService`), and Controllers, offering hybrid lesson authoring (Raw HTML/Markdown + Block Editor with Real-Time Preview and Multi-Device Simulator across Desktop, 3 Smartphones, and 2 Tablets).
+
+---
+
+## 🔒 Surgical Audit & Hardening (Patches 2.1.0 to 2.3.0 - Oct/2026)
+
+1. **Ring 0 Route Collision Protection:** Core Kernel routes (`/login`, `/admin/*`) are locked against Ring 3 hijacking (`RouteAlreadyRegisteredException`).
+2. **AES-256-GCM Authenticated Encryption:** Upgraded from `AES-256-CBC` to authenticated `AES-256-GCM` with integrity tag verification.
+3. **HTTP Session Hardening & Circuit Breaker Developer Mode:** `HttpOnly`, `SameSite=Strict`, `Strict Mode` session cookies, plus a session-scoped Developer Mode bypass for live debugging of tripped plugins.
 
 ---
 
@@ -52,6 +66,6 @@ Creation of the Troubleshooting artifact (`ERROR_DICTIONARY.md`), packaging raw 
 
 ## 📈 Conclusion
 
-The **Domain System** reaches the "Enterprise-Ready" category in version 2.0. Its agnostic Micro-Kernel is clean, cohesive, and shielded against cascading crashes, ready to establish itself as a lightweight, fast, and modern alternative to traditional market frameworks.
+The **Domain System v2.3.0** reaches the "Enterprise-Ready" benchmark. Its agnostic Micro-Kernel is clean, cohesive, tested by 180+ automated unit and architecture tests, and shielded against cascading crashes.
 
 

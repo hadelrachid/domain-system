@@ -159,7 +159,28 @@ class ProcessRegistry
             'pids'         => self::$singletonPids,
         ];
 
-        @file_put_contents($file, json_encode($payload, JSON_PRETTY_PRINT));
+        $this->writeJsonAtomically($file, $payload);
+    }
+
+    /**
+     * Escreve JSON em disco de forma atômica com LOCK_EX para evitar leituras truncadas em concorrência (M-05).
+     */
+    private function writeJsonAtomically(string $file, array $data): void
+    {
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        if ($json === false) {
+            return;
+        }
+
+        $tmpFile = $file . '.tmp.' . bin2hex(random_bytes(4));
+        if (@file_put_contents($tmpFile, $json, LOCK_EX) !== false) {
+            if (!@rename($tmpFile, $file)) {
+                @file_put_contents($file, $json, LOCK_EX);
+                @unlink($tmpFile);
+            }
+        } else {
+            @file_put_contents($file, $json, LOCK_EX);
+        }
     }
 
     /**
@@ -269,9 +290,11 @@ class ProcessRegistry
                 $currentPeak             = $proc['peak_memory_kb'] ?? 0;
                 $proc['peak_memory_kb']  = round(max($currentPeak, $memoryUsedKb), 2);
                 $proc['last_updated']    = microtime(true);
+                unset($proc);
                 return;
             }
         }
+        unset($proc);
     }
 
     /**
@@ -333,8 +356,9 @@ class ProcessRegistry
                 }
             }
         }
+        unset($proc);
 
-        file_put_contents($file, json_encode($this->processes, JSON_PRETTY_PRINT));
+        $this->writeJsonAtomically($file, $this->processes);
     }
 
     /**

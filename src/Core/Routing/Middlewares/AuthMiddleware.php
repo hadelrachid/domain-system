@@ -4,7 +4,7 @@ namespace DomainSystem\Core\Routing\Middlewares;
 
 use DomainSystem\Core\Contracts\MiddlewareInterface;
 use DomainSystem\Core\Http\Request;
-use DomainSystem\Core\Http\SessionManager;
+use DomainSystem\Core\Security\SessionManager;
 use DomainSystem\Core\Security\IdentityManager;
 use Closure;
 

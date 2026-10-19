@@ -3,24 +3,56 @@
 namespace DomainSystem\Plugins\settings\Controllers;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
-
 use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
-use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface;
 
 class SettingsController
 {
+    /**
+     * Lista estrita de tabelas gerenciadas pelo Domain System (H-03).
+     * Jamais executa SHOW TABLES -> DROP TABLE irrestrito em bancos compartilhados.
+     */
+    public const MANAGED_TABLES = [
+        'user_roles',
+        'role_capabilities',
+        'capabilities',
+        'roles',
+        'users',
+        'settings',
+        'pages',
+        'theme_menu_items',
+        'theme_menus',
+        'menu_items',
+        'menus',
+        'academy_lessons',
+        'academy_modules',
+        'academy_courses',
+        'analytics_visits',
+        'legal_cases',
+        'kernel_migrations',
+    ];
+
     private ThemeManagerInterface $theme;
     private SettingRepositoryInterface $settingRepo;
-
     private \PDO $db;
-    private SessionManagerInterface $session; public function __construct(ThemeManagerInterface $theme, SettingRepositoryInterface $settingRepo, \DomainSystem\SystemApps\Database\Connection $connection, \DomainSystem\Core\Contracts\SessionManagerInterface $session)
-    { $this->db = $connection->getPdo();
+    private SessionManagerInterface $session;
+    private string $basePath;
+
+    public function __construct(
+        ThemeManagerInterface $theme,
+        SettingRepositoryInterface $settingRepo,
+        \DomainSystem\SystemApps\Database\Connection $connection,
+        SessionManagerInterface $session,
+        ?string $basePath = null
+    ) {
+        $this->db = $connection->getPdo();
         $this->session = $session;
         $this->theme = $theme;
         $this->settingRepo = $settingRepo;
+        $this->basePath = rtrim($basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4)), '/\\');
     }
 
     public function index(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
@@ -51,7 +83,7 @@ class SettingsController
             $tmpPath = $_FILES['site_logo']['tmp_name'];
             $ext = strtolower(pathinfo($_FILES['site_logo']['name'], PATHINFO_EXTENSION));
             if ($ext === 'png') {
-                $destDir = DOMAIN_SYSTEM_ROOT . '/public/assets/img';
+                $destDir = $this->basePath . '/public/assets/img';
                 if (!is_dir($destDir)) {
                     mkdir($destDir, 0755, true);
                 }
@@ -67,7 +99,7 @@ class SettingsController
 
     public function toggleMaintenance(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
-        $lockFile = dirname(__DIR__, 4) . '/.maintenance';
+        $lockFile = $this->basePath . '/.maintenance';
         $action = $request->input('action');
         if ($action === 'on') {
             file_put_contents($lockFile, 'maintenance');
@@ -79,55 +111,96 @@ class SettingsController
 
     public function factoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $csrfToken = htmlspecialchars((string)$this->session->getCsrfToken(), ENT_QUOTES, 'UTF-8');
+
         ob_start();
         ?>
         <div class="wrap">
-            <h1 style="color: #dc3232;">🛠️ Modo de Fábrica (Wipe)</h1>
-            <p>O sistema está sendo higienizado e apagado. Por favor, não feche a página.</p>
-            <div style="background: #fff; padding: 20px; border: 1px solid #c3c4c7; border-radius: 4px; max-width: 600px;">
-                <div style="background: #f0f0f1; border-radius: 4px; height: 20px; overflow: hidden; margin-bottom: 10px;">
-                    <div id="progress-bar" style="background: #dc3232; width: 0%; height: 100%; transition: width 0.5s;"></div>
+            <h1 style="color: #dc3232;">🛠️ Modo de Fábrica (Wipe Seguro)</h1>
+            <p>Esta operação apagará apenas as tabelas gerenciadas pelo Domain System. Para continuar, confirme sua senha de administrador.</p>
+            <div style="background: #1d2327; padding: 24px; border: 1px solid rgba(220,50,50,0.4); border-radius: 8px; max-width: 600px; color: #fff;">
+                <div id="auth-box" style="margin-bottom: 18px;">
+                    <label for="admin_password" style="display:block; margin-bottom:8px; font-weight:bold;">Senha atual do Administrador *</label>
+                    <input type="password" id="admin_password" required placeholder="Digite sua senha para confirmar o Wipe" style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; box-sizing:border-box; margin-bottom:14px;">
+                    <button type="button" id="btn-start-wipe" onclick="startFactoryReset()" class="btn btn-deactivate" style="background:#dc3232; color:#fff; padding:10px 20px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
+                        Confirmar e Executar Wipe
+                    </button>
                 </div>
-                <p id="progress-status" style="margin: 0; font-weight: bold; color: #50575e;">Iniciando...</p>
+
+                <div id="progress-container" style="display:none;">
+                    <div style="background: #f0f0f1; border-radius: 4px; height: 20px; overflow: hidden; margin-bottom: 10px;">
+                        <div id="progress-bar" style="background: #dc3232; width: 0%; height: 100%; transition: width 0.5s;"></div>
+                    </div>
+                    <p id="progress-status" style="margin: 0; font-weight: bold; color: #c5c6c7;">Iniciando...</p>
+                </div>
+                <p id="reset-error" style="display:none; margin-top:12px; color:#ff8080; font-weight:bold;"></p>
             </div>
         </div>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            function startFactoryReset() {
+                const passInput = document.getElementById('admin_password');
+                const errorEl = document.getElementById('reset-error');
+                errorEl.style.display = 'none';
+
+                if (!passInput || !passInput.value) {
+                    errorEl.innerText = 'Informe sua senha de administrador para confirmar.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('auth-box').style.display = 'none';
+                document.getElementById('progress-container').style.display = 'block';
+
                 const steps = [
-                    "Desativando restrições de chaves estrangeiras...",
-                    "Mapeando tabelas do banco de dados...",
-                    "Limpando usuários e sessões...",
-                    "Dropando tabelas...",
+                    "Validando credenciais do administrador...",
+                    "Mapeando tabelas gerenciadas do sistema...",
+                    "Limpando tabelas do Domain System...",
                     "Destruindo arquivo de proteção (installed.lock)...",
-                    "Redirecionando para o Assistente de Instalação..."
+                    "Encerrando sessão segura e redirecionando..."
                 ];
                 let currentStep = 0;
                 let progress = 0;
-                
+
                 const interval = setInterval(() => {
                     if (currentStep < steps.length - 1) {
                         document.getElementById('progress-status').innerText = steps[currentStep];
-                        progress += 18;
+                        progress += 22;
                         document.getElementById('progress-bar').style.width = progress + '%';
                         currentStep++;
                     } else {
                         clearInterval(interval);
                         document.getElementById('progress-status').innerText = steps[steps.length - 1];
-                        
-                        const formData = new FormData();
-                        formData.append('csrf_token', '<?= $this->session->getCsrfToken() ?>');
 
-                        fetch('<?= BASE_URL ?>/admin/settings/factory-reset/execute', { 
+                        const formData = new FormData();
+                        formData.append('csrf_token', '<?= $csrfToken ?>');
+                        formData.append('admin_password', passInput.value);
+
+                        fetch('<?= $baseUrl ?>/admin/settings/factory-reset/execute', {
                             method: 'POST',
                             body: formData
                         })
                             .then(res => res.json())
                             .then(data => {
-                                window.location.href = '<?= BASE_URL ?>/setup';
+                                if (data && data.success) {
+                                    document.getElementById('progress-bar').style.width = '100%';
+                                    window.location.href = '<?= $baseUrl ?>/setup';
+                                } else {
+                                    document.getElementById('progress-container').style.display = 'none';
+                                    document.getElementById('auth-box').style.display = 'block';
+                                    errorEl.innerText = (data && data.error) ? data.error : 'Falha ao executar o reset de fábrica.';
+                                    errorEl.style.display = 'block';
+                                }
+                            })
+                            .catch(err => {
+                                document.getElementById('progress-container').style.display = 'none';
+                                document.getElementById('auth-box').style.display = 'block';
+                                errorEl.innerText = 'Erro de rede ao comunicar com o servidor: ' + err.message;
+                                errorEl.style.display = 'block';
                             });
                     }
-                }, 800);
-            });
+                }, 400);
+            }
         </script>
         <?php
         $html = ob_get_clean();
@@ -137,44 +210,88 @@ class SettingsController
     public function executeFactoryReset(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
         try {
-            // Drop all tables
+            $password = (string)$request->input('admin_password', '');
+            if ($password === '') {
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => 'A confirmação da senha de administrador é obrigatória.'
+                ], 403);
+            }
+
+            if (!$this->verifyAdminPassword($password)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => 'Senha de administrador inválida. Operação abortada.'
+                ], 403);
+            }
+
+            // Drop ONLY managed system tables (H-03)
             if ($this->db) {
                 $db = $this->db;
                 $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
                 if ($driver === 'mysql') {
                     $db->exec('SET FOREIGN_KEY_CHECKS = 0;');
-                    $tables = $db->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
-                    foreach ($tables as $table) {
-                        $db->exec("DROP TABLE IF EXISTS `$table`");
+                    foreach (self::MANAGED_TABLES as $table) {
+                        if (preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+                            $db->exec("DROP TABLE IF EXISTS `{$table}`");
+                        }
                     }
                     $db->exec('SET FOREIGN_KEY_CHECKS = 1;');
                 } elseif ($driver === 'sqlite') {
-                    $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN);
-                    foreach ($tables as $table) {
-                        if ($table !== 'sqlite_sequence') {
-                            $db->exec("DROP TABLE `$table`");
+                    $db->exec('PRAGMA foreign_keys = OFF;');
+                    foreach (self::MANAGED_TABLES as $table) {
+                        if (preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+                            $db->exec("DROP TABLE IF EXISTS `{$table}`");
                         }
                     }
+                    $db->exec('PRAGMA foreign_keys = ON;');
                 }
             }
 
-            // Apenas destruir o arquivo de lock e limpar config/plugins.json
-            $lockFile = DOMAIN_SYSTEM_ROOT . '/config/installed.lock';
+            // Remover apenas arquivos de lock e estado de instalação no basePath configurado
+            $lockFile = $this->basePath . '/config/installed.lock';
             if (file_exists($lockFile)) {
-                unlink($lockFile);
+                @unlink($lockFile);
             }
 
-            $pluginsConfig = DOMAIN_SYSTEM_ROOT . '/config/plugins.json';
+            $pluginsConfig = $this->basePath . '/config/plugins.json';
             if (file_exists($pluginsConfig)) {
-                unlink($pluginsConfig);
+                @unlink($pluginsConfig);
             }
 
-            // Destruir sessão
-            session_destroy();
-            
-            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => true]);
-        } catch (\Exception $e) {
-            return new \DomainSystem\Core\Http\Responses\JsonResponse(['success' => false, 'error' => 'Erro ao redefinir: ' . $e->getMessage()]);
+            // Destruir sessão via contrato SessionManagerInterface (H-03)
+            $this->session->destroy();
+
+            return new JsonResponse(['success' => true]);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['success' => false, 'error' => 'Erro ao redefinir: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function verifyAdminPassword(string $password): bool
+    {
+        $userId = (int)$this->session->get('user_id', 0);
+        if ($userId > 0) {
+            $stmt = $this->db->prepare("SELECT password, role FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($user && ($user['role'] ?? '') === 'admin' && password_verify($password, (string)$user['password'])) {
+                return true;
+            }
+            return false;
+        }
+
+        // Caso a sessão não traga user_id explícito mas user_role seja admin
+        if ($this->session->get('user_role') === 'admin') {
+            $stmt = $this->db->query("SELECT password FROM users WHERE role = 'admin'");
+            $admins = $stmt ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : [];
+            foreach ($admins as $admin) {
+                if (password_verify($password, (string)$admin['password'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

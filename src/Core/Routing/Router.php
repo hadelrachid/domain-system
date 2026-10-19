@@ -49,34 +49,38 @@ class Router implements RouterInterface
         // Remove query string
         $uri = strtok($request->uri(), '?');
 
-        // Dispara o listener
-        if ($this->dispatcher !== null) {
-            $this->dispatcher->dispatch('router.before_dispatch', $uri);
-        }
-
-        if (!isset($this->routes[$method])) {
-            throw new Exception("Rota não encontrada: $uri", 404);
-        }
-
-        // Busca rota exata
-        if (isset($this->routes[$method][$uri])) {
-            return $this->runPipeline($request, $this->routes[$method][$uri], []);
-        }
-
-        // Busca rota com parâmetros (ex: /pacientes/{id} ou /docs/{*path})
-        foreach ($this->routes[$method] as $route => $config) {
-            // Suporte a catch-all (ex: {*path}) que captura inclusive barras
-            $pattern = preg_replace('/\{\*[a-zA-Z_]+\}/', '(.*)', $route);
-            // Suporte a variáveis normais (ex: {id}) que param na barra
-            $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $pattern);
-            
-            if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
-                array_shift($matches);
-                return $this->runPipeline($request, $config, $matches);
+        try {
+            // Dispara o listener
+            if ($this->dispatcher !== null) {
+                $this->dispatcher->dispatch('router.before_dispatch', $uri);
             }
-        }
 
-        throw new Exception("Rota não encontrada: $uri", 404);
+            if (!isset($this->routes[$method])) {
+                throw new Exception("Rota não encontrada: $uri", 404);
+            }
+
+            // Busca rota exata
+            if (isset($this->routes[$method][$uri])) {
+                return $this->runPipeline($request, $this->routes[$method][$uri], []);
+            }
+
+            // Busca rota com parâmetros (ex: /pacientes/{id} ou /docs/{*path})
+            foreach ($this->routes[$method] as $route => $config) {
+                // Suporte a catch-all (ex: {*path}) que captura inclusive barras
+                $pattern = preg_replace('/\{\*[a-zA-Z_]+\}/', '(.*)', $route);
+                // Suporte a variáveis normais (ex: {id}) que param na barra
+                $pattern = preg_replace('/\{[a-zA-Z_]+\}/', '([^/]+)', $pattern);
+                
+                if (preg_match('#^' . $pattern . '$#', $uri, $matches)) {
+                    array_shift($matches);
+                    return $this->runPipeline($request, $config, $matches);
+                }
+            }
+
+            throw new Exception("Rota não encontrada: $uri", 404);
+        } catch (\DomainSystem\Core\Exceptions\HttpResponseException $e) {
+            return $e->getResponse();
+        }
     }
 
     /**

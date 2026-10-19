@@ -6,12 +6,12 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-2.2.0-blueviolet?style=for-the-badge" alt="Version 2.2.0">
+  <img src="https://img.shields.io/badge/Version-2.3.0-blueviolet?style=for-the-badge" alt="Version 2.3.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Weight-~26MB-orange?style=for-the-badge" alt="Weight">
   <br><br>
-  <h1>🛸 Domain System (v2.2)</h1>
+  <h1>🛸 Domain System (v2.3)</h1>
   <p><strong>Uma Plataforma Web hiper-resiliente e estruturada em SOLID para substituir gigantes como WordPress e frameworks monolíticos.</strong></p>
 </div>
 
@@ -25,7 +25,7 @@ O **Domain System** não é apenas mais um CMS ou Framework de prateleira. Ele n
 
 Construído sob a rigorosa cartilha do **SOLID** e utilizando puramente **Injeção de Dependências**, ele se comporta como um **Ambiente Operacional Web**.
 O limite é a sua imaginação:
-- O **Núcleo (Micro-Kernel)** fornece a infraestrutura de baixo nível, completamente agnóstica: Conexão com Banco de Dados, Roteamento Dinâmico, Telemetria, Segurança Baseada em Capabilities (ACL, Anti-CSRF) e Gerenciamento do Ciclo de Vida.
+- O **Núcleo (Micro-Kernel)** fornece a infraestrutura de baixo nível, completamente agnóstica: Conexão com Banco de Dados, Roteamento Dinâmico 100% Agnóstico de Ambiente (Subpasta ou Raiz), Telemetria, Segurança Baseada em Capabilities (ACL, Anti-CSRF), Auto-Descoberta de Manuais por Contrato e Gerenciamento do Ciclo de Vida.
 - Toda a **lógica de negócio** e **gestão de páginas/serviços** é injetada através de **Módulos**. O núcleo nunca sabe o que a aplicação faz, ele apenas orquestra os eventos!
 
 ## 🚀 Principais Diferenciais
@@ -39,10 +39,19 @@ Proteção total contra ZIPs maliciosos. O instalador não confia cegamente em u
 ### 🔋 3. No-Break Shield (O Disjuntor Imortal)
 Esqueça a "Tela Branca da Morte" (WSOD). O Domain System roda com o **No-Break Shield**: um *Circuit Breaker* centralizado que intercepta falhas fatais geradas por plugins malfeitos. Se um plugin do Ring 3 causa um erro sintético ou de lógica grave, ele é isolado, e o restante do painel continua vivo.
 
-### 🎨 4. Administrador de Conteúdo e Serviços
+### 🎓 4. Academy LMS Híbrido & Editor em Blocos com Simulador Multi-Dispositivos
+O ecossistema conta com o **Academy (Cursos)** em arquitetura 100% SOLID:
+- **Modo Híbrido de Aulas:** Suporta tanto **HTML/Markdown Puro** (com importação automática de pastas de cursos e re-importação sob demanda) quanto **Editor em Blocos Estruturado** (`heading`, `paragraph`, `code`, `callout`, `video`, `divider`) com migração inteligente sem perda de dados.
+- **Preview Dinâmico em Tempo Real (`⚡ Dinâmico` & `👁️ Aula Final`):** Visualize a aula final enquanto digita, sem recarregar a página, com player 16:9 embutido para YouTube, Vimeo e MP4.
+- **Simulador Multi-Dispositivos & UX Mobile Off-Canvas:** Alterne entre `🖥️ Desktop` e `📱 Mobile` com **5 tamanhos de dispositivos padrão** (Celulares Compacto `320×568`, Padrão `375×667`, Max `430×932` e Tablets Retrato `768×1024` e Paisagem `1024×768`), testando menus responsivos e gaveta deslizante (*Off-Canvas Drawer*) de módulos e aulas em tempo real.
+
+### 📖 5. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
+Qualquer plugin em `src/Plugins/<slug>/manual/module.php` que implemente a interface `ManualModuleInterface` é rastreado e injetado automaticamente pelo `PluginManualScanner` dentro do **Manual de Instruções & QA do Cockpit (`/admin/manual`)**, adicionando sua documentação interativa e seus itens de checklist de homologação sem acoplamento com o Kernel.
+
+### 🎨 6. Administrador de Conteúdo e Serviços
 O sistema possui a flexibilidade para gerenciar páginas web (CMS) usando o **Builder Flex** integrado, além de fornecer rotas para APIs RESTful, permitindo que a plataforma opere não apenas como um site, mas como o back-end de serviços modernos.
 
-### 🔐 5. Segurança Anti-CSRF e Controle de Acessos (ACL)
+### 🔐 7. Segurança Anti-CSRF e Controle de Acessos (ACL)
 O núcleo foi rigorosamente auditado para bloquear ataques CSRF e Cross-Site Scripting (XSS). O gerenciamento de Identidade é baseado num motor robusto de **Capability Security**, onde os Privilégios são interceptados no Middleware antes da execução. Suporte nativo a 2FA (Google Authenticator) protege a camada administrativa.
 
 ## ⚙️ Como Instalar
@@ -63,6 +72,6 @@ O núcleo foi rigorosamente auditado para bloquear ataques CSRF e Cross-Site Scr
 
 ## 👨‍💻 Para Desenvolvedores (SDK)
 
-O sistema possui uma engine massiva de **Hooks (Event-Driven)** para você alterar o fluxo sem encostar no código-fonte do Kernel.
-A arquitetura foi inteiramente varrida para remover Anti-Patterns (como `Service Locator`), forçando injeções de dependência declarativas e interfaces puras.
+O sistema possui uma engine massiva de **Hooks (Event-Driven)** e **Contratos (`src/Core/Contracts`)** para você alterar o fluxo sem encostar no código-fonte do Kernel.
+A arquitetura foi inteiramente varrida para remover Anti-Patterns (como `Service Locator` e superglobais em Controllers), forçando injeções de dependência declarativas e interfaces puras.
 Para criar o seu próprio componente, consulte o nosso [Guia de Desenvolvimento de Plugins](DEVELOPER_GUIDE.md).

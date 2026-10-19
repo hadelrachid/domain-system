@@ -45,11 +45,14 @@ class CourseNavigationService implements CourseNavigationInterface
         $modules = $this->structureRepo->getModules($courseId);
         $allLessons = $this->structureRepo->getLessons($courseId);
 
-        // Agrupa aulas por module_id
+        // Agrupa apenas aulas publicadas por module_id
         $lessonsByModule = [];
         $standaloneLessons = [];
 
         foreach ($allLessons as $lesson) {
+            if (($lesson['status'] ?? 'published') !== 'published') {
+                continue;
+            }
             $lessonSlug = (string)$lesson['slug'];
             $lesson['url'] = $this->baseUrl . '/cursos/' . urlencode($courseSlug) . '/' . urlencode($lessonSlug);
 
@@ -160,9 +163,12 @@ class CourseNavigationService implements CourseNavigationInterface
             return ['prev' => null, 'next' => null];
         }
 
-        // Filtra e normaliza
+        // Filtra apenas aulas publicadas e normaliza
         $flat = [];
         foreach ($allLessons as $l) {
+            if (($l['status'] ?? 'published') !== 'published') {
+                continue;
+            }
             $slug = (string)$l['slug'];
             $flat[] = [
                 'id'    => (int)$l['id'],

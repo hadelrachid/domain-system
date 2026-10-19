@@ -4,6 +4,15 @@
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('uploadThemeModal').style.display='block'; return false;">Instalar Tema (.zip)</a>
     <p style="color: var(--text-muted); margin-bottom: 25px;">Gerencie e ative o tema visual do site público. O tema ativo define a identidade visual e os templates do seu domínio.</p>
 
+    <?php if (!empty($is_coming_soon)): ?>
+        <div style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.35); color: #fef08a; padding: 14px 18px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <strong style="color: #fbbf24; font-size: 14px;">🟡 Site em Modo "Em Breve" (Padrão de Instalação)</strong>
+                <p style="margin: 4px 0 0; font-size: 13px; color: #cbd5e1;">A página pública está exibindo a tela padrão de "Em Breve". Clique em <strong>Ativar e Publicar</strong> em qualquer tema abaixo para colocar seu site no ar.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
         <?php foreach ($themes as $t): ?>
             <?php if (isset($t['is_add_new']) && $t['is_add_new']): ?>
@@ -70,7 +79,7 @@
                                 <form method="POST" action="<?= $baseUrl ?>/admin/themes/activate" style="margin: 0;">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                    <button type="submit" class="btn button-primary" style="padding: 6px 12px !important; font-size: 12px !important; background: #2271b1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" title="Ativar este tema no site">Ativar</button>
+                                    <button type="submit" class="btn button-primary" style="padding: 6px 12px !important; font-size: 12px !important; background: #2271b1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" title="Ativar este tema no site"><?= !empty($is_coming_soon) ? 'Ativar e Publicar' : 'Ativar' ?></button>
                                 </form>
 
                                 <?php if (!empty($t['preview_url'])): ?>

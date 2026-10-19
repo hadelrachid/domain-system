@@ -1,29 +1,57 @@
 <?php
-require_once __DIR__ . "/../bootstrap.php";
-$app = \DomainSystem\Core\Application::getInstance();
+
+require_once __DIR__ . '/../bootstrap.php';
+
+use DomainSystem\Core\Application;
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
+use DomainSystem\Core\Database\MigrationRunner;
+
+$app = Application::getInstance();
+if (!$app) {
+    fwrite(STDERR, "Erro: Application não instanciada.\n");
+    exit(1);
+}
+
 $app->boot();
 
-echo "Running migrations...\n";
+$container = $app->getContainer();
+$runner = new MigrationRunner($container->make(DatabaseConnectionInterface::class));
 
-// Reactivate all plugins to make sure we run all activates
-$pluginsJson = json_decode(file_get_contents("config/plugins.json"), true);
-$activePlugins = [];
-foreach ($pluginsJson as $pluginName => $isActive) {
-    if ($isActive) {
-        $activePlugins[] = $pluginName;
+$pluginsPath = DOMAIN_SYSTEM_ROOT . '/src/Plugins';
+$migrated = 0;
+$errors = 0;
+
+echo "== Migrations Versionadas do Domain System ==\n\n";
+
+foreach (glob($pluginsPath . '/*', GLOB_ONLYDIR) ?: [] as $pluginDir) {
+    $pluginName = basename($pluginDir);
+    $migrationsPath = $pluginDir . '/migrations';
+
+    if (!is_dir($migrationsPath)) {
+        continue;
     }
-}
-$pm = $app->getPluginManager();
-foreach ($activePlugins as $name) {
-    $plugin = current(array_filter($pm->getPlugins(), fn($p) => $p->getName() === $name));
-    if ($plugin) {
-        echo "Running activate() for: " . $plugin->getName() . "\n";
-        try {
-            $plugin->activate();
-        } catch (\Exception $e) {
-            echo "Error activating " . $plugin->getName() . ": " . $e->getMessage() . "\n";
+
+    $result = $runner->runForPlugin($pluginName, $migrationsPath);
+
+    if (!empty($result['executed'])) {
+        echo "✅ {$pluginName}:\n";
+        foreach ($result['executed'] as $m) {
+            echo "   → {$m}\n";
+            $migrated++;
+        }
+    }
+
+    if (!empty($result['errors'])) {
+        echo "❌ {$pluginName}:\n";
+        foreach ($result['errors'] as $err) {
+            echo "   → {$err}\n";
+            $errors++;
         }
     }
 }
-echo "Migrations complete.\n";
 
+echo "\n== Resumo ==\n";
+echo "Migrations executadas: {$migrated}\n";
+echo "Erros: {$errors}\n";
+
+exit($errors > 0 ? 1 : 0);

@@ -6,15 +6,93 @@ use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
 
 abstract class AbstractWidget implements WidgetInterface
 {
-    // Lógicas compartilhadas por TODOS os widgets (ex: margens, padding, IDs dinâmicos)
+    /**
+     * Constrói o mapa estruturado de estilos CSS a partir das propriedades do widget.
+     */
+    protected function buildStyles(array $props): array
+    {
+        $unit = fn($val) => (is_numeric($val) ? $val . 'px' : $val);
+        $styles = [];
+
+        $map = [
+            'position' => 'position', 'left' => 'left', 'top' => 'top',
+            'width' => 'width', 'height' => 'height', 'minHeight' => 'min-height',
+            'flex' => 'flex', 'margin' => 'margin', 'padding' => 'padding',
+            'display' => 'display', 'flexDirection' => 'flex-direction',
+            'justifyContent' => 'justify-content', 'alignItems' => 'align-items',
+            'gap' => 'gap', 'order' => 'order', 'backgroundColor' => 'background-color',
+            'border' => 'border', 'borderRadius' => 'border-radius',
+            'boxShadow' => 'box-shadow', 'opacity' => 'opacity',
+            'zIndex' => 'z-index', 'overflow' => 'overflow', 'color' => 'color',
+        ];
+
+        foreach ($map as $key => $cssProperty) {
+            if (isset($props[$key]) && $props[$key] !== '' && $props[$key] !== null) {
+                $styles[$cssProperty] = in_array($key, ['width', 'height', 'minHeight', 'left', 'top', 'borderRadius'], true)
+                    ? $unit($props[$key])
+                    : $props[$key];
+            }
+        }
+
+        if (($props['hidden'] ?? false) === true || ($props['hidden'] ?? '') === 'true') {
+            $styles['display'] = 'none';
+        }
+
+        return $styles;
+    }
+
+    /**
+     * Construtor padrão de DTO. Os widgets filhos especializam tag/styles/content.
+     */
+    public function toDto(array $attributes, array $children = []): array
+    {
+        $classes = ['flex-widget', 'widget-node'];
+        if (!empty($attributes['layout'])) {
+            $classes[] = 'layout-' . $attributes['layout'];
+        }
+        if (!empty($attributes['class_css'])) {
+            $classes[] = $attributes['class_css'];
+        }
+
+        return [
+            'type' => 'div',
+            'tag' => 'div',
+            'attrs' => [
+                'id' => !empty($attributes['id']) ? $attributes['id'] : null,
+                'class' => array_values(array_filter($classes)),
+            ],
+            'styles' => $this->buildStyles($attributes),
+            'content' => (string)($attributes['content'] ?? ''),
+            'children' => $children,
+        ];
+    }
+
+    /**
+     * Renderização de compatibilidade (ex: Shortcodes diretos) delegando ao DtoRenderer.
+     */
+    public function render(array $attributes, string $content = ''): string
+    {
+        $dto = $this->toDto($attributes, []);
+        if ($content !== '' && empty($dto['content'])) {
+            $dto['content'] = $content;
+        }
+        return (new DtoRenderer())->render($dto);
+    }
+
+    // Helpers legados mantidos como protected para retrocompatibilidade
     protected function extractCommonAttributes(array $attributes): string
     {
         $html = '';
-        if (!empty($attributes['id'])) $html .= ' id="' . htmlspecialchars($attributes['id']) . '"';
-        
+        if (!empty($attributes['id'])) {
+            $html .= ' id="' . htmlspecialchars((string)$attributes['id']) . '"';
+        }
+
         $classes = ['widget-node'];
         if (!empty($attributes['layout'])) {
             $classes[] = 'layout-' . $attributes['layout'];
+        }
+        if (!empty($attributes['class_css'])) {
+            $classes[] = $attributes['class_css'];
         }
         $html .= ' class="' . htmlspecialchars(implode(' ', $classes)) . '"';
 
@@ -22,67 +100,29 @@ abstract class AbstractWidget implements WidgetInterface
         if (!empty($styles)) {
             $html .= ' style="' . htmlspecialchars($styles) . '"';
         }
-        
+
         return $html;
     }
 
     protected function generateBaseStyles(array $props): string
     {
-        $unit = function($val) {
-            if ($val === null || $val === '') return '';
-            if (is_numeric($val)) return $val . 'px';
-            return $val;
-        };
-
-        $styles = '';
-        
-        // Posição base
-        $pos = $props['position'] ?? 'absolute';
-        $styles .= "position: {$pos}; ";
-        if (isset($props['left'])) $styles .= "left: " . $unit($props['left']) . "; ";
-        if (isset($props['top'])) $styles .= "top: " . $unit($props['top']) . "; ";
-        if (isset($props['width'])) $styles .= "width: " . $unit($props['width']) . "; ";
-        
-        $height = $props['height'] ?? 'auto';
-        $styles .= "height: " . ($height === 'auto' ? 'auto' : $unit($height)) . "; ";
-        if (isset($props['minHeight'])) $styles .= "min-height: " . $unit($props['minHeight']) . "; ";
-
-        // Flex e Box Model
-        if (isset($props['flex'])) $styles .= "flex: {$props['flex']}; ";
-        if (isset($props['margin'])) $styles .= "margin: {$props['margin']}; ";
-        if (isset($props['padding'])) $styles .= "padding: {$props['padding']}; ";
-        if (isset($props['display'])) $styles .= "display: {$props['display']}; ";
-        if (isset($props['flexDirection'])) $styles .= "flex-direction: {$props['flexDirection']}; ";
-        if (isset($props['justifyContent'])) $styles .= "justify-content: {$props['justifyContent']}; ";
-        if (isset($props['alignItems'])) $styles .= "align-items: {$props['alignItems']}; ";
-        if (isset($props['gap'])) $styles .= "gap: {$props['gap']}; ";
-        
-        $order = $props['order'] ?? 0;
-        $styles .= "order: {$order}; ";
-
-        // Estética
-        if (isset($props['backgroundColor'])) $styles .= "background-color: {$props['backgroundColor']}; ";
-        if (isset($props['border'])) $styles .= "border: {$props['border']}; ";
-        if (isset($props['borderRadius'])) $styles .= "border-radius: " . $unit($props['borderRadius']) . "; ";
-        if (isset($props['boxShadow'])) $styles .= "box-shadow: {$props['boxShadow']}; ";
-        if (isset($props['opacity'])) $styles .= "opacity: {$props['opacity']}; ";
-        if (isset($props['zIndex'])) $styles .= "z-index: {$props['zIndex']}; ";
-        if (isset($props['overflow'])) $styles .= "overflow: {$props['overflow']}; ";
-        if (isset($props['color'])) $styles .= "color: {$props['color']}; ";
-        
-        // Esconder
-        if (isset($props['hidden']) && ($props['hidden'] === true || $props['hidden'] === 'true')) {
-            $styles .= "display: none !important; ";
+        $styles = $this->buildStyles($props);
+        $parts = [];
+        foreach ($styles as $prop => $val) {
+            $parts[] = "{$prop}: {$val};";
         }
-
-        return $styles;
+        return implode(' ', $parts);
     }
 
     protected function extractCommonStyles(array $attributes): string
     {
         $styles = '';
-        if (!empty($attributes['margin'])) $styles .= 'margin:' . $attributes['margin'] . ';';
-        if (!empty($attributes['padding'])) $styles .= 'padding:' . $attributes['padding'] . ';';
+        if (!empty($attributes['margin'])) {
+            $styles .= 'margin:' . $attributes['margin'] . ';';
+        }
+        if (!empty($attributes['padding'])) {
+            $styles .= 'padding:' . $attributes['padding'] . ';';
+        }
         return $styles;
     }
 
@@ -96,7 +136,6 @@ abstract class AbstractWidget implements WidgetInterface
                         'type' => 'dimension',
                         'label' => 'Largura',
                         'units' => ['px', '%', 'vw', 'auto'],
-                        // A mágica do Live Preview: O JS vai saber exatamente qual CSS atualizar no DOM!
                         'css_property' => 'width'
                     ],
                     'margin' => [
@@ -113,5 +152,4 @@ abstract class AbstractWidget implements WidgetInterface
             ]
         ];
     }
-
 }

@@ -36,11 +36,26 @@
 
         <h3>Explanation of Methods:</h3>
         <ul>
-            <li><strong>register():</strong> The right place to register Routes, Event Listeners, and Dashboard Menus. Executed on every request.</li>
-            <li><strong>boot():</strong> Executed after all plugins finish registering.</li>
+            <li><strong>register() / osRegister():</strong> The right place to negotiate capabilities with the Gatekeeper and register Routes, Event Listeners, and Dashboard Menus.</li>
+            <li><strong>boot() / osBoot():</strong> Executed after all plugins finish registering. <code>osBoot(OsRuntimeInterface $runtime)</code> is the 2.3 standard for safe Kernel access.</li>
             <li><strong>activate():</strong> Run <strong>only once</strong> when you turn on the Plugin in the Dashboard (Ideal for Migrations and table creation).</li>
             <li><strong>deactivate() / uninstall():</strong> Used to clean up the traces the plugin left when deactivated or deleted.</li>
         </ul>
+
+        <h2>ManualModuleInterface (Manual Auto-Discovery v2.3)</h2>
+        <p>Any plugin providing a <code>manual/module.php</code> file returning an instance of <code>ManualModuleInterface</code> is automatically discovered by <code>PluginManualScanner</code> and rendered inside the Cockpit's <strong>Instruction Manual (<code>/admin/manual</code>)</strong>:</p>
+        <pre><code>interface ManualModuleInterface
+{
+    public function getId(): string;
+    public function getTitle(): string;
+    public function getIcon(): string;
+    public function getBadge(): string;
+    public function getVersion(): string;
+    public function getOrder(): int;
+    public function getChecklistItems(): array;
+    public function renderContent(string $baseUrl = ''): string;
+}</code></pre>
+        <p>This enables rich plugins (such as <strong>Academy LMS</strong>) to ship their own interactive documentation and QA homologation checklists with zero coupling to the Kernel source code!</p>
 
     </div>
 </body>

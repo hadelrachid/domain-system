@@ -49,10 +49,10 @@ class LinkRegistry
 
         // --- FALLBACK DO KERNEL (LINKS OFICIAIS DO SO) ---
         if ($linkName === 'core.session') {
-            return $this->container->make(\DomainSystem\Core\Http\SessionManager::class);
+            return $this->container->make(\DomainSystem\Core\Security\SessionManager::class);
         }
         if ($linkName === 'core.db') {
-            return $this->container->make(\DomainSystem\SystemApps\Database\Connection::class);
+            return $this->container->make(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class);
         }
         if ($linkName === 'core.identity') {
             return $this->container->make(\DomainSystem\Core\Security\IdentityManager::class);

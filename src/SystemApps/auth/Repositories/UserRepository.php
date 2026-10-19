@@ -3,14 +3,43 @@ namespace DomainSystem\SystemApps\auth\Repositories;
 
 use DomainSystem\SystemApps\Database\Connection;
 use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
+use InvalidArgumentException;
 
 class UserRepository implements UserRepositoryInterface
 {
+    private const ALLOWED_COLUMNS = [
+        'id',
+        'name',
+        'email',
+        'password',
+        'role',
+        'avatar',
+        'profile_image',
+        'theme_color',
+        'dashboard_layout',
+        'two_factor_type',
+        'two_factor_secret',
+        'email_2fa_code',
+        'email_2fa_expiry',
+        'session_timeout',
+        'created_at',
+        'updated_at',
+    ];
+
     private \PDO $db;
 
     public function __construct(Connection $connection)
     {
         $this->db = $connection->getPdo();
+    }
+
+    private function validateColumns(array $data): void
+    {
+        foreach (array_keys($data) as $col) {
+            if (!in_array((string)$col, self::ALLOWED_COLUMNS, true)) {
+                throw new InvalidArgumentException("Coluna inválida não permitida em users: {$col}");
+            }
+        }
     }
 
     public function findByEmail(string $email): ?array
@@ -29,7 +58,6 @@ class UserRepository implements UserRepositoryInterface
         return $result ?: null;
     }
 
-
     public function updateTwoFactor(int $userId, string $type, ?string $secret): void
     {
         $stmt = $this->db->prepare("UPDATE users SET two_factor_type = :type, two_factor_secret = :secret WHERE id = :id");
@@ -42,10 +70,9 @@ class UserRepository implements UserRepositoryInterface
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-
-
     public function createUser(array $data): int
     {
+        $this->validateColumns($data);
         $fields = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
         $stmt = $this->db->prepare("INSERT INTO users ($fields) VALUES ($placeholders)");
@@ -54,13 +81,13 @@ class UserRepository implements UserRepositoryInterface
             $params[":$k"] = $v;
         }
         $stmt->execute($params);
-                $userId = (int)$this->db->lastInsertId();
+        $userId = (int)$this->db->lastInsertId();
         if (isset($data['role'])) {
             $stmtRole = $this->db->prepare('SELECT id FROM roles WHERE slug = ?');
             $stmtRole->execute([$data['role']]);
             $roleId = $stmtRole->fetchColumn();
             if ($roleId) {
-                $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)' )->execute([$userId, $roleId]);
+                $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)')->execute([$userId, $roleId]);
             }
         }
         return $userId;
@@ -80,7 +107,10 @@ class UserRepository implements UserRepositoryInterface
 
     public function updateProfile(int $userId, array $data): void
     {
-        if (empty($data)) return;
+        if (empty($data)) {
+            return;
+        }
+        $this->validateColumns($data);
         $setParts = [];
         $params = [":id" => $userId];
         foreach ($data as $key => $val) {

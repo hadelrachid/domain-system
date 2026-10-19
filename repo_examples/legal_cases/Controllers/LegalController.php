@@ -1,28 +1,34 @@
 <?php
+
 namespace DomainSystem\Plugins\legal_cases\Controllers;
 
-use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Plugins\Database\QueryBuilder;
+use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Http\Response;
+use DomainSystem\Plugins\legal_cases\Contracts\LegalCaseRepositoryInterface;
 
 class LegalController
 {
-    private ThemeManager $theme;
-    private QueryBuilder $db;
+    private ThemeManagerInterface $theme;
+    private LegalCaseRepositoryInterface $repository;
 
-    public function __construct(ThemeManager $theme, QueryBuilder $db)
-    {
+    public function __construct(
+        ThemeManagerInterface $theme,
+        LegalCaseRepositoryInterface $repository
+    ) {
         $this->theme = $theme;
-        $this->db = $db;
+        $this->repository = $repository;
     }
 
-    public function index()
+    public function index(): Response
     {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
+        $cases = $this->repository->all();
 
-        $cases = $this->db->table('legal_cases')->get();
-        
-        return $this->theme->render('admin_legal', ['cases' => $cases], __DIR__ . '/../views');
+        $html = $this->theme->render(
+            'admin_legal',
+            ['cases' => $cases],
+            __DIR__ . '/../views'
+        );
+
+        return new Response($html);
     }
 }
-
-

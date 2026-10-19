@@ -2,11 +2,12 @@
 
 namespace DomainSystem\Plugins\pages\Controllers;
 
+use DomainSystem\Core\Contracts\PageTreeRendererInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
-
-use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
+use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Theme\SafeThemeResolver;
 use DomainSystem\Core\Theme\ShortcodeManager;
-use DomainSystem\Core\Theme\ThemeManager;
+use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
 use DomainSystem\Plugins\seo\Contracts\SeoManagerInterface;
 
 class PageFrontController
@@ -15,13 +16,20 @@ class PageFrontController
     private ShortcodeManager $shortcodes;
     private SeoManagerInterface $seo;
     private ThemeManagerInterface $themeManager;
+    private ?PageTreeRendererInterface $treeRenderer;
 
-    public function __construct(PageRepositoryInterface $pageRepo, ShortcodeManager $shortcodes, SeoManagerInterface $seo, ThemeManagerInterface $themeManager)
-    {
+    public function __construct(
+        PageRepositoryInterface $pageRepo,
+        ShortcodeManager $shortcodes,
+        SeoManagerInterface $seo,
+        ThemeManagerInterface $themeManager,
+        ?PageTreeRendererInterface $treeRenderer = null
+    ) {
         $this->pageRepo = $pageRepo;
         $this->shortcodes = $shortcodes;
         $this->seo = $seo;
         $this->themeManager = $themeManager;
+        $this->treeRenderer = $treeRenderer;
     }
 
     public function show(string $slug)
@@ -29,7 +37,7 @@ class PageFrontController
         $page = $this->pageRepo->findBySlug($slug);
 
         if (!$page) {
-            return new \DomainSystem\Core\Http\Response("<h1>404 - Página não encontrada</h1><p>Buscando pelo slug: [" . htmlspecialchars($slug) . "]</p>", 404);
+            return new Response("<h1>404 - Página não encontrada</h1><p>Buscando pelo slug: [" . htmlspecialchars($slug) . "]</p>", 404);
         }
 
         $this->seo->setTitle($page['title'] . ' | Rachid');
@@ -40,10 +48,10 @@ class PageFrontController
         // Se a página tem um template PHP ou página estática linkada
         if (!empty($page['theme']) && !empty($page['template_file'])) {
             $themesBaseDir = DOMAIN_SYSTEM_ROOT . '/src/Plugins/flextheme/themes';
-            $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver($themesBaseDir);
+            $resolver = new SafeThemeResolver($themesBaseDir);
             $themeRoot = $resolver->resolveThemePath((string)$page['theme']);
             $templateFile = $page['template_file'];
-            
+
             // Backward compatibility: se não tiver prefixo, assume templates/
             if (!str_starts_with($templateFile, 'templates/') && !str_starts_with($templateFile, 'pages/')) {
                 $templateFile = 'templates/' . $templateFile;
@@ -53,16 +61,20 @@ class PageFrontController
                 // MODO PÁGINA ESTÁTICA (Bypassa o renderizador de templates)
                 $filePath = $themeRoot . '/' . $templateFile;
                 if (!file_exists($filePath)) {
-                    return new \DomainSystem\Core\Http\Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
+                    return new Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
                 }
 
                 $realPath = realpath($filePath);
                 $realThemeRoot = realpath($themeRoot);
-                
-                if ($realPath === false || $realThemeRoot === false || !str_starts_with($realPath, $realThemeRoot)) {
-                    return new \DomainSystem\Core\Http\Response("<h1>403 - Tentativa de acesso inválido</h1>", 403);
+
+                if (
+                    $realPath === false
+                    || $realThemeRoot === false
+                    || !str_starts_with($realPath, rtrim($realThemeRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
+                ) {
+                    return new Response("<h1>403 - Tentativa de acesso inválido</h1>", 403);
                 }
-                
+
                 ob_start();
                 extract(['page' => $page], EXTR_SKIP);
                 include $realPath;
@@ -88,9 +100,11 @@ class PageFrontController
             if (!empty($page['content']) && str_starts_with(trim($page['content']), '[')) {
                 $tree = json_decode($page['content'], true);
                 if (is_array($tree)) {
-                    $app = \DomainSystem\Core\Application::getInstance();
-                    $renderer = $app->make(\DomainSystem\Plugins\flextheme\BuilderFlex\Core\JsonRenderer::class);
-                    $html = $renderer->renderTree($tree);
+                    if ($this->treeRenderer !== null) {
+                        $html = $this->treeRenderer->renderTree($tree);
+                    } else {
+                        $html = $page['content'];
+                    }
                 } else {
                     $html = $page['content'];
                 }
@@ -110,6 +124,6 @@ class PageFrontController
         // Processa os shortcodes no HTML final!
         $html = $this->shortcodes->parse($html);
 
-        return new \DomainSystem\Core\Http\Response($html);
+        return new Response($html);
     }
 }

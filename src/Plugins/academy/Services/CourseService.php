@@ -46,14 +46,25 @@ class CourseService
             $thumbnail = $this->storage->storeUpload($uploadedFile);
         }
 
-        return $this->repository->create([
-            'title'       => trim((string)$data['title']),
-            'slug'        => $slug,
-            'description' => trim((string)($data['description'] ?? '')),
-            'thumbnail'   => $thumbnail,
-            'status'      => $data['status'] ?? 'draft',
-            'link'        => trim((string)($data['link'] ?? '')),
-        ]);
+        try {
+            $courseId = $this->repository->create([
+                'title'       => trim((string)$data['title']),
+                'slug'        => $slug,
+                'description' => trim((string)($data['description'] ?? '')),
+                'thumbnail'   => $thumbnail,
+                'status'      => $data['status'] ?? 'draft',
+                'link'        => trim((string)($data['link'] ?? '')),
+            ]);
+            if ($courseId <= 0 && $thumbnail !== null) {
+                $this->storage->deleteFile($thumbnail);
+            }
+            return $courseId;
+        } catch (\Throwable $e) {
+            if ($thumbnail !== null) {
+                $this->storage->deleteFile($thumbnail);
+            }
+            throw $e;
+        }
     }
 
     public function updateCourse(int $id, array $data, ?array $uploadedFile = null): bool
@@ -70,32 +81,54 @@ class CourseService
             $slug = $this->generateUniqueSlug((string)$data['title'], $id);
         }
 
-        $thumbnail = $course['thumbnail'];
+        $oldThumbnail = $course['thumbnail'] ?? null;
+        $newThumbnail = null;
         if (!empty($uploadedFile['tmp_name'])) {
             $newThumbnail = $this->storage->storeUpload($uploadedFile);
-            if (!empty($thumbnail)) {
-                $this->storage->deleteFile((string)$thumbnail);
-            }
-            $thumbnail = $newThumbnail;
         }
 
-        return $this->repository->update($id, [
-            'title'       => trim((string)$data['title']),
-            'slug'        => $slug,
-            'description' => trim((string)($data['description'] ?? '')),
-            'thumbnail'   => $thumbnail,
-            'status'      => $data['status'] ?? 'draft',
-            'link'        => trim((string)($data['link'] ?? '')),
-        ]);
+        $effectiveThumbnail = $newThumbnail ?? $oldThumbnail;
+
+        try {
+            $updated = $this->repository->update($id, [
+                'title'       => trim((string)$data['title']),
+                'slug'        => $slug,
+                'description' => trim((string)($data['description'] ?? '')),
+                'thumbnail'   => $effectiveThumbnail,
+                'status'      => $data['status'] ?? 'draft',
+                'link'        => trim((string)($data['link'] ?? '')),
+            ]);
+        } catch (\Throwable $e) {
+            if ($newThumbnail !== null) {
+                $this->storage->deleteFile($newThumbnail);
+            }
+            throw $e;
+        }
+
+        if (!$updated) {
+            if ($newThumbnail !== null) {
+                $this->storage->deleteFile($newThumbnail);
+            }
+            return false;
+        }
+
+        if ($newThumbnail !== null && !empty($oldThumbnail) && $oldThumbnail !== $newThumbnail) {
+            $this->storage->deleteFile((string)$oldThumbnail);
+        }
+
+        return true;
     }
 
     public function deleteCourse(int $id): bool
     {
         $course = $this->repository->findById($id);
-        if ($course && !empty($course['thumbnail'])) {
+        $deleted = $this->repository->delete($id);
+
+        if ($deleted && $course && !empty($course['thumbnail'])) {
             $this->storage->deleteFile((string)$course['thumbnail']);
         }
-        return $this->repository->delete($id);
+
+        return $deleted;
     }
 
     public function generateUniqueSlug(string $title, ?int $ignoreId = null): string

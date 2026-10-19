@@ -2,7 +2,7 @@
 
 Bem-vindo ao **Ambiente Operacional Web (Web OS)** definitivo. O Domain System deixou de ser um simples CMS para se tornar um Kernel puro (Ring 0) que orquestra Plugins de Nível de Usuário (Ring 3).
 
-Este guia oficial foi atualizado para a versão **2.1** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
+Este guia oficial foi atualizado para a versão **2.3** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
 
 ---
 
@@ -13,6 +13,7 @@ Um Plugin é onde reside a regra de negócios. Ele não pode acessar o Banco de 
 Crie uma pasta em `src/Plugins/nome_do_plugin/` contendo:
 - `plugin.json`: Metadados.
 - `Plugin.php`: O "Motor" do seu aplicativo.
+- `manual/module.php` *(Opcional)*: Módulo de instruções e QA rastreado automaticamente pelo Cockpit (`/admin/manual`).
 
 ### O Arquivo `plugin.json`
 ```json
@@ -22,7 +23,7 @@ Crie uma pasta em `src/Plugins/nome_do_plugin/` contendo:
     "description": "Um aplicativo de exemplo",
     "author": "Sua Empresa",
     "core": false,
-    "os_version": "2.1"
+    "os_version": "2.3"
 }
 ```
 
@@ -90,7 +91,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 ---
 
-## 🔒 Segurança e Capabilities (ACL)
+## 🔒 Segurança, Capabilities (ACL) e Proibição de Superglobais
 
 O sistema de permissões abandonou o modelo rígido de "Cargos" por um modelo microscópico de **Capabilities**.
 Sempre que seu plugin for instalado, ele deve registrar suas Capabilities no método `activate()`, usando:
@@ -99,16 +100,62 @@ Sempre que seu plugin for instalado, ele deve registrar suas Capabilities no mé
 $runtime->registerCapability('slug_da_permissao', 'Nome Visível no Painel');
 ```
 O SysAdmin poderá, através da interface do sistema, atrelar essa permissão a qualquer grupo (Admin, Editor, Visitante).
-Para testar se o usuário atual tem a permissão, puxe o `core.identity` e chame:
+> **Regra de Ouro (SOLID):** Jamais acesse `$_SESSION`, `$_POST` ou `$_GET` diretamente dentro de Controllers! Utilize sempre `SessionManagerInterface` e `Request` injetados via Construtor (validado pelo teste de arquitetura `NoSuperglobalsInControllersTest`).
 
 ```php
 $identity = $runtime->getLink('core.identity');
-$userId = $_SESSION['auth_user_id'] ?? 0;
+$userId = (int) $this->session->get('auth_user_id', 0);
 
 if (!$identity->userCan($userId, 'slug_da_permissao')) {
-    die("Acesso Negado!");
+    return new Response("Acesso Negado!", 403);
 }
 ```
+
+---
+
+## 📖 Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
+
+A partir da **v2.3.0**, qualquer plugin pode fornecer sua própria documentação interativa e checklist de QA que serão carregados **automaticamente** no menu **Manual de Instruções (`/admin/manual`)** do Cockpit.
+
+O motor `PluginManualScanner` varre todos os plugins em `src/Plugins/*/manual/module.php` (e `bundled_plugins/*/manual/module.php`) procurando instâncias que assinem o contrato `DomainSystem\Core\Contracts\ManualModuleInterface`:
+
+### 1. Crie a classe do Manual (`src/Plugins/meu_app/manual/MeuAppManualModule.php`)
+```php
+<?php
+namespace DomainSystem\Plugins\meu_app\manual;
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+class MeuAppManualModule implements ManualModuleInterface
+{
+    public function getId(): string { return 'meu_app'; }
+    public function getTitle(): string { return 'Meu App — Guia de Operação'; }
+    public function getIcon(): string { return '🚀'; }
+    public function getBadge(): string { return 'Plugin v2.3 • SOLID'; }
+    public function getVersion(): string { return '1.0.0'; }
+    public function getOrder(): int { return 30; }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            ['id' => 'chk_meu_app_1', 'label' => 'Meu App: Testar criação de registro e validação CSRF.'],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return '<p>Instruções detalhadas e interativas do plugin...</p>';
+    }
+}
+```
+
+### 2. Retorne a instância em `src/Plugins/meu_app/manual/module.php`
+```php
+<?php
+require_once __DIR__ . '/MeuAppManualModule.php';
+return new \DomainSystem\Plugins\meu_app\manual\MeuAppManualModule();
+```
+Assim que a pasta `manual/module.php` existir, o Cockpit exibirá automaticamente o cartão do módulo e adicionará seus itens à barra de progresso de Homologação (QA)! Veja a implementação de referência em `src/Plugins/academy/manual/`.
 
 ---
 

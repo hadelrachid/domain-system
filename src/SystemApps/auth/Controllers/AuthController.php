@@ -3,7 +3,7 @@
 namespace DomainSystem\SystemApps\auth\Controllers;
 
 use DomainSystem\Core\Theme\ThemeManager;
-use DomainSystem\Core\Http\SessionManager;
+use DomainSystem\Core\Security\SessionManager;
 use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\SystemApps\auth\Services\TwoFactorService;
 use DomainSystem\Core\Contracts\CockpitRegistryInterface;

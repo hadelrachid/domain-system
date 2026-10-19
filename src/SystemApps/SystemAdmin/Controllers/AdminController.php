@@ -212,7 +212,12 @@ class AdminController
     {
         $basePath = dirname(__DIR__, 4);
         $themesPath = $basePath . '/themes';
-        $activeTheme = $this->themeActivator->getActiveTheme();
+        
+        $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
+        $isComingSoon = $siteState->isComingSoon();
+        // Se o site está em modo 'Em Breve', nenhum tema está publicamente ativo
+        $activeTheme = $isComingSoon ? '' : $this->themeActivator->getActiveTheme();
+        $configuredTheme = $this->themeActivator->getActiveTheme();
         
         $themes = [];
         $seenFolders = [];
@@ -344,7 +349,9 @@ class AdminController
         try {
             return $this->theme->render('themes_panel', [
                 'themes' => $themes,
-                'active_theme' => $activeTheme
+                'active_theme' => $activeTheme,
+                'configured_theme' => $configuredTheme,
+                'is_coming_soon' => $isComingSoon
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar painel de temas: " . $e->getMessage();
@@ -578,9 +585,14 @@ class AdminController
     public function manual(\DomainSystem\Core\Http\Request $request)
     {
         try {
+            $scanner = new \DomainSystem\Core\Manual\PluginManualScanner();
+            $discoveredManuals = $scanner->discover();
+            $discoveredManuals = $this->dispatcher->applyFilters('manual.register_modules', $discoveredManuals);
+
             return $this->theme->render('manual', [
                 'baseUrl' => defined('BASE_URL') ? BASE_URL : '',
-                'version' => defined('DS_VERSION') ? DS_VERSION : '2.2.0'
+                'version' => defined('DS_VERSION') ? DS_VERSION : '2.3.0',
+                'pluginManuals' => is_array($discoveredManuals) ? $discoveredManuals : [],
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar manual de instruções: " . $e->getMessage();

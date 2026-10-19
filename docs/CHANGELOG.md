@@ -7,6 +7,32 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
+
+## [2.3.0] - 2026-10-18
+### Added
+- **Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface` & `PluginManualScanner`):** Qualquer plugin em `src/Plugins/<slug>/manual/module.php` que implemente `ManualModuleInterface` agora é descoberto e renderizado automaticamente no menu **Manual de Instruções (`/admin/manual`)** do Cockpit, incluindo seus itens de checklist de homologação (QA).
+- **Academy LMS Híbrido (v2.3.0) & Editor em Blocos com Preview em Tempo Real:**
+  - Suporte híbrido nativo para aulas em **HTML/Markdown Puro** (`content_mode = 'raw'`) e **Editor em Blocos Estruturado** (`content_mode = 'blocks'`, com blocos `heading`, `paragraph`, `code`, `callout`, `video`, `divider`).
+  - **Modos de Visualização em Tempo Real:** `✏️ Blocos`, `⚡ Dinâmico (Lado a Lado)` e `👁️ Aula Final` com renderização instantânea e player 16:9 embutido para YouTube, Vimeo e MP4.
+  - **Simulador Multi-Dispositivos (Desktop, 3 Celulares e 2 Tablets):** Alternância entre `🖥️ Desktop` e `📱 Mobile` com 5 viewports padrão (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) e navegação mobile interativa com *Off-Canvas Course Drawer* (`📚 Índice de Módulos & Aulas`).
+  - **Importação e Re-importação Automática de Pastas de Cursos (`CourseFolderImporterService`):** Sincronização inteligente de arquivos `.html`/`.md` do disco com o banco de dados sem sobrescrever aulas editadas no painel.
+  - **Manual Interativo da Academy (`src/Plugins/academy/manual/`):** Tutorial passo-a-passo e checklist de QA acoplados via `ManualModuleInterface`.
+
+### Changed
+- **Status Padrão de Novos Cursos:** Alterado de `soon` (*Em Breve*) para `published` (*Publicado*) no modal de criação do Academy para evitar erros 404 acidentais ao visualizar aulas recém-criadas, além de banner de alerta no editor quando o curso pai não está publicado.
+- **Roteamento 100% Agnóstico de Ambiente (`public/index.php`):** Remoção de prefixos hardcoded para suportar qualquer subpasta ou domínio raiz automaticamente.
+
+## [2.2.0] - 2026-10-12
+### Added
+- **Página Padrão "Em Breve" Desacoplada:** O instalador agora inicia com `active_theme = ''` por padrão, exibindo a vitrine "Em Breve" até que o administrador ative explicitamente um tema no Cockpit.
+- **Suíte de Testes de Arquitetura e Segurança (`tests/`):** Testes automatizados garantindo ausência de superglobais em Controllers (`NoSuperglobalsInControllersTest`), proteção de rotas Ring 0 e cobertura de plugins.
+
+## [2.1.0] - 2026-10-05
+### Added
+- **Criptografia Autenticada AES-256-GCM:** Migração de `AES-256-CBC` para `AES-256-GCM` em `src/Core/helpers.php`.
+- **Proteção contra Colisão de Rotas (Ring 0 Lock):** Bloqueio de sobrescrita de rotas vitais do Kernel por plugins Ring 3 (`RouteAlreadyRegisteredException`).
+- **Hardening de Sessão HTTP & Modo Desenvolvedor do Disjuntor:** Cookies `HttpOnly`, `SameSite=Strict` e bypass seguro de sessão para depuração de plugins desarmados.
+
 ## [1.2.0] - 2026-08-30
 ### Added
 - **Cérebro I.A. (AI Hub):** Novo plugin dedicado para gerenciamento de chaves de API (Gemini, ChatGPT, DeepSeek, Claude).

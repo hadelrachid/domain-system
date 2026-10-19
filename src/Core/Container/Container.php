@@ -22,7 +22,13 @@ class Container implements ContainerInterface
     {
         $this->bind($abstract, function () use ($concrete, $abstract) {
             if (!isset($this->instances[$abstract])) {
-                $this->instances[$abstract] = is_callable($concrete) ? $concrete($this) : $this->make($concrete);
+                if (is_callable($concrete)) {
+                    $this->instances[$abstract] = $concrete($this);
+                } elseif ($concrete === $abstract) {
+                    $this->instances[$abstract] = $this->autowire($concrete);
+                } else {
+                    $this->instances[$abstract] = $this->make($concrete);
+                }
             }
             return $this->instances[$abstract];
         });
@@ -44,7 +50,18 @@ class Container implements ContainerInterface
             if (is_callable($concrete)) {
                 return $concrete($this);
             }
+            if ($concrete === $abstract) {
+                return $this->autowire($concrete);
+            }
             return $this->make($concrete);
+        }
+
+        if (interface_exists($abstract)) {
+            foreach (array_keys($this->bindings) as $boundKey) {
+                if ((class_exists($boundKey) || interface_exists($boundKey)) && is_subclass_of($boundKey, $abstract)) {
+                    return $this->make($boundKey);
+                }
+            }
         }
 
         return $this->autowire($abstract);
@@ -78,6 +95,7 @@ class Container implements ContainerInterface
             $type = $parameter->getType();
             $resolved = false;
             $dependency = null;
+            $lastException = null;
 
             if ($type instanceof \ReflectionNamedType) {
                 if (!$type->isBuiltin()) {
@@ -86,6 +104,7 @@ class Container implements ContainerInterface
                         $resolved = true;
                     } catch (\Throwable $e) {
                         // Permite tentar valor padrão se a resolução falhar
+                        $lastException = $e;
                     }
                 }
             } elseif ($type instanceof \ReflectionUnionType) {
@@ -96,6 +115,7 @@ class Container implements ContainerInterface
                             $resolved = true;
                             break;
                         } catch (\Throwable $e) {
+                            $lastException = $e;
                             continue;
                         }
                     }
@@ -107,7 +127,8 @@ class Container implements ContainerInterface
             } elseif ($parameter->isDefaultValueAvailable()) {
                 $dependencies[] = $parameter->getDefaultValue();
             } else {
-                throw new Exception("Cannot resolve parameter [{$parameter->name}] in class [$abstract].");
+                $cause = $lastException ? ' (Causa: ' . $lastException->getMessage() . ')' : '';
+                throw new Exception("Cannot resolve parameter [{$parameter->name}] in class [$abstract].{$cause}", 0, $lastException);
             }
         }
 

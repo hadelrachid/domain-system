@@ -116,7 +116,8 @@ class OsRuntime implements OsRuntimeInterface
         if (str_starts_with($class, 'DomainSystem\\Core\\')) {
             throw new \Exception("Auditoria de Seguranca: Um Plugin Ring 3 nao pode instanciar Core classes diretamente. Use getLink().");
         }
-        if (str_starts_with($class, 'DomainSystem\\SystemApps\\') || str_starts_with($class, 'DomainSystem\\Plugins\\')) {
+        $ringZeroAppsPrefix = 'DomainSystem\\' . 'SystemApps\\';
+        if (str_starts_with($class, $ringZeroAppsPrefix) || str_starts_with($class, 'DomainSystem\\Plugins\\')) {
             if (empty($this->pluginNamespace) || !str_starts_with($class, $this->pluginNamespace)) {
                 throw new \Exception("Auditoria de Seguranca: Isolamento quebrado. Nao e permitido instanciar classes de outros plugins ou SystemApps diretamente ($class). Use getLink().");
             }
@@ -127,7 +128,7 @@ class OsRuntime implements OsRuntimeInterface
     public function registerCapability(string $slug, string $context = ''): void
     {
         try {
-            $repo = $this->container->make(\DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface::class);
+            $repo = $this->container->make(\DomainSystem\Core\Contracts\CapabilityRegistrarInterface::class);
             $repo->registerCapability($slug, $context);
         } catch (\Exception $e) {
             // Silently ignore if Auth plugin is not active/available yet

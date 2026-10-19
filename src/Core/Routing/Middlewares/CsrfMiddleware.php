@@ -8,7 +8,7 @@ use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\JsonResponse;
-use DomainSystem\Core\Http\SessionManager;
+use DomainSystem\Core\Security\SessionManager;
 use Closure;
 
 /**

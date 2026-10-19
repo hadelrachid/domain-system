@@ -30,18 +30,25 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osBoot(OsRuntimeInterface $runtime): void
     {
+        $runtime->singleton(
+            \DomainSystem\SystemApps\installer\Contracts\InstallerServiceInterface::class,
+            \DomainSystem\SystemApps\installer\Services\InstallerService::class
+        );
+
         // Verifica se o arquivo de proteção existe. Se não existir, MODO SETUP.
         if (file_exists(DOMAIN_SYSTEM_ROOT . '/config/installed.lock')) {
             $this->isInstalled = true;
         }
 
         if (!$this->isInstalled) {
-            // Prioridade máxima (1000) para barrar qualquer outro plugin (ex: SystemAdmin/Auth)
+            // Prioridade máxima (-1000) para barrar qualquer outro plugin (ex: SystemAdmin/Auth)
             $runtime->onHook('router.before_dispatch', function(string $uri) {
                 // Permite apenas as rotas do setup
                 if (!str_starts_with($uri, '/setup') && !str_starts_with($uri, '/assets')) {
-                    header("Location: " . BASE_URL . "/setup");
-                    exit;
+                    $base = defined('BASE_URL') ? BASE_URL : '';
+                    throw new \DomainSystem\Core\Exceptions\HttpResponseException(
+                        \DomainSystem\Core\Http\Response::redirect($base . "/setup")
+                    );
                 }
             }, \DomainSystem\Core\Events\HookPriority::HIGHEST);
 

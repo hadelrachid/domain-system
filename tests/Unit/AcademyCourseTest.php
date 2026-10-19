@@ -408,4 +408,175 @@ class AcademyCourseTest extends TestCase
         $courseStorage->deleteFile($relativePath);
         $this->assertFalse($publicStorage->exists($relativePath));
     }
+
+    public function testDraftAndSoonLessonsOrCoursesAreBlockedPublicly(): void
+    {
+        $courseRepo = new PdoCourseRepository($this->pdo);
+        $structureRepo = new \DomainSystem\Plugins\academy\Repositories\PdoCourseStructureRepository($this->pdo);
+        $navService = new \DomainSystem\Plugins\academy\Services\CourseNavigationService($courseRepo, $structureRepo, '');
+        $catalogRenderer = new CourseCatalogRenderer($courseRepo);
+        $frontController = new \DomainSystem\Plugins\academy\Controllers\CourseFrontController(
+            $courseRepo,
+            $structureRepo,
+            $navService,
+            $catalogRenderer
+        );
+
+        $courseId = $courseRepo->create([
+            'title'       => 'Curso de Segurança Web',
+            'slug'        => 'curso-seguranca-web',
+            'description' => 'Segurança em aplicações PHP.',
+            'status'      => 'published',
+        ]);
+
+        $modId = $structureRepo->createModule($courseId, 'Módulo 1', 1);
+        $structureRepo->createLesson([
+            'course_id'   => $courseId,
+            'module_id'   => $modId,
+            'title'       => 'Aula 01 Publicada',
+            'slug'        => 'aula-01-publicada',
+            'source_type' => 'content',
+            'content'     => '<p>Conteúdo publicado</p>',
+            'position'    => 1,
+            'status'      => 'published',
+        ]);
+        $structureRepo->createLesson([
+            'course_id'   => $courseId,
+            'module_id'   => $modId,
+            'title'       => 'Aula 02 Secreta em Rascunho',
+            'slug'        => 'aula-02-rascunho',
+            'source_type' => 'content',
+            'content'     => '<p>Conteúdo confidencial não publicado</p>',
+            'position'    => 2,
+            'status'      => 'draft',
+        ]);
+
+        // 1. Aula publicada em curso publicado retorna 200
+        $resPublished = $frontController->showLesson('curso-seguranca-web', 'aula-01-publicada');
+        $this->assertSame(200, $resPublished->getStatusCode());
+        $this->assertStringContainsString('Conteúdo publicado', $resPublished->getContent());
+
+        // 2. Aula em rascunho NUNCA deve abrir no front público (deve retornar 404)
+        $resDraft = $frontController->showLesson('curso-seguranca-web', 'aula-02-rascunho');
+        $this->assertSame(404, $resDraft->getStatusCode());
+        $this->assertStringNotContainsString('Conteúdo confidencial não publicado', $resDraft->getContent());
+
+        // 3. Navegação lateral e adjacência não devem listar a aula em rascunho
+        $navHtml = $navService->renderCourseNav('curso-seguranca-web', 'aula-01-publicada');
+        $this->assertStringContainsString('Aula 01 Publicada', $navHtml);
+        $this->assertStringNotContainsString('Aula 02 Secreta em Rascunho', $navHtml);
+
+        $adjacent = $navService->getAdjacentLessons('curso-seguranca-web', 'aula-01-publicada');
+        $this->assertNull($adjacent['next']);
+
+        // 4. Se o curso estiver 'soon' (Em breve), as aulas não devem abrir no front público
+        $courseRepo->update($courseId, [
+            'title'       => 'Curso de Segurança Web',
+            'slug'        => 'curso-seguranca-web',
+            'description' => 'Segurança em aplicações PHP.',
+            'thumbnail'   => null,
+            'status'      => 'soon',
+            'link'        => null,
+        ]);
+
+        $resSoonLesson = $frontController->showLesson('curso-seguranca-web', 'aula-01-publicada');
+        $this->assertSame(404, $resSoonLesson->getStatusCode());
+
+        $resSoonCourse = $frontController->showCourse('curso-seguranca-web');
+        $this->assertSame(200, $resSoonCourse->getStatusCode());
+        $this->assertStringNotContainsString('Começar Agora', $resSoonCourse->getContent());
+    }
+
+    public function testUpdateCoursePreservesOldThumbnailAndCleansNewWhenDbFails(): void
+    {
+        $storage = new LocalCourseImageStorage($this->tempUploadDir);
+
+        $oldImg = $this->createDummyImage(640, 360);
+        $oldThumbnailRel = $storage->storeUpload([
+            'tmp_name' => $oldImg,
+            'size'     => filesize($oldImg),
+        ]);
+        $oldFullPath = $storage->getUploadDir() . DIRECTORY_SEPARATOR . basename($oldThumbnailRel);
+        $this->assertFileExists($oldFullPath);
+
+        $repoMock = $this->createMock(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+        $repoMock->method('findById')->willReturn([
+            'id'          => 10,
+            'title'       => 'Curso Original',
+            'slug'        => 'curso-original',
+            'description' => 'Desc',
+            'thumbnail'   => $oldThumbnailRel,
+            'status'      => 'published',
+            'link'        => '',
+        ]);
+        $repoMock->method('update')->willReturn(false);
+
+        $service = new CourseService($repoMock, $storage);
+
+        $newImg = $this->createDummyImage(1280, 720);
+        $updated = $service->updateCourse(10, [
+            'title'  => 'Curso Original',
+            'status' => 'published',
+        ], [
+            'tmp_name' => $newImg,
+            'size'     => filesize($newImg),
+        ]);
+
+        $this->assertFalse($updated);
+        // A imagem antiga NÃO pode ter sido apagada quando o banco falhou
+        $this->assertFileExists($oldFullPath);
+        // E não deve sobrar a imagem nova órfã no diretório de uploads
+        $filesInUploadDir = array_values(array_diff(scandir($storage->getUploadDir()), ['.', '..']));
+        $this->assertSame([basename($oldThumbnailRel)], $filesInUploadDir);
+    }
+
+    public function testCreateCourseCleansUpThumbnailWhenDbThrowsException(): void
+    {
+        $storage = new LocalCourseImageStorage($this->tempUploadDir);
+        $repoMock = $this->createMock(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+        $repoMock->method('findBySlug')->willReturn(null);
+        $repoMock->method('create')->willThrowException(new \RuntimeException('DB insert failed'));
+
+        $service = new CourseService($repoMock, $storage);
+        $newImg = $this->createDummyImage(640, 360);
+
+        try {
+            $service->createCourse([
+                'title'  => 'Curso Falho',
+                'status' => 'draft',
+            ], [
+                'tmp_name' => $newImg,
+                'size'     => filesize($newImg),
+            ]);
+            $this->fail('Deveria ter lançado RuntimeException');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('DB insert failed', $e->getMessage());
+        }
+
+        $filesInUploadDir = array_values(array_diff(scandir($storage->getUploadDir()), ['.', '..']));
+        $this->assertEmpty($filesInUploadDir, 'Arquivo de upload órfão deve ser removido se create() falhar');
+    }
+
+    public function testDeleteCourseDoesNotDeleteThumbnailIfDbDeleteFails(): void
+    {
+        $storage = new LocalCourseImageStorage($this->tempUploadDir);
+        $img = $this->createDummyImage(640, 360);
+        $thumbRel = $storage->storeUpload([
+            'tmp_name' => $img,
+            'size'     => filesize($img),
+        ]);
+        $fullPath = $storage->getUploadDir() . DIRECTORY_SEPARATOR . basename($thumbRel);
+
+        $repoMock = $this->createMock(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+        $repoMock->method('findById')->willReturn([
+            'id'        => 5,
+            'title'     => 'Curso X',
+            'thumbnail' => $thumbRel,
+        ]);
+        $repoMock->method('delete')->willReturn(false);
+
+        $service = new CourseService($repoMock, $storage);
+        $this->assertFalse($service->deleteCourse(5));
+        $this->assertFileExists($fullPath, 'A capa não deve ser apagada se o DELETE no banco falhar');
+    }
 }

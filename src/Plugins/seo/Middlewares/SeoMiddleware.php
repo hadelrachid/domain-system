@@ -45,11 +45,15 @@ class SeoMiddleware
                 ]);
                 $themeDir = $resolver->resolveThemePath($themeName);
                 
-                if (file_exists($themeDir . '/layouts/main.php')) {
+                $mainLayout = file_exists($themeDir . '/layouts/main.php')
+                    ? $themeDir . '/layouts/main.php'
+                    : ($baseRoot . '/src/Plugins/flextheme/themes/default/layouts/main.php');
+
+                if (file_exists($mainLayout)) {
                     $seo = $this->seo;
                     // Envelopa o fragmento dentro do layout
                     ob_start();
-                    require $themeDir . '/layouts/main.php';
+                    require $mainLayout;
                     $content = ob_get_clean();
                 }
             }

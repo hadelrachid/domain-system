@@ -2,7 +2,9 @@
 
 namespace DomainSystem\SystemApps\installer\Services;
 
-class InstallerService
+use DomainSystem\SystemApps\installer\Contracts\InstallerServiceInterface;
+
+class InstallerService implements InstallerServiceInterface
 {
     private string $tokenFile;
 
@@ -113,7 +115,7 @@ class InstallerService
         $existing['DB_USER'] = $user;
         $existing['DB_PASS'] = $pass;
         $existing['SITE_STATUS'] = $existing['SITE_STATUS'] ?? 'coming_soon';
-        $existing['ACTIVE_THEME'] = $existing['ACTIVE_THEME'] ?? 'default';
+        $existing['ACTIVE_THEME'] = $existing['ACTIVE_THEME'] ?? '';
         
         // Garante a APP_KEY
         if (empty($existing['APP_KEY'])) {

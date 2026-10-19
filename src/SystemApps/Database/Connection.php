@@ -2,11 +2,12 @@
 
 namespace DomainSystem\SystemApps\Database;
 
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use PDO;
 use PDOException;
 use Exception;
 
-class Connection
+class Connection implements DatabaseConnectionInterface
 {
     private PDO $pdo;
 

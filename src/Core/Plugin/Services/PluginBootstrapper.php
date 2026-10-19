@@ -215,7 +215,7 @@ class PluginBootstrapper
                     $migrations = $plugin->getMigrations();
                     if (!empty($migrations)) {
                         $pdo = $this->container
-                            ->make(\DomainSystem\SystemApps\Database\Connection::class)
+                            ->make(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class)
                             ->getPdo();
                         foreach ($migrations as $name => $sql) {
                             $key = $pluginName . '_' . $name;
