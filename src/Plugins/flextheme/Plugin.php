@@ -7,6 +7,7 @@ use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
 use DomainSystem\Plugins\flextheme\Controllers\ThemeController;
+use DomainSystem\Plugins\flextheme\Controllers\ThemePartsAdminController;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Controllers\BuilderAdminController;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\WidgetManager;
@@ -93,12 +94,23 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 return Response::redirect("$base/docs/index");
             });
 
-            // Rotas do Builder Flex (Editor Visual)
-            $router->addRoute('GET', '/admin/builder', [BuilderAdminController::class, 'index'], 'flextheme', ['admin']);
-            $router->addRoute('POST', '/admin/builder/save', [BuilderAdminController::class, 'save'], 'flextheme', ['admin']);
-            $router->addRoute('GET', '/admin/builder/api/schema', [BuilderAdminController::class, 'getSchema'], 'flextheme', ['admin']);
-            $router->addRoute('GET', '/admin/builder/assets/builder.js', [BuilderAdminController::class, 'script'], 'flextheme', ['admin']);
-            $router->addRoute('GET', '/admin/builder/assets/builder.css', [BuilderAdminController::class, 'style'], 'flextheme', ['admin']);
+            // Rotas do Novo Flex Builder (Motor Visual em Blocos FSE & Contratos SOLID)
+            $router->addRoute('GET', '/admin/builder', [ThemePartsAdminController::class, 'index'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/create', [ThemePartsAdminController::class, 'create'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/edit', [ThemePartsAdminController::class, 'edit'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/save-part', [ThemePartsAdminController::class, 'savePart'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/delete-part', [ThemePartsAdminController::class, 'deletePart'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/assign', [ThemePartsAdminController::class, 'assign'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/tokens', [ThemePartsAdminController::class, 'tokens'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/tokens/save', [ThemePartsAdminController::class, 'saveTokens'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/preview', [ThemePartsAdminController::class, 'preview'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/schema', [ThemePartsAdminController::class, 'schema'], 'flextheme', ['admin']);
+
+            // Aliases de compatibilidade e navegação
+            $router->addRoute('POST', '/admin/builder/save', [ThemePartsAdminController::class, 'savePart'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/builder/api/schema', [ThemePartsAdminController::class, 'schema'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/themes/parts', [ThemePartsAdminController::class, 'index'], 'flextheme', ['admin']);
+            $router->addRoute('GET', '/admin/themes/tokens', [ThemePartsAdminController::class, 'tokens'], 'flextheme', ['admin']);
         });
 
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) {
@@ -132,27 +144,46 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return $c->make(JsonRenderer::class);
         });
 
-        // 2. Resolve a instância do gerenciador
+        // 2. Controller do Novo Flex Builder
+        $runtime->singleton(ThemePartsAdminController::class, function($c) {
+            return new ThemePartsAdminController(
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class),
+                $c->make(\DomainSystem\Core\Contracts\ThemeManagerInterface::class),
+                $c->make(\DomainSystem\Core\Theme\ShortcodeManager::class),
+                $c->has(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
+                    ? $c->make(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
+                    : null,
+                $c->has(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
+                    ? $c->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
+                    : null
+            );
+        });
+
+        // 3. Resolve a instância do gerenciador de widgets
         /** @var WidgetManagerInterface $manager */
         $manager = $runtime->make(WidgetManagerInterface::class);
 
-        // 3. Registra os widgets nativos
-        //    Futuramente, outros plugins poderão injetar widgets via hook 'builder.register_widgets'
+        // 4. Registra os widgets nativos
         $manager->registerWidget(new ContainerWidget());
         $manager->registerWidget(new TextWidget());
         $manager->registerWidget(new LogoWidget());
 
-        // 4. Integra com o motor de Shortcodes
+        // 5. Integra com o motor de Shortcodes
         $runtime->onHook('shortcodes.register', function(\DomainSystem\Core\Theme\ShortcodeManager $sm) use ($manager) {
             $manager->bootShortcodes($sm);
         });
 
-                // 5. Adiciona o botão do Builder no menu administrativo (DENTRO DO MENU TEMAS)
+        // 6. Adiciona o submenu do Flex Builder e Design Tokens dentro do menu "Temas"
         $runtime->onHook('admin.menu', function($menus, $role) {
             if (in_array($role, ['admin', 'manager'])) {
                 $inserted = false;
                 
-                // Procura o menu "Temas" para inserir como submenu
+                // Procura o menu "Temas" para inserir como submenus
                 foreach ($menus as &$menu) {
                     if (isset($menu['title']) && $menu['title'] === 'Temas') {
                         if (!isset($menu['submenu'])) {
@@ -161,6 +192,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         $menu['submenu'][] = [
                             'title' => 'Flex Builder',
                             'url'   => '/admin/builder',
+                        ];
+                        $menu['submenu'][] = [
+                            'title' => 'Design Tokens',
+                            'url'   => '/admin/builder/tokens',
                         ];
                         $inserted = true;
                         break;
@@ -173,6 +208,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         'title' => 'Flex Builder',
                         'url'   => '/admin/builder',
                         'icon'  => '🏗️'
+                    ];
+                    $menus[] = [
+                        'title' => 'Design Tokens',
+                        'url'   => '/admin/builder/tokens',
+                        'icon'  => '🎨'
                     ];
                 }
             }
