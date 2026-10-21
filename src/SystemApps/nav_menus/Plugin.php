@@ -30,6 +30,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     public function osBoot(OsRuntimeInterface $runtime): void
     {
         $runtime->bind(MenuRepositoryInterface::class, PdoMenuRepository::class);
+        $runtime->bind(
+            \DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class,
+            \DomainSystem\SystemApps\nav_menus\Services\NavMenuProviderAdapter::class
+        );
 
         // Interceptar o menu admin para adicionar o submenu "Menus" em "Temas"
         // Prioridade 99 para rodar APÓS o SystemAdmin (que cria o item "Temas")

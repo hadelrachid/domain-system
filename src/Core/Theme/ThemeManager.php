@@ -12,11 +12,18 @@ class ThemeManager implements ThemeManagerInterface
     private string $activeThemePath;
     public ?EventDispatcherInterface $dispatcher = null;
     private ?ShortcodeManager $shortcodeManager = null;
+    private ?\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface $partRenderer = null;
 
-    public function __construct(string $activeThemePath, ?ShortcodeManager $shortcodeManager = null)
+    public function __construct(string $activeThemePath, ?ShortcodeManager $shortcodeManager = null, ?\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface $partRenderer = null)
     {
         $this->activeThemePath = rtrim($activeThemePath, '/\\');
         $this->shortcodeManager = $shortcodeManager;
+        $this->partRenderer = $partRenderer;
+    }
+
+    public function setPartRenderer(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface $renderer): void
+    {
+        $this->partRenderer = $renderer;
     }
 
     public function setActiveThemePath(string $path): void
@@ -84,6 +91,16 @@ class ThemeManager implements ThemeManagerInterface
     public function get_header(array $args = []): string
     {
         try {
+            $renderer = $this->resolvePartRenderer();
+            if ($renderer !== null) {
+                $themeFolder = basename($this->activeThemePath);
+                $html = $renderer->renderHeader($themeFolder, $args);
+                if (trim($html) !== '') {
+                    echo $html;
+                    return $html;
+                }
+            }
+
             $html = $this->render('header', $args);
             echo $html;
             return $html;
@@ -95,12 +112,41 @@ class ThemeManager implements ThemeManagerInterface
     public function get_footer(array $args = []): string
     {
         try {
+            $renderer = $this->resolvePartRenderer();
+            if ($renderer !== null) {
+                $themeFolder = basename($this->activeThemePath);
+                $html = $renderer->renderFooter($themeFolder, $args);
+                if (trim($html) !== '') {
+                    echo $html;
+                    return $html;
+                }
+            }
+
             $html = $this->render('footer', $args);
             echo $html;
             return $html;
         } catch (Exception $e) {
             return '';
         }
+    }
+
+    private function resolvePartRenderer(): ?\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface
+    {
+        if ($this->partRenderer !== null) {
+            return $this->partRenderer;
+        }
+
+        if (isset($GLOBALS['app'])) {
+            try {
+                $c = $GLOBALS['app']->getContainer();
+                if ($c->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)) {
+                    $this->partRenderer = $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
+                    return $this->partRenderer;
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        return null;
     }
 
     public function getAvailableThemes(): array

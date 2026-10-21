@@ -177,6 +177,42 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Theme\NavigationManager();
         });
 
+        // 4.3. Theme Parts (Header & Footer Builder Engine)
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository($basePath . '/config/theme_parts');
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartAssociation($basePath . '/config/theme_parts_associations.json');
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Theme\Parts\Models\DesignTokens($basePath . '/config/design_tokens.json');
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class, function() {
+            return new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer();
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class, function($c) {
+            $menuProvider = $c->has(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
+                ? $c->make(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
+                : null;
+            $sm = $c->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
+            return \DomainSystem\Core\Theme\Parts\Blocks\DefaultBlockRegistryFactory::create($menuProvider, $sm);
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class, function($c) use ($basePath) {
+            return new \DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer(
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface::class),
+                $basePath
+            );
+        });
+
         // 5. Workspace
         $container->singleton(\DomainSystem\Core\Workspace\WorkspaceManager::class, function($c) {
             $themeManager = $c->make(\DomainSystem\Core\Theme\ThemeManager::class);

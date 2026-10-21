@@ -288,13 +288,29 @@ $seo->setCanonical($canonicalUrl)
 </head>
 <body>
 
-    <?php require $themeDir . '/partials/header.php'; ?>
+    <?php 
+        $partRenderer = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class))
+            ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
+            : null;
+        $themeFolder = basename($themeDir);
+        if ($partRenderer !== null) {
+            echo $partRenderer->renderHeader($themeFolder, get_defined_vars());
+        } else {
+            require $themeDir . '/partials/header.php';
+        }
+    ?>
 
     <main>
         <?= $content ?>
     </main>
 
-    <?php require $themeDir . '/partials/footer.php'; ?>
+    <?php 
+        if ($partRenderer !== null) {
+            echo $partRenderer->renderFooter($themeFolder, get_defined_vars());
+        } else {
+            require $themeDir . '/partials/footer.php';
+        }
+    ?>
 
 </body>
 </html>
