@@ -205,6 +205,21 @@ class SessionManager implements SessionManagerInterface
     }
 
     /**
+     * Verifica se existe uma mensagem flash pendente (opcionalmente de um tipo específico).
+     */
+    public function hasFlash(?string $type = null): bool
+    {
+        $flash = $this->get('flash_message');
+        if (!is_array($flash) || empty($flash['msg'])) {
+            return false;
+        }
+        if ($type !== null) {
+            return ($flash['type'] ?? '') === $type;
+        }
+        return true;
+    }
+
+    /**
      * Regenera o ID da sessão.
      */
     public function regenerate(): void

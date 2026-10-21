@@ -29,9 +29,17 @@
         </button>
     </div>
 
-    <?php if ($session && $session->hasFlash('success')): ?>
-        <div style="background: rgba(0, 210, 132, 0.15); border: 1px solid #00d284; color: #00d284; padding: 12px 18px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
-            ✓ <?= htmlspecialchars((string)$session->getFlash('success'), ENT_QUOTES, 'UTF-8') ?>
+    <?php 
+        $flash = $session ? $session->getFlash() : null;
+        if ($flash && !empty($flash['msg'])): 
+            $isSuccess = ($flash['type'] ?? 'info') === 'success';
+            $bgColor = $isSuccess ? 'rgba(0, 210, 132, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+            $borderColor = $isSuccess ? '#00d284' : '#ef4444';
+            $textColor = $isSuccess ? '#00d284' : '#f87171';
+            $icon = $isSuccess ? '✓' : '✕';
+    ?>
+        <div style="background: <?= $bgColor ?>; border: 1px solid <?= $borderColor ?>; color: <?= $textColor ?>; padding: 12px 18px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+            <?= $icon ?> <?= htmlspecialchars((string)$flash['msg'], ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 

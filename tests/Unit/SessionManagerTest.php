@@ -61,9 +61,14 @@ class SessionManagerTest extends TestCase
         $manager->start();
 
         $manager->setFlash('success', 'Operação realizada');
+        $this->assertTrue($manager->hasFlash());
+        $this->assertTrue($manager->hasFlash('success'));
+        $this->assertFalse($manager->hasFlash('error'));
+
         $flash = $manager->getFlash();
 
         $this->assertEquals(['type' => 'success', 'msg' => 'Operação realizada'], $flash);
         $this->assertNull($manager->getFlash(), 'O flash message deve ser removido após a primeira leitura');
+        $this->assertFalse($manager->hasFlash());
     }
 }
