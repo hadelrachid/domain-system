@@ -145,6 +145,24 @@ class NavMenuBlock implements BlockInterface
             #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
             #{$navId} .ds-mobile-drawer { display: flex !important; }
         }
+        .ds-mobile-mode #{$navId} .ds-desktop-menu,
+        .ds-is-mobile #{$navId} .ds-desktop-menu,
+        .ds-device-375 #{$navId} .ds-desktop-menu,
+        .ds-device-768 #{$navId} .ds-desktop-menu {
+            display: none !important;
+        }
+        .ds-mobile-mode #{$navId} .ds-mobile-toggle-btn,
+        .ds-is-mobile #{$navId} .ds-mobile-toggle-btn,
+        .ds-device-375 #{$navId} .ds-mobile-toggle-btn,
+        .ds-device-768 #{$navId} .ds-mobile-toggle-btn {
+            display: inline-flex !important;
+        }
+        .ds-mobile-mode #{$navId} .ds-mobile-drawer,
+        .ds-is-mobile #{$navId} .ds-mobile-drawer,
+        .ds-device-375 #{$navId} .ds-mobile-drawer,
+        .ds-device-768 #{$navId} .ds-mobile-drawer {
+            display: flex !important;
+        }
     </style>
 
     <!-- Menu Desktop -->

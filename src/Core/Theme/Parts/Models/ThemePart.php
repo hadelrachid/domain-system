@@ -19,6 +19,7 @@ class ThemePart implements ThemePartInterface
     private string $layoutPreset;
     private array $containerSettings;
     private array $columnsData;
+    private array $sections;
     private string $mobileToggleStyle;
     private bool $isDefault;
     private int $createdAt;
@@ -34,7 +35,8 @@ class ThemePart implements ThemePartInterface
         string $mobileToggleStyle = MobileToggleStyleInterface::STYLE_CLASSIC,
         bool $isDefault = false,
         ?int $createdAt = null,
-        ?int $updatedAt = null
+        ?int $updatedAt = null,
+        array $sections = []
     ) {
         $cleanId = trim($id);
         if ($cleanId === '') {
@@ -52,6 +54,28 @@ class ThemePart implements ThemePartInterface
         $this->layoutPreset = $layoutPreset;
         $this->containerSettings = $containerSettings;
         $this->columnsData = $columnsData;
+
+        // Se seções forem fornecidas, armazena; caso contrário, sintetiza uma seção padrão retrocompatível
+        if (!empty($sections)) {
+            $this->sections = $sections;
+            $first = reset($sections);
+            if (is_array($first)) {
+                $this->layoutPreset = (string)($first['layout_preset'] ?? $this->layoutPreset);
+                $this->containerSettings = (array)($first['container_settings'] ?? $this->containerSettings);
+                $this->columnsData = (array)($first['columns_data'] ?? $this->columnsData);
+            }
+        } else {
+            $this->sections = [
+                [
+                    'id'                 => 'sec_' . substr(md5($cleanId . '_default'), 0, 8),
+                    'title'              => 'Seção 1',
+                    'layout_preset'      => $this->layoutPreset,
+                    'container_settings' => $this->containerSettings,
+                    'columns_data'       => $this->columnsData,
+                ]
+            ];
+        }
+
         $this->mobileToggleStyle = in_array($mobileToggleStyle, [
             MobileToggleStyleInterface::STYLE_CLASSIC,
             MobileToggleStyleInterface::STYLE_PILL,
@@ -113,6 +137,11 @@ class ThemePart implements ThemePartInterface
         return $this->updatedAt;
     }
 
+    public function getSections(): array
+    {
+        return $this->sections;
+    }
+
     public function toArray(): array
     {
         return [
@@ -122,6 +151,7 @@ class ThemePart implements ThemePartInterface
             'layout_preset'       => $this->layoutPreset,
             'container_settings'  => $this->containerSettings,
             'columns_data'        => $this->columnsData,
+            'sections'            => $this->sections,
             'mobile_toggle_style' => $this->mobileToggleStyle,
             'is_default'          => $this->isDefault,
             'created_at'          => $this->createdAt,
@@ -141,7 +171,8 @@ class ThemePart implements ThemePartInterface
             (string)($data['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC),
             (bool)($data['is_default'] ?? false),
             isset($data['created_at']) ? (int)$data['created_at'] : null,
-            isset($data['updated_at']) ? (int)$data['updated_at'] : null
+            isset($data['updated_at']) ? (int)$data['updated_at'] : null,
+            (array)($data['sections'] ?? [])
         );
     }
 }

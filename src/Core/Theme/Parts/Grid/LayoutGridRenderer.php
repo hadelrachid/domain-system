@@ -85,6 +85,7 @@ class LayoutGridRenderer implements LayoutGridInterface
 
         $alignItems = (string)($settings['align_items'] ?? 'center');
         $padding = (string)($settings['padding'] ?? '20px 16px');
+        $margin = (string)($settings['margin'] ?? '0px');
         $background = (string)($settings['background'] ?? 'transparent');
         $customClass = (string)($settings['custom_class'] ?? '');
 
@@ -105,7 +106,7 @@ class LayoutGridRenderer implements LayoutGridInterface
             : "width: 100%;";
 
         return <<<HTML
-<div id="{$sectionId}" class="ds-section-wrapper {$customClass}" style="background: {$background}; width: 100%;">
+<div id="{$sectionId}" class="ds-section-wrapper {$customClass}" style="background: {$background}; width: 100%; margin: {$margin};">
     <style>
         #{$sectionId} .ds-section-grid {
             display: grid;
@@ -129,6 +130,20 @@ class LayoutGridRenderer implements LayoutGridInterface
                 padding-left: 12px !important;
                 padding-right: 12px !important;
             }
+        }
+        .ds-mobile-mode #{$sectionId} .ds-section-grid,
+        .ds-is-mobile #{$sectionId} .ds-section-grid,
+        .ds-device-375 #{$sectionId} .ds-section-grid {
+            grid-template-columns: {$mobileTemplate} !important;
+            gap: 12px !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+        }
+        .ds-tablet-mode #{$sectionId} .ds-section-grid,
+        .ds-is-tablet #{$sectionId} .ds-section-grid,
+        .ds-device-768 #{$sectionId} .ds-section-grid {
+            grid-template-columns: {$tabletTemplate} !important;
+            gap: 16px !important;
         }
     </style>
     <div class="ds-section-grid">

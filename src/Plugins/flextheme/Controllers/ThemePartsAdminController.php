@@ -208,6 +208,7 @@ class ThemePartsAdminController
             $columnsData = (array)($input['columns_data'] ?? []);
             $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
             $isDefault = !empty($input['is_default']);
+            $sections = (array)($input['sections'] ?? []);
 
             $part = new ThemePart(
                 $id,
@@ -219,7 +220,8 @@ class ThemePartsAdminController
                 $mobileToggleStyle,
                 $isDefault,
                 isset($input['created_at']) ? (int)$input['created_at'] : null,
-                time()
+                time(),
+                $sections
             );
 
             $this->partRepo->save($part);
@@ -367,30 +369,63 @@ class ThemePartsAdminController
             $settings = (array)($input['container_settings'] ?? []);
             $columnsData = (array)($input['columns_data'] ?? []);
             $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+            $sections = (array)($input['sections'] ?? []);
 
-            $columnsHtml = [];
-            foreach ($columnsData as $colIndex => $blocksList) {
-                $colBlocks = [];
-                if (is_array($blocksList)) {
-                    foreach ($blocksList as $bDef) {
-                        if (!is_array($bDef)) continue;
-                        $bType = (string)($bDef['type'] ?? '');
-                        $bData = (array)($bDef['data'] ?? []);
+            if (!empty($sections)) {
+                $sectionsHtml = [];
+                foreach ($sections as $sec) {
+                    $secPreset = (string)($sec['layout_preset'] ?? '1_col');
+                    $secSettings = (array)($sec['container_settings'] ?? []);
+                    $secColsData = (array)($sec['columns_data'] ?? []);
 
-                        if ($bType === 'nav_menu' && !isset($bData['toggle_style'])) {
-                            $bData['toggle_style'] = $mobileToggleStyle;
+                    $colsHtml = [];
+                    foreach ($secColsData as $colIndex => $blocksList) {
+                        $colBlocks = [];
+                        if (is_array($blocksList)) {
+                            foreach ($blocksList as $bDef) {
+                                if (!is_array($bDef)) continue;
+                                $bType = (string)($bDef['type'] ?? '');
+                                $bData = (array)($bDef['data'] ?? []);
+
+                                if ($bType === 'nav_menu' && !isset($bData['toggle_style'])) {
+                                    $bData['toggle_style'] = $mobileToggleStyle;
+                                }
+
+                                $block = $this->blockRegistry->get($bType);
+                                if ($block !== null) {
+                                    $colBlocks[] = $block->render($bData, ['preview' => true]);
+                                }
+                            }
                         }
+                        $colsHtml[(int)$colIndex] = implode("\n", $colBlocks);
+                    }
+                    $sectionsHtml[] = $this->layoutGrid->renderSection($secPreset, $colsHtml, $secSettings);
+                }
+                $renderedGrid = implode("\n", $sectionsHtml);
+            } else {
+                $columnsHtml = [];
+                foreach ($columnsData as $colIndex => $blocksList) {
+                    $colBlocks = [];
+                    if (is_array($blocksList)) {
+                        foreach ($blocksList as $bDef) {
+                            if (!is_array($bDef)) continue;
+                            $bType = (string)($bDef['type'] ?? '');
+                            $bData = (array)($bDef['data'] ?? []);
 
-                        $block = $this->blockRegistry->get($bType);
-                        if ($block !== null) {
-                            $colBlocks[] = $block->render($bData, ['preview' => true]);
+                            if ($bType === 'nav_menu' && !isset($bData['toggle_style'])) {
+                                $bData['toggle_style'] = $mobileToggleStyle;
+                            }
+
+                            $block = $this->blockRegistry->get($bType);
+                            if ($block !== null) {
+                                $colBlocks[] = $block->render($bData, ['preview' => true]);
+                            }
                         }
                     }
+                    $columnsHtml[(int)$colIndex] = implode("\n", $colBlocks);
                 }
-                $columnsHtml[(int)$colIndex] = implode("\n", $colBlocks);
+                $renderedGrid = $this->layoutGrid->renderSection($preset, $columnsHtml, $settings);
             }
-
-            $renderedGrid = $this->layoutGrid->renderSection($preset, $columnsHtml, $settings);
             $cssVars = '<style id="ds-design-tokens">' . $this->tokens->generateCssVariables() . '</style>';
 
             return new Response($cssVars . $renderedGrid, 200, ['Content-Type' => 'text/html; charset=utf-8']);

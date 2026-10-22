@@ -356,6 +356,150 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             margin-top: 4px;
         }
 
+        /* ELEMENTOR SECTIONS IN CANVAS */
+        .elementor-section-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .elementor-section-card.active-section {
+            border-color: rgba(56, 189, 248, 0.7);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.12);
+        }
+        .elementor-section-bar {
+            background: #0f1520;
+            border-bottom: 1px solid var(--border);
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .elementor-sec-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .elementor-sec-badge {
+            font-size: 10px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .elementor-sec-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sec-act-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sec-act-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.12);
+            border-color: var(--primary);
+        }
+        .sec-act-btn.del:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .elementor-add-section-area {
+            border: 2px dashed rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 20px 16px;
+            text-align: center;
+            margin-top: 16px;
+            background: rgba(255,255,255,0.01);
+            transition: all 0.2s;
+        }
+        .elementor-add-section-area:hover {
+            border-color: var(--primary);
+            background: rgba(56, 189, 248, 0.03);
+        }
+        .elementor-add-section-circle {
+            width: 44px;
+            height: 44px;
+            background: #e11d48;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .elementor-add-section-circle:hover {
+            transform: scale(1.08);
+            background: #f43f5e;
+        }
+        .elementor-add-section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .elementor-structure-picker {
+            margin-top: 14px;
+            padding: 14px;
+            background: #111722;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .elementor-structure-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .structure-item-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            width: 135px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .structure-item-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .structure-bars {
+            display: flex;
+            gap: 3px;
+            height: 26px;
+            margin-bottom: 6px;
+        }
+        .structure-col-bar {
+            background: rgba(255,255,255,0.25);
+            border-radius: 3px;
+        }
+
         /* FORM CONTROLS IN INSPECTOR */
         .inspector-field {
             margin-bottom: 14px;
@@ -416,7 +560,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 ← Flex Builder
             </a>
             <input type="text" id="part_title_input" value="<?= htmlspecialchars($part->getTitle()) ?>" 
-                   style="background: transparent; border: 1px solid transparent; color: #fff; font-size: 15px; font-weight: 700; padding: 4px 8px; border-radius: 4px; width: 220px;"
+                   style="background: transparent; border: 1px solid transparent; color: #fff; font-size: 15px; font-weight: 700; padding: 4px 8px; border-radius: 4px; width: 200px;"
                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='transparent'">
             <span style="background: rgba(56, 189, 248, 0.15); color: var(--primary); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 12px; text-transform: uppercase;">
                 <?= htmlspecialchars(strtoupper($part->getType())) ?>
@@ -439,10 +583,20 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             </button>
         </div>
 
+        <!-- MODO DE VISUALIZAÇÃO: ESTRUTURA VS AO VIVO -->
+        <div style="display: flex; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
+            <button type="button" class="header-btn active" id="btn_mode_structure" onclick="setStudioMode('structure')" title="Modo Construtor de Estrutura e Blocos">
+                🧱 Estrutura
+            </button>
+            <button type="button" class="header-btn" id="btn_mode_live" onclick="setStudioMode('live')" title="Modo Visual Interativo com clique real no Hamburguer">
+                👁️ Ao Vivo
+            </button>
+        </div>
+
         <!-- AÇÕES -->
         <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" class="header-btn" onclick="toggleLivePreviewModal()" title="Ver código / Preview">
-                👁️ Preview Real
+            <button type="button" class="header-btn" onclick="toggleLivePreviewModal()" title="Ver código / Preview Modal">
+                🔍 Modal
             </button>
             <button type="button" id="btn_save" class="header-btn" onclick="savePart()" style="background: var(--accent-green); color: #000; border-color: var(--accent-green); font-weight: 700;">
                 💾 Salvar
@@ -463,43 +617,50 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             </div>
 
             <div class="sidebar-content" id="sidebar_tab_layout">
-                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 10px;">Selecione a Grade de Divisórias</div>
+                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 8px;">Seção Sendo Configurada</div>
+                <div id="sidebar_sec_selector_bar" style="display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;"></div>
+
+                <div class="inspector-field">
+                    <label class="inspector-label">Nome de Identificação da Seção</label>
+                    <input type="text" id="sec_title_input" class="inspector-input" oninput="updateActiveSecTitle(this.value)" placeholder="ex: Topbar, Header Principal, Sub-header">
+                </div>
+
+                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-top: 14px; margin-bottom: 8px;">Estrutura de Divisórias Desta Seção</div>
                 <div id="presets_list"></div>
 
                 <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">Dimensões do Container</div>
+                    <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">Espaçamentos e Dimensões da Seção</div>
                     
                     <div class="inspector-field">
-                        <label class="inspector-label">Largura Máxima (Container)</label>
-                        <div class="dimension-row">
-                            <input type="text" id="setting_max_width" class="inspector-input" value="1280px" oninput="updateContainerSetting('max_width', this.value)">
-                            <select class="inspector-select" onchange="changeUnit('setting_max_width', this.value)">
-                                <option value="px">px</option>
-                                <option value="%">%</option>
-                                <option value="vw">vw</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="inspector-field">
-                        <label class="inspector-label">Espaçamento Entre Colunas (Gap)</label>
-                        <div class="dimension-row">
-                            <input type="text" id="setting_gap" class="inspector-input" value="24px" oninput="updateContainerSetting('gap', this.value)">
-                            <select class="inspector-select" onchange="changeUnit('setting_gap', this.value)">
-                                <option value="px">px</option>
-                                <option value="rem">rem</option>
-                            </select>
-                        </div>
+                        <label class="inspector-label">Margem Externa (Margin - Afastamento Entre Seções)</label>
+                        <input type="text" id="setting_margin" class="inspector-input" value="0px 0px 16px 0px" oninput="updateActiveSecSetting('margin', this.value)" placeholder="ex: 0px 0px 20px 0px">
+                        <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Afasta esta seção das outras seções acima/abaixo.</span>
                     </div>
 
                     <div class="inspector-field">
                         <label class="inspector-label">Preenchimento Interno (Padding)</label>
-                        <input type="text" id="setting_padding" class="inspector-input" value="20px 24px" oninput="updateContainerSetting('padding', this.value)">
+                        <input type="text" id="setting_padding" class="inspector-input" value="16px 24px" oninput="updateActiveSecSetting('padding', this.value)" placeholder="ex: 20px 24px">
+                        <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Espaço interno antes das colunas/células.</span>
                     </div>
 
                     <div class="inspector-field">
-                        <label class="inspector-label">Alinhamento Vertical</label>
-                        <select id="setting_align_items" class="inspector-select" onchange="updateContainerSetting('align_items', this.value)">
+                        <label class="inspector-label">Espaçamento Entre Células (Gap)</label>
+                        <input type="text" id="setting_gap" class="inspector-input" value="24px" oninput="updateActiveSecSetting('gap', this.value)" placeholder="ex: 24px">
+                    </div>
+
+                    <div class="inspector-field">
+                        <label class="inspector-label">Largura Máxima do Container (Boxed)</label>
+                        <input type="text" id="setting_max_width" class="inspector-input" value="1280px" oninput="updateActiveSecSetting('max_width', this.value)" placeholder="ex: 1280px ou 100%">
+                    </div>
+
+                    <div class="inspector-field">
+                        <label class="inspector-label">Cor de Fundo da Seção (Background)</label>
+                        <input type="text" id="setting_background" class="inspector-input" value="transparent" oninput="updateActiveSecSetting('background', this.value)" placeholder="ex: transparent, #0f1520">
+                    </div>
+
+                    <div class="inspector-field">
+                        <label class="inspector-label">Alinhamento Vertical das Colunas</label>
+                        <select id="setting_align_items" class="inspector-select" onchange="updateActiveSecSetting('align_items', this.value)">
                             <option value="center">Centralizado (center)</option>
                             <option value="flex-start">Topo (flex-start)</option>
                             <option value="flex-end">Base (flex-end)</option>
@@ -566,11 +727,20 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         <section id="simulator-container">
             <div id="device-viewport">
                 <div id="device-screen-bar">
-                    <span>Simulador Responsivo: <strong id="cur_device_name">Desktop (100%)</strong></span>
-                    <span id="cur_device_px">100%</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>Simulador: <strong id="cur_device_name">Desktop (100%)</strong></span>
+                        <span id="cur_device_px" style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px;">100%</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span id="active_sections_count_badge" style="font-size: 11px; color: var(--primary); font-weight: 700;">1 Seção</span>
+                    </div>
                 </div>
                 <div id="canvas-content">
-                    <div id="canvas_grid" class="canvas-grid-row"></div>
+                    <div id="sections_stage"></div>
+                    <div id="elementor_add_section_wrapper"></div>
+                </div>
+                <div id="live-stage-container" style="display: none; flex-grow: 1; width: 100%; min-height: 480px;">
+                    <iframe id="live_stage_iframe" style="width: 100%; height: 100%; border: none; min-height: 480px; background: #06090e;"></iframe>
                 </div>
             </div>
         </section>
@@ -605,20 +775,44 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     <div id="toast"></div>
 
     <script>
-    // ESTADO DO CONSTRUTOR
+    // ESTADO DO CONSTRUTOR MULTI-SEÇÃO
     var csrfToken = '<?= htmlspecialchars($csrfToken ?? '') ?>';
     var state = <?= $initialJson ?>;
     var presets = <?= $presetsJson ?>;
     var shortcodesList = <?= $shortcodesJson ?>;
     var menusList = <?= $menusJson ?>;
-    var selectedBlockCoord = null; // { col: 0, blockIdx: 0 }
-    var activeColIdx = 0; // Coluna ativa atual para inserções
-    var currentDevice = '100%';
-    var currentUploadTargetKey = null;
-
-    if (!state.columns_data || Array.isArray(state.columns_data) && state.columns_data.length === 0) {
-        state.columns_data = { 0: [] };
+    
+    // Normalização defensiva de seções (Garante que sempre exista state.sections)
+    if (!state.sections || !Array.isArray(state.sections) || state.sections.length === 0) {
+        var initialPreset = state.layout_preset || '3_cols_header';
+        var initialCols = state.columns_data || { 0: [], 1: [], 2: [] };
+        var initialSettings = state.container_settings || {
+            max_width: '1280px',
+            gap: '24px',
+            padding: '20px 24px',
+            margin: '0px 0px 16px 0px',
+            align_items: 'center',
+            background: 'transparent'
+        };
+        if (!initialSettings.margin) initialSettings.margin = '0px 0px 16px 0px';
+        state.sections = [
+            {
+                id: 'sec_' + Math.random().toString(36).substr(2, 8),
+                title: 'Seção 1',
+                layout_preset: initialPreset,
+                container_settings: initialSettings,
+                columns_data: initialCols
+            }
+        ];
     }
+
+    var activeSecIdx = 0; // Seção ativa no momento
+    var activeColIdx = 0; // Coluna/Célula ativa na seção atual
+    var selectedBlockCoord = null; // { sec: 0, col: 0, blockIdx: 0 }
+    var currentDevice = '100%';
+    var studioMode = 'structure'; // 'structure' ou 'live'
+    var showStructurePicker = false;
+    var currentUploadTargetKey = null;
 
     var blocksCatalog = [
         { type: 'heading', name: 'Título', icon: '🔤', desc: 'Títulos H1 até H6 com suporte a fontes e cores.' },
@@ -635,8 +829,14 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         { type: 'custom_code', name: 'Código Customizado', icon: '💻', desc: 'Editor HTML, CSS e JavaScript livre.' }
     ];
 
+    function getMaxSectionsForType(type) {
+        if (type === 'header') return 3; // Topbar, Principal, Sub-header
+        if (type === 'footer') return 3; // Newsletter, Principal, Copyright
+        return 6; // Seções centrais livres
+    }
+
     function initStudio() {
-        renderPresetsList();
+        renderSidebarLayoutTab();
         renderBlocksCatalog();
         renderCanvas();
     }
@@ -645,6 +845,45 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         ['layout', 'blocks', 'inspector', 'settings'].forEach(function(t) {
             document.getElementById('sidebar_tab_' + t).style.display = (t === tab) ? 'block' : 'none';
             document.getElementById('tab_btn_' + t).classList.toggle('active', t === tab);
+        });
+    }
+
+    function setStudioMode(mode) {
+        studioMode = mode;
+        document.getElementById('btn_mode_structure').classList.toggle('active', mode === 'structure');
+        document.getElementById('btn_mode_live').classList.toggle('active', mode === 'live');
+
+        var canvasContent = document.getElementById('canvas-content');
+        var liveStage = document.getElementById('live-stage-container');
+
+        if (mode === 'live') {
+            canvasContent.style.display = 'none';
+            liveStage.style.display = 'flex';
+            loadLiveStageContent();
+        } else {
+            canvasContent.style.display = 'block';
+            liveStage.style.display = 'none';
+            renderCanvas();
+        }
+    }
+
+    function loadLiveStageContent() {
+        var iframe = document.getElementById('live_stage_iframe');
+        var payload = JSON.parse(JSON.stringify(state));
+        payload.csrf_token = csrfToken;
+
+        fetch('<?= $baseUrl ?>/admin/builder/preview', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) { return res.text(); })
+        .then(function(html) {
+            iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;}</style></head><body>' + html + '</body></html>';
         });
     }
 
@@ -658,20 +897,29 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             document.getElementById('btn_dev_' + d).classList.remove('active');
         });
 
+        viewport.classList.remove('ds-mobile-mode', 'ds-tablet-mode', 'ds-device-375', 'ds-device-768');
+
         if (width === '100%') {
             document.getElementById('btn_dev_desktop').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Desktop (100%)';
         } else if (width === '1024px') {
             document.getElementById('btn_dev_laptop').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Laptop / Tablet Grande (1024px)';
+            document.getElementById('cur_device_name').textContent = 'Laptop (1024px)';
         } else if (width === '768px') {
             document.getElementById('btn_dev_tablet').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Tablet (768px) - 📱 Hamburguer Ativo';
+            viewport.classList.add('ds-tablet-mode', 'ds-device-768');
         } else if (width === '375px') {
             document.getElementById('btn_dev_mobile').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Mobile (375px) - 📱 Hamburguer Ativo';
+            viewport.classList.add('ds-mobile-mode', 'ds-device-375');
         }
-        renderCanvas();
+
+        if (studioMode === 'live') {
+            loadLiveStageContent();
+        } else {
+            renderCanvas();
+        }
     }
 
     function setPreviewModalDevice(w) {
@@ -681,16 +929,206 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         if (badge) badge.textContent = w + (w === '375px' ? ' Mobile' : (w === '768px' ? ' Tablet' : ' Desktop'));
     }
 
-    function renderPresetsList() {
+    function updateSectionsCountBadge() {
+        var el = document.getElementById('active_sections_count_badge');
+        if (el) {
+            var count = state.sections.length;
+            var max = getMaxSectionsForType(state.type);
+            el.textContent = count + ' de ' + max + ' Seções';
+        }
+    }
+
+    // GESTÃO DE SEÇÕES (ELEMENTOR STYLE)
+    function toggleAddSectionPicker() {
+        showStructurePicker = !showStructurePicker;
+        renderCanvas();
+    }
+
+    function addSection(presetKey) {
+        var maxSec = getMaxSectionsForType(state.type);
+        if (state.sections.length >= maxSec) {
+            alert('Limite máximo de ' + maxSec + ' seções atingido para ' + state.type + '.');
+            return;
+        }
+
+        var p = presets[presetKey] || presets['1_col'];
+        var cols = {};
+        for (var i = 0; i < p.columns; i++) {
+            cols[i] = [];
+        }
+
+        var newSec = {
+            id: 'sec_' + Math.random().toString(36).substr(2, 8),
+            title: 'Seção ' + (state.sections.length + 1),
+            layout_preset: presetKey,
+            container_settings: {
+                max_width: '1280px',
+                gap: '24px',
+                padding: '16px 24px',
+                margin: '0px 0px 16px 0px',
+                align_items: 'center',
+                background: 'transparent'
+            },
+            columns_data: cols
+        };
+
+        state.sections.push(newSec);
+        activeSecIdx = state.sections.length - 1;
+        activeColIdx = 0;
+        selectedBlockCoord = null;
+        showStructurePicker = false;
+        
+        renderCanvas();
+        renderSidebarLayoutTab();
+        renderBlocksCatalog();
+        showToast('Nova Seção com ' + p.columns + ' divisões criada!');
+    }
+
+    function moveSection(secIdx, dir, e) {
+        if (e) e.stopPropagation();
+        var targetIdx = secIdx + dir;
+        if (targetIdx >= 0 && targetIdx < state.sections.length) {
+            var sec = state.sections.splice(secIdx, 1)[0];
+            state.sections.splice(targetIdx, 0, sec);
+            activeSecIdx = targetIdx;
+            renderCanvas();
+            renderSidebarLayoutTab();
+            showToast('Seção reordenada!');
+        }
+    }
+
+    function duplicateSection(secIdx, e) {
+        if (e) e.stopPropagation();
+        var maxSec = getMaxSectionsForType(state.type);
+        if (state.sections.length >= maxSec) {
+            alert('Não é possível duplicar: limite de ' + maxSec + ' seções atingido.');
+            return;
+        }
+
+        var copy = JSON.parse(JSON.stringify(state.sections[secIdx]));
+        copy.id = 'sec_' + Math.random().toString(36).substr(2, 8);
+        copy.title = (copy.title || 'Seção') + ' (Cópia)';
+        state.sections.splice(secIdx + 1, 0, copy);
+        activeSecIdx = secIdx + 1;
+        renderCanvas();
+        renderSidebarLayoutTab();
+        showToast('Seção duplicada!');
+    }
+
+    function deleteSection(secIdx, e) {
+        if (e) e.stopPropagation();
+        if (state.sections.length <= 1) {
+            alert('O construtor deve manter ao menos 1 seção.');
+            return;
+        }
+        if (confirm('Deseja excluir esta seção e todos os blocos dentro dela?')) {
+            state.sections.splice(secIdx, 1);
+            if (activeSecIdx >= state.sections.length) {
+                activeSecIdx = state.sections.length - 1;
+            }
+            activeColIdx = 0;
+            selectedBlockCoord = null;
+            renderCanvas();
+            renderSidebarLayoutTab();
+            showToast('Seção removida.');
+        }
+    }
+
+    function selectSectionForConfig(secIdx, e) {
+        if (e) e.stopPropagation();
+        activeSecIdx = secIdx;
+        activeColIdx = 0;
+        renderCanvas();
+        renderSidebarLayoutTab();
+        renderBlocksCatalog();
+        switchSidebarTab('layout');
+    }
+
+    function changeSectionPreset(presetKey) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        curSec.layout_preset = presetKey;
+        var p = presets[presetKey];
+        if (!curSec.columns_data) curSec.columns_data = {};
+        for (var i = 0; i < p.columns; i++) {
+            if (!curSec.columns_data[i]) curSec.columns_data[i] = [];
+        }
+        if (activeColIdx >= p.columns) {
+            activeColIdx = 0;
+        }
+        renderCanvas();
+        renderSidebarLayoutTab();
+        renderBlocksCatalog();
+    }
+
+    function updateActiveSecTitle(val) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        curSec.title = val;
+        renderCanvas();
+    }
+
+    function updateActiveSecSetting(key, val) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        if (!curSec.container_settings) curSec.container_settings = {};
+        curSec.container_settings[key] = val;
+        renderCanvas();
+    }
+
+    function renderSidebarLayoutTab() {
+        var curSec = state.sections[activeSecIdx] || state.sections[0];
+        if (!curSec) return;
+
+        // Seletor de pílulas das seções
+        var bar = document.getElementById('sidebar_sec_selector_bar');
+        bar.innerHTML = '';
+        var maxSec = getMaxSectionsForType(state.type);
+
+        state.sections.forEach(function(s, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'col-sel-btn' + (activeSecIdx === idx ? ' active' : '');
+            btn.textContent = s.title || ('Seção ' + (idx + 1));
+            btn.onclick = function() {
+                activeSecIdx = idx;
+                activeColIdx = 0;
+                renderCanvas();
+                renderSidebarLayoutTab();
+                renderBlocksCatalog();
+            };
+            bar.appendChild(btn);
+        });
+
+        if (state.sections.length < maxSec) {
+            var addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'header-btn';
+            addBtn.style.fontSize = '11px';
+            addBtn.style.padding = '4px 8px';
+            addBtn.textContent = '+ Nova Seção';
+            addBtn.onclick = function() {
+                showStructurePicker = true;
+                renderCanvas();
+                var el = document.getElementById('elementor-structure-picker');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            };
+            bar.appendChild(addBtn);
+        }
+
+        // Título da seção
+        var titleInput = document.getElementById('sec_title_input');
+        if (titleInput) titleInput.value = curSec.title || ('Seção ' + (activeSecIdx + 1));
+
+        // Lista de presets para a seção ativa
         var container = document.getElementById('presets_list');
         container.innerHTML = '';
-        
         for (var key in presets) {
             var p = presets[key];
             var card = document.createElement('div');
-            card.className = 'preset-card' + (state.layout_preset === key ? ' active' : '');
+            card.className = 'preset-card' + (curSec.layout_preset === key ? ' active' : '');
             card.onclick = (function(presetKey) {
-                return function() { selectPreset(presetKey); };
+                return function() { changeSectionPreset(presetKey); };
             })(key);
 
             var title = document.createElement('div');
@@ -711,37 +1149,44 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             card.appendChild(bars);
             container.appendChild(card);
         }
-    }
 
-    function selectPreset(presetKey) {
-        state.layout_preset = presetKey;
-        var p = presets[presetKey];
-        if (!state.columns_data) state.columns_data = {};
-        for (var i = 0; i < p.columns; i++) {
-            if (!state.columns_data[i]) state.columns_data[i] = [];
-        }
-        if (activeColIdx >= p.columns) {
-            activeColIdx = 0;
-        }
-        renderPresetsList();
-        renderBlocksCatalog();
-        renderCanvas();
+        // Espaçamentos e dimensões da seção
+        var cs = curSec.container_settings || {};
+        var marginEl = document.getElementById('setting_margin');
+        if (marginEl) marginEl.value = cs.margin || '0px 0px 16px 0px';
+        var paddingEl = document.getElementById('setting_padding');
+        if (paddingEl) paddingEl.value = cs.padding || '16px 24px';
+        var gapEl = document.getElementById('setting_gap');
+        if (gapEl) gapEl.value = cs.gap || '24px';
+        var maxWidthEl = document.getElementById('setting_max_width');
+        if (maxWidthEl) maxWidthEl.value = cs.max_width || '1280px';
+        var bgEl = document.getElementById('setting_background');
+        if (bgEl) bgEl.value = cs.background || 'transparent';
+        var alignEl = document.getElementById('setting_align_items');
+        if (alignEl) alignEl.value = cs.align_items || 'center';
     }
 
     function renderBlocksCatalog() {
         var container = document.getElementById('blocks_catalog');
         container.innerHTML = '';
 
-        var currentPreset = presets[state.layout_preset] || presets['1_col'];
-        
-        // Seletor de Coluna Ativa na Sidebar
+        var curSec = state.sections[activeSecIdx] || state.sections[0];
+        var curPreset = presets[curSec ? curSec.layout_preset : '1_col'] || presets['1_col'];
+
+        var secInfo = document.createElement('div');
+        secInfo.style.cssText = 'font-size:11px; color:#38bdf8; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;';
+        secInfo.innerHTML = '<span>Inserindo em: <strong>' + escapeHtml(curSec ? curSec.title : 'Seção 1') + '</strong></span>' +
+                            '<span style="background:rgba(56,189,248,0.15); padding:2px 6px; border-radius:4px;">Célula ' + (activeColIdx + 1) + '</span>';
+        container.appendChild(secInfo);
+
+        // Seletor de Células da Seção Atual
         var colSelector = document.createElement('div');
         colSelector.className = 'col-selector-bar';
-        for (var c = 0; c < currentPreset.columns; c++) {
+        for (var c = 0; c < curPreset.columns; c++) {
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'col-sel-btn' + (activeColIdx === c ? ' active' : '');
-            btn.textContent = 'Coluna ' + (c + 1);
+            btn.textContent = 'Célula ' + (c + 1);
             btn.onclick = (function(targetC) {
                 return function() {
                     activeColIdx = targetC;
@@ -757,7 +1202,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         hint.style.fontSize = '11px';
         hint.style.color = 'var(--text-muted)';
         hint.style.marginBottom = '12px';
-        hint.innerHTML = '✨ <em>Clique para inserir na <strong>Coluna ' + (activeColIdx + 1) + '</strong> ou arraste diretamente para qualquer coluna.</em>';
+        hint.innerHTML = '✨ <em>Clique no bloco para adicionar na <strong>Célula ' + (activeColIdx + 1) + '</strong> ou arraste para qualquer célula do stage.</em>';
         container.appendChild(hint);
 
         blocksCatalog.forEach(function(b) {
@@ -768,7 +1213,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'catalog', type: b.type }));
                 e.dataTransfer.effectAllowed = 'copy';
             };
-            item.onclick = function() { addBlockToColumn(b.type, activeColIdx); };
+            item.onclick = function() { addBlockToCell(activeSecIdx, activeColIdx, b.type); };
             item.innerHTML = '<span class="block-palette-icon">' + b.icon + '</span>' +
                              '<div><strong style="display:block; font-size:13px; color:#fff;">' + b.name + '</strong>' +
                              '<span style="font-size:11px; color:var(--text-muted);">' + b.desc + '</span></div>';
@@ -778,173 +1223,309 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function getColumnTitle(presetKey, colIdx, totalCols) {
         if (presetKey === '3_cols_header') {
-            if (colIdx === 0) return 'Coluna 1 (25% - Logo)';
-            if (colIdx === 1) return 'Coluna 2 (50% - Menu)';
-            if (colIdx === 2) return 'Coluna 3 (25% - CTA / Ação)';
+            if (colIdx === 0) return 'Célula 1 (25% - Logo)';
+            if (colIdx === 1) return 'Célula 2 (50% - Menu)';
+            if (colIdx === 2) return 'Célula 3 (25% - CTA / Ação)';
         }
         if (presetKey === '2_cols_split') {
-            return 'Coluna ' + (colIdx + 1) + ' (50%)';
+            if (colIdx === 0) return 'Célula 1 (30%)';
+            if (colIdx === 1) return 'Célula 2 (70%)';
         }
-        if (presetKey === '4_cols') {
-            return 'Coluna ' + (colIdx + 1) + ' (25%)';
+        if (presetKey === '2_cols_equal') {
+            return 'Célula ' + (colIdx + 1) + ' (50%)';
         }
-        return 'Coluna ' + (colIdx + 1);
+        if (presetKey === '4_cols_footer') {
+            return 'Célula ' + (colIdx + 1) + ' (25%)';
+        }
+        return 'Célula ' + (colIdx + 1);
     }
 
+    // RENDERIZADOR DO STAGE (CANVAS COM SEÇÕES EMPILHADAS E BOTÃO ELEMENTOR +)
     function renderCanvas() {
-        var grid = document.getElementById('canvas_grid');
-        grid.innerHTML = '';
+        var stage = document.getElementById('sections_stage');
+        if (!stage) return;
+        stage.innerHTML = '';
 
-        var currentPreset = presets[state.layout_preset] || presets['1_col'];
-        grid.style.gridTemplateColumns = currentPreset.template || '1fr';
+        var maxSections = getMaxSectionsForType(state.type);
 
-        for (var colIdx = 0; colIdx < currentPreset.columns; colIdx++) {
-            var colEl = document.createElement('div');
-            colEl.className = 'canvas-column' + (activeColIdx === colIdx ? ' active-col' : '');
-            colEl.dataset.col = colIdx;
-
-            // Clique na coluna a torna a coluna ativa
-            colEl.onclick = (function(c) {
-                return function(e) {
-                    activeColIdx = c;
-                    renderBlocksCatalog();
-                    renderCanvas();
-                };
-            })(colIdx);
-
-            // Drag and drop sobre a coluna
-            colEl.ondragover = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.currentTarget.classList.add('drag-target-over');
-            };
-            colEl.ondragleave = function(e) {
-                e.stopPropagation();
-                e.currentTarget.classList.remove('drag-target-over');
-            };
-            colEl.ondrop = (function(c) {
-                return function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.currentTarget.classList.remove('drag-target-over');
-                    var raw = e.dataTransfer.getData('text/plain');
-                    if (!raw) return;
-                    try {
-                        var payload = JSON.parse(raw);
-                        if (payload.source === 'catalog') {
-                            addBlockToColumn(payload.type, c);
-                        } else if (payload.source === 'card') {
-                            moveBlockAcrossCols(payload.fromCol, payload.fromIdx, c, null);
-                        }
-                    } catch (err) {}
-                };
-            })(colIdx);
-
-            var colHeader = document.createElement('div');
-            colHeader.className = 'canvas-column-header';
-            var colTitle = getColumnTitle(state.layout_preset, colIdx, currentPreset.columns);
-            var isColActive = (activeColIdx === colIdx);
-            colHeader.innerHTML = '<div style="display:flex; align-items:center; gap:6px;">' +
-                                  '<span>' + colTitle + '</span>' +
-                                  (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 6px; border-radius:10px; font-weight:800;">ATIVA</span>' : '') +
-                                  '</div>' +
-                                  '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCol(' + colIdx + ')" title="Adicionar Bloco">+ Bloco</button>';
-            colEl.appendChild(colHeader);
-
-            var blocksInCol = (state.columns_data && state.columns_data[colIdx]) ? state.columns_data[colIdx] : [];
+        state.sections.forEach(function(sec, secIdx) {
+            var secCard = document.createElement('div');
+            secCard.className = 'elementor-section-card' + (activeSecIdx === secIdx ? ' active-section' : '');
+            secCard.dataset.sec = secIdx;
             
-            blocksInCol.forEach(function(block, blockIdx) {
-                var card = document.createElement('div');
-                var isSelected = selectedBlockCoord && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx;
-                card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
-                
-                // Arrastar bloco para reordenar ou mover
-                card.setAttribute('draggable', 'true');
-                card.ondragstart = (function(c, b) {
+            // Aplica margem e fundo da seção
+            if (sec.container_settings) {
+                if (sec.container_settings.margin) secCard.style.margin = sec.container_settings.margin;
+                if (sec.container_settings.background) secCard.style.background = sec.container_settings.background;
+            }
+
+            // Barra superior da seção (Handle Elementor)
+            var secHeader = document.createElement('div');
+            secHeader.className = 'elementor-section-bar';
+            
+            var presetInfo = presets[sec.layout_preset] || presets['1_col'];
+            var secTitleText = sec.title || ('Seção ' + (secIdx + 1));
+
+            secHeader.innerHTML = 
+                '<div class="elementor-sec-title" onclick="selectSectionForConfig(' + secIdx + ', event)">' +
+                    '<span style="font-size: 13px;">🔲</span>' +
+                    '<strong>' + escapeHtml(secTitleText) + '</strong>' +
+                    '<span class="elementor-sec-badge">' + presetInfo.columns + ' Células (' + presetInfo.name + ')</span>' +
+                '</div>' +
+                '<div class="elementor-sec-actions">' +
+                    '<button type="button" class="sec-act-btn" onclick="selectSectionForConfig(' + secIdx + ', event)" title="Configurar Divisórias & Espaçamento">⚙️ Divisórias & Espaçamento</button>' +
+                    '<button type="button" class="sec-act-btn" onclick="moveSection(' + secIdx + ', -1, event)" title="Subir Seção">▲</button>' +
+                    '<button type="button" class="sec-act-btn" onclick="moveSection(' + secIdx + ', 1, event)" title="Descer Seção">▼</button>' +
+                    '<button type="button" class="sec-act-btn" onclick="duplicateSection(' + secIdx + ', event)" title="Duplicar Seção">⎘</button>' +
+                    '<button type="button" class="sec-act-btn del" onclick="deleteSection(' + secIdx + ', event)" title="Excluir Seção">✕</button>' +
+                '</div>';
+            secCard.appendChild(secHeader);
+
+            // Grade de Colunas / Células da Seção
+            var gridRow = document.createElement('div');
+            gridRow.className = 'canvas-grid-row';
+            gridRow.style.gridTemplateColumns = presetInfo.template || '1fr';
+            if (sec.container_settings) {
+                if (sec.container_settings.gap) gridRow.style.gap = sec.container_settings.gap;
+                if (sec.container_settings.padding) gridRow.style.padding = sec.container_settings.padding;
+                if (sec.container_settings.align_items) gridRow.style.alignItems = sec.container_settings.align_items;
+            }
+
+            for (var colIdx = 0; colIdx < presetInfo.columns; colIdx++) {
+                var colEl = document.createElement('div');
+                var isColActive = (activeSecIdx === secIdx && activeColIdx === colIdx);
+                colEl.className = 'canvas-column' + (isColActive ? ' active-col' : '');
+                colEl.dataset.sec = secIdx;
+                colEl.dataset.col = colIdx;
+
+                colEl.onclick = (function(s, c) {
+                    return function(e) {
+                        activeSecIdx = s;
+                        activeColIdx = c;
+                        renderBlocksCatalog();
+                        renderCanvas();
+                    };
+                })(secIdx, colIdx);
+
+                // Drag and drop sobre a célula
+                setupCellDropHandlers(colEl, secIdx, colIdx);
+
+                var colHeader = document.createElement('div');
+                colHeader.className = 'canvas-column-header';
+                var colTitle = getColumnTitle(sec.layout_preset, colIdx, presetInfo.columns);
+                colHeader.innerHTML = '<div style="display:flex; align-items:center; gap:6px;">' +
+                                      '<span>' + colTitle + '</span>' +
+                                      (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 6px; border-radius:10px; font-weight:800;">ATIVA</span>' : '') +
+                                      '</div>' +
+                                      '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + secIdx + ',' + colIdx + ')" title="Adicionar Bloco">+ Bloco</button>';
+                colEl.appendChild(colHeader);
+
+                // Blocos dentro da célula
+                var blocksInCol = (sec.columns_data && sec.columns_data[colIdx]) ? sec.columns_data[colIdx] : [];
+                blocksInCol.forEach(function(block, blockIdx) {
+                    var card = createBlockCard(block, secIdx, colIdx, blockIdx);
+                    colEl.appendChild(card);
+                });
+
+                // Dropzone no rodapé da célula
+                var dropzone = document.createElement('div');
+                dropzone.className = 'column-dropzone';
+                dropzone.innerHTML = '+ Adicionar Bloco nesta Divisão';
+                dropzone.onclick = (function(s, c) {
                     return function(e) {
                         e.stopPropagation();
-                        card.classList.add('dragging');
-                        e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'card', fromCol: c, fromIdx: b }));
-                        e.dataTransfer.effectAllowed = 'move';
+                        openAddBlockForCell(s, c);
                     };
-                })(colIdx, blockIdx);
+                })(secIdx, colIdx);
+                colEl.appendChild(dropzone);
 
-                card.ondragend = function(e) {
-                    card.classList.remove('dragging');
-                };
+                gridRow.appendChild(colEl);
+            }
 
-                card.ondragover = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    card.classList.add('drag-insert-before');
-                };
-                card.ondragleave = function(e) {
-                    e.stopPropagation();
-                    card.classList.remove('drag-insert-before');
-                };
-                card.ondrop = (function(c, b) {
-                    return function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        card.classList.remove('drag-insert-before');
-                        var raw = e.dataTransfer.getData('text/plain');
-                        if (!raw) return;
-                        try {
-                            var payload = JSON.parse(raw);
-                            if (payload.source === 'catalog') {
-                                insertBlockAt(payload.type, c, b);
-                            } else if (payload.source === 'card') {
-                                moveBlockAcrossCols(payload.fromCol, payload.fromIdx, c, b);
-                            }
-                        } catch (err) {}
-                    };
-                })(colIdx, blockIdx);
+            secCard.appendChild(gridRow);
+            stage.appendChild(secCard);
+        });
 
-                card.onclick = (function(cIdx, bIdx) {
-                    return function(e) {
-                        e.stopPropagation();
-                        activeColIdx = cIdx;
-                        selectBlock(cIdx, bIdx);
-                    };
-                })(colIdx, blockIdx);
+        renderAddSectionArea(maxSections);
+        updateSectionsCountBadge();
+    }
 
-                var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
+    function renderAddSectionArea(maxSections) {
+        var wrapper = document.getElementById('elementor_add_section_wrapper');
+        if (!wrapper) return;
+        wrapper.innerHTML = '';
 
-                var bHeader = document.createElement('div');
-                bHeader.className = 'canvas-block-header';
-                bHeader.innerHTML = '<span>' + bMeta.icon + ' ' + bMeta.name + '</span>' +
-                    '<div class="canvas-block-actions">' +
-                    '<button type="button" class="block-act-btn" onclick="moveBlock(' + colIdx + ',' + blockIdx + ',-1,event)" title="Subir">▲</button>' +
-                    '<button type="button" class="block-act-btn" onclick="moveBlock(' + colIdx + ',' + blockIdx + ',1,event)" title="Descer">▼</button>' +
-                    '<button type="button" class="block-act-btn" onclick="duplicateBlock(' + colIdx + ',' + blockIdx + ',event)" title="Duplicar">⎘</button>' +
-                    '<button type="button" class="block-act-btn del" onclick="deleteBlock(' + colIdx + ',' + blockIdx + ',event)" title="Excluir">✕</button>' +
-                    '</div>';
-
-                var bPreview = document.createElement('div');
-                bPreview.style.fontSize = '12px';
-                bPreview.style.color = 'var(--text-muted)';
-                bPreview.style.marginTop = '4px';
-                bPreview.innerHTML = getBlockSummary(block);
-
-                card.appendChild(bHeader);
-                card.appendChild(bPreview);
-                colEl.appendChild(card);
-            });
-
-            // Botão dropzone no rodapé da coluna
-            var dropzone = document.createElement('div');
-            dropzone.className = 'column-dropzone';
-            dropzone.innerHTML = '+ Adicionar Bloco Nesta Coluna';
-            dropzone.onclick = (function(c) {
-                return function(e) {
-                    e.stopPropagation();
-                    openAddBlockForCol(c);
-                };
-            })(colIdx);
-            colEl.appendChild(dropzone);
-
-            grid.appendChild(colEl);
+        if (state.sections.length >= maxSections) {
+            var limitMsg = document.createElement('div');
+            limitMsg.style.cssText = 'padding:14px; text-align:center; font-size:12px; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; margin-top:16px; background:rgba(0,0,0,0.2);';
+            limitMsg.innerHTML = '🔒 <strong>Limite de ' + maxSections + ' seções atingido para ' + (state.type === 'header' ? 'o Header (Topbar, Principal e Sub-header)' : (state.type === 'footer' ? 'o Footer (Pré, Principal e Copyright)' : 'esta parte')) + '.</strong><br><span style="font-size:11px; opacity:0.7;">Para mais divisões, divida as seções existentes horizontalmente em colunas/células.</span>';
+            wrapper.appendChild(limitMsg);
+            return;
         }
+
+        var addBox = document.createElement('div');
+        addBox.className = 'elementor-add-section-area';
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'elementor-add-section-circle';
+        btn.innerHTML = '+';
+        btn.title = 'Adicionar Nova Seção';
+        btn.onclick = function() {
+            toggleAddSectionPicker();
+        };
+
+        var label = document.createElement('div');
+        label.className = 'elementor-add-section-label';
+        label.textContent = 'Adicionar Nova Seção (' + (state.sections.length + 1) + ' de ' + maxSections + ')';
+
+        var picker = document.createElement('div');
+        picker.id = 'elementor-structure-picker';
+        picker.className = 'elementor-structure-picker';
+        picker.style.display = showStructurePicker ? 'block' : 'none';
+
+        var pickerTitle = document.createElement('div');
+        pickerTitle.style.cssText = 'font-size:13px; font-weight:700; color:#fff; margin-bottom:12px;';
+        pickerTitle.textContent = 'Selecione a Estrutura de Divisórias para a Nova Seção:';
+        picker.appendChild(pickerTitle);
+
+        var grid = document.createElement('div');
+        grid.className = 'elementor-structure-grid';
+
+        for (var key in presets) {
+            var p = presets[key];
+            var item = document.createElement('div');
+            item.className = 'structure-item-card';
+            item.onclick = (function(presetKey) {
+                return function() {
+                    addSection(presetKey);
+                };
+            })(key);
+
+            var bars = document.createElement('div');
+            bars.className = 'structure-bars';
+            for (var c = 0; c < p.columns; c++) {
+                var b = document.createElement('div');
+                b.className = 'structure-col-bar';
+                b.style.flex = '1';
+                bars.appendChild(b);
+            }
+
+            var t = document.createElement('div');
+            t.style.cssText = 'font-size:11px; font-weight:700; color:#fff;';
+            t.textContent = p.name;
+
+            item.appendChild(bars);
+            item.appendChild(t);
+            grid.appendChild(item);
+        }
+
+        picker.appendChild(grid);
+
+        addBox.appendChild(btn);
+        addBox.appendChild(label);
+        addBox.appendChild(picker);
+        wrapper.appendChild(addBox);
+    }
+
+    function createBlockCard(block, secIdx, colIdx, blockIdx) {
+        var card = document.createElement('div');
+        var isSelected = selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx;
+        card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
+        
+        // Drag-and-drop do bloco entre células e seções
+        card.setAttribute('draggable', 'true');
+        card.ondragstart = function(e) {
+            e.stopPropagation();
+            card.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'card', fromSec: secIdx, fromCol: colIdx, fromIdx: blockIdx }));
+            e.dataTransfer.effectAllowed = 'move';
+        };
+
+        card.ondragend = function(e) {
+            card.classList.remove('dragging');
+        };
+
+        card.ondragover = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.add('drag-insert-before');
+        };
+        card.ondragleave = function(e) {
+            e.stopPropagation();
+            card.classList.remove('drag-insert-before');
+        };
+        card.ondrop = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.remove('drag-insert-before');
+            var raw = e.dataTransfer.getData('text/plain');
+            if (!raw) return;
+            try {
+                var payload = JSON.parse(raw);
+                if (payload.source === 'catalog') {
+                    insertBlockAtCell(secIdx, colIdx, blockIdx, payload.type);
+                } else if (payload.source === 'card') {
+                    moveBlockAcrossSecs(payload.fromSec, payload.fromCol, payload.fromIdx, secIdx, colIdx, blockIdx);
+                }
+            } catch (err) {}
+        };
+
+        card.onclick = function(e) {
+            e.stopPropagation();
+            activeSecIdx = secIdx;
+            activeColIdx = colIdx;
+            selectBlock(secIdx, colIdx, blockIdx);
+        };
+
+        var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
+
+        var bHeader = document.createElement('div');
+        bHeader.className = 'canvas-block-header';
+        bHeader.innerHTML = '<span>' + bMeta.icon + ' ' + bMeta.name + '</span>' +
+            '<div class="canvas-block-actions">' +
+            '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',-1,event)" title="Subir">▲</button>' +
+            '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',1,event)" title="Descer">▼</button>' +
+            '<button type="button" class="block-act-btn" onclick="duplicateBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',event)" title="Duplicar">⎘</button>' +
+            '<button type="button" class="block-act-btn del" onclick="deleteBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',event)" title="Excluir">✕</button>' +
+            '</div>';
+
+        var bPreview = document.createElement('div');
+        bPreview.style.fontSize = '12px';
+        bPreview.style.color = 'var(--text-muted)';
+        bPreview.style.marginTop = '4px';
+        bPreview.innerHTML = getBlockSummary(block);
+
+        card.appendChild(bHeader);
+        card.appendChild(bPreview);
+        return card;
+    }
+
+    function setupCellDropHandlers(colEl, secIdx, colIdx) {
+        colEl.ondragover = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            colEl.classList.add('drag-target-over');
+        };
+        colEl.ondragleave = function(e) {
+            e.stopPropagation();
+            colEl.classList.remove('drag-target-over');
+        };
+        colEl.ondrop = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            colEl.classList.remove('drag-target-over');
+            var raw = e.dataTransfer.getData('text/plain');
+            if (!raw) return;
+            try {
+                var payload = JSON.parse(raw);
+                if (payload.source === 'catalog') {
+                    addBlockToCell(secIdx, colIdx, payload.type);
+                } else if (payload.source === 'card') {
+                    moveBlockAcrossSecs(payload.fromSec, payload.fromCol, payload.fromIdx, secIdx, colIdx, null);
+                }
+            } catch (err) {}
+        };
     }
 
     function getBlockSummary(block) {
@@ -989,8 +1570,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
             if (isMobile) {
                 return '<div style="display:flex; align-items:center; gap:8px;">' +
-                       '<span class="toggle-preview-badge">' + toggleLabel + '</span>' +
-                       '<span style="font-size:11px; color:#38bdf8;">📱 Mobile (' + curStyle + ')</span>' +
+                       '<button type="button" class="header-btn" style="padding:2px 8px; font-size:12px; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);" onclick="event.stopPropagation(); testMobileDrawer(\'' + curStyle + '\')">' + toggleLabel + '</button>' +
+                       '<span style="font-size:11px; color:#38bdf8;">📱 Mobile Hamburguer Dinâmico (' + curStyle + ')</span>' +
                        '</div>';
             } else {
                 return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> (Início · Cursos · Sobre · Contato)';
@@ -1001,8 +1582,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         return block.type;
     }
 
-    function selectBlock(colIdx, blockIdx) {
-        selectedBlockCoord = { col: colIdx, blockIdx: blockIdx };
+    function testMobileDrawer(style) {
+        showToast('📱 Botão Toggle Mobile (' + style + ') clicado! No modo Ao Vivo você pode testar a gaveta 100% interativa.');
+    }
+
+    function selectBlock(secIdx, colIdx, blockIdx) {
+        selectedBlockCoord = { sec: secIdx, col: colIdx, blockIdx: blockIdx };
         renderCanvas();
         renderInspector();
         switchSidebarTab('inspector');
@@ -1011,11 +1596,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     function renderInspector() {
         var container = document.getElementById('inspector_container');
         if (!selectedBlockCoord) {
-            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px 10px;">👈 Selecione um bloco no canvas para inspecionar e editar suas propriedades aqui.</div>';
+            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px 10px;">👈 Selecione um bloco no stage para inspecionar e editar suas propriedades aqui.</div>';
             return;
         }
 
-        var block = state.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block) return;
         if (!block.data) block.data = {};
 
@@ -1026,7 +1613,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                    '<span style="font-size:20px;">' + bMeta.icon + '</span>' +
                    '<strong style="font-size:15px; color:#fff;">' + bMeta.name + '</strong>' +
                    '</div>' +
-                   '<span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">Coluna ' + (selectedBlockCoord.col + 1) + '</span>' +
+                   '<span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">' + (sec.title || 'Seção') + ' / Célula ' + (selectedBlockCoord.col + 1) + '</span>' +
                    '</div>';
 
         if (block.type === 'heading') {
@@ -1224,7 +1811,9 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function updateBlockProp(key, val) {
         if (!selectedBlockCoord) return;
-        var block = state.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
         block.data[key] = val;
         renderCanvas();
@@ -1232,24 +1821,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function applyUnitToBlockProp(key, newUnit) {
         if (!selectedBlockCoord) return;
-        var block = state.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         var curVal = (block.data && block.data[key]) ? String(block.data[key]) : '16';
         var num = curVal.replace(/[^0-9.]/g, '') || '16';
         updateBlockProp(key, num + newUnit);
         renderInspector();
-    }
-
-    function changeUnit(inputId, unit) {
-        var el = document.getElementById(inputId);
-        if (!el) return;
-        var num = el.value.replace(/[^0-9.]/g, '') || '10';
-        el.value = num + unit;
-        el.dispatchEvent(new Event('input'));
-    }
-
-    function updateContainerSetting(key, val) {
-        if (!state.container_settings) state.container_settings = {};
-        state.container_settings[key] = val;
     }
 
     function getDefaultBlockData(type) {
@@ -1264,80 +1842,95 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         return defaultData;
     }
 
-    function addBlockToColumn(type, colIdx) {
-        if (!state.columns_data[colIdx]) state.columns_data[colIdx] = [];
+    function addBlockToCell(secIdx, colIdx, type) {
+        var sec = state.sections[secIdx];
+        if (!sec) return;
+        if (!sec.columns_data[colIdx]) sec.columns_data[colIdx] = [];
         var defaultData = getDefaultBlockData(type);
-        state.columns_data[colIdx].push({ type: type, data: defaultData });
+        sec.columns_data[colIdx].push({ type: type, data: defaultData });
+        activeSecIdx = secIdx;
         activeColIdx = colIdx;
-        selectBlock(colIdx, state.columns_data[colIdx].length - 1);
+        selectBlock(secIdx, colIdx, sec.columns_data[colIdx].length - 1);
         renderCanvas();
-        showToast('Bloco adicionado à Coluna ' + (colIdx + 1));
+        showToast('Bloco adicionado à Célula ' + (colIdx + 1));
     }
 
-    function insertBlockAt(type, toCol, toIdx) {
-        if (!state.columns_data[toCol]) state.columns_data[toCol] = [];
+    function insertBlockAtCell(secIdx, colIdx, blockIdx, type) {
+        var sec = state.sections[secIdx];
+        if (!sec) return;
+        if (!sec.columns_data[colIdx]) sec.columns_data[colIdx] = [];
         var defaultData = getDefaultBlockData(type);
-        state.columns_data[toCol].splice(toIdx, 0, { type: type, data: defaultData });
-        activeColIdx = toCol;
-        selectBlock(toCol, toIdx);
-        renderCanvas();
-        showToast('Bloco inserido na Coluna ' + (toCol + 1));
-    }
-
-    function moveBlockAcrossCols(fromCol, fromIdx, toCol, toIdx) {
-        if (!state.columns_data[fromCol] || !state.columns_data[fromCol][fromIdx]) return;
-        var item = state.columns_data[fromCol].splice(fromIdx, 1)[0];
-        if (!state.columns_data[toCol]) state.columns_data[toCol] = [];
-        if (toIdx === null || toIdx === undefined || toIdx >= state.columns_data[toCol].length) {
-            state.columns_data[toCol].push(item);
-            selectedBlockCoord = { col: toCol, blockIdx: state.columns_data[toCol].length - 1 };
-        } else {
-            state.columns_data[toCol].splice(toIdx, 0, item);
-            selectedBlockCoord = { col: toCol, blockIdx: toIdx };
-        }
-        activeColIdx = toCol;
-        renderCanvas();
-        renderInspector();
-        showToast('Bloco reposicionado!');
-    }
-
-    function openAddBlockForCol(colIdx) {
+        sec.columns_data[colIdx].splice(blockIdx, 0, { type: type, data: defaultData });
+        activeSecIdx = secIdx;
         activeColIdx = colIdx;
-        renderBlocksCatalog();
+        selectBlock(secIdx, colIdx, blockIdx);
         renderCanvas();
-        switchSidebarTab('blocks');
+        showToast('Bloco inserido na Célula ' + (colIdx + 1));
     }
 
-    function moveBlock(colIdx, blockIdx, dir, e) {
-        e.stopPropagation();
+    function moveBlockInCell(secIdx, colIdx, blockIdx, dir, e) {
+        if (e) e.stopPropagation();
+        var sec = state.sections[secIdx];
+        if (!sec || !sec.columns_data[colIdx]) return;
+        var list = sec.columns_data[colIdx];
         var targetIdx = blockIdx + dir;
-        var list = state.columns_data[colIdx];
         if (targetIdx >= 0 && targetIdx < list.length) {
             var item = list.splice(blockIdx, 1)[0];
             list.splice(targetIdx, 0, item);
-            selectedBlockCoord = { col: colIdx, blockIdx: targetIdx };
-            renderCanvas();
-            renderInspector();
+            selectBlock(secIdx, colIdx, targetIdx);
         }
     }
 
-    function duplicateBlock(colIdx, blockIdx, e) {
-        e.stopPropagation();
-        var item = JSON.parse(JSON.stringify(state.columns_data[colIdx][blockIdx]));
-        state.columns_data[colIdx].splice(blockIdx + 1, 0, item);
+    function duplicateBlockInCell(secIdx, colIdx, blockIdx, e) {
+        if (e) e.stopPropagation();
+        var sec = state.sections[secIdx];
+        if (!sec || !sec.columns_data[colIdx]) return;
+        var item = JSON.parse(JSON.stringify(sec.columns_data[colIdx][blockIdx]));
+        sec.columns_data[colIdx].splice(blockIdx + 1, 0, item);
         renderCanvas();
-        showToast('Bloco duplicado com sucesso!');
+        showToast('Bloco duplicado!');
     }
 
-    function deleteBlock(colIdx, blockIdx, e) {
-        e.stopPropagation();
+    function deleteBlockInCell(secIdx, colIdx, blockIdx, e) {
+        if (e) e.stopPropagation();
         if (confirm('Deseja excluir este bloco?')) {
-            state.columns_data[colIdx].splice(blockIdx, 1);
+            var sec = state.sections[secIdx];
+            if (!sec || !sec.columns_data[colIdx]) return;
+            sec.columns_data[colIdx].splice(blockIdx, 1);
             selectedBlockCoord = null;
             renderCanvas();
             renderInspector();
             showToast('Bloco removido.');
         }
+    }
+
+    function moveBlockAcrossSecs(fromSec, fromCol, fromIdx, toSec, toCol, toIdx) {
+        var sFrom = state.sections[fromSec];
+        var sTo = state.sections[toSec];
+        if (!sFrom || !sFrom.columns_data[fromCol] || !sFrom.columns_data[fromCol][fromIdx]) return;
+        if (!sTo) return;
+        if (!sTo.columns_data[toCol]) sTo.columns_data[toCol] = [];
+
+        var item = sFrom.columns_data[fromCol].splice(fromIdx, 1)[0];
+        if (toIdx === null || toIdx === undefined || toIdx >= sTo.columns_data[toCol].length) {
+            sTo.columns_data[toCol].push(item);
+            selectBlock(toSec, toCol, sTo.columns_data[toCol].length - 1);
+        } else {
+            sTo.columns_data[toCol].splice(toIdx, 0, item);
+            selectBlock(toSec, toCol, toIdx);
+        }
+        activeSecIdx = toSec;
+        activeColIdx = toCol;
+        renderCanvas();
+        showToast('Bloco reposicionado!');
+    }
+
+    function openAddBlockForCell(secIdx, colIdx) {
+        activeSecIdx = secIdx;
+        activeColIdx = colIdx;
+        renderBlocksCatalog();
+        renderCanvas();
+        switchSidebarTab('blocks');
     }
 
     function savePart() {
@@ -1348,14 +1941,21 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         state.title = document.getElementById('part_title_input').value || state.title;
         var assignedTheme = document.getElementById('setting_assigned_theme').value;
 
+        // Mantém sincronizada a raiz da parte com a primeira seção para retrocompatibilidade
+        var firstSec = state.sections[0] || {};
+        state.layout_preset = firstSec.layout_preset || '3_cols_header';
+        state.container_settings = firstSec.container_settings || {};
+        state.columns_data = firstSec.columns_data || {};
+
         var payload = {
             csrf_token: csrfToken,
             id: state.id,
             type: state.type,
             title: state.title,
             layout_preset: state.layout_preset,
-            container_settings: state.container_settings || {},
-            columns_data: state.columns_data || {},
+            container_settings: state.container_settings,
+            columns_data: state.columns_data,
+            sections: state.sections,
             mobile_toggle_style: state.mobile_toggle_style || 'classic',
             is_default: !!state.is_default,
             assigned_theme: assignedTheme
@@ -1393,6 +1993,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             modal.style.display = 'block';
             var previewPayload = JSON.parse(JSON.stringify(state));
             previewPayload.csrf_token = csrfToken;
+            previewPayload.sections = state.sections;
 
             fetch('<?= $baseUrl ?>/admin/builder/preview', {
                 method: 'POST',
@@ -1429,7 +2030,5 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     document.addEventListener('DOMContentLoaded', initStudio);
     </script>
-</body>
-</html>
 </body>
 </html>

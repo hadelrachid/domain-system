@@ -81,45 +81,52 @@ class ThemePartRenderer implements ThemePartRendererInterface
 
     private function compileDynamicPart(ThemePartInterface $part, array $context, bool $injectDesignTokens): string
     {
-        $preset = $part->getLayoutPreset();
-        $settings = $part->getContainerSettings();
-        $columnsData = $part->getColumnsData();
+        $sections = $part->getSections();
+        $sectionsOutput = [];
 
-        $columnsHtml = [];
-        foreach ($columnsData as $colIndex => $blocksList) {
-            $colBlocksOutput = [];
-            if (is_array($blocksList)) {
-                foreach ($blocksList as $blockDef) {
-                    if (!is_array($blockDef)) {
-                        continue;
-                    }
-                    $blockType = (string)($blockDef['type'] ?? '');
-                    $blockData = (array)($blockDef['data'] ?? []);
-                    
-                    // Se for bloco de nav_menu, garante o estilo do toggle configurado na parte
-                    if ($blockType === 'nav_menu' && !isset($blockData['toggle_style'])) {
-                        $blockData['toggle_style'] = $part->getMobileToggleStyle();
-                    }
+        foreach ($sections as $section) {
+            $preset = (string)($section['layout_preset'] ?? '1_col');
+            $settings = (array)($section['container_settings'] ?? []);
+            $columnsData = (array)($section['columns_data'] ?? []);
 
-                    $block = $this->blockRegistry->get($blockType);
-                    if ($block !== null) {
-                        $colBlocksOutput[] = $block->render($blockData, $context);
+            $columnsHtml = [];
+            foreach ($columnsData as $colIndex => $blocksList) {
+                $colBlocksOutput = [];
+                if (is_array($blocksList)) {
+                    foreach ($blocksList as $blockDef) {
+                        if (!is_array($blockDef)) {
+                            continue;
+                        }
+                        $blockType = (string)($blockDef['type'] ?? '');
+                        $blockData = (array)($blockDef['data'] ?? []);
+                        
+                        // Se for bloco de nav_menu, garante o estilo do toggle configurado na parte
+                        if ($blockType === 'nav_menu' && !isset($blockData['toggle_style'])) {
+                            $blockData['toggle_style'] = $part->getMobileToggleStyle();
+                        }
+
+                        $block = $this->blockRegistry->get($blockType);
+                        if ($block !== null) {
+                            $colBlocksOutput[] = $block->render($blockData, $context);
+                        }
                     }
                 }
+                $columnsHtml[(int)$colIndex] = implode("\n", $colBlocksOutput);
             }
-            $columnsHtml[$colIndex] = implode("\n", $colBlocksOutput);
+
+            $sectionsOutput[] = $this->gridRenderer->renderSection($preset, $columnsHtml, $settings);
         }
 
-        $gridHtml = $this->gridRenderer->renderSection($preset, $columnsHtml, $settings);
+        $allSectionsHtml = implode("\n", $sectionsOutput);
 
         // Se for Header, injeta as variáveis CSS dos Design Tokens no topo
         if ($injectDesignTokens) {
             $tokensCss = $this->designTokens->generateCssVariables();
             $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n";
-            return $tokensTag . $gridHtml;
+            return $tokensTag . $allSectionsHtml;
         }
 
-        return $gridHtml;
+        return $allSectionsHtml;
     }
 
     private function renderFileFallback(string $themeFolder, string $partName, array $context): string

@@ -29,10 +29,16 @@ interface ThemePartInterface
     public function getContainerSettings(): array;
 
     /**
-     * Lista de blocos organizados por coluna.
+     * Lista de blocos organizados por coluna (retrocompatibilidade com seção única).
      * @return array<int, array<int, array<string, mixed>>> [colIndex => [ [ 'type' => '...', 'data' => [...] ] ]]
      */
     public function getColumnsData(): array;
+
+    /**
+     * Lista de seções estruturais acopladas a esta parte (cada seção com sua grade e blocos).
+     * @return array<int, array<string, mixed>> [ [ 'id' => '...', 'layout_preset' => '...', 'columns_data' => [...], 'container_settings' => [...] ] ]
+     */
+    public function getSections(): array;
 
     /** Estilo do botão de toggle mobile do menu (classic, pill, minimal, dots) */
     public function getMobileToggleStyle(): string;
