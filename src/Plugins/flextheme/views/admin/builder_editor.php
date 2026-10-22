@@ -335,12 +335,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 </div>
 
                 <div class="inspector-field">
-                    <label class="inspector-label">Alinhamento Padrão do Toggle (Mobile)</label>
-                    <div style="display:flex; flex-direction:column; gap:6px;">
-                        <button type="button" class="header-btn" id="btn_toggle_align_left" onclick="selectGlobalToggleAlign('left')">⬅️ Alinhar à Esquerda</button>
-                        <button type="button" class="header-btn" id="btn_toggle_align_center" onclick="selectGlobalToggleAlign('center')">🎯 Centralizar no Topo</button>
-                        <button type="button" class="header-btn active" id="btn_toggle_align_right" onclick="selectGlobalToggleAlign('right')">➡️ Alinhar à Direita</button>
-                    </div>
+                    <label class="inspector-label">Posição do Botão Hamburguer (Mobile)</label>
+                    <select id="setting_mobile_toggle_align" class="inspector-select" onchange="selectGlobalToggleAlign(this.value)">
+                        <option value="right" selected>➡️ Alinhar à Direita (Padrão)</option>
+                        <option value="center">🎯 Centralizar no Topo</option>
+                        <option value="left">⬅️ Alinhar à Esquerda</option>
+                    </select>
                     <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Define o lado em que o botão hamburguer é posicionado na tela do celular.</span>
                 </div>
 
@@ -1587,7 +1587,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                        '<span style="font-size:11px; color:#38bdf8;">📱 ' + (curAlign === 'left' ? '⬅️ Esq' : (curAlign === 'center' ? '🎯 Centro' : '➡️ Dir')) + ' (' + curStyle + ')</span>' +
                        '</div>';
             } else {
-                return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> (Início · Cursos · Sobre · Contato)';
+                var alignText = (curAlign === 'left') ? '⬅️ Esquerda' : ((curAlign === 'center') ? '🎯 Centro' : '➡️ Direita'); return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> <span style="font-size:10px; color:#38bdf8; margin-left:8px; padding:2px 6px; background:rgba(56,189,248,0.1); border-radius:4px;">📱 Toggle: ' + alignText + ' (' + curStyle + ')</span>';
             }
         }
         if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid') + ' (' + (d.height || '20px') + ')';
@@ -1909,6 +1909,31 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         showToast('Estilo do Toggle Mobile atualizado para: ' + val);
     }
 
+    function selectGlobalToggleAlign(val) {
+        state.mobile_toggle_align = val;
+        var sel = document.getElementById('setting_mobile_toggle_align');
+        if (sel) sel.value = val;
+        if (state.sections) {
+            state.sections.forEach(function(sec) {
+                if (sec.columns_data) {
+                    for (var col in sec.columns_data) {
+                        if (Array.isArray(sec.columns_data[col])) {
+                            sec.columns_data[col].forEach(function(b) {
+                                if (b.type === 'nav_menu') {
+                                    b.data = b.data || {};
+                                    b.data.toggle_align = val;
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        renderCanvas();
+        if (selectionType === 'block') renderInspector();
+        showToast('Posição do toggle mobile: ' + (val === 'right' ? 'Direita' : (val === 'center' ? 'Centro' : 'Esquerda')));
+    }
+
     function setPreviewHeaderAlign(align) {
         if (state.sections && state.sections.length > 0) {
             var targetSec = state.sections[activeSecIdx] || state.sections[0];
@@ -2025,14 +2050,11 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     '</div>';
 
             var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
-            html += '<div class="inspector-field">' +
-                    '<label class="inspector-label">Alinhamento do Botão Toggle (Mobile)</label>' +
-                    '<div style="display:flex; flex-direction:column; gap:6px;">' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'left' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'left\'); renderCanvas(); renderInspector();">⬅️ Alinhar à Esquerda</button>' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'center' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'center\'); renderCanvas(); renderInspector();">🎯 Centralizar no Topo</button>' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'right' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'right\'); renderCanvas(); renderInspector();">➡️ Alinhar à Direita</button>' +
-                    '</div>' +
-                    '</div>';
+            html += inspectorSelect('Posição do Botão Hamburguer (Mobile)', 'toggle_align', [
+                { value: 'right', label: '➡️ Alinhar à Direita (Padrão)' },
+                { value: 'center', label: '🎯 Centralizar no Topo' },
+                { value: 'left', label: '⬅️ Alinhar à Esquerda' }
+            ], curToggleAlign);
 
             html += inspectorSelect('Alinhamento dos Links (Desktop)', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'divider') {
@@ -2322,14 +2344,14 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function inspectorSelect(label, key, options, curVal) {
         var opts = options.map(function(o) {
-            return '<option value="' + o + '"' + (o === curVal ? ' selected' : '') + '>' + o + '</option>';
+            var val = (typeof o === 'object') ? o.value : o;
+            var text = (typeof o === 'object') ? o.label : o;
+            return '<option value="' + escapeAttr(val) + '"' + (String(val) === String(curVal) ? ' selected' : '') + '>' + escapeHtml(text) + '</option>';
         }).join('');
         return '<div class="inspector-field">' +
                '<label class="inspector-label">' + label + '</label>' +
-               '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value)">' + opts + '</select>' +
+               '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' + opts + '</select>' +
                '</div>';
-    }
-
     function inspectorDimension(label, key, val) {
         var num = val.replace(/[^0-9.]/g, '');
         var unit = val.replace(/[0-9.]/g, '') || 'px';
