@@ -365,9 +365,197 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             position: relative;
             transition: all 0.2s ease;
         }
-        .elementor-section-card.active-section {
-            border-color: rgba(56, 189, 248, 0.7);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.12);
+        .elementor-section-card.selected-section-active {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px var(--primary), 0 0 24px rgba(56, 189, 248, 0.25) !important;
+        }
+        .elementor-section-card.selected-section-active .elementor-section-bar {
+            background: rgba(56, 189, 248, 0.15) !important;
+            border-bottom-color: var(--primary) !important;
+        }
+
+        /* LAYERS / CAMADAS PANEL */
+        .layer-tree-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .layer-node {
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+        .layer-root {
+            background: rgba(255,255,255,0.04);
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .layer-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+        .layer-section.active-layer {
+            border-color: var(--primary);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .layer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .layer-row:hover {
+            background: rgba(255,255,255,0.06);
+        }
+        .layer-row.active-layer {
+            background: rgba(56, 189, 248, 0.18) !important;
+            color: #fff;
+            font-weight: 700;
+        }
+        .layer-row-sec {
+            background: #0f1520;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-weight: 700;
+        }
+        .layer-row-col {
+            padding-left: 20px;
+            color: var(--text-muted);
+            font-size: 11px;
+            border-bottom: 1px dashed rgba(255,255,255,0.04);
+        }
+        .layer-row-block {
+            padding-left: 34px;
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .layer-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-grow: 1;
+        }
+        .layer-actions {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .layer-act-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 10px;
+            border-radius: 3px;
+        }
+        .layer-act-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.15);
+        }
+        .layer-act-btn.del:hover {
+            color: var(--danger);
+        }
+        .layer-badge {
+            font-size: 9px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        /* TOGGLE CARDS SELECTOR */
+        .toggle-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+            margin-bottom: 14px;
+        }
+        .toggle-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .toggle-card:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.05);
+        }
+        .toggle-card.active {
+            border-color: var(--primary);
+            background: rgba(56, 189, 248, 0.15);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+        }
+        .toggle-card-preview {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            font-size: 18px;
+            color: var(--primary);
+        }
+        .toggle-card-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .toggle-card-desc {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* MOBILE OVERFLOW PREVENTION (375px) */
+        #device-viewport.ds-device-375,
+        #device-viewport.ds-mobile-mode {
+            max-width: 375px !important;
+            width: 375px !important;
+            overflow-x: hidden !important;
+        }
+        #device-viewport.ds-device-375 .canvas-grid-row,
+        #device-viewport.ds-mobile-mode .canvas-grid-row {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        #device-viewport.ds-device-375 .canvas-column,
+        #device-viewport.ds-mobile-mode .canvas-column {
+            min-width: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        #device-viewport.ds-device-375 .canvas-block-card,
+        #device-viewport.ds-mobile-mode .canvas-block-card {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            word-break: break-word !important;
+        }
+        #device-viewport.ds-device-375 .elementor-section-card,
+        #device-viewport.ds-mobile-mode .elementor-section-card {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
         }
         .elementor-section-bar {
             background: #0f1520;
@@ -611,6 +799,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         <aside id="studio-sidebar">
             <div class="sidebar-tabs">
                 <div class="sidebar-tab active" id="tab_btn_layout" onclick="switchSidebarTab('layout')">Divisórias</div>
+                <div class="sidebar-tab" id="tab_btn_layers" onclick="switchSidebarTab('layers')">Camadas</div>
                 <div class="sidebar-tab" id="tab_btn_blocks" onclick="switchSidebarTab('blocks')">+ Blocos</div>
                 <div class="sidebar-tab" id="tab_btn_inspector" onclick="switchSidebarTab('inspector')">Inspetor</div>
                 <div class="sidebar-tab" id="tab_btn_settings" onclick="switchSidebarTab('settings')">Config</div>
@@ -667,7 +856,28 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                             <option value="stretch">Esticado (stretch)</option>
                         </select>
                     </div>
+
+                    <div class="inspector-field">
+                        <label class="inspector-label">Alinhamento Horizontal das Divisórias (Header)</label>
+                        <select id="setting_justify_content" class="inspector-select" onchange="updateActiveSecSetting('justify_content', this.value)">
+                            <option value="space-between">Espalhado / Distribuído (Space-Between) - Padrão Header</option>
+                            <option value="center">Centralizado no Header (Center)</option>
+                            <option value="flex-start">Alinhado à Esquerda (Flex-Start)</option>
+                            <option value="flex-end">Alinhado à Direita (Flex-End)</option>
+                            <option value="space-around">Espaço por Igual nas Pontas (Space-Around)</option>
+                        </select>
+                        <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Controla como as colunas do header são distribuídas na largura total.</span>
+                    </div>
                 </div>
+            </div>
+
+            <div class="sidebar-content" id="sidebar_tab_layers" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #fff;">Árvore de Camadas (Navigator)</div>
+                    <span style="font-size: 10px; background: rgba(56,189,248,0.15); color: var(--primary); padding: 2px 6px; border-radius: 8px; font-weight: 700;">HIERARQUIA</span>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Visualize, ordene e selecione qualquer seção, célula ou bloco da estrutura.</p>
+                <div id="layers_tree_container" class="layer-tree-container"></div>
             </div>
 
             <div class="sidebar-content" id="sidebar_tab_blocks" style="display: none;">
@@ -693,12 +903,29 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
                 <div class="inspector-field">
                     <label class="inspector-label">Estilo do Toggle Hamburguer Mobile</label>
-                    <select id="setting_mobile_toggle" class="inspector-select" onchange="state.mobile_toggle_style = this.value; renderCanvas();">
-                        <option value="classic" <?= $part->getMobileToggleStyle() === 'classic' ? 'selected' : '' ?>>Clássico ☰ (3 Barras)</option>
-                        <option value="pill" <?= $part->getMobileToggleStyle() === 'pill' ? 'selected' : '' ?>>Pílula MENU ☰</option>
-                        <option value="minimal" <?= $part->getMobileToggleStyle() === 'minimal' ? 'selected' : '' ?>>Minimalista ✕ (2 Barras Modernas)</option>
-                        <option value="dots" <?= $part->getMobileToggleStyle() === 'dots' ? 'selected' : '' ?>>Pontos ⋮ (3 Pontinhos Verticais)</option>
-                    </select>
+                    <div id="settings_toggle_cards" class="toggle-cards-grid">
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'classic' ? 'active' : '' ?>" id="toggle_card_classic" onclick="selectGlobalToggleStyle('classic')">
+                            <div class="toggle-card-preview">☰</div>
+                            <div class="toggle-card-name">Clássico</div>
+                            <div class="toggle-card-desc">3 Barras</div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'pill' ? 'active' : '' ?>" id="toggle_card_pill" onclick="selectGlobalToggleStyle('pill')">
+                            <div class="toggle-card-preview" style="font-size:11px; font-weight:800; border:1px solid currentColor; border-radius:12px; padding:2px 8px; width:fit-content; margin:0 auto 4px;">MENU ☰</div>
+                            <div class="toggle-card-name">Pílula</div>
+                            <div class="toggle-card-desc">Texto + Ícone</div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'minimal' ? 'active' : '' ?>" id="toggle_card_minimal" onclick="selectGlobalToggleStyle('minimal')">
+                            <div class="toggle-card-preview">═</div>
+                            <div class="toggle-card-name">Minimalista</div>
+                            <div class="toggle-card-desc">2 Linhas</div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'dots' ? 'active' : '' ?>" id="toggle_card_dots" onclick="selectGlobalToggleStyle('dots')">
+                            <div class="toggle-card-preview">⋮</div>
+                            <div class="toggle-card-name">Pontos</div>
+                            <div class="toggle-card-desc">3 Pontos</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="setting_mobile_toggle" value="<?= htmlspecialchars($part->getMobileToggleStyle()) ?>">
                 </div>
 
                 <div class="inspector-field">
@@ -760,6 +987,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     <button type="button" class="header-btn" onclick="setPreviewModalDevice('1024px')" title="Laptop">💻 1024px</button>
                     <button type="button" class="header-btn" onclick="setPreviewModalDevice('768px')" title="Tablet">📱 768px</button>
                     <button type="button" class="header-btn" onclick="setPreviewModalDevice('375px')" title="Mobile">📱 375px</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
+                    <span style="font-size:10px; color:var(--text-muted); padding:0 4px;">Alinhamento:</span>
+                    <button type="button" class="header-btn" onclick="setPreviewHeaderAlign('space-between')" title="Espalhado">↔️ Espalhado</button>
+                    <button type="button" class="header-btn" onclick="setPreviewHeaderAlign('center')" title="Centralizado">🎯 Centro</button>
+                    <button type="button" class="header-btn" onclick="setPreviewHeaderAlign('flex-start')" title="Esquerda">⬅️ Esquerda</button>
+                    <button type="button" class="header-btn" onclick="setPreviewHeaderAlign('flex-end')" title="Direita">➡️ Direita</button>
                 </div>
                 <button type="button" onclick="toggleLivePreviewModal()" style="background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
             </div>
@@ -835,17 +1069,26 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         return 6; // Seções centrais livres
     }
 
+    var selectionType = 'none'; // 'none' | 'section' | 'block' | 'column'
+    var selectedSecIdx = 0;
+
     function initStudio() {
         renderSidebarLayoutTab();
         renderBlocksCatalog();
+        renderLayersTree();
         renderCanvas();
     }
 
     function switchSidebarTab(tab) {
-        ['layout', 'blocks', 'inspector', 'settings'].forEach(function(t) {
-            document.getElementById('sidebar_tab_' + t).style.display = (t === tab) ? 'block' : 'none';
-            document.getElementById('tab_btn_' + t).classList.toggle('active', t === tab);
+        ['layout', 'layers', 'blocks', 'inspector', 'settings'].forEach(function(t) {
+            var el = document.getElementById('sidebar_tab_' + t);
+            if (el) el.style.display = (t === tab) ? 'block' : 'none';
+            var btn = document.getElementById('tab_btn_' + t);
+            if (btn) btn.classList.toggle('active', t === tab);
         });
+        if (tab === 'layers') {
+            renderLayersTree();
+        }
     }
 
     function setStudioMode(mode) {
@@ -1016,31 +1259,65 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     }
 
     function deleteSection(secIdx, e) {
-        if (e) e.stopPropagation();
-        if (state.sections.length <= 1) {
-            alert('O construtor deve manter ao menos 1 seção.');
-            return;
+        if (e) {
+            if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof e.preventDefault === 'function') e.preventDefault();
         }
-        if (confirm('Deseja excluir esta seção e todos os blocos dentro dela?')) {
-            state.sections.splice(secIdx, 1);
+
+        var sec = state.sections[secIdx];
+        if (!sec) return;
+
+        // Verifica se a seção tem blocos reais dentro dela
+        var hasBlocks = false;
+        if (sec.columns_data) {
+            for (var colKey in sec.columns_data) {
+                if (Array.isArray(sec.columns_data[colKey]) && sec.columns_data[colKey].length > 0) {
+                    hasBlocks = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasBlocks) {
+            if (!confirm('Esta seção contém blocos adicionados. Deseja realmente excluir esta seção e todos os seus blocos?')) {
+                return;
+            }
+        }
+
+        state.sections.splice(secIdx, 1);
+
+        if (state.sections.length === 0) {
+            activeSecIdx = 0;
+            activeColIdx = 0;
+            selectedBlockCoord = null;
+            selectionType = 'none';
+            showStructurePicker = true; // Abre automaticamente as divisórias para adicionar uma nova
+            showToast('Seção excluída com sucesso! Selecione uma nova estrutura abaixo.');
+        } else {
             if (activeSecIdx >= state.sections.length) {
-                activeSecIdx = state.sections.length - 1;
+                activeSecIdx = Math.max(0, state.sections.length - 1);
             }
             activeColIdx = 0;
             selectedBlockCoord = null;
-            renderCanvas();
-            renderSidebarLayoutTab();
-            showToast('Seção removida.');
+            selectionType = 'none';
+            showToast('Seção excluída com sucesso.');
         }
+
+        renderCanvas();
+        renderSidebarLayoutTab();
+        renderLayersTree();
     }
 
     function selectSectionForConfig(secIdx, e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        selectionType = 'section';
+        selectedSecIdx = secIdx;
         activeSecIdx = secIdx;
         activeColIdx = 0;
+        selectedBlockCoord = null;
         renderCanvas();
         renderSidebarLayoutTab();
-        renderBlocksCatalog();
+        renderLayersTree();
         switchSidebarTab('layout');
     }
 
@@ -1077,13 +1354,22 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     }
 
     function renderSidebarLayoutTab() {
+        var bar = document.getElementById('sidebar_sec_selector_bar');
+        if (bar) bar.innerHTML = '';
+        var maxSec = getMaxSectionsForType(state.type);
+
+        if (!state.sections || state.sections.length === 0) {
+            var titleInput = document.getElementById('sec_title_input');
+            if (titleInput) titleInput.value = '';
+            var container = document.getElementById('presets_list');
+            if (container) container.innerHTML = '<div style="color:var(--text-muted); font-size:12px; padding:20px; text-align:center;">Nenhuma seção criada. Clique em "+ Nova Seção" para adicionar.</div>';
+            return;
+        }
+
         var curSec = state.sections[activeSecIdx] || state.sections[0];
         if (!curSec) return;
 
         // Seletor de pílulas das seções
-        var bar = document.getElementById('sidebar_sec_selector_bar');
-        bar.innerHTML = '';
-        var maxSec = getMaxSectionsForType(state.type);
 
         state.sections.forEach(function(s, idx) {
             var btn = document.createElement('button');
@@ -1164,6 +1450,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         if (bgEl) bgEl.value = cs.background || 'transparent';
         var alignEl = document.getElementById('setting_align_items');
         if (alignEl) alignEl.value = cs.align_items || 'center';
+        var justifyEl = document.getElementById('setting_justify_content');
+        if (justifyEl) justifyEl.value = cs.justify_content || 'space-between';
     }
 
     function renderBlocksCatalog() {
@@ -1248,9 +1536,20 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         var maxSections = getMaxSectionsForType(state.type);
 
+        if (state.sections.length === 0) {
+            var emptyNotice = document.createElement('div');
+            emptyNotice.style.cssText = 'text-align:center; padding:48px 20px; border:2px dashed rgba(255,255,255,0.12); border-radius:12px; margin-bottom:20px; background:rgba(255,255,255,0.01);';
+            emptyNotice.innerHTML = '<div style="font-size:36px; margin-bottom:10px;">🔲</div>' +
+                '<h4 style="color:#fff; margin:0 0 6px 0; font-size:15px;">Nenhuma Seção Ativa</h4>' +
+                '<p style="color:var(--text-muted); font-size:12px; margin:0 0 16px 0;">Escolha abaixo uma estrutura de divisórias para criar sua primeira seção.</p>' +
+                '<button type="button" class="header-btn" onclick="toggleAddSectionPicker()" style="padding:6px 16px; background:var(--primary); color:#000; font-weight:700;">+ Adicionar Seção</button>';
+            stage.appendChild(emptyNotice);
+        }
+
         state.sections.forEach(function(sec, secIdx) {
             var secCard = document.createElement('div');
-            secCard.className = 'elementor-section-card' + (activeSecIdx === secIdx ? ' active-section' : '');
+            var isSecSelected = (selectionType === 'section' && selectedSecIdx === secIdx);
+            secCard.className = 'elementor-section-card' + (isSecSelected ? ' selected-section-active' : '');
             secCard.dataset.sec = secIdx;
             
             // Aplica margem e fundo da seção
@@ -1265,12 +1564,14 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             
             var presetInfo = presets[sec.layout_preset] || presets['1_col'];
             var secTitleText = sec.title || ('Seção ' + (secIdx + 1));
+            var secSelectedBadge = isSecSelected ? '<span style="background:var(--primary); color:#000; font-size:9px; padding:2px 8px; border-radius:10px; font-weight:800;">SEÇÃO SELECIONADA</span>' : '';
 
             secHeader.innerHTML = 
                 '<div class="elementor-sec-title" onclick="selectSectionForConfig(' + secIdx + ', event)">' +
                     '<span style="font-size: 13px;">🔲</span>' +
                     '<strong>' + escapeHtml(secTitleText) + '</strong>' +
                     '<span class="elementor-sec-badge">' + presetInfo.columns + ' Células (' + presetInfo.name + ')</span>' +
+                    secSelectedBadge +
                 '</div>' +
                 '<div class="elementor-sec-actions">' +
                     '<button type="button" class="sec-act-btn" onclick="selectSectionForConfig(' + secIdx + ', event)" title="Configurar Divisórias & Espaçamento">⚙️ Divisórias & Espaçamento</button>' +
@@ -1281,14 +1582,25 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 '</div>';
             secCard.appendChild(secHeader);
 
-            // Grade de Colunas / Células da Seção
+            // Grade de Colunas / Células da Seção (Responsiva para 375px sem vazamento)
             var gridRow = document.createElement('div');
             gridRow.className = 'canvas-grid-row';
-            gridRow.style.gridTemplateColumns = presetInfo.template || '1fr';
+            
+            var isMobileStage = (currentDevice === '375px');
+            var isTabletStage = (currentDevice === '768px');
+            var templateCols = presetInfo.template || '1fr';
+            if (isMobileStage) {
+                templateCols = presetInfo.mobile || '1fr';
+            } else if (isTabletStage) {
+                templateCols = presetInfo.tablet || '1fr 1fr';
+            }
+            gridRow.style.gridTemplateColumns = templateCols;
+
             if (sec.container_settings) {
-                if (sec.container_settings.gap) gridRow.style.gap = sec.container_settings.gap;
-                if (sec.container_settings.padding) gridRow.style.padding = sec.container_settings.padding;
+                if (sec.container_settings.gap) gridRow.style.gap = isMobileStage ? '12px' : sec.container_settings.gap;
+                if (sec.container_settings.padding) gridRow.style.padding = isMobileStage ? '12px 8px' : sec.container_settings.padding;
                 if (sec.container_settings.align_items) gridRow.style.alignItems = sec.container_settings.align_items;
+                if (sec.container_settings.justify_content) gridRow.style.justifyContent = sec.container_settings.justify_content;
             }
 
             for (var colIdx = 0; colIdx < presetInfo.columns; colIdx++) {
@@ -1430,7 +1742,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function createBlockCard(block, secIdx, colIdx, blockIdx) {
         var card = document.createElement('div');
-        var isSelected = selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx;
+        var isSelected = (selectionType === 'block' && selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx);
         card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
         
         // Drag-and-drop do bloco entre células e seções
@@ -1587,10 +1899,173 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     }
 
     function selectBlock(secIdx, colIdx, blockIdx) {
+        selectionType = 'block';
+        activeSecIdx = secIdx;
+        activeColIdx = colIdx;
         selectedBlockCoord = { sec: secIdx, col: colIdx, blockIdx: blockIdx };
         renderCanvas();
         renderInspector();
+        renderLayersTree();
         switchSidebarTab('inspector');
+    }
+
+    function selectColFromLayers(secIdx, colIdx, e) {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        selectionType = 'column';
+        activeSecIdx = secIdx;
+        activeColIdx = colIdx;
+        selectedBlockCoord = null;
+        renderCanvas();
+        renderBlocksCatalog();
+        renderLayersTree();
+        switchSidebarTab('blocks');
+        showToast('Célula ' + (colIdx + 1) + ' selecionada. Escolha um bloco para adicionar.');
+    }
+
+    function renderLayersTree() {
+        var container = document.getElementById('layers_tree_container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!state.sections || state.sections.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:30px 10px;">Nenhuma seção ativa na hierarquia.<br><button type="button" class="header-btn" onclick="toggleAddSectionPicker()" style="margin-top:10px; font-size:11px;">+ Adicionar Seção</button></div>';
+            return;
+        }
+
+        var rootNode = document.createElement('div');
+        rootNode.className = 'layer-node layer-root';
+        rootNode.innerHTML = '<div class="layer-item-title" style="display:flex; align-items:center; gap:8px; width:100%;">' +
+            '<span>📑</span> <strong style="color:#fff;">' + escapeHtml(state.title || 'Parte') + '</strong>' +
+            '<span style="font-size:10px; color:var(--text-muted); margin-left:auto;">' + state.sections.length + ' seções</span>' +
+            '</div>';
+        container.appendChild(rootNode);
+
+        var treeBody = document.createElement('div');
+        treeBody.className = 'layer-tree-body';
+
+        state.sections.forEach(function(sec, sIdx) {
+            var secNode = document.createElement('div');
+            var isSecActive = (selectionType === 'section' && selectedSecIdx === sIdx);
+            secNode.className = 'layer-node layer-section' + (isSecActive ? ' active-layer' : '');
+
+            var presetInfo = presets[sec.layout_preset] || presets['1_col'];
+            var secTitle = sec.title || ('Seção ' + (sIdx + 1));
+
+            var secHeader = document.createElement('div');
+            secHeader.className = 'layer-row layer-row-sec' + (isSecActive ? ' active-layer' : '');
+            secHeader.innerHTML = 
+                '<div class="layer-title-wrap" onclick="selectSectionForConfig(' + sIdx + ', event)">' +
+                    '<span class="layer-icon">🔲</span>' +
+                    '<span class="layer-text">' + escapeHtml(secTitle) + '</span>' +
+                    '<span class="layer-badge">' + presetInfo.columns + ' cols</span>' +
+                '</div>' +
+                '<div class="layer-actions">' +
+                    '<button type="button" class="layer-act-btn" onclick="moveSection(' + sIdx + ', -1, event)" title="Subir">▲</button>' +
+                    '<button type="button" class="layer-act-btn" onclick="moveSection(' + sIdx + ', 1, event)" title="Descer">▼</button>' +
+                    '<button type="button" class="layer-act-btn" onclick="duplicateSection(' + sIdx + ', event)" title="Duplicar">⎘</button>' +
+                    '<button type="button" class="layer-act-btn del" onclick="deleteSection(' + sIdx + ', event)" title="Excluir">✕</button>' +
+                '</div>';
+            secNode.appendChild(secHeader);
+
+            var colsWrapper = document.createElement('div');
+            colsWrapper.className = 'layer-cols-wrapper';
+
+            for (var cIdx = 0; cIdx < presetInfo.columns; cIdx++) {
+                var colNode = document.createElement('div');
+                colNode.className = 'layer-node layer-col';
+
+                var colTitle = getColumnTitle(sec.layout_preset, cIdx, presetInfo.columns);
+                var blocksInCol = (sec.columns_data && sec.columns_data[cIdx]) ? sec.columns_data[cIdx] : [];
+
+                var colHeader = document.createElement('div');
+                colHeader.className = 'layer-row layer-row-col';
+                colHeader.innerHTML = 
+                    '<div class="layer-title-wrap" onclick="selectColFromLayers(' + sIdx + ', ' + cIdx + ', event)">' +
+                        '<span class="layer-icon">▦</span>' +
+                        '<span class="layer-text">' + escapeHtml(colTitle) + '</span>' +
+                        '<span style="font-size:10px; color:var(--text-muted); margin-left:auto;">' + blocksInCol.length + ' blocos</span>' +
+                    '</div>' +
+                    '<div class="layer-actions">' +
+                        '<button type="button" class="layer-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + sIdx + ', ' + cIdx + ')" title="+ Bloco">+</button>' +
+                    '</div>';
+                colNode.appendChild(colHeader);
+
+                var blocksWrapper = document.createElement('div');
+                blocksWrapper.className = 'layer-blocks-wrapper';
+
+                blocksInCol.forEach(function(block, bIdx) {
+                    var isBlockActive = (selectionType === 'block' && selectedBlockCoord && selectedBlockCoord.sec === sIdx && selectedBlockCoord.col === cIdx && selectedBlockCoord.blockIdx === bIdx);
+                    var bNode = document.createElement('div');
+                    bNode.className = 'layer-row layer-row-block' + (isBlockActive ? ' active-layer' : '');
+
+                    var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
+
+                    bNode.innerHTML = 
+                        '<div class="layer-title-wrap" onclick="selectBlock(' + sIdx + ', ' + cIdx + ', ' + bIdx + ')">' +
+                            '<span class="layer-icon">' + bMeta.icon + '</span>' +
+                            '<span class="layer-text">' + escapeHtml(bMeta.name) + '</span>' +
+                        '</div>' +
+                        '<div class="layer-actions">' +
+                            '<button type="button" class="layer-act-btn" onclick="moveBlockInCell(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', -1, event)" title="Subir">▲</button>' +
+                            '<button type="button" class="layer-act-btn" onclick="moveBlockInCell(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', 1, event)" title="Descer">▼</button>' +
+                            '<button type="button" class="layer-act-btn" onclick="duplicateBlockInCell(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', event)" title="Duplicar">⎘</button>' +
+                            '<button type="button" class="layer-act-btn del" onclick="deleteBlockInCell(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', event)" title="Excluir">✕</button>' +
+                        '</div>';
+
+                    blocksWrapper.appendChild(bNode);
+                });
+
+                colNode.appendChild(blocksWrapper);
+                colsWrapper.appendChild(colNode);
+            }
+
+            secNode.appendChild(colsWrapper);
+            treeBody.appendChild(secNode);
+        });
+
+        container.appendChild(treeBody);
+    }
+
+    function selectGlobalToggleStyle(val) {
+        state.mobile_toggle_style = val;
+        var hidden = document.getElementById('setting_mobile_toggle');
+        if (hidden) hidden.value = val;
+        ['classic', 'pill', 'minimal', 'dots'].forEach(function(s) {
+            var el = document.getElementById('toggle_card_' + s);
+            if (el) el.classList.toggle('active', s === val);
+        });
+        if (state.sections) {
+            state.sections.forEach(function(sec) {
+                if (sec.columns_data) {
+                    for (var col in sec.columns_data) {
+                        if (Array.isArray(sec.columns_data[col])) {
+                            sec.columns_data[col].forEach(function(b) {
+                                if (b.type === 'nav_menu') {
+                                    b.data = b.data || {};
+                                    b.data.toggle_style = val;
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        renderCanvas();
+        renderLayersTree();
+        showToast('Estilo do Toggle Mobile atualizado para: ' + val);
+    }
+
+    function setPreviewHeaderAlign(align) {
+        if (state.sections && state.sections.length > 0) {
+            var targetSec = state.sections[activeSecIdx] || state.sections[0];
+            targetSec.container_settings = targetSec.container_settings || {};
+            targetSec.container_settings.justify_content = align;
+            var selectEl = document.getElementById('setting_justify_content');
+            if (selectEl) selectEl.value = align;
+            renderCanvas();
+            loadLivePreviewModal();
+            showToast('Alinhamento do Header ajustado para: ' + align);
+        }
     }
 
     function renderInspector() {
@@ -1647,6 +2122,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     '</div>';
             html += inspectorDimension('Altura da Logo', 'height', block.data.height || '36px');
             html += inspectorTextInput('Link de Destino', 'url', block.data.url || '/');
+            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'image') {
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Arquivo de Imagem (PNG, SVG, JPG, WEBP)</label>' +
@@ -1672,12 +2148,20 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Estilo do Hamburguer Mobile (Toggle)</label>' +
-                    '<select class="inspector-select" onchange="updateNavToggleStyle(this.value)">' +
-                    '<option value="classic"' + (curToggle === 'classic' ? ' selected' : '') + '>Clássico ☰ (3 Barras)</option>' +
-                    '<option value="pill"' + (curToggle === 'pill' ? ' selected' : '') + '>Pílula MENU ☰ (Texto + Ícone)</option>' +
-                    '<option value="minimal"' + (curToggle === 'minimal' ? ' selected' : '') + '>Minimalista ✕ (2 Barras Modernas)</option>' +
-                    '<option value="dots"' + (curToggle === 'dots' ? ' selected' : '') + '>Pontos ⋮ (3 Pontinhos Verticais)</option>' +
-                    '</select>' +
+                    '<div class="toggle-cards-grid">' +
+                        '<div class="toggle-card ' + (curToggle === 'classic' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'classic\')">' +
+                            '<div class="toggle-card-preview">☰</div><div class="toggle-card-name">Clássico</div>' +
+                        '</div>' +
+                        '<div class="toggle-card ' + (curToggle === 'pill' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'pill\')">' +
+                            '<div class="toggle-card-preview" style="font-size:10px; font-weight:800; border:1px solid currentColor; border-radius:10px; padding:1px 6px; width:fit-content; margin:0 auto;">MENU ☰</div><div class="toggle-card-name">Pílula</div>' +
+                        '</div>' +
+                        '<div class="toggle-card ' + (curToggle === 'minimal' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'minimal\')">' +
+                            '<div class="toggle-card-preview">═</div><div class="toggle-card-name">Minimal</div>' +
+                        '</div>' +
+                        '<div class="toggle-card ' + (curToggle === 'dots' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'dots\')">' +
+                            '<div class="toggle-card-preview">⋮</div><div class="toggle-card-name">Pontos</div>' +
+                        '</div>' +
+                    '</div>' +
                     '</div>';
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'divider') {
@@ -1852,6 +2336,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         activeColIdx = colIdx;
         selectBlock(secIdx, colIdx, sec.columns_data[colIdx].length - 1);
         renderCanvas();
+        renderLayersTree();
         showToast('Bloco adicionado à Célula ' + (colIdx + 1));
     }
 
@@ -1865,11 +2350,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         activeColIdx = colIdx;
         selectBlock(secIdx, colIdx, blockIdx);
         renderCanvas();
+        renderLayersTree();
         showToast('Bloco inserido na Célula ' + (colIdx + 1));
     }
 
     function moveBlockInCell(secIdx, colIdx, blockIdx, dir, e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         var sec = state.sections[secIdx];
         if (!sec || !sec.columns_data[colIdx]) return;
         var list = sec.columns_data[colIdx];
@@ -1878,21 +2364,23 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             var item = list.splice(blockIdx, 1)[0];
             list.splice(targetIdx, 0, item);
             selectBlock(secIdx, colIdx, targetIdx);
+            renderLayersTree();
         }
     }
 
     function duplicateBlockInCell(secIdx, colIdx, blockIdx, e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         var sec = state.sections[secIdx];
         if (!sec || !sec.columns_data[colIdx]) return;
         var item = JSON.parse(JSON.stringify(sec.columns_data[colIdx][blockIdx]));
         sec.columns_data[colIdx].splice(blockIdx + 1, 0, item);
         renderCanvas();
+        renderLayersTree();
         showToast('Bloco duplicado!');
     }
 
     function deleteBlockInCell(secIdx, colIdx, blockIdx, e) {
-        if (e) e.stopPropagation();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         if (confirm('Deseja excluir este bloco?')) {
             var sec = state.sections[secIdx];
             if (!sec || !sec.columns_data[colIdx]) return;
@@ -1900,6 +2388,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             selectedBlockCoord = null;
             renderCanvas();
             renderInspector();
+            renderLayersTree();
             showToast('Bloco removido.');
         }
     }
@@ -1922,6 +2411,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         activeSecIdx = toSec;
         activeColIdx = toCol;
         renderCanvas();
+        renderLayersTree();
         showToast('Bloco reposicionado!');
     }
 
@@ -1937,6 +2427,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var btn = document.getElementById('btn_save');
         btn.textContent = 'Salvando...';
         btn.disabled = true;
+
+        if (!state.sections || state.sections.length === 0) {
+            btn.textContent = '💾 Salvar';
+            btn.disabled = false;
+            alert('Adicione ao menos uma seção com divisórias antes de salvar.');
+            return;
+        }
 
         state.title = document.getElementById('part_title_input').value || state.title;
         var assignedTheme = document.getElementById('setting_assigned_theme').value;

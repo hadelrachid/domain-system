@@ -45,6 +45,12 @@ class NavMenuBlock implements BlockInterface
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $location = (string)($data['menu_location'] ?? 'header');
         $toggleStyle = (string)($data['toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+        $align = (string)($data['align'] ?? 'center');
+        $justifyNav = match ($align) {
+            'left'  => 'flex-start',
+            'right' => 'flex-end',
+            default => 'center',
+        };
 
         $items = $this->resolveMenuItems($data, $location);
         if (empty($items)) {
@@ -85,15 +91,17 @@ class NavMenuBlock implements BlockInterface
         };
 
         return <<<HTML
-<div id="{$navId}" class="ds-block-nav-wrapper">
+<div id="{$navId}" class="ds-block-nav-wrapper" style="display:flex; justify-content:{$justifyNav}; width:100%;">
     <style>
         #{$navId} .ds-desktop-menu {
             display: flex;
             align-items: center;
+            justify-content: {$justifyNav};
             gap: 24px;
             list-style: none;
             margin: 0;
             padding: 0;
+            width: 100%;
         }
         #{$navId} .ds-mobile-toggle-btn {
             display: none;

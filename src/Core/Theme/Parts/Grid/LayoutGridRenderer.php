@@ -84,6 +84,7 @@ class LayoutGridRenderer implements LayoutGridInterface
         };
 
         $alignItems = (string)($settings['align_items'] ?? 'center');
+        $justifyContent = (string)($settings['justify_content'] ?? 'space-between');
         $padding = (string)($settings['padding'] ?? '20px 16px');
         $margin = (string)($settings['margin'] ?? '0px');
         $background = (string)($settings['background'] ?? 'transparent');
@@ -113,9 +114,14 @@ class LayoutGridRenderer implements LayoutGridInterface
             grid-template-columns: {$gridTemplate};
             gap: {$gap};
             align-items: {$alignItems};
+            justify-content: {$justifyContent};
             box-sizing: border-box;
             padding: {$padding};
             {$containerStyle}
+        }
+        #{$sectionId} .ds-grid-col {
+            min-width: 0;
+            box-sizing: border-box;
         }
         @media (max-width: 900px) {
             #{$sectionId} .ds-section-grid {

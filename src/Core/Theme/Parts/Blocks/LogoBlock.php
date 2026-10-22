@@ -40,6 +40,12 @@ class LogoBlock implements BlockInterface
         $brandText = (string)($data['brand_text'] ?? 'Domain<span class="text-primary">System</span>');
         $showImage = (bool)($data['show_image'] ?? true);
         $showText = (bool)($data['show_text'] ?? true);
+        $align = (string)($data['align'] ?? 'left');
+        $justifyLogo = match ($align) {
+            'center' => 'center',
+            'right'  => 'flex-end',
+            default  => 'flex-start',
+        };
 
         $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
 
@@ -56,10 +62,12 @@ class LogoBlock implements BlockInterface
         }
 
         return <<<HTML
-<a href="{$safeLink}" class="ds-block-logo" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-    {$imgHtml}
-    {$textHtml}
-</a>
+<div class="ds-block-logo-wrapper" style="display: flex; justify-content: {$justifyLogo}; width: 100%;">
+    <a href="{$safeLink}" class="ds-block-logo" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none;">
+        {$imgHtml}
+        {$textHtml}
+    </a>
+</div>
 HTML;
     }
 

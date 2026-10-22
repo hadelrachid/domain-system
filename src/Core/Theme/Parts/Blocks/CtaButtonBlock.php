@@ -55,7 +55,12 @@ class CtaButtonBlock implements BlockInterface
             default     => "background: var(--primary, #45f3ff); color: #0b0c10; border: 2px solid var(--primary, #45f3ff);",
         };
 
-        $wrapperStyle = "text-align: {$align};";
+        $justifyBtn = match ($align) {
+            'center' => 'center',
+            'right'  => 'flex-end',
+            default  => 'flex-start',
+        };
+        $wrapperStyle = "display: flex; justify-content: {$justifyBtn}; width: 100%; text-align: {$align};";
 
         return <<<HTML
 <div class="ds-block-cta-wrapper" style="{$wrapperStyle}">
