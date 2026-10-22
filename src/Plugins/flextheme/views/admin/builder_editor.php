@@ -477,22 +477,28 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             font-weight: 700;
         }
 
-        /* TOGGLE CARDS SELECTOR */
+        /* TOGGLE CARDS SELECTOR (VERTICAL FLEX) */
         .toggle-cards-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             margin-top: 6px;
             margin-bottom: 14px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .toggle-card {
             background: rgba(255, 255, 255, 0.03);
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 8px;
-            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-sizing: border-box;
+            width: 100%;
         }
         .toggle-card:hover {
             border-color: rgba(56, 189, 248, 0.5);
@@ -501,26 +507,35 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         .toggle-card.active {
             border-color: var(--primary);
             background: rgba(56, 189, 248, 0.15);
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
         }
         .toggle-card-preview {
-            height: 32px;
+            width: 50px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 4px;
-            font-size: 18px;
+            font-size: 15px;
             color: var(--primary);
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+        .toggle-card-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
         }
         .toggle-card-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             color: #fff;
         }
         .toggle-card-desc {
-            font-size: 9px;
+            font-size: 10px;
             color: var(--text-muted);
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         /* MOBILE OVERFLOW PREVENTION (375px) */
@@ -696,33 +711,39 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             color: var(--text-muted);
         }
         .spacing-quad-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             width: 100%;
             box-sizing: border-box;
         }
         .spacing-side-col {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 4px;
+            justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255,255,255,0.02);
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .spacing-side-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
+            font-size: 11px;
+            color: #cbd5e1;
             font-weight: 600;
         }
         .stepper-wrap {
             display: flex;
             align-items: center;
-            width: 100%;
+            width: 130px;
             border: 1px solid var(--border);
             border-radius: 4px;
             overflow: hidden;
             background: #070a0f;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
         .stepper-single-wrap {
             display: flex;
@@ -732,15 +753,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             overflow: hidden;
             background: #070a0f;
             width: 100%;
+            box-sizing: border-box;
         }
         .step-btn {
             background: #111827;
             border: none;
             color: #fff;
-            width: 22px;
+            width: 32px;
             height: 28px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -748,6 +770,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             transition: background 0.15s;
             user-select: none;
             padding: 0;
+            flex-shrink: 0;
         }
         .step-btn:hover {
             background: var(--primary);
@@ -759,7 +782,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             background: transparent;
             border: none;
             color: #fff;
-            font-size: 11px;
+            font-size: 12px;
             text-align: center;
             height: 28px;
             padding: 0;
@@ -1203,23 +1226,31 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     <div id="settings_toggle_cards" class="toggle-cards-grid">
                         <div class="toggle-card <?= $part->getMobileToggleStyle() === 'classic' ? 'active' : '' ?>" id="toggle_card_classic" onclick="selectGlobalToggleStyle('classic')">
                             <div class="toggle-card-preview">☰</div>
-                            <div class="toggle-card-name">Clássico</div>
-                            <div class="toggle-card-desc">3 Barras</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Clássico</div>
+                                <div class="toggle-card-desc">3 Barras</div>
+                            </div>
                         </div>
                         <div class="toggle-card <?= $part->getMobileToggleStyle() === 'pill' ? 'active' : '' ?>" id="toggle_card_pill" onclick="selectGlobalToggleStyle('pill')">
-                            <div class="toggle-card-preview" style="font-size:11px; font-weight:800; border:1px solid currentColor; border-radius:12px; padding:2px 8px; width:fit-content; margin:0 auto 4px;">MENU ☰</div>
-                            <div class="toggle-card-name">Pílula</div>
-                            <div class="toggle-card-desc">Texto + Ícone</div>
+                            <div class="toggle-card-preview" style="font-size:10px; font-weight:800;">MENU ☰</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Pílula</div>
+                                <div class="toggle-card-desc">Texto + Ícone</div>
+                            </div>
                         </div>
                         <div class="toggle-card <?= $part->getMobileToggleStyle() === 'minimal' ? 'active' : '' ?>" id="toggle_card_minimal" onclick="selectGlobalToggleStyle('minimal')">
                             <div class="toggle-card-preview">═</div>
-                            <div class="toggle-card-name">Minimalista</div>
-                            <div class="toggle-card-desc">2 Linhas</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Minimalista</div>
+                                <div class="toggle-card-desc">2 Linhas</div>
+                            </div>
                         </div>
                         <div class="toggle-card <?= $part->getMobileToggleStyle() === 'dots' ? 'active' : '' ?>" id="toggle_card_dots" onclick="selectGlobalToggleStyle('dots')">
                             <div class="toggle-card-preview">⋮</div>
-                            <div class="toggle-card-name">Pontos</div>
-                            <div class="toggle-card-desc">3 Pontos</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Pontos</div>
+                                <div class="toggle-card-desc">3 Pontos</div>
+                            </div>
                         </div>
                     </div>
                     <input type="hidden" id="setting_mobile_toggle" value="<?= htmlspecialchars($part->getMobileToggleStyle()) ?>">
@@ -2892,16 +2923,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     '<label class="inspector-label">Estilo do Hamburguer Mobile (Toggle)</label>' +
                     '<div class="toggle-cards-grid">' +
                         '<div class="toggle-card ' + (curToggle === 'classic' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'classic\')">' +
-                            '<div class="toggle-card-preview">☰</div><div class="toggle-card-name">Clássico</div>' +
+                            '<div class="toggle-card-preview">☰</div><div class="toggle-card-info"><div class="toggle-card-name">Clássico</div><div class="toggle-card-desc">3 Barras</div></div>' +
                         '</div>' +
                         '<div class="toggle-card ' + (curToggle === 'pill' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'pill\')">' +
-                            '<div class="toggle-card-preview" style="font-size:10px; font-weight:800; border:1px solid currentColor; border-radius:10px; padding:1px 6px; width:fit-content; margin:0 auto;">MENU ☰</div><div class="toggle-card-name">Pílula</div>' +
+                            '<div class="toggle-card-preview" style="font-size:10px; font-weight:800;">MENU ☰</div><div class="toggle-card-info"><div class="toggle-card-name">Pílula</div><div class="toggle-card-desc">Texto + Ícone</div></div>' +
                         '</div>' +
                         '<div class="toggle-card ' + (curToggle === 'minimal' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'minimal\')">' +
-                            '<div class="toggle-card-preview">═</div><div class="toggle-card-name">Minimal</div>' +
+                            '<div class="toggle-card-preview">═</div><div class="toggle-card-info"><div class="toggle-card-name">Minimal</div><div class="toggle-card-desc">2 Linhas</div></div>' +
                         '</div>' +
                         '<div class="toggle-card ' + (curToggle === 'dots' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'dots\')">' +
-                            '<div class="toggle-card-preview">⋮</div><div class="toggle-card-name">Pontos</div>' +
+                            '<div class="toggle-card-preview">⋮</div><div class="toggle-card-info"><div class="toggle-card-name">Pontos</div><div class="toggle-card-desc">3 Pontos</div></div>' +
                         '</div>' +
                     '</div>' +
                     '</div>';
