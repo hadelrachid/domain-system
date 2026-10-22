@@ -6,11 +6,13 @@ namespace DomainSystem\Core\Theme\Parts\Services;
 
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 
 /**
  * Orquestrador de Renderização de Partes de Tema (Header, Footer, Seções)
@@ -23,6 +25,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
     private LayoutGridInterface $gridRenderer;
     private BlockRegistryInterface $blockRegistry;
     private DesignTokensInterface $designTokens;
+    private ElementStyleRendererInterface $styleRenderer;
     private ?string $baseRoot;
 
     public function __construct(
@@ -31,7 +34,8 @@ class ThemePartRenderer implements ThemePartRendererInterface
         LayoutGridInterface $gridRenderer,
         BlockRegistryInterface $blockRegistry,
         DesignTokensInterface $designTokens,
-        ?string $baseRoot = null
+        ?string $baseRoot = null,
+        ?ElementStyleRendererInterface $styleRenderer = null
     ) {
         $this->partRepo = $partRepo;
         $this->partAssoc = $partAssoc;
@@ -39,6 +43,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
         $this->blockRegistry = $blockRegistry;
         $this->designTokens = $designTokens;
         $this->baseRoot = $baseRoot !== null ? rtrim($baseRoot, '/\\') : (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 5));
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
     }
 
     public function renderHeader(string $themeFolder, array $context = []): string
@@ -108,7 +113,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
                         $block = $this->blockRegistry->get($blockType);
                         if ($block !== null) {
                             $renderedHtml = $block->render($blockData, $context);
-                            $elementStyles = $this->buildElementStyleString($blockData);
+                            $elementStyles = $this->styleRenderer->renderStyleString($blockData);
                             if ($elementStyles !== '') {
                                 $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
                             }
@@ -160,64 +165,6 @@ class ThemePartRenderer implements ThemePartRendererInterface
         }
 
         return '';
-    }
-
-    private function buildElementStyleString(array $data): string
-    {
-        $rules = [];
-
-        // Margem e Padding
-        if (!empty($data['margin'])) {
-            $rules[] = 'margin: ' . htmlspecialchars((string)$data['margin'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['padding'])) {
-            $rules[] = 'padding: ' . htmlspecialchars((string)$data['padding'], ENT_QUOTES, 'UTF-8');
-        }
-
-        // Flex & Flexbox
-        if (!empty($data['display'])) {
-            $rules[] = 'display: ' . htmlspecialchars((string)$data['display'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['flex_direction'])) {
-            $rules[] = 'flex-direction: ' . htmlspecialchars((string)$data['flex_direction'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['justify_content'])) {
-            $rules[] = 'justify-content: ' . htmlspecialchars((string)$data['justify_content'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['align_items'])) {
-            $rules[] = 'align-items: ' . htmlspecialchars((string)$data['align_items'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['flex_wrap'])) {
-            $rules[] = 'flex-wrap: ' . htmlspecialchars((string)$data['flex_wrap'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['gap'])) {
-            $rules[] = 'gap: ' . htmlspecialchars((string)$data['gap'], ENT_QUOTES, 'UTF-8');
-        }
-
-        // Dimensões & Visual
-        if (!empty($data['width'])) {
-            $rules[] = 'width: ' . htmlspecialchars((string)$data['width'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['max_width'])) {
-            $rules[] = 'max-width: ' . htmlspecialchars((string)$data['max_width'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['background'])) {
-            $rules[] = 'background: ' . htmlspecialchars((string)$data['background'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['border'])) {
-            $rules[] = 'border: ' . htmlspecialchars((string)$data['border'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['border_radius'])) {
-            $rules[] = 'border-radius: ' . htmlspecialchars((string)$data['border_radius'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['box_shadow'])) {
-            $rules[] = 'box-shadow: ' . htmlspecialchars((string)$data['box_shadow'], ENT_QUOTES, 'UTF-8');
-        }
-        if (!empty($data['opacity']) && $data['opacity'] !== '1' && $data['opacity'] !== 1) {
-            $rules[] = 'opacity: ' . htmlspecialchars((string)$data['opacity'], ENT_QUOTES, 'UTF-8');
-        }
-
-        return !empty($rules) ? implode('; ', $rules) . ';' : '';
     }
 
     private function resolveThemeDir(string $themeFolder): ?string
