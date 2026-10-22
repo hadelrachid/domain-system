@@ -134,7 +134,9 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         .sidebar-content {
             flex-grow: 1;
             overflow-y: auto;
+            overflow-x: hidden !important;
             padding: 16px;
+            box-sizing: border-box;
         }
 
         /* PRESET GRID BUTTONS */
@@ -695,8 +697,10 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
         .spacing-quad-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 12px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .spacing-side-col {
             display: flex;
@@ -1223,10 +1227,10 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
                 <div class="inspector-field">
                     <label class="inspector-label">Alinhamento Padrão do Toggle (Mobile)</label>
-                    <div style="display:flex; gap:6px;">
-                        <button type="button" class="header-btn" id="btn_toggle_align_left" onclick="selectGlobalToggleAlign('left')" style="flex:1;">⬅️ Esquerda</button>
-                        <button type="button" class="header-btn" id="btn_toggle_align_center" onclick="selectGlobalToggleAlign('center')" style="flex:1;">🎯 Centro</button>
-                        <button type="button" class="header-btn active" id="btn_toggle_align_right" onclick="selectGlobalToggleAlign('right')" style="flex:1;">➡️ Direita</button>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <button type="button" class="header-btn" id="btn_toggle_align_left" onclick="selectGlobalToggleAlign('left')">⬅️ Alinhar à Esquerda</button>
+                        <button type="button" class="header-btn" id="btn_toggle_align_center" onclick="selectGlobalToggleAlign('center')">🎯 Centralizar no Topo</button>
+                        <button type="button" class="header-btn active" id="btn_toggle_align_right" onclick="selectGlobalToggleAlign('right')">➡️ Alinhar à Direita</button>
                     </div>
                     <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Define o lado em que o botão hamburguer é posicionado na tela do celular.</span>
                 </div>
@@ -2905,10 +2909,10 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Alinhamento do Botão Toggle (Mobile)</label>' +
-                    '<div style="display:flex; gap:6px;">' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'left' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'left\'); renderCanvas(); renderInspector();">⬅️ Esquerda</button>' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'center' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'center\'); renderCanvas(); renderInspector();">🎯 Centro</button>' +
-                    '<button type="button" class="header-btn ' + (curToggleAlign === 'right' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'right\'); renderCanvas(); renderInspector();">➡️ Direita</button>' +
+                    '<div style="display:flex; flex-direction:column; gap:6px;">' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'left' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'left\'); renderCanvas(); renderInspector();">⬅️ Alinhar à Esquerda</button>' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'center' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'center\'); renderCanvas(); renderInspector();">🎯 Centralizar no Topo</button>' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'right' ? 'active' : '') + '" onclick="updateBlockProp(\'toggle_align\', \'right\'); renderCanvas(); renderInspector();">➡️ Alinhar à Direita</button>' +
                     '</div>' +
                     '</div>';
 
