@@ -105,6 +105,7 @@ class ThemePartsAdminController
             'globalFooter' => $globalFooter,
             'baseUrl'      => defined('BASE_URL') ? BASE_URL : '',
             'session'      => $this->session,
+            'csrfToken'    => $this->getCsrfToken(),
         ], true);
     }
 
@@ -320,6 +321,7 @@ class ThemePartsAdminController
             'cssVars'    => $this->tokens->generateCssVariables(),
             'baseUrl'    => defined('BASE_URL') ? BASE_URL : '',
             'session'    => $this->session,
+            'csrfToken'  => $this->getCsrfToken(),
         ], true);
     }
 
@@ -398,6 +400,58 @@ class ThemePartsAdminController
     }
 
     /**
+     * API AJAX: Upload de imagens (PNG, SVG, JPG, WEBP) para logos e blocos de imagem.
+     */
+    public function uploadImage(Request $request): Response
+    {
+        $file = $request->file('image') ?? ($request->file('file') ?? null);
+        if (!$file || empty($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Nenhum arquivo enviado ou erro no upload.',
+            ]), 400, ['Content-Type' => 'application/json']);
+        }
+
+        $allowedExtensions = ['png', 'svg', 'jpg', 'jpeg', 'webp', 'gif'];
+        $origName = (string)($file['name'] ?? 'image.png');
+        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowedExtensions, true)) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Formato não permitido. Envie PNG, SVG, JPG ou WEBP.',
+            ]), 400, ['Content-Type' => 'application/json']);
+        }
+
+        $uploadDir = $this->basePath . '/public/uploads/builder';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0755, true);
+        }
+
+        $safeName = 'logo_' . time() . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
+        $destPath = $uploadDir . '/' . $safeName;
+
+        if (!@move_uploaded_file($file['tmp_name'], $destPath)) {
+            if (!@copy($file['tmp_name'], $destPath)) {
+                return new Response(json_encode([
+                    'success' => false,
+                    'message' => 'Falha ao gravar arquivo em public/uploads/builder.',
+                ]), 500, ['Content-Type' => 'application/json']);
+            }
+        }
+
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $publicUrl = $baseUrl . '/uploads/builder/' . $safeName;
+
+        return new Response(json_encode([
+            'success' => true,
+            'url'     => $publicUrl,
+            'filename'=> $safeName,
+            'message' => 'Imagem enviada com sucesso!',
+        ]), 200, ['Content-Type' => 'application/json']);
+    }
+
+    /**
      * API AJAX: Schema completo dos 12 blocos, presets, shortcodes do sistema e menus.
      */
     public function schema(Request $request): Response
@@ -473,7 +527,13 @@ class ThemePartsAdminController
             'activeTheme' => $activeTheme,
             'baseUrl'     => defined('BASE_URL') ? BASE_URL : '',
             'session'     => $this->session,
+            'csrfToken'   => $this->getCsrfToken(),
         ], false); // wrapLayout false para o Studio Full Screen
+    }
+
+    private function getCsrfToken(): string
+    {
+        return $this->session !== null ? $this->session->getCsrfToken() : '';
     }
 
     private function renderView(string $viewName, array $data = [], bool $wrapLayout = true): ViewResponse

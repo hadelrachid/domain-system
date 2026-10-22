@@ -148,6 +148,7 @@
 
                         <!-- Formulário de Atribuição Rápida -->
                         <form method="POST" action="<?= $baseUrl ?>/admin/builder/assign" style="margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 8px; align-items: center;">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '') ?>">
                             <input type="hidden" name="part_type" value="header">
                             <input type="hidden" name="part_id" value="<?= htmlspecialchars($h->getId()) ?>">
                             
@@ -225,6 +226,7 @@
                         </div>
 
                         <form method="POST" action="<?= $baseUrl ?>/admin/builder/assign" style="margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 8px; align-items: center;">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '') ?>">
                             <input type="hidden" name="part_type" value="footer">
                             <input type="hidden" name="part_id" value="<?= htmlspecialchars($f->getId()) ?>">
                             
@@ -308,6 +310,12 @@ function deletePart(id) {
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = '<?= $baseUrl ?>/admin/builder/delete-part';
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = '<?= htmlspecialchars($csrfToken ?? '') ?>';
+    form.appendChild(csrfInput);
     
     var input = document.createElement('input');
     input.type = 'hidden';

@@ -104,6 +104,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/builder/tokens', [ThemePartsAdminController::class, 'tokens'], 'flextheme', ['admin']);
             $router->addRoute('POST', '/admin/builder/tokens/save', [ThemePartsAdminController::class, 'saveTokens'], 'flextheme', ['admin']);
             $router->addRoute('POST', '/admin/builder/preview', [ThemePartsAdminController::class, 'preview'], 'flextheme', ['admin']);
+            $router->addRoute('POST', '/admin/builder/upload-image', [ThemePartsAdminController::class, 'uploadImage'], 'flextheme', ['admin']);
             $router->addRoute('GET', '/admin/builder/schema', [ThemePartsAdminController::class, 'schema'], 'flextheme', ['admin']);
 
             // Aliases de compatibilidade e navegação

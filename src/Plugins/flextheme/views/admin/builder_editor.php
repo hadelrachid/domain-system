@@ -26,6 +26,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken ?? '') ?>">
     <title>Flex Builder Studio - <?= htmlspecialchars($part->getTitle()) ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -221,16 +222,26 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         .canvas-column {
             background: rgba(255,255,255,0.02);
-            border: 2px dashed rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 12px;
+            border: 2px dashed rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            min-height: 120px;
+            min-height: 140px;
             position: relative;
+            transition: all 0.2s ease;
         }
-        .canvas-column.drag-over { border-color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+        .canvas-column.active-col {
+            border: 2px solid var(--primary);
+            background: rgba(56, 189, 248, 0.04);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+        }
+        .canvas-column.drag-target-over {
+            border-color: var(--accent-green) !important;
+            background: rgba(0, 210, 132, 0.08) !important;
+            box-shadow: 0 0 16px rgba(0, 210, 132, 0.25) !important;
+        }
 
         .canvas-column-header {
             font-size: 11px;
@@ -240,9 +251,27 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 6px;
-            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 8px;
+            margin-bottom: 4px;
+        }
+
+        .column-dropzone {
+            margin-top: auto;
+            border: 1px dashed rgba(56, 189, 248, 0.35);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(56, 189, 248, 0.03);
+        }
+        .column-dropzone:hover {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: var(--primary);
         }
 
         .canvas-block-card {
@@ -250,12 +279,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 10px 12px;
-            cursor: pointer;
+            cursor: grab;
             transition: all 0.2s;
             position: relative;
+            user-select: none;
         }
         .canvas-block-card:hover { border-color: rgba(56, 189, 248, 0.5); }
         .canvas-block-card.selected { border-color: var(--primary); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+        .canvas-block-card.dragging { opacity: 0.35; transform: scale(0.98); }
+        .canvas-block-card.drag-insert-before { border-top: 3px solid var(--accent-green) !important; }
+        .canvas-block-card.drag-insert-after { border-bottom: 3px solid var(--accent-green) !important; }
 
         .canvas-block-header {
             display: flex;
@@ -281,6 +314,47 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
         .block-act-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
         .block-act-btn.del:hover { color: var(--danger); }
+
+        .col-selector-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .col-sel-btn {
+            flex: 1;
+            padding: 6px 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .col-sel-btn.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .toggle-preview-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            margin-top: 4px;
+        }
 
         /* FORM CONTROLS IN INSPECTOR */
         .inspector-field {
@@ -504,25 +578,43 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     </main>
 
     <!-- MODAL DE PREVIEW REAL -->
-    <div id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; padding: 30px;">
+    <div id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; padding: 24px;">
         <div style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; max-width: 1200px; height: 90vh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden;">
-            <div style="padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #fff; font-size: 15px;">Pré-Visualização Real em HTML & CSS Tokens</strong>
+            <div style="padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <strong style="color: #fff; font-size: 15px;">Pré-Visualização Real em HTML & CSS Tokens</strong>
+                    <span id="preview_device_badge" style="background: rgba(56, 189, 248, 0.15); color: var(--primary); font-size: 11px; padding: 2px 8px; border-radius: 10px;">100% Desktop</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
+                    <button type="button" class="header-btn" onclick="setPreviewModalDevice('100%')" title="Desktop">💻 100%</button>
+                    <button type="button" class="header-btn" onclick="setPreviewModalDevice('1024px')" title="Laptop">💻 1024px</button>
+                    <button type="button" class="header-btn" onclick="setPreviewModalDevice('768px')" title="Tablet">📱 768px</button>
+                    <button type="button" class="header-btn" onclick="setPreviewModalDevice('375px')" title="Mobile">📱 375px</button>
+                </div>
                 <button type="button" onclick="toggleLivePreviewModal()" style="background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer;">✕</button>
             </div>
-            <iframe id="preview_iframe" style="flex-grow: 1; border: none; background: #06090e; width: 100%;"></iframe>
+            <div style="flex-grow: 1; display: flex; justify-content: center; background: #06090e; overflow-y: auto;">
+                <iframe id="preview_iframe" style="width: 100%; height: 100%; border: none; background: #06090e; transition: max-width 0.3s ease;"></iframe>
+            </div>
         </div>
     </div>
+
+    <!-- INPUT GLOBAL PARA UPLOAD DE IMAGENS E LOGOS -->
+    <input type="file" id="global_image_uploader" accept=".png,.svg,.jpg,.jpeg,.webp,.gif" style="display: none;" onchange="handleFileUpload(this)">
 
     <div id="toast"></div>
 
     <script>
     // ESTADO DO CONSTRUTOR
+    var csrfToken = '<?= htmlspecialchars($csrfToken ?? '') ?>';
     var state = <?= $initialJson ?>;
     var presets = <?= $presetsJson ?>;
     var shortcodesList = <?= $shortcodesJson ?>;
     var menusList = <?= $menusJson ?>;
     var selectedBlockCoord = null; // { col: 0, blockIdx: 0 }
+    var activeColIdx = 0; // Coluna ativa atual para inserções
+    var currentDevice = '100%';
+    var currentUploadTargetKey = null;
 
     if (!state.columns_data || Array.isArray(state.columns_data) && state.columns_data.length === 0) {
         state.columns_data = { 0: [] };
@@ -531,10 +623,10 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     var blocksCatalog = [
         { type: 'heading', name: 'Título', icon: '🔤', desc: 'Títulos H1 até H6 com suporte a fontes e cores.' },
         { type: 'paragraph', name: 'Parágrafo', icon: '📄', desc: 'Texto corrido rico e tipografia escalável.' },
-        { type: 'image', name: 'Imagem', icon: '🖼️', desc: 'Imagem com dimensões dinâmicas e link.' },
+        { type: 'image', name: 'Imagem', icon: '🖼️', desc: 'Imagem com dimensões dinâmicas, upload e link.' },
         { type: 'video', name: 'Vídeo', icon: '🎥', desc: 'YouTube, Vimeo ou MP4 direto responsivo.' },
         { type: 'nav_menu', name: 'Menu de Navegação', icon: '🧭', desc: 'Menu dinâmico com 4 tipos de toggle hamburguer.' },
-        { type: 'logo', name: 'Logotipo', icon: '🛡️', desc: 'Logo em imagem ou texto estilizado.' },
+        { type: 'logo', name: 'Logotipo', icon: '🛡️', desc: 'Logo com upload de imagem ou texto estilizado.' },
         { type: 'cta_button', name: 'Botão CTA', icon: '🚀', desc: 'Botão de ação com variantes primária e outline.' },
         { type: 'shortcode', name: 'Shortcode Pronto', icon: '⚡', desc: 'Insere qualquer shortcode ativo do sistema.' },
         { type: 'divider', name: 'Divisória / Espaçador', icon: '➖', desc: 'Linha sólida, tracejada ou espaçador transparente.' },
@@ -557,6 +649,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     }
 
     function setDevice(width) {
+        currentDevice = width;
         var viewport = document.getElementById('device-viewport');
         viewport.style.maxWidth = width;
         document.getElementById('cur_device_px').textContent = width;
@@ -573,11 +666,19 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             document.getElementById('cur_device_name').textContent = 'Laptop / Tablet Grande (1024px)';
         } else if (width === '768px') {
             document.getElementById('btn_dev_tablet').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Tablet (768px)';
+            document.getElementById('cur_device_name').textContent = 'Tablet (768px) - 📱 Hamburguer Ativo';
         } else if (width === '375px') {
             document.getElementById('btn_dev_mobile').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Mobile (375px)';
+            document.getElementById('cur_device_name').textContent = 'Mobile (375px) - 📱 Hamburguer Ativo';
         }
+        renderCanvas();
+    }
+
+    function setPreviewModalDevice(w) {
+        var iframe = document.getElementById('preview_iframe');
+        iframe.style.maxWidth = w;
+        var badge = document.getElementById('preview_device_badge');
+        if (badge) badge.textContent = w + (w === '375px' ? ' Mobile' : (w === '768px' ? ' Tablet' : ' Desktop'));
     }
 
     function renderPresetsList() {
@@ -619,7 +720,11 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         for (var i = 0; i < p.columns; i++) {
             if (!state.columns_data[i]) state.columns_data[i] = [];
         }
+        if (activeColIdx >= p.columns) {
+            activeColIdx = 0;
+        }
         renderPresetsList();
+        renderBlocksCatalog();
         renderCanvas();
     }
 
@@ -627,15 +732,63 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var container = document.getElementById('blocks_catalog');
         container.innerHTML = '';
 
+        var currentPreset = presets[state.layout_preset] || presets['1_col'];
+        
+        // Seletor de Coluna Ativa na Sidebar
+        var colSelector = document.createElement('div');
+        colSelector.className = 'col-selector-bar';
+        for (var c = 0; c < currentPreset.columns; c++) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'col-sel-btn' + (activeColIdx === c ? ' active' : '');
+            btn.textContent = 'Coluna ' + (c + 1);
+            btn.onclick = (function(targetC) {
+                return function() {
+                    activeColIdx = targetC;
+                    renderBlocksCatalog();
+                    renderCanvas();
+                };
+            })(c);
+            colSelector.appendChild(btn);
+        }
+        container.appendChild(colSelector);
+
+        var hint = document.createElement('div');
+        hint.style.fontSize = '11px';
+        hint.style.color = 'var(--text-muted)';
+        hint.style.marginBottom = '12px';
+        hint.innerHTML = '✨ <em>Clique para inserir na <strong>Coluna ' + (activeColIdx + 1) + '</strong> ou arraste diretamente para qualquer coluna.</em>';
+        container.appendChild(hint);
+
         blocksCatalog.forEach(function(b) {
             var item = document.createElement('div');
             item.className = 'block-palette-item';
-            item.onclick = function() { addBlockToActiveColumn(b.type); };
+            item.setAttribute('draggable', 'true');
+            item.ondragstart = function(e) {
+                e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'catalog', type: b.type }));
+                e.dataTransfer.effectAllowed = 'copy';
+            };
+            item.onclick = function() { addBlockToColumn(b.type, activeColIdx); };
             item.innerHTML = '<span class="block-palette-icon">' + b.icon + '</span>' +
                              '<div><strong style="display:block; font-size:13px; color:#fff;">' + b.name + '</strong>' +
                              '<span style="font-size:11px; color:var(--text-muted);">' + b.desc + '</span></div>';
             container.appendChild(item);
         });
+    }
+
+    function getColumnTitle(presetKey, colIdx, totalCols) {
+        if (presetKey === '3_cols_header') {
+            if (colIdx === 0) return 'Coluna 1 (25% - Logo)';
+            if (colIdx === 1) return 'Coluna 2 (50% - Menu)';
+            if (colIdx === 2) return 'Coluna 3 (25% - CTA / Ação)';
+        }
+        if (presetKey === '2_cols_split') {
+            return 'Coluna ' + (colIdx + 1) + ' (50%)';
+        }
+        if (presetKey === '4_cols') {
+            return 'Coluna ' + (colIdx + 1) + ' (25%)';
+        }
+        return 'Coluna ' + (colIdx + 1);
     }
 
     function renderCanvas() {
@@ -647,13 +800,55 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         for (var colIdx = 0; colIdx < currentPreset.columns; colIdx++) {
             var colEl = document.createElement('div');
-            colEl.className = 'canvas-column';
+            colEl.className = 'canvas-column' + (activeColIdx === colIdx ? ' active-col' : '');
             colEl.dataset.col = colIdx;
+
+            // Clique na coluna a torna a coluna ativa
+            colEl.onclick = (function(c) {
+                return function(e) {
+                    activeColIdx = c;
+                    renderBlocksCatalog();
+                    renderCanvas();
+                };
+            })(colIdx);
+
+            // Drag and drop sobre a coluna
+            colEl.ondragover = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add('drag-target-over');
+            };
+            colEl.ondragleave = function(e) {
+                e.stopPropagation();
+                e.currentTarget.classList.remove('drag-target-over');
+            };
+            colEl.ondrop = (function(c) {
+                return function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('drag-target-over');
+                    var raw = e.dataTransfer.getData('text/plain');
+                    if (!raw) return;
+                    try {
+                        var payload = JSON.parse(raw);
+                        if (payload.source === 'catalog') {
+                            addBlockToColumn(payload.type, c);
+                        } else if (payload.source === 'card') {
+                            moveBlockAcrossCols(payload.fromCol, payload.fromIdx, c, null);
+                        }
+                    } catch (err) {}
+                };
+            })(colIdx);
 
             var colHeader = document.createElement('div');
             colHeader.className = 'canvas-column-header';
-            colHeader.innerHTML = '<span>Coluna ' + (colIdx + 1) + '</span>' +
-                                  '<button type="button" class="block-act-btn" onclick="openAddBlockForCol(' + colIdx + ')" title="Adicionar Bloco">+ Bloco</button>';
+            var colTitle = getColumnTitle(state.layout_preset, colIdx, currentPreset.columns);
+            var isColActive = (activeColIdx === colIdx);
+            colHeader.innerHTML = '<div style="display:flex; align-items:center; gap:6px;">' +
+                                  '<span>' + colTitle + '</span>' +
+                                  (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 6px; border-radius:10px; font-weight:800;">ATIVA</span>' : '') +
+                                  '</div>' +
+                                  '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCol(' + colIdx + ')" title="Adicionar Bloco">+ Bloco</button>';
             colEl.appendChild(colHeader);
 
             var blocksInCol = (state.columns_data && state.columns_data[colIdx]) ? state.columns_data[colIdx] : [];
@@ -662,9 +857,53 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 var card = document.createElement('div');
                 var isSelected = selectedBlockCoord && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx;
                 card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
+                
+                // Arrastar bloco para reordenar ou mover
+                card.setAttribute('draggable', 'true');
+                card.ondragstart = (function(c, b) {
+                    return function(e) {
+                        e.stopPropagation();
+                        card.classList.add('dragging');
+                        e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'card', fromCol: c, fromIdx: b }));
+                        e.dataTransfer.effectAllowed = 'move';
+                    };
+                })(colIdx, blockIdx);
+
+                card.ondragend = function(e) {
+                    card.classList.remove('dragging');
+                };
+
+                card.ondragover = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    card.classList.add('drag-insert-before');
+                };
+                card.ondragleave = function(e) {
+                    e.stopPropagation();
+                    card.classList.remove('drag-insert-before');
+                };
+                card.ondrop = (function(c, b) {
+                    return function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        card.classList.remove('drag-insert-before');
+                        var raw = e.dataTransfer.getData('text/plain');
+                        if (!raw) return;
+                        try {
+                            var payload = JSON.parse(raw);
+                            if (payload.source === 'catalog') {
+                                insertBlockAt(payload.type, c, b);
+                            } else if (payload.source === 'card') {
+                                moveBlockAcrossCols(payload.fromCol, payload.fromIdx, c, b);
+                            }
+                        } catch (err) {}
+                    };
+                })(colIdx, blockIdx);
+
                 card.onclick = (function(cIdx, bIdx) {
                     return function(e) {
                         e.stopPropagation();
+                        activeColIdx = cIdx;
                         selectBlock(cIdx, bIdx);
                     };
                 })(colIdx, blockIdx);
@@ -684,15 +923,25 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 var bPreview = document.createElement('div');
                 bPreview.style.fontSize = '12px';
                 bPreview.style.color = 'var(--text-muted)';
-                bPreview.style.overflow = 'hidden';
-                bPreview.style.textOverflow = 'ellipsis';
-                bPreview.style.whiteSpace = 'nowrap';
-                bPreview.textContent = getBlockSummary(block);
+                bPreview.style.marginTop = '4px';
+                bPreview.innerHTML = getBlockSummary(block);
 
                 card.appendChild(bHeader);
                 card.appendChild(bPreview);
                 colEl.appendChild(card);
             });
+
+            // Botão dropzone no rodapé da coluna
+            var dropzone = document.createElement('div');
+            dropzone.className = 'column-dropzone';
+            dropzone.innerHTML = '+ Adicionar Bloco Nesta Coluna';
+            dropzone.onclick = (function(c) {
+                return function(e) {
+                    e.stopPropagation();
+                    openAddBlockForCol(c);
+                };
+            })(colIdx);
+            colEl.appendChild(dropzone);
 
             grid.appendChild(colEl);
         }
@@ -700,15 +949,55 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function getBlockSummary(block) {
         var d = block.data || {};
-        if (block.type === 'heading') return d.text || 'Título';
-        if (block.type === 'paragraph') return d.text ? d.text.replace(/<[^>]+>/g, '').substr(0, 40) + '...' : 'Parágrafo de texto';
-        if (block.type === 'image') return d.url || 'URL da imagem';
-        if (block.type === 'video') return d.url || 'Vídeo';
-        if (block.type === 'cta_button') return d.label ? d.label + ' (' + (d.url || '#') + ')' : 'Botão';
-        if (block.type === 'shortcode') return d.tag || '[shortcode]';
-        if (block.type === 'logo') return d.text || 'Logotipo';
-        if (block.type === 'nav_menu') return 'Menu: ' + (d.menu_id || 'Principal');
-        if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid');
+        if (block.type === 'heading') {
+            return '<span style="font-weight:700; color:#fff;">' + escapeHtml(d.text || 'Título') + '</span> <span style="font-size:10px; opacity:0.6;">(' + (d.level || 'h2').toUpperCase() + ')</span>';
+        }
+        if (block.type === 'paragraph') {
+            return escapeHtml(d.text ? d.text.replace(/<[^>]+>/g, '').substr(0, 45) + '...' : 'Parágrafo de texto');
+        }
+        if (block.type === 'image') {
+            if (d.url) {
+                return '<div style="display:flex; align-items:center; gap:8px;">' +
+                       '<img src="' + escapeAttr(d.url) + '" style="height:22px; max-width:40px; object-fit:cover; border-radius:3px;">' +
+                       '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">' + escapeHtml(d.url) + '</span>' +
+                       '</div>';
+            }
+            return '🖼️ Imagem (nenhum arquivo selecionado)';
+        }
+        if (block.type === 'video') return '🎥 ' + (d.url || 'Vídeo');
+        if (block.type === 'cta_button') {
+            return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:var(--primary); color:#000;">' + 
+                   escapeHtml(d.label || 'Botão CTA') + '</span>';
+        }
+        if (block.type === 'shortcode') return '<code style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">' + escapeHtml(d.tag || '[shortcode]') + '</code>';
+        if (block.type === 'logo') {
+            if (d.image_url) {
+                return '<div style="display:flex; align-items:center; gap:8px;">' +
+                       '<img src="' + escapeAttr(d.image_url) + '" style="height:22px; max-width:80px; object-fit:contain; border-radius:2px; background:rgba(255,255,255,0.05);">' +
+                       '<span style="color:#fff; font-weight:600;">' + escapeHtml(d.text || 'Logo') + '</span>' +
+                       '</div>';
+            }
+            return '<strong style="color:#fff;">' + escapeHtml(d.text || 'DomainSystem') + '</strong>';
+        }
+        if (block.type === 'nav_menu') {
+            var curStyle = d.toggle_style || state.mobile_toggle_style || 'classic';
+            var isMobile = (currentDevice === '375px' || currentDevice === '768px');
+            var toggleLabel = '☰';
+            if (curStyle === 'pill') toggleLabel = 'MENU ☰';
+            if (curStyle === 'minimal') toggleLabel = '═';
+            if (curStyle === 'dots') toggleLabel = '⋮';
+
+            if (isMobile) {
+                return '<div style="display:flex; align-items:center; gap:8px;">' +
+                       '<span class="toggle-preview-badge">' + toggleLabel + '</span>' +
+                       '<span style="font-size:11px; color:#38bdf8;">📱 Mobile (' + curStyle + ')</span>' +
+                       '</div>';
+            } else {
+                return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> (Início · Cursos · Sobre · Contato)';
+            }
+        }
+        if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid') + ' (' + (d.height || '20px') + ')';
+        if (block.type === 'copyright') return '© ' + new Date().getFullYear() + ' ' + escapeHtml(d.site_name || 'Domain-System');
         return block.type;
     }
 
@@ -722,7 +1011,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     function renderInspector() {
         var container = document.getElementById('inspector_container');
         if (!selectedBlockCoord) {
-            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px 10px;">Selecione um bloco para inspecionar.</div>';
+            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:40px 10px;">👈 Selecione um bloco no canvas para inspecionar e editar suas propriedades aqui.</div>';
             return;
         }
 
@@ -732,9 +1021,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
 
-        var html = '<div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;">' +
+        var html = '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;">' +
+                   '<div style="display:flex; align-items:center; gap:8px;">' +
                    '<span style="font-size:20px;">' + bMeta.icon + '</span>' +
                    '<strong style="font-size:15px; color:#fff;">' + bMeta.name + '</strong>' +
+                   '</div>' +
+                   '<span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">Coluna ' + (selectedBlockCoord.col + 1) + '</span>' +
                    '</div>';
 
         if (block.type === 'heading') {
@@ -756,12 +1048,28 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             html += inspectorDimension('Padding', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'logo') {
-            html += inspectorTextInput('Texto da Logo (suporta HTML)', 'text', block.data.text || 'DomainSystem');
-            html += inspectorTextInput('URL da Imagem (opcional)', 'image_url', block.data.image_url || '');
+            html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || 'DomainSystem');
+            html += '<div class="inspector-field">' +
+                    '<label class="inspector-label">Arquivo de Logotipo (PNG, SVG, JPG, WEBP)</label>' +
+                    '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(block.data.image_url || '') + '" oninput="updateBlockProp(\'image_url\', this.value)" placeholder="https://... ou faça upload">' +
+                    '<button type="button" class="header-btn" onclick="triggerImageUpload(\'image_url\')" style="white-space:nowrap; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);">' +
+                    '📁 Upload</button>' +
+                    '</div>' +
+                    (block.data.image_url ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(block.data.image_url) + '" style="max-height:44px; max-width:100%; object-fit:contain;"></div>' : '') +
+                    '</div>';
             html += inspectorDimension('Altura da Logo', 'height', block.data.height || '36px');
             html += inspectorTextInput('Link de Destino', 'url', block.data.url || '/');
         } else if (block.type === 'image') {
-            html += inspectorTextInput('URL da Imagem', 'url', block.data.url || '');
+            html += '<div class="inspector-field">' +
+                    '<label class="inspector-label">Arquivo de Imagem (PNG, SVG, JPG, WEBP)</label>' +
+                    '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(block.data.url || '') + '" oninput="updateBlockProp(\'url\', this.value)" placeholder="https://... ou faça upload">' +
+                    '<button type="button" class="header-btn" onclick="triggerImageUpload(\'url\')" style="white-space:nowrap; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);">' +
+                    '📁 Upload</button>' +
+                    '</div>' +
+                    (block.data.url ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(block.data.url) + '" style="max-height:90px; max-width:100%; object-fit:contain; border-radius:4px;"></div>' : '') +
+                    '</div>';
             html += inspectorTextInput('Texto Alternativo (Alt)', 'alt', block.data.alt || '');
             html += inspectorDimension('Largura', 'width', block.data.width || '100%');
             html += inspectorDimension('Borda Arredondada', 'border_radius', block.data.border_radius || '8px');
@@ -774,6 +1082,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             html += inspectorShortcodeSelector('Selecione o Shortcode Pronto', 'tag', block.data.tag || '');
         } else if (block.type === 'nav_menu') {
             html += inspectorMenuSelector('Menu do Sistema', 'menu_id', block.data.menu_id || '');
+            var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
+            html += '<div class="inspector-field">' +
+                    '<label class="inspector-label">Estilo do Hamburguer Mobile (Toggle)</label>' +
+                    '<select class="inspector-select" onchange="updateNavToggleStyle(this.value)">' +
+                    '<option value="classic"' + (curToggle === 'classic' ? ' selected' : '') + '>Clássico ☰ (3 Barras)</option>' +
+                    '<option value="pill"' + (curToggle === 'pill' ? ' selected' : '') + '>Pílula MENU ☰ (Texto + Ícone)</option>' +
+                    '<option value="minimal"' + (curToggle === 'minimal' ? ' selected' : '') + '>Minimalista ✕ (2 Barras Modernas)</option>' +
+                    '<option value="dots"' + (curToggle === 'dots' ? ' selected' : '') + '>Pontos ⋮ (3 Pontinhos Verticais)</option>' +
+                    '</select>' +
+                    '</div>';
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'divider') {
             html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'transparent'], block.data.style || 'solid');
@@ -787,6 +1105,55 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
 
         container.innerHTML = html;
+    }
+
+    function updateNavToggleStyle(val) {
+        updateBlockProp('toggle_style', val);
+        state.mobile_toggle_style = val;
+        var partSetting = document.getElementById('setting_mobile_toggle');
+        if (partSetting) partSetting.value = val;
+        renderCanvas();
+    }
+
+    function triggerImageUpload(targetPropKey) {
+        currentUploadTargetKey = targetPropKey;
+        var fileInput = document.getElementById('global_image_uploader');
+        fileInput.value = '';
+        fileInput.click();
+    }
+
+    function handleFileUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+
+        var formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrf_token', csrfToken);
+
+        showToast('⏳ Enviando imagem...');
+
+        fetch('<?= $baseUrl ?>/admin/builder/upload-image', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
+            body: formData
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success && data.url) {
+                updateBlockProp(currentUploadTargetKey, data.url);
+                renderInspector();
+                renderCanvas();
+                showToast('✓ Imagem carregada com sucesso!');
+            } else {
+                alert('Erro no upload: ' + (data.message || 'Falha ao salvar imagem.'));
+            }
+        })
+        .catch(function(err) {
+            alert('Erro de conexão ao enviar imagem: ' + err);
+        });
     }
 
     function inspectorTextInput(label, key, val) {
@@ -885,25 +1252,59 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         state.container_settings[key] = val;
     }
 
-    function addBlockToActiveColumn(type) {
-        var targetCol = selectedBlockCoord ? selectedBlockCoord.col : 0;
-        if (!state.columns_data[targetCol]) state.columns_data[targetCol] = [];
-        
+    function getDefaultBlockData(type) {
         var defaultData = {};
         if (type === 'heading') defaultData = { text: 'Novo Título', level: 'h2', font: 'secondary' };
         if (type === 'paragraph') defaultData = { text: 'Insira seu texto explicativo aqui.', font_size: '1rem' };
         if (type === 'cta_button') defaultData = { label: 'Saiba Mais', url: '#', variant: 'primary' };
-        if (type === 'logo') defaultData = { text: 'DomainSystem', height: '32px' };
+        if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px' };
         if (type === 'divider') defaultData = { style: 'solid', height: '24px' };
         if (type === 'copyright') defaultData = { site_name: 'Domain-System' };
+        if (type === 'nav_menu') defaultData = { toggle_style: state.mobile_toggle_style || 'classic', align: 'center' };
+        return defaultData;
+    }
 
-        state.columns_data[targetCol].push({ type: type, data: defaultData });
-        selectBlock(targetCol, state.columns_data[targetCol].length - 1);
-        showToast('Bloco adicionado à coluna ' + (targetCol + 1));
+    function addBlockToColumn(type, colIdx) {
+        if (!state.columns_data[colIdx]) state.columns_data[colIdx] = [];
+        var defaultData = getDefaultBlockData(type);
+        state.columns_data[colIdx].push({ type: type, data: defaultData });
+        activeColIdx = colIdx;
+        selectBlock(colIdx, state.columns_data[colIdx].length - 1);
+        renderCanvas();
+        showToast('Bloco adicionado à Coluna ' + (colIdx + 1));
+    }
+
+    function insertBlockAt(type, toCol, toIdx) {
+        if (!state.columns_data[toCol]) state.columns_data[toCol] = [];
+        var defaultData = getDefaultBlockData(type);
+        state.columns_data[toCol].splice(toIdx, 0, { type: type, data: defaultData });
+        activeColIdx = toCol;
+        selectBlock(toCol, toIdx);
+        renderCanvas();
+        showToast('Bloco inserido na Coluna ' + (toCol + 1));
+    }
+
+    function moveBlockAcrossCols(fromCol, fromIdx, toCol, toIdx) {
+        if (!state.columns_data[fromCol] || !state.columns_data[fromCol][fromIdx]) return;
+        var item = state.columns_data[fromCol].splice(fromIdx, 1)[0];
+        if (!state.columns_data[toCol]) state.columns_data[toCol] = [];
+        if (toIdx === null || toIdx === undefined || toIdx >= state.columns_data[toCol].length) {
+            state.columns_data[toCol].push(item);
+            selectedBlockCoord = { col: toCol, blockIdx: state.columns_data[toCol].length - 1 };
+        } else {
+            state.columns_data[toCol].splice(toIdx, 0, item);
+            selectedBlockCoord = { col: toCol, blockIdx: toIdx };
+        }
+        activeColIdx = toCol;
+        renderCanvas();
+        renderInspector();
+        showToast('Bloco reposicionado!');
     }
 
     function openAddBlockForCol(colIdx) {
-        selectedBlockCoord = { col: colIdx, blockIdx: 0 };
+        activeColIdx = colIdx;
+        renderBlocksCatalog();
+        renderCanvas();
         switchSidebarTab('blocks');
     }
 
@@ -948,6 +1349,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var assignedTheme = document.getElementById('setting_assigned_theme').value;
 
         var payload = {
+            csrf_token: csrfToken,
             id: state.id,
             type: state.type,
             title: state.title,
@@ -961,7 +1363,11 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         fetch('<?= $baseUrl ?>/admin/builder/save-part', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
             body: JSON.stringify(payload)
         })
         .then(function(res) { return res.json(); })
@@ -985,10 +1391,17 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var modal = document.getElementById('previewModal');
         if (modal.style.display === 'none') {
             modal.style.display = 'block';
+            var previewPayload = JSON.parse(JSON.stringify(state));
+            previewPayload.csrf_token = csrfToken;
+
             fetch('<?= $baseUrl ?>/admin/builder/preview', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(state)
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify(previewPayload)
             })
             .then(function(res) { return res.text(); })
             .then(function(html) {
@@ -1016,5 +1429,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     document.addEventListener('DOMContentLoaded', initStudio);
     </script>
+</body>
+</html>
 </body>
 </html>

@@ -44,6 +44,7 @@
     <?php endif; ?>
 
     <form id="tokensForm" method="POST" action="<?= $baseUrl ?>/admin/builder/tokens/save">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken ?? '') ?>">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
             
             <!-- COLUNA ESQUERDA: CONFIGURAÇÕES -->
