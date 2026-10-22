@@ -195,4 +195,57 @@ class ThemePartsRendererTest extends TestCase
         $this->assertStringContainsString('Cabeçalho do ThemeManager', $rendered);
         $this->assertSame($rendered, $output);
     }
+
+    public function testRenderPartWithElementCustomStylesAndFlexbox(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/config/theme_parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/config/associations.json');
+        $grid = new LayoutGridRenderer();
+        $tokens = new DesignTokens($this->tempDir . '/config/design_tokens.json');
+        $registry = DefaultBlockRegistryFactory::create();
+
+        $styledPart = new ThemePart(
+            'styled_part_1',
+            ThemePartInterface::TYPE_HEADER,
+            'Styled Part Test',
+            '1_col',
+            [],
+            [
+                0 => [
+                    [
+                        'type' => 'heading',
+                        'data' => [
+                            'text' => 'Título Estilizado',
+                            'margin' => '10px 20px 10px 20px',
+                            'padding' => '15px 30px 15px 30px',
+                            'display' => 'flex',
+                            'flex_direction' => 'row',
+                            'justify_content' => 'space-between',
+                            'align_items' => 'center',
+                            'gap' => '16px',
+                            'background' => '#1e293b',
+                            'border_radius' => '8px',
+                        ],
+                    ],
+                ],
+            ]
+        );
+        $repo->save($styledPart);
+        $assoc->assignPart('test_theme', 'header', 'styled_part_1');
+
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir);
+        $html = $renderer->renderHeader('test_theme');
+
+        $this->assertStringContainsString('ds-element-wrapper', $html);
+        $this->assertStringContainsString('margin: 10px 20px 10px 20px;', $html);
+        $this->assertStringContainsString('padding: 15px 30px 15px 30px;', $html);
+        $this->assertStringContainsString('display: flex;', $html);
+        $this->assertStringContainsString('flex-direction: row;', $html);
+        $this->assertStringContainsString('justify-content: space-between;', $html);
+        $this->assertStringContainsString('align-items: center;', $html);
+        $this->assertStringContainsString('gap: 16px;', $html);
+        $this->assertStringContainsString('background: #1e293b;', $html);
+        $this->assertStringContainsString('border-radius: 8px;', $html);
+        $this->assertStringContainsString('Título Estilizado', $html);
+    }
 }

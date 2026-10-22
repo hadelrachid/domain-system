@@ -557,6 +557,54 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             box-sizing: border-box !important;
             overflow: hidden !important;
         }
+
+        /* FLOATING NAVIGATOR (POPUP FLUTUANTE ESTILO ELEMENTOR) */
+        .floating-navigator-panel {
+            position: fixed;
+            bottom: 24px;
+            right: 380px;
+            width: 320px;
+            max-height: 520px;
+            background: #0d121c;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 16px rgba(56, 189, 248, 0.15);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+        .floating-navigator-header {
+            background: #111827;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: move;
+            user-select: none;
+        }
+        .floating-navigator-body {
+            padding: 8px;
+            overflow-y: auto;
+            max-height: 460px;
+            background: #0b0f17;
+        }
+        .navigator-ctrl-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .navigator-ctrl-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
         .elementor-section-bar {
             background: #0f1520;
             border-bottom: 1px solid var(--border);
@@ -608,6 +656,147 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         .sec-act-btn.del:hover {
             color: var(--danger);
             border-color: var(--danger);
+        }
+
+        /* CONTROLES DE ESPAÇAMENTOS E DIMENSÕES (ELEMENTOR-STYLE STEPPERS) */
+        .spacing-box-control {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+        .spacing-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .spacing-box-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        .spacing-link-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 2px 7px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .spacing-link-btn.unlinked {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+        .spacing-quad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .spacing-side-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .spacing-side-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .stepper-wrap {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            background: #070a0f;
+        }
+        .stepper-single-wrap {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            background: #070a0f;
+            width: 100%;
+        }
+        .step-btn {
+            background: #111827;
+            border: none;
+            color: #fff;
+            width: 22px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            user-select: none;
+            padding: 0;
+        }
+        .step-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+        .step-input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 11px;
+            text-align: center;
+            height: 28px;
+            padding: 0;
+            -moz-appearance: textfield;
+            font-family: inherit;
+        }
+        .step-input::-webkit-outer-spin-button,
+        .step-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .step-input-single {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            height: 28px;
+            -moz-appearance: textfield;
+            font-family: inherit;
+        }
+        .step-input-single::-webkit-outer-spin-button,
+        .step-input-single::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .pill-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pill-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+            background: rgba(56, 189, 248, 0.1);
         }
 
         .elementor-add-section-area {
@@ -783,6 +972,9 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         <!-- AÇÕES -->
         <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="header-btn" id="btn_toggle_floating_layers" onclick="toggleFloatingLayers()" title="Abrir Navegador Flutuante de Camadas (Elementor Navigator)" style="border-color: rgba(56, 189, 248, 0.4); color: #fff;">
+                🗂️ Camadas (Navigator)
+            </button>
             <button type="button" class="header-btn" onclick="toggleLivePreviewModal()" title="Ver código / Preview Modal">
                 🔍 Modal
             </button>
@@ -818,28 +1010,129 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 <div id="presets_list"></div>
 
                 <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">Espaçamentos e Dimensões da Seção</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="font-size: 12px; font-weight: 700; color: #fff;">Espaçamentos e Dimensões da Seção</div>
+                        <button type="button" class="header-btn" onclick="resetSectionSpacings()" title="Redefinir espaçamentos desta seção para os padrões" style="font-size: 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3); padding: 1px 6px;">
+                            ↺ Reset
+                        </button>
+                    </div>
                     
-                    <div class="inspector-field">
-                        <label class="inspector-label">Margem Externa (Margin - Afastamento Entre Seções)</label>
-                        <input type="text" id="setting_margin" class="inspector-input" value="0px 0px 16px 0px" oninput="updateActiveSecSetting('margin', this.value)" placeholder="ex: 0px 0px 20px 0px">
-                        <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Afasta esta seção das outras seções acima/abaixo.</span>
+                    <!-- MARGEM EXTERNA (4 LADOS COM STEPPER) -->
+                    <div class="spacing-box-control">
+                        <div class="spacing-box-header">
+                            <span class="spacing-box-title">Margem Externa (Margin)</span>
+                            <button type="button" class="spacing-link-btn" id="margin_link_btn" onclick="toggleSpacingLink('margin')" title="Vincular ou Desvincular os 4 Lados">
+                                🔓 Separado
+                            </button>
+                        </div>
+                        <div class="spacing-quad-grid">
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Cima</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 0, -2)">-</button>
+                                    <input type="number" class="step-input" id="mar_top" value="0" oninput="onQuadInputChange('margin', 0, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 0, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Direita</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 1, -2)">-</button>
+                                    <input type="number" class="step-input" id="mar_right" value="0" oninput="onQuadInputChange('margin', 1, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 1, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Baixo</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 2, -2)">-</button>
+                                    <input type="number" class="step-input" id="mar_bottom" value="16" oninput="onQuadInputChange('margin', 2, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 2, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Esquerda</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 3, -2)">-</button>
+                                    <input type="number" class="step-input" id="mar_left" value="0" oninput="onQuadInputChange('margin', 3, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('margin', 3, 2)">+</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="inspector-field">
-                        <label class="inspector-label">Preenchimento Interno (Padding)</label>
-                        <input type="text" id="setting_padding" class="inspector-input" value="16px 24px" oninput="updateActiveSecSetting('padding', this.value)" placeholder="ex: 20px 24px">
-                        <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Espaço interno antes das colunas/células.</span>
+                    <!-- PREENCHIMENTO INTERNO (4 LADOS COM STEPPER) -->
+                    <div class="spacing-box-control">
+                        <div class="spacing-box-header">
+                            <span class="spacing-box-title">Preenchimento Interno (Padding)</span>
+                            <button type="button" class="spacing-link-btn" id="padding_link_btn" onclick="toggleSpacingLink('padding')" title="Vincular ou Desvincular os 4 Lados">
+                                🔗 Vinculado
+                            </button>
+                        </div>
+                        <div class="spacing-quad-grid">
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Cima</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 0, -2)">-</button>
+                                    <input type="number" class="step-input" id="pad_top" value="16" oninput="onQuadInputChange('padding', 0, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 0, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Direita</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 1, -2)">-</button>
+                                    <input type="number" class="step-input" id="pad_right" value="24" oninput="onQuadInputChange('padding', 1, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 1, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Baixo</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 2, -2)">-</button>
+                                    <input type="number" class="step-input" id="pad_bottom" value="16" oninput="onQuadInputChange('padding', 2, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 2, 2)">+</button>
+                                </div>
+                            </div>
+                            <div class="spacing-side-col">
+                                <span class="spacing-side-label">Esquerda</span>
+                                <div class="stepper-wrap">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 3, -2)">-</button>
+                                    <input type="number" class="step-input" id="pad_left" value="24" oninput="onQuadInputChange('padding', 3, this.value)">
+                                    <button type="button" class="step-btn" onclick="stepQuadValue('padding', 3, 2)">+</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- ESPAÇAMENTO ENTRE CÉLULAS (GAP COM STEPPER) -->
                     <div class="inspector-field">
-                        <label class="inspector-label">Espaçamento Entre Células (Gap)</label>
-                        <input type="text" id="setting_gap" class="inspector-input" value="24px" oninput="updateActiveSecSetting('gap', this.value)" placeholder="ex: 24px">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="inspector-label" style="margin-bottom:0;">Espaçamento Entre Células (Gap)</label>
+                            <span id="gap_display_val" style="font-size:11px; color:var(--primary); font-weight:700;">24px</span>
+                        </div>
+                        <div class="stepper-single-wrap">
+                            <button type="button" class="step-btn" onclick="stepSingleValue('gap', -2, 0, 100)">-</button>
+                            <input type="number" id="setting_gap_num" class="step-input-single" value="24" min="0" max="100" oninput="onSingleNumChange('gap', this.value)">
+                            <button type="button" class="step-btn" onclick="stepSingleValue('gap', 2, 0, 100)">+</button>
+                        </div>
                     </div>
 
+                    <!-- LARGURA MÁXIMA DO CONTAINER (MAX-WIDTH COM STEPPER E PRESETS) -->
                     <div class="inspector-field">
-                        <label class="inspector-label">Largura Máxima do Container (Boxed)</label>
-                        <input type="text" id="setting_max_width" class="inspector-input" value="1280px" oninput="updateActiveSecSetting('max_width', this.value)" placeholder="ex: 1280px ou 100%">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label class="inspector-label" style="margin-bottom:0;">Largura Máxima do Container (Boxed)</label>
+                            <div style="display:flex; gap:4px;">
+                                <button type="button" class="pill-btn" onclick="setMaxWidthPreset('100%')" title="Largura Total">100%</button>
+                                <button type="button" class="pill-btn" onclick="setMaxWidthPreset('1280px')" title="Padrão">1280px</button>
+                                <button type="button" class="pill-btn" onclick="setMaxWidthPreset('1440px')" title="Wide">1440px</button>
+                            </div>
+                        </div>
+                        <div class="stepper-single-wrap">
+                            <button type="button" class="step-btn" onclick="stepSingleValue('max_width', -20, 320, 2560)">-</button>
+                            <input type="number" id="setting_max_width_num" class="step-input-single" value="1280" min="320" max="2560" oninput="onSingleNumChange('max_width', this.value)">
+                            <button type="button" class="step-btn" onclick="stepSingleValue('max_width', 20, 320, 2560)">+</button>
+                        </div>
                     </div>
 
                     <div class="inspector-field">
@@ -929,6 +1222,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 </div>
 
                 <div class="inspector-field">
+                    <label class="inspector-label">Alinhamento Padrão do Toggle (Mobile)</label>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="header-btn" id="btn_toggle_align_left" onclick="selectGlobalToggleAlign('left')" style="flex:1;">⬅️ Esquerda</button>
+                        <button type="button" class="header-btn" id="btn_toggle_align_center" onclick="selectGlobalToggleAlign('center')" style="flex:1;">🎯 Centro</button>
+                        <button type="button" class="header-btn active" id="btn_toggle_align_right" onclick="selectGlobalToggleAlign('right')" style="flex:1;">➡️ Direita</button>
+                    </div>
+                    <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Define o lado em que o botão hamburguer é posicionado na tela do celular.</span>
+                </div>
+
+                <div class="inspector-field">
                     <label class="inspector-label">Vincular Diretamente ao Tema</label>
                     <select id="setting_assigned_theme" class="inspector-select">
                         <option value="">Nenhum (usar padrão ou vincular depois)</option>
@@ -974,7 +1277,22 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     </main>
 
-    <!-- MODAL DE PREVIEW REAL -->
+    <!-- FLOATING NAVIGATOR (POPUP FLUTUANTE DE CAMADAS ESTILO ELEMENTOR) -->
+    <div id="floating_layers_panel" class="floating-navigator-panel" style="display: none;">
+        <div class="floating-navigator-header" id="floating_layers_drag_handle">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px;">🗂️</span>
+                <strong style="font-size: 12px; color: #fff;">Navegador de Camadas</strong>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <button type="button" class="navigator-ctrl-btn" onclick="toggleFloatingLayersMinimize()" title="Minimizar / Expandir">_</button>
+                <button type="button" class="navigator-ctrl-btn" onclick="toggleFloatingLayers(false)" title="Fechar">✕</button>
+            </div>
+        </div>
+        <div id="floating_layers_content" class="floating-navigator-body">
+            <div id="floating_layers_tree_container" class="layer-tree-container"></div>
+        </div>
+    </div>
     <div id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; padding: 24px;">
         <div style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; max-width: 1200px; height: 90vh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden;">
             <div style="padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
@@ -1044,6 +1362,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     var activeColIdx = 0; // Coluna/Célula ativa na seção atual
     var selectedBlockCoord = null; // { sec: 0, col: 0, blockIdx: 0 }
     var currentDevice = '100%';
+    var currentSidebarTab = 'layout';
     var studioMode = 'structure'; // 'structure' ou 'live'
     var showStructurePicker = false;
     var currentUploadTargetKey = null;
@@ -1073,6 +1392,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     var selectedSecIdx = 0;
 
     function initStudio() {
+        initDraggableNavigator();
         renderSidebarLayoutTab();
         renderBlocksCatalog();
         renderLayersTree();
@@ -1080,6 +1400,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     }
 
     function switchSidebarTab(tab) {
+        currentSidebarTab = tab;
         ['layout', 'layers', 'blocks', 'inspector', 'settings'].forEach(function(t) {
             var el = document.getElementById('sidebar_tab_' + t);
             if (el) el.style.display = (t === tab) ? 'block' : 'none';
@@ -1089,6 +1410,75 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         if (tab === 'layers') {
             renderLayersTree();
         }
+    }
+
+    // NAVEGADOR FLUTUANTE DE CAMADAS (ELEMENTOR-STYLE FLOATING POPUP)
+    function toggleFloatingLayers(forceState) {
+        var panel = document.getElementById('floating_layers_panel');
+        var btn = document.getElementById('btn_toggle_floating_layers');
+        if (!panel) return;
+        var willOpen = (typeof forceState === 'boolean') ? forceState : (panel.style.display === 'none');
+        panel.style.display = willOpen ? 'flex' : 'none';
+        if (btn) {
+            btn.classList.toggle('active', willOpen);
+            btn.style.borderColor = willOpen ? 'var(--primary)' : 'rgba(56, 189, 248, 0.4)';
+        }
+        if (willOpen) {
+            renderLayersTree();
+        }
+    }
+
+    function toggleFloatingLayersMinimize() {
+        var content = document.getElementById('floating_layers_content');
+        if (!content) return;
+        content.style.display = (content.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function initDraggableNavigator() {
+        var panel = document.getElementById('floating_layers_panel');
+        var handle = document.getElementById('floating_layers_drag_handle');
+        if (!panel || !handle) return;
+
+        var isDragging = false;
+        var startX, startY, initialLeft, initialTop;
+
+        handle.onmousedown = function(e) {
+            if (e.target.tagName === 'BUTTON') return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            var rect = panel.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+
+            // Transfere o posicionamento de bottom/right para top/left para arraste suave
+            panel.style.bottom = 'auto';
+            panel.style.right = 'auto';
+            panel.style.left = initialLeft + 'px';
+            panel.style.top = initialTop + 'px';
+            
+            document.body.style.userSelect = 'none';
+        };
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            var dx = e.clientX - startX;
+            var dy = e.clientY - startY;
+
+            var newLeft = Math.max(10, Math.min(window.innerWidth - panel.offsetWidth - 10, initialLeft + dx));
+            var newTop = Math.max(10, Math.min(window.innerHeight - panel.offsetHeight - 10, initialTop + dy));
+
+            panel.style.left = newLeft + 'px';
+            panel.style.top = newTop + 'px';
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            }
+        });
     }
 
     function setStudioMode(mode) {
@@ -1258,6 +1648,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         showToast('Seção duplicada!');
     }
 
+    var lastDeletedSectionBackup = null;
+
     function deleteSection(secIdx, e) {
         if (e) {
             if (typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -1267,23 +1659,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var sec = state.sections[secIdx];
         if (!sec) return;
 
-        // Verifica se a seção tem blocos reais dentro dela
-        var hasBlocks = false;
-        if (sec.columns_data) {
-            for (var colKey in sec.columns_data) {
-                if (Array.isArray(sec.columns_data[colKey]) && sec.columns_data[colKey].length > 0) {
-                    hasBlocks = true;
-                    break;
-                }
-            }
-        }
+        // Salva backup para permitir desfazer imediatamente
+        lastDeletedSectionBackup = {
+            sec: JSON.parse(JSON.stringify(sec)),
+            index: secIdx
+        };
 
-        if (hasBlocks) {
-            if (!confirm('Esta seção contém blocos adicionados. Deseja realmente excluir esta seção e todos os seus blocos?')) {
-                return;
-            }
-        }
-
+        // Exclui a seção imediatamente sem bloqueio de janela confirm()
         state.sections.splice(secIdx, 1);
 
         if (state.sections.length === 0) {
@@ -1291,8 +1673,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             activeColIdx = 0;
             selectedBlockCoord = null;
             selectionType = 'none';
-            showStructurePicker = true; // Abre automaticamente as divisórias para adicionar uma nova
-            showToast('Seção excluída com sucesso! Selecione uma nova estrutura abaixo.');
+            showStructurePicker = true;
+            showToast('✓ Seção excluída! <button type="button" onclick="undoDeleteSection()" style="margin-left:8px; background:#000; color:#fff; border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:700;">Desfazer</button>');
         } else {
             if (activeSecIdx >= state.sections.length) {
                 activeSecIdx = Math.max(0, state.sections.length - 1);
@@ -1300,12 +1682,23 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             activeColIdx = 0;
             selectedBlockCoord = null;
             selectionType = 'none';
-            showToast('Seção excluída com sucesso.');
+            showToast('✓ Seção excluída com sucesso! <button type="button" onclick="undoDeleteSection()" style="margin-left:8px; background:#000; color:#fff; border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:700;">Desfazer</button>');
         }
 
         renderCanvas();
         renderSidebarLayoutTab();
         renderLayersTree();
+    }
+
+    function undoDeleteSection() {
+        if (!lastDeletedSectionBackup) return;
+        state.sections.splice(lastDeletedSectionBackup.index, 0, lastDeletedSectionBackup.sec);
+        activeSecIdx = lastDeletedSectionBackup.index;
+        lastDeletedSectionBackup = null;
+        renderCanvas();
+        renderSidebarLayoutTab();
+        renderLayersTree();
+        showToast('✓ Seção restaurada com sucesso!');
     }
 
     function selectSectionForConfig(secIdx, e) {
@@ -1318,7 +1711,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         renderCanvas();
         renderSidebarLayoutTab();
         renderLayersTree();
-        switchSidebarTab('layout');
+
+        var floatingPanel = document.getElementById('floating_layers_panel');
+        var isFloatingOpen = floatingPanel && floatingPanel.style.display !== 'none';
+        if (isFloatingOpen || currentSidebarTab !== 'layers') {
+            switchSidebarTab('layout');
+        }
     }
 
     function changeSectionPreset(presetKey) {
@@ -1436,22 +1834,183 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             container.appendChild(card);
         }
 
-        // Espaçamentos e dimensões da seção
+        // Espaçamentos e dimensões da seção sincronizados com a UI de Steppers
         var cs = curSec.container_settings || {};
-        var marginEl = document.getElementById('setting_margin');
-        if (marginEl) marginEl.value = cs.margin || '0px 0px 16px 0px';
-        var paddingEl = document.getElementById('setting_padding');
-        if (paddingEl) paddingEl.value = cs.padding || '16px 24px';
-        var gapEl = document.getElementById('setting_gap');
-        if (gapEl) gapEl.value = cs.gap || '24px';
-        var maxWidthEl = document.getElementById('setting_max_width');
-        if (maxWidthEl) maxWidthEl.value = cs.max_width || '1280px';
+        var marginVals = parse4Values(cs.margin || '0px 0px 16px 0px');
+        var paddingVals = parse4Values(cs.padding || '16px 24px');
+
+        ['mar_top', 'mar_right', 'mar_bottom', 'mar_left'].forEach(function(id, idx) {
+            var el = document.getElementById(id);
+            if (el) el.value = marginVals[idx];
+        });
+
+        ['pad_top', 'pad_right', 'pad_bottom', 'pad_left'].forEach(function(id, idx) {
+            var el = document.getElementById(id);
+            if (el) el.value = paddingVals[idx];
+        });
+
+        var gapNum = parseFloat(cs.gap || '24px') || 24;
+        var gapEl = document.getElementById('setting_gap_num');
+        if (gapEl) gapEl.value = gapNum;
+        var gapDisp = document.getElementById('gap_display_val');
+        if (gapDisp) gapDisp.textContent = gapNum + 'px';
+
+        var maxWidthStr = cs.max_width || '1280px';
+        var maxWidthNum = parseFloat(maxWidthStr) || 1280;
+        var maxWidthEl = document.getElementById('setting_max_width_num');
+        if (maxWidthEl) maxWidthEl.value = maxWidthNum;
+
         var bgEl = document.getElementById('setting_background');
         if (bgEl) bgEl.value = cs.background || 'transparent';
         var alignEl = document.getElementById('setting_align_items');
         if (alignEl) alignEl.value = cs.align_items || 'center';
         var justifyEl = document.getElementById('setting_justify_content');
         if (justifyEl) justifyEl.value = cs.justify_content || 'space-between';
+
+        updateSpacingLinkUI('margin');
+        updateSpacingLinkUI('padding');
+    }
+
+    // CONTROLES DE ESPAÇAMENTOS E DIMENSÕES DA SEÇÃO (STEPPERS + RESET)
+    var spacingLinkState = {
+        margin: false, // Separado por padrão para margin externa (normalmente diferente em cima/baixo)
+        padding: true  // Vinculado por padrão para padding interno
+    };
+
+    function toggleSpacingLink(type) {
+        spacingLinkState[type] = !spacingLinkState[type];
+        updateSpacingLinkUI(type);
+        showToast(type === 'padding' 
+            ? (spacingLinkState[type] ? '🔗 Padding: 4 lados vinculados.' : '🔓 Padding: 4 lados separados.')
+            : (spacingLinkState[type] ? '🔗 Margem: 4 lados vinculados.' : '🔓 Margem: 4 lados separados.')
+        );
+    }
+
+    function updateSpacingLinkUI(type) {
+        var btn = document.getElementById(type + '_link_btn');
+        if (!btn) return;
+        var isLinked = spacingLinkState[type];
+        btn.classList.toggle('unlinked', !isLinked);
+        btn.innerHTML = isLinked ? '🔗 Vinculado' : '🔓 Separado';
+    }
+
+    function parse4Values(str) {
+        if (!str || typeof str !== 'string') return [0, 0, 0, 0];
+        var parts = str.trim().split(/\s+/).map(function(p) {
+            var n = parseFloat(p);
+            return isNaN(n) ? 0 : n;
+        });
+        if (parts.length === 0) return [0, 0, 0, 0];
+        if (parts.length === 1) return [parts[0], parts[0], parts[0], parts[0]];
+        if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
+        if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
+        if (parts.length >= 4) return [parts[0], parts[1], parts[2], parts[3]];
+        return [0, 0, 0, 0];
+    }
+
+    function getQuadIds(type) {
+        if (type === 'padding') return ['pad_top', 'pad_right', 'pad_bottom', 'pad_left'];
+        return ['mar_top', 'mar_right', 'mar_bottom', 'mar_left'];
+    }
+
+    function stepQuadValue(type, sideIdx, delta) {
+        var ids = getQuadIds(type);
+        var curVals = ids.map(function(id) {
+            var el = document.getElementById(id);
+            var n = parseFloat(el ? el.value : 0);
+            return isNaN(n) ? 0 : n;
+        });
+
+        if (spacingLinkState[type]) {
+            var newVal = Math.max(0, curVals[sideIdx] + delta);
+            curVals = [newVal, newVal, newVal, newVal];
+        } else {
+            curVals[sideIdx] = Math.max(0, curVals[sideIdx] + delta);
+        }
+
+        applyQuadValues(type, curVals);
+    }
+
+    function onQuadInputChange(type, sideIdx, rawVal) {
+        var num = parseFloat(rawVal);
+        if (isNaN(num) || num < 0) num = 0;
+        var ids = getQuadIds(type);
+        var curVals = ids.map(function(id) {
+            var el = document.getElementById(id);
+            var n = parseFloat(el ? el.value : 0);
+            return isNaN(n) ? 0 : n;
+        });
+
+        if (spacingLinkState[type]) {
+            curVals = [num, num, num, num];
+        } else {
+            curVals[sideIdx] = num;
+        }
+
+        applyQuadValues(type, curVals);
+    }
+
+    function applyQuadValues(type, vals) {
+        var ids = getQuadIds(type);
+        ids.forEach(function(id, i) {
+            var el = document.getElementById(id);
+            if (el) el.value = vals[i];
+        });
+
+        var cssVal = vals[0] + 'px ' + vals[1] + 'px ' + vals[2] + 'px ' + vals[3] + 'px';
+        updateActiveSecSetting(type, cssVal);
+    }
+
+    function stepSingleValue(key, delta, minVal, maxVal) {
+        var el = document.getElementById('setting_' + key + '_num');
+        if (!el) return;
+        var cur = parseFloat(el.value);
+        if (isNaN(cur)) cur = minVal;
+        var next = Math.max(minVal, Math.min(maxVal, cur + delta));
+        el.value = next;
+        onSingleNumChange(key, next);
+    }
+
+    function onSingleNumChange(key, rawVal) {
+        var num = parseFloat(rawVal);
+        if (isNaN(num)) return;
+        var unit = 'px';
+        var cssVal = num + unit;
+
+        var displayEl = document.getElementById(key + '_display_val');
+        if (displayEl) displayEl.textContent = cssVal;
+
+        updateActiveSecSetting(key, cssVal);
+    }
+
+    function setMaxWidthPreset(val) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        if (!curSec.container_settings) curSec.container_settings = {};
+        curSec.container_settings.max_width = val;
+
+        var numEl = document.getElementById('setting_max_width_num');
+        if (numEl) {
+            var n = parseFloat(val);
+            numEl.value = isNaN(n) ? 1280 : n;
+        }
+        renderCanvas();
+        showToast('Largura Máxima definida para: ' + val);
+    }
+
+    function resetSectionSpacings() {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        if (!curSec.container_settings) curSec.container_settings = {};
+
+        curSec.container_settings.margin = '0px 0px 16px 0px';
+        curSec.container_settings.padding = '16px 24px';
+        curSec.container_settings.gap = '24px';
+        curSec.container_settings.max_width = '1280px';
+
+        renderSidebarLayoutTab();
+        renderCanvas();
+        showToast('↺ Espaçamentos da seção redefinidos para os padrões!');
     }
 
     function renderBlocksCatalog() {
@@ -1509,7 +2068,10 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         });
     }
 
-    function getColumnTitle(presetKey, colIdx, totalCols) {
+    function getColumnTitle(presetKey, colIdx, totalCols, sec) {
+        if (sec && sec.columns_labels && sec.columns_labels[colIdx]) {
+            return sec.columns_labels[colIdx];
+        }
         if (presetKey === '3_cols_header') {
             if (colIdx === 0) return 'Célula 1 (25% - Logo)';
             if (colIdx === 1) return 'Célula 2 (50% - Menu)';
@@ -1745,6 +2307,17 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var isSelected = (selectionType === 'block' && selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx);
         card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
         
+        // Aplica estilos visuais configurados no elemento diretamente no card para preview instantâneo
+        if (block.data) {
+            if (block.data.margin) card.style.margin = block.data.margin;
+            if (block.data.padding) card.style.padding = block.data.padding;
+            if (block.data.background) card.style.background = block.data.background;
+            if (block.data.border_radius) card.style.borderRadius = block.data.border_radius;
+            if (block.data.border) card.style.border = block.data.border;
+            if (block.data.box_shadow) card.style.boxShadow = block.data.box_shadow;
+            if (block.data.opacity !== undefined && block.data.opacity !== '' && block.data.opacity !== '1') card.style.opacity = block.data.opacity;
+        }
+
         // Drag-and-drop do bloco entre células e seções
         card.setAttribute('draggable', 'true');
         card.ondragstart = function(e) {
@@ -1791,10 +2364,13 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         };
 
         var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
+        var blockDisplayName = block.custom_name || bMeta.name;
 
         var bHeader = document.createElement('div');
         bHeader.className = 'canvas-block-header';
-        bHeader.innerHTML = '<span>' + bMeta.icon + ' ' + bMeta.name + '</span>' +
+        bHeader.innerHTML = '<span ondblclick="startInlineRenameBlock(' + secIdx + ',' + colIdx + ',' + blockIdx + ', this, event)" title="Duplo clique para renomear" style="cursor:pointer; display:flex; align-items:center; gap:6px;">' +
+            '<span>' + bMeta.icon + '</span> <strong>' + escapeHtml(blockDisplayName) + '</strong>' +
+            '</span>' +
             '<div class="canvas-block-actions">' +
             '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',-1,event)" title="Subir">▲</button>' +
             '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',1,event)" title="Descer">▼</button>' +
@@ -1874,16 +2450,19 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
         if (block.type === 'nav_menu') {
             var curStyle = d.toggle_style || state.mobile_toggle_style || 'classic';
+            var curAlign = d.toggle_align || d.align || state.mobile_toggle_align || 'right';
             var isMobile = (currentDevice === '375px' || currentDevice === '768px');
             var toggleLabel = '☰';
             if (curStyle === 'pill') toggleLabel = 'MENU ☰';
             if (curStyle === 'minimal') toggleLabel = '═';
             if (curStyle === 'dots') toggleLabel = '⋮';
 
+            var justifyVal = (curAlign === 'left') ? 'flex-start' : ((curAlign === 'center') ? 'center' : 'flex-end');
+
             if (isMobile) {
-                return '<div style="display:flex; align-items:center; gap:8px;">' +
+                return '<div style="display:flex; justify-content:' + justifyVal + '; width:100%; align-items:center; gap:8px;">' +
                        '<button type="button" class="header-btn" style="padding:2px 8px; font-size:12px; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);" onclick="event.stopPropagation(); testMobileDrawer(\'' + curStyle + '\')">' + toggleLabel + '</button>' +
-                       '<span style="font-size:11px; color:#38bdf8;">📱 Mobile Hamburguer Dinâmico (' + curStyle + ')</span>' +
+                       '<span style="font-size:11px; color:#38bdf8;">📱 ' + (curAlign === 'left' ? '⬅️ Esq' : (curAlign === 'center' ? '🎯 Centro' : '➡️ Dir')) + ' (' + curStyle + ')</span>' +
                        '</div>';
             } else {
                 return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> (Início · Cursos · Sobre · Contato)';
@@ -1906,7 +2485,14 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         renderCanvas();
         renderInspector();
         renderLayersTree();
-        switchSidebarTab('inspector');
+
+        // Se a janela flutuante estiver aberta, atualiza a barra lateral para o Inspetor
+        // permitindo que o usuário edite sem perder o popup flutuante de camadas!
+        var floatingPanel = document.getElementById('floating_layers_panel');
+        var isFloatingOpen = floatingPanel && floatingPanel.style.display !== 'none';
+        if (isFloatingOpen || currentSidebarTab !== 'layers') {
+            switchSidebarTab('inspector');
+        }
     }
 
     function selectColFromLayers(secIdx, colIdx, e) {
@@ -1918,13 +2504,26 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         renderCanvas();
         renderBlocksCatalog();
         renderLayersTree();
-        switchSidebarTab('blocks');
-        showToast('Célula ' + (colIdx + 1) + ' selecionada. Escolha um bloco para adicionar.');
+
+        var floatingPanel = document.getElementById('floating_layers_panel');
+        var isFloatingOpen = floatingPanel && floatingPanel.style.display !== 'none';
+        if (isFloatingOpen || currentSidebarTab !== 'layers') {
+            switchSidebarTab('blocks');
+        }
+        showToast('Célula ' + (colIdx + 1) + ' selecionada.');
     }
 
     function renderLayersTree() {
-        var container = document.getElementById('layers_tree_container');
-        if (!container) return;
+        var targets = [
+            document.getElementById('layers_tree_container'),
+            document.getElementById('floating_layers_tree_container')
+        ];
+        targets.forEach(function(c) {
+            if (c) populateLayersTree(c);
+        });
+    }
+
+    function populateLayersTree(container) {
         container.innerHTML = '';
 
         if (!state.sections || state.sections.length === 0) {
@@ -1956,7 +2555,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             secHeader.innerHTML = 
                 '<div class="layer-title-wrap" onclick="selectSectionForConfig(' + sIdx + ', event)">' +
                     '<span class="layer-icon">🔲</span>' +
-                    '<span class="layer-text">' + escapeHtml(secTitle) + '</span>' +
+                    '<span class="layer-text" ondblclick="startInlineRenameSection(' + sIdx + ', this, event)" title="Duplo clique para renomear">' + escapeHtml(secTitle) + '</span>' +
                     '<span class="layer-badge">' + presetInfo.columns + ' cols</span>' +
                 '</div>' +
                 '<div class="layer-actions">' +
@@ -1974,7 +2573,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 var colNode = document.createElement('div');
                 colNode.className = 'layer-node layer-col';
 
-                var colTitle = getColumnTitle(sec.layout_preset, cIdx, presetInfo.columns);
+                var colTitle = getColumnTitle(sec.layout_preset, cIdx, presetInfo.columns, sec);
                 var blocksInCol = (sec.columns_data && sec.columns_data[cIdx]) ? sec.columns_data[cIdx] : [];
 
                 var colHeader = document.createElement('div');
@@ -1982,7 +2581,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 colHeader.innerHTML = 
                     '<div class="layer-title-wrap" onclick="selectColFromLayers(' + sIdx + ', ' + cIdx + ', event)">' +
                         '<span class="layer-icon">▦</span>' +
-                        '<span class="layer-text">' + escapeHtml(colTitle) + '</span>' +
+                        '<span class="layer-text" ondblclick="startInlineRenameColumn(' + sIdx + ', ' + cIdx + ', this, event)" title="Duplo clique para renomear">' + escapeHtml(colTitle) + '</span>' +
                         '<span style="font-size:10px; color:var(--text-muted); margin-left:auto;">' + blocksInCol.length + ' blocos</span>' +
                     '</div>' +
                     '<div class="layer-actions">' +
@@ -1999,11 +2598,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                     bNode.className = 'layer-row layer-row-block' + (isBlockActive ? ' active-layer' : '');
 
                     var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
+                    var blockDisplayName = block.custom_name || bMeta.name;
 
                     bNode.innerHTML = 
                         '<div class="layer-title-wrap" onclick="selectBlock(' + sIdx + ', ' + cIdx + ', ' + bIdx + ')">' +
                             '<span class="layer-icon">' + bMeta.icon + '</span>' +
-                            '<span class="layer-text">' + escapeHtml(bMeta.name) + '</span>' +
+                            '<span class="layer-text" ondblclick="startInlineRenameBlock(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', this, event)" title="Duplo clique para renomear">' + escapeHtml(blockDisplayName) + '</span>' +
                         '</div>' +
                         '<div class="layer-actions">' +
                             '<button type="button" class="layer-act-btn" onclick="moveBlockInCell(' + sIdx + ', ' + cIdx + ', ' + bIdx + ', -1, event)" title="Subir">▲</button>' +
@@ -2024,6 +2624,138 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         });
 
         container.appendChild(treeBody);
+    }
+
+    // RENOMEAÇÃO INLINE NAS CAMADAS (ELEMENTOR-STYLE INLINE RENAME)
+    function startInlineRenameSection(secIdx, el, e) {
+        if (e) e.stopPropagation();
+        var sec = state.sections[secIdx];
+        if (!sec) return;
+        var currentText = sec.title || ('Seção ' + (secIdx + 1));
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentText;
+        input.className = 'layer-inline-input';
+        input.style.cssText = 'background:#1e293b; color:#fff; border:1px solid #38bdf8; border-radius:4px; font-size:12px; padding:2px 6px; width:120px; outline:none;';
+        
+        var finish = function() {
+            var val = input.value.trim();
+            if (val) {
+                sec.title = val;
+                var secTitleInput = document.getElementById('sec_title_input');
+                if (secTitleInput && activeSecIdx === secIdx) secTitleInput.value = val;
+            }
+            renderCanvas();
+            renderLayersTree();
+        };
+
+        input.onblur = finish;
+        input.onkeydown = function(ev) {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                input.blur();
+            } else if (ev.key === 'Escape') {
+                ev.preventDefault();
+                renderLayersTree();
+            }
+        };
+
+        el.innerHTML = '';
+        el.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    function startInlineRenameColumn(secIdx, colIdx, el, e) {
+        if (e) e.stopPropagation();
+        var sec = state.sections[secIdx];
+        if (!sec) return;
+        if (!sec.columns_labels) sec.columns_labels = {};
+        var currentText = sec.columns_labels[colIdx] || getColumnTitle(sec.layout_preset, colIdx, (presets[sec.layout_preset] || {}).columns || 3, sec);
+        
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentText;
+        input.className = 'layer-inline-input';
+        input.style.cssText = 'background:#1e293b; color:#fff; border:1px solid #38bdf8; border-radius:4px; font-size:12px; padding:2px 6px; width:120px; outline:none;';
+
+        var finish = function() {
+            var val = input.value.trim();
+            if (val) {
+                sec.columns_labels[colIdx] = val;
+            }
+            renderCanvas();
+            renderLayersTree();
+        };
+
+        input.onblur = finish;
+        input.onkeydown = function(ev) {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                input.blur();
+            } else if (ev.key === 'Escape') {
+                ev.preventDefault();
+                renderLayersTree();
+            }
+        };
+
+        el.innerHTML = '';
+        el.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    function startInlineRenameBlock(secIdx, colIdx, blockIdx, el, e) {
+        if (e) e.stopPropagation();
+        var sec = state.sections[secIdx];
+        if (!sec || !sec.columns_data || !sec.columns_data[colIdx]) return;
+        var block = sec.columns_data[colIdx][blockIdx];
+        if (!block) return;
+        var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type };
+        var currentText = block.custom_name || bMeta.name;
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentText;
+        input.className = 'layer-inline-input';
+        input.style.cssText = 'background:#1e293b; color:#fff; border:1px solid #38bdf8; border-radius:4px; font-size:12px; padding:2px 6px; width:130px; outline:none;';
+
+        var finish = function() {
+            var val = input.value.trim();
+            block.custom_name = val || null;
+            renderCanvas();
+            renderLayersTree();
+            if (selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx) {
+                renderInspector();
+            }
+        };
+
+        input.onblur = finish;
+        input.onkeydown = function(ev) {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                input.blur();
+            } else if (ev.key === 'Escape') {
+                ev.preventDefault();
+                renderLayersTree();
+            }
+        };
+
+        el.innerHTML = '';
+        el.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    function updateBlockCustomName(val) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block) return;
+        block.custom_name = val.trim() || null;
+        renderCanvas();
+        renderLayersTree();
     }
 
     function selectGlobalToggleStyle(val) {
@@ -2086,10 +2818,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var html = '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:10px;">' +
                    '<div style="display:flex; align-items:center; gap:8px;">' +
                    '<span style="font-size:20px;">' + bMeta.icon + '</span>' +
-                   '<strong style="font-size:15px; color:#fff;">' + bMeta.name + '</strong>' +
+                   '<strong style="font-size:15px; color:#fff;">' + (block.custom_name || bMeta.name) + '</strong>' +
                    '</div>' +
                    '<span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">' + (sec.title || 'Seção') + ' / Célula ' + (selectedBlockCoord.col + 1) + '</span>' +
                    '</div>';
+
+        html += '<div class="inspector-field" style="background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); margin-bottom:14px;">' +
+                '<label class="inspector-label" style="color:var(--primary);">🏷️ Rótulo Personalizado na Layer (Camadas)</label>' +
+                '<input type="text" class="inspector-input" value="' + escapeAttr(block.custom_name || '') + '" oninput="updateBlockCustomName(this.value)" placeholder="ex: ' + escapeAttr(bMeta.name) + ' Principal">' +
+                '<span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Renomeie este elemento para identificá-lo facilmente no navegador de camadas.</span>' +
+                '</div>';
 
         if (block.type === 'heading') {
             html += inspectorTextInput('Texto do Título', 'text', block.data.text || '');
@@ -2163,7 +2901,18 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                         '</div>' +
                     '</div>' +
                     '</div>';
-            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'center');
+
+            var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
+            html += '<div class="inspector-field">' +
+                    '<label class="inspector-label">Alinhamento do Botão Toggle (Mobile)</label>' +
+                    '<div style="display:flex; gap:6px;">' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'left' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'left\'); renderCanvas(); renderInspector();">⬅️ Esquerda</button>' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'center' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'center\'); renderCanvas(); renderInspector();">🎯 Centro</button>' +
+                    '<button type="button" class="header-btn ' + (curToggleAlign === 'right' ? 'active' : '') + '" style="flex:1;" onclick="updateBlockProp(\'toggle_align\', \'right\'); renderCanvas(); renderInspector();">➡️ Direita</button>' +
+                    '</div>' +
+                    '</div>';
+
+            html += inspectorSelect('Alinhamento dos Links (Desktop)', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'divider') {
             html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'transparent'], block.data.style || 'solid');
             html += inspectorDimension('Altura / Espaçamento', 'height', block.data.height || '20px');
@@ -2175,7 +2924,215 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             html += inspectorTextarea('Código HTML / CSS / JS Customizado', 'code', block.data.code || '');
         }
 
+        // ==========================================
+        // ESTILOS CSS AVANÇADOS DO ELEMENTO (MARGIN, PADDING, FLEX, FLEXBOX, ETC.)
+        // ==========================================
+        var elemMarginVals = parse4Values(block.data.margin || '0px');
+        var elemPaddingVals = parse4Values(block.data.padding || '0px');
+        var isMarginLinked = (elemSpacingLinkState.margin !== undefined) ? elemSpacingLinkState.margin : true;
+        var isPaddingLinked = (elemSpacingLinkState.padding !== undefined) ? elemSpacingLinkState.padding : true;
+
+        html += '<div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">' +
+                '<div style="font-size:12px; font-weight:700; color:#fff;">🎨 Estilos CSS do Elemento</div>' +
+                '<button type="button" class="header-btn" onclick="resetElementStyles()" title="Redefinir estilos CSS deste elemento" style="font-size:10px; color:#ef4444; border-color:rgba(239,68,68,0.3); padding:1px 6px;">↺ Reset</button>' +
+                '</div>';
+
+        // MARGEM EXTERNA (4 LADOS COM STEPPERS)
+        html += '<div class="spacing-box-control">' +
+                '<div class="spacing-box-header">' +
+                '<span class="spacing-box-title">Margem Externa (Margin)</span>' +
+                '<button type="button" class="spacing-link-btn ' + (isMarginLinked ? '' : 'unlinked') + '" onclick="toggleElemSpacingLink(\'margin\')">' + (isMarginLinked ? '🔗 Vinculado' : '🔓 Separado') + '</button>' +
+                '</div>' +
+                '<div class="spacing-quad-grid">' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Cima</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 0, -2)">-</button><input type="number" class="step-input" value="' + elemMarginVals[0] + '" oninput="onElemQuadInputChange(\'margin\', 0, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 0, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Direita</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 1, -2)">-</button><input type="number" class="step-input" value="' + elemMarginVals[1] + '" oninput="onElemQuadInputChange(\'margin\', 1, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 1, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Baixo</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 2, -2)">-</button><input type="number" class="step-input" value="' + elemMarginVals[2] + '" oninput="onElemQuadInputChange(\'margin\', 2, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 2, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Esquerda</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 3, -2)">-</button><input type="number" class="step-input" value="' + elemMarginVals[3] + '" oninput="onElemQuadInputChange(\'margin\', 3, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'margin\', 3, 2)">+</button></div></div>' +
+                '</div></div>';
+
+        // PREENCHIMENTO INTERNO (4 LADOS COM STEPPERS)
+        html += '<div class="spacing-box-control">' +
+                '<div class="spacing-box-header">' +
+                '<span class="spacing-box-title">Preenchimento Interno (Padding)</span>' +
+                '<button type="button" class="spacing-link-btn ' + (isPaddingLinked ? '' : 'unlinked') + '" onclick="toggleElemSpacingLink(\'padding\')">' + (isPaddingLinked ? '🔗 Vinculado' : '🔓 Separado') + '</button>' +
+                '</div>' +
+                '<div class="spacing-quad-grid">' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Cima</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 0, -2)">-</button><input type="number" class="step-input" value="' + elemPaddingVals[0] + '" oninput="onElemQuadInputChange(\'padding\', 0, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 0, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Direita</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 1, -2)">-</button><input type="number" class="step-input" value="' + elemPaddingVals[1] + '" oninput="onElemQuadInputChange(\'padding\', 1, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 1, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Baixo</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 2, -2)">-</button><input type="number" class="step-input" value="' + elemPaddingVals[2] + '" oninput="onElemQuadInputChange(\'padding\', 2, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 2, 2)">+</button></div></div>' +
+                '<div class="spacing-side-col"><span class="spacing-side-label">Esquerda</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 3, -2)">-</button><input type="number" class="step-input" value="' + elemPaddingVals[3] + '" oninput="onElemQuadInputChange(\'padding\', 3, this.value)"><button type="button" class="step-btn" onclick="stepElemQuadValue(\'padding\', 3, 2)">+</button></div></div>' +
+                '</div></div>';
+
+        // FLEX & FLEXBOX
+        html += '<div class="inspector-field">' +
+                '<label class="inspector-label">Comportamento de Exibição (Display)</label>' +
+                '<select class="inspector-select" onchange="updateBlockProp(\'display\', this.value); renderCanvas(); renderInspector();">' +
+                '<option value="" ' + (!block.data.display ? 'selected' : '') + '>Padrão do Elemento</option>' +
+                '<option value="flex" ' + (block.data.display === 'flex' ? 'selected' : '') + '>Flexbox Container (display: flex)</option>' +
+                '<option value="inline-flex" ' + (block.data.display === 'inline-flex' ? 'selected' : '') + '>Inline Flex (display: inline-flex)</option>' +
+                '<option value="block" ' + (block.data.display === 'block' ? 'selected' : '') + '>Bloco (display: block)</option>' +
+                '<option value="inline-block" ' + (block.data.display === 'inline-block' ? 'selected' : '') + '>Inline Block (display: inline-block)</option>' +
+                '</select>' +
+                '</div>';
+
+        if (block.data.display === 'flex' || block.data.display === 'inline-flex') {
+            html += '<div style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px; margin-bottom:12px;">' +
+                    '<div style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:8px;">Propriedades Flexbox</div>' +
+                    inspectorSelect('Direção dos Itens (Flex Direction)', 'flex_direction', ['row', 'column', 'row-reverse', 'column-reverse'], block.data.flex_direction || 'row') +
+                    inspectorSelect('Alinhamento Principal (Justify Content)', 'justify_content', ['flex-start', 'center', 'flex-end', 'space-between', 'space-around'], block.data.justify_content || 'flex-start') +
+                    inspectorSelect('Alinhamento Transversal (Align Items)', 'align_items', ['stretch', 'center', 'flex-start', 'flex-end'], block.data.align_items || 'stretch') +
+                    inspectorSelect('Quebra de Linha (Flex Wrap)', 'flex_wrap', ['nowrap', 'wrap'], block.data.flex_wrap || 'nowrap') +
+                    '<div class="inspector-field">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                    '<label class="inspector-label" style="margin-bottom:0;">Espaçamento Entre Itens (Gap)</label>' +
+                    '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + (block.data.gap || '0px') + '</span>' +
+                    '</div>' +
+                    '<div class="stepper-single-wrap">' +
+                    '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'gap\', -2, 0, 100)">-</button>' +
+                    '<input type="number" id="elem_gap_num" class="step-input-single" value="' + (parseFloat(block.data.gap || '0') || 0) + '" min="0" max="100" oninput="onElemSingleNumChange(\'gap\', this.value)">' +
+                    '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'gap\', 2, 0, 100)">+</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+        }
+
+        // DIMENSÕES & VISUAL
+        html += inspectorTextInput('Largura do Elemento (Width)', 'width', block.data.width || '');
+        html += inspectorTextInput('Largura Máxima (Max-Width)', 'max_width', block.data.max_width || '');
+        html += inspectorTextInput('Cor de Fundo do Elemento (Background)', 'background', block.data.background || '');
+
+        // BORDER RADIUS COM STEPPER
+        var curRadiusNum = parseFloat(block.data.border_radius || '0') || 0;
+        html += '<div class="inspector-field">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                '<label class="inspector-label" style="margin-bottom:0;">Arredondamento de Borda (Border Radius)</label>' +
+                '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + (block.data.border_radius || '0px') + '</span>' +
+                '</div>' +
+                '<div class="stepper-single-wrap">' +
+                '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'border_radius\', -2, 0, 100)">-</button>' +
+                '<input type="number" id="elem_border_radius_num" class="step-input-single" value="' + curRadiusNum + '" min="0" max="100" oninput="onElemSingleNumChange(\'border_radius\', this.value)">' +
+                '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'border_radius\', 2, 0, 100)">+</button>' +
+                '</div>' +
+                '</div>';
+
+        html += inspectorTextInput('Borda (Border)', 'border', block.data.border || '');
+        html += inspectorTextInput('Sombra (Box Shadow)', 'box_shadow', block.data.box_shadow || '');
+        html += inspectorTextInput('Opacidade (0.1 a 1.0)', 'opacity', (block.data.opacity !== undefined ? block.data.opacity : ''));
+
+        html += '</div>';
+
         container.innerHTML = html;
+    }
+
+    // HELPER FUNCTIONS PARA ESTILOS CSS DOS ELEMENTOS (STEPPERS + RESET)
+    var elemSpacingLinkState = {
+        margin: true,
+        padding: true
+    };
+
+    function toggleElemSpacingLink(type) {
+        elemSpacingLinkState[type] = !elemSpacingLinkState[type];
+        renderInspector();
+    }
+
+    function stepElemQuadValue(type, sideIdx, delta) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var curVals = parse4Values(block.data[type] || '0px');
+        if (elemSpacingLinkState[type]) {
+            var newVal = Math.max(0, curVals[sideIdx] + delta);
+            curVals = [newVal, newVal, newVal, newVal];
+        } else {
+            curVals[sideIdx] = Math.max(0, curVals[sideIdx] + delta);
+        }
+
+        var cssVal = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
+        block.data[type] = cssVal;
+        renderCanvas();
+        renderInspector();
+    }
+
+    function onElemQuadInputChange(type, sideIdx, rawVal) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var num = parseFloat(rawVal);
+        if (isNaN(num) || num < 0) num = 0;
+        var curVals = parse4Values(block.data[type] || '0px');
+
+        if (elemSpacingLinkState[type]) {
+            curVals = [num, num, num, num];
+        } else {
+            curVals[sideIdx] = num;
+        }
+
+        var cssVal = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
+        block.data[type] = cssVal;
+        renderCanvas();
+    }
+
+    function stepElemSingleValue(key, delta, minVal, maxVal) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var cur = parseFloat(block.data[key] || '0');
+        if (isNaN(cur)) cur = minVal;
+        var next = Math.max(minVal, Math.min(maxVal, cur + delta));
+        block.data[key] = next + 'px';
+        renderCanvas();
+        renderInspector();
+    }
+
+    function onElemSingleNumChange(key, rawVal) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var num = parseFloat(rawVal);
+        if (isNaN(num)) return;
+        block.data[key] = num + 'px';
+        renderCanvas();
+    }
+
+    function resetElementStyles() {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) return;
+
+        delete block.data.margin;
+        delete block.data.padding;
+        delete block.data.display;
+        delete block.data.flex_direction;
+        delete block.data.justify_content;
+        delete block.data.align_items;
+        delete block.data.flex_wrap;
+        delete block.data.gap;
+        delete block.data.width;
+        delete block.data.max_width;
+        delete block.data.background;
+        delete block.data.border;
+        delete block.data.border_radius;
+        delete block.data.box_shadow;
+        delete block.data.opacity;
+
+        renderCanvas();
+        renderInspector();
+        showToast('↺ Estilos CSS do elemento redefinidos para os padrões!');
     }
 
     function updateNavToggleStyle(val) {

@@ -52,6 +52,16 @@ class NavMenuBlock implements BlockInterface
             default => 'center',
         };
 
+        $toggleAlign = (string)($data['toggle_align'] ?? $data['align'] ?? 'right');
+        $justifyToggle = match ($toggleAlign) {
+            'left'   => 'flex-start',
+            'center' => 'center',
+            'right'  => 'flex-end',
+            default  => 'flex-end',
+        };
+
+        $drawerSide = ($toggleAlign === 'left') ? 'left: 0; transform: translateX(-105%);' : 'right: 0; transform: translateX(105%);';
+
         $items = $this->resolveMenuItems($data, $location);
         if (empty($items)) {
             $items = [
@@ -103,6 +113,11 @@ class NavMenuBlock implements BlockInterface
             padding: 0;
             width: 100%;
         }
+        #{$navId} .ds-mobile-toggle-wrapper {
+            display: none;
+            width: 100%;
+            justify-content: {$justifyToggle};
+        }
         #{$navId} .ds-mobile-toggle-btn {
             display: none;
             background: transparent;
@@ -120,7 +135,7 @@ class NavMenuBlock implements BlockInterface
             display: none;
             position: fixed;
             top: 0;
-            right: 0;
+            {$drawerSide}
             bottom: 0;
             width: 80vw;
             max-width: 320px;
@@ -131,7 +146,6 @@ class NavMenuBlock implements BlockInterface
             box-shadow: -10px 0 30px rgba(0,0,0,0.7);
             flex-direction: column;
             gap: 16px;
-            transform: translateX(105%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         #{$navId} .ds-mobile-drawer.is-open {
@@ -150,6 +164,7 @@ class NavMenuBlock implements BlockInterface
         }
         @media (max-width: 768px) {
             #{$navId} .ds-desktop-menu { display: none !important; }
+            #{$navId} .ds-mobile-toggle-wrapper { display: flex !important; }
             #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
             #{$navId} .ds-mobile-drawer { display: flex !important; }
         }
@@ -158,6 +173,12 @@ class NavMenuBlock implements BlockInterface
         .ds-device-375 #{$navId} .ds-desktop-menu,
         .ds-device-768 #{$navId} .ds-desktop-menu {
             display: none !important;
+        }
+        .ds-mobile-mode #{$navId} .ds-mobile-toggle-wrapper,
+        .ds-is-mobile #{$navId} .ds-mobile-toggle-wrapper,
+        .ds-device-375 #{$navId} .ds-mobile-toggle-wrapper,
+        .ds-device-768 #{$navId} .ds-mobile-toggle-wrapper {
+            display: flex !important;
         }
         .ds-mobile-mode #{$navId} .ds-mobile-toggle-btn,
         .ds-is-mobile #{$navId} .ds-mobile-toggle-btn,
@@ -180,10 +201,12 @@ class NavMenuBlock implements BlockInterface
         </ul>
     </nav>
 
-    <!-- Botão Toggle Mobile Padronizado -->
-    <button type="button" class="ds-mobile-toggle-btn ds-toggle-{$toggleStyle}" onclick="window.toggleDsNavDrawer('{$navId}', true)" aria-label="Abrir Menu">
-        {$toggleContent}
-    </button>
+    <!-- Botão Toggle Mobile com Alinhamento Configurável -->
+    <div class="ds-mobile-toggle-wrapper">
+        <button type="button" class="ds-mobile-toggle-btn ds-toggle-{$toggleStyle}" onclick="window.toggleDsNavDrawer('{$navId}', true)" aria-label="Abrir Menu">
+            {$toggleContent}
+        </button>
+    </div>
 
     <!-- Backdrop & Gaveta Mobile -->
     <div class="ds-mobile-backdrop" id="{$navId}_backdrop" onclick="window.toggleDsNavDrawer('{$navId}', false)"></div>
