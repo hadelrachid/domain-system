@@ -29,5 +29,6 @@
     "align_center": "居中",
     "align_right": "右对齐",
     "system_locale": "系统语言",
-    "system_locale_desc": "设置控制台、面板和可视化构建器的默认语言。"
+    "system_locale_desc": "设置控制台、面板和可视化构建器的默认语言。",
+    "link_disabled_live": "实时模式下已禁用链接以防止离开编辑器。"
 }

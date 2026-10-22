@@ -628,6 +628,36 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
     }
 
+    function getPreviewGuardScript() {
+        return '<script>' +
+            'document.addEventListener("click", function(e) {' +
+                'var link = e.target.closest("a, area");' +
+                'if (link) {' +
+                    'e.preventDefault();' +
+                    'e.stopPropagation();' +
+                    'var href = link.getAttribute("href") || "#";' +
+                    'try {' +
+                        'if (window.parent && typeof window.parent.showToast === "function") {' +
+                            'var msg = (window.parent.__ ? window.parent.__("link_disabled_live", "Links estão desativados no modo Ao Vivo para não sair da edição.") : "Links estão desativados no modo Ao Vivo para não sair da edição.");' +
+                            'window.parent.showToast("🔗 " + msg + " (" + href + ")");' +
+                        '}' +
+                    '} catch(err) {}' +
+                    'return false;' +
+                '}' +
+            '}, true);' +
+            'document.addEventListener("submit", function(e) {' +
+                'e.preventDefault();' +
+                'e.stopPropagation();' +
+                'try {' +
+                    'if (window.parent && typeof window.parent.showToast === "function") {' +
+                        'window.parent.showToast("⚠️ Formulários desativados no modo Ao Vivo.");' +
+                    '}' +
+                '} catch(err) {}' +
+                'return false;' +
+            '}, true);' +
+        '</' + 'script>';
+    }
+
     var liveStageDebounceTimer = null;
     function loadLiveStageContent() {
         if (liveStageDebounceTimer) {
@@ -667,7 +697,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 } else {
                     bodyClass += ' ds-desktop-mode';
                 }
-                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;}</style></head><body class="' + bodyClass + '">' + html + '</body></html>';
+                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;} a{cursor:pointer !important;}</style></head><body class="' + bodyClass + '">' + html + getPreviewGuardScript() + '</body></html>';
             })
             .catch(function(err) {
                 console.error('[LiveStage] Erro ao renderizar preview ao vivo:', err);
@@ -2642,7 +2672,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             .then(function(res) { return res.text(); })
             .then(function(html) {
                 var iframe = document.getElementById('preview_iframe');
-                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:20px;background:#06090e;color:#fff;font-family:sans-serif;}</style></head><body>' + html + '</body></html>';
+                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:20px;background:#06090e;color:#fff;font-family:sans-serif;} a{cursor:pointer !important;}</style></head><body>' + html + getPreviewGuardScript() + '</body></html>';
             });
         } else {
             modal.style.display = 'none';

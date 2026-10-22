@@ -29,5 +29,6 @@
     "align_center": "Center",
     "align_right": "Right",
     "system_locale": "System Language",
-    "system_locale_desc": "Sets the default language for interfaces, dashboards, and visual builder."
+    "system_locale_desc": "Sets the default language for interfaces, dashboards, and visual builder.",
+    "link_disabled_live": "Links are disabled in Live mode to prevent leaving the editor."
 }

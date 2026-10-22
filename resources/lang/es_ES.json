@@ -29,5 +29,6 @@
     "align_center": "Centro",
     "align_right": "Derecha",
     "system_locale": "Idioma del Sistema",
-    "system_locale_desc": "Establece el idioma predeterminado de las interfaces, paneles y constructor visual."
+    "system_locale_desc": "Establece el idioma predeterminado de las interfaces, paneles y constructor visual.",
+    "link_disabled_live": "Los enlaces están deshabilitados en el modo En Vivo para no salir de la edición."
 }

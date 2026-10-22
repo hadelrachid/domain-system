@@ -29,5 +29,6 @@
     "align_center": "Centro",
     "align_right": "Direita",
     "system_locale": "Idioma do Sistema",
-    "system_locale_desc": "Define o idioma padrão das interfaces, painéis e construtor visual."
+    "system_locale_desc": "Define o idioma padrão das interfaces, painéis e construtor visual.",
+    "link_disabled_live": "Links desativados no modo Ao Vivo para não sair da edição."
 }
