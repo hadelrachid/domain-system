@@ -120,6 +120,35 @@ class ThemePartsAdminControllerTest extends TestCase
         $this->assertStringContainsString('3_cols_header', $content);
     }
 
+    public function testCreateWithMenuProviderPopulatesMenus(): void
+    {
+        $menuMock = $this->createMock(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class);
+        $menuMock->method('getMenus')->willReturn([
+            ['id' => 1, 'name' => 'Menu Principal', 'location' => 'header'],
+        ]);
+
+        $ctrlWithMenu = new ThemePartsAdminController(
+            $this->partRepo,
+            $this->partAssoc,
+            $this->tokens,
+            DefaultBlockRegistryFactory::create(null, $this->shortcodeManager),
+            $this->layoutGrid,
+            $this->renderer,
+            $this->createMock(ThemeManagerInterface::class),
+            $this->shortcodeManager,
+            $menuMock,
+            null,
+            $this->tempDir
+        );
+
+        $request = new Request(['type' => 'header'], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/builder/create']);
+        $response = $ctrlWithMenu->create($request);
+
+        $this->assertInstanceOf(ViewResponse::class, $response);
+        $content = $response->getContent();
+        $this->assertStringContainsString('Menu Principal', $content);
+    }
+
     public function testEditLoadsExistingPart(): void
     {
         $part = new ThemePart(

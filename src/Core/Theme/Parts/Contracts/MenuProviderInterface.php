@@ -10,6 +10,13 @@ namespace DomainSystem\Core\Theme\Parts\Contracts;
 interface MenuProviderInterface
 {
     /**
+     * Retorna a lista de menus cadastrados no sistema.
+     *
+     * @return array<int, array{id: int, name: string, location?: string}>
+     */
+    public function getMenus(): array;
+
+    /**
      * Retorna os itens de um menu por local ou ID.
      *
      * @param string $location Local do menu (ex: 'header', 'footer').

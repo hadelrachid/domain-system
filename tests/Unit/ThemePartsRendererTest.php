@@ -149,7 +149,15 @@ class ThemePartsRendererTest extends TestCase
             ['title' => 'Blog', 'url' => '/blog'],
         ]);
 
+        $repoMock->method('getMenus')->willReturn([
+            ['id' => 99, 'name' => 'Menu do Topo', 'location' => 'header'],
+        ]);
+
         $adapter = new NavMenuProviderAdapter($repoMock);
+        $menus = $adapter->getMenus();
+        $this->assertCount(1, $menus);
+        $this->assertSame('Menu do Topo', $menus[0]['name']);
+
         $items = $adapter->getMenuItems('header');
 
         $this->assertCount(2, $items);

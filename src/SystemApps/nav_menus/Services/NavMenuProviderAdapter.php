@@ -19,6 +19,15 @@ class NavMenuProviderAdapter implements MenuProviderInterface
         $this->repo = $repo;
     }
 
+    public function getMenus(): array
+    {
+        try {
+            return $this->repo->getMenus();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     public function getMenuItems(string $location = 'header', ?int $menuId = null): array
     {
         try {

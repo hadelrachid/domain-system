@@ -423,7 +423,7 @@ class ThemePartsAdminController
         }
 
         $menus = [];
-        if ($this->menuProvider !== null) {
+        if ($this->menuProvider !== null && method_exists($this->menuProvider, 'getMenus')) {
             $menus = $this->menuProvider->getMenus();
         }
 
@@ -453,7 +453,7 @@ class ThemePartsAdminController
         $presets = $this->layoutGrid->getPresets();
         $blocks = $this->blockRegistry->all();
         $shortcodes = $this->shortcodeManager->getRegisteredShortcodes();
-        $menus = $this->menuProvider ? $this->menuProvider->getMenus() : [];
+        $menus = ($this->menuProvider && method_exists($this->menuProvider, 'getMenus')) ? $this->menuProvider->getMenus() : [];
         $tokens = [
             'palette'    => $this->tokens->getColorPalette(),
             'typography' => $this->tokens->getTypography(),
