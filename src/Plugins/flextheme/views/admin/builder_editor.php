@@ -2031,23 +2031,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         } else if (block.type === 'nav_menu') {
             html += inspectorMenuSelector('Menu do Sistema', 'menu_id', block.data.menu_id || '');
             var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
-            html += '<div class="inspector-field">' +
-                    '<label class="inspector-label">Estilo do Hamburguer Mobile (Toggle)</label>' +
-                    '<div class="toggle-cards-grid">' +
-                        '<div class="toggle-card ' + (curToggle === 'classic' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'classic\')">' +
-                            '<div class="toggle-card-preview">☰</div><div class="toggle-card-info"><div class="toggle-card-name">Clássico</div><div class="toggle-card-desc">3 Barras</div></div>' +
-                        '</div>' +
-                        '<div class="toggle-card ' + (curToggle === 'pill' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'pill\')">' +
-                            '<div class="toggle-card-preview" style="font-size:10px; font-weight:800;">MENU ☰</div><div class="toggle-card-info"><div class="toggle-card-name">Pílula</div><div class="toggle-card-desc">Texto + Ícone</div></div>' +
-                        '</div>' +
-                        '<div class="toggle-card ' + (curToggle === 'minimal' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'minimal\')">' +
-                            '<div class="toggle-card-preview">═</div><div class="toggle-card-info"><div class="toggle-card-name">Minimal</div><div class="toggle-card-desc">2 Linhas</div></div>' +
-                        '</div>' +
-                        '<div class="toggle-card ' + (curToggle === 'dots' ? 'active' : '') + '" onclick="updateNavToggleStyle(\'dots\')">' +
-                            '<div class="toggle-card-preview">⋮</div><div class="toggle-card-info"><div class="toggle-card-name">Pontos</div><div class="toggle-card-desc">3 Pontos</div></div>' +
-                        '</div>' +
-                    '</div>' +
-                    '</div>';
+            html += inspectorSelect('Estilo do Hamburguer Mobile (Toggle)', 'toggle_style', [
+                { value: 'classic', label: '☰ Clássico (3 Barras)' },
+                { value: 'pill', label: 'MENU ☰ Pílula (Texto + Ícone)' },
+                { value: 'minimal', label: '═ Minimalista (2 Linhas)' },
+                { value: 'dots', label: '⋮ Pontos (3 Pontos Verticais)' }
+            ], curToggle);
 
             var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
             html += inspectorSelect('Posição do Botão Hamburguer (Mobile)', 'toggle_align', [
@@ -2285,8 +2274,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var partSetting = document.getElementById('setting_mobile_toggle');
         if (partSetting) partSetting.value = val;
         renderCanvas();
+        renderInspector();
     }
-
     function triggerImageUpload(targetPropKey) {
         currentUploadTargetKey = targetPropKey;
         var fileInput = document.getElementById('global_image_uploader');
@@ -2403,6 +2392,16 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
         block.data[key] = val;
+        if (key === 'toggle_style') {
+            state.mobile_toggle_style = val;
+            var partSetting = document.getElementById('setting_mobile_toggle');
+            if (partSetting) partSetting.value = val;
+        }
+        if (key === 'toggle_align') {
+            state.mobile_toggle_align = val;
+            var alignSetting = document.getElementById('setting_mobile_toggle_align');
+            if (alignSetting) alignSetting.value = val;
+        }
         renderCanvas();
     }
 
