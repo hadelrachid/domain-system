@@ -2352,6 +2352,8 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                '<label class="inspector-label">' + label + '</label>' +
                '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' + opts + '</select>' +
                '</div>';
+    }
+
     function inspectorDimension(label, key, val) {
         var num = val.replace(/[^0-9.]/g, '');
         var unit = val.replace(/[0-9.]/g, '') || 'px';
