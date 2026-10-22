@@ -63,18 +63,22 @@ class ThemePartsFoundationTest extends TestCase
         $this->assertSame('Header Principal Pro', $part->getTitle());
         $this->assertSame('3_cols_header', $part->getLayoutPreset());
         $this->assertSame(MobileToggleStyleInterface::STYLE_PILL, $part->getMobileToggleStyle());
+        $this->assertSame('right', $part->getMobileToggleAlign());
         $this->assertTrue($part->isDefault());
         $this->assertCount(3, $part->getColumnsData());
 
         $serialized = $part->toArray();
         $this->assertIsArray($serialized);
         $this->assertSame('header_principal', $serialized['id']);
+        $this->assertSame('right', $serialized['mobile_toggle_align']);
 
+        $serialized['mobile_toggle_align'] = 'center';
         $restored = ThemePart::fromArray($serialized);
         $this->assertSame($part->getId(), $restored->getId());
         $this->assertSame($part->getTitle(), $restored->getTitle());
         $this->assertSame($part->getLayoutPreset(), $restored->getLayoutPreset());
         $this->assertSame($part->getMobileToggleStyle(), $restored->getMobileToggleStyle());
+        $this->assertSame('center', $restored->getMobileToggleAlign());
     }
 
     public function testThemePartModelThrowsOnInvalidType(): void

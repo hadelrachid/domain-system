@@ -315,6 +315,27 @@ class ThemePartsAdminControllerTest extends TestCase
         $this->assertStringContainsString('Clique Aqui', $html);
     }
 
+    public function testPreviewInjectsMobileToggleStyleAndAlignIntoNavMenu(): void
+    {
+        $payload = [
+            'layout_preset'       => '1_col',
+            'container_settings'  => [],
+            'columns_data'        => [
+                0 => [['type' => 'nav_menu', 'data' => ['menu_id' => 1]]],
+            ],
+            'mobile_toggle_style' => 'dots',
+            'mobile_toggle_align' => 'left',
+        ];
+
+        $request = new Request([], $payload, ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/admin/builder/preview']);
+        $response = $this->controller->preview($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $html = $response->getContent();
+        $this->assertStringContainsString('ds-toggle-dots', $html);
+        $this->assertStringContainsString('justify-content: flex-start', $html);
+    }
+
     public function testSchemaExposesAll12BlocksPresetsShortcodesAndMenus(): void
     {
         $request = new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/builder/schema']);

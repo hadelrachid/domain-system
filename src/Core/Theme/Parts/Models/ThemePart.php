@@ -21,6 +21,7 @@ class ThemePart implements ThemePartInterface
     private array $columnsData;
     private array $sections;
     private string $mobileToggleStyle;
+    private string $mobileToggleAlign;
     private bool $isDefault;
     private int $createdAt;
     private int $updatedAt;
@@ -36,7 +37,8 @@ class ThemePart implements ThemePartInterface
         bool $isDefault = false,
         ?int $createdAt = null,
         ?int $updatedAt = null,
-        array $sections = []
+        array $sections = [],
+        string $mobileToggleAlign = 'right'
     ) {
         $cleanId = trim($id);
         if ($cleanId === '') {
@@ -82,6 +84,7 @@ class ThemePart implements ThemePartInterface
             MobileToggleStyleInterface::STYLE_MINIMAL,
             MobileToggleStyleInterface::STYLE_DOTS
         ], true) ? $mobileToggleStyle : MobileToggleStyleInterface::STYLE_CLASSIC;
+        $this->mobileToggleAlign = in_array($mobileToggleAlign, ['left', 'center', 'right'], true) ? $mobileToggleAlign : 'right';
         $this->isDefault = $isDefault;
         $this->createdAt = $createdAt ?? time();
         $this->updatedAt = $updatedAt ?? time();
@@ -122,6 +125,11 @@ class ThemePart implements ThemePartInterface
         return $this->mobileToggleStyle;
     }
 
+    public function getMobileToggleAlign(): string
+    {
+        return $this->mobileToggleAlign;
+    }
+
     public function isDefault(): bool
     {
         return $this->isDefault;
@@ -153,6 +161,7 @@ class ThemePart implements ThemePartInterface
             'columns_data'        => $this->columnsData,
             'sections'            => $this->sections,
             'mobile_toggle_style' => $this->mobileToggleStyle,
+            'mobile_toggle_align' => $this->mobileToggleAlign,
             'is_default'          => $this->isDefault,
             'created_at'          => $this->createdAt,
             'updated_at'          => $this->updatedAt,
@@ -172,7 +181,8 @@ class ThemePart implements ThemePartInterface
             (bool)($data['is_default'] ?? false),
             isset($data['created_at']) ? (int)$data['created_at'] : null,
             isset($data['updated_at']) ? (int)$data['updated_at'] : null,
-            (array)($data['sections'] ?? [])
+            (array)($data['sections'] ?? []),
+            (string)($data['mobile_toggle_align'] ?? 'right')
         );
     }
 }

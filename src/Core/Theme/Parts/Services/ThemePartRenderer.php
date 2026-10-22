@@ -105,9 +105,14 @@ class ThemePartRenderer implements ThemePartRendererInterface
                         $blockType = (string)($blockDef['type'] ?? '');
                         $blockData = (array)($blockDef['data'] ?? []);
                         
-                        // Se for bloco de nav_menu, garante o estilo do toggle configurado na parte
-                        if ($blockType === 'nav_menu' && !isset($blockData['toggle_style'])) {
-                            $blockData['toggle_style'] = $part->getMobileToggleStyle();
+                        // Se for bloco de nav_menu, garante o estilo e alinhamento do toggle configurados na parte
+                        if ($blockType === 'nav_menu') {
+                            if (!isset($blockData['toggle_style']) || empty($blockData['toggle_style'])) {
+                                $blockData['toggle_style'] = $part->getMobileToggleStyle();
+                            }
+                            if (!isset($blockData['toggle_align']) || empty($blockData['toggle_align'])) {
+                                $blockData['toggle_align'] = $part->getMobileToggleAlign();
+                            }
                         }
 
                         $block = $this->blockRegistry->get($blockType);

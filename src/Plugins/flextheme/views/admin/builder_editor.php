@@ -337,9 +337,9 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
                 <div class="inspector-field">
                     <label class="inspector-label">Posição do Botão Hamburguer (Mobile)</label>
                     <select id="setting_mobile_toggle_align" class="inspector-select" onchange="selectGlobalToggleAlign(this.value)">
-                        <option value="right" selected>➡️ Alinhar à Direita (Padrão)</option>
-                        <option value="center">🎯 Centralizar no Topo</option>
-                        <option value="left">⬅️ Alinhar à Esquerda</option>
+                        <option value="right" <?= $part->getMobileToggleAlign() === 'right' ? 'selected' : '' ?>>➡️ Alinhar à Direita (Padrão)</option>
+                        <option value="center" <?= $part->getMobileToggleAlign() === 'center' ? 'selected' : '' ?>>🎯 Centralizar no Topo</option>
+                        <option value="left" <?= $part->getMobileToggleAlign() === 'left' ? 'selected' : '' ?>>⬅️ Alinhar à Esquerda</option>
                     </select>
                     <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Define o lado em que o botão hamburguer é posicionado na tela do celular.</span>
                 </div>
@@ -515,6 +515,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
     function initStudio() {
         initDraggableNavigator();
+        state.mobile_toggle_style = state.mobile_toggle_style || '<?= $part->getMobileToggleStyle() ?>';
+        state.mobile_toggle_align = state.mobile_toggle_align || '<?= $part->getMobileToggleAlign() ?>';
+        var alignSel = document.getElementById('setting_mobile_toggle_align');
+        if (alignSel && state.mobile_toggle_align) {
+            alignSel.value = state.mobile_toggle_align;
+        }
         renderSidebarLayoutTab();
         renderBlocksCatalog();
         renderLayersTree();
@@ -622,24 +628,51 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         }
     }
 
+    var liveStageDebounceTimer = null;
     function loadLiveStageContent() {
-        var iframe = document.getElementById('live_stage_iframe');
-        var payload = JSON.parse(JSON.stringify(state));
-        payload.csrf_token = csrfToken;
+        if (liveStageDebounceTimer) {
+            clearTimeout(liveStageDebounceTimer);
+        }
+        liveStageDebounceTimer = setTimeout(function() {
+            var iframe = document.getElementById('live_stage_iframe');
+            if (!iframe) return;
+            var payload = JSON.parse(JSON.stringify(state));
+            payload.csrf_token = csrfToken;
 
-        fetch('<?= $baseUrl ?>/admin/builder/preview', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': csrfToken
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(function(res) { return res.text(); })
-        .then(function(html) {
-            iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;}</style></head><body>' + html + '</body></html>';
-        });
+            if (!payload.mobile_toggle_style && state.mobile_toggle_style) {
+                payload.mobile_toggle_style = state.mobile_toggle_style;
+            }
+            if (!payload.mobile_toggle_align && state.mobile_toggle_align) {
+                payload.mobile_toggle_align = state.mobile_toggle_align;
+            }
+
+            fetch('<?= $baseUrl ?>/admin/builder/preview', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                var bodyClass = 'ds-live-preview';
+                if (currentDevice === '375px') {
+                    bodyClass += ' ds-mobile-mode ds-device-375';
+                } else if (currentDevice === '768px') {
+                    bodyClass += ' ds-tablet-mode ds-device-768 ds-mobile-mode';
+                } else if (currentDevice === '1024px') {
+                    bodyClass += ' ds-laptop-mode';
+                } else {
+                    bodyClass += ' ds-desktop-mode';
+                }
+                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;}</style></head><body class="' + bodyClass + '">' + html + '</body></html>';
+            })
+            .catch(function(err) {
+                console.error('[LiveStage] Erro ao renderizar preview ao vivo:', err);
+            });
+        }, 50);
     }
 
     function setDevice(width) {
@@ -1344,6 +1377,9 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
 
         renderAddSectionArea(maxSections);
         updateSectionsCountBadge();
+        if (studioMode === 'live') {
+            loadLiveStageContent();
+        }
     }
 
     function renderAddSectionArea(maxSections) {
@@ -2424,7 +2460,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px' };
         if (type === 'divider') defaultData = { style: 'solid', height: '24px' };
         if (type === 'copyright') defaultData = { site_name: 'Domain-System' };
-        if (type === 'nav_menu') defaultData = { toggle_style: state.mobile_toggle_style || 'classic', align: 'center' };
+        if (type === 'nav_menu') defaultData = { toggle_style: state.mobile_toggle_style || 'classic', toggle_align: state.mobile_toggle_align || 'right', align: 'center' };
         return defaultData;
     }
 

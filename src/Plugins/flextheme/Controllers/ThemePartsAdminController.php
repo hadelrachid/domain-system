@@ -222,6 +222,7 @@ class ThemePartsAdminController
             $settings = (array)($input['container_settings'] ?? []);
             $columnsData = (array)($input['columns_data'] ?? []);
             $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+            $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
             $isDefault = !empty($input['is_default']);
             $sections = (array)($input['sections'] ?? []);
 
@@ -236,7 +237,8 @@ class ThemePartsAdminController
                 $isDefault,
                 isset($input['created_at']) ? (int)$input['created_at'] : null,
                 time(),
-                $sections
+                $sections,
+                $mobileToggleAlign
             );
 
             $this->partRepo->save($part);
@@ -384,6 +386,7 @@ class ThemePartsAdminController
             $settings = (array)($input['container_settings'] ?? []);
             $columnsData = (array)($input['columns_data'] ?? []);
             $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+            $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
             $sections = (array)($input['sections'] ?? []);
 
             if (!empty($sections)) {
@@ -402,8 +405,13 @@ class ThemePartsAdminController
                                 $bType = (string)($bDef['type'] ?? '');
                                 $bData = (array)($bDef['data'] ?? []);
 
-                                if ($bType === 'nav_menu' && !isset($bData['toggle_style'])) {
-                                    $bData['toggle_style'] = $mobileToggleStyle;
+                                if ($bType === 'nav_menu') {
+                                    if (!isset($bData['toggle_style']) || empty($bData['toggle_style'])) {
+                                        $bData['toggle_style'] = $mobileToggleStyle;
+                                    }
+                                    if (!isset($bData['toggle_align']) || empty($bData['toggle_align'])) {
+                                        $bData['toggle_align'] = $mobileToggleAlign;
+                                    }
                                 }
 
                                 $block = $this->blockRegistry->get($bType);
@@ -427,8 +435,13 @@ class ThemePartsAdminController
                             $bType = (string)($bDef['type'] ?? '');
                             $bData = (array)($bDef['data'] ?? []);
 
-                            if ($bType === 'nav_menu' && !isset($bData['toggle_style'])) {
-                                $bData['toggle_style'] = $mobileToggleStyle;
+                            if ($bType === 'nav_menu') {
+                                if (!isset($bData['toggle_style']) || empty($bData['toggle_style'])) {
+                                    $bData['toggle_style'] = $mobileToggleStyle;
+                                }
+                                if (!isset($bData['toggle_align']) || empty($bData['toggle_align'])) {
+                                    $bData['toggle_align'] = $mobileToggleAlign;
+                                }
                             }
 
                             $block = $this->blockRegistry->get($bType);

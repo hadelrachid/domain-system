@@ -43,6 +43,9 @@ interface ThemePartInterface
     /** Estilo do botão de toggle mobile do menu (classic, pill, minimal, dots) */
     public function getMobileToggleStyle(): string;
 
+    /** Posição do botão de toggle mobile do menu (left, center, right) */
+    public function getMobileToggleAlign(): string;
+
     /** Se é a parte padrão de fallback global */
     public function isDefault(): bool;
 
