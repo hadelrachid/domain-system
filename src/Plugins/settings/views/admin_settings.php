@@ -59,6 +59,17 @@
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">CNPJ (Opcional)</label>
             <input type="text" name="site_cnpj" value="<?= htmlspecialchars($settings['site_cnpj'] ?? '') ?>" style="width: 100%; padding: 8px; box-sizing: border-box;" placeholder="00.000.000/0001-00">
         </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Idioma Padrão do Sistema (Locale)</label>
+            <?php $currentLocale = $settings['site_locale'] ?? 'pt_BR'; ?>
+            <select name="site_locale" style="width: 100%; padding: 8px; box-sizing: border-box; background: #fff; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="pt_BR" <?= $currentLocale === 'pt_BR' ? 'selected' : '' ?>>🇧🇷 Português (Brasil)</option>
+                <option value="en_US" <?= $currentLocale === 'en_US' ? 'selected' : '' ?>>🇺🇸 English (United States)</option>
+                <option value="es_ES" <?= $currentLocale === 'es_ES' ? 'selected' : '' ?>>🇪🇸 Español</option>
+                <option value="zh_CN" <?= $currentLocale === 'zh_CN' ? 'selected' : '' ?>>🇨🇳 简体中文 (Chinese Simplified)</option>
+            </select>
+            <small style="color: #666;">Define o idioma global para interfaces administrativas, painéis e construtor visual.</small>
+        </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Slogan / Subtítulo</label>

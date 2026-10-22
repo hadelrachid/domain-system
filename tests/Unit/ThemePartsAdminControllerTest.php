@@ -336,4 +336,30 @@ class ThemePartsAdminControllerTest extends TestCase
         $this->assertArrayHasKey('toggle_styles', $data);
         $this->assertArrayHasKey('tokens', $data);
     }
+
+    public function testUploadImageDelegatesToMediaUploadService(): void
+    {
+        $pngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+        $tmp = tempnam(sys_get_temp_dir(), 'ctrl_upload_');
+        file_put_contents($tmp, $pngBytes);
+
+        $request = new Request([], [], ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/admin/builder/upload-image'], [], [
+            'image' => [
+                'name'     => 'ctrl_logo.png',
+                'type'     => 'image/png',
+                'tmp_name' => $tmp,
+                'error'    => UPLOAD_ERR_OK,
+                'size'     => strlen($pngBytes),
+            ],
+        ]);
+
+        $response = $this->controller->uploadImage($request);
+        @unlink($tmp);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $data = json_decode($response->getContent(), true);
+        $this->assertTrue($data['success']);
+        $this->assertArrayHasKey('url', $data);
+        $this->assertArrayHasKey('filename', $data);
+    }
 }

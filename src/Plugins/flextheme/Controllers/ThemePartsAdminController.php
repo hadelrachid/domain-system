@@ -6,9 +6,11 @@ namespace DomainSystem\Plugins\flextheme\Controllers;
 
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\TranslatorInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Core\I18n\Translator;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
@@ -20,6 +22,10 @@ use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
 use DomainSystem\Core\Theme\ShortcodeManager;
+use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
+use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
+use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
+use DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService;
 use Throwable;
 
 /**
@@ -41,6 +47,9 @@ class ThemePartsAdminController
     private ?MenuProviderInterface $menuProvider;
     private ?SessionManagerInterface $session;
     private string $basePath;
+    private ThemeDiscoveryServiceInterface $themeDiscovery;
+    private MediaUploadServiceInterface $mediaUpload;
+    private TranslatorInterface $translator;
 
     public function __construct(
         ThemePartRepositoryInterface $partRepo,
@@ -53,7 +62,10 @@ class ThemePartsAdminController
         ShortcodeManager $shortcodeManager,
         ?MenuProviderInterface $menuProvider = null,
         ?SessionManagerInterface $session = null,
-        ?string $basePath = null
+        ?string $basePath = null,
+        ?ThemeDiscoveryServiceInterface $themeDiscovery = null,
+        ?MediaUploadServiceInterface $mediaUpload = null,
+        ?TranslatorInterface $translator = null
     ) {
         $this->partRepo         = $partRepo;
         $this->partAssoc        = $partAssoc;
@@ -65,7 +77,10 @@ class ThemePartsAdminController
         $this->shortcodeManager = $shortcodeManager;
         $this->menuProvider     = $menuProvider;
         $this->session          = $session;
-        $this->basePath         = $basePath ?? dirname(__DIR__, 4);
+        $this->basePath         = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
+        $this->themeDiscovery   = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
+        $this->mediaUpload      = $mediaUpload ?? new MediaUploadService($this->basePath);
+        $this->translator       = $translator ?? new Translator($this->basePath . '/resources/lang');
     }
 
     /**
@@ -435,55 +450,22 @@ class ThemePartsAdminController
     }
 
     /**
-     * API AJAX: Upload de imagens (PNG, SVG, JPG, WEBP) para logos e blocos de imagem.
+     * API AJAX: Upload seguro de imagens para logos e blocos de imagem.
      */
     public function uploadImage(Request $request): Response
     {
         $file = $request->file('image') ?? ($request->file('file') ?? null);
-        if (!$file || empty($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        if (!$file) {
             return new Response(json_encode([
                 'success' => false,
                 'message' => 'Nenhum arquivo enviado ou erro no upload.',
-            ]), 400, ['Content-Type' => 'application/json']);
+            ], JSON_UNESCAPED_UNICODE), 400, ['Content-Type' => 'application/json']);
         }
 
-        $allowedExtensions = ['png', 'svg', 'jpg', 'jpeg', 'webp', 'gif'];
-        $origName = (string)($file['name'] ?? 'image.png');
-        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $result = $this->mediaUpload->upload($file);
+        $status = $result['success'] ? 200 : 400;
 
-        if (!in_array($ext, $allowedExtensions, true)) {
-            return new Response(json_encode([
-                'success' => false,
-                'message' => 'Formato não permitido. Envie PNG, SVG, JPG ou WEBP.',
-            ]), 400, ['Content-Type' => 'application/json']);
-        }
-
-        $uploadDir = $this->basePath . '/public/uploads/builder';
-        if (!is_dir($uploadDir)) {
-            @mkdir($uploadDir, 0755, true);
-        }
-
-        $safeName = 'logo_' . time() . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
-        $destPath = $uploadDir . '/' . $safeName;
-
-        if (!@move_uploaded_file($file['tmp_name'], $destPath)) {
-            if (!@copy($file['tmp_name'], $destPath)) {
-                return new Response(json_encode([
-                    'success' => false,
-                    'message' => 'Falha ao gravar arquivo em public/uploads/builder.',
-                ]), 500, ['Content-Type' => 'application/json']);
-            }
-        }
-
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
-        $publicUrl = $baseUrl . '/uploads/builder/' . $safeName;
-
-        return new Response(json_encode([
-            'success' => true,
-            'url'     => $publicUrl,
-            'filename'=> $safeName,
-            'message' => 'Imagem enviada com sucesso!',
-        ]), 200, ['Content-Type' => 'application/json']);
+        return new Response(json_encode($result, JSON_UNESCAPED_UNICODE), $status, ['Content-Type' => 'application/json']);
     }
 
     /**
@@ -531,6 +513,8 @@ class ThemePartsAdminController
                 'palette'    => $this->tokens->getColorPalette(),
                 'typography' => $this->tokens->getTypography(),
             ],
+            'locale'        => $this->translator->getLocale(),
+            'i18n'          => $this->translator->getCatalog(),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
     }
 
@@ -563,6 +547,8 @@ class ThemePartsAdminController
             'baseUrl'     => defined('BASE_URL') ? BASE_URL : '',
             'session'     => $this->session,
             'csrfToken'   => $this->getCsrfToken(),
+            'locale'      => $this->translator->getLocale(),
+            'i18n'        => $this->translator->getCatalog(),
         ], false); // wrapLayout false para o Studio Full Screen
     }
 
@@ -614,56 +600,16 @@ class ThemePartsAdminController
     }
 
     /**
-     * Descobre os temas instalados no sistema.
+     * Descobre os temas instalados no sistema via ThemeDiscoveryService.
      * @return array<int, array<string, string>>
      */
-    private function getAvailableThemes(): array
+    public function getAvailableThemes(): array
     {
-        $themes = [];
-        $seen = [];
-
-        // 1. Diretório raiz /themes
-        $themesDir = $this->basePath . '/themes';
-        if (is_dir($themesDir)) {
-            foreach (glob($themesDir . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
-                $folder = basename($dir);
-                if (in_array($folder, ['admin', 'manager'], true)) continue;
-                $seen[$folder] = true;
-                $json = file_exists($dir . '/theme.json') ? json_decode(file_get_contents($dir . '/theme.json'), true) : [];
-                $themes[] = [
-                    'folder' => $folder,
-                    'name'   => $json['name'] ?? ucfirst($folder),
-                ];
-            }
-        }
-
-        // 2. Bundled themes dentro de plugins
-        $pluginsDir = $this->basePath . '/src/Plugins';
-        if (is_dir($pluginsDir)) {
-            foreach (glob($pluginsDir . '/*/themes/*', GLOB_ONLYDIR) ?: [] as $dir) {
-                $folder = basename($dir);
-                if (isset($seen[$folder])) continue;
-                $seen[$folder] = true;
-                $json = file_exists($dir . '/theme.json') ? json_decode(file_get_contents($dir . '/theme.json'), true) : [];
-                $themes[] = [
-                    'folder' => $folder,
-                    'name'   => $json['name'] ?? ucfirst($folder),
-                ];
-            }
-        }
-
-        return $themes;
+        return $this->themeDiscovery->getAvailableThemes();
     }
 
-    private function getActiveThemeFolder(): string
+    public function getActiveThemeFolder(): string
     {
-        $activeFile = $this->basePath . '/config/active_theme.json';
-        if (file_exists($activeFile)) {
-            $data = json_decode(file_get_contents($activeFile), true);
-            if (isset($data['active']) && is_string($data['active'])) {
-                return $data['active'];
-            }
-        }
-        return 'default';
+        return $this->themeDiscovery->getActiveThemeFolder();
     }
 }

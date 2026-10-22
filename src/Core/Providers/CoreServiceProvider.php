@@ -22,6 +22,11 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Config\DatabaseConfig($dsn, $user, $pass);
         });
 
+        // 1.2 Central I18n & Translator (v2.5)
+        $container->singleton(\DomainSystem\Core\Contracts\TranslatorInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\I18n\Translator($basePath . '/resources/lang');
+        });
+
         // 1.4 Password Policy
         $container->singleton(\DomainSystem\Core\Contracts\PasswordPolicyInterface::class, function() {
             return new \DomainSystem\Core\Security\PasswordPolicy();

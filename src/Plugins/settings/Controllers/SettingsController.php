@@ -75,7 +75,7 @@ class SettingsController
 
     public function save(Request $request): \DomainSystem\Core\Contracts\ResponseInterface
     {
-        $allowedKeys = ['site_name', 'site_cnpj', 'site_slogan', 'site_address', 'site_phone', 'site_whatsapp'];
+        $allowedKeys = ['site_name', 'site_cnpj', 'site_slogan', 'site_address', 'site_phone', 'site_whatsapp', 'site_locale'];
         
         foreach ($allowedKeys as $key) {
             if ($request->has($key)) {
