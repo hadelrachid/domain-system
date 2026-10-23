@@ -23,11 +23,13 @@ class DesignTokens implements DesignTokensInterface
         'surface'    => 'rgba(31, 40, 51, 0.7)',
         'text_main'  => '#c5c6c7',
         'text_muted' => '#8b8c8d',
+        'border'     => 'rgba(255, 255, 255, 0.1)',
     ];
 
     private const DEFAULT_TYPOGRAPHY = [
         'primary_font'   => 'Inter, sans-serif',
         'secondary_font' => 'Fira Code, monospace',
+        'tertiary_font'  => 'Montserrat, sans-serif',
         'base_size'      => '16px',
         'heading_weight' => '800',
         'body_weight'    => '400',
@@ -104,6 +106,9 @@ class DesignTokens implements DesignTokensInterface
             }
             if ($key === 'secondary_font') {
                 $vars[] = "    --font-secondary: {$val};";
+            }
+            if ($key === 'tertiary_font') {
+                $vars[] = "    --font-tertiary: {$val};";
             }
         }
 

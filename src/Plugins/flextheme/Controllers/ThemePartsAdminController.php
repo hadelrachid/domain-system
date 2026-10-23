@@ -22,6 +22,8 @@ use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
 use DomainSystem\Core\Theme\ShortcodeManager;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
@@ -50,6 +52,7 @@ class ThemePartsAdminController
     private ThemeDiscoveryServiceInterface $themeDiscovery;
     private MediaUploadServiceInterface $mediaUpload;
     private TranslatorInterface $translator;
+    private ElementStyleRendererInterface $styleRenderer;
 
     public function __construct(
         ThemePartRepositoryInterface $partRepo,
@@ -65,7 +68,8 @@ class ThemePartsAdminController
         ?string $basePath = null,
         ?ThemeDiscoveryServiceInterface $themeDiscovery = null,
         ?MediaUploadServiceInterface $mediaUpload = null,
-        ?TranslatorInterface $translator = null
+        ?TranslatorInterface $translator = null,
+        ?ElementStyleRendererInterface $styleRenderer = null
     ) {
         $this->partRepo         = $partRepo;
         $this->partAssoc        = $partAssoc;
@@ -81,6 +85,7 @@ class ThemePartsAdminController
         $this->themeDiscovery   = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
         $this->mediaUpload      = $mediaUpload ?? new MediaUploadService($this->basePath);
         $this->translator       = $translator ?? new Translator($this->basePath . '/resources/lang');
+        $this->styleRenderer    = $styleRenderer ?? new ElementStyleRenderer();
     }
 
     /**
@@ -416,7 +421,12 @@ class ThemePartsAdminController
 
                                 $block = $this->blockRegistry->get($bType);
                                 if ($block !== null) {
-                                    $colBlocks[] = $block->render($bData, ['preview' => true]);
+                                    $renderedHtml = $block->render($bData, ['preview' => true]);
+                                    $elementStyles = $this->styleRenderer->renderStyleString($bData);
+                                    if ($elementStyles !== '') {
+                                        $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
+                                    }
+                                    $colBlocks[] = $renderedHtml;
                                 }
                             }
                         }
@@ -446,7 +456,12 @@ class ThemePartsAdminController
 
                             $block = $this->blockRegistry->get($bType);
                             if ($block !== null) {
-                                $colBlocks[] = $block->render($bData, ['preview' => true]);
+                                $renderedHtml = $block->render($bData, ['preview' => true]);
+                                $elementStyles = $this->styleRenderer->renderStyleString($bData);
+                                if ($elementStyles !== '') {
+                                    $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
+                                }
+                                $colBlocks[] = $renderedHtml;
                             }
                         }
                     }
@@ -454,7 +469,20 @@ class ThemePartsAdminController
                 }
                 $renderedGrid = $this->layoutGrid->renderSection($preset, $columnsHtml, $settings);
             }
-            $cssVars = '<style id="ds-design-tokens">' . $this->tokens->generateCssVariables() . '</style>';
+            $cssVars = '<style id="ds-design-tokens">' . $this->tokens->generateCssVariables() . '</style>' . "\n" .
+                '<style id="ds-builder-runtime">' .
+                '@keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }' .
+                '@keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }' .
+                '.ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }' .
+                '.ds-btn-grow:hover { transform: scale(1.05) !important; }' .
+                '.ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }' .
+                '.ds-btn-lift:hover { transform: translateY(-3px) !important; box-shadow: 0 10px 22px rgba(0,0,0,0.35) !important; }' .
+                '.ds-btn-glow { transition: box-shadow 0.25s ease, transform 0.2s ease !important; }' .
+                '.ds-btn-glow:hover { box-shadow: 0 0 25px var(--color-primary, #38bdf8) !important; }' .
+                '.ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }' .
+                '.ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }' .
+                '.ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }' .
+                '</style>';
 
             return new Response($cssVars . $renderedGrid, 200, ['Content-Type' => 'text/html; charset=utf-8']);
         } catch (Throwable $e) {

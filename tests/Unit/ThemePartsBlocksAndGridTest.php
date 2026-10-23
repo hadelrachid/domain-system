@@ -66,12 +66,13 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $all = $registry->all();
 
-        $this->assertCount(12, $all);
+        $this->assertCount(13, $all);
         $this->assertNotNull($registry->get('heading'));
         $this->assertNotNull($registry->get('paragraph'));
         $this->assertNotNull($registry->get('image'));
         $this->assertNotNull($registry->get('video'));
         $this->assertNotNull($registry->get('logo'));
+        $this->assertNotNull($registry->get('button'));
         $this->assertNotNull($registry->get('cta_button'));
         $this->assertNotNull($registry->get('divider'));
         $this->assertNotNull($registry->get('shortcode'));

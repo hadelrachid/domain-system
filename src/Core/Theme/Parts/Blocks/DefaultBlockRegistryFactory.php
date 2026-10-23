@@ -24,6 +24,7 @@ class DefaultBlockRegistryFactory
         $registry->register(new ImageBlock());
         $registry->register(new VideoBlock());
         $registry->register(new LogoBlock());
+        $registry->register(new ButtonBlock());
         $registry->register(new CtaButtonBlock());
         $registry->register(new DividerBlock());
         $registry->register(new ShortcodeBlock($shortcodeManager));

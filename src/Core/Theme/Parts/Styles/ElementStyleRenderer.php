@@ -50,8 +50,17 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         if (!empty($data['max_width'])) {
             $rules[] = 'max-width: ' . $this->sanitizeCssValue((string)$data['max_width']);
         }
+        if (!empty($data['height'])) {
+            $rules[] = 'height: ' . $this->sanitizeCssValue((string)$data['height']);
+        }
+        if (!empty($data['min_height'])) {
+            $rules[] = 'min-height: ' . $this->sanitizeCssValue((string)$data['min_height']);
+        }
         if (!empty($data['background'])) {
             $rules[] = 'background: ' . $this->sanitizeCssValue((string)$data['background']);
+        }
+        if (!empty($data['color'])) {
+            $rules[] = 'color: ' . $this->sanitizeCssValue((string)$data['color']);
         }
         if (!empty($data['border'])) {
             $rules[] = 'border: ' . $this->sanitizeCssValue((string)$data['border']);
@@ -64,6 +73,29 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         }
         if (!empty($data['opacity']) && $data['opacity'] !== '1' && $data['opacity'] !== 1) {
             $rules[] = 'opacity: ' . $this->sanitizeCssValue((string)$data['opacity']);
+        }
+
+        // Tipografia
+        if (!empty($data['font_family'])) {
+            $rules[] = 'font-family: ' . $this->sanitizeCssValue((string)$data['font_family']);
+        }
+        if (!empty($data['font_size'])) {
+            $rules[] = 'font-size: ' . $this->sanitizeCssValue((string)$data['font_size']);
+        }
+        if (!empty($data['font_weight'])) {
+            $rules[] = 'font-weight: ' . $this->sanitizeCssValue((string)$data['font_weight']);
+        }
+        if (!empty($data['line_height'])) {
+            $rules[] = 'line-height: ' . $this->sanitizeCssValue((string)$data['line_height']);
+        }
+        if (!empty($data['letter_spacing'])) {
+            $rules[] = 'letter-spacing: ' . $this->sanitizeCssValue((string)$data['letter_spacing']);
+        }
+        if (!empty($data['text_transform'])) {
+            $rules[] = 'text-transform: ' . $this->sanitizeCssValue((string)$data['text_transform']);
+        }
+        if (!empty($data['text_align'])) {
+            $rules[] = 'text-align: ' . $this->sanitizeCssValue((string)$data['text_align']);
         }
 
         return !empty($rules) ? implode('; ', $rules) . ';' : '';

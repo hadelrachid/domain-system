@@ -137,7 +137,20 @@ class ThemePartRenderer implements ThemePartRendererInterface
         // Se for Header, injeta as variáveis CSS dos Design Tokens no topo
         if ($injectDesignTokens) {
             $tokensCss = $this->designTokens->generateCssVariables();
-            $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n";
+            $runtimeCss = <<<CSS
+@keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+.ds-btn-grow:hover { transform: scale(1.05) !important; }
+.ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+.ds-btn-lift:hover { transform: translateY(-3px) !important; box-shadow: 0 10px 22px rgba(0,0,0,0.35) !important; }
+.ds-btn-glow { transition: box-shadow 0.25s ease, transform 0.2s ease !important; }
+.ds-btn-glow:hover { box-shadow: 0 0 25px var(--color-primary, #38bdf8) !important; }
+.ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }
+.ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }
+.ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }
+CSS;
+            $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
             return $tokensTag . $allSectionsHtml;
         }
 

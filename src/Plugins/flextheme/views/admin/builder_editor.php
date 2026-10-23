@@ -22,6 +22,7 @@ $initialJson = json_encode($partData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
 $presetsJson = json_encode($presets, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 $shortcodesJson = json_encode(array_keys($shortcodes), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+$tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($locale) ?>">
@@ -455,6 +456,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     var presets = <?= $presetsJson ?>;
     var shortcodesList = <?= $shortcodesJson ?>;
     var menusList = <?= $menusJson ?>;
+    window.DS_DESIGN_TOKENS = <?= $tokensJson ?>;
     
     // Normalização defensiva de seções (Garante que sempre exista state.sections)
     if (!state.sections || !Array.isArray(state.sections) || state.sections.length === 0) {
@@ -492,6 +494,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
     var blocksCatalog = [
         { type: 'heading', name: 'Título', icon: '🔤', desc: 'Títulos H1 até H6 com suporte a fontes e cores.' },
         { type: 'paragraph', name: 'Parágrafo', icon: '📄', desc: 'Texto corrido rico e tipografia escalável.' },
+        { type: 'button', name: 'Botão Genérico', icon: '🔘', desc: 'Botão com múltiplas ações (link, whatsapp, modal, scroll), cores dos tokens e hover.' },
         { type: 'image', name: 'Imagem', icon: '🖼️', desc: 'Imagem com dimensões dinâmicas, upload e link.' },
         { type: 'video', name: 'Vídeo', icon: '🎥', desc: 'YouTube, Vimeo ou MP4 direto responsivo.' },
         { type: 'nav_menu', name: 'Menu de Navegação', icon: '🧭', desc: 'Menu dinâmico com 4 tipos de toggle hamburguer.' },
@@ -1622,6 +1625,12 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             return '🖼️ Imagem (nenhum arquivo selecionado)';
         }
         if (block.type === 'video') return '🎥 ' + (d.url || 'Vídeo');
+        if (block.type === 'button') {
+            var bg = d.bg_color || 'var(--color-primary)';
+            var col = d.text_color || '#000';
+            return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';">🔘 ' + 
+                   escapeHtml(d.label || 'Botão') + '</span> <span style="font-size:10px; opacity:0.6;">[' + (d.action_type || 'link') + ']</span>';
+        }
         if (block.type === 'cta_button') {
             return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:var(--primary); color:#000;">' + 
                    escapeHtml(d.label || 'Botão CTA') + '</span>';
@@ -2045,20 +2054,99 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         if (block.type === 'heading') {
             html += inspectorTextInput('Texto do Título', 'text', block.data.text || '');
             html += inspectorSelect('Nível Hierárquico', 'level', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], block.data.level || 'h2');
+            html += inspectorFontSelector('Tipografia / Fonte do Título', 'font_family', block.data.font_family || 'var(--font-secondary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '2rem');
-            html += inspectorSelect('Fonte', 'font', ['primary', 'secondary'], block.data.font || 'secondary');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
-            html += inspectorTextInput('Cor do Título (ou token)', 'color', block.data.color || 'var(--color-primary)');
+            html += inspectorTokenColorPicker('Cor do Título', 'color', block.data.color || 'var(--color-primary)', 'primary');
         } else if (block.type === 'paragraph') {
             html += inspectorTextarea('Conteúdo do Texto', 'text', block.data.text || '');
+            html += inspectorFontSelector('Tipografia / Fonte do Texto', 'font_family', block.data.font_family || 'var(--font-primary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right', 'justify'], block.data.align || 'left');
-            html += inspectorTextInput('Cor do Texto', 'color', block.data.color || 'var(--color-text-main)');
+            html += inspectorTokenColorPicker('Cor do Texto', 'color', block.data.color || 'var(--color-text-main)', 'text_main');
+        } else if (block.type === 'button') {
+            html += inspectorTextInput('Texto do Botão', 'label', block.data.label || 'Clique Aqui');
+            html += inspectorTextInput('Subtexto Auxiliar (Opcional)', 'subtext', block.data.subtext || '');
+            
+            var actionOpts = [
+                { value: 'link', label: '🔗 Link URL (Externo ou Interno)' },
+                { value: 'scroll_to', label: '⚓ Rolar até Âncora (#secao)' },
+                { value: 'whatsapp', label: '💬 Conversa no WhatsApp' },
+                { value: 'tel', label: '📞 Ligação Telefônica' },
+                { value: 'email', label: '✉️ Enviar Email' },
+                { value: 'modal', label: '🪟 Abrir Janela Modal' },
+                { value: 'javascript', label: '⚙️ Executar JavaScript' },
+                { value: 'submit', label: '📤 Submeter Formulário' }
+            ];
+            html += inspectorSelect('Ação do Botão', 'action_type', actionOpts, block.data.action_type || 'link');
+
+            var curAction = block.data.action_type || 'link';
+            var urlPlaceholder = 'https://exemplo.com ou /pagina';
+            var urlLabel = 'Link de Destino (URL)';
+            if (curAction === 'scroll_to') {
+                urlLabel = 'ID da Âncora de Destino';
+                urlPlaceholder = '#contato ou #sobre';
+            } else if (curAction === 'whatsapp') {
+                urlLabel = 'Número do WhatsApp (com DDI)';
+                urlPlaceholder = '5511999999999';
+            } else if (curAction === 'tel') {
+                urlLabel = 'Número de Telefone';
+                urlPlaceholder = '+55 11 9999-9999';
+            } else if (curAction === 'email') {
+                urlLabel = 'Endereço de Email';
+                urlPlaceholder = 'contato@seusite.com';
+            } else if (curAction === 'modal') {
+                urlLabel = 'ID do Modal a Abrir';
+                urlPlaceholder = 'modal_orcamento';
+            } else if (curAction === 'javascript') {
+                urlLabel = 'Código JavaScript / Função';
+                urlPlaceholder = 'alert("Olá!");';
+            }
+
+            if (curAction !== 'submit') {
+                html += '<div class="inspector-field">' +
+                        '<label class="inspector-label">' + urlLabel + '</label>' +
+                        '<input type="text" class="inspector-input" value="' + escapeAttr(block.data.url || '') + '" oninput="updateBlockProp(\'url\', this.value)" placeholder="' + escapeAttr(urlPlaceholder) + '">' +
+                        '</div>';
+            }
+
+            if (curAction === 'whatsapp') {
+                html += inspectorTextInput('Mensagem Inicial do WhatsApp', 'whatsapp_message', block.data.whatsapp_message || '');
+            } else if (curAction === 'link') {
+                html += inspectorSelect('Destino da Página (Target)', 'target', [
+                    { value: '_self', label: 'Mesma Aba / Janela (_self)' },
+                    { value: '_blank', label: 'Nova Aba (_blank)' }
+                ], block.data.target || '_self');
+            }
+
+            html += inspectorTokenColorPicker('Cor de Fundo do Botão', 'bg_color', block.data.bg_color || 'var(--color-primary)', 'primary');
+            html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
+            html += inspectorFontSelector('Tipografia do Botão', 'font_family', block.data.font_family || 'var(--font-primary)');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
+            html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
+            html += inspectorDimension('Arredondamento de Borda', 'border_radius', block.data.border_radius || '8px');
+            html += inspectorSelect('Alinhamento', 'align', [
+                { value: 'left', label: 'Esquerda' },
+                { value: 'center', label: 'Centro' },
+                { value: 'right', label: 'Direita' },
+                { value: 'justify', label: 'Largura Total (100%)' }
+            ], block.data.align || 'left');
+            html += inspectorTextInput('Ícone (Emoji ou Símbolo)', 'icon', block.data.icon || '');
+            if (block.data.icon) {
+                html += inspectorSelect('Posição do Ícone', 'icon_position', [
+                    { value: 'left', label: 'Antes do Texto (Esquerda)' },
+                    { value: 'right', label: 'Depois do Texto (Direita)' }
+                ], block.data.icon_position || 'left');
+            }
         } else if (block.type === 'cta_button') {
             html += inspectorTextInput('Texto do Botão', 'label', block.data.label || 'Clique Aqui');
             html += inspectorTextInput('Link / URL de Destino', 'url', block.data.url || '#');
-            html += inspectorSelect('Variante', 'variant', ['primary', 'secondary', 'outline'], block.data.variant || 'primary');
-            html += inspectorDimension('Padding', 'padding', block.data.padding || '12px 24px');
+            html += inspectorSelect('Variante Estilizada', 'variant', ['primary', 'secondary', 'outline', 'glow'], block.data.variant || 'primary');
+            html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorTokenColorPicker('Cor de Fundo do Botão', 'bg_color', block.data.bg_color || 'var(--color-primary)', 'primary');
+            html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
+            html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'logo') {
             html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || 'DomainSystem');
@@ -2112,10 +2200,21 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
             ], curToggleAlign);
 
             html += inspectorSelect('Alinhamento dos Links (Desktop)', 'align', ['left', 'center', 'right'], block.data.align || 'center');
+            html += inspectorSelect('Animação Hover dos Links', 'hover_animation', [
+                { value: 'underline', label: '📏 Sublinhado Dinâmico' },
+                { value: 'pill_glow', label: '💊 Pílula Iluminada' },
+                { value: 'grow', label: '🔍 Escala Suave' },
+                { value: 'bracket', label: '🔲 Colchetes Revelados [ ]' },
+                { value: 'none', label: '⚪ Sem Animação' }
+            ], block.data.hover_animation || 'underline');
+            html += inspectorTokenColorPicker('Cor dos Links', 'link_color', block.data.link_color || 'var(--color-text-main)', 'text_main');
+            html += inspectorTokenColorPicker('Cor do Link Ativo / Hover', 'active_color', block.data.active_color || 'var(--color-primary)', 'primary');
+            html += inspectorFontSelector('Tipografia dos Links', 'font_family', block.data.font_family || 'var(--font-primary)');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '0.95rem');
         } else if (block.type === 'divider') {
             html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'transparent'], block.data.style || 'solid');
             html += inspectorDimension('Altura / Espaçamento', 'height', block.data.height || '20px');
-            html += inspectorTextInput('Cor da Linha', 'color', block.data.color || 'var(--border)');
+            html += inspectorTokenColorPicker('Cor da Linha', 'color', block.data.color || 'var(--color-border)', 'border');
         } else if (block.type === 'copyright') {
             html += inspectorTextInput('Nome do Site', 'site_name', block.data.site_name || 'Domain-System');
             html += inspectorTextInput('Texto Complementar', 'text', block.data.text || '');
@@ -2199,7 +2298,7 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         // DIMENSÕES & VISUAL
         html += inspectorTextInput('Largura do Elemento (Width)', 'width', block.data.width || '');
         html += inspectorTextInput('Largura Máxima (Max-Width)', 'max_width', block.data.max_width || '');
-        html += inspectorTextInput('Cor de Fundo do Elemento (Background)', 'background', block.data.background || '');
+        html += inspectorTokenColorPicker('Cor de Fundo do Elemento (Background)', 'background', block.data.background || 'transparent', 'transparent');
 
         // BORDER RADIUS COM STEPPER
         var curRadiusNum = parseFloat(block.data.border_radius || '0') || 0;
@@ -2381,6 +2480,149 @@ $menusJson = json_encode($menus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | 
         .catch(function(err) {
             alert('Erro de conexão ao enviar imagem: ' + err);
         });
+    }
+
+    // DESIGN TOKENS COLOR PICKER
+    function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
+        var dt = window.DS_DESIGN_TOKENS || {};
+        var palette = dt.palette || {
+            primary: '#38bdf8',
+            secondary: '#1f2833',
+            tertiary: '#60a5fa',
+            background: '#0b0c10',
+            surface: 'rgba(31, 40, 51, 0.7)',
+            text_main: '#c5c6c7',
+            text_muted: '#8b8c8d',
+            border: 'rgba(255, 255, 255, 0.1)'
+        };
+
+        var tokenList = [
+            { id: 'primary', label: 'Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
+            { id: 'secondary', label: 'Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
+            { id: 'tertiary', label: 'Terciária', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
+            { id: 'background', label: 'Fundo', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
+            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
+            { id: 'text_main', label: 'Texto Principal', var: 'var(--color-text-main)', hex: palette.text_main || '#c5c6c7' },
+            { id: 'text_muted', label: 'Texto Suave', var: 'var(--color-text-muted)', hex: palette.text_muted || '#8b8c8d' },
+            { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' },
+            { id: 'transparent', label: 'Transparente', var: 'transparent', hex: 'transparent' }
+        ];
+
+        var swatchesHtml = '';
+        tokenList.forEach(function(t) {
+            var isAct = (curVal === t.var || curVal === t.hex || (!curVal && defaultToken === t.id));
+            var actClass = isAct ? ' active' : '';
+            var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
+            var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
+            var escapedVar = escapeAttr(t.var);
+            
+            swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
+                            'style="' + bgStyle + '" ' +
+                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Transparente' : t.hex) + ')') + '" ' +
+                            'onclick="updateBlockProp(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderInspector();">' +
+                            '</button>';
+        });
+
+        var hexVal = curVal || '';
+        if (hexVal.indexOf('var(') === 0) {
+            var matched = tokenList.find(function(t) { return t.var === hexVal; });
+            if (matched && matched.hex && matched.hex !== 'transparent' && matched.hex.indexOf('#') === 0) {
+                hexVal = matched.hex;
+            } else {
+                hexVal = '#38bdf8';
+            }
+        }
+        if (!hexVal.startsWith('#') || hexVal.length !== 7) {
+            hexVal = '#38bdf8';
+        }
+
+        return '<div class="inspector-field">' +
+               '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+               '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
+               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'Padrão') + '</span>' +
+               '</div>' +
+               '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
+               '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
+               '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value)" placeholder="var(--color-primary) ou #hex ou rgba">' +
+               '</div>' +
+               '</div>';
+    }
+
+    // FONTS / TYPOGRAPHY SELECTOR COM DESIGN TOKENS E FONTES WEB
+    function inspectorFontSelector(label, key, curVal) {
+        var dt = window.DS_DESIGN_TOKENS || {};
+        var typo = dt.typography || {};
+        var fontPrimary = typo.primary_font || 'Inter, sans-serif';
+        var fontSecondary = typo.secondary_font || 'Fira Code, monospace';
+        var fontTertiary = typo.tertiary_font || 'Montserrat, sans-serif';
+
+        var groups = [
+            {
+                group: 'Design Tokens do Tema (Recomendado)',
+                options: [
+                    { value: 'var(--font-primary)', label: '⭐ Fonte Primária (' + fontPrimary.split(',')[0].replace(/['"]/g, '') + ')' },
+                    { value: 'var(--font-secondary)', label: '⭐ Fonte Secundária (' + fontSecondary.split(',')[0].replace(/['"]/g, '') + ')' },
+                    { value: 'var(--font-tertiary)', label: '⭐ Fonte Terciária (' + fontTertiary.split(',')[0].replace(/['"]/g, '') + ')' }
+                ]
+            },
+            {
+                group: 'Sans-Serif (Modernas)',
+                options: [
+                    { value: 'Inter, sans-serif', label: 'Inter' },
+                    { value: 'Roboto, sans-serif', label: 'Roboto' },
+                    { value: 'Montserrat, sans-serif', label: 'Montserrat' },
+                    { value: 'Poppins, sans-serif', label: 'Poppins' },
+                    { value: 'Open Sans, sans-serif', label: 'Open Sans' },
+                    { value: 'system-ui, -apple-system, sans-serif', label: 'System UI (Nativa)' }
+                ]
+            },
+            {
+                group: 'Serif (Editoriais & Clássicas)',
+                options: [
+                    { value: 'Georgia, serif', label: 'Georgia' },
+                    { value: "'Playfair Display', serif", label: 'Playfair Display' },
+                    { value: "'Merriweather', serif", label: 'Merriweather' }
+                ]
+            },
+            {
+                group: 'Monospace (Código & Técnico)',
+                options: [
+                    { value: "'Fira Code', monospace", label: 'Fira Code' },
+                    { value: "'Courier New', monospace", label: 'Courier New' }
+                ]
+            }
+        ];
+
+        var html = '<div class="inspector-field">' +
+                   '<label class="inspector-label">' + label + '</label>' +
+                   '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">';
+
+        groups.forEach(function(g) {
+            html += '<optgroup label="' + escapeAttr(g.group) + '">';
+            g.options.forEach(function(opt) {
+                var isSel = (opt.value === curVal);
+                html += '<option value="' + escapeAttr(opt.value) + '"' + (isSel ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>';
+            });
+            html += '</optgroup>';
+        });
+
+        html += '</select></div>';
+        return html;
+    }
+
+    // HOVER ANIMATION SELECTOR
+    function inspectorHoverAnimation(label, key, curVal) {
+        var options = [
+            { value: 'lift', label: '🚀 Elevar com Sombra (Lift & Shadow)' },
+            { value: 'grow', label: '🔍 Aumentar Escala (Scale Up)' },
+            { value: 'glow', label: '✨ Brilho Pulsante (Glow)' },
+            { value: 'shimmer', label: '💫 Reflexo Metálico (Shimmer)' },
+            { value: 'bounce', label: '⚡ Salto Suave (Bounce)' },
+            { value: 'none', label: '⚪ Nenhuma Animação' }
+        ];
+
+        return inspectorSelect(label, key, options, curVal || 'lift');
     }
 
     function inspectorTextInput(label, key, val) {

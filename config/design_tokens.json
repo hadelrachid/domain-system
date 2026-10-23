@@ -1,0 +1,19 @@
+{
+    "palette": {
+        "primary": "#004080",
+        "secondary": "#008080",
+        "tertiary": "#8080c0",
+        "background": "#808080",
+        "surface": "rgba(31, 40, 51, 0.7)",
+        "text_main": "#c5c6c7",
+        "text_muted": "#8b8c8d"
+    },
+    "typography": {
+        "primary_font": "Inter, sans-serif",
+        "secondary_font": "Fira Code, monospace",
+        "base_size": "16px",
+        "heading_weight": "800",
+        "body_weight": "400"
+    },
+    "updated_at": 1792713836
+}

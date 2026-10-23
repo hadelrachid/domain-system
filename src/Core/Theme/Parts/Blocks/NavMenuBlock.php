@@ -53,6 +53,11 @@ class NavMenuBlock implements BlockInterface
         };
 
         $toggleAlign = (string)($data['toggle_align'] ?? $data['align'] ?? 'right');
+        $linkColor = (string)($data['link_color'] ?? 'var(--color-text-main, #c5c6c7)');
+        $activeColor = (string)($data['active_color'] ?? 'var(--color-primary, #38bdf8)');
+        $fontFamily = !empty($data['font_family']) ? (string)$data['font_family'] : 'var(--font-primary, inherit)';
+        $fontSize = !empty($data['font_size']) ? (string)$data['font_size'] : '0.95rem';
+        $hoverAnim = (string)($data['hover_animation'] ?? 'underline');
         $justifyToggle = match ($toggleAlign) {
             'left'   => 'flex-start',
             'center' => 'center',
@@ -76,6 +81,14 @@ class NavMenuBlock implements BlockInterface
         $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
         // Renderiza itens desktop
+        $animClass = match ($hoverAnim) {
+            'pill_glow', 'pill' => ' ds-nav-anim-pill',
+            'grow'              => ' ds-nav-anim-grow',
+            'bracket'           => ' ds-nav-anim-bracket',
+            'none'              => '',
+            default             => ' ds-nav-anim-underline',
+        };
+
         $desktopLinks = [];
         $mobileLinks = [];
         foreach ($items as $item) {
@@ -83,10 +96,12 @@ class NavMenuBlock implements BlockInterface
             $url = htmlspecialchars((string)($item['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
             $isActive = ($currentUri === $url || ($url !== $baseUrl . '/' && $url !== '#' && str_starts_with((string)$currentUri, (string)$url)));
 
-            $activeStyle = $isActive ? 'color: var(--primary, #45f3ff); font-weight: 700;' : 'color: var(--color-text-main, #c5c6c7);';
+            $itemColor = $isActive ? $activeColor : $linkColor;
+            $activeClass = $isActive ? ' active' : '';
+            $activeStyle = "color: {$itemColor};" . ($isActive ? ' font-weight: 700;' : '');
 
-            $desktopLinks[] = "<li style=\"margin: 0;\"><a href=\"{$url}\" class=\"ds-nav-link\" style=\"{$activeStyle} text-decoration: none; font-size: 0.95rem; transition: color 0.2s;\">{$title}</a></li>";
-            $mobileLinks[] = "<li style=\"margin: 0;\"><a href=\"{$url}\" class=\"ds-mobile-nav-link\" style=\"{$activeStyle} display: block; padding: 10px 14px; text-decoration: none; border-radius: 6px; font-size: 1rem;\">{$title}</a></li>";
+            $desktopLinks[] = "<li style=\"margin: 0;\"><a href=\"{$url}\" class=\"ds-nav-link{$activeClass}{$animClass}\" style=\"{$activeStyle} text-decoration: none; font-family: {$fontFamily}; font-size: {$fontSize}; transition: all 0.25s ease;\">{$title}</a></li>";
+            $mobileLinks[] = "<li style=\"margin: 0;\"><a href=\"{$url}\" class=\"ds-mobile-nav-link{$activeClass}\" style=\"{$activeStyle} display: block; padding: 10px 14px; text-decoration: none; border-radius: 6px; font-size: 1rem; font-family: {$fontFamily};\">{$title}</a></li>";
         }
 
         $desktopUl = implode("\n", $desktopLinks);
@@ -113,6 +128,59 @@ class NavMenuBlock implements BlockInterface
             padding: 0;
             width: 100%;
         }
+        #{$navId} .ds-nav-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 6px;
+        }
+        #{$navId} .ds-nav-link:hover, #{$navId} .ds-nav-link.active {
+            color: {$activeColor} !important;
+        }
+        /* HOVER ANIMATIONS */
+        #{$navId} .ds-nav-anim-underline::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 50%;
+            background: {$activeColor};
+            transition: all 0.25s ease;
+            transform: translateX(-50%);
+        }
+        #{$navId} .ds-nav-anim-underline:hover::after, #{$navId} .ds-nav-anim-underline.active::after {
+            width: 100%;
+        }
+        #{$navId} .ds-nav-anim-pill {
+            border-radius: 20px;
+            padding: 6px 14px;
+        }
+        #{$navId} .ds-nav-anim-pill:hover, #{$navId} .ds-nav-anim-pill.active {
+            background: rgba(56, 189, 248, 0.12);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+        }
+        #{$navId} .ds-nav-anim-grow:hover {
+            transform: scale(1.1);
+        }
+        #{$navId} .ds-nav-anim-bracket::before {
+            content: '[';
+            opacity: 0;
+            margin-right: 4px;
+            transition: all 0.2s ease;
+            color: {$activeColor};
+        }
+        #{$navId} .ds-nav-anim-bracket::after {
+            content: ']';
+            opacity: 0;
+            margin-left: 4px;
+            transition: all 0.2s ease;
+            color: {$activeColor};
+        }
+        #{$navId} .ds-nav-anim-bracket:hover::before, #{$navId} .ds-nav-anim-bracket:hover::after {
+            opacity: 1;
+        }
+
         #{$navId} .ds-mobile-toggle-wrapper {
             display: none;
             width: 100%;
