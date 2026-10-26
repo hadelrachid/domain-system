@@ -88,4 +88,19 @@ class ElementStyleRendererTest extends TestCase
         $this->assertStringNotContainsString('<script>', $css);
         $this->assertStringNotContainsString('</style>', $css);
     }
+
+    public function testRenderStyleStringWithDetailedBorderProperties(): void
+    {
+        $data = [
+            'border_width' => '2px 0px 4px 0px',
+            'border_style' => 'dashed',
+            'border_color' => 'var(--color-primary)',
+        ];
+
+        $css = $this->renderer->renderStyleString($data);
+
+        $this->assertStringContainsString('border-width: 2px 0px 4px 0px;', $css);
+        $this->assertStringContainsString('border-style: dashed;', $css);
+        $this->assertStringContainsString('border-color: var(--color-primary);', $css);
+    }
 }

@@ -2487,9 +2487,24 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     '</div>';
         }
 
-        // DIMENSÕES & VISUAL
-        html += inspectorTextInput('Largura do Elemento (Width)', 'width', block.data.width || '');
-        html += inspectorTextInput('Largura Máxima (Max-Width)', 'max_width', block.data.max_width || '');
+        // DIMENSÕES & VISUAL COM STEPPERS E PRESETS
+        html += renderElemDimensionWithSteppers('Largura do Elemento (Width)', 'width', block.data.width || '', '%', [
+            { label: 'Auto', value: 'auto' },
+            { label: '25%', value: '25%' },
+            { label: '50%', value: '50%' },
+            { label: '75%', value: '75%' },
+            { label: '100%', value: '100%' }
+        ], 0, 2560, 10);
+
+        html += renderElemDimensionWithSteppers('Largura Máxima (Max-Width)', 'max_width', block.data.max_width || '', 'px', [
+            { label: 'Nenhum', value: 'none' },
+            { label: '480px', value: '480px' },
+            { label: '768px', value: '768px' },
+            { label: '1024px', value: '1024px' },
+            { label: '1200px', value: '1200px' },
+            { label: '100%', value: '100%' }
+        ], 0, 3840, 20);
+
         html += inspectorTokenColorPicker('Cor de Fundo do Elemento (Background)', 'background', block.data.background || 'transparent', 'transparent');
 
         // BORDER RADIUS COM STEPPER
@@ -2506,9 +2521,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 '</div>' +
                 '</div>';
 
-        html += inspectorTextInput('Borda (Border)', 'border', block.data.border || '');
-        html += inspectorTextInput('Sombra (Box Shadow)', 'box_shadow', block.data.box_shadow || '');
-        html += inspectorTextInput('Opacidade (0.1 a 1.0)', 'opacity', (block.data.opacity !== undefined ? block.data.opacity : ''));
+        // BORDA COMPLETA COM TIPO, 4 LADOS STEPPERS E DESIGN TOKENS
+        html += renderElemBorderControl(block);
+
+        // SOMBRA DA CAIXA (BOX SHADOW) COM PRESETS VISUAIS
+        html += renderElemBoxShadowControl(block);
+
+        // OPACIDADE COM SLIDER E STEPPERS
+        html += renderElemOpacityControl(block);
 
         html += '</div>';
 
@@ -2518,8 +2538,346 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     // HELPER FUNCTIONS PARA ESTILOS CSS DOS ELEMENTOS (STEPPERS + RESET)
     var elemSpacingLinkState = {
         margin: true,
-        padding: true
+        padding: true,
+        border: true
     };
+
+    function renderElemDimensionWithSteppers(label, key, curVal, defaultUnit, presets, minVal, maxVal, stepDelta) {
+        var valStr = String(curVal || '').trim();
+        var num = parseFloat(valStr.replace(/[^0-9.-]/g, ''));
+        var isAutoOrNone = (valStr === 'auto' || valStr === 'none' || valStr === '');
+        if (isNaN(num)) num = isAutoOrNone ? 0 : 100;
+        var unit = valStr.replace(/[0-9.-]/g, '') || defaultUnit;
+        if (unit !== 'px' && unit !== '%' && unit !== 'vw') {
+            unit = defaultUnit;
+        }
+
+        var displayVal = valStr !== '' ? valStr : (isAutoOrNone ? 'auto' : 'padrão');
+
+        var out = '<div class="inspector-field" style="margin-bottom:12px;">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                  '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
+                  '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + escapeHtml(displayVal) + '</span>' +
+                  '</div>' +
+                  '<div style="display:flex; gap:6px; align-items:center;">' +
+                  '<div class="stepper-single-wrap" style="flex:1;">' +
+                  '<button type="button" class="step-btn" onclick="stepElemDimValue(\'' + key + '\', -' + stepDelta + ', ' + minVal + ', ' + maxVal + ', \'' + unit + '\')">-</button>' +
+                  '<input type="number" class="step-input-single" value="' + (isAutoOrNone ? '' : num) + '" placeholder="auto" min="' + minVal + '" max="' + maxVal + '" oninput="onElemDimNumChange(\'' + key + '\', this.value, \'' + unit + '\')">' +
+                  '<button type="button" class="step-btn" onclick="stepElemDimValue(\'' + key + '\', ' + stepDelta + ', ' + minVal + ', ' + maxVal + ', \'' + unit + '\')">+</button>' +
+                  '</div>' +
+                  '<select class="inspector-select" style="width:70px; padding:6px 4px; font-size:11px;" onchange="changeElemDimUnit(\'' + key + '\', this.value)">' +
+                  '<option value="px"' + (unit === 'px' ? ' selected' : '') + '>px</option>' +
+                  '<option value="%"' + (unit === '%' ? ' selected' : '') + '>%</option>' +
+                  '<option value="vw"' + (unit === 'vw' ? ' selected' : '') + '>vw</option>' +
+                  '<option value="auto"' + (valStr === 'auto' ? ' selected' : '') + '>auto</option>' +
+                  '</select>' +
+                  '</div>';
+
+        if (presets && presets.length > 0) {
+            out += '<div style="display:flex; gap:4px; margin-top:5px; flex-wrap:wrap;">';
+            presets.forEach(function(p) {
+                var isPAct = (valStr === p.value);
+                var actStyle = isPAct ? 'background:rgba(56,189,248,0.25); border-color:var(--primary); color:#fff;' : 'background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.1); color:var(--text-muted);';
+                out += '<button type="button" class="header-btn" style="font-size:10px; padding:1px 6px; border-radius:3px; ' + actStyle + '" onclick="setElemDimPreset(\'' + key + '\', \'' + p.value + '\')">' + p.label + '</button>';
+            });
+            out += '</div>';
+        }
+
+        out += '</div>';
+        return out;
+    }
+
+    function stepElemDimValue(key, delta, minVal, maxVal, unit) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var valStr = String(block.data[key] || '').trim();
+        var curNum = parseFloat(valStr.replace(/[^0-9.-]/g, ''));
+        if (isNaN(curNum)) curNum = (delta > 0 ? minVal : maxVal);
+        var next = Math.max(minVal, Math.min(maxVal, curNum + delta));
+        block.data[key] = next + unit;
+        renderCanvas();
+        renderInspector();
+    }
+
+    function onElemDimNumChange(key, rawVal, unit) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var trimmed = String(rawVal || '').trim();
+        if (trimmed === '' || trimmed === 'auto') {
+            block.data[key] = trimmed;
+        } else {
+            var num = parseFloat(trimmed);
+            if (!isNaN(num)) {
+                block.data[key] = num + unit;
+            }
+        }
+        renderCanvas();
+    }
+
+    function changeElemDimUnit(key, newUnit) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        if (newUnit === 'auto' || newUnit === 'none') {
+            block.data[key] = newUnit;
+        } else {
+            var curNum = parseFloat(String(block.data[key] || '').replace(/[^0-9.-]/g, '')) || (newUnit === '%' ? 100 : 320);
+            block.data[key] = curNum + newUnit;
+        }
+        renderCanvas();
+        renderInspector();
+    }
+
+    function setElemDimPreset(key, val) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        block.data[key] = val;
+        renderCanvas();
+        renderInspector();
+    }
+
+    function renderElemBorderControl(block) {
+        var d = block.data || {};
+        var bStyle = d.border_style || '';
+        if (!bStyle && d.border) {
+            if (d.border.indexOf('solid') !== -1) bStyle = 'solid';
+            else if (d.border.indexOf('dashed') !== -1) bStyle = 'dashed';
+            else if (d.border.indexOf('dotted') !== -1) bStyle = 'dotted';
+            else if (d.border.indexOf('double') !== -1) bStyle = 'double';
+            else if (d.border.indexOf('groove') !== -1) bStyle = 'groove';
+        }
+
+        var bWidthVals = parse4Values(d.border_width || (d.border ? d.border.replace(/[^0-9px ]/g, '').trim() : '0px'));
+        var isBorderLinked = (elemSpacingLinkState.border !== undefined) ? elemSpacingLinkState.border : true;
+        var bColor = d.border_color || 'var(--color-border)';
+
+        var styleOptions = [
+            { value: '', label: 'Nenhuma Borda' },
+            { value: 'solid', label: '── Sólida (solid)' },
+            { value: 'dashed', label: '┈┈ Tracejada (dashed)' },
+            { value: 'dotted', label: '┈ Pontilhada (dotted)' },
+            { value: 'double', label: '══ Dupla (double)' },
+            { value: 'groove', label: '◫ Entalhada 3D (groove)' }
+        ];
+
+        var out = '<div class="inspector-field" style="margin-top:14px; border-top:1px solid rgba(255,255,255,0.06); padding-top:10px;">' +
+                  '<label class="inspector-label" style="font-weight:700; color:#fff;">Borda do Elemento (Border)</label>' +
+                  '<select class="inspector-select" onchange="setElemBorderStyle(this.value)">' +
+                  styleOptions.map(function(opt) {
+                      return '<option value="' + escapeAttr(opt.value) + '"' + (bStyle === opt.value ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>';
+                  }).join('') +
+                  '</select>' +
+                  '</div>';
+
+        if (bStyle && bStyle !== 'none') {
+            out += '<div class="spacing-box-control" style="margin-top:8px;">' +
+                   '<div class="spacing-box-header">' +
+                   '<span class="spacing-side-label" style="font-weight:700; color:var(--text-main);">Espessura da Borda (Border Width)</span>' +
+                   '<button type="button" class="spacing-link-btn ' + (isBorderLinked ? '' : 'unlinked') + '" onclick="toggleElemBorderLink()">' + (isBorderLinked ? '🔗 Vinculado' : '🔓 Separado') + '</button>' +
+                   '</div>' +
+                   '<div class="spacing-quad-grid">' +
+                   '<div class="spacing-side-col"><span class="spacing-side-label">Cima</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemBorderWidth(0, -1)">-</button><input type="number" class="step-input" value="' + bWidthVals[0] + '" min="0" oninput="onElemBorderWidthChange(0, this.value)"><button type="button" class="step-btn" onclick="stepElemBorderWidth(0, 1)">+</button></div></div>' +
+                   '<div class="spacing-side-col"><span class="spacing-side-label">Direita</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemBorderWidth(1, -1)">-</button><input type="number" class="step-input" value="' + bWidthVals[1] + '" min="0" oninput="onElemBorderWidthChange(1, this.value)"><button type="button" class="step-btn" onclick="stepElemBorderWidth(1, 1)">+</button></div></div>' +
+                   '<div class="spacing-side-col"><span class="spacing-side-label">Baixo</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemBorderWidth(2, -1)">-</button><input type="number" class="step-input" value="' + bWidthVals[2] + '" min="0" oninput="onElemBorderWidthChange(2, this.value)"><button type="button" class="step-btn" onclick="stepElemBorderWidth(2, 1)">+</button></div></div>' +
+                   '<div class="spacing-side-col"><span class="spacing-side-label">Esquerda</span><div class="stepper-wrap"><button type="button" class="step-btn" onclick="stepElemBorderWidth(3, -1)">-</button><input type="number" class="step-input" value="' + bWidthVals[3] + '" min="0" oninput="onElemBorderWidthChange(3, this.value)"><button type="button" class="step-btn" onclick="stepElemBorderWidth(3, 1)">+</button></div></div>' +
+                   '</div></div>';
+
+            out += inspectorTokenColorPicker('Cor da Borda (Design Tokens)', 'border_color', bColor, 'border');
+        }
+
+        return out;
+    }
+
+    function toggleElemBorderLink() {
+        elemSpacingLinkState.border = !elemSpacingLinkState.border;
+        renderInspector();
+    }
+
+    function setElemBorderStyle(style) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        block.data.border_style = style;
+        compileElemBorder(block);
+        renderCanvas();
+        renderInspector();
+    }
+
+    function stepElemBorderWidth(sideIdx, delta) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var curVals = parse4Values(block.data.border_width || '1px');
+        if (elemSpacingLinkState.border) {
+            var newVal = Math.max(0, curVals[sideIdx] + delta);
+            curVals = [newVal, newVal, newVal, newVal];
+        } else {
+            curVals[sideIdx] = Math.max(0, curVals[sideIdx] + delta);
+        }
+
+        block.data.border_width = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
+        compileElemBorder(block);
+        renderCanvas();
+        renderInspector();
+    }
+
+    function onElemBorderWidthChange(sideIdx, rawVal) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var num = parseFloat(rawVal);
+        if (isNaN(num) || num < 0) num = 0;
+        var curVals = parse4Values(block.data.border_width || '1px');
+        if (elemSpacingLinkState.border) {
+            curVals = [num, num, num, num];
+        } else {
+            curVals[sideIdx] = num;
+        }
+
+        block.data.border_width = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
+        compileElemBorder(block);
+        renderCanvas();
+    }
+
+    function compileElemBorder(block) {
+        var style = block.data.border_style || '';
+        if (!style || style === 'none') {
+            block.data.border = 'none';
+            return;
+        }
+        var width = block.data.border_width || '1px';
+        var color = block.data.border_color || 'var(--color-border)';
+        var wParts = parse4Values(width);
+        if (wParts[0] === wParts[1] && wParts[1] === wParts[2] && wParts[2] === wParts[3]) {
+            block.data.border = wParts[0] + 'px ' + style + ' ' + color;
+        } else {
+            block.data.border = width + ' ' + style + ' ' + color;
+        }
+    }
+
+    function renderElemBoxShadowControl(block) {
+        var curShadow = block.data.box_shadow || '';
+
+        var shadowPresets = [
+            { id: '', label: 'Nenhuma', css: '' },
+            { id: 'soft', label: 'Suave', css: '0 2px 8px rgba(0,0,0,0.15)' },
+            { id: 'medium', label: 'Média', css: '0 6px 18px rgba(0,0,0,0.25)' },
+            { id: 'elevated', label: 'Elevada', css: '0 12px 28px rgba(0,0,0,0.38)' },
+            { id: 'floating', label: 'Flutuante', css: '0 20px 45px rgba(0,0,0,0.55)' },
+            { id: 'neon', label: 'Neon Glow', css: '0 0 20px var(--color-primary, #38bdf8)' },
+            { id: 'inset', label: 'Interna', css: 'inset 0 2px 8px rgba(0,0,0,0.4)' }
+        ];
+
+        var out = '<div class="inspector-field" style="margin-top:12px;">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+                  '<label class="inspector-label" style="margin-bottom:0; font-weight:700; color:#fff;">Sombra da Caixa (Box Shadow)</label>' +
+                  '</div>' +
+                  '<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-bottom:8px;">';
+
+        shadowPresets.forEach(function(p) {
+            var isAct = (curShadow === p.css);
+            var actStyle = isAct ? 'background:rgba(56,189,248,0.2); border-color:var(--primary); color:#fff; font-weight:700;' : 'background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.08); color:var(--text-muted);';
+            out += '<button type="button" class="header-btn" style="padding:6px 4px; font-size:11px; border-radius:4px; text-align:center; ' + actStyle + '" onclick="setElemBoxShadowPreset(\'' + escapeAttr(p.css) + '\')">' + p.label + '</button>';
+        });
+
+        out += '</div>' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curShadow) + '" oninput="updateBlockProp(\'box_shadow\', this.value)" placeholder="ex: 0 4px 12px rgba(0,0,0,0.3)">' +
+               '</div>';
+
+        return out;
+    }
+
+    function setElemBoxShadowPreset(css) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        block.data.box_shadow = css;
+        renderCanvas();
+        renderInspector();
+    }
+
+    function renderElemOpacityControl(block) {
+        var raw = block.data.opacity !== undefined ? block.data.opacity : '';
+        var num = parseFloat(raw);
+        if (isNaN(num)) num = 1.0;
+        var pct = Math.round(num * 100);
+
+        var out = '<div class="inspector-field" style="margin-top:12px;">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                  '<label class="inspector-label" style="margin-bottom:0; font-weight:700; color:#fff;">Opacidade do Elemento (Opacity)</label>' +
+                  '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + pct + '% (' + num.toFixed(2) + ')</span>' +
+                  '</div>' +
+                  '<div style="display:flex; gap:8px; align-items:center;">' +
+                  '<div class="stepper-single-wrap" style="width:110px;">' +
+                  '<button type="button" class="step-btn" onclick="stepElemOpacity(-0.05)">-</button>' +
+                  '<input type="number" step="0.05" min="0.05" max="1.0" class="step-input-single" value="' + num.toFixed(2) + '" oninput="onElemOpacityChange(this.value)">' +
+                  '<button type="button" class="step-btn" onclick="stepElemOpacity(0.05)">+</button>' +
+                  '</div>' +
+                  '<input type="range" min="0.05" max="1.0" step="0.05" value="' + num + '" style="flex:1; accent-color:var(--primary); cursor:pointer;" oninput="onElemOpacityChange(this.value)">' +
+                  '</div>' +
+                  '<div style="display:flex; gap:4px; margin-top:6px;">' +
+                  [1.0, 0.8, 0.5, 0.2].map(function(val) {
+                      var isAct = (Math.abs(num - val) < 0.01);
+                      var actStyle = isAct ? 'background:rgba(56,189,248,0.25); border-color:var(--primary); color:#fff;' : 'background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.08); color:var(--text-muted);';
+                      return '<button type="button" class="header-btn" style="font-size:10px; padding:1px 6px; border-radius:3px; flex:1; ' + actStyle + '" onclick="onElemOpacityChange(' + val + ')">' + Math.round(val * 100) + '%</button>';
+                  }).join('') +
+                  '</div>' +
+                  '</div>';
+
+        return out;
+    }
+
+    function stepElemOpacity(delta) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        var cur = parseFloat(block.data.opacity !== undefined ? block.data.opacity : '1.0');
+        if (isNaN(cur)) cur = 1.0;
+        var next = Math.max(0.05, Math.min(1.0, Math.round((cur + delta) * 100) / 100));
+        block.data.opacity = String(next);
+        renderCanvas();
+        renderInspector();
+    }
+
+    function onElemOpacityChange(val) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        var num = parseFloat(val);
+        if (isNaN(num)) num = 1.0;
+        num = Math.max(0.05, Math.min(1.0, Math.round(num * 100) / 100));
+        block.data.opacity = String(num);
+        renderCanvas();
+        renderInspector();
+    }
 
     function toggleElemSpacingLink(type) {
         elemSpacingLinkState[type] = !elemSpacingLinkState[type];
@@ -2616,6 +2974,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         delete block.data.max_width;
         delete block.data.background;
         delete block.data.border;
+        delete block.data.border_style;
+        delete block.data.border_width;
+        delete block.data.border_color;
         delete block.data.border_radius;
         delete block.data.box_shadow;
         delete block.data.opacity;
@@ -2989,6 +3350,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
         block.data[key] = val;
+        if (key === 'border_color') {
+            compileElemBorder(block);
+        }
         if (key === 'toggle_style') {
             state.mobile_toggle_style = val;
             var partSetting = document.getElementById('setting_mobile_toggle');

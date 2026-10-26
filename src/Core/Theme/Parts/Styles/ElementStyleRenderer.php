@@ -65,6 +65,15 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         if (!empty($data['border'])) {
             $rules[] = 'border: ' . $this->sanitizeCssValue((string)$data['border']);
         }
+        if (!empty($data['border_width'])) {
+            $rules[] = 'border-width: ' . $this->sanitizeCssValue((string)$data['border_width']);
+        }
+        if (!empty($data['border_style'])) {
+            $rules[] = 'border-style: ' . $this->sanitizeCssValue((string)$data['border_style']);
+        }
+        if (!empty($data['border_color'])) {
+            $rules[] = 'border-color: ' . $this->sanitizeCssValue((string)$data['border_color']);
+        }
         if (!empty($data['border_radius'])) {
             $rules[] = 'border-radius: ' . $this->sanitizeCssValue((string)$data['border_radius']);
         }
