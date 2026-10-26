@@ -121,4 +121,26 @@ class LayoutPresetsAndOcpTest extends TestCase
         $this->assertStringContainsString('grid-template-columns: 1fr !important', $html);
         $this->assertStringContainsString('Card Post 4', $html);
     }
+
+    public function testRenderSectionWithUnifiedVisualStyles(): void
+    {
+        $renderer = new LayoutGridRenderer();
+        $settings = [
+            'background'    => 'var(--color-surface)',
+            'border'        => '1px solid var(--color-border)',
+            'border_radius' => '16px',
+            'box_shadow'    => '0 10px 25px rgba(0,0,0,0.4)',
+            'opacity'       => '0.9',
+            'margin'        => '0px 0px 24px 0px',
+        ];
+
+        $html = $renderer->renderSection('1_col', [0 => 'Conteúdo'], $settings);
+
+        $this->assertStringContainsString('background: var(--color-surface)', $html);
+        $this->assertStringContainsString('border: 1px solid var(--color-border)', $html);
+        $this->assertStringContainsString('border-radius: 16px', $html);
+        $this->assertStringContainsString('box-shadow: 0 10px 25px rgba(0,0,0,0.4)', $html);
+        $this->assertStringContainsString('opacity: 0.9', $html);
+        $this->assertStringContainsString('margin: 0px 0px 24px 0px', $html);
+    }
 }

@@ -241,10 +241,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                         </div>
                     </div>
 
-                    <div class="inspector-field">
-                        <label class="inspector-label">Cor de Fundo da Seção (Background)</label>
-                        <input type="text" id="setting_background" class="inspector-input" value="transparent" oninput="updateActiveSecSetting('background', this.value)" placeholder="ex: transparent, #0f1520">
-                    </div>
+                    <!-- CONTROLES UNIFICADOS DE ESTILO DA SEÇÃO (DESIGN TOKENS, BORDAS, SOMBRAS) -->
+                    <div id="sec_style_controls_container"></div>
 
                     <div class="inspector-field">
                         <label class="inspector-label">Alinhamento Vertical das Colunas</label>
@@ -1048,8 +1046,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var maxWidthEl = document.getElementById('setting_max_width_num');
         if (maxWidthEl) maxWidthEl.value = maxWidthNum;
 
-        var bgEl = document.getElementById('setting_background');
-        if (bgEl) bgEl.value = cs.background || 'transparent';
+        renderSectionStyleControls(curSec);
         var alignEl = document.getElementById('setting_align_items');
         if (alignEl) alignEl.value = cs.align_items || 'center';
         var justifyEl = document.getElementById('setting_justify_content');
@@ -1059,7 +1056,154 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         updateSpacingLinkUI('padding');
     }
 
-    // CONTROLES DE ESPAÇAMENTOS E DIMENSÕES DA SEÇÃO (STEPPERS + RESET)
+    
+    // ==========================================
+    // ESTILOS AVANÇADOS DE SEÇÕES (FASE 5 CONTRATOS UNIFICADOS)
+    // ==========================================
+    function renderSectionStyleControls(curSec) {
+        var container = document.getElementById('sec_style_controls_container');
+        if (!container) return;
+        var cs = curSec.container_settings || {};
+
+        var html = '';
+
+        // 1. Cor de Fundo da Seção com Design Tokens
+        html += renderSectionTokenColorPicker('Cor de Fundo da Seção (Background)', 'background', cs.background || 'transparent', 'transparent');
+
+        // 2. Arredondamento de Borda da Seção (Border Radius)
+        var curRadiusNum = parseFloat(cs.border_radius || '0') || 0;
+        html += '<div class="inspector-field" style="margin-top:12px;">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                '<label class="inspector-label" style="margin-bottom:0;">Arredondamento da Seção (Border Radius)</label>' +
+                '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + (cs.border_radius || '0px') + '</span>' +
+                '</div>' +
+                '<div class="stepper-single-wrap">' +
+                '<button type="button" class="step-btn" onclick="stepSecSingleValue(\'border_radius\', -2, 0, 100)">-</button>' +
+                '<input type="number" id="sec_border_radius_num" class="step-input-single" value="' + curRadiusNum + '" min="0" max="100" oninput="onSecSingleNumChange(\'border_radius\', this.value)">' +
+                '<button type="button" class="step-btn" onclick="stepSecSingleValue(\'border_radius\', 2, 0, 100)">+</button>' +
+                '</div>' +
+                '</div>';
+
+        // 3. Borda da Seção (Border)
+        html += '<div class="inspector-field">' +
+                '<label class="inspector-label">Borda da Seção (Border)</label>' +
+                '<input type="text" class="inspector-input" value="' + escapeAttr(cs.border || '') + '" oninput="updateActiveSecSetting(\'border\', this.value)" placeholder="ex: 1px solid var(--color-border)">' +
+                '</div>';
+
+        // 4. Sombra da Seção (Box Shadow) com Presets
+        var shadowOpts = [
+            { value: '', label: 'Nenhuma Sombra' },
+            { value: '0 2px 4px rgba(0,0,0,0.15)', label: 'Sutil (0 2px 4px)' },
+            { value: '0 4px 12px rgba(0,0,0,0.25)', label: 'Média (0 4px 12px)' },
+            { value: '0 10px 25px rgba(0,0,0,0.4)', label: 'Elevada (0 10px 25px)' },
+            { value: '0 0 20px var(--color-primary, rgba(56,189,248,0.4))', label: 'Glow Neon Primário' }
+        ];
+        html += '<div class="inspector-field">' +
+                '<label class="inspector-label">Sombra da Seção (Box Shadow)</label>' +
+                '<select class="inspector-select" onchange="updateActiveSecSetting(\'box_shadow\', this.value)">' +
+                shadowOpts.map(function(opt) {
+                    return '<option value="' + escapeAttr(opt.value) + '"' + (cs.box_shadow === opt.value ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>';
+                }).join('') +
+                '</select>' +
+                '</div>';
+
+        // 5. Opacidade da Seção
+        html += '<div class="inspector-field">' +
+                '<label class="inspector-label">Opacidade da Seção (0.1 a 1.0)</label>' +
+                '<input type="number" step="0.1" min="0.1" max="1.0" class="inspector-input" value="' + (cs.opacity !== undefined ? cs.opacity : '') + '" oninput="updateActiveSecSetting(\'opacity\', this.value)" placeholder="1.0">' +
+                '</div>';
+
+        container.innerHTML = html;
+    }
+
+    function renderSectionTokenColorPicker(label, key, curVal, defaultToken) {
+        var dt = window.DS_DESIGN_TOKENS || {};
+        var palette = dt.palette || {
+            primary: '#38bdf8',
+            secondary: '#1f2833',
+            tertiary: '#60a5fa',
+            background: '#0b0c10',
+            surface: 'rgba(31, 40, 51, 0.7)',
+            text_main: '#c5c6c7',
+            text_muted: '#8b8c8d',
+            border: 'rgba(255, 255, 255, 0.1)'
+        };
+
+        var tokenList = [
+            { id: 'transparent', label: 'Transparente', var: 'transparent', hex: 'transparent' },
+            { id: 'background', label: 'Fundo', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
+            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
+            { id: 'primary', label: 'Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
+            { id: 'secondary', label: 'Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
+            { id: 'tertiary', label: 'Terciária', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
+            { id: 'text_main', label: 'Texto Principal', var: 'var(--color-text-main)', hex: palette.text_main || '#c5c6c7' },
+            { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' }
+        ];
+
+        var swatchesHtml = '';
+        tokenList.forEach(function(t) {
+            var isAct = (curVal === t.var || curVal === t.hex || (!curVal && defaultToken === t.id));
+            var actClass = isAct ? ' active' : '';
+            var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
+            var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
+            var escapedVar = escapeAttr(t.var);
+            
+            swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
+                            'style="' + bgStyle + '" ' +
+                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Transparente' : t.hex) + ')') + '" ' +
+                            'onclick="updateActiveSecSetting(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
+                            '</button>';
+        });
+
+        var hexVal = curVal || '';
+        if (hexVal.indexOf('var(') === 0) {
+            var matched = tokenList.find(function(t) { return t.var === hexVal; });
+            if (matched && matched.hex && matched.hex !== 'transparent' && matched.hex.indexOf('#') === 0) {
+                hexVal = matched.hex;
+            } else {
+                hexVal = '#0b0c10';
+            }
+        }
+        if (!hexVal.startsWith('#') || hexVal.length !== 7) {
+            hexVal = '#0b0c10';
+        }
+
+        return '<div class="inspector-field">' +
+               '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+               '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
+               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'transparent') + '</span>' +
+               '</div>' +
+               '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
+               '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
+               '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value)" placeholder="var(--color-surface) ou #hex ou rgba">' +
+               '</div>' +
+               '</div>';
+    }
+
+    function stepSecSingleValue(key, delta, minVal, maxVal) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        if (!curSec.container_settings) curSec.container_settings = {};
+        var cur = parseFloat(curSec.container_settings[key] || '0');
+        if (isNaN(cur)) cur = minVal;
+        var next = Math.max(minVal, Math.min(maxVal, cur + delta));
+        curSec.container_settings[key] = next + 'px';
+        renderCanvas();
+        renderSidebarLayoutTab();
+    }
+
+    function onSecSingleNumChange(key, rawVal) {
+        var curSec = state.sections[activeSecIdx];
+        if (!curSec) return;
+        if (!curSec.container_settings) curSec.container_settings = {};
+        var num = parseFloat(rawVal);
+        if (isNaN(num)) return;
+        curSec.container_settings[key] = num + 'px';
+        renderCanvas();
+    }
+
+// CONTROLES DE ESPAÇAMENTOS E DIMENSÕES DA SEÇÃO (STEPPERS + RESET)
     var spacingLinkState = {
         margin: false, // Separado por padrão para margin externa (normalmente diferente em cima/baixo)
         padding: true  // Vinculado por padrão para padding interno
@@ -1195,6 +1339,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         curSec.container_settings.padding = '16px 24px';
         curSec.container_settings.gap = '24px';
         curSec.container_settings.max_width = '1280px';
+        curSec.container_settings.background = 'transparent';
+        delete curSec.container_settings.border;
+        delete curSec.container_settings.border_radius;
+        delete curSec.container_settings.box_shadow;
+        delete curSec.container_settings.opacity;
 
         renderSidebarLayoutTab();
         renderCanvas();
@@ -1306,6 +1455,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (sec.container_settings) {
                 if (sec.container_settings.margin) secCard.style.margin = sec.container_settings.margin;
                 if (sec.container_settings.background) secCard.style.background = sec.container_settings.background;
+                if (sec.container_settings.border) secCard.style.border = sec.container_settings.border;
+                if (sec.container_settings.border_radius) secCard.style.borderRadius = sec.container_settings.border_radius;
+                if (sec.container_settings.box_shadow) secCard.style.boxShadow = sec.container_settings.box_shadow;
+                if (sec.container_settings.opacity !== undefined && sec.container_settings.opacity !== '') secCard.style.opacity = sec.container_settings.opacity;
             }
 
             // Barra superior da seção (Handle Elementor)

@@ -62,6 +62,16 @@ class LayoutGridRenderer implements LayoutGridInterface
         $background = (string)($settings['background'] ?? 'transparent');
         $customClass = (string)($settings['custom_class'] ?? '');
 
+        // Estilos Visuais Avançados da Seção (Bordas, Sombras, Opacidade)
+        $border = !empty($settings['border']) ? 'border: ' . htmlspecialchars((string)$settings['border'], ENT_QUOTES, 'UTF-8') . ';' : '';
+        $borderRadius = !empty($settings['border_radius']) ? 'border-radius: ' . htmlspecialchars((string)$settings['border_radius'], ENT_QUOTES, 'UTF-8') . ';' : '';
+        $boxShadow = !empty($settings['box_shadow']) ? 'box-shadow: ' . htmlspecialchars((string)$settings['box_shadow'], ENT_QUOTES, 'UTF-8') . ';' : '';
+        $opacity = (isset($settings['opacity']) && (string)$settings['opacity'] !== '' && (string)$settings['opacity'] !== '1')
+            ? 'opacity: ' . htmlspecialchars((string)$settings['opacity'], ENT_QUOTES, 'UTF-8') . ';'
+            : '';
+        $extraStyles = array_filter([$border, $borderRadius, $boxShadow, $opacity]);
+        $extraStylesStr = !empty($extraStyles) ? ' ' . implode(' ', $extraStyles) : '';
+
         $gridTemplate = $presetConfig['template'];
         $tabletTemplate = $presetConfig['tablet'];
         $mobileTemplate = $presetConfig['mobile'];
@@ -79,7 +89,7 @@ class LayoutGridRenderer implements LayoutGridInterface
             : "width: 100%;";
 
         return <<<HTML
-<div id="{$sectionId}" class="ds-section-wrapper {$customClass}" style="background: {$background}; width: 100%; margin: {$margin};">
+<div id="{$sectionId}" class="ds-section-wrapper {$customClass}" style="background: {$background}; width: 100%; margin: {$margin};{$extraStylesStr}">
     <style>
         #{$sectionId} .ds-section-grid {
             display: grid;
