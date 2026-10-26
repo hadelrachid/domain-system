@@ -289,6 +289,8 @@ final class SystemUpdaterM1Test extends TestCase
             public function bind(string $abstract, callable|string $concrete): void {}
             public function singleton(string $abstract, callable|string $concrete): void {}
             public function make(string $class) { return null; }
+            public function has(string $abstract): bool { return false; }
+            public function hasLink(string $linkName): bool { return false; }
             public function registerCapability(string $slug, string $context = ''): void
             {
                 $this->caps[] = ['slug' => $slug, 'context' => $context];

@@ -75,6 +75,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->listenHook('router.register');
         $os->listenHook('shortcodes.register');
         $os->listenHook('admin.menu');
+        $os->requireLink('core.theme_parts');
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -120,37 +121,47 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             }, 'Retorna a URL base do site (ex: /domain-system/public)');
 
             $sm->add('theme_header', function($attrs = []) use ($runtime) {
-                if ($runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)) {
-                    $renderer = $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
+                try {
+                    $renderer = $runtime->getLink('core.theme_parts');
                     $theme = $attrs['theme'] ?? 'default';
                     return $renderer->renderHeader($theme);
+                } catch (\Throwable $e) {
+                    return '';
                 }
-                return '';
             }, 'Renderiza o Header ativo do Flex Builder (suporta atributo theme)');
 
             $sm->add('theme_footer', function($attrs = []) use ($runtime) {
-                if ($runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)) {
-                    $renderer = $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
+                try {
+                    $renderer = $runtime->getLink('core.theme_parts');
                     $theme = $attrs['theme'] ?? 'default';
                     return $renderer->renderFooter($theme);
+                } catch (\Throwable $e) {
+                    return '';
                 }
-                return '';
             }, 'Renderiza o Rodapé ativo do Flex Builder (suporta atributo theme)');
 
             $sm->add('section', function($attrs = []) use ($runtime) {
                 $id = $attrs['id'] ?? '';
-                if ($id !== '' && $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)) {
-                    $renderer = $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
-                    return $renderer->renderSection($id);
+                if ($id !== '') {
+                    try {
+                        $renderer = $runtime->getLink('core.theme_parts');
+                        return $renderer->renderSection($id);
+                    } catch (\Throwable $e) {
+                        return '';
+                    }
                 }
                 return '';
             }, 'Renderiza uma Seção específica do Flex Builder pelo ID: [section id="..."]');
 
             $sm->add('theme_part', function($attrs = []) use ($runtime) {
                 $id = $attrs['id'] ?? '';
-                if ($id !== '' && $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)) {
-                    $renderer = $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
-                    return $renderer->renderSection($id);
+                if ($id !== '') {
+                    try {
+                        $renderer = $runtime->getLink('core.theme_parts');
+                        return $renderer->renderSection($id);
+                    } catch (\Throwable $e) {
+                        return '';
+                    }
                 }
                 return '';
             }, 'Renderiza uma parte específica (Header, Footer ou Seção) pelo ID: [theme_part id="..."]');

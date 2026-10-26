@@ -125,6 +125,16 @@ class OsRuntime implements OsRuntimeInterface
         return $this->container->make($class);
     }
     
+    public function has(string $abstract): bool
+    {
+        return $this->container->has($abstract);
+    }
+
+    public function hasLink(string $linkName): bool
+    {
+        return $this->linkRegistry->hasLink($linkName);
+    }
+
     public function registerCapability(string $slug, string $context = ''): void
     {
         try {

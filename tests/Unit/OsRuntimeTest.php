@@ -42,4 +42,35 @@ class OsRuntimeTest extends TestCase
         
         $this->assertTrue(true, 'Executed silently without throwing exceptions');
     }
+
+    public function testHasDelegatesToContainer(): void
+    {
+        $container = new Container();
+        $container->bind('sample.service', fn() => 'sample');
+
+        $connectorMock = $this->createMock(\DomainSystem\Core\Plugin\OsConnector::class);
+        $linkRegistryMock = $this->createMock(\DomainSystem\Core\Plugin\LinkRegistry::class);
+        $dispatcherMock = $this->createMock(\DomainSystem\Core\Events\EventDispatcher::class);
+
+        $runtime = new OsRuntime($container, $connectorMock, $linkRegistryMock, $dispatcherMock, 'DomainSystem\\TestPlugin');
+
+        $this->assertTrue($runtime->has('sample.service'));
+        $this->assertFalse($runtime->has('unregistered.service'));
+    }
+
+    public function testHasLinkDelegatesToLinkRegistry(): void
+    {
+        $container = new Container();
+        $connectorMock = $this->createMock(\DomainSystem\Core\Plugin\OsConnector::class);
+        $linkRegistryMock = $this->createMock(\DomainSystem\Core\Plugin\LinkRegistry::class);
+        $dispatcherMock = $this->createMock(\DomainSystem\Core\Events\EventDispatcher::class);
+
+        $linkRegistryMock->method('hasLink')
+            ->willReturnCallback(fn($name) => $name === 'core.theme_parts');
+
+        $runtime = new OsRuntime($container, $connectorMock, $linkRegistryMock, $dispatcherMock, 'DomainSystem\\TestPlugin');
+
+        $this->assertTrue($runtime->hasLink('core.theme_parts'));
+        $this->assertFalse($runtime->hasLink('unknown.link'));
+    }
 }

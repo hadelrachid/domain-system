@@ -66,8 +66,31 @@ class LinkRegistry
         if ($linkName === 'core.storage') {
             return $this->container->make(\DomainSystem\Core\Contracts\PublicStorageInterface::class);
         }
+        if ($linkName === 'core.theme_parts') {
+            return $this->container->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
+        }
 
         throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
+    }
+
+    /**
+     * Verifica se um link está disponível (via plugin ou core fallback).
+     */
+    public function hasLink(string $linkName): bool
+    {
+        if (isset($this->providedLinks[$linkName])) {
+            return true;
+        }
+
+        return in_array($linkName, [
+            'core.session',
+            'core.db',
+            'core.identity',
+            'core.router',
+            'core.theme',
+            'core.storage',
+            'core.theme_parts',
+        ], true);
     }
 
     /**
