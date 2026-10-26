@@ -1820,6 +1820,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
         if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid') + ' (' + (d.height || '20px') + ')';
         if (block.type === 'copyright') return '© ' + new Date().getFullYear() + ' ' + escapeHtml(d.site_name || 'Domain-System');
+        if (block.type === 'social_icons') {
+            var nets = d.networks || [];
+            var count = Array.isArray(nets) ? nets.length : (typeof nets === 'object' && nets !== null ? Object.keys(nets).length : 0);
+            var shapeLabel = (d.shape === 'circle' ? 'Círculo' : (d.shape === 'rounded' ? 'Arredondado' : (d.shape === 'square' ? 'Quadrado' : 'Minimal')));
+            return '🌐 Redes Sociais: <strong>' + count + ' ícones</strong> <span style="font-size:10px; opacity:0.75; padding:2px 6px; background:rgba(56,189,248,0.12); color:var(--primary); border-radius:4px; margin-left:6px;">' + shapeLabel + ' • ' + (d.color_mode || 'official') + '</span>';
+        }
         return block.type;
     }
 
@@ -2373,6 +2379,39 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTextInput('Texto Complementar', 'text', block.data.text || '');
         } else if (block.type === 'custom_code') {
             html += inspectorTextarea('Código HTML / CSS / JS Customizado', 'code', block.data.code || '');
+        } else if (block.type === 'social_icons') {
+            html += inspectorSelect('Formato da Silhueta', 'shape', [
+                { value: 'circle', label: '🔘 Círculo (50%)' },
+                { value: 'rounded', label: '🔲 Cantos Arredondados (10px)' },
+                { value: 'square', label: '⬛ Quadrado (0px)' },
+                { value: 'minimal', label: '✨ Minimalista (Sem Fundo)' }
+            ], block.data.shape || 'circle');
+
+            html += inspectorSelect('Modo de Cores', 'color_mode', [
+                { value: 'official', label: '🎨 Cores Oficiais das Marcas' },
+                { value: 'custom', label: '⚙️ Cores Personalizadas (Tokens)' }
+            ], block.data.color_mode || 'official');
+
+            if (block.data.color_mode === 'custom') {
+                html += inspectorTokenColorPicker('Cor dos Ícones', 'icon_color', block.data.icon_color || '#ffffff', 'background');
+                if (block.data.shape !== 'minimal') {
+                    html += inspectorTokenColorPicker('Cor de Fundo dos Botões', 'bg_color', block.data.bg_color || 'var(--color-surface)', 'surface');
+                }
+            }
+
+            html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+
+            html += inspectorSelect('Alinhamento', 'align', [
+                { value: 'left', label: '⬅️ Esquerda' },
+                { value: 'center', label: '🎯 Centro' },
+                { value: 'right', label: '➡️ Direita' }
+            ], block.data.align || 'center');
+
+            html += inspectorDimension('Tamanho do Ícone', 'icon_size', block.data.icon_size || '20px');
+            html += inspectorDimension('Tamanho do Botão', 'button_size', block.data.button_size || '40px');
+            html += inspectorDimension('Espaçamento Entre Ícones (Gap)', 'gap', block.data.gap || '12px');
+
+            html += inspectorSocialIconsRepeater(block);
         }
 
         // ==========================================
@@ -2846,6 +2885,103 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                '</div>';
     }
 
+    function inspectorSocialIconsRepeater(block) {
+        var rawNetworks = block.data.networks || [
+            { network: 'instagram', url: 'https://instagram.com' },
+            { network: 'whatsapp', url: 'https://wa.me/5511999999999' },
+            { network: 'youtube', url: 'https://youtube.com' }
+        ];
+
+        var list = [];
+        if (Array.isArray(rawNetworks)) {
+            list = rawNetworks;
+        } else if (typeof rawNetworks === 'object' && rawNetworks !== null) {
+            for (var k in rawNetworks) {
+                list.push({ network: k, url: rawNetworks[k] });
+            }
+        }
+        block.data.networks = list;
+
+        var availableNetworks = [
+            { id: 'whatsapp', label: '💬 WhatsApp' },
+            { id: 'instagram', label: '📸 Instagram' },
+            { id: 'youtube', label: '🎥 YouTube' },
+            { id: 'linkedin', label: '💼 LinkedIn' },
+            { id: 'facebook', label: '👥 Facebook' },
+            { id: 'x', label: '✖️ X (Twitter)' },
+            { id: 'tiktok', label: '🎵 TikTok' },
+            { id: 'github', label: '🐙 GitHub' },
+            { id: 'telegram', label: '✈️ Telegram' },
+            { id: 'email', label: '✉️ Email' },
+            { id: 'phone', label: '📞 Telefone' },
+            { id: 'website', label: '🌐 Website Geral' }
+        ];
+
+        var out = '<div class="inspector-field" style="margin-top:16px;">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+                  '<label class="inspector-label" style="margin-bottom:0; font-weight:700; color:var(--primary);">🔗 Redes Sociais Conectadas</label>' +
+                  '<button type="button" class="header-btn" onclick="addSocialIconItem()" style="font-size:10px; padding:2px 8px; background:rgba(56,189,248,0.15); border-color:var(--primary); color:var(--primary);">➕ Adicionar</button>' +
+                  '</div>';
+
+        if (list.length === 0) {
+            out += '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:12px; background:rgba(255,255,255,0.02); border-radius:6px;">Nenhuma rede adicionada. Clique em Adicionar acima.</div>';
+        } else {
+            out += '<div style="display:flex; flex-direction:column; gap:8px;">';
+            list.forEach(function(item, idx) {
+                var netSelect = '<select class="inspector-select" style="width:130px; font-size:11px; padding:4px 6px;" onchange="updateSocialIconItem(' + idx + ', \'network\', this.value)">';
+                availableNetworks.forEach(function(an) {
+                    netSelect += '<option value="' + an.id + '"' + (item.network === an.id ? ' selected' : '') + '>' + an.label + '</option>';
+                });
+                netSelect += '</select>';
+
+                out += '<div style="display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:6px 8px;">' +
+                       netSelect +
+                       '<input type="text" class="inspector-input" style="flex:1; font-size:11px; padding:4px 8px;" value="' + escapeAttr(item.url || '') + '" placeholder="https://..." oninput="updateSocialIconItem(' + idx + ', \'url\', this.value)">' +
+                       '<button type="button" class="block-act-btn del" onclick="removeSocialIconItem(' + idx + ')" title="Remover rede" style="width:24px; height:24px; line-height:22px; font-size:11px;">✕</button>' +
+                       '</div>';
+            });
+            out += '</div>';
+        }
+
+        out += '</div>';
+        return out;
+    }
+
+    function addSocialIconItem() {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+        if (!Array.isArray(block.data.networks)) block.data.networks = [];
+        block.data.networks.push({ network: 'instagram', url: 'https://instagram.com' });
+        renderCanvas();
+        renderInspector();
+    }
+
+    function removeSocialIconItem(idx) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (block.data && Array.isArray(block.data.networks)) {
+            block.data.networks.splice(idx, 1);
+            renderCanvas();
+            renderInspector();
+        }
+    }
+
+    function updateSocialIconItem(idx, key, val) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (block.data && Array.isArray(block.data.networks) && block.data.networks[idx]) {
+            block.data.networks[idx][key] = val;
+            renderCanvas();
+        }
+    }
+
     function updateBlockProp(key, val) {
         if (!selectedBlockCoord) return;
         var sec = state.sections[selectedBlockCoord.sec];
@@ -2885,6 +3021,21 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px' };
         if (type === 'divider') defaultData = { style: 'solid', height: '24px' };
         if (type === 'copyright') defaultData = { site_name: 'Domain-System' };
+        if (type === 'button') defaultData = { label: 'Clique Aqui', action_type: 'link', url: '#', bg_color: 'var(--color-primary)', text_color: '#0f172a', hover_animation: 'lift', border_radius: '8px', align: 'left' };
+        if (type === 'social_icons') defaultData = {
+            networks: [
+                { network: 'instagram', url: 'https://instagram.com' },
+                { network: 'whatsapp', url: 'https://wa.me/5511999999999' },
+                { network: 'youtube', url: 'https://youtube.com' }
+            ],
+            shape: 'circle',
+            color_mode: 'official',
+            hover_animation: 'lift',
+            align: 'center',
+            gap: '12px',
+            icon_size: '20px',
+            button_size: '40px'
+        };
         if (type === 'nav_menu') defaultData = { toggle_style: state.mobile_toggle_style || 'classic', toggle_align: state.mobile_toggle_align || 'right', align: 'center' };
         return defaultData;
     }
