@@ -22,9 +22,10 @@ interface DesignTokensInterface
     public function getTypography(): array;
 
     /**
-     * Gera o bloco de variáveis CSS :root { ... } para injeção inline no layout.
+     * Gera o bloco de variáveis CSS :root e escopo específico para injeção inline no layout.
+     * @param string|null $scope Seletor CSS alvo (ex: '.ds-part-wrapper, .ds-section-wrapper'). Se nulo, padroniza para encapsulamento das partes.
      */
-    public function generateCssVariables(): string;
+    public function generateCssVariables(?string $scope = null): string;
 
     /**
      * Atualiza os tokens e persiste no repositório.

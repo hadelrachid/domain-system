@@ -8,10 +8,8 @@ class HelpersTest extends TestCase
 {
     protected function setUp(): void
     {
-        // Define APP_KEY se não estiver definida
-        if (!getenv('APP_KEY')) {
-            putenv('APP_KEY=12345678901234567890123456789012'); // 32 bytes key
-        }
+        // Define APP_KEY válida de 32 bytes para o teste
+        putenv('APP_KEY=12345678901234567890123456789012');
         
         // Garante que os helpers estão carregados
         require_once __DIR__ . '/../../src/Core/helpers.php';

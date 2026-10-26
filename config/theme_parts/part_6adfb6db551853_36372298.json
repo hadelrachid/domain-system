@@ -1,0 +1,100 @@
+{
+    "id": "part_6adfb6db551853.36372298",
+    "type": "header",
+    "title": "Novo Header",
+    "layout_preset": "3_cols_header",
+    "container_settings": {
+        "is_full_width": false,
+        "max_width": "1280px",
+        "gap": "24px",
+        "padding": "20px 24px",
+        "align_items": "center",
+        "background": "var(--color-border)",
+        "box_shadow": ""
+    },
+    "columns_data": [
+        [
+            {
+                "type": "logo",
+                "data": {
+                    "text": "Domain<span style=\"color:var(--color-primary);\">System</span>",
+                    "height": "32px"
+                }
+            }
+        ],
+        [
+            {
+                "type": "nav_menu",
+                "data": {
+                    "align": "center",
+                    "border_style": "solid",
+                    "border": "1px solid var(--color-border)"
+                }
+            }
+        ],
+        [
+            {
+                "type": "cta_button",
+                "data": {
+                    "label": "Acessar",
+                    "url": "/login",
+                    "variant": "primary",
+                    "align": "right"
+                }
+            }
+        ]
+    ],
+    "sections": [
+        {
+            "id": "sec_6593d9b8",
+            "title": "Seção 1",
+            "layout_preset": "3_cols_header",
+            "container_settings": {
+                "is_full_width": false,
+                "max_width": "1280px",
+                "gap": "24px",
+                "padding": "20px 24px",
+                "align_items": "center",
+                "background": "var(--color-border)",
+                "box_shadow": ""
+            },
+            "columns_data": [
+                [
+                    {
+                        "type": "logo",
+                        "data": {
+                            "text": "Domain<span style=\"color:var(--color-primary);\">System</span>",
+                            "height": "32px"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "type": "nav_menu",
+                        "data": {
+                            "align": "center",
+                            "border_style": "solid",
+                            "border": "1px solid var(--color-border)"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "type": "cta_button",
+                        "data": {
+                            "label": "Acessar",
+                            "url": "/login",
+                            "variant": "primary",
+                            "align": "right"
+                        }
+                    }
+                ]
+            ]
+        }
+    ],
+    "mobile_toggle_style": "classic",
+    "mobile_toggle_align": "right",
+    "is_default": false,
+    "created_at": 1793057233,
+    "updated_at": 1793057233
+}

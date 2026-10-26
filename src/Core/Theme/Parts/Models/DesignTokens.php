@@ -72,47 +72,67 @@ class DesignTokens implements DesignTokensInterface
         return $this->typography;
     }
 
-    public function generateCssVariables(): string
+    public function generateCssVariables(?string $scope = null): string
     {
-        $vars = [];
+        $rootVars = [];
+        $scopedVars = [];
+
         foreach ($this->palette as $key => $val) {
             $cssKey = str_replace('_', '-', $key);
-            $vars[] = "    --color-{$cssKey}: {$val};";
+            $rootVars[] = "    --ds-color-{$cssKey}: {$val};";
+            $scopedVars[] = "    --color-{$cssKey}: {$val};";
             if ($key === 'primary') {
-                $vars[] = "    --primary: {$val};";
+                $rootVars[] = "    --ds-primary: {$val};";
+                $scopedVars[] = "    --primary: {$val};";
             }
             if ($key === 'secondary') {
-                $vars[] = "    --secondary: {$val};";
+                $rootVars[] = "    --ds-secondary: {$val};";
+                $scopedVars[] = "    --secondary: {$val};";
             }
             if ($key === 'background') {
-                $vars[] = "    --bg-color: {$val};";
+                $rootVars[] = "    --ds-bg-color: {$val};";
+                $scopedVars[] = "    --bg-color: {$val};";
             }
             if ($key === 'surface') {
-                $vars[] = "    --surface: {$val};";
+                $rootVars[] = "    --ds-surface: {$val};";
+                $scopedVars[] = "    --surface: {$val};";
             }
             if ($key === 'text_main') {
-                $vars[] = "    --text-main: {$val};";
+                $rootVars[] = "    --ds-text-main: {$val};";
+                $scopedVars[] = "    --text-main: {$val};";
             }
             if ($key === 'text_muted') {
-                $vars[] = "    --text-muted: {$val};";
+                $rootVars[] = "    --ds-text-muted: {$val};";
+                $scopedVars[] = "    --text-muted: {$val};";
+            }
+            if ($key === 'border') {
+                $rootVars[] = "    --ds-border: {$val};";
+                $scopedVars[] = "    --border: {$val};";
             }
         }
 
         foreach ($this->typography as $key => $val) {
             $cssKey = str_replace('_', '-', $key);
-            $vars[] = "    --font-{$cssKey}: {$val};";
+            $rootVars[] = "    --ds-font-{$cssKey}: {$val};";
+            $scopedVars[] = "    --font-{$cssKey}: {$val};";
             if ($key === 'primary_font') {
-                $vars[] = "    --font-primary: {$val};";
+                $rootVars[] = "    --ds-font-primary: {$val};";
+                $scopedVars[] = "    --font-primary: {$val};";
             }
             if ($key === 'secondary_font') {
-                $vars[] = "    --font-secondary: {$val};";
+                $rootVars[] = "    --ds-font-secondary: {$val};";
+                $scopedVars[] = "    --font-secondary: {$val};";
             }
             if ($key === 'tertiary_font') {
-                $vars[] = "    --font-tertiary: {$val};";
+                $rootVars[] = "    --ds-font-tertiary: {$val};";
+                $scopedVars[] = "    --font-tertiary: {$val};";
             }
         }
 
-        return ":root {\n" . implode("\n", $vars) . "\n}";
+        $targetScope = $scope ?? '.ds-part-wrapper, .ds-section-wrapper';
+
+        return ":root {\n" . implode("\n", $rootVars) . "\n}\n\n" .
+               "{$targetScope} {\n" . implode("\n", $scopedVars) . "\n}";
     }
 
     public function updateTokens(array $tokens): bool

@@ -27,6 +27,12 @@ class ThemePartRenderer implements ThemePartRendererInterface
     private DesignTokensInterface $designTokens;
     private ElementStyleRendererInterface $styleRenderer;
     private ?string $baseRoot;
+    private static bool $tokensInjected = false;
+
+    public static function resetInjectedState(): void
+    {
+        self::$tokensInjected = false;
+    }
 
     public function __construct(
         ThemePartRepositoryInterface $partRepo,
@@ -134,12 +140,32 @@ class ThemePartRenderer implements ThemePartRendererInterface
 
         $allSectionsHtml = implode("\n", $sectionsOutput);
 
-        // Se for Header, injeta as variáveis CSS dos Design Tokens no topo
-        if ($injectDesignTokens) {
+        $partType = $part->getType();
+        $wrapperTag = 'section';
+        $roleAttr = '';
+        $typeClass = 'ds-theme-section';
+
+        if ($partType === ThemePartInterface::TYPE_HEADER) {
+            $wrapperTag = 'header';
+            $roleAttr = ' role="banner"';
+            $typeClass = 'ds-theme-header';
+        } elseif ($partType === ThemePartInterface::TYPE_FOOTER) {
+            $wrapperTag = 'footer';
+            $roleAttr = ' role="contentinfo"';
+            $typeClass = 'ds-theme-footer';
+        }
+
+        $wrappedHtml = "<{$wrapperTag} class=\"ds-part-wrapper {$typeClass}\"{$roleAttr}>\n{$allSectionsHtml}\n</{$wrapperTag}>";
+
+        // Injeta variáveis CSS e animações runtime dos Design Tokens se solicitado ou se ainda não injetado
+        if ($injectDesignTokens || !self::$tokensInjected) {
+            self::$tokensInjected = true;
             $tokensCss = $this->designTokens->generateCssVariables();
             $runtimeCss = <<<CSS
 @keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.ds-part-wrapper { position: relative; width: 100%; box-sizing: border-box; }
+.ds-part-wrapper * { box-sizing: border-box; }
 .ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
 .ds-btn-grow:hover { transform: scale(1.05) !important; }
 .ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
@@ -151,10 +177,10 @@ class ThemePartRenderer implements ThemePartRendererInterface
 .ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }
 CSS;
             $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
-            return $tokensTag . $allSectionsHtml;
+            return $tokensTag . $wrappedHtml;
         }
 
-        return $allSectionsHtml;
+        return $wrappedHtml;
     }
 
     private function renderFileFallback(string $themeFolder, string $partName, array $context): string

@@ -1,16 +1,18 @@
 {
     "palette": {
-        "primary": "#004080",
-        "secondary": "#008080",
-        "tertiary": "#8080c0",
-        "background": "#808080",
+        "primary": "#45f3ff",
+        "secondary": "#1f2833",
+        "tertiary": "#60a5fa",
+        "background": "#0b0c10",
         "surface": "rgba(31, 40, 51, 0.7)",
         "text_main": "#c5c6c7",
-        "text_muted": "#8b8c8d"
+        "text_muted": "#8b8c8d",
+        "border": "rgba(255, 255, 255, 0.1)"
     },
     "typography": {
         "primary_font": "Inter, sans-serif",
         "secondary_font": "Fira Code, monospace",
+        "tertiary_font": "Montserrat, sans-serif",
         "base_size": "16px",
         "heading_weight": "800",
         "body_weight": "400"

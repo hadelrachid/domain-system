@@ -248,4 +248,60 @@ class ThemePartsRendererTest extends TestCase
         $this->assertStringContainsString('border-radius: 8px;', $html);
         $this->assertStringContainsString('Título Estilizado', $html);
     }
+
+    public function testSemanticWrapperAndCssIsolation(): void
+    {
+        ThemePartRenderer::resetInjectedState();
+
+        $repo = new JsonThemePartRepository($this->tempDir . '/config/theme_parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/config/associations.json');
+        $grid = new LayoutGridRenderer();
+        $tokens = new DesignTokens($this->tempDir . '/config/design_tokens.json');
+        $registry = DefaultBlockRegistryFactory::create();
+
+        $headerPart = new ThemePart(
+            'hdr_isolation',
+            ThemePartInterface::TYPE_HEADER,
+            'Header Isolado',
+            '1_col',
+            ['full_width' => true],
+            [
+                0 => [
+                    ['type' => 'heading', 'data' => ['text' => 'Topo Protegido', 'level' => 'h1']],
+                ],
+            ]
+        );
+        $repo->save($headerPart);
+        $assoc->assignPart('test_theme', 'header', 'hdr_isolation');
+
+        $footerPart = new ThemePart(
+            'ftr_isolation',
+            ThemePartInterface::TYPE_FOOTER,
+            'Rodapé Isolado',
+            '1_col',
+            ['full_width' => true],
+            [
+                0 => [
+                    ['type' => 'text', 'data' => ['content' => 'Rodapé Protegido']],
+                ],
+            ]
+        );
+        $repo->save($footerPart);
+        $assoc->assignPart('test_theme', 'footer', 'ftr_isolation');
+
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir);
+
+        // 1. Renderiza Header com encapsulamento semântico
+        $headerHtml = $renderer->renderHeader('test_theme');
+        $this->assertStringContainsString('<header class="ds-part-wrapper ds-theme-header" role="banner">', $headerHtml);
+        $this->assertStringContainsString('</header>', $headerHtml);
+        $this->assertStringContainsString('.ds-part-wrapper, .ds-section-wrapper {', $headerHtml);
+        $this->assertStringContainsString('--primary: #45f3ff;', $headerHtml);
+        $this->assertStringContainsString('--ds-primary: #45f3ff;', $headerHtml);
+
+        // 2. Renderiza Footer com encapsulamento semântico
+        $footerHtml = $renderer->renderFooter('test_theme');
+        $this->assertStringContainsString('<footer class="ds-part-wrapper ds-theme-footer" role="contentinfo">', $footerHtml);
+        $this->assertStringContainsString('</footer>', $footerHtml);
+    }
 }
