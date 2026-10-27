@@ -298,9 +298,15 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 
                 <div class="inspector-field">
                     <label class="inspector-label">Tipo da Parte</label>
-                    <input type="text" class="inspector-input" value="<?= htmlspecialchars($part->getType()) ?>" disabled style="opacity: 0.6;">
+                    <input type="text" class="inspector-input" value="<?= htmlspecialchars(
+                        $part->getType() === 'header' ? 'Cabeçalho (Header)' : (
+                            $part->getType() === 'footer' ? 'Rodapé (Footer)' : 'Seção / Layout Central'
+                        )
+                    ) ?>" disabled style="opacity: 0.8; font-weight: 600;">
                 </div>
 
+                <?php if ($part->getType() === 'header'): ?>
+                <!-- CONFIGURAÇÃO EXCLUSIVA DE CABEÇALHOS (HEADERS): TOGGLE HAMBURGUER MOBILE -->
                 <div class="inspector-field">
                     <label class="inspector-label">Estilo do Toggle Hamburguer Mobile</label>
                     <div id="settings_toggle_cards" class="toggle-cards-grid">
@@ -345,7 +351,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     </select>
                     <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px;">Define o lado em que o botão hamburguer é posicionado na tela do celular.</span>
                 </div>
+                <?php endif; ?>
 
+                <?php if ($part->getType() !== 'section'): ?>
+                <!-- VINCULAR DIRETAMENTE AO TEMA (APENAS HEADERS E FOOTERS) -->
                 <div class="inspector-field">
                     <label class="inspector-label">Vincular Diretamente ao Tema</label>
                     <select id="setting_assigned_theme" class="inspector-select">
@@ -358,32 +367,37 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <?php endif; ?>
 
                 <?php if ($part->getType() === 'section'): ?>
+                <!-- ATRIBUIR A TEMPLATE (EXCLUSIVO DE SEÇÕES & LAYOUTS CENTRAIS) -->
                 <div class="inspector-field" style="margin-top: 14px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
                     <label class="inspector-label" style="color: var(--primary); font-weight: 700;">🎯 Atribuir Diretamente a um Template do Tema</label>
                     <select id="setting_assigned_template" class="inspector-select">
                         <option value="">Nenhum (Usar somente via Shortcode)</option>
                         <?php if (!empty($templates) && is_array($templates)): ?>
                             <?php foreach ($templates as $tSlug => $tFile): ?>
-                                <option value="<?= htmlspecialchars($tSlug) ?>" <?= (($assignedTemplate ?? '') === $tSlug) ? 'selected' : '' ?>>
+                                <?php $isSelected = (($assignedTemplate ?? '') === $tSlug || str_replace('.php', '', $assignedTemplate ?? '') === str_replace('.php', '', $tSlug)); ?>
+                                <option value="<?= htmlspecialchars($tSlug) ?>" <?= $isSelected ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($tFile) ?>
                                 </option>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">
-                        Ao escolher um template (ex: <code>home.php</code>, <code>sobre.php</code>, <code>blog.php</code>), esta seção será renderizada automaticamente como o conteúdo central daquela página.
+                    <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 6px; line-height: 1.4;">
+                        Ao escolher um template (ex: <code>home.php</code>, <code>sobre.php</code>, <code>blog.php</code>), esta seção será concatenada automaticamente abaixo do conteúdo daquela página.
                     </span>
                 </div>
                 <?php endif; ?>
 
+                <?php if ($part->getType() !== 'section'): ?>
                 <div class="inspector-field" style="margin-top: 15px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
                         <input type="checkbox" id="setting_is_default" <?= $part->isDefault() ? 'checked' : '' ?> onchange="state.is_default = this.checked;">
                         Definir como Padrão Global do Sistema
                     </label>
                 </div>
+                <?php endif; ?>
             </div>
         </aside>
 
