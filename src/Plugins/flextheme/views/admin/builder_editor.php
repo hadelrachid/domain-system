@@ -3076,7 +3076,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         });
     }
 
-    // DESIGN TOKENS COLOR PICKER
+        // DESIGN TOKENS COLOR PICKER
     // ==========================================
     // ==========================================
     // GERADOR AVANÇADO DE FUNDOS E DEGRADÊS (ESTILO ELEMENTOR / SOLID)
@@ -3086,10 +3086,36 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         element: null
     };
 
+    function getSelectedBlock() {
+        if (!selectedBlockCoord) return null;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data || !sec.columns_data[selectedBlockCoord.col]) return null;
+        return sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx] || null;
+    }
+
+    function getSelectedSection() {
+        return state.sections[activeSecIdx] || state.sections[0] || null;
+    }
+
+    function refreshActiveContextUI(isSection) {
+        if (isSection) {
+            var curSec = getSelectedSection();
+            if (curSec) {
+                renderSectionStyleControls(curSec);
+            }
+        } else {
+            renderInspector();
+        }
+    }
+
+    function renderSectionSettingsTab() {
+        refreshActiveContextUI(true);
+    }
+
     function parseGradientCss(str) {
         var def = {
             type: 'linear',          // 'linear' | 'radial'
-            direction: 'horizontal', // 'horizontal' (90deg) | 'vertical' (180deg) | 'radial' | 'custom'
+            direction: 'horizontal', // 'horizontal' (90deg) | 'vertical' (180deg) | 'diagonal' (135deg) | 'radial' | 'custom'
             angle: 90,
             position: 'center center',
             color1: '#0b0c10',
@@ -3105,10 +3131,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             return def;
         }
 
-        if (str.indexOf('radial-gradient(') === 0) {
+        var s = str.trim();
+
+        if (s.indexOf('radial-gradient(') === 0) {
             def.type = 'radial';
             def.direction = 'radial';
-            var m3 = str.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            var m3 = s.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
             if (m3) {
                 def.position = m3[1] ? m3[1].trim() : 'center center';
                 def.color1 = m3[2].trim();
@@ -3121,7 +3149,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 return def;
             }
 
-            var m2 = str.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            var m2 = s.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
             if (m2) {
                 def.position = m2[1] ? m2[1].trim() : 'center center';
                 def.color1 = m2[2].trim();
@@ -3130,12 +3158,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 def.stop2 = parseInt(m2[5], 10) || 100;
                 return def;
             }
-        } else {
+            return def;
+        }
+
+        if (s.indexOf('linear-gradient(') === 0) {
             def.type = 'linear';
-            var m3 = str.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+
+            var m3 = s.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
             if (m3) {
-                def.angle = parseInt(m3[1], 10) || 90;
-                def.direction = (def.angle === 90) ? 'horizontal' : ((def.angle === 180) ? 'vertical' : 'custom');
+                var ang3 = parseInt(m3[1], 10) || 90;
+                def.angle = ang3;
+                def.direction = (ang3 === 90) ? 'horizontal' : ((ang3 === 180) ? 'vertical' : ((ang3 === 135) ? 'diagonal' : 'custom'));
                 def.color1 = m3[2].trim();
                 def.stop1 = parseInt(m3[3], 10) || 0;
                 def.has_middle = true;
@@ -3146,10 +3179,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 return def;
             }
 
-            var m2 = str.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            var m2 = s.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
             if (m2) {
-                def.angle = parseInt(m2[1], 10) || 90;
-                def.direction = (def.angle === 90) ? 'horizontal' : ((def.angle === 180) ? 'vertical' : 'custom');
+                var ang2 = parseInt(m2[1], 10) || 90;
+                def.angle = ang2;
+                def.direction = (ang2 === 90) ? 'horizontal' : ((ang2 === 180) ? 'vertical' : ((ang2 === 135) ? 'diagonal' : 'custom'));
                 def.color1 = m2[2].trim();
                 def.stop1 = parseInt(m2[3], 10) || 0;
                 def.color2 = m2[4].trim();
@@ -3170,7 +3204,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             return 'radial-gradient(circle at ' + (g.position || 'center center') + ', ' + stops + ')';
         }
 
-        var ang = (g.direction === 'horizontal') ? 90 : ((g.direction === 'vertical') ? 180 : (g.angle !== undefined ? g.angle : 90));
+        var ang = (g.direction === 'horizontal') ? 90 
+                : ((g.direction === 'vertical') ? 180 
+                : ((g.direction === 'diagonal') ? 135 
+                : (g.angle !== undefined ? g.angle : 90)));
+
         return 'linear-gradient(' + ang + 'deg, ' + stops + ')';
     }
 
@@ -3178,6 +3216,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var stateKey = isSection ? 'section' : 'element';
         var isGradient = curVal && typeof curVal === 'string' && curVal.indexOf('gradient(') !== -1;
         var activeMode = bgControlModeState[stateKey] || (isGradient ? 'gradient' : 'solid');
+        var previewId = 'grad_live_preview_' + (isSection ? 'sec' : 'elem');
 
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
@@ -3215,8 +3254,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
                 var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
                 var clickFn = isSection
-                    ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapeAttr(t.var) + '\'); renderCanvas(); renderSectionSettingsTab();'
-                    : 'updateBlockProp(\'' + key + '\', \'' + escapeAttr(t.var) + '\'); renderCanvas(); renderInspector();';
+                    ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapeAttr(t.var) + '\'); refreshActiveContextUI(true);'
+                    : 'updateBlockProp(\'' + key + '\', \'' + escapeAttr(t.var) + '\'); refreshActiveContextUI(false);';
 
                 swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" style="' + bgStyle + '" title="' + escapeAttr(t.label) + '" onclick="' + clickFn + '"></button>';
             });
@@ -3229,8 +3268,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (!hexVal.startsWith('#') || hexVal.length !== 7) hexVal = '#38bdf8';
 
             var changeColorFn = isSection
-                ? 'updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSectionSettingsTab();'
-                : 'updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();';
+                ? 'updateActiveSecSetting(\'' + key + '\', this.value); refreshActiveContextUI(true);'
+                : 'updateBlockProp(\'' + key + '\', this.value); refreshActiveContextUI(false);';
             var inputColorFn = isSection
                 ? 'updateActiveSecSetting(\'' + key + '\', this.value);'
                 : 'updateBlockProp(\'' + key + '\', this.value);';
@@ -3243,29 +3282,32 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         } else {
             // MODO DEGRADÊ / GRADIENTE
             var currentGradCss = compileGradientCss(gData);
-            html += '<div style="height:32px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); margin-bottom:10px; background:' + currentGradCss + '; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" title="Visualização do Degradê em Tempo Real"></div>';
+            html += '<div id="' + previewId + '" style="height:34px; border-radius:6px; border:1px solid rgba(255,255,255,0.25); margin-bottom:10px; background:' + currentGradCss + '; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" title="Visualização do Degradê em Tempo Real"></div>';
 
-            // 1. ESCOLHA DE TIPO / DIREÇÃO DO DEGRADÊ: LINEAR (HORIZONTAL), LINEAR (VERTICAL), RADIAL
+            // 1. ESCOLHA DE TIPO / DIREÇÃO DO DEGRADÊ
             html += '<div style="margin-bottom:10px;">' +
                     '<label class="inspector-label" style="font-size:11px; margin-bottom:4px; font-weight:700;">TIPO E DIREÇÃO DO DEGRADÊ:</label>' +
-                    '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-bottom:4px;">' +
-                    '<button type="button" class="btn ' + (gData.direction === 'horizontal' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'horizontal\', ' + isSection + ')">↔️ Horizontal</button>' +
-                    '<button type="button" class="btn ' + (gData.direction === 'vertical' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'vertical\', ' + isSection + ')">↕️ Vertical</button>' +
-                    '<button type="button" class="btn ' + (gData.direction === 'radial' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'radial\', ' + isSection + ')">🎯 Radial</button>' +
+                    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:4px;">' +
+                    '<button type="button" class="btn ' + (gData.direction === 'horizontal' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 4px;" onclick="setGradientDirection(\'' + key + '\', \'horizontal\', ' + isSection + ')">↔️ Linear (Horizontal)</button>' +
+                    '<button type="button" class="btn ' + (gData.direction === 'vertical' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 4px;" onclick="setGradientDirection(\'' + key + '\', \'vertical\', ' + isSection + ')">↕️ Linear (Vertical)</button>' +
+                    '</div>' +
+                    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:4px;">' +
+                    '<button type="button" class="btn ' + (gData.direction === 'diagonal' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 4px;" onclick="setGradientDirection(\'' + key + '\', \'diagonal\', ' + isSection + ')">↗️ Linear (Diagonal)</button>' +
+                    '<button type="button" class="btn ' + (gData.direction === 'radial' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 4px;" onclick="setGradientDirection(\'' + key + '\', \'radial\', ' + isSection + ')">🎯 Radial (Esférico)</button>' +
                     '</div>' +
                     '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">' +
                     '<button type="button" class="btn ' + (gData.direction === 'custom' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:4px 8px; width:100%;" onclick="setGradientDirection(\'' + key + '\', \'custom\', ' + isSection + ')">📐 Ângulo Livre (' + gData.angle + '°)</button>' +
                     '</div>' +
                     '</div>';
 
-            // Se for Ângulo Livre ou Direção customizada
+            // Se for Ângulo Livre
             if (gData.direction === 'custom') {
                 html += '<div style="margin-bottom:10px; padding:6px; background:rgba(0,0,0,0.2); border-radius:6px;">' +
                         '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">' +
                         '<span style="font-size:10px; color:#fff; font-weight:700;">Ângulo Personalizado:</span>' +
-                        '<span style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.angle + '°</span>' +
+                        '<span id="badge_angle_' + (isSection ? 'sec' : 'elem') + '" style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.angle + '°</span>' +
                         '</div>' +
-                        '<input type="range" min="0" max="360" value="' + gData.angle + '" oninput="updateGradientProp(\'' + key + '\', \'angle\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                        '<input type="range" min="0" max="360" value="' + gData.angle + '" oninput="document.getElementById(\'badge_angle_' + (isSection ? 'sec' : 'elem') + '\').textContent = this.value + \'°\'; updateGradientProp(\'' + key + '\', \'angle\', parseInt(this.value,10), ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="width:100%; cursor:pointer;">' +
                         '</div>';
             }
 
@@ -3283,11 +3325,13 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             }
 
             // Função interna para gerar Swatches de Tokens para os Stops
-            function renderColorStopSwatches(stopKey) {
-                var sHtml = '<div style="display:flex; gap:3px; margin-bottom:4px; flex-wrap:wrap;">';
+            function renderColorStopSwatches(stopKey, curStopColor) {
+                var sHtml = '<div style="display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap;">';
                 tokenList.forEach(function(t) {
                     if (t.id === 'transparent') return;
-                    sHtml += '<button type="button" style="width:16px; height:16px; border-radius:3px; border:1px solid rgba(255,255,255,0.2); background-color:' + t.hex + '; cursor:pointer; padding:0;" title="' + escapeAttr(t.label) + '" onclick="updateGradientProp(\'' + key + '\', \'' + stopKey + '\', \'' + t.hex + '\', ' + isSection + ')"></button>';
+                    var isSelected = (curStopColor === t.hex || curStopColor === t.var);
+                    var borderStyle = isSelected ? 'border:2px solid #fff; outline:2px solid var(--primary); transform:scale(1.15);' : 'border:1px solid rgba(255,255,255,0.2);';
+                    sHtml += '<button type="button" style="width:18px; height:18px; border-radius:4px; ' + borderStyle + ' background-color:' + t.hex + '; cursor:pointer; padding:0; transition:transform 0.15s;" title="' + escapeAttr(t.label + ' (' + t.hex + ')') + '" onclick="updateGradientProp(\'' + key + '\', \'' + stopKey + '\', \'' + t.hex + '\', ' + isSection + ')"></button>';
                 });
                 sHtml += '</div>';
                 return sHtml;
@@ -3298,14 +3342,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += '<div style="margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid var(--primary);">' +
                     '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
                     '<span style="font-size:11px; font-weight:700; color:#fff;">🟢 Cor de Início (Start)</span>' +
-                    '<span style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.stop1 + '%</span>' +
+                    '<span id="badge_stop1_' + (isSection ? 'sec' : 'elem') + '" style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.stop1 + '%</span>' +
                     '</div>' +
-                    renderColorStopSwatches('color1') +
+                    renderColorStopSwatches('color1', gData.color1) +
                     '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
                     '<input type="color" value="' + escapeAttr(hex1) + '" onchange="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color1) + '" oninput="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color1) + '" oninput="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
                     '</div>' +
-                    '<input type="range" min="0" max="100" value="' + gData.stop1 + '" oninput="updateGradientProp(\'' + key + '\', \'stop1\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                    '<input type="range" min="0" max="100" value="' + gData.stop1 + '" oninput="document.getElementById(\'badge_stop1_' + (isSection ? 'sec' : 'elem') + '\').textContent = this.value + \'%\'; updateGradientProp(\'' + key + '\', \'stop1\', parseInt(this.value,10), ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="width:100%; cursor:pointer;">' +
                     '</div>';
 
             // 3. COR INTERMEDIÁRIA (OPCIONAL COM TOGGLE)
@@ -3315,19 +3359,19 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                         '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
                         '<span style="font-size:11px; font-weight:700; color:#fff;">🟡 Cor Intermediária (Meio)</span>' +
                         '<div style="display:flex; align-items:center; gap:6px;">' +
-                        '<span style="font-size:10px; color:#f59e0b; font-weight:700;">' + gData.stop_mid + '%</span>' +
-                        '<button type="button" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:11px; padding:0;" title="Remover cor intermediária" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', false, ' + isSection + ')">✕</button>' +
+                        '<span id="badge_stopmid_' + (isSection ? 'sec' : 'elem') + '" style="font-size:10px; color:#f59e0b; font-weight:700;">' + gData.stop_mid + '%</span>' +
+                        '<button type="button" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:12px; font-weight:700; padding:0;" title="Remover cor intermediária" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', false, ' + isSection + ')">✕</button>' +
                         '</div></div>' +
-                        renderColorStopSwatches('color_mid') +
+                        renderColorStopSwatches('color_mid', gData.color_mid) +
                         '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
                         '<input type="color" value="' + escapeAttr(hexMid) + '" onchange="updateGradientProp(\'' + key + '\', \'color_mid\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                        '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color_mid) + '" oninput="updateGradientProp(\'' + key + '\', \'color_mid\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                        '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color_mid) + '" oninput="updateGradientProp(\'' + key + '\', \'color_mid\', this.value, ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
                         '</div>' +
-                        '<input type="range" min="0" max="100" value="' + gData.stop_mid + '" oninput="updateGradientProp(\'' + key + '\', \'stop_mid\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                        '<input type="range" min="0" max="100" value="' + gData.stop_mid + '" oninput="document.getElementById(\'badge_stopmid_' + (isSection ? 'sec' : 'elem') + '\').textContent = this.value + \'%\'; updateGradientProp(\'' + key + '\', \'stop_mid\', parseInt(this.value,10), ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="width:100%; cursor:pointer;">' +
                         '</div>';
             } else {
                 html += '<div style="margin-bottom:8px; text-align:center;">' +
-                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:4px 8px; width:100%; border-style:dashed;" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', true, ' + isSection + ')">➕ Adicionar Cor Intermediária</button>' +
+                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:5px 8px; width:100%; border-style:dashed; border-color:rgba(255,255,255,0.25);" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', true, ' + isSection + ')">➕ Adicionar Cor Intermediária (3 Cores)</button>' +
                         '</div>';
             }
 
@@ -3336,14 +3380,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += '<div style="margin-bottom:10px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid #ec4899;">' +
                     '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
                     '<span style="font-size:11px; font-weight:700; color:#fff;">🔴 Cor de Fim (Stop)</span>' +
-                    '<span style="font-size:10px; color:#ec4899; font-weight:700;">' + gData.stop2 + '%</span>' +
+                    '<span id="badge_stop2_' + (isSection ? 'sec' : 'elem') + '" style="font-size:10px; color:#ec4899; font-weight:700;">' + gData.stop2 + '%</span>' +
                     '</div>' +
-                    renderColorStopSwatches('color2') +
+                    renderColorStopSwatches('color2', gData.color2) +
                     '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
                     '<input type="color" value="' + escapeAttr(hex2) + '" onchange="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color2) + '" oninput="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color2) + '" oninput="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
                     '</div>' +
-                    '<input type="range" min="0" max="100" value="' + gData.stop2 + '" oninput="updateGradientProp(\'' + key + '\', \'stop2\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                    '<input type="range" min="0" max="100" value="' + gData.stop2 + '" oninput="document.getElementById(\'badge_stop2_' + (isSection ? 'sec' : 'elem') + '\').textContent = this.value + \'%\'; updateGradientProp(\'' + key + '\', \'stop2\', parseInt(this.value,10), ' + isSection + ', true)" onchange="refreshActiveContextUI(' + isSection + ')" style="width:100%; cursor:pointer;">' +
                     '</div>';
 
             // 5. PRESETS PRONTOS DE DEGRADÊ COM 1 CLIQUE
@@ -3357,12 +3401,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 { name: '🪟 Frost', css: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' }
             ];
 
-            html += '<div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:700;">PRESETS DE DEGRADÊ:</div>' +
+            html += '<div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:700;">PRESETS DE DEGRADÊ (1 CLIQUE):</div>' +
                     '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
             presets.forEach(function(p) {
                 var pClick = isSection
-                    ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapeAttr(p.css) + '\'); renderCanvas(); renderSectionSettingsTab();'
-                    : 'updateBlockProp(\'' + key + '\', \'' + escapeAttr(p.css) + '\'); renderCanvas(); renderInspector();';
+                    ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapeAttr(p.css) + '\'); refreshActiveContextUI(true);'
+                    : 'updateBlockProp(\'' + key + '\', \'' + escapeAttr(p.css) + '\'); refreshActiveContextUI(false);';
                 html += '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:3px 6px; border-radius:4px;" onclick="' + pClick + '">' + p.name + '</button>';
             });
             html += '</div>';
@@ -3375,7 +3419,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     function setGradientDirection(key, dir, isSection) {
         var curVal = '';
         if (isSection) {
-            var curSec = state.sections[selectedSecIdx] || state.sections[0];
+            var curSec = getSelectedSection();
             curVal = (curSec && curSec.container_settings && curSec.container_settings[key]) || '';
         } else {
             var block = getSelectedBlock();
@@ -3390,20 +3434,18 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         } else {
             gData.type = 'linear';
             if (dir === 'horizontal') gData.angle = 90;
-            if (dir === 'vertical') gData.angle = 180;
+            else if (dir === 'vertical') gData.angle = 180;
+            else if (dir === 'diagonal') gData.angle = 135;
         }
 
         var compiled = compileGradientCss(gData);
 
         if (isSection) {
             updateActiveSecSetting(key, compiled);
-            renderCanvas();
-            renderSectionSettingsTab();
         } else {
             updateBlockProp(key, compiled);
-            renderCanvas();
-            renderInspector();
         }
+        refreshActiveContextUI(isSection);
     }
 
     function setBgMode(key, mode, isSection) {
@@ -3413,31 +3455,24 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             var defaultGrad = 'linear-gradient(90deg, #0b0c10 0%, #38bdf8 100%)';
             if (isSection) {
                 updateActiveSecSetting(key, defaultGrad);
-                renderCanvas();
-                renderSectionSettingsTab();
             } else {
                 updateBlockProp(key, defaultGrad);
-                renderCanvas();
-                renderInspector();
             }
         } else {
             var defaultSolid = 'transparent';
             if (isSection) {
                 updateActiveSecSetting(key, defaultSolid);
-                renderCanvas();
-                renderSectionSettingsTab();
             } else {
                 updateBlockProp(key, defaultSolid);
-                renderCanvas();
-                renderInspector();
             }
         }
+        refreshActiveContextUI(isSection);
     }
 
-    function updateGradientProp(key, prop, val, isSection) {
+    function updateGradientProp(key, prop, val, isSection, skipFullRefresh) {
         var curVal = '';
         if (isSection) {
-            var curSec = state.sections[selectedSecIdx] || state.sections[0];
+            var curSec = getSelectedSection();
             curVal = (curSec && curSec.container_settings && curSec.container_settings[key]) || '';
         } else {
             var block = getSelectedBlock();
@@ -3450,15 +3485,19 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         if (isSection) {
             updateActiveSecSetting(key, compiled);
-            renderCanvas();
-            renderSectionSettingsTab();
         } else {
             updateBlockProp(key, compiled);
-            renderCanvas();
-            renderInspector();
+        }
+
+        var previewEl = document.getElementById('grad_live_preview_' + (isSection ? 'sec' : 'elem'));
+        if (previewEl) {
+            previewEl.style.background = compiled;
+        }
+
+        if (!skipFullRefresh) {
+            refreshActiveContextUI(isSection);
         }
     }
-
 function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
