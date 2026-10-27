@@ -124,11 +124,11 @@
                     <div style="background: var(--bg-panel, #161b22); border: 1px solid <?= $isCurrentThemeHeader ? '#00d284' : 'var(--border, #30363d)' ?>; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; position: relative;">
                         
                         <?php if ($isCurrentThemeHeader): ?>
-                            <span style="position: absolute; top: 12px; right: 12px; background: #00d284; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                            <span class="fb-status-badge fb-status-badge--active">
                                 ✓ Ativo no Tema
                             </span>
                         <?php elseif ($isGlobalDefault): ?>
-                            <span style="position: absolute; top: 12px; right: 12px; background: #fbbf24; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                            <span class="fb-status-badge fb-status-badge--global">
                                 ⭐ Padrão Global
                             </span>
                         <?php endif; ?>
@@ -205,11 +205,11 @@
                     <div style="background: var(--bg-panel, #161b22); border: 1px solid <?= $isCurrentThemeFooter ? '#00d284' : 'var(--border, #30363d)' ?>; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; position: relative;">
                         
                         <?php if ($isCurrentThemeFooter): ?>
-                            <span style="position: absolute; top: 12px; right: 12px; background: #00d284; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                            <span class="fb-status-badge fb-status-badge--active">
                                 ✓ Ativo no Tema
                             </span>
                         <?php elseif ($isGlobalDefault): ?>
-                            <span style="position: absolute; top: 12px; right: 12px; background: #fbbf24; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                            <span class="fb-status-badge fb-status-badge--global">
                                 ⭐ Padrão Global
                             </span>
                         <?php endif; ?>
@@ -289,7 +289,7 @@
                     <div style="background: var(--bg-panel, #161b22); border: 1px solid <?= !empty($assignedTemplateKey) ? '#00d284' : 'var(--border, #30363d)' ?>; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; position: relative;">
                         
                         <?php if (!empty($assignedTemplateKey)): ?>
-                            <span style="position: absolute; top: 12px; right: 12px; background: #00d284; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                            <span class="fb-status-badge fb-status-badge--active">
                                 ✓ Ativo em <?= htmlspecialchars($assignedTemplateKey) ?>.php
                             </span>
                         <?php endif; ?>
@@ -402,12 +402,14 @@ function showCopyFeedback(btn) {
     if (!btn) return;
     var origText = btn.innerHTML;
     btn.innerHTML = '✓ Copiado!';
-    btn.style.background = '#10b981';
-    btn.style.color = '#000';
+    btn.style.setProperty('background', '#065f46', 'important');
+    btn.style.setProperty('border-color', '#10b981', 'important');
+    btn.style.setProperty('color', '#ecfdf5', 'important');
     setTimeout(function() {
         btn.innerHTML = origText;
-        btn.style.background = '#238636';
-        btn.style.color = '#fff';
+        btn.style.setProperty('background', '#238636', 'important');
+        btn.style.setProperty('border-color', 'rgba(255,255,255,0.15)', 'important');
+        btn.style.setProperty('color', '#fff', 'important');
     }, 2000);
 }
 
@@ -483,4 +485,26 @@ window.addEventListener('click', function(e) {
 
 <style>
 #dropdownCreate.show { display: block !important; }
+.fb-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.fb-status-badge--active {
+    background: #064e3b !important;
+    border: 1px solid #10b981 !important;
+    color: #ecfdf5 !important;
+}
+.fb-status-badge--global {
+    background: #78350f !important;
+    border: 1px solid #f59e0b !important;
+    color: #fef3c7 !important;
+}
 </style>
