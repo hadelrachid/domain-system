@@ -11,8 +11,11 @@ use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
 /**
  * Bloco de Navegação e Menu Dinâmico com Suporte aos 4 Estilos de Toggle Mobile.
  */
+use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 class NavMenuBlock implements BlockInterface
 {
+    use AllowedPartTypesTrait;
+
     private ?MenuProviderInterface $menuProvider;
 
     public function __construct(?MenuProviderInterface $menuProvider = null)

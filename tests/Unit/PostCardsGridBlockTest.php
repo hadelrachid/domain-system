@@ -38,6 +38,29 @@ class PostCardsGridBlockTest extends TestCase
         $this->assertArrayHasKey('show_author', $schema);
         $this->assertArrayHasKey('show_excerpt', $schema);
         $this->assertArrayHasKey('show_read_more', $schema);
+
+        // Segregação estrita por contrato (SOLID - ISP/SRP): permitido apenas em seções centrais!
+        $this->assertSame(['section'], $block->getAllowedPartTypes());
+    }
+
+    public function testPartTypeSegregationInRegistry(): void
+    {
+        $registry = DefaultBlockRegistryFactory::create();
+
+        $headerBlocks = $registry->allForPartType('header');
+        $this->assertArrayNotHasKey('post_cards_grid', $headerBlocks, 'PostCardsGridBlock NÃO deve estar disponível para Headers');
+        $this->assertArrayNotHasKey('copyright', $headerBlocks, 'CopyrightBlock NÃO deve estar disponível para Headers');
+        $this->assertArrayHasKey('logo', $headerBlocks);
+        $this->assertArrayHasKey('nav_menu', $headerBlocks);
+
+        $footerBlocks = $registry->allForPartType('footer');
+        $this->assertArrayNotHasKey('post_cards_grid', $footerBlocks, 'PostCardsGridBlock NÃO deve estar disponível para Footers');
+        $this->assertArrayHasKey('copyright', $footerBlocks, 'CopyrightBlock DEVE estar disponível para Footers');
+        $this->assertArrayHasKey('social_icons', $footerBlocks);
+
+        $sectionBlocks = $registry->allForPartType('section');
+        $this->assertArrayHasKey('post_cards_grid', $sectionBlocks, 'PostCardsGridBlock DEVE estar disponível para Conteúdo Central (Seções)');
+        $this->assertArrayHasKey('heading', $sectionBlocks);
     }
 
     public function testRenderWithDefaultMockProvider(): void
@@ -206,5 +229,50 @@ class PostCardsGridBlockTest extends TestCase
 
         $this->assertNotNull($block);
         $this->assertInstanceOf(PostCardsGridBlock::class, $block);
+    }
+
+    public function testThemePartRendererBlocksPostGridInsideHeader(): void
+    {
+        \DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer::resetInjectedState();
+
+        $repoMock = $this->createMock(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface::class);
+        $assocMock = $this->createMock(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface::class);
+        $grid = new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer();
+        $registry = DefaultBlockRegistryFactory::create();
+        $tokens = new \DomainSystem\Core\Theme\Parts\Models\DesignTokens(sys_get_temp_dir() . '/dummy_tokens.json');
+
+        // Cria parte do tipo HEADER contendo indevidamente um bloco de post_cards_grid
+        $headerPart = new \DomainSystem\Core\Theme\Parts\Models\ThemePart(
+            'hdr_with_blog',
+            \DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface::TYPE_HEADER,
+            'Header Inválido com Grid',
+            '1_col',
+            [],
+            [
+                0 => [
+                    ['type' => 'logo', 'data' => ['brand_text' => 'Domain<b>OS</b>']],
+                    ['type' => 'post_cards_grid', 'data' => ['limit' => 3]],
+                ],
+            ]
+        );
+
+        $assocMock->method('getAssignedPartId')->willReturn('hdr_with_blog');
+        $repoMock->method('findById')->willReturn($headerPart);
+
+        $renderer = new \DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer(
+            $repoMock,
+            $assocMock,
+            $grid,
+            $registry,
+            $tokens
+        );
+
+        $html = $renderer->renderHeader('test_theme');
+
+        // O logotipo deve ser renderizado normalmente
+        $this->assertStringContainsString('Domain<b>OS</b>', $html);
+        // O Grid de Artigos DEVE SER BLOQUEADO por contrato e não aparecer no Header!
+        $this->assertStringNotContainsString('ds-post-cards-grid', $html);
+        $this->assertStringNotContainsString('Arquitetura SOLID no PHP Moderno', $html);
     }
 }

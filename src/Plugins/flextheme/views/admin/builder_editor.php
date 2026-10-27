@@ -501,8 +501,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         { type: 'shortcode', name: 'Shortcode Pronto', icon: '⚡', desc: 'Insere qualquer shortcode ativo do sistema.' },
         { type: 'divider', name: 'Divisória / Espaçador', icon: '➖', desc: 'Linha sólida, tracejada ou espaçador transparente.' },
         { type: 'social_icons', name: 'Redes Sociais', icon: '🌐', desc: 'Ícones de redes com links dinâmicos.' },
-        { type: 'post_cards_grid', name: 'Grid de Artigos (Blog)', icon: '📰', desc: 'Cards de posts responsivos em CSS Grid, SEO Schema.org e filtros.' },
-        { type: 'copyright', name: 'Copyright & LGPD', icon: '©', desc: 'Ano automático {year} e links de termos.' },
+        { type: 'post_cards_grid', name: 'Grid de Artigos (Blog)', icon: '📰', desc: 'Cards de posts responsivos em CSS Grid, SEO Schema.org e filtros.' , allowed_types: ['section'] },
+        { type: 'copyright', name: 'Copyright & LGPD', icon: '©', desc: 'Ano automático {year} e links de termos.' , allowed_types: ['footer'] },
         { type: 'custom_code', name: 'Código Customizado', icon: '💻', desc: 'Editor HTML, CSS e JavaScript livre.' }
     ];
 
@@ -1390,7 +1390,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         hint.innerHTML = '✨ <em>Clique no bloco para adicionar na <strong>Célula ' + (activeColIdx + 1) + '</strong> ou arraste para qualquer célula do stage.</em>';
         container.appendChild(hint);
 
+        var curPartType = '<?= $part->getType() ?>';
         blocksCatalog.forEach(function(b) {
+            if (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1) return;
             var item = document.createElement('div');
             item.className = 'block-palette-item';
             item.setAttribute('draggable', 'true');

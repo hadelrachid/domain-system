@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
+use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Icons\SvgIconRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Styles\StylableElementInterface;
@@ -21,6 +22,7 @@ use DomainSystem\Core\Theme\Parts\Styles\Values\ColorValue;
 class SocialIconsBlock implements BlockInterface, StylableElementInterface
 {
     use StylableElementTrait;
+    use AllowedPartTypesTrait;
 
     private SvgIconRegistryInterface $iconRegistry;
 

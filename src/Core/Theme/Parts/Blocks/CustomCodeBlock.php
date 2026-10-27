@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
+use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 
 /**
@@ -11,6 +12,7 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
  */
 class CustomCodeBlock implements BlockInterface
 {
+    use AllowedPartTypesTrait;
     public function getType(): string
     {
         return 'custom_code';

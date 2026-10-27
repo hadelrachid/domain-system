@@ -514,14 +514,18 @@ class ThemePartsAdminController
      */
     public function schema(Request $request): Response
     {
+        $partType = (string)($request->input('part_type') ?? '');
+        $blocks = $partType !== '' ? $this->blockRegistry->allForPartType($partType) : $this->blockRegistry->all();
+
         $blocksData = [];
-        foreach ($this->blockRegistry->all() as $block) {
+        foreach ($blocks as $block) {
             $blocksData[$block->getType()] = [
-                'type'     => $block->getType(),
-                'name'     => $block->getName(),
-                'icon'     => $block->getIcon(),
-                'category' => $block->getCategory(),
-                'schema'   => $block->getSchema(),
+                'type'               => $block->getType(),
+                'name'               => $block->getName(),
+                'icon'               => $block->getIcon(),
+                'category'           => $block->getCategory(),
+                'schema'             => $block->getSchema(),
+                'allowed_part_types' => $block->getAllowedPartTypes(),
             ];
         }
 

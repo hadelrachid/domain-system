@@ -42,4 +42,13 @@ interface BlockInterface
      * @return array<string, mixed>
      */
     public function getSchema(): array;
+
+    /**
+     * Retorna os tipos de partes estruturais onde o bloco é permitido (ex: ['header', 'footer', 'section']).
+     * Permite segregação estrita (ISP/SRP): blocos de conteúdo central não poluem headers ou footers.
+     * Se retornar array vazio, o bloco é permitido universalmente.
+     *
+     * @return array<int, string>
+     */
+    public function getAllowedPartTypes(): array;
 }

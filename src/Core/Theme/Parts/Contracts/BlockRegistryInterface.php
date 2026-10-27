@@ -30,4 +30,10 @@ interface BlockRegistryInterface
      * @return array<string, array<string, BlockInterface>>
      */
     public function allByCategory(): array;
+
+    /**
+     * Retorna apenas os blocos permitidos para o tipo de parte estrutural informada ('header', 'footer', 'section').
+     * @return array<string, BlockInterface>
+     */
+    public function allForPartType(string $partType): array;
 }

@@ -7,6 +7,7 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Styles\StylableElementInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Providers\MockPostProvider;
 use DomainSystem\Core\Theme\Parts\Styles\Traits\StylableElementTrait;
 
@@ -45,6 +46,11 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
     public function getCategory(): string
     {
         return 'content';
+    }
+
+    public function getAllowedPartTypes(): array
+    {
+        return [ThemePartInterface::TYPE_SECTION];
     }
 
     public function getSchema(): array

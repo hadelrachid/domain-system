@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 
 /**
  * Bloco de Rodapé / Direitos Autorais e Links Institucionais.
@@ -29,6 +30,11 @@ class CopyrightBlock implements BlockInterface
     public function getCategory(): string
     {
         return 'footer';
+    }
+
+    public function getAllowedPartTypes(): array
+    {
+        return [ThemePartInterface::TYPE_FOOTER];
     }
 
     public function render(array $data = [], array $context = []): string

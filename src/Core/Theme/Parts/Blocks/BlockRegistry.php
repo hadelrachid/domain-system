@@ -43,4 +43,17 @@ class BlockRegistry implements BlockRegistryInterface
 
         return $grouped;
     }
+
+    public function allForPartType(string $partType): array
+    {
+        $filtered = [];
+        foreach ($this->blocks as $type => $block) {
+            $allowed = $block->getAllowedPartTypes();
+            if (empty($allowed) || in_array($partType, $allowed, true)) {
+                $filtered[$type] = $block;
+            }
+        }
+
+        return $filtered;
+    }
 }

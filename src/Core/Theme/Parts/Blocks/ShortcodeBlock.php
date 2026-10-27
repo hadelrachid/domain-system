@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
+use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 use DomainSystem\Core\Theme\ShortcodeManager;
 
@@ -12,6 +13,7 @@ use DomainSystem\Core\Theme\ShortcodeManager;
  */
 class ShortcodeBlock implements BlockInterface
 {
+    use AllowedPartTypesTrait;
     private ?ShortcodeManager $shortcodeManager;
 
     public function __construct(?ShortcodeManager $shortcodeManager = null)
