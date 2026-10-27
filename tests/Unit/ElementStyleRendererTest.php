@@ -103,4 +103,19 @@ class ElementStyleRendererTest extends TestCase
         $this->assertStringContainsString('border-style: dashed;', $css);
         $this->assertStringContainsString('border-color: var(--color-primary);', $css);
     }
+
+    public function testRenderStyleStringWithGradients(): void
+    {
+        $linear = [
+            'background' => 'linear-gradient(135deg, #0b0c10 0%, #1f2833 100%)',
+        ];
+        $cssLinear = $this->renderer->renderStyleString($linear);
+        $this->assertStringContainsString('background: linear-gradient(135deg, #0b0c10 0%, #1f2833 100%);', $cssLinear);
+
+        $radial = [
+            'background' => 'radial-gradient(circle at center, #38bdf8 0%, #0b0c10 100%)',
+        ];
+        $cssRadial = $this->renderer->renderStyleString($radial);
+        $this->assertStringContainsString('background: radial-gradient(circle at center, #38bdf8 0%, #0b0c10 100%);', $cssRadial);
+    }
 }
