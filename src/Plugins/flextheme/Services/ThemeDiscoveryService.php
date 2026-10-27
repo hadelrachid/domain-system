@@ -73,8 +73,9 @@ class ThemeDiscoveryService implements ThemeDiscoveryServiceInterface
         $activeFile = $this->basePath . '/config/active_theme.json';
         if (file_exists($activeFile)) {
             $data = json_decode((string)file_get_contents($activeFile), true);
-            if (is_array($data) && isset($data['active']) && is_string($data['active']) && $data['active'] !== '') {
-                return basename($data['active']);
+            $theme = $data['active_theme'] ?? ($data['active'] ?? null);
+            if (is_string($theme) && trim($theme) !== '') {
+                return basename(trim($theme));
             }
         }
 

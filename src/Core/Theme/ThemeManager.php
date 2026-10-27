@@ -45,13 +45,11 @@ class ThemeManager implements ThemeManagerInterface
     {
         // 1. Verifica se há uma seção modular do FlexBuilder atribuída diretamente a este template
         $renderer = $this->resolvePartRenderer();
+        $assignedSection = '';
         if ($renderer !== null) {
             $themeFolder = basename($this->activeThemePath);
             $cleanTemplate = str_replace(['templates/', '.php'], '', $template);
-            $customSection = $renderer->renderTemplateSection($themeFolder, $cleanTemplate, $args);
-            if (trim($customSection) !== '') {
-                return $this->shortcodeManager !== null ? $this->shortcodeManager->parse($customSection) : $customSection;
-            }
+            $assignedSection = $renderer->renderTemplateSection($themeFolder, $cleanTemplate, $args);
         }
 
         $file = $this->activeThemePath . '/' . ltrim($template, '/') . '.php';
@@ -74,10 +72,14 @@ class ThemeManager implements ThemeManagerInterface
                 }
             }
             if (!$fileToInclude || !file_exists($fileToInclude)) {
+                if (trim($assignedSection) !== '') {
+                    return $this->shortcodeManager !== null ? $this->shortcodeManager->parse($assignedSection) : $assignedSection;
+                }
                 throw new \Exception("Template '{$template}' not found in theme or plugin.");
             }
         }
 
+        $args['assignedSection'] = $assignedSection;
         extract($args, EXTR_SKIP);
         
         $obLevel = ob_get_level();
@@ -90,6 +92,11 @@ class ThemeManager implements ThemeManagerInterface
                 ob_end_clean();
             }
             throw $t;
+        }
+
+        // Se uma seção foi atribuída e o template não a imprimiu internamente, concatena abaixo
+        if (trim($assignedSection) !== '' && !str_contains($content, $assignedSection)) {
+            $content .= "\n" . $assignedSection;
         }
         
         if ($this->shortcodeManager !== null) {

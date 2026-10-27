@@ -56,5 +56,9 @@
     </div>
 </section>
 
-
-
+<!-- Seções Modulares do FlexBuilder (Concatenadas Abaixo do Conteúdo Principal) -->
+<?php if (!empty($assignedSection)): ?>
+    <section class="builder-custom-sections" style="position: relative; width: 100%; margin-top: 30px;">
+        <?= $assignedSection ?>
+    </section>
+<?php endif; ?>

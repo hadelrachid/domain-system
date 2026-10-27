@@ -55,16 +55,16 @@ class ThemeController
             ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
             : null;
         
-        $customHome = ($partRenderer !== null) ? $partRenderer->renderTemplateSection($themeName, 'home') : '';
-        if (trim($customHome) !== '') {
-            return new Response($customHome);
-        }
+        $assignedSection = ($partRenderer !== null) ? $partRenderer->renderTemplateSection($themeName, 'home') : '';
 
         $themePath = file_exists($themeDir . '/templates/home.php') 
             ? $themeDir . '/templates/home.php' 
             : $themeDir . '/index.php';
         
         if (!file_exists($themePath)) {
+            if (trim($assignedSection) !== '') {
+                return new Response($assignedSection);
+            }
             return new Response("Tema não encontrado em: " . htmlspecialchars($themeDir), 404);
         }
 
@@ -73,6 +73,19 @@ class ThemeController
         $siteName = 'Domain-System OS';
         require $themePath;
         $html = ob_get_clean();
+
+        // Se uma seção customizada foi atribuída ao template home, concatena abaixo se não tiver sido impressa internamente
+        if (trim($assignedSection) !== '' && !str_contains($html, $assignedSection)) {
+            $html .= "\n" . $assignedSection;
+        }
+
+        // Executa o processador de Shortcodes para que qualquer [section id="..."] na home funcione nativamente
+        $shortcodes = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\ShortcodeManager::class))
+            ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\ShortcodeManager::class)
+            : null;
+        if ($shortcodes !== null) {
+            $html = $shortcodes->parse($html);
+        }
 
         // O SEO Middleware vai interceptar esta Response e envelopá-la no main.php + Minificar!
         return new Response($html);

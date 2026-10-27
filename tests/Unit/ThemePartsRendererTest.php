@@ -348,4 +348,50 @@ class ThemePartsRendererTest extends TestCase
         $htmlSobre = $renderer->renderTemplateSection('test_theme', 'sobre');
         $this->assertSame('', $htmlSobre);
     }
+
+    public function testThemeManagerConcatenatesAssignedSectionBelowNativeTemplate(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/config/theme_parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/config/associations.json');
+        $grid = new LayoutGridRenderer();
+        $tokens = new DesignTokens($this->tempDir . '/config/design_tokens.json');
+        $registry = DefaultBlockRegistryFactory::create();
+
+        $sectionPart = new ThemePart(
+            'sec_concat_test',
+            ThemePartInterface::TYPE_SECTION,
+            'Seção Concatenada Teste',
+            '1_col',
+            [],
+            [
+                0 => [
+                    ['type' => 'heading', 'data' => ['text' => 'Seção Abaixo do Conteúdo', 'level' => 'h2']],
+                ],
+            ]
+        );
+        $repo->save($sectionPart);
+
+        $themeFolder = basename($this->themeMockDir);
+        $assoc->assignPart($themeFolder, 'template:home', 'sec_concat_test');
+
+        @mkdir($this->themeMockDir . '/templates', 0755, true);
+        file_put_contents(
+            $this->themeMockDir . '/templates/home.php',
+            "<div class='native-hero'><h1>Hero Nativo Antigo</h1></div>"
+        );
+
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir);
+        $themeManager = new ThemeManager($this->themeMockDir, null, $renderer);
+
+        $output = $themeManager->render('templates/home');
+
+        // Ambos devem estar presentes (concatenados)
+        $this->assertStringContainsString('Hero Nativo Antigo', $output);
+        $this->assertStringContainsString('Seção Abaixo do Conteúdo', $output);
+
+        // A seção dinâmica deve vir abaixo do conteúdo nativo
+        $nativePos = strpos($output, 'Hero Nativo Antigo');
+        $customPos = strpos($output, 'Seção Abaixo do Conteúdo');
+        $this->assertGreaterThan($nativePos, $customPos);
+    }
 }

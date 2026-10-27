@@ -266,7 +266,8 @@ class ThemePartsAdminController
                     $templateChoice = trim((string)$input['assigned_template']);
                     // Limpa atribuições anteriores desta seção em templates
                     $allAssignments = $this->partAssoc->getAllAssignments();
-                    foreach ($allAssignments[$targetTheme] ?? [] as $tKey => $pId) {
+                    $themeAssoc = $allAssignments['themes'][$targetTheme] ?? [];
+                    foreach ($themeAssoc as $tKey => $pId) {
                         if ($pId === $id && str_starts_with($tKey, 'template:')) {
                             $this->partAssoc->assignPart($targetTheme, $tKey, null);
                         }
@@ -333,10 +334,24 @@ class ThemePartsAdminController
 
         $resolvedPartId = ($partId !== '' && $partId !== 'none' && $partId !== 'fallback') ? $partId : null;
 
-        if ($isGlobal) {
-            $this->partAssoc->setGlobalDefault($partType, $resolvedPartId);
+        if (str_starts_with($partType, 'template:')) {
+            // Se for atribuição de template a uma seção, limpa associações anteriores desta seção
+            $allAssignments = $this->partAssoc->getAllAssignments();
+            $themeAssoc = $allAssignments['themes'][$themeFolder] ?? [];
+            foreach ($themeAssoc as $tKey => $pId) {
+                if ($pId === $partId && str_starts_with($tKey, 'template:')) {
+                    $this->partAssoc->assignPart($themeFolder, $tKey, null);
+                }
+            }
+            if ($partType !== 'template:none' && $resolvedPartId !== null) {
+                $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
+            }
         } else {
-            $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
+            if ($isGlobal) {
+                $this->partAssoc->setGlobalDefault($partType, $resolvedPartId);
+            } else {
+                $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
+            }
         }
 
         if ($this->isAjax($request)) {
