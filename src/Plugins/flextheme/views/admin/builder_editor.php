@@ -1230,6 +1230,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 '<input type="number" step="0.1" min="0.1" max="1.0" class="inspector-input" value="' + (cs.opacity !== undefined ? cs.opacity : '') + '" oninput="updateActiveSecSetting(\'opacity\', this.value)" placeholder="1.0">' +
                 '</div>';
 
+        // 6. Visibilidade Responsiva da Seção (Desktop, Tablet, Mobile)
+        html += '<div class="inspector-field" style="margin-top:12px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:8px;">📱 Visibilidade Responsiva da Seção</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer;">' +
+                '<input type="checkbox" ' + (cs.hide_desktop ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_desktop\', this.checked)"> 🖥️ Ocultar no Desktop</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer;">' +
+                '<input type="checkbox" ' + (cs.hide_tablet ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_tablet\', this.checked)"> 📱 Ocultar no Tablet (≤ 900px)</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer;">' +
+                '<input type="checkbox" ' + (cs.hide_mobile ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_mobile\', this.checked)"> 📲 Ocultar no Celular (≤ 640px)</label>' +
+                '</div>';
+
         container.innerHTML = html;
     }
 
@@ -1319,7 +1330,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         curSec.container_settings[key] = num + 'px';
         renderCanvas();
     }
-
+
 // CONTROLES DE ESPAÇAMENTOS E DIMENSÕES DA SEÇÃO (STEPPERS + RESET)
     var spacingLinkState = {
         margin: false, // Separado por padrão para margin externa (normalmente diferente em cima/baixo)
@@ -2687,6 +2698,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         // OPACIDADE COM SLIDER E STEPPERS
         html += renderElemOpacityControl(block);
 
+        // VISIBILIDADE RESPONSIVA DO ELEMENTO (DESKTOP, TABLET, CELULAR)
+        html += '<div class="inspector-field" style="margin-top:14px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:8px;">📱 Visibilidade Responsiva (Ocultar por Dispositivo)</label>' +
+                inspectorCheckbox('🖥️ Ocultar no Desktop', 'hide_desktop', !!block.data.hide_desktop) +
+                inspectorCheckbox('📱 Ocultar no Tablet (≤ 900px)', 'hide_tablet', !!block.data.hide_tablet) +
+                inspectorCheckbox('📲 Ocultar no Celular (≤ 640px)', 'hide_mobile', !!block.data.hide_mobile) +
+                '</div>';
+
         html += '</div>';
 
         container.innerHTML = html;
@@ -3137,6 +3156,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         delete block.data.border_radius;
         delete block.data.box_shadow;
         delete block.data.opacity;
+        delete block.data.hide_desktop;
+        delete block.data.hide_tablet;
+        delete block.data.hide_mobile;
 
         renderCanvas();
         renderInspector();

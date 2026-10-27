@@ -5,35 +5,43 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Theme\Parts\Providers;
 
 use DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface;
-use DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use Throwable;
 
 /**
- * Adapter que conecta o repositório de Páginas/Artigos do sistema ao contrato PostProviderInterface.
+ * Adapter desacoplado (Ring 0 Pure) que conecta qualquer repositório de Páginas/Artigos
+ * (que implemente getAll(): array) ao contrato PostProviderInterface sem acoplar a Plugins (SOLID - DIP).
  */
 class PagesPostProvider implements PostProviderInterface
 {
-    private ?PageRepositoryInterface $pageRepo;
+    private ?object $pageRepo;
     private PostProviderInterface $fallbackProvider;
+    private PublicUrlResolverInterface $urlResolver;
 
-    public function __construct(?PageRepositoryInterface $pageRepo = null, ?PostProviderInterface $fallbackProvider = null)
-    {
+    public function __construct(
+        ?object $pageRepo = null,
+        ?PostProviderInterface $fallbackProvider = null,
+        ?PublicUrlResolverInterface $urlResolver = null
+    ) {
         $this->pageRepo = $pageRepo;
         $this->fallbackProvider = $fallbackProvider ?? new MockPostProvider();
+        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
     }
 
     public function getPosts(array $options = []): array
     {
-        if ($this->pageRepo === null) {
+        if ($this->pageRepo === null || !method_exists($this->pageRepo, 'getAll')) {
             return $this->fallbackProvider->getPosts($options);
         }
 
         try {
             $pages = $this->pageRepo->getAll();
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             return $this->fallbackProvider->getPosts($options);
         }
 
-        if (empty($pages)) {
+        if (!is_array($pages) || empty($pages)) {
             return $this->fallbackProvider->getPosts($options);
         }
 
@@ -41,6 +49,9 @@ class PagesPostProvider implements PostProviderInterface
         $limit = isset($options['limit']) ? (int)$options['limit'] : 6;
 
         foreach ($pages as $page) {
+            if (!is_array($page)) {
+                continue;
+            }
             $content = (string)($page['content'] ?? '');
             $cleanExcerpt = mb_substr(trim(strip_tags($content)), 0, 160);
             if (mb_strlen($cleanExcerpt) >= 160) {
@@ -57,7 +68,7 @@ class PagesPostProvider implements PostProviderInterface
             }
 
             $slug = (string)($page['slug'] ?? 'post-' . ($page['id'] ?? '1'));
-            $url = defined('BASE_URL') ? BASE_URL . '/' . ltrim($slug, '/') : '/' . ltrim($slug, '/');
+            $url = $this->urlResolver->resolve('/' . ltrim($slug, '/'));
 
             $posts[] = [
                 'id'             => $page['id'] ?? $slug,

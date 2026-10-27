@@ -7,11 +7,27 @@ use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
 
 class WidgetManager implements WidgetManagerInterface
 {
+    /** @var array<string, WidgetInterface> */
     protected array $widgets = [];
+
+    /** @var array<string, WidgetInterface> Índice O(1) por nome curto e nome da classe */
+    protected array $shortNameIndex = [];
 
     public function registerWidget(WidgetInterface $widget): void
     {
-        $this->widgets[$widget->getShortcodeTag()] = $widget;
+        $tag = $widget->getShortcodeTag();
+        $this->widgets[$tag] = $widget;
+
+        $classParts = explode('\\', get_class($widget));
+        $className = (string)end($classParts);
+        $this->shortNameIndex[$className] = $widget;
+
+        if (str_ends_with($className, 'Widget')) {
+            $shortName = substr($className, 0, -6);
+            if ($shortName !== '') {
+                $this->shortNameIndex[$shortName] = $widget;
+            }
+        }
     }
 
     public function getWidgets(): array
@@ -21,19 +37,16 @@ class WidgetManager implements WidgetManagerInterface
 
     public function getWidget(string $name): ?WidgetInterface
     {
-        // Busca direta pela tag do shortcode (ex: flex_container)
+        // Busca O(1) direta pela tag do shortcode (ex: flex_container)
         if (isset($this->widgets[$name])) {
             return $this->widgets[$name];
         }
-        
-        // Busca pelo nome da classe/tipo JS (ex: ContainerWidget)
-        foreach ($this->widgets as $widget) {
-            $classParts = explode('\\', get_class($widget));
-            $className = end($classParts);
-            if ($className === $name || $className === $name . 'Widget') {
-                return $widget;
-            }
+
+        // Busca O(1) pelo índice de nomes curtos / classes (ex: Container ou ContainerWidget)
+        if (isset($this->shortNameIndex[$name])) {
+            return $this->shortNameIndex[$name];
         }
+
         return null;
     }
 
@@ -41,10 +54,9 @@ class WidgetManager implements WidgetManagerInterface
     public function bootShortcodes($shortcodeManager): void
     {
         foreach ($this->widgets as $tag => $widget) {
-            $shortcodeManager->add($tag, function(array $attrs, string $content = '') use ($widget) {
+            $shortcodeManager->add($tag, function (array $attrs, string $content = '') use ($widget) {
                 return $widget->render($attrs, $content);
             });
         }
     }
 }
-

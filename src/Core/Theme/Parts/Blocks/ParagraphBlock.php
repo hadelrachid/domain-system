@@ -6,6 +6,10 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Parágrafo / Texto Corrido.
@@ -13,6 +17,18 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class ParagraphBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private HtmlSanitizerInterface $htmlSanitizer;
+    private ElementStyleRendererInterface $styleRenderer;
+
+    public function __construct(
+        ?HtmlSanitizerInterface $htmlSanitizer = null,
+        ?ElementStyleRendererInterface $styleRenderer = null
+    ) {
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+    }
+
     public function getType(): string
     {
         return 'paragraph';
@@ -36,10 +52,10 @@ class ParagraphBlock implements BlockInterface
     public function render(array $data = [], array $context = []): string
     {
         $text = (string)($data['text'] ?? '');
-        $size = (string)($data['size'] ?? '');
-        $color = (string)($data['color'] ?? '');
-        $align = (string)($data['align'] ?? 'left');
-        $lineHeight = (string)($data['line_height'] ?? '1.7');
+        $size = $this->styleRenderer->sanitizeCssValue((string)($data['size'] ?? ''));
+        $color = $this->styleRenderer->sanitizeCssValue((string)($data['color'] ?? ''));
+        $align = $this->styleRenderer->sanitizeCssValue((string)($data['align'] ?? 'left'));
+        $lineHeight = $this->styleRenderer->sanitizeCssValue((string)($data['line_height'] ?? '1.7'));
 
         $styles = [
             "text-align: {$align}",
@@ -58,8 +74,8 @@ class ParagraphBlock implements BlockInterface
         }
 
         $styleAttr = implode('; ', $styles) . ';';
-        // Permite tags HTML básicas como <strong>, <em>, <a>, <code>
-        $sanitized = strip_tags($text, '<strong><b><em><i><a><code><br><span>');
+        // Sanitização segura de HTML inline contra XSS (atributos on*, javascript:, etc.)
+        $sanitized = $this->htmlSanitizer->sanitizeInlineHtml($text);
 
         return "<p class=\"ds-block-paragraph\" style=\"{$styleAttr}\">{$sanitized}</p>";
     }

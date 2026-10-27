@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Grid;
 
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Layout\LayoutPresetRegistryInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 
 /**
  * Motor de Renderização de Grade e Divisórias (CSS Grid / Flexbox) (SOLID - OCP / DIP).
@@ -16,10 +18,14 @@ use DomainSystem\Core\Theme\Parts\Contracts\Layout\LayoutPresetRegistryInterface
 class LayoutGridRenderer implements LayoutGridInterface
 {
     private LayoutPresetRegistryInterface $presetRegistry;
+    private ElementStyleRendererInterface $styleRenderer;
 
-    public function __construct(?LayoutPresetRegistryInterface $presetRegistry = null)
-    {
+    public function __construct(
+        ?LayoutPresetRegistryInterface $presetRegistry = null,
+        ?ElementStyleRendererInterface $styleRenderer = null
+    ) {
         $this->presetRegistry = $presetRegistry ?? DefaultLayoutPresetsFactory::create();
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
     }
 
     public function getPresetRegistry(): LayoutPresetRegistryInterface
@@ -45,30 +51,66 @@ class LayoutGridRenderer implements LayoutGridInterface
         $sectionId = 'ds_sec_' . substr(md5(uniqid((string)mt_rand(), true)), 0, 8);
 
         $isBoxed = (bool)($settings['boxed'] ?? true);
-        $maxWidth = (string)($settings['max_width'] ?? '1280px');
+        $maxWidth = $this->styleRenderer->sanitizeCssValue((string)($settings['max_width'] ?? '1280px'));
+        if ($maxWidth === '') {
+            $maxWidth = '1280px';
+        }
+
         $rawGap = (string)($settings['gap'] ?? '24px');
-        $gap = match ($rawGap) {
+        $mappedGap = match ($rawGap) {
             'none'   => '0px',
             'small'  => '12px',
             'medium' => '24px',
             'large'  => '40px',
             default  => $rawGap !== '' ? $rawGap : '24px',
         };
+        $gap = $this->styleRenderer->sanitizeCssValue($mappedGap);
+        if ($gap === '') {
+            $gap = '24px';
+        }
 
-        $alignItems = (string)($settings['align_items'] ?? 'center');
-        $justifyContent = (string)($settings['justify_content'] ?? 'space-between');
-        $padding = (string)($settings['padding'] ?? '20px 16px');
-        $margin = (string)($settings['margin'] ?? '0px');
-        $background = (string)($settings['background'] ?? 'transparent');
-        $customClass = (string)($settings['custom_class'] ?? '');
+        $alignItems = $this->styleRenderer->sanitizeCssValue((string)($settings['align_items'] ?? 'center'));
+        if ($alignItems === '') {
+            $alignItems = 'center';
+        }
+
+        $justifyContent = $this->styleRenderer->sanitizeCssValue((string)($settings['justify_content'] ?? 'space-between'));
+        if ($justifyContent === '') {
+            $justifyContent = 'space-between';
+        }
+
+        $padding = $this->styleRenderer->sanitizeCssValue((string)($settings['padding'] ?? '20px 16px'));
+        if ($padding === '') {
+            $padding = '20px 16px';
+        }
+
+        $margin = $this->styleRenderer->sanitizeCssValue((string)($settings['margin'] ?? '0px'));
+        if ($margin === '') {
+            $margin = '0px';
+        }
+
+        $background = $this->styleRenderer->sanitizeCssValue((string)($settings['background'] ?? 'transparent'));
+        if ($background === '') {
+            $background = 'transparent';
+        }
+
+        $customClass = preg_replace('/[^a-zA-Z0-9_\-\s]/', '', (string)($settings['custom_class'] ?? '')) ?? '';
+        $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($settings);
+        $combinedClasses = trim("ds-section-wrapper {$customClass} {$visibilityClasses}");
 
         // Estilos Visuais Avançados da Seção (Bordas, Sombras, Opacidade)
-        $border = !empty($settings['border']) ? 'border: ' . htmlspecialchars((string)$settings['border'], ENT_QUOTES, 'UTF-8') . ';' : '';
-        $borderRadius = !empty($settings['border_radius']) ? 'border-radius: ' . htmlspecialchars((string)$settings['border_radius'], ENT_QUOTES, 'UTF-8') . ';' : '';
-        $boxShadow = !empty($settings['box_shadow']) ? 'box-shadow: ' . htmlspecialchars((string)$settings['box_shadow'], ENT_QUOTES, 'UTF-8') . ';' : '';
-        $opacity = (isset($settings['opacity']) && (string)$settings['opacity'] !== '' && (string)$settings['opacity'] !== '1')
-            ? 'opacity: ' . htmlspecialchars((string)$settings['opacity'], ENT_QUOTES, 'UTF-8') . ';'
+        $borderVal = !empty($settings['border']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['border']) : '';
+        $borderRadiusVal = !empty($settings['border_radius']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['border_radius']) : '';
+        $boxShadowVal = !empty($settings['box_shadow']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['box_shadow']) : '';
+        $opacityVal = (isset($settings['opacity']) && (string)$settings['opacity'] !== '' && (string)$settings['opacity'] !== '1')
+            ? $this->styleRenderer->sanitizeCssValue((string)$settings['opacity'])
             : '';
+
+        $border = $borderVal !== '' ? "border: {$borderVal};" : '';
+        $borderRadius = $borderRadiusVal !== '' ? "border-radius: {$borderRadiusVal};" : '';
+        $boxShadow = $boxShadowVal !== '' ? "box-shadow: {$boxShadowVal};" : '';
+        $opacity = $opacityVal !== '' ? "opacity: {$opacityVal};" : '';
+
         $extraStyles = array_filter([$border, $borderRadius, $boxShadow, $opacity]);
         $extraStylesStr = !empty($extraStyles) ? ' ' . implode(' ', $extraStyles) : '';
 
@@ -89,7 +131,7 @@ class LayoutGridRenderer implements LayoutGridInterface
             : "width: 100%;";
 
         return <<<HTML
-<div id="{$sectionId}" class="ds-section-wrapper {$customClass}" style="background: {$background}; width: 100%; margin: {$margin};{$extraStylesStr}">
+<div id="{$sectionId}" class="{$combinedClasses}" style="background: {$background}; width: 100%; margin: {$margin};{$extraStylesStr}">
     <style>
         #{$sectionId} .ds-section-grid {
             display: grid;

@@ -10,14 +10,13 @@ use RuntimeException;
  * ════════════════════════════════════════════════════════════════════════════
  *
  * Responsabilidade ÚNICA: ler o manifesto (assets/manifest.php) e concatenar,
- * na ordem declarada, os arquivos JS ou CSS de cada módulo.
- *
- * - A pasta src/ não é pública, então o Controller entrega o bundle por rota.
- * - Aberto/Fechado: para adicionar um módulo basta uma linha no manifesto.
- * - Seguro: só arquivos listados no manifesto são lidos (sem path traversal).
+ * na ordem declarada, os arquivos JS ou CSS de cada módulo com cache por hash.
  */
 final class AssetBundle
 {
+    /** @var array<string, string> */
+    private array $memoryCache = [];
+
     public function __construct(private string $assetsDir)
     {
     }
@@ -28,22 +27,39 @@ final class AssetBundle
      */
     public function build(string $type): ?string
     {
-        $manifest = require $this->assetsDir . '/manifest.php';
+        $manifestFile = $this->assetsDir . '/manifest.php';
+        if (!is_file($manifestFile)) {
+            return null;
+        }
+
+        $manifest = require $manifestFile;
 
         if (!isset($manifest[$type]) || !is_array($manifest[$type])) {
             return null;
         }
 
-        $output = '';
+        $mtimes = [];
+        $filesToRead = [];
         foreach ($manifest[$type] as $relativePath) {
             $file = $this->assetsDir . '/' . $type . '/' . $relativePath;
-
             if (!is_file($file)) {
                 throw new RuntimeException("Módulo do Builder não encontrado: {$type}/{$relativePath}");
             }
+            $mtimes[] = $relativePath . ':' . (string)@filemtime($file);
+            $filesToRead[$relativePath] = $file;
+        }
 
+        $cacheKey = $type . '_' . md5(implode('|', $mtimes));
+        if (isset($this->memoryCache[$cacheKey])) {
+            return $this->memoryCache[$cacheKey];
+        }
+
+        $output = '';
+        foreach ($filesToRead as $relativePath => $file) {
             $output .= "/* ── {$relativePath} ── */\n" . file_get_contents($file) . "\n\n";
         }
+
+        $this->memoryCache[$cacheKey] = $output;
 
         return $output;
     }

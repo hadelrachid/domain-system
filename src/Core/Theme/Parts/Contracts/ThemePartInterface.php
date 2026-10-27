@@ -6,8 +6,9 @@ namespace DomainSystem\Core\Theme\Parts\Contracts;
 
 /**
  * Contrato de Parte Estrutural de Tema (Header, Footer, Seção ou Template Part).
+ * Compõe LayoutContainerInterface, SectionedPartInterface e MobileToggleAwareInterface (SOLID - ISP).
  */
-interface ThemePartInterface
+interface ThemePartInterface extends LayoutContainerInterface, SectionedPartInterface, MobileToggleAwareInterface
 {
     public const TYPE_HEADER  = 'header';
     public const TYPE_FOOTER  = 'footer';
@@ -21,30 +22,6 @@ interface ThemePartInterface
 
     /** Título ou nome de exibição da parte */
     public function getTitle(): string;
-
-    /** Preset de grade de colunas (ex: '3_cols_header', '4_cols_footer', '1_col') */
-    public function getLayoutPreset(): string;
-
-    /** Configurações de container (boxed/full, gap, padding, margin, etc.) */
-    public function getContainerSettings(): array;
-
-    /**
-     * Lista de blocos organizados por coluna (retrocompatibilidade com seção única).
-     * @return array<int, array<int, array<string, mixed>>> [colIndex => [ [ 'type' => '...', 'data' => [...] ] ]]
-     */
-    public function getColumnsData(): array;
-
-    /**
-     * Lista de seções estruturais acopladas a esta parte (cada seção com sua grade e blocos).
-     * @return array<int, array<string, mixed>> [ [ 'id' => '...', 'layout_preset' => '...', 'columns_data' => [...], 'container_settings' => [...] ] ]
-     */
-    public function getSections(): array;
-
-    /** Estilo do botão de toggle mobile do menu (classic, pill, minimal, dots) */
-    public function getMobileToggleStyle(): string;
-
-    /** Posição do botão de toggle mobile do menu (left, center, right) */
-    public function getMobileToggleAlign(): string;
 
     /** Se é a parte padrão de fallback global */
     public function isDefault(): bool;

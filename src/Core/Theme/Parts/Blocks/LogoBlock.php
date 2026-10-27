@@ -6,6 +6,12 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Logotipo (Imagem ou Tipografia da Marca com link).
@@ -13,6 +19,21 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class LogoBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private HtmlSanitizerInterface $htmlSanitizer;
+    private PublicUrlResolverInterface $urlResolver;
+    private ElementStyleRendererInterface $styleRenderer;
+
+    public function __construct(
+        ?HtmlSanitizerInterface $htmlSanitizer = null,
+        ?PublicUrlResolverInterface $urlResolver = null,
+        ?ElementStyleRendererInterface $styleRenderer = null
+    ) {
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+    }
+
     public function getType(): string
     {
         return 'logo';
@@ -35,9 +56,9 @@ class LogoBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $baseUrl = $this->urlResolver->getBaseUrl();
         $link = (string)($data['link'] ?? $baseUrl . '/');
-        $height = (string)($data['height'] ?? '40px');
+        $height = $this->styleRenderer->sanitizeCssValue((string)($data['height'] ?? '40px'));
         $imageUrl = (string)($data['image_url'] ?? $baseUrl . '/assets/img/logo.png');
         $brandText = (string)($data['brand_text'] ?? 'Domain<span class="text-primary">System</span>');
         $showImage = (bool)($data['show_image'] ?? true);
@@ -59,7 +80,7 @@ class LogoBlock implements BlockInterface
 
         $textHtml = '';
         if ($showText && $brandText !== '') {
-            $sanitized = strip_tags($brandText, '<span><strong><b><small>');
+            $sanitized = $this->htmlSanitizer->sanitizeInlineHtml($brandText);
             $textHtml = "<div class=\"ds-logo-text\" style=\"font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: #fff;\">{$sanitized}</div>";
         }
 

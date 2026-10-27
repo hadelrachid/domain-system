@@ -110,6 +110,22 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         return !empty($rules) ? implode('; ', $rules) . ';' : '';
     }
 
+    public function getResponsiveVisibilityClasses(array $data): string
+    {
+        $classes = [];
+        if (!empty($data['hide_desktop']) && $data['hide_desktop'] !== 'false' && $data['hide_desktop'] !== '0') {
+            $classes[] = 'ds-hide-desktop';
+        }
+        if (!empty($data['hide_tablet']) && $data['hide_tablet'] !== 'false' && $data['hide_tablet'] !== '0') {
+            $classes[] = 'ds-hide-tablet';
+        }
+        if (!empty($data['hide_mobile']) && $data['hide_mobile'] !== 'false' && $data['hide_mobile'] !== '0') {
+            $classes[] = 'ds-hide-mobile';
+        }
+
+        return implode(' ', $classes);
+    }
+
     public function parse4Sides(string $spacing): array
     {
         $parts = preg_split('/\s+/', trim($spacing));
@@ -125,10 +141,26 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         };
     }
 
-    private function sanitizeCssValue(string $val): string
+    public function sanitizeCssValue(string $value): string
     {
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        // Bloqueia expressões maliciosas de CSS (expression, javascript:, vbscript:)
+        $lower = strtolower($trimmed);
+        if (
+            str_contains($lower, 'expression(') ||
+            str_contains($lower, 'javascript:') ||
+            str_contains($lower, 'vbscript:') ||
+            str_contains($lower, '@import')
+        ) {
+            return '';
+        }
+
         // Higienização contra injeção de CSS ou quebra de sintaxe
-        $sanitized = preg_replace('/[;<>{}\\\\]/', '', trim($val)) ?? '';
+        $sanitized = preg_replace('/[;<>{}\\\\]/', '', $trimmed) ?? '';
         return htmlspecialchars($sanitized, ENT_QUOTES, 'UTF-8');
     }
 }

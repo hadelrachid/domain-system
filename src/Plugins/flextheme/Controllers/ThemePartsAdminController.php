@@ -13,28 +13,32 @@ use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Core\I18n\Translator;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
-use DomainSystem\Core\Theme\Parts\Models\ThemePart;
-use DomainSystem\Core\Theme\ShortcodeManager;
-use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use DomainSystem\Core\Theme\ShortcodeManager;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
+use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
 use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
 use DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService;
+use DomainSystem\Plugins\flextheme\Services\ThemePartManagementService;
+use DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService;
 use Throwable;
 
 /**
- * Controller Administrativo do Novo Flex Builder (Motor em Blocos & Design Tokens).
+ * Controller Administrativo do Flex Builder (Motor em Blocos & Design Tokens).
  *
- * Responsável pela gestão de Headers, Footers, Seções e Design Tokens do Domain System.
- * Implementa arquitetura SOLID com contratos Ring 0 / Ring 1 e simulação responsiva.
+ * Responsável apenas pela coordenação HTTP, delegando descoberta de temas,
+ * persistência/atribuição e compilação de preview para serviços dedicados (SOLID - SRP / DIP).
  */
 class ThemePartsAdminController
 {
@@ -53,6 +57,9 @@ class ThemePartsAdminController
     private MediaUploadServiceInterface $mediaUpload;
     private TranslatorInterface $translator;
     private ElementStyleRendererInterface $styleRenderer;
+    private ThemePartPreviewServiceInterface $previewService;
+    private ThemePartManagementService $managementService;
+    private PublicUrlResolverInterface $urlResolver;
 
     public function __construct(
         ThemePartRepositoryInterface $partRepo,
@@ -69,23 +76,29 @@ class ThemePartsAdminController
         ?ThemeDiscoveryServiceInterface $themeDiscovery = null,
         ?MediaUploadServiceInterface $mediaUpload = null,
         ?TranslatorInterface $translator = null,
-        ?ElementStyleRendererInterface $styleRenderer = null
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?ThemePartPreviewServiceInterface $previewService = null,
+        ?ThemePartManagementService $managementService = null,
+        ?PublicUrlResolverInterface $urlResolver = null
     ) {
-        $this->partRepo         = $partRepo;
-        $this->partAssoc        = $partAssoc;
-        $this->tokens           = $tokens;
-        $this->blockRegistry    = $blockRegistry;
-        $this->layoutGrid       = $layoutGrid;
-        $this->renderer         = $renderer;
-        $this->themeManager     = $themeManager;
-        $this->shortcodeManager = $shortcodeManager;
-        $this->menuProvider     = $menuProvider;
-        $this->session          = $session;
-        $this->basePath         = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
-        $this->themeDiscovery   = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
-        $this->mediaUpload      = $mediaUpload ?? new MediaUploadService($this->basePath);
-        $this->translator       = $translator ?? new Translator($this->basePath . '/resources/lang');
-        $this->styleRenderer    = $styleRenderer ?? new ElementStyleRenderer();
+        $this->partRepo          = $partRepo;
+        $this->partAssoc         = $partAssoc;
+        $this->tokens            = $tokens;
+        $this->blockRegistry     = $blockRegistry;
+        $this->layoutGrid        = $layoutGrid;
+        $this->renderer          = $renderer;
+        $this->themeManager      = $themeManager;
+        $this->shortcodeManager  = $shortcodeManager;
+        $this->menuProvider      = $menuProvider;
+        $this->session           = $session;
+        $this->basePath          = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
+        $this->themeDiscovery    = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
+        $this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
+        $this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
+        $this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
+        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->blockRegistry, $this->layoutGrid, $this->tokens, $this->styleRenderer);
+        $this->managementService = $managementService ?? new ThemePartManagementService($this->partRepo, $this->partAssoc, $this->themeDiscovery);
+        $this->urlResolver       = $urlResolver ?? new BaseUrlResolver();
     }
 
     /**
@@ -116,19 +129,19 @@ class ThemePartsAdminController
         $globalFooter = $this->partAssoc->getGlobalDefault(ThemePartInterface::TYPE_FOOTER);
 
         return $this->renderView('admin/parts_list', [
-            'headers'      => $headers,
-            'footers'      => $footers,
-            'sections'     => $sections,
-            'themes'       => $themes,
-            'activeTheme'  => $activeTheme,
-            'assignments'  => $assignments,
+            'headers'        => $headers,
+            'footers'        => $footers,
+            'sections'       => $sections,
+            'themes'         => $themes,
+            'activeTheme'    => $activeTheme,
+            'assignments'    => $assignments,
             'allAssignments' => $allAssignments,
-            'globalHeader' => $globalHeader,
-            'globalFooter' => $globalFooter,
-            'templates'    => $this->getThemeTemplates($activeTheme),
-            'baseUrl'      => defined('BASE_URL') ? BASE_URL : '',
-            'session'      => $this->session,
-            'csrfToken'    => $this->getCsrfToken(),
+            'globalHeader'   => $globalHeader,
+            'globalFooter'   => $globalFooter,
+            'templates'      => $this->getThemeTemplates($activeTheme),
+            'baseUrl'        => $this->urlResolver->getBaseUrl(),
+            'session'        => $this->session,
+            'csrfToken'      => $this->getCsrfToken(),
         ], true);
     }
 
@@ -138,54 +151,7 @@ class ThemePartsAdminController
     public function create(Request $request): ViewResponse
     {
         $type = (string)$request->input('type', ThemePartInterface::TYPE_HEADER);
-        if (!in_array($type, [ThemePartInterface::TYPE_HEADER, ThemePartInterface::TYPE_FOOTER, ThemePartInterface::TYPE_SECTION], true)) {
-            $type = ThemePartInterface::TYPE_HEADER;
-        }
-
-        $defaultPreset = match ($type) {
-            ThemePartInterface::TYPE_HEADER  => '3_cols_header',
-            ThemePartInterface::TYPE_FOOTER  => '4_cols_footer',
-            ThemePartInterface::TYPE_SECTION => '1_col',
-            default => '1_col',
-        };
-
-        $defaultSettings = [
-            'is_full_width' => false,
-            'max_width'     => '1280px',
-            'gap'           => '24px',
-            'padding'       => '20px 24px',
-            'align_items'   => 'center',
-            'background'    => '',
-        ];
-
-        // Colunas iniciais vazias de acordo com o preset padrão
-        $initialColumns = match ($defaultPreset) {
-            '3_cols_header' => [
-                0 => [['type' => 'logo', 'data' => ['text' => 'Domain<span style="color:var(--color-primary);">System</span>', 'height' => '32px']]],
-                1 => [['type' => 'nav_menu', 'data' => ['align' => 'center']]],
-                2 => [['type' => 'cta_button', 'data' => ['label' => 'Acessar', 'url' => '/login', 'variant' => 'primary', 'align' => 'right']]],
-            ],
-            '4_cols_footer' => [
-                0 => [['type' => 'logo', 'data' => ['text' => 'DomainSystem', 'height' => '28px']], ['type' => 'paragraph', 'data' => ['text' => 'Ecossistema modular de alto desempenho.', 'font_size' => '0.85rem']]],
-                1 => [['type' => 'heading', 'data' => ['text' => 'Navegação', 'level' => 'h4', 'font_size' => '1rem']], ['type' => 'paragraph', 'data' => ['text' => '<a href="/" style="color:inherit;">Início</a><br><a href="/cursos" style="color:inherit;">Cursos</a>', 'font_size' => '0.85rem']]],
-                2 => [['type' => 'heading', 'data' => ['text' => 'Comunidade', 'level' => 'h4', 'font_size' => '1rem']], ['type' => 'social_icons', 'data' => []]],
-                3 => [['type' => 'heading', 'data' => ['text' => 'Legal', 'level' => 'h4', 'font_size' => '1rem']], ['type' => 'copyright', 'data' => ['site_name' => 'Domain-System']]],
-            ],
-            default => [
-                0 => [['type' => 'heading', 'data' => ['text' => 'Título da Seção', 'level' => 'h2']], ['type' => 'paragraph', 'data' => ['text' => 'Insira seu texto e blocos aqui.']]],
-            ]
-        };
-
-        $newPart = new ThemePart(
-            uniqid('part_', true),
-            $type,
-            'Novo ' . ucfirst($type),
-            $defaultPreset,
-            $defaultSettings,
-            $initialColumns,
-            MobileToggleStyleInterface::STYLE_CLASSIC,
-            false
-        );
+        $newPart = $this->managementService->createDefaultPart($type);
 
         return $this->renderEditorView($newPart, true);
     }
@@ -197,7 +163,7 @@ class ThemePartsAdminController
     {
         $id = (string)$request->input('id', '');
         if ($id === '') {
-            return Response::redirect((defined('BASE_URL') ? BASE_URL : '') . '/admin/builder');
+            return Response::redirect($this->urlResolver->resolve('/admin/builder'));
         }
 
         $part = $this->partRepo->findById($id);
@@ -205,7 +171,7 @@ class ThemePartsAdminController
             if ($this->session) {
                 $this->session->setFlash('error', 'Parte visual não encontrada.');
             }
-            return Response::redirect((defined('BASE_URL') ? BASE_URL : '') . '/admin/builder');
+            return Response::redirect($this->urlResolver->resolve('/admin/builder'));
         }
 
         return $this->renderEditorView($part, false);
@@ -218,67 +184,7 @@ class ThemePartsAdminController
     {
         try {
             $input = $this->extractInput($request);
-
-            $id = trim((string)($input['id'] ?? ''));
-            if ($id === '') {
-                $id = uniqid('part_', true);
-            }
-
-            $type = (string)($input['type'] ?? ThemePartInterface::TYPE_HEADER);
-            $title = trim((string)($input['title'] ?? 'Sem Título'));
-            $preset = (string)($input['layout_preset'] ?? '1_col');
-            $settings = (array)($input['container_settings'] ?? []);
-            $columnsData = (array)($input['columns_data'] ?? []);
-            $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
-            $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
-            $isDefault = !empty($input['is_default']);
-            $sections = (array)($input['sections'] ?? []);
-
-            $part = new ThemePart(
-                $id,
-                $type,
-                $title !== '' ? $title : 'Sem Título',
-                $preset,
-                $settings,
-                $columnsData,
-                $mobileToggleStyle,
-                $isDefault,
-                isset($input['created_at']) ? (int)$input['created_at'] : null,
-                time(),
-                $sections,
-                $mobileToggleAlign
-            );
-
-            $this->partRepo->save($part);
-
-            // Atualiza Padrão Global se solicitado
-            if ($isDefault) {
-                $this->partAssoc->setGlobalDefault($type, $id);
-            }
-
-            // Atualiza Atribuição a Tema Específico se informado
-            if (!empty($input['assigned_theme'])) {
-                $this->partAssoc->assignPart((string)$input['assigned_theme'], $type, $id);
-            }
-
-            // Atualiza Atribuição a Template de Seção se informado
-            if ($type === ThemePartInterface::TYPE_SECTION) {
-                $targetTheme = !empty($input['assigned_theme']) ? (string)$input['assigned_theme'] : $this->getActiveThemeFolder();
-                if (isset($input['assigned_template'])) {
-                    $templateChoice = trim((string)$input['assigned_template']);
-                    // Limpa atribuições anteriores desta seção em templates
-                    $allAssignments = $this->partAssoc->getAllAssignments();
-                    $themeAssoc = $allAssignments['themes'][$targetTheme] ?? [];
-                    foreach ($themeAssoc as $tKey => $pId) {
-                        if ($pId === $id && str_starts_with($tKey, 'template:')) {
-                            $this->partAssoc->assignPart($targetTheme, $tKey, null);
-                        }
-                    }
-                    if ($templateChoice !== '' && $templateChoice !== 'none') {
-                        $this->partAssoc->assignPart($targetTheme, 'template:' . $templateChoice, $id);
-                    }
-                }
-            }
+            $part = $this->managementService->saveFromPayload($input);
 
             return new Response(json_encode([
                 'success' => true,
@@ -286,7 +192,6 @@ class ThemePartsAdminController
                 'title'   => $part->getTitle(),
                 'message' => 'Parte "' . $part->getTitle() . '" salva com sucesso no Flex Builder!',
             ], JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
-
         } catch (Throwable $e) {
             return new Response(json_encode([
                 'success' => false,
@@ -320,43 +225,16 @@ class ThemePartsAdminController
             $this->session->setFlash($deleted ? 'success' : 'error', $deleted ? 'Parte excluída com sucesso.' : 'Falha ao excluir parte.');
         }
 
-        return Response::redirect((defined('BASE_URL') ? BASE_URL : '') . '/admin/builder');
+        return Response::redirect($this->urlResolver->resolve('/admin/builder'));
     }
 
     /**
-     * API AJAX / POST: Define atribuição de uma parte a um tema ou ao padrão global.
+     * API AJAX / POST: Define atribuição de uma parte a um tema, padrão global ou template.
      */
     public function assign(Request $request): Response
     {
         $input = $this->extractInput($request);
-        $themeFolder = trim((string)($input['theme_folder'] ?? ''));
-        $partType    = trim((string)($input['part_type'] ?? ''));
-        $partId      = trim((string)($input['part_id'] ?? ''));
-        $sectionId   = trim((string)($input['section_id'] ?? $partId));
-        $isGlobal    = !empty($input['is_global']);
-
-        $resolvedPartId = ($partId !== '' && $partId !== 'none' && $partId !== 'fallback') ? $partId : null;
-
-        if (str_starts_with($partType, 'template:')) {
-            // Se for atribuição de template a uma seção, limpa associações anteriores desta seção
-            $allAssignments = $this->partAssoc->getAllAssignments();
-            $themeAssoc = $allAssignments['themes'][$themeFolder] ?? ($allAssignments[$themeFolder] ?? []);
-            foreach ($themeAssoc as $tKey => $pId) {
-                if (($pId === $sectionId || $pId === $partId) && str_starts_with($tKey, 'template:')) {
-                    $this->partAssoc->assignPart($themeFolder, $tKey, null);
-                }
-            }
-            if ($partType !== 'template:none' && $resolvedPartId !== null) {
-                $cleanSlug = str_replace(['templates/', '.php'], '', substr($partType, strlen('template:')));
-                $this->partAssoc->assignPart($themeFolder, 'template:' . $cleanSlug, $resolvedPartId);
-            }
-        } else {
-            if ($isGlobal) {
-                $this->partAssoc->setGlobalDefault($partType, $resolvedPartId);
-            } else {
-                $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
-            }
-        }
+        $this->managementService->assignFromPayload($input);
 
         if ($this->isAjax($request)) {
             return new Response(json_encode([
@@ -369,7 +247,7 @@ class ThemePartsAdminController
             $this->session->setFlash('success', 'Atribuição atualizada com sucesso!');
         }
 
-        return Response::redirect((defined('BASE_URL') ? BASE_URL : '') . '/admin/builder');
+        return Response::redirect($this->urlResolver->resolve('/admin/builder'));
     }
 
     /**
@@ -381,7 +259,7 @@ class ThemePartsAdminController
             'palette'    => $this->tokens->getColorPalette(),
             'typography' => $this->tokens->getTypography(),
             'cssVars'    => $this->tokens->generateCssVariables(),
-            'baseUrl'    => defined('BASE_URL') ? BASE_URL : '',
+            'baseUrl'    => $this->urlResolver->getBaseUrl(),
             'session'    => $this->session,
             'csrfToken'  => $this->getCsrfToken(),
         ], true);
@@ -414,115 +292,19 @@ class ThemePartsAdminController
             $this->session->setFlash($success ? 'success' : 'error', $success ? 'Design Tokens atualizados com sucesso!' : 'Erro ao atualizar tokens.');
         }
 
-        return Response::redirect((defined('BASE_URL') ? BASE_URL : '') . '/admin/builder/tokens');
+        return Response::redirect($this->urlResolver->resolve('/admin/builder/tokens'));
     }
 
     /**
-     * API AJAX: Renderiza pré-visualização ao vivo da parte visual.
+     * API AJAX: Renderiza pré-visualização ao vivo da parte visual via ThemePartPreviewService.
      */
     public function preview(Request $request): Response
     {
         try {
             $input = $this->extractInput($request);
+            $html = $this->previewService->renderPreview($input);
 
-            $preset = (string)($input['layout_preset'] ?? '1_col');
-            $settings = (array)($input['container_settings'] ?? []);
-            $columnsData = (array)($input['columns_data'] ?? []);
-            $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
-            $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
-            $sections = (array)($input['sections'] ?? []);
-
-            if (!empty($sections)) {
-                $sectionsHtml = [];
-                foreach ($sections as $sec) {
-                    $secPreset = (string)($sec['layout_preset'] ?? '1_col');
-                    $secSettings = (array)($sec['container_settings'] ?? []);
-                    $secColsData = (array)($sec['columns_data'] ?? []);
-
-                    $colsHtml = [];
-                    foreach ($secColsData as $colIndex => $blocksList) {
-                        $colBlocks = [];
-                        if (is_array($blocksList)) {
-                            foreach ($blocksList as $bDef) {
-                                if (!is_array($bDef)) continue;
-                                $bType = (string)($bDef['type'] ?? '');
-                                $bData = (array)($bDef['data'] ?? []);
-
-                                if ($bType === 'nav_menu') {
-                                    if (!isset($bData['toggle_style']) || empty($bData['toggle_style'])) {
-                                        $bData['toggle_style'] = $mobileToggleStyle;
-                                    }
-                                    if (!isset($bData['toggle_align']) || empty($bData['toggle_align'])) {
-                                        $bData['toggle_align'] = $mobileToggleAlign;
-                                    }
-                                }
-
-                                $block = $this->blockRegistry->get($bType);
-                                if ($block !== null) {
-                                    $renderedHtml = $block->render($bData, ['preview' => true]);
-                                    $elementStyles = $this->styleRenderer->renderStyleString($bData);
-                                    if ($elementStyles !== '') {
-                                        $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
-                                    }
-                                    $colBlocks[] = $renderedHtml;
-                                }
-                            }
-                        }
-                        $colsHtml[(int)$colIndex] = implode("\n", $colBlocks);
-                    }
-                    $sectionsHtml[] = $this->layoutGrid->renderSection($secPreset, $colsHtml, $secSettings);
-                }
-                $renderedGrid = implode("\n", $sectionsHtml);
-            } else {
-                $columnsHtml = [];
-                foreach ($columnsData as $colIndex => $blocksList) {
-                    $colBlocks = [];
-                    if (is_array($blocksList)) {
-                        foreach ($blocksList as $bDef) {
-                            if (!is_array($bDef)) continue;
-                            $bType = (string)($bDef['type'] ?? '');
-                            $bData = (array)($bDef['data'] ?? []);
-
-                            if ($bType === 'nav_menu') {
-                                if (!isset($bData['toggle_style']) || empty($bData['toggle_style'])) {
-                                    $bData['toggle_style'] = $mobileToggleStyle;
-                                }
-                                if (!isset($bData['toggle_align']) || empty($bData['toggle_align'])) {
-                                    $bData['toggle_align'] = $mobileToggleAlign;
-                                }
-                            }
-
-                            $block = $this->blockRegistry->get($bType);
-                            if ($block !== null) {
-                                $renderedHtml = $block->render($bData, ['preview' => true]);
-                                $elementStyles = $this->styleRenderer->renderStyleString($bData);
-                                if ($elementStyles !== '') {
-                                    $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
-                                }
-                                $colBlocks[] = $renderedHtml;
-                            }
-                        }
-                    }
-                    $columnsHtml[(int)$colIndex] = implode("\n", $colBlocks);
-                }
-                $renderedGrid = $this->layoutGrid->renderSection($preset, $columnsHtml, $settings);
-            }
-            $cssVars = '<style id="ds-design-tokens">' . $this->tokens->generateCssVariables() . '</style>' . "\n" .
-                '<style id="ds-builder-runtime">' .
-                '@keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }' .
-                '@keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }' .
-                '.ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }' .
-                '.ds-btn-grow:hover { transform: scale(1.05) !important; }' .
-                '.ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }' .
-                '.ds-btn-lift:hover { transform: translateY(-3px) !important; box-shadow: 0 10px 22px rgba(0,0,0,0.35) !important; }' .
-                '.ds-btn-glow { transition: box-shadow 0.25s ease, transform 0.2s ease !important; }' .
-                '.ds-btn-glow:hover { box-shadow: 0 0 25px var(--color-primary, #38bdf8) !important; }' .
-                '.ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }' .
-                '.ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }' .
-                '.ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }' .
-                '</style>';
-
-            return new Response($cssVars . $renderedGrid, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+            return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
         } catch (Throwable $e) {
             return new Response('<div style="padding:20px; color:#f87171; background:rgba(239,68,68,0.1); border-radius:6px;">Erro no preview: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>', 200, ['Content-Type' => 'text/html; charset=utf-8']);
         }
@@ -548,7 +330,7 @@ class ThemePartsAdminController
     }
 
     /**
-     * API AJAX: Schema completo dos 12 blocos, presets, shortcodes do sistema e menus.
+     * API AJAX: Schema completo dos blocos, presets, shortcodes do sistema e menus.
      */
     public function schema(Request $request): Response
     {
@@ -618,23 +400,23 @@ class ThemePartsAdminController
         $activeTheme = $this->getActiveThemeFolder();
 
         return $this->renderView('admin/builder_editor', [
-            'part'        => $part,
-            'isNew'       => $isNew,
-            'presets'     => $presets,
-            'blocks'      => $blocks,
-            'shortcodes'  => $shortcodes,
-            'menus'       => $menus,
-            'tokens'      => $tokens,
-            'themes'      => $themes,
+            'part'             => $part,
+            'isNew'            => $isNew,
+            'presets'          => $presets,
+            'blocks'           => $blocks,
+            'shortcodes'       => $shortcodes,
+            'menus'            => $menus,
+            'tokens'           => $tokens,
+            'themes'           => $themes,
             'activeTheme'      => $activeTheme,
             'templates'        => $this->getThemeTemplates($activeTheme),
             'assignedTemplate' => ($part->getType() === ThemePartInterface::TYPE_SECTION) ? $this->getAssignedTemplateForSection($activeTheme, $part->getId()) : '',
-            'baseUrl'     => defined('BASE_URL') ? BASE_URL : '',
-            'session'     => $this->session,
-            'csrfToken'   => $this->getCsrfToken(),
-            'locale'      => $this->translator->getLocale(),
-            'i18n'        => $this->translator->getCatalog(),
-        ], false); // wrapLayout false para o Studio Full Screen
+            'baseUrl'          => $this->urlResolver->getBaseUrl(),
+            'session'          => $this->session,
+            'csrfToken'        => $this->getCsrfToken(),
+            'locale'           => $this->translator->getLocale(),
+            'i18n'             => $this->translator->getCatalog(),
+        ], false);
     }
 
     private function getCsrfToken(): string
@@ -649,10 +431,21 @@ class ThemePartsAdminController
             throw new \RuntimeException("View não encontrada: {$viewFile}");
         }
 
-        ob_start();
-        extract($data, EXTR_SKIP);
-        include $viewFile;
-        $html = ob_get_clean();
+        $isolatedInclude = static function (string $__file, array $__ctx): string {
+            ob_start();
+            try {
+                extract($__ctx, EXTR_SKIP);
+                include $__file;
+                return (string)ob_get_clean();
+            } catch (Throwable $e) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                throw $e;
+            }
+        };
+
+        $html = $isolatedInclude($viewFile, $data);
 
         return new ViewResponse($html, $wrapLayout);
     }
@@ -697,44 +490,17 @@ class ThemePartsAdminController
     {
         return $this->themeDiscovery->getActiveThemeFolder();
     }
+
     public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): string
     {
-        $assignments = $this->partAssoc->getAllAssignments();
-        $themeAssoc = $assignments['themes'][$themeFolder] ?? ($assignments[$themeFolder] ?? []);
-        foreach ($themeAssoc as $partType => $assignedId) {
-            if ($assignedId === $sectionId && str_starts_with($partType, 'template:')) {
-                return substr($partType, strlen('template:'));
-            }
-        }
-        return '';
+        return $this->partAssoc->getAssignedTemplateForSection($themeFolder, $sectionId) ?? '';
     }
-public function getThemeTemplates(string $themeFolder): array
+
+    /**
+     * @return array<string, string>
+     */
+    public function getThemeTemplates(string $themeFolder): array
     {
-        $possibleDirs = [
-            $this->basePath . '/themes/' . $themeFolder . '/templates',
-            $this->basePath . '/src/Plugins/flextheme/themes/' . $themeFolder . '/templates',
-        ];
-
-        $templates = [];
-        foreach ($possibleDirs as $dir) {
-            if (is_dir($dir)) {
-                foreach (glob($dir . '/*.php') ?: [] as $file) {
-                    $base = basename($file, '.php');
-                    $templates[$base] = $base . '.php';
-                }
-            }
-        }
-
-        if (empty($templates)) {
-            $templates = [
-                'home'        => 'home.php (Página Inicial)',
-                'sobre'       => 'sobre.php (Página Sobre)',
-                'blog'        => 'blog.php (Blog / Artigos)',
-                'privacidade' => 'privacidade.php',
-                'termos'      => 'termos.php',
-            ];
-        }
-
-        return $templates;
+        return $this->themeDiscovery->getThemeTemplates($themeFolder);
     }
 }

@@ -13,10 +13,11 @@ use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use Throwable;
 
 /**
  * Orquestrador de Renderização de Partes de Tema (Header, Footer, Seções)
- * com compilação de blocos, injeção de Design Tokens e Fallback Gracioso.
+ * com compilação de blocos, injeção de Design Tokens, Visibilidade Responsiva e Fallback Gracioso.
  */
 class ThemePartRenderer implements ThemePartRendererInterface
 {
@@ -106,8 +107,23 @@ class ThemePartRenderer implements ThemePartRendererInterface
         return $this->compileDynamicPart($part, $context, false);
     }
 
-    private function compileDynamicPart(ThemePartInterface $part, array $context, bool $injectDesignTokens): string
+    /**
+     * Compila uma instância de ThemePart (persistida ou efêmera de preview) aplicando todas as regras
+     * de contrato (getAllowedPartTypes), estilos de elemento e classes responsivas.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function compilePart(ThemePartInterface $part, array $context = [], bool $injectDesignTokens = true, bool $wrapWithSemanticTag = true): string
     {
+        return $this->compileDynamicPart($part, $context, $injectDesignTokens, $wrapWithSemanticTag);
+    }
+
+    private function compileDynamicPart(
+        ThemePartInterface $part,
+        array $context,
+        bool $injectDesignTokens,
+        bool $wrapWithSemanticTag = true
+    ): string {
         $sections = $part->getSections();
         $sectionsOutput = [];
 
@@ -126,7 +142,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
                         }
                         $blockType = (string)($blockDef['type'] ?? '');
                         $blockData = (array)($blockDef['data'] ?? []);
-                        
+
                         // Se for bloco de nav_menu, garante o estilo e alinhamento do toggle configurados na parte
                         if ($blockType === 'nav_menu') {
                             if (!isset($blockData['toggle_style']) || empty($blockData['toggle_style'])) {
@@ -147,8 +163,12 @@ class ThemePartRenderer implements ThemePartRendererInterface
 
                             $renderedHtml = $block->render($blockData, $context);
                             $elementStyles = $this->styleRenderer->renderStyleString($blockData);
-                            if ($elementStyles !== '') {
-                                $renderedHtml = "<div class=\"ds-element-wrapper\" style=\"{$elementStyles}\">{$renderedHtml}</div>";
+                            $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($blockData);
+
+                            if ($elementStyles !== '' || $visibilityClasses !== '') {
+                                $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
+                                $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
+                                $renderedHtml = "<div class=\"{$wrapperClass}\"{$styleAttr}>{$renderedHtml}</div>";
                             }
                             $colBlocksOutput[] = $renderedHtml;
                         }
@@ -162,28 +182,42 @@ class ThemePartRenderer implements ThemePartRendererInterface
 
         $allSectionsHtml = implode("\n", $sectionsOutput);
 
-        $partType = $part->getType();
-        $wrapperTag = 'section';
-        $roleAttr = '';
-        $typeClass = 'ds-theme-section';
+        if ($wrapWithSemanticTag) {
+            $partType = $part->getType();
+            $wrapperTag = 'section';
+            $roleAttr = '';
+            $typeClass = 'ds-theme-section';
 
-        if ($partType === ThemePartInterface::TYPE_HEADER) {
-            $wrapperTag = 'header';
-            $roleAttr = ' role="banner"';
-            $typeClass = 'ds-theme-header';
-        } elseif ($partType === ThemePartInterface::TYPE_FOOTER) {
-            $wrapperTag = 'footer';
-            $roleAttr = ' role="contentinfo"';
-            $typeClass = 'ds-theme-footer';
+            if ($partType === ThemePartInterface::TYPE_HEADER) {
+                $wrapperTag = 'header';
+                $roleAttr = ' role="banner"';
+                $typeClass = 'ds-theme-header';
+            } elseif ($partType === ThemePartInterface::TYPE_FOOTER) {
+                $wrapperTag = 'footer';
+                $roleAttr = ' role="contentinfo"';
+                $typeClass = 'ds-theme-footer';
+            }
+
+            $wrappedHtml = "<{$wrapperTag} class=\"ds-part-wrapper {$typeClass}\"{$roleAttr}>\n{$allSectionsHtml}\n</{$wrapperTag}>";
+        } else {
+            $wrappedHtml = $allSectionsHtml;
         }
 
-        $wrappedHtml = "<{$wrapperTag} class=\"ds-part-wrapper {$typeClass}\"{$roleAttr}>\n{$allSectionsHtml}\n</{$wrapperTag}>";
-
-        // Injeta variáveis CSS e animações runtime dos Design Tokens se solicitado ou se ainda não injetado
+        // Injeta variáveis CSS, animações runtime e utilitários responsivos dos Design Tokens
         if ($injectDesignTokens || !self::$tokensInjected) {
             self::$tokensInjected = true;
             $tokensCss = $this->designTokens->generateCssVariables();
-            $runtimeCss = <<<CSS
+            $runtimeCss = self::getRuntimeCss();
+            $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
+            return $tokensTag . $wrappedHtml;
+        }
+
+        return $wrappedHtml;
+    }
+
+    public static function getRuntimeCss(): string
+    {
+        return <<<CSS
 @keyframes ds-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .ds-part-wrapper { position: relative; width: 100%; box-sizing: border-box; }
@@ -197,12 +231,24 @@ class ThemePartRenderer implements ThemePartRendererInterface
 .ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }
 .ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }
 .ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }
+/* Visibilidade Responsiva (Frontend Media Queries & Simulador Studio) */
+@media (min-width: 901px) {
+    body:not(.ds-is-tablet):not(.ds-is-mobile):not(.ds-mobile-mode) .ds-hide-desktop { display: none !important; }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+    .ds-hide-tablet { display: none !important; }
+}
+@media (max-width: 640px) {
+    .ds-hide-mobile { display: none !important; }
+}
+.ds-device-1440 .ds-hide-desktop,
+.ds-is-desktop .ds-hide-desktop { display: none !important; }
+.ds-device-768 .ds-hide-tablet,
+.ds-is-tablet .ds-hide-tablet { display: none !important; }
+.ds-device-375 .ds-hide-mobile,
+.ds-is-mobile .ds-hide-mobile,
+.ds-mobile-mode .ds-hide-mobile { display: none !important; }
 CSS;
-            $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
-            return $tokensTag . $wrappedHtml;
-        }
-
-        return $wrappedHtml;
     }
 
     private function renderFileFallback(string $themeFolder, string $partName, array $context): string
@@ -222,10 +268,22 @@ CSS;
                 $realCandidate = realpath($candidate);
                 $realThemeDir = realpath($themeDir);
                 if ($realCandidate !== false && $realThemeDir !== false && str_starts_with($realCandidate, $realThemeDir)) {
-                    ob_start();
-                    extract($context, EXTR_SKIP);
-                    include $realCandidate;
-                    return (string)ob_get_clean();
+                    // Isolamento estrito de escopo: impede vazamento de $this para o arquivo de template
+                    $isolatedInclude = static function (string $__file, array $__ctx): string {
+                        ob_start();
+                        try {
+                            extract($__ctx, EXTR_SKIP);
+                            include $__file;
+                            return (string)ob_get_clean();
+                        } catch (Throwable $e) {
+                            if (ob_get_level() > 0) {
+                                ob_end_clean();
+                            }
+                            throw $e;
+                        }
+                    };
+
+                    return $isolatedInclude($realCandidate, $context);
                 }
             }
         }

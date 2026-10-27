@@ -7,6 +7,7 @@ namespace DomainSystem\Core\Theme\Parts\Repositories;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
+use InvalidArgumentException;
 
 /**
  * Repositório de Persistência em JSON Estruturado de Partes de Tema (config/theme_parts/).
@@ -28,9 +29,29 @@ class JsonThemePartRepository implements ThemePartRepositoryInterface
         }
     }
 
+    /**
+     * Valida estritamente o ID contra Path Traversal e caracteres inválidos.
+     */
+    private function validateId(string $id): string
+    {
+        $trimmed = trim($id);
+        if (
+            $trimmed === '' ||
+            str_contains($trimmed, '..') ||
+            str_contains($trimmed, '/') ||
+            str_contains($trimmed, '\\') ||
+            !preg_match('/^[a-zA-Z0-9_.-]{1,128}$/', $trimmed)
+        ) {
+            throw new InvalidArgumentException("ID de parte de tema inválido ou inseguro: '{$id}'.");
+        }
+
+        // Mantém compatibilidade com nomes de arquivos onde '.' vira '_'
+        return preg_replace('/[^a-zA-Z0-9_-]/', '_', $trimmed) ?? $trimmed;
+    }
+
     private function getFilePath(string $id): string
     {
-        $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $id);
+        $safeId = $this->validateId($id);
         return rtrim($this->storageDir, '/\\') . DIRECTORY_SEPARATOR . $safeId . '.json';
     }
 
@@ -42,7 +63,12 @@ class JsonThemePartRepository implements ThemePartRepositoryInterface
 
     public function findById(string $id): ?ThemePartInterface
     {
-        $path = $this->getFilePath($id);
+        try {
+            $path = $this->getFilePath($id);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+
         if (!file_exists($path)) {
             return null;
         }
@@ -65,13 +91,32 @@ class JsonThemePartRepository implements ThemePartRepositoryInterface
         $this->ensureDirectory();
         $path = $this->getFilePath($part->getId());
         $json = json_encode($part->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return false;
+        }
 
-        return @file_put_contents($path, $json, LOCK_EX) !== false;
+        $tmpPath = $path . '.' . uniqid('tmp_', true) . '.tmp';
+        if (@file_put_contents($tmpPath, $json, LOCK_EX) === false) {
+            return false;
+        }
+
+        if (!@rename($tmpPath, $path)) {
+            $copied = @copy($tmpPath, $path);
+            @unlink($tmpPath);
+            return $copied;
+        }
+
+        return true;
     }
 
     public function delete(string $id): bool
     {
-        $path = $this->getFilePath($id);
+        try {
+            $path = $this->getFilePath($id);
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+
         if (file_exists($path)) {
             return @unlink($path);
         }

@@ -5,13 +5,22 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
 
 /**
  * Bloco de Rodapé / Direitos Autorais e Links Institucionais.
  */
 class CopyrightBlock implements BlockInterface
 {
+    private PublicUrlResolverInterface $urlResolver;
+
+    public function __construct(?PublicUrlResolverInterface $urlResolver = null)
+    {
+        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
+    }
+
     public function getType(): string
     {
         return 'copyright';
@@ -47,7 +56,7 @@ class CopyrightBlock implements BlockInterface
         $safeText = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 
         $showLgpd = (bool)($data['show_lgpd_links'] ?? true);
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $baseUrl = $this->urlResolver->getBaseUrl();
 
         $linksHtml = '';
         if ($showLgpd) {

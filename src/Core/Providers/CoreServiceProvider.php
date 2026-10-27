@@ -182,7 +182,19 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Theme\NavigationManager();
         });
 
-        // 4.3. Theme Parts (Header & Footer Builder Engine)
+        // 4.3. Theme Parts (Header, Footer & Section Builder Engine - Ring 0 Pure)
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class, function() {
+            return new \DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver();
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface::class, function() {
+            return new \DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer();
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class, function() {
+            return new \DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer();
+        });
+
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface::class, function() use ($basePath) {
             return new \DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository($basePath . '/config/theme_parts');
         });
@@ -195,15 +207,23 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Theme\Parts\Models\DesignTokens($basePath . '/config/design_tokens.json');
         });
 
-        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class, function() {
-            return new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer();
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class, function($c) {
+            return new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer(
+                null,
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
+            );
         });
 
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class, function($c) {
-            $pageRepo = $c->has(\DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class)
-                ? $c->make(\DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class)
+            // Resolução desacoplada via PageLookupInterface (Ring 0) sem importar classes de Plugins
+            $pageRepo = $c->has(\DomainSystem\Core\Contracts\PageLookupInterface::class)
+                ? $c->make(\DomainSystem\Core\Contracts\PageLookupInterface::class)
                 : null;
-            return new \DomainSystem\Core\Theme\Parts\Providers\PagesPostProvider($pageRepo);
+            return new \DomainSystem\Core\Theme\Parts\Providers\PagesPostProvider(
+                $pageRepo,
+                null,
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
+            );
         });
 
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class, function($c) {
@@ -224,7 +244,8 @@ class CoreServiceProvider
                 $c->make(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class),
                 $c->make(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class),
                 $c->make(\DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface::class),
-                $basePath
+                $basePath,
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
             );
         });
 

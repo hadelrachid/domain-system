@@ -7,7 +7,7 @@ namespace DomainSystem\Plugins\flextheme\Services;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 
 /**
- * Serviço responsável pela descoberta de temas disponíveis e resolução do tema ativo.
+ * Serviço responsável pela descoberta de temas disponíveis, resolução do tema ativo e listagem de templates.
  *
  * Desacopla a exploração de diretórios do sistema de arquivos e arquivos de configuração
  * dos controladores HTTP (respeito estrito ao SRP - Single Responsibility Principle).
@@ -80,5 +80,38 @@ class ThemeDiscoveryService implements ThemeDiscoveryServiceInterface
         }
 
         return 'default';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getThemeTemplates(string $themeFolder): array
+    {
+        $possibleDirs = [
+            $this->basePath . '/themes/' . $themeFolder . '/templates',
+            $this->basePath . '/src/Plugins/flextheme/themes/' . $themeFolder . '/templates',
+        ];
+
+        $templates = [];
+        foreach ($possibleDirs as $dir) {
+            if (is_dir($dir)) {
+                foreach (glob($dir . '/*.php') ?: [] as $file) {
+                    $base = basename($file, '.php');
+                    $templates[$base] = $base . '.php';
+                }
+            }
+        }
+
+        if (empty($templates)) {
+            $templates = [
+                'home'        => 'home.php (Página Inicial)',
+                'sobre'       => 'sobre.php (Página Sobre)',
+                'blog'        => 'blog.php (Blog / Artigos)',
+                'privacidade' => 'privacidade.php',
+                'termos'      => 'termos.php',
+            ];
+        }
+
+        return $templates;
     }
 }

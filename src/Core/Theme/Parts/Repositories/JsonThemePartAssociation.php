@@ -7,7 +7,7 @@ namespace DomainSystem\Core\Theme\Parts\Repositories;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 
 /**
- * Persistência do Mapa de Associação: Tema <-> Header / Footer Ativo (config/theme_parts_associations.json).
+ * Persistência do Mapa de Associação: Tema <-> Header / Footer / Seções Ativas (config/theme_parts_associations.json).
  */
 class JsonThemePartAssociation implements ThemePartAssociationInterface
 {
@@ -48,11 +48,23 @@ class JsonThemePartAssociation implements ThemePartAssociationInterface
             @mkdir($dir, 0755, true);
         }
 
-        return @file_put_contents(
-            $this->filePath,
-            json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-            LOCK_EX
-        ) !== false;
+        $json = json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return false;
+        }
+
+        $tmpPath = $this->filePath . '.' . uniqid('tmp_', true) . '.tmp';
+        if (@file_put_contents($tmpPath, $json, LOCK_EX) === false) {
+            return false;
+        }
+
+        if (!@rename($tmpPath, $this->filePath)) {
+            $copied = @copy($tmpPath, $this->filePath);
+            @unlink($tmpPath);
+            return $copied;
+        }
+
+        return true;
     }
 
     public function getAssignedPartId(string $themeFolder, string $partType): ?string
@@ -113,5 +125,57 @@ class JsonThemePartAssociation implements ThemePartAssociationInterface
     public function getAllAssignments(): array
     {
         return $this->data;
+    }
+
+    public function getThemeAssignments(string $themeFolder): array
+    {
+        return is_array($this->data['themes'][$themeFolder] ?? null)
+            ? $this->data['themes'][$themeFolder]
+            : [];
+    }
+
+    public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): ?string
+    {
+        $themeAssoc = $this->getThemeAssignments($themeFolder);
+        foreach ($themeAssoc as $partType => $assignedId) {
+            if ($assignedId === $sectionId && str_starts_with((string)$partType, 'template:')) {
+                return substr((string)$partType, strlen('template:'));
+            }
+        }
+
+        return null;
+    }
+
+    public function assignTemplateToSection(string $themeFolder, string $sectionId, ?string $templateSlug): bool
+    {
+        $cleanSectionId = trim($sectionId);
+        if ($cleanSectionId === '') {
+            return false;
+        }
+
+        if (!isset($this->data['themes'][$themeFolder]) || !is_array($this->data['themes'][$themeFolder])) {
+            $this->data['themes'][$themeFolder] = [];
+        }
+
+        // Remove qualquer vínculo anterior desta seção com templates do tema
+        foreach ($this->data['themes'][$themeFolder] as $tKey => $pId) {
+            if ($pId === $cleanSectionId && str_starts_with((string)$tKey, 'template:')) {
+                unset($this->data['themes'][$themeFolder][$tKey]);
+            }
+        }
+
+        $cleanSlug = $templateSlug !== null
+            ? trim(str_replace(['templates/', '.php'], '', $templateSlug))
+            : '';
+
+        if ($cleanSlug !== '' && $cleanSlug !== 'none' && $cleanSlug !== 'fallback') {
+            $this->data['themes'][$themeFolder]['template:' . $cleanSlug] = $cleanSectionId;
+        }
+
+        if (empty($this->data['themes'][$themeFolder])) {
+            unset($this->data['themes'][$themeFolder]);
+        }
+
+        return $this->save();
     }
 }
