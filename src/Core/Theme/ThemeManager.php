@@ -43,6 +43,17 @@ class ThemeManager implements ThemeManagerInterface
 
     public function render(string $template, array $args = [], ?string $pluginViewsDir = null): string
     {
+        // 1. Verifica se há uma seção modular do FlexBuilder atribuída diretamente a este template
+        $renderer = $this->resolvePartRenderer();
+        if ($renderer !== null) {
+            $themeFolder = basename($this->activeThemePath);
+            $cleanTemplate = str_replace(['templates/', '.php'], '', $template);
+            $customSection = $renderer->renderTemplateSection($themeFolder, $cleanTemplate, $args);
+            if (trim($customSection) !== '') {
+                return $this->shortcodeManager !== null ? $this->shortcodeManager->parse($customSection) : $customSection;
+            }
+        }
+
         $file = $this->activeThemePath . '/' . ltrim($template, '/') . '.php';
         $realFile = realpath($file);
         $realThemePath = realpath($this->activeThemePath);

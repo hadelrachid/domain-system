@@ -276,7 +276,24 @@
         <?php else: ?>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px;">
                 <?php foreach ($sections as $s): ?>
-                    <div style="background: var(--bg-panel, #161b22); border: 1px solid var(--border, #30363d); border-radius: 8px; padding: 18px; display: flex; flex-direction: column;">
+                    <?php
+                        // Descobre se esta seção está atribuída a algum template do tema ativo
+                        $assignedTemplateKey = '';
+                        foreach ($assignments[$activeTheme] ?? [] as $partKey => $assignedId) {
+                            if ($assignedId === $s->getId() && str_starts_with($partKey, 'template:')) {
+                                $assignedTemplateKey = substr($partKey, strlen('template:'));
+                                break;
+                            }
+                        }
+                    ?>
+                    <div style="background: var(--bg-panel, #161b22); border: 1px solid <?= !empty($assignedTemplateKey) ? '#00d284' : 'var(--border, #30363d)' ?>; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; position: relative;">
+                        
+                        <?php if (!empty($assignedTemplateKey)): ?>
+                            <span style="position: absolute; top: 12px; right: 12px; background: #00d284; color: #000; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">
+                                ✓ Ativo em <?= htmlspecialchars($assignedTemplateKey) ?>.php
+                            </span>
+                        <?php endif; ?>
+
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                             <span style="font-size: 18px;">🧩</span>
                             <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #fff;"><?= htmlspecialchars($s->getTitle()) ?></h3>
@@ -285,11 +302,45 @@
                             <span>Grade: <code><?= htmlspecialchars($s->getLayoutPreset()) ?></code></span> •
                             <span>ID: <code><?= htmlspecialchars($s->getId()) ?></code></span>
                         </div>
+
+                        <!-- 1. CAIXA DE SHORTCODE COM BOTÃO COPIAR E INSTRUÇÃO AMIGÁVEL -->
+                        <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <code style="font-size: 12px; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 4px 8px; border-radius: 4px; font-weight: 700; user-select: all; font-family: monospace;">[section id="<?= htmlspecialchars($s->getId()) ?>"]</code>
+                                <button type="button" class="btn" onclick="copyShortcode('[section id=\'<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>\']', this)" style="background: #238636; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: all 0.2s ease;">
+                                    📋 Copiar Shortcode
+                                </button>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.45; background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 4px; border-left: 2px solid var(--accent-blue, #58a6ff);">
+                                💡 <strong>Como usar:</strong> Copie esse shortcode e cole no conteúdo da sua página (no <em>menu Páginas</em> que você preferir) para exibir este layout.
+                            </div>
+                        </div>
+
+                        <!-- 2. COMBOBOX DE ATRIBUIÇÃO DIRETA AO TEMPLATE DO TEMA -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px;">
+                                🎯 Atribuir Diretamente a um Template:
+                            </label>
+                            <select onchange="assignTemplateSection('<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>', this.value)" style="width: 100%; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border, #30363d); color: #fff; border-radius: 4px; font-size: 12px;">
+                                <option value="none">Nenhum (Usar livremente via Shortcode)</option>
+                                <?php if (!empty($templates) && is_array($templates)): ?>
+                                    <?php foreach ($templates as $tSlug => $tFile): ?>
+                                        <option value="<?= htmlspecialchars($tSlug) ?>" <?= ($assignedTemplateKey === $tSlug) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($tFile) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 4px;">
+                                Se selecionado, substitui automaticamente o conteúdo central deste template no site.
+                            </span>
+                        </div>
+
                         <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
-                            <span style="font-size: 11px; color: var(--text-muted);">Shortcode: <code>[section id="<?= htmlspecialchars($s->getId()) ?>"]</code></span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Layout Modular</span>
                             <div style="display: flex; gap: 8px;">
-                                <a href="<?= $baseUrl ?>/admin/builder/edit?id=<?= urlencode($s->getId()) ?>" class="btn button-primary" style="background: #2563eb; color: #fff; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600;">
-                                    Editar
+                                <a href="<?= $baseUrl ?>/admin/builder/edit?id=<?= urlencode($s->getId()) ?>" class="btn button-primary" style="background: #2563eb; color: #fff; padding: 5px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600;">
+                                    ✏️ Editar
                                 </a>
                                 <button type="button" onclick="deletePart('<?= htmlspecialchars($s->getId()) ?>')" style="background: transparent; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Excluir">
                                     🗑️
@@ -304,6 +355,80 @@
 </div>
 
 <script>
+function copyShortcode(text, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            showCopyFeedback(btn);
+        }).catch(function() {
+            fallbackCopy(text, btn);
+        });
+    } else {
+        fallbackCopy(text, btn);
+    }
+}
+
+function fallbackCopy(text, btn) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showCopyFeedback(btn);
+    } catch(e) {
+        prompt('Copie o shortcode abaixo:', text);
+    }
+    document.body.removeChild(ta);
+}
+
+function showCopyFeedback(btn) {
+    if (!btn) return;
+    var origText = btn.innerHTML;
+    btn.innerHTML = '✓ Copiado!';
+    btn.style.background = '#10b981';
+    btn.style.color = '#000';
+    setTimeout(function() {
+        btn.innerHTML = origText;
+        btn.style.background = '#238636';
+        btn.style.color = '#fff';
+    }, 2000);
+}
+
+function assignTemplateSection(sectionId, templateSlug) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= $baseUrl ?>/admin/builder/assign';
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = '<?= htmlspecialchars($csrfToken ?? "") ?>';
+    form.appendChild(csrfInput);
+
+    var themeInput = document.createElement('input');
+    themeInput.type = 'hidden';
+    themeInput.name = 'theme_folder';
+    themeInput.value = '<?= htmlspecialchars($activeTheme ?? "default") ?>';
+    form.appendChild(themeInput);
+
+    var typeInput = document.createElement('input');
+    typeInput.type = 'hidden';
+    typeInput.name = 'part_type';
+    typeInput.value = (templateSlug === 'none' || !templateSlug) ? 'template:none' : ('template:' + templateSlug);
+    form.appendChild(typeInput);
+
+    var idInput = document.createElement('input');
+    idInput.type = 'hidden';
+    idInput.name = 'part_id';
+    idInput.value = (templateSlug === 'none' || !templateSlug) ? 'none' : sectionId;
+    form.appendChild(idInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
 function deletePart(id) {
     if (!confirm('Deseja realmente excluir esta parte de tema?')) return;
     

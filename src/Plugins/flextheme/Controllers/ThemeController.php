@@ -51,6 +51,15 @@ class ThemeController
         $themeName = $siteState->getActiveTheme();
         $themeDir = $resolver->resolveThemePath($themeName);
         
+        $partRenderer = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class))
+            ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
+            : null;
+        
+        $customHome = ($partRenderer !== null) ? $partRenderer->renderTemplateSection($themeName, 'home') : '';
+        if (trim($customHome) !== '') {
+            return new Response($customHome);
+        }
+
         $themePath = file_exists($themeDir . '/templates/home.php') 
             ? $themeDir . '/templates/home.php' 
             : $themeDir . '/index.php';

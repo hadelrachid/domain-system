@@ -1,0 +1,80 @@
+{
+    "id": "part_6adffa90a454f0.08376171",
+    "type": "section",
+    "title": "Hero",
+    "layout_preset": "1_col",
+    "container_settings": {
+        "is_full_width": false,
+        "max_width": "1280px",
+        "gap": "24px",
+        "padding": "20px 24px",
+        "align_items": "center",
+        "background": ""
+    },
+    "columns_data": [
+        [
+            {
+                "type": "heading",
+                "data": {
+                    "text": "Página Hero",
+                    "level": "h2"
+                }
+            },
+            {
+                "type": "paragraph",
+                "data": {
+                    "text": "Esta página é um hero"
+                }
+            },
+            {
+                "type": "video",
+                "data": {
+                    "url": "https://www.youtube.com/watch?v=tvBrm1xGVqs&list=RDtvBrm1xGVqs&start_radio=1"
+                }
+            }
+        ]
+    ],
+    "sections": [
+        {
+            "id": "sec_9f9e255b",
+            "title": "Seção 1",
+            "layout_preset": "1_col",
+            "container_settings": {
+                "is_full_width": false,
+                "max_width": "1280px",
+                "gap": "24px",
+                "padding": "20px 24px",
+                "align_items": "center",
+                "background": ""
+            },
+            "columns_data": [
+                [
+                    {
+                        "type": "heading",
+                        "data": {
+                            "text": "Página Hero",
+                            "level": "h2"
+                        }
+                    },
+                    {
+                        "type": "paragraph",
+                        "data": {
+                            "text": "Esta página é um hero"
+                        }
+                    },
+                    {
+                        "type": "video",
+                        "data": {
+                            "url": "https://www.youtube.com/watch?v=tvBrm1xGVqs&list=RDtvBrm1xGVqs&start_radio=1"
+                        }
+                    }
+                ]
+            ]
+        }
+    ],
+    "mobile_toggle_style": "classic",
+    "mobile_toggle_align": "right",
+    "is_default": false,
+    "created_at": 1793063721,
+    "updated_at": 1793063721
+}

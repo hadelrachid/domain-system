@@ -304,4 +304,48 @@ class ThemePartsRendererTest extends TestCase
         $this->assertStringContainsString('<footer class="ds-part-wrapper ds-theme-footer" role="contentinfo">', $footerHtml);
         $this->assertStringContainsString('</footer>', $footerHtml);
     }
+
+    public function testRenderTemplateSectionAndFallback(): void
+    {
+        ThemePartRenderer::resetInjectedState();
+
+        $repo = new JsonThemePartRepository($this->tempDir . '/config/theme_parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/config/associations.json');
+        $grid = new LayoutGridRenderer();
+        $tokens = new DesignTokens($this->tempDir . '/config/design_tokens.json');
+        $registry = DefaultBlockRegistryFactory::create();
+
+        $sectionPart = new ThemePart(
+            'sec_home_custom',
+            ThemePartInterface::TYPE_SECTION,
+            'Seção Home Customizada',
+            '1_col',
+            [],
+            [
+                0 => [
+                    ['type' => 'heading', 'data' => ['text' => 'Bem-vindo à Home Dinâmica', 'level' => 'h1']],
+                    ['type' => 'paragraph', 'data' => ['text' => 'Conteúdo central modularizado via FlexBuilder.']],
+                ],
+            ]
+        );
+        $repo->save($sectionPart);
+
+        // Atribui a seção ao template 'home'
+        $assoc->assignPart('test_theme', 'template:home', 'sec_home_custom');
+
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir);
+
+        // 1. Template com seção atribuída
+        $htmlHome = $renderer->renderTemplateSection('test_theme', 'home');
+        $this->assertStringContainsString('Bem-vindo à Home Dinâmica', $htmlHome);
+        $this->assertStringContainsString('ds-theme-section', $htmlHome);
+
+        // 2. Com sufixo .php ou templates/
+        $htmlHomePhp = $renderer->renderTemplateSection('test_theme', 'templates/home.php');
+        $this->assertStringContainsString('Bem-vindo à Home Dinâmica', $htmlHomePhp);
+
+        // 3. Template sem seção atribuída -> Retorna vazio (permitindo fallback gracioso)
+        $htmlSobre = $renderer->renderTemplateSection('test_theme', 'sobre');
+        $this->assertSame('', $htmlSobre);
+    }
 }

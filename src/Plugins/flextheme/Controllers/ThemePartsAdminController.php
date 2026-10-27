@@ -123,6 +123,7 @@ class ThemePartsAdminController
             'assignments'  => $assignments,
             'globalHeader' => $globalHeader,
             'globalFooter' => $globalFooter,
+            'templates'    => $this->getThemeTemplates($activeTheme),
             'baseUrl'      => defined('BASE_URL') ? BASE_URL : '',
             'session'      => $this->session,
             'csrfToken'    => $this->getCsrfToken(),
@@ -256,6 +257,24 @@ class ThemePartsAdminController
             // Atualiza Atribuição a Tema Específico se informado
             if (!empty($input['assigned_theme'])) {
                 $this->partAssoc->assignPart((string)$input['assigned_theme'], $type, $id);
+            }
+
+            // Atualiza Atribuição a Template de Seção se informado
+            if ($type === ThemePartInterface::TYPE_SECTION) {
+                $targetTheme = !empty($input['assigned_theme']) ? (string)$input['assigned_theme'] : $this->getActiveThemeFolder();
+                if (isset($input['assigned_template'])) {
+                    $templateChoice = trim((string)$input['assigned_template']);
+                    // Limpa atribuições anteriores desta seção em templates
+                    $allAssignments = $this->partAssoc->getAllAssignments();
+                    foreach ($allAssignments[$targetTheme] ?? [] as $tKey => $pId) {
+                        if ($pId === $id && str_starts_with($tKey, 'template:')) {
+                            $this->partAssoc->assignPart($targetTheme, $tKey, null);
+                        }
+                    }
+                    if ($templateChoice !== '' && $templateChoice !== 'none') {
+                        $this->partAssoc->assignPart($targetTheme, 'template:' . $templateChoice, $id);
+                    }
+                }
             }
 
             return new Response(json_encode([
@@ -588,7 +607,9 @@ class ThemePartsAdminController
             'menus'       => $menus,
             'tokens'      => $tokens,
             'themes'      => $themes,
-            'activeTheme' => $activeTheme,
+            'activeTheme'      => $activeTheme,
+            'templates'        => $this->getThemeTemplates($activeTheme),
+            'assignedTemplate' => ($part->getType() === ThemePartInterface::TYPE_SECTION) ? $this->getAssignedTemplateForSection($activeTheme, $part->getId()) : '',
             'baseUrl'     => defined('BASE_URL') ? BASE_URL : '',
             'session'     => $this->session,
             'csrfToken'   => $this->getCsrfToken(),
@@ -656,5 +677,44 @@ class ThemePartsAdminController
     public function getActiveThemeFolder(): string
     {
         return $this->themeDiscovery->getActiveThemeFolder();
+    }
+    public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): string
+    {
+        $assignments = $this->partAssoc->getAllAssignments();
+        foreach ($assignments[$themeFolder] ?? [] as $partType => $assignedId) {
+            if ($assignedId === $sectionId && str_starts_with($partType, 'template:')) {
+                return substr($partType, strlen('template:'));
+            }
+        }
+        return '';
+    }
+public function getThemeTemplates(string $themeFolder): array
+    {
+        $possibleDirs = [
+            $this->basePath . '/themes/' . $themeFolder . '/templates',
+            $this->basePath . '/src/Plugins/flextheme/themes/' . $themeFolder . '/templates',
+        ];
+
+        $templates = [];
+        foreach ($possibleDirs as $dir) {
+            if (is_dir($dir)) {
+                foreach (glob($dir . '/*.php') ?: [] as $file) {
+                    $base = basename($file, '.php');
+                    $templates[$base] = $base . '.php';
+                }
+            }
+        }
+
+        if (empty($templates)) {
+            $templates = [
+                'home'        => 'home.php (Página Inicial)',
+                'sobre'       => 'sobre.php (Página Sobre)',
+                'blog'        => 'blog.php (Blog / Artigos)',
+                'privacidade' => 'privacidade.php',
+                'termos'      => 'termos.php',
+            ];
+        }
+
+        return $templates;
     }
 }

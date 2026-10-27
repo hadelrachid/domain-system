@@ -90,6 +90,22 @@ class ThemePartRenderer implements ThemePartRendererInterface
         return $this->compileDynamicPart($part, $context, false);
     }
 
+    public function renderTemplateSection(string $themeFolder, string $templateName, array $context = []): string
+    {
+        $cleanTemplate = str_replace(['templates/', '.php'], '', $templateName);
+        $partId = $this->partAssoc->getAssignedPartId($themeFolder, 'template:' . $cleanTemplate);
+        if ($partId === null || trim($partId) === '') {
+            return '';
+        }
+
+        $part = $this->partRepo->findById($partId);
+        if ($part === null) {
+            return '';
+        }
+
+        return $this->compileDynamicPart($part, $context, false);
+    }
+
     private function compileDynamicPart(ThemePartInterface $part, array $context, bool $injectDesignTokens): string
     {
         $sections = $part->getSections();

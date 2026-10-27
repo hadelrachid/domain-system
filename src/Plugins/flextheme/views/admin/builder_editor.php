@@ -84,6 +84,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             <button type="button" class="header-btn" onclick="toggleLivePreviewModal()" title="Ver código / Preview Modal">
                 🔍 Modal
             </button>
+            <button type="button" class="header-btn" id="btn_copy_studio_shortcode" onclick="copyStudioShortcode(this)" title="Copiar Shortcode desta Parte" style="border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 600;">
+                📋 Copiar Shortcode
+            </button>
             <button type="button" id="btn_save" class="header-btn" onclick="savePart()" style="background: var(--accent-green); color: #000; border-color: var(--accent-green); font-weight: 700;">
                 💾 Salvar
             </button>
@@ -355,6 +358,25 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <?php if ($part->getType() === 'section'): ?>
+                <div class="inspector-field" style="margin-top: 14px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label class="inspector-label" style="color: var(--primary); font-weight: 700;">🎯 Atribuir Diretamente a um Template do Tema</label>
+                    <select id="setting_assigned_template" class="inspector-select">
+                        <option value="">Nenhum (Usar somente via Shortcode)</option>
+                        <?php if (!empty($templates) && is_array($templates)): ?>
+                            <?php foreach ($templates as $tSlug => $tFile): ?>
+                                <option value="<?= htmlspecialchars($tSlug) ?>" <?= (($assignedTemplate ?? '') === $tSlug) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($tFile) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                    <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">
+                        Ao escolher um template (ex: <code>home.php</code>, <code>sobre.php</code>, <code>blog.php</code>), esta seção será renderizada automaticamente como o conteúdo central daquela página.
+                    </span>
+                </div>
+                <?php endif; ?>
 
                 <div class="inspector-field" style="margin-top: 15px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff; cursor: pointer;">
@@ -4075,7 +4097,8 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             sections: state.sections,
             mobile_toggle_style: state.mobile_toggle_style || 'classic',
             is_default: !!state.is_default,
-            assigned_theme: assignedTheme
+            assigned_theme: assignedTheme,
+            assigned_template: document.getElementById('setting_assigned_template') ? document.getElementById('setting_assigned_template').value : ''
         };
 
         fetch('<?= $baseUrl ?>/admin/builder/save-part', {
@@ -4092,7 +4115,11 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             btn.textContent = '💾 Salvar';
             btn.disabled = false;
             if (data.success) {
+                var templateChoice = document.getElementById('setting_assigned_template') ? document.getElementById('setting_assigned_template').value : '';
                 showToast('✓ ' + data.message);
+                if (state.type === 'section') {
+                    showSaveSuccessModal(state.title, '[section id="' + state.id + '"]', templateChoice);
+                }
             } else {
                 alert('Erro ao salvar: ' + (data.message || 'Erro desconhecido'));
             }
@@ -4145,7 +4172,90 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         return String(str || '').replace(/"/g, '&quot;');
     }
 
+        function copyStudioShortcode(btn) {
+        var sc = (state.type === 'section') ? '[section id="' + state.id + '"]' : ('[theme_part id="' + state.id + '"]');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(sc).then(function() {
+                showToast('✓ Shortcode ' + sc + ' copiado! Cole na página que preferir (menu Páginas).');
+                if (btn) {
+                    var orig = btn.innerHTML;
+                    btn.innerHTML = '✓ Copiado!';
+                    btn.style.color = '#10b981';
+                    setTimeout(function() { btn.innerHTML = orig; btn.style.color = '#38bdf8'; }, 2000);
+                }
+            });
+        } else {
+            prompt('Copie o shortcode da seção:', sc);
+        }
+    }
+
+    function showSaveSuccessModal(title, shortcode, assignedTemplate) {
+        var modal = document.getElementById('saveSuccessModal');
+        if (!modal) return;
+
+        document.getElementById('save_success_title').textContent = title || 'Seção';
+        document.getElementById('save_success_sc_code').textContent = shortcode;
+        
+        var tNotice = document.getElementById('save_success_template_notice');
+        if (assignedTemplate && assignedTemplate !== 'none') {
+            tNotice.style.display = 'block';
+            tNotice.innerHTML = '🎯 <strong>Atribuição Direta:</strong> Esta seção está vinculada ao template <code>' + escapeHtml(assignedTemplate) + '.php</code> e substituirá o conteúdo da página automaticamente!';
+        } else {
+            tNotice.style.display = 'none';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function copyModalShortcode() {
+        var sc = document.getElementById('save_success_sc_code').textContent;
+        var btn = document.getElementById('btn_modal_copy_sc');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(sc).then(function() {
+                var orig = btn.innerHTML;
+                btn.innerHTML = '✓ Copiado!';
+                btn.style.background = '#10b981';
+                btn.style.color = '#000';
+                setTimeout(function() { btn.innerHTML = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+            });
+        } else {
+            prompt('Copie o shortcode abaixo:', sc);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', initStudio);
     </script>
+    <!-- MODAL DE CONFIRMAÇÃO DE SALVAMENTO COM SHORTCODE E ATRIBUIÇÃO -->
+    <div id="saveSuccessModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 520px; padding: 26px; box-shadow: 0 25px 50px rgba(0,0,0,0.6); text-align: center;">
+            <div style="font-size: 38px; margin-bottom: 10px;">🎉</div>
+            <h3 style="color: #fff; margin: 0 0 8px; font-size: 19px; font-weight: 700;">Seção Salva com Sucesso!</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 16px; line-height: 1.5;">
+                A seção <strong id="save_success_title" style="color:#fff;"></strong> foi gravada. Você pode copiá-la para usar em qualquer página do menu <strong>Páginas</strong>.
+            </p>
+
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px;">
+                <code id="save_success_sc_code" style="font-size: 13px; color: #38bdf8; font-weight: 700; font-family: monospace; user-select: all;">[section id="..."]</code>
+                <button type="button" class="btn btn-primary" id="btn_modal_copy_sc" onclick="copyModalShortcode()" style="font-size: 12px; padding: 7px 12px; white-space: nowrap; font-weight: 700;">
+                    📋 Copiar Shortcode
+                </button>
+            </div>
+
+            <div id="save_success_template_notice" style="display: none; font-size: 11px; color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; text-align: left; line-height: 1.4;"></div>
+
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.45; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border-left: 2px solid var(--accent-blue, #58a6ff); margin-bottom: 18px; text-align: left;">
+                💡 <strong>Como usar:</strong> Copie esse shortcode e cole no conteúdo da sua página (no <em>menu Páginas</em> que você preferir) para exibir este layout.
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('saveSuccessModal').style.display='none'" style="padding: 8px 16px; font-size: 13px;">
+                    Continuar Editando
+                </button>
+                <a href="<?= $baseUrl ?>/admin/builder" class="btn btn-primary" style="text-decoration: none; padding: 8px 18px; font-size: 13px; font-weight: 700;">
+                    Ir para o Painel do Builder
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

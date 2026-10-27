@@ -25,4 +25,10 @@ interface ThemePartRendererInterface
      * Renderiza uma seção ou bloco central específico.
      */
     public function renderSection(string $sectionId, array $context = []): string;
+
+    /**
+     * Renderiza a seção customizada atribuída diretamente a um template (ex: home, sobre, blog).
+     * Retorna string vazia caso não haja seção atribuída ao template.
+     */
+    public function renderTemplateSection(string $themeFolder, string $templateName, array $context = []): string;
 }
