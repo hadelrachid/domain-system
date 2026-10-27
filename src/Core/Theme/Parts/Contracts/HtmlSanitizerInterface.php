@@ -14,4 +14,10 @@ interface HtmlSanitizerInterface
      * vetores XSS (atributos de evento on*, javascript:, data:, style malicioso).
      */
     public function sanitizeInlineHtml(string $html): string;
+
+    /**
+     * Valida e higieniza uma URL contra protocolos maliciosos (javascript:, vbscript:, data:).
+     * Retorna o fallback seguro se a URL contiver um esquema proibido.
+     */
+    public function sanitizeUrl(string $url, string $fallback = '#'): string;
 }

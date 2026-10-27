@@ -1,61 +1,80 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Controllers;
 
-use DomainSystem\Core\Contracts\ContainerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\AssetBundle;
-use DomainSystem\Core\Http\Response;
+use Throwable;
 
 /**
  * ════════════════════════════════════════════════════════════════════════════
  * CONTROLLER: BuilderAdminController (Editor Visual Full Site Editing)
  * ════════════════════════════════════════════════════════════════════════════
  *
- * Responsável por renderizar a interface do editor visual e expor a API 
+ * Responsável por renderizar a interface do editor visual e expor a API
  * de schema dos widgets (controles de propriedade) para o JavaScript.
  *
- * NOTA: Este controller recebe o WidgetManagerInterface via Injeção de 
- * Dependência no construtor, eliminando o anti-pattern Application::getInstance().
+ * Desacoplado de classes concretas/interfaces de outros plugins (suporta
+ * repositório de páginas opcional via duck-typing/contrato agnóstico).
  */
 class BuilderAdminController
 {
     private ThemeManagerInterface $theme;
     private WidgetManagerInterface $widgetManager;
-    private \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface $pageRepo;
+    private ?object $pageRepo;
 
-    public function __construct(ThemeManagerInterface $theme, WidgetManagerInterface $widgetManager, \DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface $pageRepo)
-    {
+    public function __construct(
+        ThemeManagerInterface $theme,
+        WidgetManagerInterface $widgetManager,
+        ?object $pageRepo = null
+    ) {
         $this->theme         = $theme;
         $this->widgetManager = $widgetManager;
-        $this->pageRepo = $pageRepo;
+        $this->pageRepo      = $pageRepo;
     }
 
     /**
-     * Renderiza a view do editor visual (Full Site Editing).
+     * Renderiza a view do editor visual (Full Site Editing) com isolamento estrito de escopo.
      */
-    public function index(\DomainSystem\Core\Http\Request $request): \DomainSystem\Core\Http\Responses\ViewResponse
+    public function index(Request $request): ViewResponse
     {
         $pageId = $request->input('page_id');
         $pageContent = '';
-        
-        if ($pageId) {
+
+        if ($pageId && $this->pageRepo !== null && method_exists($this->pageRepo, 'findById')) {
             $page = $this->pageRepo->findById((int)$pageId);
-            if ($page && !empty($page['content'])) {
-                $pageContent = $page['content'];
+            if (is_array($page) && !empty($page['content'])) {
+                $pageContent = (string)$page['content'];
             }
         }
 
-        ob_start();
-        // Passar os dados para a view
         $builderData = [
             'page_id' => $pageId,
-            'content' => $pageContent
+            'content' => $pageContent,
         ];
-        extract($builderData);
-        include dirname(__DIR__) . '/views/builder_editor.php';
-        return new \DomainSystem\Core\Http\Responses\ViewResponse(ob_get_clean(), false);
+
+        $viewFile = dirname(__DIR__) . '/views/builder_editor.php';
+        $isolatedInclude = static function (string $__file, array $__ctx): string {
+            ob_start();
+            try {
+                extract($__ctx, EXTR_SKIP);
+                include $__file;
+                return (string)ob_get_clean();
+            } catch (Throwable $e) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                throw $e;
+            }
+        };
+
+        return new ViewResponse($isolatedInclude($viewFile, $builderData), false);
     }
 
     /** Entrega o bundle JS (todos os módulos do manifesto, na ordem). */
@@ -89,7 +108,7 @@ class BuilderAdminController
      * API JSON: Retorna o schema de controles de todos os widgets registrados.
      * Consumido pelo JavaScript do editor para montar o painel de propriedades.
      */
-    public function getSchema()
+    public function getSchema(): Response
     {
         $schema = [];
         foreach ($this->widgetManager->getWidgets() as $tag => $widget) {
@@ -106,7 +125,7 @@ class BuilderAdminController
         );
     }
 
-    public function save(\DomainSystem\Core\Http\Request $request)
+    public function save(Request $request): Response
     {
         $pageId = $request->input('page_id');
         $content = $request->input('content');
@@ -115,10 +134,14 @@ class BuilderAdminController
             return new Response(json_encode(['success' => false, 'error' => 'Missing page_id or content']), 400, ['Content-Type' => 'application/json']);
         }
 
+        if ($this->pageRepo === null || !method_exists($this->pageRepo, 'update')) {
+            return new Response(json_encode(['success' => false, 'error' => 'Page repository unavailable']), 503, ['Content-Type' => 'application/json']);
+        }
+
         try {
             $this->pageRepo->update((int)$pageId, ['content' => $content]);
             return new Response(json_encode(['success' => true]), 200, ['Content-Type' => 'application/json']);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
         }
     }

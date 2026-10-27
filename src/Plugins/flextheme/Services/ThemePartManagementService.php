@@ -180,4 +180,22 @@ class ThemePartManagementService
 
         return $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
     }
+
+    /**
+     * Exclui uma parte visual e limpa quaisquer referências órfãs nas associações de temas/templates/globais.
+     */
+    public function deletePart(string $id): bool
+    {
+        $cleanId = trim($id);
+        if ($cleanId === '') {
+            return false;
+        }
+
+        $deleted = $this->partRepo->delete($cleanId);
+        if ($deleted) {
+            $this->partAssoc->removePartReferences($cleanId);
+        }
+
+        return $deleted;
+    }
 }

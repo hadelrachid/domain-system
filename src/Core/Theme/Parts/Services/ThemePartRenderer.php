@@ -29,6 +29,9 @@ class ThemePartRenderer implements ThemePartRendererInterface
     private ElementStyleRendererInterface $styleRenderer;
     private ?string $baseRoot;
     private static bool $tokensInjected = false;
+    /** @var array<int, string> Pilha de proteção contra recursão infinita (ex: Shortcode [section] auto-referenciado) */
+    private array $renderingStack = [];
+    private const MAX_RENDER_DEPTH = 10;
 
     public static function resetInjectedState(): void
     {
@@ -124,95 +127,110 @@ class ThemePartRenderer implements ThemePartRendererInterface
         bool $injectDesignTokens,
         bool $wrapWithSemanticTag = true
     ): string {
-        $sections = $part->getSections();
-        $sectionsOutput = [];
+        $partId = trim($part->getId());
+        if ($partId !== '') {
+            if (in_array($partId, $this->renderingStack, true) || count($this->renderingStack) >= self::MAX_RENDER_DEPTH) {
+                $safeId = htmlspecialchars($partId, ENT_QUOTES, 'UTF-8');
+                return "<!-- Recursion guard triggered for part: {$safeId} -->";
+            }
+            $this->renderingStack[] = $partId;
+        }
 
-        foreach ($sections as $section) {
-            $preset = (string)($section['layout_preset'] ?? '1_col');
-            $settings = (array)($section['container_settings'] ?? []);
-            $columnsData = (array)($section['columns_data'] ?? []);
+        try {
+            $sections = $part->getSections();
+            $sectionsOutput = [];
 
-            $columnsHtml = [];
-            foreach ($columnsData as $colIndex => $blocksList) {
-                $colBlocksOutput = [];
-                if (is_array($blocksList)) {
-                    foreach ($blocksList as $blockDef) {
-                        if (!is_array($blockDef)) {
-                            continue;
-                        }
-                        $blockType = (string)($blockDef['type'] ?? '');
-                        $blockData = (array)($blockDef['data'] ?? []);
+            foreach ($sections as $section) {
+                $preset = (string)($section['layout_preset'] ?? '1_col');
+                $settings = (array)($section['container_settings'] ?? []);
+                $columnsData = (array)($section['columns_data'] ?? []);
 
-                        // Se for bloco de nav_menu, garante o estilo e alinhamento do toggle configurados na parte
-                        if ($blockType === 'nav_menu') {
-                            if (!isset($blockData['toggle_style']) || empty($blockData['toggle_style'])) {
-                                $blockData['toggle_style'] = $part->getMobileToggleStyle();
-                            }
-                            if (!isset($blockData['toggle_align']) || empty($blockData['toggle_align'])) {
-                                $blockData['toggle_align'] = $part->getMobileToggleAlign();
-                            }
-                        }
-
-                        $block = $this->blockRegistry->get($blockType);
-                        if ($block !== null) {
-                            // Validação estrita por contrato: impede que blocos de conteúdo vazem para headers ou footers
-                            $allowedTypes = $block->getAllowedPartTypes();
-                            if (!empty($allowedTypes) && !in_array($part->getType(), $allowedTypes, true)) {
+                $columnsHtml = [];
+                foreach ($columnsData as $colIndex => $blocksList) {
+                    $colBlocksOutput = [];
+                    if (is_array($blocksList)) {
+                        foreach ($blocksList as $blockDef) {
+                            if (!is_array($blockDef)) {
                                 continue;
                             }
+                            $blockType = (string)($blockDef['type'] ?? '');
+                            $blockData = (array)($blockDef['data'] ?? []);
 
-                            $renderedHtml = $block->render($blockData, $context);
-                            $elementStyles = $this->styleRenderer->renderStyleString($blockData);
-                            $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($blockData);
-
-                            if ($elementStyles !== '' || $visibilityClasses !== '') {
-                                $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
-                                $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
-                                $renderedHtml = "<div class=\"{$wrapperClass}\"{$styleAttr}>{$renderedHtml}</div>";
+                            // Se for bloco de nav_menu, garante o estilo e alinhamento do toggle configurados na parte
+                            if ($blockType === 'nav_menu') {
+                                if (!isset($blockData['toggle_style']) || empty($blockData['toggle_style'])) {
+                                    $blockData['toggle_style'] = $part->getMobileToggleStyle();
+                                }
+                                if (!isset($blockData['toggle_align']) || empty($blockData['toggle_align'])) {
+                                    $blockData['toggle_align'] = $part->getMobileToggleAlign();
+                                }
                             }
-                            $colBlocksOutput[] = $renderedHtml;
+
+                            $block = $this->blockRegistry->get($blockType);
+                            if ($block !== null) {
+                                // Validação estrita por contrato: impede que blocos de conteúdo vazem para headers ou footers
+                                $allowedTypes = $block->getAllowedPartTypes();
+                                if (!empty($allowedTypes) && !in_array($part->getType(), $allowedTypes, true)) {
+                                    continue;
+                                }
+
+                                $renderedHtml = $block->render($blockData, $context);
+                                $elementStyles = $this->styleRenderer->renderStyleString($blockData);
+                                $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($blockData);
+
+                                if ($elementStyles !== '' || $visibilityClasses !== '') {
+                                    $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
+                                    $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
+                                    $renderedHtml = "<div class=\"{$wrapperClass}\"{$styleAttr}>{$renderedHtml}</div>";
+                                }
+                                $colBlocksOutput[] = $renderedHtml;
+                            }
                         }
                     }
+                    $columnsHtml[(int)$colIndex] = implode("\n", $colBlocksOutput);
                 }
-                $columnsHtml[(int)$colIndex] = implode("\n", $colBlocksOutput);
+
+                $sectionsOutput[] = $this->gridRenderer->renderSection($preset, $columnsHtml, $settings);
             }
 
-            $sectionsOutput[] = $this->gridRenderer->renderSection($preset, $columnsHtml, $settings);
-        }
+            $allSectionsHtml = implode("\n", $sectionsOutput);
 
-        $allSectionsHtml = implode("\n", $sectionsOutput);
+            if ($wrapWithSemanticTag) {
+                $partType = $part->getType();
+                $wrapperTag = 'section';
+                $roleAttr = '';
+                $typeClass = 'ds-theme-section';
 
-        if ($wrapWithSemanticTag) {
-            $partType = $part->getType();
-            $wrapperTag = 'section';
-            $roleAttr = '';
-            $typeClass = 'ds-theme-section';
+                if ($partType === ThemePartInterface::TYPE_HEADER) {
+                    $wrapperTag = 'header';
+                    $roleAttr = ' role="banner"';
+                    $typeClass = 'ds-theme-header';
+                } elseif ($partType === ThemePartInterface::TYPE_FOOTER) {
+                    $wrapperTag = 'footer';
+                    $roleAttr = ' role="contentinfo"';
+                    $typeClass = 'ds-theme-footer';
+                }
 
-            if ($partType === ThemePartInterface::TYPE_HEADER) {
-                $wrapperTag = 'header';
-                $roleAttr = ' role="banner"';
-                $typeClass = 'ds-theme-header';
-            } elseif ($partType === ThemePartInterface::TYPE_FOOTER) {
-                $wrapperTag = 'footer';
-                $roleAttr = ' role="contentinfo"';
-                $typeClass = 'ds-theme-footer';
+                $wrappedHtml = "<{$wrapperTag} class=\"ds-part-wrapper {$typeClass}\"{$roleAttr}>\n{$allSectionsHtml}\n</{$wrapperTag}>";
+            } else {
+                $wrappedHtml = $allSectionsHtml;
             }
 
-            $wrappedHtml = "<{$wrapperTag} class=\"ds-part-wrapper {$typeClass}\"{$roleAttr}>\n{$allSectionsHtml}\n</{$wrapperTag}>";
-        } else {
-            $wrappedHtml = $allSectionsHtml;
-        }
+            // Injeta variáveis CSS, animações runtime e utilitários responsivos dos Design Tokens
+            if ($injectDesignTokens || !self::$tokensInjected) {
+                self::$tokensInjected = true;
+                $tokensCss = $this->designTokens->generateCssVariables();
+                $runtimeCss = self::getRuntimeCss();
+                $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
+                return $tokensTag . $wrappedHtml;
+            }
 
-        // Injeta variáveis CSS, animações runtime e utilitários responsivos dos Design Tokens
-        if ($injectDesignTokens || !self::$tokensInjected) {
-            self::$tokensInjected = true;
-            $tokensCss = $this->designTokens->generateCssVariables();
-            $runtimeCss = self::getRuntimeCss();
-            $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
-            return $tokensTag . $wrappedHtml;
+            return $wrappedHtml;
+        } finally {
+            if ($partId !== '') {
+                array_pop($this->renderingStack);
+            }
         }
-
-        return $wrappedHtml;
     }
 
     public static function getRuntimeCss(): string

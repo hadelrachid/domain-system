@@ -6,11 +6,15 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Icons\SvgIconRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Styles\StylableElementInterface;
 use DomainSystem\Core\Theme\Parts\Icons\DefaultSvgIconsFactory;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\Traits\StylableElementTrait;
 use DomainSystem\Core\Theme\Parts\Styles\Values\ColorValue;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Redes Sociais com Vetores SVG Nativos Puros (SOLID - SRP / OCP).
@@ -25,10 +29,17 @@ class SocialIconsBlock implements BlockInterface, StylableElementInterface
     use AllowedPartTypesTrait;
 
     private SvgIconRegistryInterface $iconRegistry;
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
 
-    public function __construct(?SvgIconRegistryInterface $iconRegistry = null)
-    {
+    public function __construct(
+        ?SvgIconRegistryInterface $iconRegistry = null,
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null
+    ) {
         $this->iconRegistry = $iconRegistry ?? DefaultSvgIconsFactory::create();
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
     }
 
     public function getType(): string
@@ -88,13 +99,17 @@ class SocialIconsBlock implements BlockInterface, StylableElementInterface
         $colorMode = (string)($data['color_mode'] ?? 'official'); // 'official' | 'custom'
         $hoverAnim = (string)($data['hover_animation'] ?? 'lift');
         $align = (string)($data['align'] ?? 'center');
-        $gap = (string)($data['gap'] ?? '12px');
+        $gap = $this->styleRenderer->sanitizeCssValue((string)($data['gap'] ?? '12px'));
         $iconSize = (int)preg_replace('/[^0-9]/', '', (string)($data['icon_size'] ?? '20')) ?: 20;
         $buttonSize = (int)preg_replace('/[^0-9]/', '', (string)($data['button_size'] ?? '40')) ?: 40;
 
         // Resolução de cores personalizadas via Design Tokens
-        $customIconColor = ColorValue::fromString((string)($data['icon_color'] ?? '#ffffff'))->toCss();
-        $customBgColor = ColorValue::fromString((string)($data['bg_color'] ?? 'var(--color-surface, #1f2833)'))->toCss();
+        $customIconColor = $this->styleRenderer->sanitizeCssValue(
+            ColorValue::fromString((string)($data['icon_color'] ?? '#ffffff'))->toCss()
+        );
+        $customBgColor = $this->styleRenderer->sanitizeCssValue(
+            ColorValue::fromString((string)($data['bg_color'] ?? 'var(--color-surface, #1f2833)'))->toCss()
+        );
 
         $borderRadius = match ($shape) {
             'circle'  => '50%',
@@ -120,7 +135,8 @@ class SocialIconsBlock implements BlockInterface, StylableElementInterface
         $renderedIcons = [];
         foreach ($itemsList as $item) {
             $net = $item['network'];
-            $url = htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8');
+            $safeItemUrl = $this->htmlSanitizer->sanitizeUrl($item['url'], '#');
+            $url = htmlspecialchars($safeItemUrl, ENT_QUOTES, 'UTF-8');
             $label = $this->iconRegistry->getLabel($net) ?? ucfirst($net);
             $officialBrandColor = $this->iconRegistry->getBrandColor($net) ?? '#38bdf8';
 

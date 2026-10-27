@@ -89,6 +89,20 @@ class SafeHtmlSanitizer implements HtmlSanitizerInterface
         return implode(' ', $cleanPairs);
     }
 
+    public function sanitizeUrl(string $url, string $fallback = '#'): string
+    {
+        $trimmed = trim($url);
+        if ($trimmed === '') {
+            return $fallback;
+        }
+
+        if (!$this->isSafeUrl($trimmed)) {
+            return $fallback;
+        }
+
+        return $trimmed;
+    }
+
     private function isSafeUrl(string $url): bool
     {
         $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');

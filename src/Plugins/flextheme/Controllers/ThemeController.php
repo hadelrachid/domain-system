@@ -2,17 +2,43 @@
 
 namespace DomainSystem\Plugins\flextheme\Controllers;
 
+use DomainSystem\Core\Contracts\SiteStateInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Theme\EnvSiteState;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use DomainSystem\Core\Theme\SafeThemeResolver;
+use DomainSystem\Core\Theme\ShortcodeManager;
 
 class ThemeController
 {
+    private SiteStateInterface $siteState;
+    private ?ThemePartRendererInterface $partRenderer;
+    private ?ShortcodeManager $shortcodes;
+    private PublicUrlResolverInterface $urlResolver;
+    private string $baseRoot;
+
+    public function __construct(
+        ?SiteStateInterface $siteState = null,
+        ?ThemePartRendererInterface $partRenderer = null,
+        ?ShortcodeManager $shortcodes = null,
+        ?PublicUrlResolverInterface $urlResolver = null,
+        ?string $baseRoot = null
+    ) {
+        $this->siteState = $siteState ?? new EnvSiteState();
+        $this->partRenderer = $partRenderer;
+        $this->shortcodes = $shortcodes;
+        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
+        $this->baseRoot = $baseRoot ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
+    }
+
     public function renderHome(Request $request): Response
     {
-        $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
-        $baseRoot = dirname(__DIR__, 4);
-        $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver([
-            $baseRoot . '/themes',
+        $siteState = $this->siteState;
+        $resolver = new SafeThemeResolver([
+            $this->baseRoot . '/themes',
             __DIR__ . '/../themes'
         ]);
 
@@ -25,7 +51,7 @@ class ThemeController
             
             if (file_exists($themePath)) {
                 ob_start();
-                $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+                $baseUrl = $this->urlResolver->getBaseUrl();
                 $siteName = 'Domain-System OS';
                 require $themePath;
                 $html = ob_get_clean();
@@ -50,11 +76,8 @@ class ThemeController
         // 3. Estado: Live
         $themeName = $siteState->getActiveTheme();
         $themeDir = $resolver->resolveThemePath($themeName);
-        
-        $partRenderer = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class))
-            ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
-            : null;
-        
+
+        $partRenderer = $this->partRenderer;
         $assignedSection = ($partRenderer !== null) ? $partRenderer->renderTemplateSection($themeName, 'home') : '';
 
         $themePath = file_exists($themeDir . '/templates/home.php') 
@@ -69,7 +92,7 @@ class ThemeController
         }
 
         ob_start();
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $baseUrl = $this->urlResolver->getBaseUrl();
         $siteName = 'Domain-System OS';
         require $themePath;
         $html = ob_get_clean();
@@ -80,11 +103,8 @@ class ThemeController
         }
 
         // Executa o processador de Shortcodes para que qualquer [section id="..."] na home funcione nativamente
-        $shortcodes = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\ShortcodeManager::class))
-            ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\ShortcodeManager::class)
-            : null;
-        if ($shortcodes !== null) {
-            $html = $shortcodes->parse($html);
+        if ($this->shortcodes !== null) {
+            $html = $this->shortcodes->parse($html);
         }
 
         // O SEO Middleware vai interceptar esta Response e envelopá-la no main.php + Minificar!

@@ -57,10 +57,12 @@ class LogoBlock implements BlockInterface
     public function render(array $data = [], array $context = []): string
     {
         $baseUrl = $this->urlResolver->getBaseUrl();
-        $link = (string)($data['link'] ?? $baseUrl . '/');
+        $rawLink = (string)($data['link'] ?? $data['url'] ?? $baseUrl . '/');
+        $link = $this->htmlSanitizer->sanitizeUrl($rawLink, $baseUrl . '/');
         $height = $this->styleRenderer->sanitizeCssValue((string)($data['height'] ?? '40px'));
-        $imageUrl = (string)($data['image_url'] ?? $baseUrl . '/assets/img/logo.png');
-        $brandText = (string)($data['brand_text'] ?? 'Domain<span class="text-primary">System</span>');
+        $rawImageUrl = (string)($data['image_url'] ?? $baseUrl . '/assets/img/logo.png');
+        $imageUrl = $rawImageUrl !== '' ? $this->htmlSanitizer->sanitizeUrl($rawImageUrl, '') : '';
+        $brandText = (string)($data['brand_text'] ?? $data['text'] ?? 'Domain<span class="text-primary">System</span>');
         $showImage = (bool)($data['show_image'] ?? true);
         $showText = (bool)($data['show_text'] ?? true);
         $align = (string)($data['align'] ?? 'left');

@@ -6,6 +6,8 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 
 /**
  * Bloco de Divisória ou Espaçador.
@@ -13,6 +15,14 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class DividerBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private ElementStyleRendererInterface $styleRenderer;
+
+    public function __construct(?ElementStyleRendererInterface $styleRenderer = null)
+    {
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+    }
+
     public function getType(): string
     {
         return 'divider';
@@ -36,12 +46,12 @@ class DividerBlock implements BlockInterface
     public function render(array $data = [], array $context = []): string
     {
         $style = (string)($data['style'] ?? 'solid');
-        $height = (string)($data['height'] ?? '20px');
-        $color = (string)($data['color'] ?? 'rgba(255, 255, 255, 0.1)');
-        $width = (string)($data['width'] ?? '100%');
+        $height = $this->styleRenderer->sanitizeCssValue((string)($data['height'] ?? '20px'));
+        $color = $this->styleRenderer->sanitizeCssValue((string)($data['color'] ?? 'rgba(255, 255, 255, 0.1)'));
+        $width = $this->styleRenderer->sanitizeCssValue((string)($data['width'] ?? '100%'));
         $align = (string)($data['align'] ?? 'center');
 
-        if ($style === 'spacer') {
+        if ($style === 'spacer' || $style === 'transparent') {
             return "<div class=\"ds-block-spacer\" style=\"height: {$height}; width: 100%;\" aria-hidden=\"true\"></div>";
         }
 

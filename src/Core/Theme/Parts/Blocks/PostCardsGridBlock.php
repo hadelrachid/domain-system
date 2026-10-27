@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Styles\StylableElementInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Providers\MockPostProvider;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\Traits\StylableElementTrait;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Grade de Artigos do Blog (PostCardsGridBlock) com Contratos SOLID e SEO Semântico.
@@ -22,10 +26,17 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
     use StylableElementTrait;
 
     private PostProviderInterface $postProvider;
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
 
-    public function __construct(?PostProviderInterface $postProvider = null)
-    {
+    public function __construct(
+        ?PostProviderInterface $postProvider = null,
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null
+    ) {
         $this->postProvider = $postProvider ?? new MockPostProvider();
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
     }
 
     public function getType(): string
@@ -142,9 +153,11 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
         $columns = in_array($rawCols, [1, 2, 3, 4], true) ? $rawCols : 3;
 
         $limit = max(1, (int)($data['limit'] ?? 6));
-        $cardStyle = (string)($data['card_style'] ?? 'cyber_glass');
-        $hoverEffect = (string)($data['hover_effect'] ?? 'lift');
-        $gap = !empty($data['gap']) ? htmlspecialchars((string)$data['gap'], ENT_QUOTES, 'UTF-8') : '24px';
+        $rawCardStyle = (string)($data['card_style'] ?? 'cyber_glass');
+        $cardStyle = preg_replace('/[^a-z0-9_-]/i', '', $rawCardStyle) ?: 'cyber_glass';
+        $rawHoverEffect = (string)($data['hover_effect'] ?? 'lift');
+        $hoverEffect = preg_replace('/[^a-z0-9_-]/i', '', $rawHoverEffect) ?: 'lift';
+        $gap = !empty($data['gap']) ? $this->styleRenderer->sanitizeCssValue((string)$data['gap']) : '24px';
 
         $showImage = (bool)($data['show_image'] ?? true);
         $showDate = (bool)($data['show_date'] ?? true);
@@ -170,11 +183,13 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
         foreach ($posts as $post) {
             $title = htmlspecialchars((string)($post['title'] ?? 'Sem Título'), ENT_QUOTES, 'UTF-8');
             $excerpt = htmlspecialchars((string)($post['excerpt'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars((string)($post['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
+            $safePostUrl = $this->htmlSanitizer->sanitizeUrl((string)($post['url'] ?? '#'), '#');
+            $url = htmlspecialchars($safePostUrl, ENT_QUOTES, 'UTF-8');
             $author = htmlspecialchars((string)($post['author'] ?? 'Redação'), ENT_QUOTES, 'UTF-8');
             $publishedAt = htmlspecialchars((string)($post['published_at'] ?? ''), ENT_QUOTES, 'UTF-8');
             $category = htmlspecialchars((string)($post['category'] ?? 'Artigo'), ENT_QUOTES, 'UTF-8');
-            $featuredImage = !empty($post['featured_image']) ? htmlspecialchars((string)$post['featured_image'], ENT_QUOTES, 'UTF-8') : '';
+            $rawFeaturedImage = !empty($post['featured_image']) ? $this->htmlSanitizer->sanitizeUrl((string)$post['featured_image'], '') : '';
+            $featuredImage = $rawFeaturedImage !== '' ? htmlspecialchars($rawFeaturedImage, ENT_QUOTES, 'UTF-8') : '';
             $readingTime = !empty($post['reading_time']) ? htmlspecialchars((string)$post['reading_time'], ENT_QUOTES, 'UTF-8') : '';
 
             $imageHtml = '';

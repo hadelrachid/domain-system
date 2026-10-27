@@ -48,11 +48,15 @@ class CopyrightBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $siteName = defined('DOMAIN_SYSTEM_SITE_NAME') ? DOMAIN_SYSTEM_SITE_NAME : 'Domain System';
+        $defaultSiteName = defined('DOMAIN_SYSTEM_SITE_NAME') ? DOMAIN_SYSTEM_SITE_NAME : 'Domain System';
+        $siteName = !empty($data['site_name']) ? trim((string)$data['site_name']) : $defaultSiteName;
         $year = date('Y');
         $rawText = (string)($data['text'] ?? '© {year} {site_name}. Todos os direitos reservados.');
 
         $text = str_replace(['{year}', '{site_name}'], [$year, $siteName], $rawText);
+        if (!empty($data['site_name']) && !str_contains($rawText, '{site_name}') && !str_contains($text, $siteName)) {
+            $text .= ' — ' . $siteName;
+        }
         $safeText = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 
         $showLgpd = (bool)($data['show_lgpd_links'] ?? true);

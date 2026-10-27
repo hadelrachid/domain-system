@@ -7,11 +7,13 @@ namespace DomainSystem\Plugins\flextheme\Services;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\SiteStateInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Contracts\TranslatorInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
@@ -29,6 +31,7 @@ use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\TextWidget;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
+use DomainSystem\Plugins\flextheme\Controllers\ThemeController;
 use DomainSystem\Plugins\flextheme\Controllers\ThemePartsAdminController;
 
 /**
@@ -66,7 +69,12 @@ class BuilderFlexBootstrapper
 
         // 2. Motor de Widgets do BuilderFlex (Subplugin)
         $runtime->singleton(WidgetManagerInterface::class, WidgetManager::class);
-        $runtime->singleton(DtoRenderer::class, fn() => new DtoRenderer());
+        $runtime->singleton(DtoRenderer::class, function ($c) {
+            return new DtoRenderer(
+                $c->has(HtmlSanitizerInterface::class) ? $c->make(HtmlSanitizerInterface::class) : null,
+                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null
+            );
+        });
         $runtime->singleton(JsonRenderer::class, function ($c) {
             return new JsonRenderer(
                 $c->make(WidgetManagerInterface::class),
@@ -77,7 +85,17 @@ class BuilderFlexBootstrapper
             return $c->make(JsonRenderer::class);
         });
 
-        // 3. Controller do Flex Builder com todas as dependências injetadas via Container
+        // 3. Controllers do FlexTheme / Flex Builder com todas as dependências injetadas via Container
+        $runtime->singleton(ThemeController::class, function ($c) use ($basePath) {
+            return new ThemeController(
+                $c->has(SiteStateInterface::class) ? $c->make(SiteStateInterface::class) : null,
+                $c->has(ThemePartRendererInterface::class) ? $c->make(ThemePartRendererInterface::class) : null,
+                $c->has(ShortcodeManager::class) ? $c->make(ShortcodeManager::class) : null,
+                $c->has(PublicUrlResolverInterface::class) ? $c->make(PublicUrlResolverInterface::class) : null,
+                $basePath
+            );
+        });
+
         $runtime->singleton(ThemePartsAdminController::class, function ($c) use ($basePath) {
             return new ThemePartsAdminController(
                 $c->make(ThemePartRepositoryInterface::class),

@@ -53,4 +53,9 @@ interface ThemePartAssociationInterface
      * Passar $templateSlug = null ou 'none' desvincula a seção de qualquer template no tema.
      */
     public function assignTemplateToSection(string $themeFolder, string $sectionId, ?string $templateSlug): bool;
+
+    /**
+     * Remove todas as referências e vínculos de uma parte excluída em todos os temas e padrões globais.
+     */
+    public function removePartReferences(string $partId): bool;
 }

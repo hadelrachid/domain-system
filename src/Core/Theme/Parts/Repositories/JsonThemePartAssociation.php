@@ -178,4 +178,38 @@ class JsonThemePartAssociation implements ThemePartAssociationInterface
 
         return $this->save();
     }
+
+    public function removePartReferences(string $partId): bool
+    {
+        $cleanId = trim($partId);
+        if ($cleanId === '') {
+            return false;
+        }
+
+        $changed = false;
+
+        foreach ($this->data['globals'] as $partType => $assignedId) {
+            if ($assignedId === $cleanId) {
+                unset($this->data['globals'][$partType]);
+                $changed = true;
+            }
+        }
+
+        foreach ($this->data['themes'] as $themeFolder => $assignments) {
+            if (!is_array($assignments)) {
+                continue;
+            }
+            foreach ($assignments as $partType => $assignedId) {
+                if ($assignedId === $cleanId) {
+                    unset($this->data['themes'][$themeFolder][$partType]);
+                    $changed = true;
+                }
+            }
+            if (empty($this->data['themes'][$themeFolder])) {
+                unset($this->data['themes'][$themeFolder]);
+            }
+        }
+
+        return $changed ? $this->save() : true;
+    }
 }

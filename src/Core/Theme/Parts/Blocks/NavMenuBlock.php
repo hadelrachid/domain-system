@@ -4,23 +4,50 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
+use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Navegação e Menu Dinâmico com Suporte aos 4 Estilos de Toggle Mobile.
  */
-use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 class NavMenuBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
 
     private ?MenuProviderInterface $menuProvider;
+    /** @var (\Closure(): ?MenuProviderInterface)|null */
+    private ?\Closure $menuProviderResolver;
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
+    private PublicUrlResolverInterface $urlResolver;
 
-    public function __construct(?MenuProviderInterface $menuProvider = null)
-    {
+    /**
+     * @param MenuProviderInterface|null $menuProvider
+     * @param (\Closure(): ?MenuProviderInterface)|null $menuProviderResolver
+     * @param ElementStyleRendererInterface|null $styleRenderer
+     * @param HtmlSanitizerInterface|null $htmlSanitizer
+     * @param PublicUrlResolverInterface|null $urlResolver
+     */
+    public function __construct(
+        ?MenuProviderInterface $menuProvider = null,
+        ?\Closure $menuProviderResolver = null,
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null,
+        ?PublicUrlResolverInterface $urlResolver = null
+    ) {
         $this->menuProvider = $menuProvider;
+        $this->menuProviderResolver = $menuProviderResolver;
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
     }
 
     public function getType(): string
@@ -45,9 +72,10 @@ class NavMenuBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $baseUrl = $this->urlResolver->getBaseUrl();
         $location = (string)($data['menu_location'] ?? 'header');
-        $toggleStyle = (string)($data['toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+        $rawToggleStyle = (string)($data['toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
+        $toggleStyle = preg_replace('/[^a-z0-9_-]/i', '', $rawToggleStyle) ?: MobileToggleStyleInterface::STYLE_CLASSIC;
         $align = (string)($data['align'] ?? 'center');
         $justifyNav = match ($align) {
             'left'  => 'flex-start',
@@ -56,10 +84,14 @@ class NavMenuBlock implements BlockInterface
         };
 
         $toggleAlign = (string)($data['toggle_align'] ?? $data['align'] ?? 'right');
-        $linkColor = (string)($data['link_color'] ?? 'var(--color-text-main, #c5c6c7)');
-        $activeColor = (string)($data['active_color'] ?? 'var(--color-primary, #38bdf8)');
-        $fontFamily = !empty($data['font_family']) ? (string)$data['font_family'] : 'var(--font-primary, inherit)';
-        $fontSize = !empty($data['font_size']) ? (string)$data['font_size'] : '0.95rem';
+        $linkColor = $this->styleRenderer->sanitizeCssValue((string)($data['link_color'] ?? 'var(--color-text-main, #c5c6c7)'));
+        $activeColor = $this->styleRenderer->sanitizeCssValue((string)($data['active_color'] ?? 'var(--color-primary, #38bdf8)'));
+        $fontFamily = $this->styleRenderer->sanitizeCssValue(
+            !empty($data['font_family']) ? (string)$data['font_family'] : 'var(--font-primary, inherit)'
+        );
+        $fontSize = $this->styleRenderer->sanitizeCssValue(
+            !empty($data['font_size']) ? (string)$data['font_size'] : '0.95rem'
+        );
         $hoverAnim = (string)($data['hover_animation'] ?? 'underline');
         $justifyToggle = match ($toggleAlign) {
             'left'   => 'flex-start',
@@ -96,7 +128,8 @@ class NavMenuBlock implements BlockInterface
         $mobileLinks = [];
         foreach ($items as $item) {
             $title = htmlspecialchars((string)($item['title'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars((string)($item['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
+            $safeUrl = $this->htmlSanitizer->sanitizeUrl((string)($item['url'] ?? '#'), '#');
+            $url = htmlspecialchars($safeUrl, ENT_QUOTES, 'UTF-8');
             $isActive = ($currentUri === $url || ($url !== $baseUrl . '/' && $url !== '#' && str_starts_with((string)$currentUri, (string)$url)));
 
             $itemColor = $isActive ? $activeColor : $linkColor;
@@ -320,13 +353,12 @@ HTML;
     private function resolveMenuItems(array $data, string $location): array
     {
         $provider = $this->menuProvider;
-        if ($provider === null && isset($GLOBALS['app'])) {
+        if ($provider === null && $this->menuProviderResolver !== null) {
             try {
-                $container = $GLOBALS['app']->getContainer();
-                if ($container->has(MenuProviderInterface::class)) {
-                    $provider = $container->make(MenuProviderInterface::class);
-                }
-            } catch (\Throwable $e) {}
+                $provider = ($this->menuProviderResolver)();
+            } catch (\Throwable $e) {
+                $provider = null;
+            }
         }
 
         if ($provider === null) {

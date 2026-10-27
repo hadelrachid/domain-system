@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Theme\Parts\Models;
 
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 
 /**
  * Gestão Centralizada de Design Tokens Globais (Paleta de Cores e Tipografia).
@@ -14,6 +16,7 @@ class DesignTokens implements DesignTokensInterface
     private string $storagePath;
     private array $palette;
     private array $typography;
+    private ElementStyleRendererInterface $styleRenderer;
 
     private const DEFAULT_PALETTE = [
         'primary'    => '#45f3ff',
@@ -35,9 +38,10 @@ class DesignTokens implements DesignTokensInterface
         'body_weight'    => '400',
     ];
 
-    public function __construct(?string $storagePath = null)
+    public function __construct(?string $storagePath = null, ?ElementStyleRendererInterface $styleRenderer = null)
     {
         $this->storagePath = $storagePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT . '/config/design_tokens.json' : __DIR__ . '/../../../../../config/design_tokens.json');
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
         $this->load();
     }
 
@@ -77,8 +81,9 @@ class DesignTokens implements DesignTokensInterface
         $rootVars = [];
         $scopedVars = [];
 
-        foreach ($this->palette as $key => $val) {
-            $cssKey = str_replace('_', '-', $key);
+        foreach ($this->palette as $key => $rawVal) {
+            $cssKey = preg_replace('/[^a-zA-Z0-9-]/', '', str_replace('_', '-', (string)$key)) ?: 'token';
+            $val = $this->styleRenderer->sanitizeCssValue((string)$rawVal);
             $rootVars[] = "    --ds-color-{$cssKey}: {$val};";
             $scopedVars[] = "    --color-{$cssKey}: {$val};";
             if ($key === 'primary') {
@@ -111,8 +116,9 @@ class DesignTokens implements DesignTokensInterface
             }
         }
 
-        foreach ($this->typography as $key => $val) {
-            $cssKey = str_replace('_', '-', $key);
+        foreach ($this->typography as $key => $rawVal) {
+            $cssKey = preg_replace('/[^a-zA-Z0-9-]/', '', str_replace('_', '-', (string)$key)) ?: 'font';
+            $val = $this->styleRenderer->sanitizeCssValue((string)$rawVal);
             $rootVars[] = "    --ds-font-{$cssKey}: {$val};";
             $scopedVars[] = "    --font-{$cssKey}: {$val};";
             if ($key === 'primary_font') {
@@ -129,7 +135,8 @@ class DesignTokens implements DesignTokensInterface
             }
         }
 
-        $targetScope = $scope ?? '.ds-part-wrapper, .ds-section-wrapper';
+        $rawScope = $scope ?? '.ds-part-wrapper, .ds-section-wrapper';
+        $targetScope = preg_replace('/[{};<>]/', '', $rawScope) ?: '.ds-part-wrapper, .ds-section-wrapper';
 
         return ":root {\n" . implode("\n", $rootVars) . "\n}\n\n" .
                "{$targetScope} {\n" . implode("\n", $scopedVars) . "\n}";
@@ -138,10 +145,14 @@ class DesignTokens implements DesignTokensInterface
     public function updateTokens(array $tokens): bool
     {
         if (isset($tokens['palette']) && is_array($tokens['palette'])) {
-            $this->palette = array_merge($this->palette, $tokens['palette']);
+            foreach ($tokens['palette'] as $k => $v) {
+                $this->palette[(string)$k] = $this->styleRenderer->sanitizeCssValue((string)$v);
+            }
         }
         if (isset($tokens['typography']) && is_array($tokens['typography'])) {
-            $this->typography = array_merge($this->typography, $tokens['typography']);
+            foreach ($tokens['typography'] as $k => $v) {
+                $this->typography[(string)$k] = $this->styleRenderer->sanitizeCssValue((string)$v);
+            }
         }
 
         $dir = dirname($this->storagePath);
@@ -155,10 +166,22 @@ class DesignTokens implements DesignTokensInterface
             'updated_at' => time(),
         ];
 
-        return @file_put_contents(
-            $this->storagePath,
-            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-            LOCK_EX
-        ) !== false;
+        $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return false;
+        }
+
+        $tmpPath = $this->storagePath . '.' . uniqid('tmp_', true) . '.tmp';
+        if (@file_put_contents($tmpPath, $json, LOCK_EX) === false) {
+            return false;
+        }
+
+        if (!@rename($tmpPath, $this->storagePath)) {
+            $copied = @copy($tmpPath, $this->storagePath);
+            @unlink($tmpPath);
+            return $copied;
+        }
+
+        return true;
     }
 }

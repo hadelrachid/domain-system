@@ -6,6 +6,8 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 
 /**
  * Bloco de Título / Cabeçalho (H1 - H6).
@@ -13,6 +15,14 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class HeadingBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private ElementStyleRendererInterface $styleRenderer;
+
+    public function __construct(?ElementStyleRendererInterface $styleRenderer = null)
+    {
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+    }
+
     public function getType(): string
     {
         return 'heading';
@@ -35,15 +45,20 @@ class HeadingBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $rawLevel = (int)($data['level'] ?? 2);
-        $level = in_array($rawLevel, [1, 2, 3, 4, 5, 6], true) ? $rawLevel : 2;
+        $rawLevel = $data['level'] ?? 2;
+        if (is_string($rawLevel) && preg_match('/^h?([1-6])$/i', trim($rawLevel), $m)) {
+            $parsedLevel = (int)$m[1];
+        } else {
+            $parsedLevel = (int)$rawLevel;
+        }
+        $level = in_array($parsedLevel, [1, 2, 3, 4, 5, 6], true) ? $parsedLevel : 2;
         $tag = 'h' . $level;
 
         $text = (string)($data['text'] ?? 'Título');
-        $size = (string)($data['size'] ?? '');
-        $color = (string)($data['color'] ?? '');
-        $align = (string)($data['align'] ?? 'left');
-        $fontFamily = (string)($data['font_family'] ?? 'primary');
+        $size = $this->styleRenderer->sanitizeCssValue((string)($data['size'] ?? $data['font_size'] ?? ''));
+        $color = $this->styleRenderer->sanitizeCssValue((string)($data['color'] ?? ''));
+        $align = $this->styleRenderer->sanitizeCssValue((string)($data['align'] ?? 'left'));
+        $fontFamily = $this->styleRenderer->sanitizeCssValue((string)($data['font_family'] ?? 'primary'));
 
         $styles = [
             "text-align: {$align}",
@@ -52,8 +67,10 @@ class HeadingBlock implements BlockInterface
 
         if ($fontFamily === 'secondary') {
             $styles[] = "font-family: var(--font-secondary, monospace)";
-        } else {
+        } elseif ($fontFamily === 'primary' || $fontFamily === '') {
             $styles[] = "font-family: var(--font-primary, sans-serif)";
+        } else {
+            $styles[] = "font-family: {$fontFamily}";
         }
 
         if ($size !== '') {

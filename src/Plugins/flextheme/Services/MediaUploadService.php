@@ -117,21 +117,47 @@ class MediaUploadService implements MediaUploadServiceInterface
         $safeName = 'media_' . time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
         $destPath = $this->uploadDir . '/' . $safeName;
 
-        // Suporte tanto a uploads normais via HTTP (is_uploaded_file / move_uploaded_file)
-        // quanto testes unitários (copy)
-        $moved = false;
-        if (is_uploaded_file($tmpName)) {
-            $moved = @move_uploaded_file($tmpName, $destPath);
-        }
-        if (!$moved) {
-            $moved = @copy($tmpName, $destPath);
-        }
+        // Sanitização estrita de arquivos SVG contra Stored XSS (<script>, <foreignObject>, on* handlers, javascript:)
+        if ($ext === 'svg') {
+            $rawSvg = @file_get_contents($tmpName);
+            if ($rawSvg === false || stripos($rawSvg, '<svg') === false) {
+                return [
+                    'success' => false,
+                    'message' => 'Arquivo SVG inválido ou malformado.',
+                ];
+            }
 
-        if (!$moved) {
-            return [
-                'success' => false,
-                'message' => 'Falha ao salvar o arquivo no diretório de destino.',
-            ];
+            $sanitizedSvg = $this->sanitizeSvgContent($rawSvg);
+            if (stripos($sanitizedSvg, '<svg') === false) {
+                return [
+                    'success' => false,
+                    'message' => 'Arquivo SVG bloqueado por conter conteúdo inseguro.',
+                ];
+            }
+
+            if (@file_put_contents($destPath, $sanitizedSvg, LOCK_EX) === false) {
+                return [
+                    'success' => false,
+                    'message' => 'Falha ao salvar o arquivo SVG sanitizado no diretório de destino.',
+                ];
+            }
+        } else {
+            // Suporte tanto a uploads normais via HTTP (is_uploaded_file / move_uploaded_file)
+            // quanto testes unitários (copy)
+            $moved = false;
+            if (is_uploaded_file($tmpName)) {
+                $moved = @move_uploaded_file($tmpName, $destPath);
+            }
+            if (!$moved) {
+                $moved = @copy($tmpName, $destPath);
+            }
+
+            if (!$moved) {
+                return [
+                    'success' => false,
+                    'message' => 'Falha ao salvar o arquivo no diretório de destino.',
+                ];
+            }
         }
 
         $publicUrl = $this->baseUrl . '/uploads/builder/' . $safeName;
@@ -142,5 +168,42 @@ class MediaUploadService implements MediaUploadServiceInterface
             'filename' => $safeName,
             'message'  => 'Imagem enviada com sucesso!',
         ];
+    }
+
+    /**
+     * Remove vetores de XSS de arquivos SVG (<script>, <foreignObject>, handlers on*= e URIs javascript:/data:text/html).
+     */
+    public function sanitizeSvgContent(string $svg): string
+    {
+        // 1. Remove blocos <script> e <foreignObject> completos
+        $clean = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $svg) ?? $svg;
+        $clean = preg_replace('#<script\b[^>]*/?>#is', '', $clean) ?? $clean;
+        $clean = preg_replace('#<foreignObject\b[^>]*>.*?</foreignObject>#is', '', $clean) ?? $clean;
+        $clean = preg_replace('#<foreignObject\b[^>]*/?>#is', '', $clean) ?? $clean;
+
+        // 2. Remove atributos de eventos inline (onload, onclick, onerror, onmouseover, etc.)
+        $clean = preg_replace('/\s+on[a-zA-Z0-9_-]+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean) ?? $clean;
+
+        // 3. Neutraliza esquemas javascript:, vbscript: e data:text/html em href / xlink:href
+        $clean = preg_replace_callback(
+            '/\b((?:xlink:)?href)\s*=\s*(["\'])(.*?)\2/is',
+            static function (array $m): string {
+                $attr = $m[1];
+                $quote = $m[2];
+                $val = html_entity_decode($m[3], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $norm = strtolower(preg_replace('/[\x00-\x20\s]+/', '', $val) ?? '');
+                if (
+                    str_starts_with($norm, 'javascript:') ||
+                    str_starts_with($norm, 'vbscript:') ||
+                    str_starts_with($norm, 'data:')
+                ) {
+                    return $attr . '=' . $quote . '#' . $quote;
+                }
+                return $m[0];
+            },
+            $clean
+        ) ?? $clean;
+
+        return $clean;
     }
 }

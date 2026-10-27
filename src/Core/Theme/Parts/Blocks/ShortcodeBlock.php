@@ -15,10 +15,17 @@ class ShortcodeBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
     private ?ShortcodeManager $shortcodeManager;
+    /** @var (\Closure(): ?ShortcodeManager)|null */
+    private ?\Closure $shortcodeResolver;
 
-    public function __construct(?ShortcodeManager $shortcodeManager = null)
+    /**
+     * @param ShortcodeManager|null $shortcodeManager
+     * @param (\Closure(): ?ShortcodeManager)|null $shortcodeResolver
+     */
+    public function __construct(?ShortcodeManager $shortcodeManager = null, ?\Closure $shortcodeResolver = null)
     {
         $this->shortcodeManager = $shortcodeManager;
+        $this->shortcodeResolver = $shortcodeResolver;
     }
 
     public function getType(): string
@@ -43,19 +50,18 @@ class ShortcodeBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $code = trim((string)($data['code'] ?? ''));
+        $code = trim((string)($data['code'] ?? $data['tag'] ?? ''));
         if ($code === '') {
             return '';
         }
 
         $sm = $this->shortcodeManager;
-        if ($sm === null && isset($GLOBALS['app'])) {
+        if ($sm === null && $this->shortcodeResolver !== null) {
             try {
-                $container = $GLOBALS['app']->getContainer();
-                if ($container->has(ShortcodeManager::class)) {
-                    $sm = $container->make(ShortcodeManager::class);
-                }
-            } catch (\Throwable $e) {}
+                $sm = ($this->shortcodeResolver)();
+            } catch (\Throwable $e) {
+                $sm = null;
+            }
         }
 
         if ($sm !== null) {

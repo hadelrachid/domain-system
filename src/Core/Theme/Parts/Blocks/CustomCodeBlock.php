@@ -35,12 +35,13 @@ class CustomCodeBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $html = (string)($data['html'] ?? '');
+        $html = (string)($data['html'] ?? $data['code'] ?? '');
         $css = (string)($data['css'] ?? '');
 
         $output = '';
         if (trim($css) !== '') {
-            $output .= "<style>{$css}</style>\n";
+            $safeCss = str_ireplace('</style>', '', $css);
+            $output .= "<style>{$safeCss}</style>\n";
         }
         if (trim($html) !== '') {
             $output .= $html;

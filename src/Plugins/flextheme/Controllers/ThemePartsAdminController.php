@@ -212,7 +212,7 @@ class ThemePartsAdminController
             return new Response(json_encode(['success' => false, 'message' => 'ID inválido.'], JSON_UNESCAPED_UNICODE), 400, ['Content-Type' => 'application/json']);
         }
 
-        $deleted = $this->partRepo->delete($id);
+        $deleted = $this->managementService->deletePart($id);
 
         if ($this->isAjax($request)) {
             return new Response(json_encode([

@@ -214,30 +214,31 @@ function applyPreviewTokens() {
     var fontSecondary = document.getElementById('input_font_secondary').value || 'sans-serif';
 
     var card = document.getElementById('tokens_preview_card');
-    card.style.backgroundColor = surface;
-    card.style.fontFamily = fontPrimary + ', sans-serif';
+    card.style.setProperty('background-color', surface, 'important');
+    card.style.setProperty('font-family', fontPrimary + ', sans-serif', 'important');
 
-    document.getElementById('preview_heading').style.color = textMain;
-    document.getElementById('preview_heading').style.fontFamily = fontSecondary + ', sans-serif';
+    var previewHeading = document.getElementById('preview_heading');
+    previewHeading.style.setProperty('color', textMain, 'important');
+    previewHeading.style.setProperty('font-family', fontSecondary + ', sans-serif', 'important');
 
-    document.getElementById('preview_text_main').style.color = textMain;
-    document.getElementById('preview_text_muted').style.color = textMuted;
+    document.getElementById('preview_text_main').style.setProperty('color', textMain, 'important');
+    document.getElementById('preview_text_muted').style.setProperty('color', textMuted, 'important');
 
-    document.getElementById('preview_logo').style.color = textMain;
-    document.getElementById('preview_logo_primary').style.color = primary;
+    document.getElementById('preview_logo').style.setProperty('color', textMain, 'important');
+    document.getElementById('preview_logo_primary').style.setProperty('color', primary, 'important');
 
     var badge = document.getElementById('preview_badge');
-    badge.style.backgroundColor = tertiary;
-    badge.style.color = '#fff';
+    badge.style.setProperty('background-color', tertiary, 'important');
+    badge.style.setProperty('color', '#0f172a', 'important');
 
     var btnPri = document.getElementById('preview_btn_primary');
-    btnPri.style.backgroundColor = primary;
-    btnPri.style.color = '#000';
+    btnPri.style.setProperty('background-color', primary, 'important');
+    btnPri.style.setProperty('color', '#0f172a', 'important');
 
     var btnSec = document.getElementById('preview_btn_secondary');
-    btnSec.style.backgroundColor = 'transparent';
-    btnSec.style.color = secondary;
-    btnSec.style.border = '1px solid ' + secondary;
+    btnSec.style.setProperty('background-color', 'transparent', 'important');
+    btnSec.style.setProperty('color', primary, 'important');
+    btnSec.style.setProperty('border', '1px solid ' + primary, 'important');
 }
 
 document.addEventListener('DOMContentLoaded', applyPreviewTokens);

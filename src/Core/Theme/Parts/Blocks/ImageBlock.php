@@ -6,6 +6,10 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Imagem com Dimensões e Alinhamento.
@@ -13,6 +17,18 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class ImageBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
+
+    public function __construct(
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null
+    ) {
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+    }
+
     public function getType(): string
     {
         return 'image';
@@ -35,17 +51,24 @@ class ImageBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $url = (string)($data['url'] ?? '');
-        $alt = htmlspecialchars((string)($data['alt'] ?? 'Imagem'), ENT_QUOTES, 'UTF-8');
-        $width = (string)($data['width'] ?? 'auto');
-        $height = (string)($data['height'] ?? 'auto');
-        $borderRadius = (string)($data['border_radius'] ?? '0');
-        $link = (string)($data['link'] ?? '');
-        $align = (string)($data['align'] ?? 'left');
+        $rawUrl = trim((string)($data['url'] ?? ''));
+        if ($rawUrl === '') {
+            return '';
+        }
 
+        $url = $this->htmlSanitizer->sanitizeUrl($rawUrl, '');
         if ($url === '') {
             return '';
         }
+
+        $alt = htmlspecialchars((string)($data['alt'] ?? 'Imagem'), ENT_QUOTES, 'UTF-8');
+        $width = $this->styleRenderer->sanitizeCssValue((string)($data['width'] ?? 'auto'));
+        $height = $this->styleRenderer->sanitizeCssValue((string)($data['height'] ?? 'auto'));
+        $borderRadius = $this->styleRenderer->sanitizeCssValue((string)($data['border_radius'] ?? '0'));
+        $rawLink = trim((string)($data['link'] ?? ''));
+        $link = $rawLink !== '' ? $this->htmlSanitizer->sanitizeUrl($rawLink, '') : '';
+        $rawAlign = (string)($data['align'] ?? 'left');
+        $align = in_array($rawAlign, ['left', 'center', 'right'], true) ? $rawAlign : 'left';
 
         $styles = [
             "max-width: 100%",

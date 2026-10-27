@@ -1918,15 +1918,16 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:var(--primary); color:#000;">' + 
                    escapeHtml(d.label || 'Botão CTA') + '</span>';
         }
-        if (block.type === 'shortcode') return '<code style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">' + escapeHtml(d.tag || '[shortcode]') + '</code>';
+        if (block.type === 'shortcode') return '<code style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">' + escapeHtml(d.code || d.tag || '[shortcode]') + '</code>';
         if (block.type === 'logo') {
+            var logoTxt = d.text || d.brand_text || 'DomainSystem';
             if (d.image_url) {
                 return '<div style="display:flex; align-items:center; gap:8px;">' +
                        '<img src="' + escapeAttr(d.image_url) + '" style="height:22px; max-width:80px; object-fit:contain; border-radius:2px; background:rgba(255,255,255,0.05);">' +
-                       '<span style="color:#fff; font-weight:600;">' + escapeHtml(d.text || 'Logo') + '</span>' +
+                       '<span style="color:#fff; font-weight:600;">' + escapeHtml(logoTxt) + '</span>' +
                        '</div>';
             }
-            return '<strong style="color:#fff;">' + escapeHtml(d.text || 'DomainSystem') + '</strong>';
+            return '<strong style="color:#fff;">' + escapeHtml(logoTxt) + '</strong>';
         }
         if (block.type === 'nav_menu') {
             var curStyle = d.toggle_style || state.mobile_toggle_style || 'classic';
@@ -2347,16 +2348,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 '</div>';
 
         if (block.type === 'heading') {
+            var normalizedLevel = String(block.data.level || 'h2').toLowerCase().replace(/^([1-6])$/, 'h$1');
             html += inspectorTextInput('Texto do Título', 'text', block.data.text || '');
-            html += inspectorSelect('Nível Hierárquico', 'level', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], block.data.level || 'h2');
+            html += inspectorSelect('Nível Hierárquico', 'level', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], normalizedLevel);
             html += inspectorFontSelector('Tipografia / Fonte do Título', 'font_family', block.data.font_family || 'var(--font-secondary)');
-            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '2rem');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || block.data.size || '2rem');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
             html += inspectorTokenColorPicker('Cor do Título', 'color', block.data.color || 'var(--color-primary)', 'primary');
         } else if (block.type === 'paragraph') {
             html += inspectorTextarea('Conteúdo do Texto', 'text', block.data.text || '');
             html += inspectorFontSelector('Tipografia / Fonte do Texto', 'font_family', block.data.font_family || 'var(--font-primary)');
-            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || block.data.size || '1rem');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right', 'justify'], block.data.align || 'left');
             html += inspectorTokenColorPicker('Cor do Texto', 'color', block.data.color || 'var(--color-text-main)', 'text_main');
         } else if (block.type === 'button') {
@@ -2444,7 +2446,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'logo') {
-            html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || 'DomainSystem');
+            html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || block.data.brand_text || 'DomainSystem');
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Arquivo de Logotipo (PNG, SVG, JPG, WEBP)</label>' +
                     '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
@@ -2455,7 +2457,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     (block.data.image_url ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(block.data.image_url) + '" style="max-height:44px; max-width:100%; object-fit:contain;"></div>' : '') +
                     '</div>';
             html += inspectorDimension('Altura da Logo', 'height', block.data.height || '36px');
-            html += inspectorTextInput('Link de Destino', 'url', block.data.url || '/');
+            html += inspectorTextInput('Link de Destino', 'link', block.data.link || block.data.url || '/');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'image') {
             html += '<div class="inspector-field">' +
@@ -2476,7 +2478,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorSelect('Aspect Ratio', 'aspect_ratio', ['16/9', '4/3', '1/1'], block.data.aspect_ratio || '16/9');
             html += inspectorDimension('Borda Arredondada', 'border_radius', block.data.border_radius || '8px');
         } else if (block.type === 'shortcode') {
-            html += inspectorShortcodeSelector('Selecione o Shortcode Pronto', 'tag', block.data.tag || '');
+            html += inspectorShortcodeSelector('Selecione o Shortcode Pronto', 'code', block.data.code || block.data.tag || '');
         } else if (block.type === 'nav_menu') {
             html += inspectorMenuSelector('Menu do Sistema', 'menu_id', block.data.menu_id || '');
             var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
@@ -2507,14 +2509,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorFontSelector('Tipografia dos Links', 'font_family', block.data.font_family || 'var(--font-primary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '0.95rem');
         } else if (block.type === 'divider') {
-            html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'transparent'], block.data.style || 'solid');
+            html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'gradient', 'spacer', 'transparent'], block.data.style || 'solid');
             html += inspectorDimension('Altura / Espaçamento', 'height', block.data.height || '20px');
             html += inspectorTokenColorPicker('Cor da Linha', 'color', block.data.color || 'var(--color-border)', 'border');
         } else if (block.type === 'copyright') {
             html += inspectorTextInput('Nome do Site', 'site_name', block.data.site_name || 'Domain-System');
             html += inspectorTextInput('Texto Complementar', 'text', block.data.text || '');
         } else if (block.type === 'custom_code') {
-            html += inspectorTextarea('Código HTML / CSS / JS Customizado', 'code', block.data.code || '');
+            html += inspectorTextarea('Código HTML / CSS / JS Customizado', 'code', block.data.code || block.data.html || '');
         } else if (block.type === 'social_icons') {
             html += inspectorSelect('Formato da Silhueta', 'shape', [
                 { value: 'circle', label: '🔘 Círculo (50%)' },

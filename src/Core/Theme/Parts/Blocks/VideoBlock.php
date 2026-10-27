@@ -6,6 +6,10 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Vídeo Responsivo (YouTube, Vimeo, MP4 com modo cinema).
@@ -13,6 +17,18 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 class VideoBlock implements BlockInterface
 {
     use AllowedPartTypesTrait;
+
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
+
+    public function __construct(
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null
+    ) {
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+    }
+
     public function getType(): string
     {
         return 'video';
@@ -35,13 +51,18 @@ class VideoBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $url = trim((string)($data['url'] ?? ''));
+        $rawUrl = trim((string)($data['url'] ?? ''));
+        if ($rawUrl === '') {
+            return '';
+        }
+
+        $url = $this->htmlSanitizer->sanitizeUrl($rawUrl, '');
         if ($url === '') {
             return '';
         }
 
-        $aspectRatio = (string)($data['aspect_ratio'] ?? '16/9');
-        $borderRadius = (string)($data['border_radius'] ?? '10px');
+        $aspectRatio = $this->styleRenderer->sanitizeCssValue((string)($data['aspect_ratio'] ?? '16/9'));
+        $borderRadius = $this->styleRenderer->sanitizeCssValue((string)($data['border_radius'] ?? '10px'));
 
         $embedUrl = $this->resolveEmbedUrl($url);
 

@@ -6,10 +6,14 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\Styles\StylableElementInterface;
+use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\Traits\StylableElementTrait;
 use DomainSystem\Core\Theme\Parts\Styles\Values\ColorValue;
 use DomainSystem\Core\Theme\Parts\Styles\Values\DimensionValue;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
  * Bloco de Botão Genérico Multi-Ação e Alta Fidelidade Visual (SOLID - SRP / OCP).
@@ -40,6 +44,17 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
     public const ACTION_MODAL = 'modal';
     public const ACTION_JAVASCRIPT = 'javascript';
     public const ACTION_SUBMIT = 'submit';
+
+    private ElementStyleRendererInterface $styleRenderer;
+    private HtmlSanitizerInterface $htmlSanitizer;
+
+    public function __construct(
+        ?ElementStyleRendererInterface $styleRenderer = null,
+        ?HtmlSanitizerInterface $htmlSanitizer = null
+    ) {
+        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+    }
 
     public function getType(): string
     {
@@ -75,15 +90,21 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
         $iconPos = (string)($data['icon_position'] ?? 'left');
 
         // Resolução de cores via Value Object ColorValue
-        $bgColor = ColorValue::fromString((string)($data['bg_color'] ?? 'var(--color-primary, #38bdf8)'))->getCssValue();
-        $textColor = ColorValue::fromString((string)($data['text_color'] ?? '#0f172a'))->getCssValue();
-        $borderRadius = (string)($data['border_radius'] ?? '8px');
-        $padding = (string)($data['padding'] ?? '12px 24px');
-        $fontFamily = !empty($data['font_family']) ? (string)$data['font_family'] : 'var(--font-primary, inherit)';
-        $fontWeight = (string)($data['font_weight'] ?? '700');
-        $fontSize = (string)($data['font_size'] ?? '1rem');
-        $boxShadow = (string)($data['box_shadow'] ?? '0 4px 12px rgba(0,0,0,0.15)');
-        $width = (string)($data['width'] ?? 'auto');
+        $bgColor = $this->styleRenderer->sanitizeCssValue(
+            ColorValue::fromString((string)($data['bg_color'] ?? 'var(--color-primary, #38bdf8)'))->getCssValue()
+        );
+        $textColor = $this->styleRenderer->sanitizeCssValue(
+            ColorValue::fromString((string)($data['text_color'] ?? '#0f172a'))->getCssValue()
+        );
+        $borderRadius = $this->styleRenderer->sanitizeCssValue((string)($data['border_radius'] ?? '8px'));
+        $padding = $this->styleRenderer->sanitizeCssValue((string)($data['padding'] ?? '12px 24px'));
+        $fontFamily = $this->styleRenderer->sanitizeCssValue(
+            !empty($data['font_family']) ? (string)$data['font_family'] : 'var(--font-primary, inherit)'
+        );
+        $fontWeight = $this->styleRenderer->sanitizeCssValue((string)($data['font_weight'] ?? '700'));
+        $fontSize = $this->styleRenderer->sanitizeCssValue((string)($data['font_size'] ?? '1rem'));
+        $boxShadow = $this->styleRenderer->sanitizeCssValue((string)($data['box_shadow'] ?? '0 4px 12px rgba(0,0,0,0.15)'));
+        $width = $this->styleRenderer->sanitizeCssValue((string)($data['width'] ?? 'auto'));
 
         // Classe de animação de micro-interação
         $animClass = match ($hoverAnim) {
@@ -211,7 +232,8 @@ HTML;
             })(),
 
             default => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $target, $innerContent) {
-                $urlEscaped = htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8');
+                $safeLink = $this->htmlSanitizer->sanitizeUrl($rawUrl, '#');
+                $urlEscaped = htmlspecialchars($safeLink, ENT_QUOTES, 'UTF-8');
                 $targetEscaped = htmlspecialchars($target, ENT_QUOTES, 'UTF-8');
                 $relAttr = ($target === '_blank') ? ' rel="noopener noreferrer"' : '';
                 return <<<HTML

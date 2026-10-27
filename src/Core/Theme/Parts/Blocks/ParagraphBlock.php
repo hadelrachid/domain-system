@@ -52,16 +52,21 @@ class ParagraphBlock implements BlockInterface
     public function render(array $data = [], array $context = []): string
     {
         $text = (string)($data['text'] ?? '');
-        $size = $this->styleRenderer->sanitizeCssValue((string)($data['size'] ?? ''));
+        $size = $this->styleRenderer->sanitizeCssValue((string)($data['size'] ?? $data['font_size'] ?? ''));
         $color = $this->styleRenderer->sanitizeCssValue((string)($data['color'] ?? ''));
         $align = $this->styleRenderer->sanitizeCssValue((string)($data['align'] ?? 'left'));
         $lineHeight = $this->styleRenderer->sanitizeCssValue((string)($data['line_height'] ?? '1.7'));
+        $fontFamily = $this->styleRenderer->sanitizeCssValue((string)($data['font_family'] ?? ''));
+
+        $resolvedFont = ($fontFamily !== '' && $fontFamily !== 'primary')
+            ? ($fontFamily === 'secondary' ? 'var(--font-secondary, monospace)' : $fontFamily)
+            : 'var(--font-primary, sans-serif)';
 
         $styles = [
             "text-align: {$align}",
             "line-height: {$lineHeight}",
             "margin: 0",
-            "font-family: var(--font-primary, sans-serif)",
+            "font-family: {$resolvedFont}",
         ];
 
         if ($size !== '') {

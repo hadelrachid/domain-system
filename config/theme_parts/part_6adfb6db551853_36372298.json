@@ -9,7 +9,7 @@
         "gap": "24px",
         "padding": "20px 24px",
         "align_items": "center",
-        "background": "var(--color-border)",
+        "background": "linear-gradient(180deg, #0b0c10 73%, #60a5fa 100%)",
         "box_shadow": ""
     },
     "columns_data": [
@@ -55,7 +55,7 @@
                 "gap": "24px",
                 "padding": "20px 24px",
                 "align_items": "center",
-                "background": "var(--color-border)",
+                "background": "linear-gradient(180deg, #0b0c10 73%, #60a5fa 100%)",
                 "box_shadow": ""
             },
             "columns_data": [
@@ -95,6 +95,6 @@
     "mobile_toggle_style": "classic",
     "mobile_toggle_align": "right",
     "is_default": false,
-    "created_at": 1793057233,
-    "updated_at": 1793057233
+    "created_at": 1793071338,
+    "updated_at": 1793071338
 }
