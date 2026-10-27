@@ -6,16 +6,18 @@ namespace DomainSystem\Core\Theme\Parts\Blocks;
 
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface;
 use DomainSystem\Core\Theme\ShortcodeManager;
 
 /**
- * Fábrica e Registrador dos 12 Blocos Semânticos Nativos do Motor Visual.
+ * Fábrica e Registrador dos Blocos Semânticos Nativos do Motor Visual.
  */
 class DefaultBlockRegistryFactory
 {
     public static function create(
         ?MenuProviderInterface $menuProvider = null,
-        ?ShortcodeManager $shortcodeManager = null
+        ?ShortcodeManager $shortcodeManager = null,
+        ?PostProviderInterface $postProvider = null
     ): BlockRegistryInterface {
         $registry = new BlockRegistry();
 
@@ -32,6 +34,7 @@ class DefaultBlockRegistryFactory
         $registry->register(new SocialIconsBlock());
         $registry->register(new CopyrightBlock());
         $registry->register(new NavMenuBlock($menuProvider));
+        $registry->register(new PostCardsGridBlock($postProvider));
 
         return $registry;
     }

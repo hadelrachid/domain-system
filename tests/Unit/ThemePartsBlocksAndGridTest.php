@@ -66,7 +66,7 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $all = $registry->all();
 
-        $this->assertCount(13, $all);
+        $this->assertCount(14, $all);
         $this->assertNotNull($registry->get('heading'));
         $this->assertNotNull($registry->get('paragraph'));
         $this->assertNotNull($registry->get('image'));
@@ -80,6 +80,7 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $this->assertNotNull($registry->get('social_icons'));
         $this->assertNotNull($registry->get('copyright'));
         $this->assertNotNull($registry->get('nav_menu'));
+        $this->assertNotNull($registry->get('post_cards_grid'));
 
         $grouped = $registry->allByCategory();
         $this->assertArrayHasKey('typography', $grouped);

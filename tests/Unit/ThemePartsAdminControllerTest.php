@@ -345,12 +345,13 @@ class ThemePartsAdminControllerTest extends TestCase
         $data = json_decode($response->getContent(), true);
 
         $this->assertArrayHasKey('blocks', $data);
-        $this->assertCount(13, $data['blocks']);
+        $this->assertCount(14, $data['blocks']);
         $this->assertArrayHasKey('heading', $data['blocks']);
         $this->assertArrayHasKey('button', $data['blocks']);
         $this->assertArrayHasKey('cta_button', $data['blocks']);
         $this->assertArrayHasKey('nav_menu', $data['blocks']);
         $this->assertArrayHasKey('shortcode', $data['blocks']);
+        $this->assertArrayHasKey('post_cards_grid', $data['blocks']);
 
         $this->assertArrayHasKey('presets', $data);
         $this->assertArrayHasKey('3_cols_header', $data['presets']);

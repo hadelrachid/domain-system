@@ -501,6 +501,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         { type: 'shortcode', name: 'Shortcode Pronto', icon: '⚡', desc: 'Insere qualquer shortcode ativo do sistema.' },
         { type: 'divider', name: 'Divisória / Espaçador', icon: '➖', desc: 'Linha sólida, tracejada ou espaçador transparente.' },
         { type: 'social_icons', name: 'Redes Sociais', icon: '🌐', desc: 'Ícones de redes com links dinâmicos.' },
+        { type: 'post_cards_grid', name: 'Grid de Artigos (Blog)', icon: '📰', desc: 'Cards de posts responsivos em CSS Grid, SEO Schema.org e filtros.' },
         { type: 'copyright', name: 'Copyright & LGPD', icon: '©', desc: 'Ano automático {year} e links de termos.' },
         { type: 'custom_code', name: 'Código Customizado', icon: '💻', desc: 'Editor HTML, CSS e JavaScript livre.' }
     ];
@@ -1826,6 +1827,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             var shapeLabel = (d.shape === 'circle' ? 'Círculo' : (d.shape === 'rounded' ? 'Arredondado' : (d.shape === 'square' ? 'Quadrado' : 'Minimal')));
             return '🌐 Redes Sociais: <strong>' + count + ' ícones</strong> <span style="font-size:10px; opacity:0.75; padding:2px 6px; background:rgba(56,189,248,0.12); color:var(--primary); border-radius:4px; margin-left:6px;">' + shapeLabel + ' • ' + (d.color_mode || 'official') + '</span>';
         }
+        if (block.type === 'post_cards_grid') {
+            var cols = d.columns || 3;
+            var limit = d.limit || 6;
+            var styleLabel = d.card_style || 'cyber_glass';
+            return '📰 Grid de Artigos: <strong>' + cols + ' colunas</strong> (até ' + limit + ' posts) <span style="font-size:10px; opacity:0.75; padding:2px 6px; background:rgba(56,189,248,0.12); color:var(--primary); border-radius:4px; margin-left:6px;">' + styleLabel + '</span>';
+        }
         return block.type;
     }
 
@@ -2412,6 +2419,38 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorDimension('Espaçamento Entre Ícones (Gap)', 'gap', block.data.gap || '12px');
 
             html += inspectorSocialIconsRepeater(block);
+        } else if (block.type === "post_cards_grid") {
+            html += inspectorSelect("Colunas no Desktop", "columns", [
+                { value: "1", label: "1 Coluna (Lista Cheia)" },
+                { value: "2", label: "2 Colunas (50% / 50%)" },
+                { value: "3", label: "3 Colunas (Padrão Blog)" },
+                { value: "4", label: "4 Colunas (Grid Compacto)" }
+            ], String(block.data.columns || "3"));
+
+            html += inspectorInput("Limite de Artigos", "limit", block.data.limit || 6, "number");
+
+            html += inspectorSelect("Estilo dos Cards", "card_style", [
+                { value: "cyber_glass", label: "Cyber Glass (Glassmorphism & Glow)" },
+                { value: "minimal", label: "Minimalista (Clean & Tipográfico)" },
+                { value: "bordered", label: "Bordas Definidas (Contraste Token)" },
+                { value: "flat", label: "Flat Surface (Preenchimento Sólido)" }
+            ], block.data.card_style || "cyber_glass");
+
+            html += inspectorSelect("Efeito ao Passar o Mouse (Hover)", "hover_effect", [
+                { value: "lift", label: "Elevação 3D (Lift suave)" },
+                { value: "glow", label: "Brilho Neon (Glow Primário)" },
+                { value: "border_accent", label: "Realce de Borda (Color Accent)" },
+                { value: "none", label: "Sem Animação" }
+            ], block.data.hover_effect || "lift");
+
+            html += inspectorDimension("Espaçamento do Grid (Gap)", "gap", block.data.gap || "24px");
+
+            html += inspectorCheckbox("Exibir Imagem Destacada", "show_image", block.data.show_image !== false);
+            html += inspectorCheckbox("Exibir Data de Publicação", "show_date", block.data.show_date !== false);
+            html += inspectorCheckbox("Exibir Autor", "show_author", block.data.show_author !== false);
+            html += inspectorCheckbox("Exibir Resumo (Excerto)", "show_excerpt", block.data.show_excerpt !== false);
+            html += inspectorCheckbox("Exibir Botão \"Ler Artigo\"", "show_read_more", block.data.show_read_more !== false);
+            html += inspectorInput("Texto do Link", "read_more_text", block.data.read_more_text || "Ler Artigo →");
         }
 
         // ==========================================

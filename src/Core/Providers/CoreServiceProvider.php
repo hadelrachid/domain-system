@@ -199,12 +199,22 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer();
         });
 
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class, function($c) {
+            $pageRepo = $c->has(\DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class)
+                ? $c->make(\DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface::class)
+                : null;
+            return new \DomainSystem\Core\Theme\Parts\Providers\PagesPostProvider($pageRepo);
+        });
+
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class, function($c) {
             $menuProvider = $c->has(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
                 ? $c->make(\DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class)
                 : null;
             $sm = $c->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
-            return \DomainSystem\Core\Theme\Parts\Blocks\DefaultBlockRegistryFactory::create($menuProvider, $sm);
+            $postProvider = $c->has(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class)
+                ? $c->make(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class)
+                : null;
+            return \DomainSystem\Core\Theme\Parts\Blocks\DefaultBlockRegistryFactory::create($menuProvider, $sm, $postProvider);
         });
 
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class, function($c) use ($basePath) {
