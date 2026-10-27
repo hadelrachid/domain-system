@@ -160,7 +160,8 @@
             border-radius: 8px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             transition: max-width 0.3s ease;
-            min-height: 480px;
+            min-height: 850px;
+            transition: max-width 0.3s ease, min-height 0.25s ease;
             display: flex;
             flex-direction: column;
         }

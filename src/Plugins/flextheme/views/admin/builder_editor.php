@@ -373,7 +373,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                         <span>Simulador: <strong id="cur_device_name">Desktop (100%)</strong></span>
                         <span id="cur_device_px" style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px;">100%</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <!-- SELETOR DE ALTURA VERTICAL / CONTEÚDO CENTRAL -->
+                        <div id="live_vertical_height_controls" style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 10px; color: var(--text-muted); font-weight: 600;">↕️ Altura:</span>
+                            <div style="display: flex; gap: 2px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 4px; padding: 1px;">
+                                <button type="button" class="header-btn" id="btn_vh_850" onclick="setLiveViewportHeight('850px')" title="Altura Padrão (850px)" style="padding: 2px 6px; font-size: 10px;">850px</button>
+                                <button type="button" class="header-btn" id="btn_vh_1200" onclick="setLiveViewportHeight('1200px')" title="Altura Estendida (1200px)" style="padding: 2px 6px; font-size: 10px;">1200px</button>
+                                <button type="button" class="header-btn" id="btn_vh_full" onclick="setLiveViewportHeight('calc(100vh - 160px)')" title="Janela Completa (100vh)" style="padding: 2px 6px; font-size: 10px;">100vh</button>
+                                <button type="button" class="header-btn active" id="btn_vh_auto" onclick="setLiveViewportHeight('auto')" title="Auto: Altura Total do Conteúdo" style="padding: 2px 6px; font-size: 10px;">Auto (Total)</button>
+                            </div>
+                        </div>
                         <span id="active_sections_count_badge" style="font-size: 11px; color: var(--primary); font-weight: 700;">1 Seção</span>
                     </div>
                 </div>
@@ -381,15 +391,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     <div id="sections_stage"></div>
                     <div id="elementor_add_section_wrapper"></div>
                 </div>
-                <div id="live-stage-container" style="display: none; flex-grow: 1; width: 100%; min-height: 480px;">
-                    <iframe id="live_stage_iframe" style="width: 100%; height: 100%; border: none; min-height: 480px; background: #06090e;"></iframe>
+                <div id="live-stage-container" style="display: none; flex-grow: 1; width: 100%; min-height: 850px; transition: min-height 0.25s ease;">
+                    <iframe id="live_stage_iframe" style="width: 100%; height: 850px; border: none; min-height: 850px; background: #06090e; transition: height 0.25s ease;"></iframe>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- FLOATING NAVIGATOR (POPUP FLUTUANTE DE CAMADAS ESTILO ELEMENTOR) -->
     <div id="floating_layers_panel" class="floating-navigator-panel" style="display: none;">
         <div class="floating-navigator-header" id="floating_layers_drag_handle">
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -611,6 +620,63 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         });
     }
 
+    var currentLiveHeightPreset = 'auto';
+
+    function setLiveViewportHeight(h) {
+        currentLiveHeightPreset = h;
+        ['850', '1200', 'full', 'auto'].forEach(function(k) {
+            var btn = document.getElementById('btn_vh_' + k);
+            if (btn) btn.classList.remove('active');
+        });
+
+        var activeKey = (h === '850px') ? '850' : ((h === '1200px') ? '1200' : ((h === 'auto') ? 'auto' : 'full'));
+        var activeBtn = document.getElementById('btn_vh_' + activeKey);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        adjustLiveStageIframeHeight();
+    }
+
+    function adjustLiveStageIframeHeight() {
+        var iframe = document.getElementById('live_stage_iframe');
+        var container = document.getElementById('live-stage-container');
+        var viewport = document.getElementById('device-viewport');
+        if (!iframe) return;
+
+        var isSection = (state.type === 'section');
+        var minBase = isSection ? 850 : 500;
+
+        if (currentLiveHeightPreset === 'auto') {
+            try {
+                var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                if (doc && doc.body) {
+                    var scrollH = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+                    var finalH = Math.max(minBase, scrollH + 40);
+                    iframe.style.height = finalH + 'px';
+                    if (container) {
+                        container.style.height = finalH + 'px';
+                        container.style.minHeight = finalH + 'px';
+                    }
+                    if (viewport) {
+                        viewport.style.minHeight = finalH + 'px';
+                    }
+                    return;
+                }
+            } catch(e) {}
+            iframe.style.height = minBase + 'px';
+            if (container) container.style.minHeight = minBase + 'px';
+            if (viewport) viewport.style.minHeight = minBase + 'px';
+        } else {
+            iframe.style.height = currentLiveHeightPreset;
+            if (container) {
+                container.style.height = currentLiveHeightPreset;
+                container.style.minHeight = currentLiveHeightPreset;
+            }
+            if (viewport) {
+                viewport.style.minHeight = currentLiveHeightPreset;
+            }
+        }
+    }
+
     function setStudioMode(mode) {
         studioMode = mode;
         document.getElementById('btn_mode_structure').classList.toggle('active', mode === 'structure');
@@ -623,6 +689,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             canvasContent.style.display = 'none';
             liveStage.style.display = 'flex';
             loadLiveStageContent();
+            setTimeout(adjustLiveStageIframeHeight, 150);
         } else {
             canvasContent.style.display = 'block';
             liveStage.style.display = 'none';
@@ -699,7 +766,20 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 } else {
                     bodyClass += ' ds-desktop-mode';
                 }
-                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;background:#06090e;color:#fff;font-family:sans-serif;} a{cursor:pointer !important;}</style></head><body class="' + bodyClass + '">' + html + getPreviewGuardScript() + '</body></html>';
+
+                iframe.onload = function() {
+                    adjustLiveStageIframeHeight();
+                };
+
+                var liveStyles = '<style>' +
+                    'body { margin:0; padding:0; background:#06090e; color:#fff; font-family:var(--font-primary, sans-serif); min-height:100vh; box-sizing:border-box; }' +
+                    'a { cursor:pointer !important; }' +
+                    (state.type === 'section' ? '.ds-part-wrapper, .ds-theme-section { min-height: 80vh; }' : '') +
+                    '</style>';
+
+                iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' + liveStyles + '</head><body class="' + bodyClass + '">' + html + getPreviewGuardScript() + '</body></html>';
+
+                setTimeout(adjustLiveStageIframeHeight, 150);
             })
             .catch(function(err) {
                 console.error('[LiveStage] Erro ao renderizar preview ao vivo:', err);
