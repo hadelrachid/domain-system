@@ -3078,6 +3078,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
     // DESIGN TOKENS COLOR PICKER
     // ==========================================
+    // ==========================================
     // GERADOR AVANÇADO DE FUNDOS E DEGRADÊS (ESTILO ELEMENTOR / SOLID)
     // ==========================================
     var bgControlModeState = {
@@ -3087,46 +3088,90 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
     function parseGradientCss(str) {
         var def = {
-            type: 'linear',
-            angle: 135,
+            type: 'linear',          // 'linear' | 'radial'
+            direction: 'horizontal', // 'horizontal' (90deg) | 'vertical' (180deg) | 'radial' | 'custom'
+            angle: 90,
             position: 'center center',
             color1: '#0b0c10',
             stop1: 0,
-            color2: '#1f2833',
+            has_middle: false,
+            color_mid: '#0284c7',
+            stop_mid: 50,
+            color2: '#38bdf8',
             stop2: 100
         };
+
         if (!str || typeof str !== 'string' || str.indexOf('gradient(') === -1) {
             return def;
         }
+
         if (str.indexOf('radial-gradient(') === 0) {
             def.type = 'radial';
-            var m = str.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
-            if (m) {
-                def.position = m[1] ? m[1].trim() : 'center center';
-                def.color1 = m[2].trim();
-                def.stop1 = parseInt(m[3], 10) || 0;
-                def.color2 = m[4].trim();
-                def.stop2 = parseInt(m[5], 10) || 100;
+            def.direction = 'radial';
+            var m3 = str.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            if (m3) {
+                def.position = m3[1] ? m3[1].trim() : 'center center';
+                def.color1 = m3[2].trim();
+                def.stop1 = parseInt(m3[3], 10) || 0;
+                def.has_middle = true;
+                def.color_mid = m3[4].trim();
+                def.stop_mid = parseInt(m3[5], 10) || 50;
+                def.color2 = m3[6].trim();
+                def.stop2 = parseInt(m3[7], 10) || 100;
+                return def;
+            }
+
+            var m2 = str.match(/radial-gradient\((?:circle at ([^,]+),\s*)?([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            if (m2) {
+                def.position = m2[1] ? m2[1].trim() : 'center center';
+                def.color1 = m2[2].trim();
+                def.stop1 = parseInt(m2[3], 10) || 0;
+                def.color2 = m2[4].trim();
+                def.stop2 = parseInt(m2[5], 10) || 100;
+                return def;
             }
         } else {
             def.type = 'linear';
-            var m = str.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
-            if (m) {
-                def.angle = parseInt(m[1], 10) || 135;
-                def.color1 = m[2].trim();
-                def.stop1 = parseInt(m[3], 10) || 0;
-                def.color2 = m[4].trim();
-                def.stop2 = parseInt(m[5], 10) || 100;
+            var m3 = str.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            if (m3) {
+                def.angle = parseInt(m3[1], 10) || 90;
+                def.direction = (def.angle === 90) ? 'horizontal' : ((def.angle === 180) ? 'vertical' : 'custom');
+                def.color1 = m3[2].trim();
+                def.stop1 = parseInt(m3[3], 10) || 0;
+                def.has_middle = true;
+                def.color_mid = m3[4].trim();
+                def.stop_mid = parseInt(m3[5], 10) || 50;
+                def.color2 = m3[6].trim();
+                def.stop2 = parseInt(m3[7], 10) || 100;
+                return def;
+            }
+
+            var m2 = str.match(/linear-gradient\((\d+)deg,\s*([^%]+?)\s+(\d+)%,\s*([^%]+?)\s+(\d+)%\)/i);
+            if (m2) {
+                def.angle = parseInt(m2[1], 10) || 90;
+                def.direction = (def.angle === 90) ? 'horizontal' : ((def.angle === 180) ? 'vertical' : 'custom');
+                def.color1 = m2[2].trim();
+                def.stop1 = parseInt(m2[3], 10) || 0;
+                def.color2 = m2[4].trim();
+                def.stop2 = parseInt(m2[5], 10) || 100;
+                return def;
             }
         }
+
         return def;
     }
 
     function compileGradientCss(g) {
+        var stops = g.has_middle
+            ? g.color1 + ' ' + g.stop1 + '%, ' + g.color_mid + ' ' + g.stop_mid + '%, ' + g.color2 + ' ' + g.stop2 + '%'
+            : g.color1 + ' ' + g.stop1 + '%, ' + g.color2 + ' ' + g.stop2 + '%';
+
         if (g.type === 'radial') {
-            return 'radial-gradient(circle at ' + (g.position || 'center center') + ', ' + g.color1 + ' ' + g.stop1 + '%, ' + g.color2 + ' ' + g.stop2 + '%)';
+            return 'radial-gradient(circle at ' + (g.position || 'center center') + ', ' + stops + ')';
         }
-        return 'linear-gradient(' + (g.angle !== undefined ? g.angle : 135) + 'deg, ' + g.color1 + ' ' + g.stop1 + '%, ' + g.color2 + ' ' + g.stop2 + '%)';
+
+        var ang = (g.direction === 'horizontal') ? 90 : ((g.direction === 'vertical') ? 180 : (g.angle !== undefined ? g.angle : 90));
+        return 'linear-gradient(' + ang + 'deg, ' + stops + ')';
     }
 
     function renderAdvancedBackgroundControl(label, key, curVal, defaultToken, isSection) {
@@ -3198,21 +3243,122 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         } else {
             // MODO DEGRADÊ / GRADIENTE
             var currentGradCss = compileGradientCss(gData);
-            html += '<div style="height:32px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); margin-bottom:8px; background:' + currentGradCss + '; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" title="Visualização do Degradê em Tempo Real"></div>';
+            html += '<div style="height:32px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); margin-bottom:10px; background:' + currentGradCss + '; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" title="Visualização do Degradê em Tempo Real"></div>';
 
-            // Presets de Degradê com 1 clique
+            // 1. ESCOLHA DE TIPO / DIREÇÃO DO DEGRADÊ: LINEAR (HORIZONTAL), LINEAR (VERTICAL), RADIAL
+            html += '<div style="margin-bottom:10px;">' +
+                    '<label class="inspector-label" style="font-size:11px; margin-bottom:4px; font-weight:700;">TIPO E DIREÇÃO DO DEGRADÊ:</label>' +
+                    '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin-bottom:4px;">' +
+                    '<button type="button" class="btn ' + (gData.direction === 'horizontal' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'horizontal\', ' + isSection + ')">↔️ Horizontal</button>' +
+                    '<button type="button" class="btn ' + (gData.direction === 'vertical' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'vertical\', ' + isSection + ')">↕️ Vertical</button>' +
+                    '<button type="button" class="btn ' + (gData.direction === 'radial' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:6px 2px;" onclick="setGradientDirection(\'' + key + '\', \'radial\', ' + isSection + ')">🎯 Radial</button>' +
+                    '</div>' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">' +
+                    '<button type="button" class="btn ' + (gData.direction === 'custom' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:4px 8px; width:100%;" onclick="setGradientDirection(\'' + key + '\', \'custom\', ' + isSection + ')">📐 Ângulo Livre (' + gData.angle + '°)</button>' +
+                    '</div>' +
+                    '</div>';
+
+            // Se for Ângulo Livre ou Direção customizada
+            if (gData.direction === 'custom') {
+                html += '<div style="margin-bottom:10px; padding:6px; background:rgba(0,0,0,0.2); border-radius:6px;">' +
+                        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">' +
+                        '<span style="font-size:10px; color:#fff; font-weight:700;">Ângulo Personalizado:</span>' +
+                        '<span style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.angle + '°</span>' +
+                        '</div>' +
+                        '<input type="range" min="0" max="360" value="' + gData.angle + '" oninput="updateGradientProp(\'' + key + '\', \'angle\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                        '</div>';
+            }
+
+            // Se for Radial: Posição do centro
+            if (gData.type === 'radial') {
+                html += '<div style="margin-bottom:10px;">' +
+                        '<span style="font-size:11px; font-weight:700; color:#fff; display:block; margin-bottom:4px;">Origem do Centro Radial:</span>' +
+                        '<select class="inspector-select" onchange="updateGradientProp(\'' + key + '\', \'position\', this.value, ' + isSection + ')">' +
+                        '<option value="center center"' + (gData.position === 'center center' ? ' selected' : '') + '>🎯 Centro (Center)</option>' +
+                        '<option value="top center"' + (gData.position === 'top center' ? ' selected' : '') + '>⬆️ Topo Centro</option>' +
+                        '<option value="top left"' + (gData.position === 'top left' ? ' selected' : '') + '>↖️ Topo Esquerda</option>' +
+                        '<option value="top right"' + (gData.position === 'top right' ? ' selected' : '') + '>↗️ Topo Direita</option>' +
+                        '<option value="bottom center"' + (gData.position === 'bottom center' ? ' selected' : '') + '>⬇️ Base Centro</option>' +
+                        '</select></div>';
+            }
+
+            // Função interna para gerar Swatches de Tokens para os Stops
+            function renderColorStopSwatches(stopKey) {
+                var sHtml = '<div style="display:flex; gap:3px; margin-bottom:4px; flex-wrap:wrap;">';
+                tokenList.forEach(function(t) {
+                    if (t.id === 'transparent') return;
+                    sHtml += '<button type="button" style="width:16px; height:16px; border-radius:3px; border:1px solid rgba(255,255,255,0.2); background-color:' + t.hex + '; cursor:pointer; padding:0;" title="' + escapeAttr(t.label) + '" onclick="updateGradientProp(\'' + key + '\', \'' + stopKey + '\', \'' + t.hex + '\', ' + isSection + ')"></button>';
+                });
+                sHtml += '</div>';
+                return sHtml;
+            }
+
+            // 2. COR DE INÍCIO
+            var hex1 = gData.color1.startsWith('#') ? gData.color1 : '#0b0c10';
+            html += '<div style="margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid var(--primary);">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                    '<span style="font-size:11px; font-weight:700; color:#fff;">🟢 Cor de Início (Start)</span>' +
+                    '<span style="font-size:10px; color:var(--primary); font-weight:700;">' + gData.stop1 + '%</span>' +
+                    '</div>' +
+                    renderColorStopSwatches('color1') +
+                    '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
+                    '<input type="color" value="' + escapeAttr(hex1) + '" onchange="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color1) + '" oninput="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                    '</div>' +
+                    '<input type="range" min="0" max="100" value="' + gData.stop1 + '" oninput="updateGradientProp(\'' + key + '\', \'stop1\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                    '</div>';
+
+            // 3. COR INTERMEDIÁRIA (OPCIONAL COM TOGGLE)
+            if (gData.has_middle) {
+                var hexMid = gData.color_mid.startsWith('#') ? gData.color_mid : '#0284c7';
+                html += '<div style="margin-bottom:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid #f59e0b;">' +
+                        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                        '<span style="font-size:11px; font-weight:700; color:#fff;">🟡 Cor Intermediária (Meio)</span>' +
+                        '<div style="display:flex; align-items:center; gap:6px;">' +
+                        '<span style="font-size:10px; color:#f59e0b; font-weight:700;">' + gData.stop_mid + '%</span>' +
+                        '<button type="button" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:11px; padding:0;" title="Remover cor intermediária" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', false, ' + isSection + ')">✕</button>' +
+                        '</div></div>' +
+                        renderColorStopSwatches('color_mid') +
+                        '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
+                        '<input type="color" value="' + escapeAttr(hexMid) + '" onchange="updateGradientProp(\'' + key + '\', \'color_mid\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
+                        '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color_mid) + '" oninput="updateGradientProp(\'' + key + '\', \'color_mid\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                        '</div>' +
+                        '<input type="range" min="0" max="100" value="' + gData.stop_mid + '" oninput="updateGradientProp(\'' + key + '\', \'stop_mid\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                        '</div>';
+            } else {
+                html += '<div style="margin-bottom:8px; text-align:center;">' +
+                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:4px 8px; width:100%; border-style:dashed;" onclick="updateGradientProp(\'' + key + '\', \'has_middle\', true, ' + isSection + ')">➕ Adicionar Cor Intermediária</button>' +
+                        '</div>';
+            }
+
+            // 4. COR DE FIM
+            var hex2 = gData.color2.startsWith('#') ? gData.color2 : '#38bdf8';
+            html += '<div style="margin-bottom:10px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid #ec4899;">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                    '<span style="font-size:11px; font-weight:700; color:#fff;">🔴 Cor de Fim (Stop)</span>' +
+                    '<span style="font-size:10px; color:#ec4899; font-weight:700;">' + gData.stop2 + '%</span>' +
+                    '</div>' +
+                    renderColorStopSwatches('color2') +
+                    '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
+                    '<input type="color" value="' + escapeAttr(hex2) + '" onchange="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="width:30px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color2) + '" oninput="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex ou rgba">' +
+                    '</div>' +
+                    '<input type="range" min="0" max="100" value="' + gData.stop2 + '" oninput="updateGradientProp(\'' + key + '\', \'stop2\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
+                    '</div>';
+
+            // 5. PRESETS PRONTOS DE DEGRADÊ COM 1 CLIQUE
             var presets = [
-                { name: '🌌 Cyber', css: 'linear-gradient(135deg, #0b0c10 0%, #1f2833 100%)' },
-                { name: '⚡ Neon', css: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)' },
-                { name: '🔮 Synth', css: 'linear-gradient(135deg, #4c1d95 0%, #c026d3 100%)' },
-                { name: '🌿 Emerald', css: 'linear-gradient(135deg, #064e3b 0%, #10b981 100%)' },
-                { name: '🔥 Sunset', css: 'linear-gradient(135deg, #7c2d12 0%, #f97316 100%)' },
+                { name: '🌌 Cyber', css: 'linear-gradient(90deg, #0b0c10 0%, #1f2833 100%)' },
+                { name: '⚡ Neon Blue', css: 'linear-gradient(90deg, #0284c7 0%, #38bdf8 100%)' },
+                { name: '🔮 Synthwave', css: 'linear-gradient(135deg, #4c1d95 0%, #c026d3 100%)' },
+                { name: '🌿 Emerald', css: 'linear-gradient(90deg, #064e3b 0%, #10b981 100%)' },
+                { name: '🔥 Sunset', css: 'linear-gradient(180deg, #7c2d12 0%, #f97316 100%)' },
                 { name: '🖤 Carbon', css: 'linear-gradient(180deg, #18181b 0%, #09090b 100%)' },
                 { name: '🪟 Frost', css: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)' }
             ];
 
             html += '<div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:700;">PRESETS DE DEGRADÊ:</div>' +
-                    '<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">';
+                    '<div style="display:flex; flex-wrap:wrap; gap:4px;">';
             presets.forEach(function(p) {
                 var pClick = isSection
                     ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapeAttr(p.css) + '\'); renderCanvas(); renderSectionSettingsTab();'
@@ -3220,79 +3366,51 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 html += '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:3px 6px; border-radius:4px;" onclick="' + pClick + '">' + p.name + '</button>';
             });
             html += '</div>';
-
-            // Tipo de Degradê (Linear / Radial)
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
-                    '<label class="inspector-label" style="margin-bottom:0; font-size:11px;">Tipo de Degradê</label>' +
-                    '<div style="display:flex; gap:4px;">' +
-                    '<button type="button" class="btn ' + (gData.type === 'linear' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:3px 8px;" onclick="updateGradientProp(\'' + key + '\', \'type\', \'linear\', ' + isSection + ')">Linear ➡️</button>' +
-                    '<button type="button" class="btn ' + (gData.type === 'radial' ? 'btn-primary' : 'btn-secondary') + '" style="font-size:10px; padding:3px 8px;" onclick="updateGradientProp(\'' + key + '\', \'type\', \'radial\', ' + isSection + ')">Radial 🎯</button>' +
-                    '</div></div>';
-
-            // Cor 1 e Stop 1
-            var hex1 = gData.color1.startsWith('#') ? gData.color1 : '#0b0c10';
-            html += '<div style="margin-bottom:8px; padding:6px; background:rgba(0,0,0,0.25); border-radius:6px;">' +
-                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                    '<span style="font-size:11px; font-weight:700; color:#fff;">Cor Inicial (1)</span>' +
-                    '<span style="font-size:10px; color:var(--primary);">' + gData.stop1 + '%</span>' +
-                    '</div>' +
-                    '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
-                    '<input type="color" value="' + escapeAttr(hex1) + '" onchange="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="width:28px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color1) + '" oninput="updateGradientProp(\'' + key + '\', \'color1\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex">' +
-                    '</div>' +
-                    '<input type="range" min="0" max="100" value="' + gData.stop1 + '" oninput="updateGradientProp(\'' + key + '\', \'stop1\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
-                    '</div>';
-
-            // Cor 2 e Stop 2
-            var hex2 = gData.color2.startsWith('#') ? gData.color2 : '#1f2833';
-            html += '<div style="margin-bottom:8px; padding:6px; background:rgba(0,0,0,0.25); border-radius:6px;">' +
-                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                    '<span style="font-size:11px; font-weight:700; color:#fff;">Cor Final (2)</span>' +
-                    '<span style="font-size:10px; color:var(--primary);">' + gData.stop2 + '%</span>' +
-                    '</div>' +
-                    '<div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">' +
-                    '<input type="color" value="' + escapeAttr(hex2) + '" onchange="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="width:28px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(gData.color2) + '" oninput="updateGradientProp(\'' + key + '\', \'color2\', this.value, ' + isSection + ')" style="font-size:11px; height:24px;" placeholder="#hex">' +
-                    '</div>' +
-                    '<input type="range" min="0" max="100" value="' + gData.stop2 + '" oninput="updateGradientProp(\'' + key + '\', \'stop2\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
-                    '</div>';
-
-            // Controles específicos de Ângulo (Linear) ou Posição (Radial)
-            if (gData.type === 'linear') {
-                html += '<div style="margin-bottom:6px;">' +
-                        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">' +
-                        '<span style="font-size:11px; font-weight:700; color:#fff;">Ângulo do Degradê</span>' +
-                        '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + gData.angle + '°</span>' +
-                        '</div>' +
-                        '<input type="range" min="0" max="360" value="' + gData.angle + '" oninput="updateGradientProp(\'' + key + '\', \'angle\', parseInt(this.value,10), ' + isSection + ')" style="width:100%; cursor:pointer;">' +
-                        '<div style="display:flex; gap:4px; margin-top:4px;">' +
-                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:2px 6px; flex:1;" onclick="updateGradientProp(\'' + key + '\', \'angle\', 90, ' + isSection + ')">➡️ 90°</button>' +
-                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:2px 6px; flex:1;" onclick="updateGradientProp(\'' + key + '\', \'angle\', 135, ' + isSection + ')">↘️ 135°</button>' +
-                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:2px 6px; flex:1;" onclick="updateGradientProp(\'' + key + '\', \'angle\', 180, ' + isSection + ')">⬇️ 180°</button>' +
-                        '<button type="button" class="btn btn-secondary" style="font-size:10px; padding:2px 6px; flex:1;" onclick="updateGradientProp(\'' + key + '\', \'angle\', 270, ' + isSection + ')">⬅️ 270°</button>' +
-                        '</div></div>';
-            } else {
-                html += '<div style="margin-bottom:6px;">' +
-                        '<span style="font-size:11px; font-weight:700; color:#fff; display:block; margin-bottom:4px;">Posição do Centro</span>' +
-                        '<select class="inspector-select" onchange="updateGradientProp(\'' + key + '\', \'position\', this.value, ' + isSection + ')">' +
-                        '<option value="center center"' + (gData.position === 'center center' ? ' selected' : '') + '>Centro (Center)</option>' +
-                        '<option value="top center"' + (gData.position === 'top center' ? ' selected' : '') + '>Topo Centro</option>' +
-                        '<option value="top left"' + (gData.position === 'top left' ? ' selected' : '') + '>Topo Esquerda</option>' +
-                        '<option value="top right"' + (gData.position === 'top right' ? ' selected' : '') + '>Topo Direita</option>' +
-                        '<option value="bottom center"' + (gData.position === 'bottom center' ? ' selected' : '') + '>Base Centro</option>' +
-                        '</select></div>';
-            }
         }
 
         html += '</div>';
         return html;
     }
 
+    function setGradientDirection(key, dir, isSection) {
+        var curVal = '';
+        if (isSection) {
+            var curSec = state.sections[selectedSecIdx] || state.sections[0];
+            curVal = (curSec && curSec.container_settings && curSec.container_settings[key]) || '';
+        } else {
+            var block = getSelectedBlock();
+            curVal = (block && block.data && block.data[key]) || '';
+        }
+
+        var gData = parseGradientCss(curVal);
+        gData.direction = dir;
+
+        if (dir === 'radial') {
+            gData.type = 'radial';
+        } else {
+            gData.type = 'linear';
+            if (dir === 'horizontal') gData.angle = 90;
+            if (dir === 'vertical') gData.angle = 180;
+        }
+
+        var compiled = compileGradientCss(gData);
+
+        if (isSection) {
+            updateActiveSecSetting(key, compiled);
+            renderCanvas();
+            renderSectionSettingsTab();
+        } else {
+            updateBlockProp(key, compiled);
+            renderCanvas();
+            renderInspector();
+        }
+    }
+
     function setBgMode(key, mode, isSection) {
         var stateKey = isSection ? 'section' : 'element';
         bgControlModeState[stateKey] = mode;
         if (mode === 'gradient') {
-            var defaultGrad = 'linear-gradient(135deg, #0b0c10 0%, #1f2833 100%)';
+            var defaultGrad = 'linear-gradient(90deg, #0b0c10 0%, #38bdf8 100%)';
             if (isSection) {
                 updateActiveSecSetting(key, defaultGrad);
                 renderCanvas();
@@ -3341,7 +3459,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
     }
 
-    function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
+function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
             primary: '#38bdf8',
