@@ -303,25 +303,35 @@
                             <span>ID: <code><?= htmlspecialchars($s->getId()) ?></code></span>
                         </div>
 
-                        <!-- 1. CAIXA DE SHORTCODE COM BOTÃO COPIAR E INSTRUÇÃO AMIGÁVEL -->
-                        <div style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <code style="font-size: 12px; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 4px 8px; border-radius: 4px; font-weight: 700; user-select: all; font-family: monospace;">[section id="<?= htmlspecialchars($s->getId()) ?>"]</code>
-                                <button type="button" class="btn" onclick="copyShortcode('[section id=\'<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>\']', this)" style="background: #238636; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; transition: all 0.2s ease;">
-                                    📋 Copiar Shortcode
-                                </button>
+                        <!-- 1. SEÇÃO DO CARD: SHORTCODE REUTILIZÁVEL (SEM ESPREMER, ESPAÇOSA E ELEGANTE) -->
+                        <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Shortcode da Seção</span>
+                                <span style="font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 1px 6px; border-radius: 4px; font-weight: 600;">Uso em Páginas</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.45; background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 4px; border-left: 2px solid var(--accent-blue, #58a6ff);">
+                            
+                            <!-- Código em linha própria com largura total -->
+                            <div style="background: #06090e; border: 1px solid var(--border, #30363d); border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; display: flex; align-items: center;">
+                                <code style="font-size: 12px; color: #38bdf8; font-weight: 700; font-family: 'Fira Code', monospace; width: 100%; overflow-x: auto; white-space: nowrap; user-select: all;">[section id="<?= htmlspecialchars($s->getId()) ?>"]</code>
+                            </div>
+
+                            <!-- Botão em linha própria, largo, confortável e sem espremer -->
+                            <button type="button" class="btn" onclick="copyShortcode('[section id=\'<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>\']', this)" style="width: 100%; background: #238636; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease;">
+                                📋 Copiar Shortcode
+                            </button>
+
+                            <!-- Instrução explicativa com respiro e borda suave -->
+                            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.45; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                                 💡 <strong>Como usar:</strong> Copie esse shortcode e cole no conteúdo da sua página (no <em>menu Páginas</em> que você preferir) para exibir este layout.
                             </div>
                         </div>
 
-                        <!-- 2. COMBOBOX DE ATRIBUIÇÃO DIRETA AO TEMPLATE DO TEMA -->
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">
-                            <label style="display: block; font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 5px;">
+                        <!-- 2. SEÇÃO DO CARD: COMBOBOX DE ATRIBUIÇÃO AO TEMPLATE -->
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 6px;">
                                 🎯 Atribuir Diretamente a um Template:
                             </label>
-                            <select onchange="assignTemplateSection('<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>', this.value)" style="width: 100%; padding: 6px 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border, #30363d); color: #fff; border-radius: 4px; font-size: 12px;">
+                            <select onchange="assignTemplateSection('<?= htmlspecialchars($s->getId(), ENT_QUOTES) ?>', this.value)" style="width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border, #30363d); color: #fff; border-radius: 6px; font-size: 12px;">
                                 <option value="none">Nenhum (Usar livremente via Shortcode)</option>
                                 <?php if (!empty($templates) && is_array($templates)): ?>
                                     <?php foreach ($templates as $tSlug => $tFile): ?>
@@ -331,8 +341,8 @@
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
-                            <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 4px;">
-                                Se selecionado, substitui automaticamente o conteúdo central deste template no site.
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 6px; line-height: 1.4;">
+                                Ao selecionar um template, esta seção substituirá automaticamente o conteúdo central daquela página.
                             </span>
                         </div>
 
