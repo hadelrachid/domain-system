@@ -335,7 +335,12 @@
                                 <option value="none">Nenhum (Usar livremente via Shortcode)</option>
                                 <?php if (!empty($templates) && is_array($templates)): ?>
                                     <?php foreach ($templates as $tSlug => $tFile): ?>
-                                        <option value="<?= htmlspecialchars($tSlug) ?>" <?= ($assignedTemplateKey === $tSlug) ? 'selected' : '' ?>>
+                                        <?php 
+                                            $isSelected = ($assignedTemplateKey === $tSlug 
+                                                || $assignedTemplateKey === $tSlug . '.php' 
+                                                || str_replace('.php', '', $assignedTemplateKey) === str_replace('.php', '', $tSlug)); 
+                                        ?>
+                                        <option value="<?= htmlspecialchars($tSlug) ?>" <?= $isSelected ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($tFile) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -434,6 +439,12 @@ function assignTemplateSection(sectionId, templateSlug) {
     idInput.name = 'part_id';
     idInput.value = (templateSlug === 'none' || !templateSlug) ? 'none' : sectionId;
     form.appendChild(idInput);
+
+    var secInput = document.createElement('input');
+    secInput.type = 'hidden';
+    secInput.name = 'section_id';
+    secInput.value = sectionId;
+    form.appendChild(secInput);
 
     document.body.appendChild(form);
     form.submit();

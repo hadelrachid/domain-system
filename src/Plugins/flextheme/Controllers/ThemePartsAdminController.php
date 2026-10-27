@@ -110,7 +110,8 @@ class ThemePartsAdminController
 
         $themes = $this->getAvailableThemes();
         $activeTheme = $this->getActiveThemeFolder();
-        $assignments = $this->partAssoc->getAllAssignments();
+        $allAssignments = $this->partAssoc->getAllAssignments();
+        $assignments = $allAssignments['themes'] ?? $allAssignments;
         $globalHeader = $this->partAssoc->getGlobalDefault(ThemePartInterface::TYPE_HEADER);
         $globalFooter = $this->partAssoc->getGlobalDefault(ThemePartInterface::TYPE_FOOTER);
 
@@ -121,6 +122,7 @@ class ThemePartsAdminController
             'themes'       => $themes,
             'activeTheme'  => $activeTheme,
             'assignments'  => $assignments,
+            'allAssignments' => $allAssignments,
             'globalHeader' => $globalHeader,
             'globalFooter' => $globalFooter,
             'templates'    => $this->getThemeTemplates($activeTheme),
@@ -330,6 +332,7 @@ class ThemePartsAdminController
         $themeFolder = trim((string)($input['theme_folder'] ?? ''));
         $partType    = trim((string)($input['part_type'] ?? ''));
         $partId      = trim((string)($input['part_id'] ?? ''));
+        $sectionId   = trim((string)($input['section_id'] ?? $partId));
         $isGlobal    = !empty($input['is_global']);
 
         $resolvedPartId = ($partId !== '' && $partId !== 'none' && $partId !== 'fallback') ? $partId : null;
@@ -337,14 +340,15 @@ class ThemePartsAdminController
         if (str_starts_with($partType, 'template:')) {
             // Se for atribuição de template a uma seção, limpa associações anteriores desta seção
             $allAssignments = $this->partAssoc->getAllAssignments();
-            $themeAssoc = $allAssignments['themes'][$themeFolder] ?? [];
+            $themeAssoc = $allAssignments['themes'][$themeFolder] ?? ($allAssignments[$themeFolder] ?? []);
             foreach ($themeAssoc as $tKey => $pId) {
-                if ($pId === $partId && str_starts_with($tKey, 'template:')) {
+                if (($pId === $sectionId || $pId === $partId) && str_starts_with($tKey, 'template:')) {
                     $this->partAssoc->assignPart($themeFolder, $tKey, null);
                 }
             }
             if ($partType !== 'template:none' && $resolvedPartId !== null) {
-                $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);
+                $cleanSlug = str_replace(['templates/', '.php'], '', substr($partType, strlen('template:')));
+                $this->partAssoc->assignPart($themeFolder, 'template:' . $cleanSlug, $resolvedPartId);
             }
         } else {
             if ($isGlobal) {
@@ -696,7 +700,8 @@ class ThemePartsAdminController
     public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): string
     {
         $assignments = $this->partAssoc->getAllAssignments();
-        foreach ($assignments[$themeFolder] ?? [] as $partType => $assignedId) {
+        $themeAssoc = $assignments['themes'][$themeFolder] ?? ($assignments[$themeFolder] ?? []);
+        foreach ($themeAssoc as $partType => $assignedId) {
             if ($assignedId === $sectionId && str_starts_with($partType, 'template:')) {
                 return substr($partType, strlen('template:'));
             }
