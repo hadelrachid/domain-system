@@ -30,11 +30,13 @@ The limit is your imagination:
 
 ## 🚀 Key Features
 
-### 🛡️ 1. Ring 0 / Ring 3 Architecture (Isolated Privileges)
-Inspired by real Operating System security, the system isolates its extensions into two privilege rings. **SystemApps (Ring 0)** are vital system components (e.g., Database, Identity/Auth, Admin Panel, SystemMonitor) that manage essential services. **UserPlugins (Ring 3)** are third-party additions running with limited privileges and are prevented from injecting or hijacking core instances.
+### 🛡️ 1. Ring 0 / Ring 3 Architectural Governance & Fault Isolation (DI Boundary)
+Inspired by layered Operating System design, the platform organizes its modules into two architectural tiers within the PHP runtime:
+- **SystemApps (`src/SystemApps` — Ring 0):** Essential infrastructure modules (Database, Auth, Admin, SystemMonitor, SystemUpdater). They receive priority in the topological boot queue and **are never auto-disabled** by the Circuit Breaker during transient failures.
+- **UserPlugins (`src/Plugins` — Ring 3):** Domain modules and extensions that interact with the core through the `OsRuntime` mediator (which enforces dependencies and hooks declared during `osRegister()` before resolving DI Container services) and are subject to **automatic quarantine by the Circuit Breaker** if they throw fatal errors during boot or route execution. *(Technical note: because all PHP code executes within the same Zend process, this separation provides architectural dependency governance and fault isolation rather than an OS-level process sandbox — only install plugins from trusted sources, just like Composer packages or WordPress plugins).*
 
-### 🛡️ 2. Gatekeeper (Installation Guardian)
-Total protection against malicious ZIPs. The installer does not blindly trust uploads; it extracts the package into a quarantine area, scans the source code (looking for Path Traversal/Zip-Slip vulnerabilities), and prevents any Privilege Escalation attempt (e.g., plugins trying to usurp the Ring 0 namespace).
+### 🛡️ 2. Gatekeeper & Safe Quarantine Extraction (`ZipArchiveExtractor`)
+Strict structural validation when uploading plugin and theme `.zip` archives: the extractor blocks *Zip-Slip* vectors (relative traversal `../`, Unix/Windows absolute paths `/`, `\`, `C:`, stream wrappers `phar://`, and UNIX *symlinks*), performs stream-based extraction into a `realpath()`-verified quarantine directory, and prevents namespace collisions with `DomainSystem\SystemApps` or overwriting protected `core` modules.
 
 ### 🔋 3. No-Break Shield, Atomic Persistence & 1-Click Snapshots
 Forget the "White Screen of Death" (WSOD). Domain System runs with the **No-Break Shield**: a centralized *Circuit Breaker* (at boot and per-route with configurable failure threshold) backed by `AtomicJsonStore` (`LOCK_EX` + atomic rename), **Schema Doctor** (`SchemaDoctorInterface`), and **1-Click Snapshot & Rollback** in `/admin/monitor`.
