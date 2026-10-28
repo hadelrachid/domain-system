@@ -58,16 +58,16 @@
 }</code></pre>
         <p>Isso permite que plugins (como <strong>Academy LMS</strong>, <strong>FlexTheme</strong>, <strong>Pages</strong> e <strong>SEO</strong>) entreguem seus próprios tutoriais interativos e checklists de Homologação (QA) sem nenhum acoplamento com o código-fonte do Kernel!</p>
 
-        <h2>SchemaDoctorInterface &amp; JsonStoreInterface (Kernel 100% Agnóstico a Banco e SO)</h2>
-        <p>No Domain-System v2.5.0, o Kernel (Ring 0) não sabe se existe SQLite, MySQL, Windows ou Linux:</p>
+        <h2>SchemaDoctorInterface &amp; JsonStoreInterface (Núcleo Agnóstico a Banco e SO)</h2>
+        <p>No Domain-System v2.5.0, o núcleo do sistema opera de forma agnóstica em relação a banco de dados e ambiente:</p>
         <ul>
             <li><strong><code>SchemaDoctorInterface</code>:</strong> Injetado no <code>MonitorController</code> e no <code>StateSnapshotManager</code> para diagnosticar e auto-reparar (<code>healAll()</code>) migrações de plugins com SQL ANSI puro.</li>
             <li><strong><code>JsonStoreInterface</code> (<code>AtomicJsonStore</code>):</strong> Persistência atômica com <code>flock(LOCK_EX)</code> + arquivo temporário + <code>rename()</code> atômico para proteger <code>config/*.json</code> e <code>temp/*.json</code> contra <em>Race Conditions</em>.</li>
             <li><strong><code>LessonFileScaffolderInterface</code>:</strong> Contrato da Fábrica Automática do Academy LMS que cria subpastas de módulos (<code>createFolder</code>) e fabrica automaticamente arquivos físicos <code>.php</code> no tema ativo (ex: <code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>).</li>
         </ul>
 
-        <h2>🤖 Guia de Contratos para IA ("Vibe Coding on Rails")</h2>
-        <p>Consulte o arquivo <a href="../AI_CONTRACT_GUIDE.md"><code>AI_CONTRACT_GUIDE.md</code></a> na raiz do projeto (e as regras automáticas <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code> e <code>.clinerules</code>) para que qualquer Inteligência Artificial gere plugins e páginas respeitando 100% estes contratos.</p>
+        <h2>🤖 Guia de Contratos para Modelos de IA</h2>
+        <p>Consulte o arquivo <a href="../AI_CONTRACT_GUIDE.md"><code>AI_CONTRACT_GUIDE.md</code></a> na raiz do projeto (e as diretrizes em <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code> e <code>.clinerules</code>) para orientar ferramentas de IA a gerarem extensões aderentes a estes contratos.</p>
 
     </div>
 </body>

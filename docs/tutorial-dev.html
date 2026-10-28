@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Tutorial: Criando Plugins Modernos - Domain System OS</title>
+    <title>Tutorial: Criando Plugins - Domain System</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; line-height: 1.6; }
         .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -20,8 +20,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Construindo Apps no Web OS (v2.5)</h1>
-        <p>O <strong>Domain System</strong> agora orquestra Plugins no Ring 3 usando estritamente Contratos e Interfaces. Siga este tutorial definitivo para criar o seu primeiro App (Plugin) moderno, completo com Widgets de Dashboard, Permissões de Segurança (ACL) e Auto-Descoberta de Manual (<code>ManualModuleInterface</code>).</p>
+        <h1>Construindo Plugins no Domain System (v2.5)</h1>
+        <p>O <strong>Domain System</strong> orquestra seus plugins através de contratos e interfaces bem definidos. Siga este tutorial para criar o seu primeiro módulo, com widgets de dashboard, permissões declarativas de acesso (ACL) e manuais auto-descobertos (<code>ManualModuleInterface</code>).</p>
 
         <div class="alert">
             <strong>Atenção:</strong> Nunca injete HTML sujo nos Hooks do sistema nem acesse superglobais (<code>$_SESSION</code>) diretamente em Controllers. Todos os componentes vitais agora exigem <em>Providers</em> e <em>Interfaces</em>.

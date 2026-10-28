@@ -55,7 +55,9 @@ Esse recurso permite que desenvolvedores ou modelos de IA (Claude, ChatGPT, Gemi
 
 * **[Flex Builder FSE](Flex-Builder.md)** — Funcionamento dos 14 blocos semânticos, visibilidade responsiva em 4 resoluções com Auto-Reflow e contratos visuais.
 * **[Atualizações e Deploy](Atualizacoes.md)** — Guia do atualizador automático via GitHub Releases e rotinas de backup.
-* **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Funcionamento do isolamento de falhas em plugins.
+* **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Funcionamento do isolamento de falhas em plugins e desativação em cascata.
+* **[Controle de Acesso Centralizado](Global-Gatekeeper.md)** — Autorização declarativa no roteador e validação antecipada de permissões.
+* **[Modo de Recuperação Administrativa](Emergency-Hatch.md)** — Mecanismo de contingência para acesso ao painel em caso de indisponibilidade de autenticação.
 
 ---
 
@@ -114,4 +116,6 @@ This enables developers and AI models (Claude, ChatGPT, Gemini) to perform compr
 
 * **[Flex Builder FSE](Flex-Builder.md)** — Guide to the 14 semantic blocks, 4-resolution responsive visibility with Auto-Reflow, and visual contracts.
 * **[Updates & Deployment](Atualizacoes.md)** — Documentation on the GitHub Releases auto-updater and backup workflows.
-* **[Circuit Breaker](Disjuntor-Circuit-Breaker.md)** — Mechanics of fault isolation for extensions.
+* **[Circuit Breaker & Resilience](Disjuntor-Circuit-Breaker.md)** — Mechanics of runtime fault isolation for extensions and cascading deactivation.
+* **[Centralized Access Control](Global-Gatekeeper.md)** — Declarative routing authorization and preemptive permission validation.
+* **[Administrative Recovery Mode](Emergency-Hatch.md)** — Core contingency fallback route for recovery when auth services are unavailable.

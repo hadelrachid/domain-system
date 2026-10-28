@@ -1,97 +1,107 @@
-> 🇧🇷 [Ler em Português](#-o-disjuntor-circuit-breaker-e-o-efeito-cascata) | 🇺🇸 [Read in English](#-the-circuit-breaker-and-the-cascade-effect)
+> 🇧🇷 [Ler em Português](#-disjuntor-circuit-breaker-e-resiliência-de-extensões) | 🇺🇸 [Read in English](#-circuit-breaker-and-extension-resilience)
 
 ---
 
-# 🇧🇷 ⚡ O Disjuntor (Circuit Breaker) e o Efeito Cascata
+# 🇧🇷 Disjuntor (Circuit Breaker) e Resiliência de Extensões
 
-Em sistemas tradicionais monolíticos, se um pequeno módulo falha (como o módulo de chat ou de relatórios), ele costuma gerar um **Fatal Error** na memória do PHP. Isso resulta na famosa "Tela Branca da Morte", derrubando o sistema inteiro e impedindo que todos os funcionários da sistema trabalhem.
+Em aplicações modulares, a falha não tratada de uma extensão (como erro de sintaxe, dependência ausente ou falha de conexão de rede) pode interromper o ciclo de vida da requisição, causando uma tela de erro fatal global.
 
-Para evitar cenários catastróficos, o **Domain-System** adota um padrão de resiliência herdado da engenharia elétrica e de microserviços: o **Circuit Breaker** (Disjuntor).
+Para manter a estabilidade do sistema principal, o **Domain System** implementa o padrão de resiliência **Circuit Breaker** (Disjuntor) no gerenciamento e na execução de plugins.
 
-## 🛡️ Como funciona a Contenção de Falhas
+---
 
-O Kernel (SystemAdmin) não confia cegamente nos plugins (módulos). Ele possui um gerenciador central (`PluginManager`) que atua como um quadro de energia (QTA).
+## 🛡️ Contenção de Falhas no Ciclo de Boot
 
-Quando o sistema está inicializando a árvore de plugins, o processo acontece dentro de uma redoma de segurança (blocos `try/catch`). Se um plugin defeituoso tentar quebrar o sistema (seja por um erro de sintaxe, conexão rejeitada com a API, ou arquivo ausente), o Disjuntor percebe a sobrecarga e **desarma automaticamente**.
+O núcleo do sistema não assume que todas as extensões são infalíveis. O carregamento de plugins (`PluginManager`) é executado dentro de blocos de captura de exceções:
 
-### O Fluxo do Desarme:
-1. **Interceptação:** O erro crítico é capturado antes de chegar ao navegador do usuário.
-2. **Isolamento:** O módulo defeituoso é bloqueado temporariamente na memória.
-3. **Log de Supervisão:** Um relatório de incidente é gerado e registrado silenciosamente no painel de Monitoramento (Supervisão).
-4. **Sobrevivência:** O restante do sistema ignora o módulo defeituoso e termina de carregar, permitindo que a sistema continue operando.
+1. **Captura Antecipada:** Se uma extensão lançar uma exceção não tratada durante sua inicialização, o erro é interceptado antes de comprometer o restante da aplicação.
+2. **Desativação Temporária:** A extensão causadora da falha é temporariamente desarmada no registro em memória e marcada para inspeção.
+3. **Registro de Incidentes:** Um log estruturado é registrado e fica disponível no painel administrativo em **Supervisão do Sistema** (`/admin/supervision`).
+4. **Continuidade da Operação:** As demais extensões independentes e os serviços essenciais do sistema continuam executando normalmente.
 
-## 🌊 O Efeito Cascata (Cascade Failure Handling)
+---
 
-Um dos maiores desafios de um sistema modular são as **dependências**. O que acontece se o módulo de "Prontuários" precisa estritamente do módulo "Autenticação", mas a Autenticação sofreu uma pane e o disjuntor a desarmou?
+## 🌊 Resolução de Dependências e Desativação em Cascata
 
-Se o sistema tentasse carregar os Prontuários, ele quebraria de qualquer forma pela ausência do sistema de segurança. Para resolver isso, implementamos o **Desligamento em Cascata**.
-
-Quando a árvore de dependências (Dependency Resolver) está sendo mapeada, se o `PluginManager` percebe que um módulo depende de algo que "morreu", ele age com inteligência artificial instintiva:
-> *"O módulo A precisa do B. O B está desativado. Logo, ejetar o módulo A preventivamente para salvar o Kernel!"*
+Quando uma extensão depende diretamente de outro módulo que falhou ou foi desativado, o carregamento dependente também falharia. Para evitar erros em sequência, o sistema realiza a desativação preventiva em cascata:
 
 ```php
-// Trecho real do Core (PluginManager.php) ilustrando a Cascata
+// Resolução de dependências no PluginManager
 try {
     $this->resolveNode($plugin, $resolved, $unresolved);
 } catch (Exception $e) {
-    // Se o plugin exigia uma dependência morta, ejetamos este plugin também (Efeito Cascata).
+    // Caso a dependência necessária não esteja disponível, desativa a extensão dependente
     $this->disable($plugin->getName());
     error_log("Cascata: Plugin '{$plugin->getName()}' desativado. Motivo: " . $e->getMessage());
-    $unresolved = []; // Limpa o rastro para proteger o próximo plugin
+    $unresolved = [];
 }
 ```
 
-Essa abordagem garante que uma falha em cadeia seja contida com elegância, provando que o Kernel é uma muralha indestrutível frente às instabilidades de código ou infraestrutura.
+Essa ordenação topológica previne inconsistências de estado e assegura que nenhuma extensão tente interagir com dependências inativas.
 
-## 🛠️ Isolamento Granular por Rota (Threshold) & Modo Desenvolvedor
-Na **v2.5.0**, o Disjuntor opera com granularidade cirúrgica e persistência atômica (`AtomicJsonStore` com `flock` + `rename`):
-- **Disjuntor por Rota com Threshold (`recordRouteFailure`):** Uma falha isolada em uma rota específica (ex: `/admin/academy/edit/6`) **não derruba o plugin inteiro de imediato**. O Kernel isola apenas a rota falha e contabiliza o incidente; o plugin só é ejetado globalmente se atingir o limite (*threshold*, padrão: 3 falhas consecutivas) ou se falhar durante o boot.
-- **Modo Desenvolvedor (Bypass Seguro na Sessão):** Quando um plugin do Ring 3 é desarmado pelo Disjuntor (`temp/disarmed.json`), o administrador pode ativar o **Modo Desenvolvedor** no painel de Supervisão (`/admin/supervision`). Isso contorna o bloqueio apenas para a sessão do administrador (`SessionManagerInterface`), mantendo os visitantes e alunos protegidos enquanto o bug é depurado em tempo real.
+---
+
+## ⚙️ Isolamento por Rota e Modo Desenvolvedor
+
+A partir da versão **v2.5.0**, o mecanismo de contenção opera com maior flexibilidade operacional:
+
+- **Isolamento por Rota com Limite de Falhas (`recordRouteFailure`):**
+  Uma falha pontual em uma ação específica (por exemplo, um endpoint com dados inconsistentes) **não desativa o plugin inteiro de imediato**. O sistema contabiliza as ocorrências sucessivas; a extensão só é desativada globalmente se atingir o limiar de tolerância configurado (padrão: 3 falhas consecutivas) ou se falhar durante a fase de inicialização (boot).
+- **Persistência Segura (`AtomicJsonStore`):**
+  O estado das extensões desarmadas é persistido com bloqueio exclusivo (`LOCK_EX`) e gravação atômica, evitando corrupção de arquivos em ambientes com requisições concorrentes.
+- **Modo Desenvolvedor (Bypass em Sessão):**
+  Quando uma extensão é desarmada preventivamente, o administrador pode ativar o **Modo Desenvolvedor** no painel de Supervisão. Isso contorna o bloqueio exclusivamente para a sessão autenticada do desenvolvedor (`SessionManagerInterface`), permitindo depurar o código diretamente sem expor erros aos visitantes públicos.
+
+---
 
 <br><br><br><hr>
 
-# 🇺🇸 ⚡ The Circuit Breaker and the Cascade Effect
+# 🇺🇸 Circuit Breaker and Extension Resilience
 
-In traditional monolithic systems, if a small module fails (like the chat or reporting module), it usually generates a **Fatal Error** in PHP's memory. This results in the infamous "White Screen of Death," bringing down the entire system and preventing all users from working.
+In modular applications, unhandled errors within an extension (such as syntax errors, missing dependencies, or external service timeouts) can disrupt the application request lifecycle, resulting in fatal error pages.
 
-To avoid catastrophic scenarios, the **Domain-System** adopts a resilience pattern inherited from electrical engineering and microservices: the **Circuit Breaker**.
+To preserve system uptime, **Domain System** adopts the **Circuit Breaker** pattern to isolate and manage extension runtime faults.
 
-## 🛡️ How Fault Containment Works
+---
 
-The Kernel (SystemAdmin) does not blindly trust the plugins (modules). It has a central manager (`PluginManager`) that acts as a power distribution board.
+## 🛡️ Boot-Time Fault Containment
 
-When the system is booting the plugin tree, the process happens inside a security dome (`try/catch` blocks). If a defective plugin tries to break the system (whether due to a syntax error, a rejected API connection, or a missing file), the Circuit Breaker detects the overload and **trips automatically**.
+The core runtime initializes third-party extensions within controlled exception boundaries (`PluginManager`):
 
-### The Tripping Flow:
-1. **Interception:** The critical error is caught before reaching the user's browser.
-2. **Isolation:** The defective module is temporarily blocked in memory.
-3. **Supervision Log:** An incident report is generated and silently registered in the Monitoring panel.
-4. **Survival:** The rest of the system ignores the defective module and finishes loading, allowing the platform to keep operating.
+1. **Early Interception:** If an extension throws an unhandled exception during its registration or boot phase, the failure is caught before impacting the application pipeline.
+2. **Temporary Disarming:** The offending extension is temporarily disarmed in the memory registry and flagged for administrative review.
+3. **Incident Logging:** Detailed error diagnostics are recorded in the supervision logs, accessible via the administration dashboard (`/admin/supervision`).
+4. **Service Continuity:** Core services and healthy extensions continue normal execution uninterrupted.
 
-## 🌊 The Cascade Effect (Cascade Failure Handling)
+---
 
-One of the biggest challenges of a modular system is **dependencies**. What happens if the "Medical Records" module strictly needs the "Authentication" module, but Authentication suffered a crash and the circuit breaker tripped it?
+## 🌊 Dependency Resolution & Cascading Deactivation
 
-If the system tried to load the Medical Records, it would break anyway due to the absence of the security system. To solve this, we implemented **Cascade Shutdown**.
-
-When the dependency tree (Dependency Resolver) is being mapped, if the `PluginManager` notices that a module depends on something that "died", it acts with instinctive artificial intelligence:
-> *"Module A needs B. B is deactivated. Therefore, preemptively eject module A to save the Kernel!"*
+When an extension requires another module that has been disarmed or failed to initialize, continuing execution would trigger subsequent errors. The core prevents this through cascading dependency resolution:
 
 ```php
-// Real Core snippet (PluginManager.php) illustrating the Cascade
+// Dependency tree resolution in PluginManager
 try {
     $this->resolveNode($plugin, $resolved, $unresolved);
 } catch (Exception $e) {
-    // If the plugin required a dead dependency, we eject this plugin too (Cascade Effect).
+    // If a prerequisite module is unavailable, deactivate the dependent extension
     $this->disable($plugin->getName());
     error_log("Cascade: Plugin '{$plugin->getName()}' disabled. Reason: " . $e->getMessage());
-    $unresolved = []; // Clears the trail to protect the next plugin
+    $unresolved = [];
 }
 ```
 
-## 🛠️ Route-Level Isolation (Threshold) & Developer Mode
-In **v2.5.0**, the Circuit Breaker operates with surgical granularity and atomic persistence (`AtomicJsonStore` using `flock` + `rename`):
-- **Route-Level Circuit Breaker with Threshold (`recordRouteFailure`):** An isolated runtime error in a single route (e.g., `/admin/academy/edit/6`) **does not immediately take down the entire plugin**. The Kernel isolates the failing route first and only ejects the whole plugin if it reaches the consecutive failure threshold (default: 3) or fails during boot.
-- **Developer Mode (Session-Scoped Safe Bypass):** When a Ring 3 plugin is tripped by the Circuit Breaker (`temp/disarmed.json`), the administrator can enable **Developer Mode** inside the Supervision panel (`/admin/supervision`). This bypasses the lock exclusively for the administrator's active session (`SessionManagerInterface`), keeping regular visitors and students shielded while the bug is debugged live.
+Topological dependency checking guarantees that inactive or missing components do not produce cascading runtime crashes.
 
-This approach ensures that a chain failure is contained elegantly, proving that the Kernel is an indestructible wall against code or infrastructure instabilities.
+---
+
+## ⚙️ Route-Level Isolation & Developer Debugging Mode
+
+Starting with **v2.5.0**, failure containment provides granular operational controls:
+
+- **Route-Level Thresholds (`recordRouteFailure`):**
+  An isolated exception in a specific route does not immediately bring down the entire plugin. The system tracks consecutive route failures, only disarming the whole extension if the error threshold is reached (default: 3 consecutive failures) or if a failure occurs during system boot.
+- **Atomic Configuration Persistence (`AtomicJsonStore`):**
+  The disarmed extension registry is safely persisted using exclusive file locking (`LOCK_EX`) and atomic replacement, preventing file corruption under concurrent traffic.
+- **Session-Scoped Developer Mode:**
+  If an extension is tripped by the circuit breaker, administrators can enable **Developer Mode** in the Supervision panel. This temporarily lifts the bypass strictly for the administrator's active session (`SessionManagerInterface`), allowing live debugging while keeping public visitors protected from errors.

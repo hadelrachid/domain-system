@@ -1,65 +1,68 @@
 # 🔄 Sistema de Atualizações Automáticas (GitHub Releases — Modelo A)
 
-O **Domain System** possui um subsistema nativo de verificação e atualização automática do núcleo (`SystemUpdater`), projetado especificamente para operar com segurança tanto em servidores dedicados quanto em hospedagens compartilhadas (como a **Hostinger**).
+O **Domain System** possui um subsistema nativo de verificação e atualização do núcleo (`SystemUpdater`), projetado para operar com segurança em servidores dedicados e ambientes de hospedagem compartilhada (como a Hostinger).
 
 ---
 
-## 🏛️ Arquitetura Orientada a Contratos (Ring 0)
+## 🏛️ Arquitetura Orientada a Contratos
 
-Todo o fluxo de atualização é governado pelos **25 contratos** em `src/Core/Contracts/Update/`:
-- **Isolamento de Infraestrutura:** Os serviços de domínio (`src/Core/Update/Service/`) e o aplicativo de sistema (`src/SystemApps/SystemUpdater/`) não contêm chamadas diretas a `PDO`, `curl_*`, `ZipArchive` ou superglobais (`$_GET`, `$_POST`, `$_SESSION`), sendo auditados automaticamente por `UpdateArchitectureTest`.
-- **Modelo A (Monorepo Oficial):** O núcleo e os 18 plugins/SystemApps oficiais compartilham a mesma versão (`2.5.0`) e são distribuídos em um pacote único assinado por SHA-256 (`domain-system-X.Y.Z.zip` + `domain-system-X.Y.Z.zip.sha256`).
-
----
-
-## 🔐 Segurança e Proteção de Dados
-
-1. **Allowlist HTTPS Estrita (`HostAllowlist` + `CurlHttpClient`):** Apenas os hosts `api.github.com`, `github.com`, `objects.githubusercontent.com` e `codeload.github.com` são aceitos sobre HTTPS com verificação TLS obrigatória.
-2. **Verificação SHA-256 Dupla (`Sha256PackageVerifier`):** Confere o hash SHA-256 do arquivo `.zip` contra o `.sha256` da Release e valida individualmente o hash e o tamanho de cada arquivo listado no `manifest.json` dentro de um diretório de quarentena, bloqueando Zip-Slip, links simbólicos e *zip bombs*.
-3. **Caminhos Protegidos (`CoreProtectedPaths`):** Arquivos sensíveis da instalação (`.env`, `.maintenance`, `config/`, `database.sqlite`, `storage/`, `temp/`, `uploads/`, `public/uploads/` e temas privados) **jamais** são sobrescritos. Novos arquivos de configuração padrão entram exclusivamente com `mode: default_if_missing`.
-4. **Backup Antes de Aplicar + Auto-Rollback:** Antes de entrar em manutenção ou tocar em qualquer arquivo, o sistema gera `storage/backups/core/<id>/code.zip` e o dump do banco (`SqliteDatabaseBackup` ou `MysqlDatabaseBackup`). Qualquer falha posterior aciona o rollback automático de código e banco.
+O fluxo de atualização é regido pelos **25 contratos** definidos em `src/Core/Contracts/Update/`:
+- **Isolamento de Infraestrutura:** Os serviços de domínio (`src/Core/Update/Service/`) e o aplicativo de sistema (`src/SystemApps/SystemUpdater/`) não contêm chamadas diretas a superglobais (`$_GET`, `$_POST`, `$_SESSION`) ou rotinas não desacopladas de `PDO`, `curl_*` e `ZipArchive`, sendo validados por testes automatizados em `UpdateArchitectureTest`.
+- **Modelo A (Monorepo):** O núcleo e as extensões oficiais acompanham o mesmo versionamento (`2.5.0`) e são distribuídos em pacotes assinados por SHA-256 (`domain-system-X.Y.Z.zip` + `domain-system-X.Y.Z.zip.sha256`).
 
 ---
 
-## 🖥️ Uso pelo Painel Administrativo
+## 🔐 Segurança e Integridade
 
-1. Acesse **Configurações Globais → aba Atualizações** (`/admin/settings/updates`) ou clique no card **Versão do Sistema** no Painel (`/admin`).
-2. Clique em **🔍 Verificar agora** para consultar imediatamente a última Release estável no GitHub.
-3. Quando houver versão superior disponível, revise o changelog, os avisos de pré-checagem e clique em **🚀 Atualizar para vX.Y.Z**.
-4. Acompanhe a barra de progresso etapa a etapa (`Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Done`).
+1. **Lista de Hosts Autorizados (`HostAllowlist` + `CurlHttpClient`):** Apenas os domínios `api.github.com`, `github.com`, `objects.githubusercontent.com` e `codeload.github.com` são aceitos, com conexões HTTPS e verificação TLS ativa.
+2. **Dupla Validação SHA-256 (`Sha256PackageVerifier`):** Valida a integridade do arquivo `.zip` contra o hash publicado na Release e inspeciona individualmente cada arquivo listado no `manifest.json` em um diretório temporário de quarentena, prevenindo Zip-Slip e links simbólicos maliciosos.
+3. **Preservação de Dados Locais (`CoreProtectedPaths`):** Arquivos essenciais da instalação local (`.env`, `.maintenance`, `config/`, `database.sqlite`, `storage/`, `temp/`, `uploads/`, `public/uploads/` e temas customizados) **nunca** são sobrescritos. Arquivos padrão de configuração novos utilizam o modo `default_if_missing`.
+4. **Backup Preventivo e Rollback Automático:** Antes de iniciar a substituição de arquivos ou migrações de banco, o sistema gera uma cópia de segurança em `storage/backups/core/<id>/code.zip` e realiza o backup do banco (`SqliteDatabaseBackup` ou `MysqlDatabaseBackup`). Em caso de interrupção ou falha, o rollback é acionado automaticamente.
 
 ---
 
-## 💻 Uso via Terminal (OS-CLI)
+## 🖥️ Atualização pelo Painel Administrativo
+
+1. Acesse **Configurações Globais → aba Atualizações** (`/admin/settings/updates`) ou selecione o indicador **Versão do Sistema** no Painel (`/admin`).
+2. Clique em **🔍 Verificar agora** para consultar a última versão estável disponibilizada no GitHub Releases.
+3. Havendo versão disponível, revise o changelog e os itens de pré-verificação antes de confirmar.
+4. O progresso é exibido etapa por etapa:
+   `Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Concluído`.
+
+---
+
+## 💻 Atualização via Linha de Comando (CLI)
+
+O utilitário `os-cli.php` na raiz do projeto permite executar todas as rotinas pelo terminal:
 
 ```bash
-# Verificar se há nova versão no GitHub
+# Verificar se há nova versão disponível
 php os-cli.php system:check
 
-# Consultar estado atual do atualizador
+# Exibir status do sistema de atualização
 php os-cli.php system:status
 
-# Executar atualização completa passo a passo
+# Executar a atualização completa com confirmação automática
 php os-cli.php system:update --yes
 
-# Reverter última atualização ou restaurar um backup específico
+# Reverter a última atualização ou restaurar um backup específico
 php os-cli.php system:rollback
 php os-cli.php system:rollback <backup-id>
 
-# Executar verificação de saúde do núcleo e do banco
+# Executar verificação de saúde da aplicação e integridade do banco
 php os-cli.php system:health
 ```
 
 ---
 
-## 📦 Gerando um Pacote de Release Oficial
+## 📦 Empacotamento de Releases
 
-Para empacotar uma nova versão localmente ou no CI (`.github/workflows/release.yml`):
+Para gerar o pacote compactado de uma nova versão:
 
 ```bash
 php tools/build-release.php
 ```
 
-O script valida a presença do `vendor/autoload.php`, lê `DS_VERSION` em `bootstrap.php`, aplica as exclusões de `release/exclude.txt`, incorpora o contrato de banco de `release/schema-expects.json` e gera:
+O script lê a versão definida em `bootstrap.php` (`DS_VERSION`), aplica as regras de exclusão de `release/exclude.txt`, inclui a definição de esquema de `release/schema-expects.json` e gera os artefatos na pasta `dist/`:
 - `dist/domain-system-X.Y.Z.zip`
 - `dist/domain-system-X.Y.Z.zip.sha256`
