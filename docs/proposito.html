@@ -20,20 +20,23 @@
 
     <div class="content">
         <h2>Por que criar este projeto?</h2>
-        <p>A web atual sofre com dois extremos: de um lado, sistemas monolíticos pesados e lentos (como versões legadas e infladas de CMS tradicionais) repletos de "gambiarras"; do outro lado, frameworks modernos e complexos que exigem uma curva de aprendizado altíssima e dependências infinitas via Composer.</p>
-        <p>O <strong>Domain-System</strong> nasceu da necessidade de encontrar o <em>meio-termo perfeito</em>: um sistema <strong>simples em sua essência</strong> (PHP puro), mas <strong>extremamente robusto em sua arquitetura</strong> (100% focado nos princípios SOLID e Padrões de Projeto).</p>
+        <p>No desenvolvimento web moderno, frequentemente nos deparamos com um dilema: de um lado, CMSs tradicionais que acumulam camadas históricas de código e dependências excessivas; do outro, frameworks que demandam configurações extensas e dezenas de pacotes de terceiros apenas para inicializar uma aplicação básica.</p>
+        <p>O <strong>Domain-System</strong> foi concebido para oferecer uma alternativa intermediária e equilibrada: um sistema desenvolvido em <strong>PHP 8.2+ tipado</strong>, sem dependências externas no núcleo de execução, estruturado sob os princípios de <strong>Clean Architecture</strong> e <strong>Inversão de Dependência (DIP)</strong>.</p>
 
         <h2>Qual é o propósito?</h2>
-        <p>Criar um <strong>Kernel (Núcleo)</strong> ultraleve, seguro e agnóstico, cujo único trabalho seja <em>orquestrar</em> aplicativos menores (Plugins) e Exibições (Temas). O núcleo não sabe o que é um "Paciente" ou um "Agendamento". Ele apenas fornece Ferramentas (Injeção de Dependência, Roteador, Banco de Dados Seguro) para que os Plugins façam o trabalho duro.</p>
-        <p>Dessa forma, criamos um <strong>SaaS White-label (Software as a Service)</strong> escalável. Se amanhã quisermos criar um sistema para Advogados em vez de Clínicas, o núcleo continua o mesmo, bastando apenas conectar novos Plugins.</p>
+        <p>Desenvolver um <strong>núcleo (Core)</strong> desacoplado e agnóstico, cuja responsabilidade seja apenas gerenciar a infraestrutura básica: resolução de dependências via Container, ciclo de vida de requisições, tratamento de exceções (Circuit Breaker) e despacho de eventos.</p>
+        <p>O núcleo não possui regras de negócio específicas. Todas as funcionalidades — como gerenciamento de páginas, construtor visual de temas (Flex Builder), LMS e SEO — são implementadas como <strong>Plugins</strong> e <strong>SystemApps</strong> que se comunicam através de interfaces e contratos estritos.</p>
 
         <h2>Para quem é este projeto?</h2>
-        <p>Para empresas de qualquer nicho e desenvolvedores corporativos que precisam de um ecossistema <strong>flexível, rápido e próprio</strong>, sem pagar licenças milionárias ou ficar refém do código espaguete de terceiros. A estrutura é feita para desenvolvedores sérios que apreciam Clean Architecture e TDD (Test-Driven Development).</p>
+        <p>O projeto destina-se a desenvolvedores, pequenas equipes e projetos que buscam um ambiente modular, previsível e leve (~5 MB de consumo de RAM ativo e ~30 MB em disco), ideal para servidores de baixo custo ou hospedagens compartilhadas, mantendo cobertura por testes automatizados (mais de 430 testes no PHPUnit).</p>
 
-        <h2>Como poderá ser estendido?</h2>
-        <p>A escalabilidade é infinita. Graças à arquitetura <em>Event-Driven</em> (Orientada a Eventos), desenvolvedores futuros podem injetar comportamentos (via Filtros e Ações) sem nunca tocar no código original (Open/Closed Principle).</p>
-        <p>Você pode adicionar um Plugin de Gateway de Pagamento, um Plugin de WhatsApp Inteligente (Z-API), ou conectar o frontend via APIs REST, tudo isso respeitando o fluxo natural de rotas do sistema.</p>
+        <h2>Como o sistema pode ser estendido?</h2>
+        <p>A arquitetura favorece a extensão sem modificação do núcleo (princípio Aberto/Fechado):</p>
+        <ul>
+            <li><strong>Novos Plugins:</strong> Podem ser criados na pasta <code>src/Plugins/</code> implementando <code>OsExtensionInterface</code> e registrando suas rotas, tabelas e permissões.</li>
+            <li><strong>Novos Blocos do Flex Builder:</strong> Implementando <code>BlockProviderInterface</code> para estender a biblioteca de blocos visuais.</li>
+            <li><strong>Hooks e Eventos:</strong> Ouvintes de eventos podem intervir em pontos específicos do fluxo da aplicação através do <code>EventDispatcher</code>.</li>
+        </ul>
     </div>
 </body>
 </html>
-
