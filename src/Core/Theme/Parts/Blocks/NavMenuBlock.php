@@ -267,10 +267,10 @@ class NavMenuBlock implements BlockInterface
             display: block;
         }
         @media (max-width: 768px) {
-            #{$navId} .ds-desktop-menu { display: none !important; }
-            #{$navId} .ds-mobile-toggle-wrapper { display: flex !important; }
-            #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
-            #{$navId} .ds-mobile-drawer { display: flex !important; }
+            body:not(.ds-live-preview) #{$navId} .ds-desktop-menu { display: none !important; }
+            body:not(.ds-live-preview) #{$navId} .ds-mobile-toggle-wrapper { display: flex !important; }
+            body:not(.ds-live-preview) #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
+            body:not(.ds-live-preview) #{$navId} .ds-mobile-drawer { display: flex !important; }
         }
         .ds-mobile-mode #{$navId} .ds-desktop-menu,
         .ds-is-mobile #{$navId} .ds-desktop-menu,

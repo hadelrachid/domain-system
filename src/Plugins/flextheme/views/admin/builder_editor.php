@@ -562,6 +562,22 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
     function initStudio() {
         initDraggableNavigator();
+        if (state.container_settings) {
+            delete state.container_settings.hide_desktop;
+            delete state.container_settings.hide_laptop;
+            delete state.container_settings.hide_tablet;
+            delete state.container_settings.hide_mobile;
+        }
+        if (Array.isArray(state.sections)) {
+            state.sections.forEach(function(sec) {
+                if (sec && sec.container_settings) {
+                    delete sec.container_settings.hide_desktop;
+                    delete sec.container_settings.hide_laptop;
+                    delete sec.container_settings.hide_tablet;
+                    delete sec.container_settings.hide_mobile;
+                }
+            });
+        }
         state.mobile_toggle_style = state.mobile_toggle_style || '<?= $part->getMobileToggleStyle() ?>';
         state.mobile_toggle_align = state.mobile_toggle_align || '<?= $part->getMobileToggleAlign() ?>';
         var alignSel = document.getElementById('setting_mobile_toggle_align');
@@ -796,11 +812,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 if (currentDevice === '375px') {
                     bodyClass += ' ds-mobile-mode ds-device-375';
                 } else if (currentDevice === '768px') {
-                    bodyClass += ' ds-tablet-mode ds-device-768 ds-mobile-mode';
+                    bodyClass += ' ds-tablet-mode ds-device-768';
                 } else if (currentDevice === '1024px') {
-                    bodyClass += ' ds-laptop-mode';
+                    bodyClass += ' ds-laptop-mode ds-device-1024';
                 } else {
-                    bodyClass += ' ds-desktop-mode';
+                    bodyClass += ' ds-desktop-mode ds-device-desktop ds-device-1440';
                 }
 
                 iframe.onload = function() {
@@ -833,14 +849,16 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             document.getElementById('btn_dev_' + d).classList.remove('active');
         });
 
-        viewport.classList.remove('ds-mobile-mode', 'ds-tablet-mode', 'ds-device-375', 'ds-device-768');
+        viewport.classList.remove('ds-desktop-mode', 'ds-laptop-mode', 'ds-mobile-mode', 'ds-tablet-mode', 'ds-device-desktop', 'ds-device-1024', 'ds-device-375', 'ds-device-768');
 
         if (width === '100%') {
             document.getElementById('btn_dev_desktop').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Desktop (100%)';
+            viewport.classList.add('ds-desktop-mode', 'ds-device-desktop');
         } else if (width === '1024px') {
             document.getElementById('btn_dev_laptop').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Laptop (1024px)';
+            viewport.classList.add('ds-laptop-mode', 'ds-device-1024');
         } else if (width === '768px') {
             document.getElementById('btn_dev_tablet').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Tablet (768px) - 📱 Hamburguer Ativo';
@@ -849,6 +867,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             document.getElementById('btn_dev_mobile').classList.add('active');
             document.getElementById('cur_device_name').textContent = 'Mobile (375px) - 📱 Hamburguer Ativo';
             viewport.classList.add('ds-mobile-mode', 'ds-device-375');
+        }
+
+        var curSec = getSelectedSection();
+        if (curSec) {
+            renderSectionStyleControls(curSec);
+        }
+        if (selectedBlockCoord) {
+            renderInspector();
         }
 
         if (studioMode === 'live') {
@@ -1230,18 +1256,80 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 '<input type="number" step="0.1" min="0.1" max="1.0" class="inspector-input" value="' + (cs.opacity !== undefined ? cs.opacity : '') + '" oninput="updateActiveSecSetting(\'opacity\', this.value)" placeholder="1.0">' +
                 '</div>';
 
-        // 6. Visibilidade Responsiva da Seção (Desktop, Tablet, Mobile)
+        // 6. Visibilidade Responsiva por Elemento da Seção (4 Resoluções: Desktop, 1024px, 768px, 375px)
+        var secIdxForVis = state.sections.indexOf(curSec);
+        if (secIdxForVis === -1) secIdxForVis = activeSecIdx || 0;
+        var elemRowsHtml = '';
+        var colsData = curSec.columns_data || {};
+        var presetInfoVis = presets[curSec.layout_preset] || presets['1_col'];
+        var numColsVis = presetInfoVis ? presetInfoVis.columns : 3;
+
+        for (var cIdx = 0; cIdx < numColsVis; cIdx++) {
+            var bList = colsData[cIdx] || [];
+            bList.forEach(function(blk, bIdx) {
+                if (!blk) return;
+                var bMeta = blocksCatalog.find(function(x) { return x.type === blk.type; }) || { name: blk.type, icon: '📦' };
+                var bName = blk.custom_name || bMeta.name;
+                var d = blk.data || {};
+                var isSelBlk = (selectedBlockCoord && selectedBlockCoord.sec === secIdxForVis && selectedBlockCoord.col === cIdx && selectedBlockCoord.blockIdx === bIdx);
+                var rowBorder = isSelBlk ? 'border:1px solid var(--primary); background:rgba(56,189,248,0.1);' : 'border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.25);';
+
+                var resButtons = [
+                    { key: 'hide_desktop', label: '🖥️ Desktop', active: !!d.hide_desktop },
+                    { key: 'hide_laptop',  label: '💻 1024px',  active: !!(d.hide_laptop || d.hide_1024) },
+                    { key: 'hide_tablet',  label: '📱 768px',   active: !!(d.hide_tablet || d.hide_768) },
+                    { key: 'hide_mobile',  label: '📲 375px',   active: !!(d.hide_mobile || d.hide_375) }
+                ].map(function(r) {
+                    var btnStyle = r.active
+                        ? 'background:rgba(239,68,68,0.22); border:1px solid #ef4444; color:#fca5a5; font-weight:700; text-decoration:line-through;'
+                        : 'background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7;';
+                    var titleTip = r.active
+                        ? 'Oculto em ' + r.label + ' (Clique para exibir)'
+                        : 'Visível em ' + r.label + ' (Clique para ocultar apenas este elemento)';
+                    return '<button type="button" onclick="toggleElementResolutionVisibility(' + secIdxForVis + ',' + cIdx + ',' + bIdx + ',\'' + r.key + '\',\'' + escapeAttr(r.label) + '\')" title="' + escapeAttr(titleTip) + '" style="font-size:10px; padding:3px 6px; border-radius:4px; cursor:pointer; ' + btnStyle + '">' +
+                           (r.active ? '🚫 ' : '👁️ ') + r.label.replace(/^[^\s]+\s/, '') +
+                           '</button>';
+                }).join('');
+
+                elemRowsHtml += '<div style="padding:7px 8px; border-radius:6px; margin-bottom:6px; ' + rowBorder + '">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">' +
+                    '<span style="font-size:11px; font-weight:700; color:#fff; cursor:pointer;" onclick="selectBlock(' + secIdxForVis + ',' + cIdx + ',' + bIdx + ')">' + bMeta.icon + ' ' + escapeHtml(bName) + ' <span style="font-size:9px; color:var(--text-muted); font-weight:400;">(Célula ' + (cIdx + 1) + ')</span></span>' +
+                    (isSelBlk ? '<span style="font-size:9px; color:var(--primary); font-weight:800;">SELECIONADO</span>' : '') +
+                    '</div>' +
+                    '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;">' + resButtons + '</div>' +
+                    '</div>';
+            });
+        }
+
+        if (!elemRowsHtml) {
+            elemRowsHtml = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:8px;">Nenhum elemento nesta seção ainda. Adicione blocos para configurar sua visibilidade por resolução.</div>';
+        }
+
         html += '<div class="inspector-field" style="margin-top:12px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
-                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:8px;">📱 Visibilidade Responsiva da Seção</label>' +
-                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer;">' +
-                '<input type="checkbox" ' + (cs.hide_desktop ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_desktop\', this.checked)"> 🖥️ Ocultar no Desktop</label>' +
-                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer;">' +
-                '<input type="checkbox" ' + (cs.hide_tablet ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_tablet\', this.checked)"> 📱 Ocultar no Tablet (≤ 900px)</label>' +
-                '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer;">' +
-                '<input type="checkbox" ' + (cs.hide_mobile ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_mobile\', this.checked)"> 📲 Ocultar no Celular (≤ 640px)</label>' +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">📱 Visibilidade Responsiva por Elemento (4 Resoluções)</label>' +
+                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Clique na resolução para <strong>ocultar apenas o elemento desejado</strong> (ex: Logo, Título ou Botão), mantendo os demais elementos da seção visíveis:</div>' +
+                elemRowsHtml +
                 '</div>';
 
         container.innerHTML = html;
+    }
+
+    function toggleElementResolutionVisibility(secIdx, colIdx, blockIdx, resKey, resLabel) {
+        var sec = state.sections[secIdx];
+        if (!sec || !sec.columns_data || !sec.columns_data[colIdx] || !sec.columns_data[colIdx][blockIdx]) return;
+        var blk = sec.columns_data[colIdx][blockIdx];
+        if (!blk.data) blk.data = {};
+        blk.data[resKey] = !blk.data[resKey];
+        var bMeta = blocksCatalog.find(function(x) { return x.type === blk.type; }) || { name: blk.type };
+        var bName = blk.custom_name || bMeta.name;
+        renderCanvas();
+        renderSectionStyleControls(sec);
+        if (selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx) {
+            renderInspector();
+        }
+        showToast(blk.data[resKey]
+            ? ('🚫 "' + bName + '" ocultado em ' + resLabel + ' (apenas este elemento)')
+            : ('👁️ "' + bName + '" visível novamente em ' + resLabel));
     }
 
     function renderSectionTokenColorPicker(label, key, curVal, defaultToken) {
@@ -1839,11 +1927,33 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; }) || { name: block.type, icon: '📦' };
         var blockDisplayName = block.custom_name || bMeta.name;
+        var bData = block.data || {};
+        var hiddenBadges = [];
+        if (bData.hide_desktop) hiddenBadges.push('Desktop');
+        if (bData.hide_laptop || bData.hide_1024) hiddenBadges.push('1024px');
+        if (bData.hide_tablet || bData.hide_768) hiddenBadges.push('768px');
+        if (bData.hide_mobile || bData.hide_375) hiddenBadges.push('375px');
+
+        var isHiddenOnCurrentDevice =
+            (currentDevice === '100%' && !!bData.hide_desktop) ||
+            (currentDevice === '1024px' && !!(bData.hide_laptop || bData.hide_1024)) ||
+            (currentDevice === '768px' && !!(bData.hide_tablet || bData.hide_768)) ||
+            (currentDevice === '375px' && !!(bData.hide_mobile || bData.hide_375));
+
+        if (isHiddenOnCurrentDevice) {
+            card.style.opacity = '0.45';
+            card.style.border = '1px dashed #ef4444';
+        }
+
+        var visBadgeHtml = '';
+        if (hiddenBadges.length > 0) {
+            visBadgeHtml = '<span style="font-size:9px; padding:1px 5px; border-radius:4px; background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-weight:700; margin-left:4px;" title="Elemento oculto em: ' + escapeAttr(hiddenBadges.join(', ')) + '">🚫 ' + escapeHtml(hiddenBadges.join(' · ')) + '</span>';
+        }
 
         var bHeader = document.createElement('div');
         bHeader.className = 'canvas-block-header';
-        bHeader.innerHTML = '<span ondblclick="startInlineRenameBlock(' + secIdx + ',' + colIdx + ',' + blockIdx + ', this, event)" title="Duplo clique para renomear" style="cursor:pointer; display:flex; align-items:center; gap:6px;">' +
-            '<span>' + bMeta.icon + '</span> <strong>' + escapeHtml(blockDisplayName) + '</strong>' +
+        bHeader.innerHTML = '<span ondblclick="startInlineRenameBlock(' + secIdx + ',' + colIdx + ',' + blockIdx + ', this, event)" title="Duplo clique para renomear" style="cursor:pointer; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+            '<span>' + bMeta.icon + '</span> <strong>' + escapeHtml(blockDisplayName) + '</strong>' + visBadgeHtml +
             '</span>' +
             '<div class="canvas-block-actions">' +
             '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',-1,event)" title="Subir">▲</button>' +
@@ -1978,6 +2088,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         renderCanvas();
         renderInspector();
         renderLayersTree();
+        var curSec = getSelectedSection();
+        if (curSec) {
+            renderSectionStyleControls(curSec);
+        }
 
         // Se a janela flutuante estiver aberta, atualiza a barra lateral para o Inspetor
         // permitindo que o usuário edite sem perder o popup flutuante de camadas!
@@ -2700,12 +2814,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         // OPACIDADE COM SLIDER E STEPPERS
         html += renderElemOpacityControl(block);
 
-        // VISIBILIDADE RESPONSIVA DO ELEMENTO (DESKTOP, TABLET, CELULAR)
+        // VISIBILIDADE RESPONSIVA DO ELEMENTO (4 RESOLUÇÕES: DESKTOP, 1024px, 768px, 375px)
         html += '<div class="inspector-field" style="margin-top:14px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
-                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:8px;">📱 Visibilidade Responsiva (Ocultar por Dispositivo)</label>' +
-                inspectorCheckbox('🖥️ Ocultar no Desktop', 'hide_desktop', !!block.data.hide_desktop) +
-                inspectorCheckbox('📱 Ocultar no Tablet (≤ 900px)', 'hide_tablet', !!block.data.hide_tablet) +
-                inspectorCheckbox('📲 Ocultar no Celular (≤ 640px)', 'hide_mobile', !!block.data.hide_mobile) +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">📱 Visibilidade Responsiva do Elemento (4 Resoluções)</label>' +
+                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Oculta <strong>apenas este elemento (' + escapeHtml(block.custom_name || bMeta.name) + ')</strong> nas resoluções marcadas, mantendo os demais elementos da seção visíveis:</div>' +
+                inspectorCheckbox('🖥️ Ocultar no Desktop (100%)', 'hide_desktop', !!block.data.hide_desktop) +
+                inspectorCheckbox('💻 Ocultar em 1024px (Laptop)', 'hide_laptop', !!(block.data.hide_laptop || block.data.hide_1024)) +
+                inspectorCheckbox('📱 Ocultar em 768px (Tablet)', 'hide_tablet', !!(block.data.hide_tablet || block.data.hide_768)) +
+                inspectorCheckbox('📲 Ocultar em 375px (Mobile)', 'hide_mobile', !!(block.data.hide_mobile || block.data.hide_375)) +
                 '</div>';
 
         html += '</div>';
@@ -3159,8 +3275,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         delete block.data.box_shadow;
         delete block.data.opacity;
         delete block.data.hide_desktop;
+        delete block.data.hide_laptop;
+        delete block.data.hide_1024;
         delete block.data.hide_tablet;
+        delete block.data.hide_768;
         delete block.data.hide_mobile;
+        delete block.data.hide_375;
 
         renderCanvas();
         renderInspector();
@@ -3787,6 +3907,21 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
                '</div>';
     }
 
+    function inspectorInput(label, key, val, type) {
+        var inputType = type || 'text';
+        return '<div class="inspector-field">' +
+               '<label class="inspector-label">' + label + '</label>' +
+               '<input type="' + escapeAttr(inputType) + '" class="inspector-input" value="' + escapeAttr(val) + '" oninput="updateBlockProp(\'' + key + '\', this.value)">' +
+               '</div>';
+    }
+
+    function inspectorCheckbox(label, key, isChecked) {
+        return '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer; user-select:none;">' +
+               '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' onchange="updateBlockProp(\'' + key + '\', this.checked); renderInspector(); var s = getSelectedSection(); if (s) renderSectionStyleControls(s);"> ' +
+               label +
+               '</label>';
+    }
+
     function inspectorTextarea(label, key, val) {
         return '<div class="inspector-field">' +
                '<label class="inspector-label">' + label + '</label>' +
@@ -4056,6 +4191,7 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         sec.columns_data[colIdx].splice(blockIdx + 1, 0, item);
         renderCanvas();
         renderLayersTree();
+        renderSectionStyleControls(sec);
         showToast('Bloco duplicado!');
     }
 
@@ -4069,6 +4205,7 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             renderCanvas();
             renderInspector();
             renderLayersTree();
+            renderSectionStyleControls(sec);
             showToast('Bloco removido.');
         }
     }

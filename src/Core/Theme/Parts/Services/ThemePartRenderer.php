@@ -249,23 +249,32 @@ class ThemePartRenderer implements ThemePartRendererInterface
 .ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }
 .ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }
 .ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }
-/* Visibilidade Responsiva (Frontend Media Queries & Simulador Studio) */
-@media (min-width: 901px) {
-    body:not(.ds-is-tablet):not(.ds-is-mobile):not(.ds-mobile-mode) .ds-hide-desktop { display: none !important; }
+/* Visibilidade Responsiva de Elementos (4 Resoluções: Desktop, 1024px, 768px, 375px) */
+@media (min-width: 1025px) {
+    body:not(.ds-live-preview):not(.ds-is-laptop):not(.ds-is-tablet):not(.ds-is-mobile):not(.ds-mobile-mode) .ds-hide-desktop { display: none !important; }
 }
-@media (min-width: 641px) and (max-width: 900px) {
-    .ds-hide-tablet { display: none !important; }
+@media (min-width: 769px) and (max-width: 1024px) {
+    body:not(.ds-live-preview) .ds-hide-laptop { display: none !important; }
 }
-@media (max-width: 640px) {
-    .ds-hide-mobile { display: none !important; }
+@media (min-width: 481px) and (max-width: 768px) {
+    body:not(.ds-live-preview) .ds-hide-tablet { display: none !important; }
 }
+@media (max-width: 480px) {
+    body:not(.ds-live-preview) .ds-hide-mobile { display: none !important; }
+}
+.ds-desktop-mode .ds-hide-desktop,
+.ds-device-desktop .ds-hide-desktop,
 .ds-device-1440 .ds-hide-desktop,
 .ds-is-desktop .ds-hide-desktop { display: none !important; }
+.ds-laptop-mode .ds-hide-laptop,
+.ds-device-1024 .ds-hide-laptop,
+.ds-is-laptop .ds-hide-laptop { display: none !important; }
+.ds-tablet-mode .ds-hide-tablet,
 .ds-device-768 .ds-hide-tablet,
 .ds-is-tablet .ds-hide-tablet { display: none !important; }
+.ds-mobile-mode .ds-hide-mobile,
 .ds-device-375 .ds-hide-mobile,
-.ds-is-mobile .ds-hide-mobile,
-.ds-mobile-mode .ds-hide-mobile { display: none !important; }
+.ds-is-mobile .ds-hide-mobile { display: none !important; }
 CSS;
     }
 

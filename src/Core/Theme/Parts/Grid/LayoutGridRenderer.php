@@ -95,8 +95,7 @@ class LayoutGridRenderer implements LayoutGridInterface
         }
 
         $customClass = preg_replace('/[^a-zA-Z0-9_\-\s]/', '', (string)($settings['custom_class'] ?? '')) ?? '';
-        $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($settings);
-        $combinedClasses = trim("ds-section-wrapper {$customClass} {$visibilityClasses}");
+        $combinedClasses = trim("ds-section-wrapper {$customClass}");
 
         // Estilos Visuais Avançados da Seção (Bordas, Sombras, Opacidade)
         $borderVal = !empty($settings['border']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['border']) : '';
@@ -148,18 +147,24 @@ class LayoutGridRenderer implements LayoutGridInterface
             box-sizing: border-box;
         }
         @media (max-width: 900px) {
-            #{$sectionId} .ds-section-grid {
+            body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
                 grid-template-columns: {$tabletTemplate} !important;
                 gap: 16px !important;
             }
         }
         @media (max-width: 640px) {
-            #{$sectionId} .ds-section-grid {
+            body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
                 grid-template-columns: {$mobileTemplate} !important;
                 gap: 12px !important;
                 padding-left: 12px !important;
                 padding-right: 12px !important;
             }
+        }
+        .ds-tablet-mode #{$sectionId} .ds-section-grid,
+        .ds-is-tablet #{$sectionId} .ds-section-grid,
+        .ds-device-768 #{$sectionId} .ds-section-grid {
+            grid-template-columns: {$tabletTemplate} !important;
+            gap: 16px !important;
         }
         .ds-mobile-mode #{$sectionId} .ds-section-grid,
         .ds-is-mobile #{$sectionId} .ds-section-grid,

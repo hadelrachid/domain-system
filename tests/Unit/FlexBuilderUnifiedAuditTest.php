@@ -139,9 +139,9 @@ class FlexBuilderUnifiedAuditTest extends TestCase
     }
 
     /**
-     * 3. LayoutGridRenderer higieniza CSS via ElementStyleRendererInterface.
+     * 3. LayoutGridRenderer higieniza CSS via ElementStyleRendererInterface e NUNCA oculta o container da seção inteira.
      */
-    public function testLayoutGridRendererSanitizesCssValuesAndAppliesResponsiveClasses(): void
+    public function testLayoutGridRendererSanitizesCssValuesAndNeverHidesSectionContainer(): void
     {
         $grid = new LayoutGridRenderer();
         $html = $grid->renderSection('1_col', [0 => '<p>Coluna</p>'], [
@@ -149,18 +149,21 @@ class FlexBuilderUnifiedAuditTest extends TestCase
             'padding'      => '20px; expression(alert(1))',
             'hide_mobile'  => true,
             'hide_tablet'  => true,
-            'hide_desktop' => false,
+            'hide_laptop'  => true,
+            'hide_desktop' => true,
         ]);
 
         $this->assertStringNotContainsString('<script>', $html);
         $this->assertStringNotContainsString('</style><script>', $html);
-        $this->assertStringContainsString('ds-hide-mobile', $html);
-        $this->assertStringContainsString('ds-hide-tablet', $html);
+        // O container da seção jamais deve receber ds-hide-*; apenas elementos individuais podem ser ocultados
+        $this->assertStringNotContainsString('ds-hide-mobile', $html);
+        $this->assertStringNotContainsString('ds-hide-tablet', $html);
+        $this->assertStringNotContainsString('ds-hide-laptop', $html);
         $this->assertStringNotContainsString('ds-hide-desktop', $html);
     }
 
     /**
-     * 4. Paridade entre ThemePartPreviewService e ThemePartRenderer (getAllowedPartTypes e Visibilidade Responsiva).
+     * 4. Paridade entre ThemePartPreviewService e ThemePartRenderer (getAllowedPartTypes e Visibilidade Responsiva de 4 Resoluções por Elemento).
      */
     public function testPreviewServiceAndProductionRendererEnforceIdenticalBlockContractsAndVisibility(): void
     {
@@ -174,7 +177,7 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
         $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
 
-        // Header tentando renderizar 'post_cards_grid' (permitido apenas em 'section') e 'logo' (universal) com hide_mobile
+        // Header com 2 elementos válidos ('logo' oculto em mobile/tablet e 'heading' oculto em laptop 1024px) e 1 inválido ('post_cards_grid')
         $payload = [
             'id'            => 'part_header_parity',
             'type'          => ThemePartInterface::TYPE_HEADER,
@@ -187,7 +190,8 @@ class FlexBuilderUnifiedAuditTest extends TestCase
                     'container_settings' => ['hide_tablet' => true],
                     'columns_data'       => [
                         0 => [
-                            ['type' => 'logo', 'data' => ['brand_text' => 'MinhaMarca', 'hide_mobile' => true]],
+                            ['type' => 'logo', 'data' => ['text' => 'MinhaMarca', 'hide_mobile' => true, 'hide_tablet' => true]],
+                            ['type' => 'heading', 'data' => ['text' => 'Título Visível no Mobile', 'hide_laptop' => true]],
                             ['type' => 'post_cards_grid', 'data' => ['columns' => 3]],
                         ],
                     ],
@@ -202,13 +206,15 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $prodHtml = $renderer->renderHeader('default');
         $previewHtml = $previewService->renderPreview($payload);
 
-        // Ambos devem conter o logo com classe ds-hide-mobile e a seção com ds-hide-tablet
+        // Ambos devem conter os elementos individuais com suas classes de resolução sem ocultar a seção
         $this->assertStringContainsString('MinhaMarca', $prodHtml);
         $this->assertStringContainsString('MinhaMarca', $previewHtml);
-        $this->assertStringContainsString('ds-hide-mobile', $prodHtml);
-        $this->assertStringContainsString('ds-hide-mobile', $previewHtml);
-        $this->assertStringContainsString('ds-hide-tablet', $prodHtml);
-        $this->assertStringContainsString('ds-hide-tablet', $previewHtml);
+        $this->assertStringContainsString('Título Visível no Mobile', $prodHtml);
+        $this->assertStringContainsString('ds-element-wrapper ds-hide-tablet ds-hide-mobile', $prodHtml);
+        $this->assertStringContainsString('ds-element-wrapper ds-hide-tablet ds-hide-mobile', $previewHtml);
+        $this->assertStringContainsString('ds-element-wrapper ds-hide-laptop', $prodHtml);
+        $this->assertStringContainsString('ds-element-wrapper ds-hide-laptop', $previewHtml);
+        $this->assertStringNotContainsString('ds-section-wrapper ds-hide-', $prodHtml);
 
         // Ambos devem bloquear post_cards_grid dentro de um Header
         $this->assertStringNotContainsString('ds-post-cards-grid', $prodHtml);

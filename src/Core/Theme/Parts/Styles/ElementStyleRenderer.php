@@ -116,10 +116,16 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         if (!empty($data['hide_desktop']) && $data['hide_desktop'] !== 'false' && $data['hide_desktop'] !== '0') {
             $classes[] = 'ds-hide-desktop';
         }
-        if (!empty($data['hide_tablet']) && $data['hide_tablet'] !== 'false' && $data['hide_tablet'] !== '0') {
+        $hideLaptop = $data['hide_laptop'] ?? $data['hide_1024'] ?? false;
+        if (!empty($hideLaptop) && $hideLaptop !== 'false' && $hideLaptop !== '0') {
+            $classes[] = 'ds-hide-laptop';
+        }
+        $hideTablet = $data['hide_tablet'] ?? $data['hide_768'] ?? false;
+        if (!empty($hideTablet) && $hideTablet !== 'false' && $hideTablet !== '0') {
             $classes[] = 'ds-hide-tablet';
         }
-        if (!empty($data['hide_mobile']) && $data['hide_mobile'] !== 'false' && $data['hide_mobile'] !== '0') {
+        $hideMobile = $data['hide_mobile'] ?? $data['hide_375'] ?? false;
+        if (!empty($hideMobile) && $hideMobile !== 'false' && $hideMobile !== '0') {
             $classes[] = 'ds-hide-mobile';
         }
 
