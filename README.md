@@ -4,6 +4,8 @@ Plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas
 
 O objetivo do projeto é oferecer uma alternativa enxuta e desacoplada aos CMSs tradicionais, mantendo consumo reduzido de memória (~5 MB de RAM no motor Zend em requisições típicas) e um espaço em disco de aproximadamente 30 MB descompactado.
 
+> **Status do Projeto:** O Domain System está em ciclo ativo de desenvolvimento, testes em produção e melhorias contínuas. Novas refatorações, otimizações e correções são aplicadas regularmente com base em testes automatizados e no uso prático do ecossistema.
+
 ---
 
 [🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)

@@ -6,7 +6,7 @@
 
 O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas, projetada sob os princípios de **Clean Architecture**, **SOLID** e **Inversão de Dependência (DIP)**.
 
-O sistema opera com um núcleo enxuto (~30 MB em disco e ~5 MB de RAM no motor Zend), onde as funcionalidades de negócio são desacopladas em módulos independentes.
+O sistema opera com um núcleo enxuto (~30 MB em disco e ~5 MB de RAM no motor Zend), onde as funcionalidades de negócio são desacopladas em módulos independentes. O projeto encontra-se em ciclo ativo de desenvolvimento e melhorias contínuas.
 
 ---
 
