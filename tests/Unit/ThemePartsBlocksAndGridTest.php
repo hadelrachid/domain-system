@@ -58,7 +58,9 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $this->assertStringContainsString('Logo', $html);
         $this->assertStringContainsString('Menu', $html);
         $this->assertStringContainsString('CTA', $html);
-        $this->assertStringContainsString('@media (max-width: 640px)', $html);
+        $this->assertStringContainsString('@media (max-width: 480px)', $html);
+        $this->assertStringContainsString('@media (min-width: 481px) and (max-width: 768px)', $html);
+        $this->assertStringContainsString('@media (min-width: 769px) and (max-width: 1024px)', $html);
     }
 
     public function testDefaultBlockRegistryFactoryContainsAll12Blocks(): void

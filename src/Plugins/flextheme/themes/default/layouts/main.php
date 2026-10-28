@@ -293,8 +293,9 @@ $seo->setCanonical($canonicalUrl)
             ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
             : null;
         $themeFolder = basename($themeDir);
-        if ($partRenderer !== null) {
-            echo $partRenderer->renderHeader($themeFolder, get_defined_vars());
+        $customHeader = ($partRenderer !== null) ? $partRenderer->renderHeader($themeFolder, get_defined_vars()) : '';
+        if (trim($customHeader) !== '') {
+            echo $customHeader;
         } else {
             require $themeDir . '/partials/header.php';
         }
@@ -305,8 +306,9 @@ $seo->setCanonical($canonicalUrl)
     </main>
 
     <?php 
-        if ($partRenderer !== null) {
-            echo $partRenderer->renderFooter($themeFolder, get_defined_vars());
+        $customFooter = ($partRenderer !== null) ? $partRenderer->renderFooter($themeFolder, get_defined_vars()) : '';
+        if (trim($customFooter) !== '') {
+            echo $customFooter;
         } else {
             require $themeDir . '/partials/footer.php';
         }

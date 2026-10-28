@@ -4271,6 +4271,7 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             columns_data: state.columns_data,
             sections: state.sections,
             mobile_toggle_style: state.mobile_toggle_style || 'classic',
+            mobile_toggle_align: state.mobile_toggle_align || 'right',
             is_default: !!state.is_default,
             assigned_theme: assignedTheme,
             assigned_template: document.getElementById('setting_assigned_template') ? document.getElementById('setting_assigned_template').value : ''

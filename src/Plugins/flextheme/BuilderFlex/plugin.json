@@ -2,8 +2,8 @@
     "name": "builder_flex",
     "title": "Builder Flex (FSE)",
     "description": "Motor visual de Full Site Editing (FSE). Construtor de blocos, grids, headers e footers via drag-and-drop.",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "author": "Domain System",
     "core": false,
-    "os_version": "2.4"
+    "os_version": "2.5"
 }

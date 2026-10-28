@@ -104,11 +104,33 @@ class ThemePartManagementService
         $title = trim((string)($input['title'] ?? 'Sem Título'));
         $preset = (string)($input['layout_preset'] ?? '1_col');
         $settings = (array)($input['container_settings'] ?? []);
+        unset($settings['hide_desktop'], $settings['hide_laptop'], $settings['hide_tablet'], $settings['hide_mobile']);
         $columnsData = (array)($input['columns_data'] ?? []);
         $mobileToggleStyle = (string)($input['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
         $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
         $isDefault = !empty($input['is_default']);
         $sections = (array)($input['sections'] ?? []);
+        foreach ($sections as &$sec) {
+            if (is_array($sec)) {
+                if (isset($sec['container_settings']) && is_array($sec['container_settings'])) {
+                    unset(
+                        $sec['container_settings']['hide_desktop'],
+                        $sec['container_settings']['hide_laptop'],
+                        $sec['container_settings']['hide_tablet'],
+                        $sec['container_settings']['hide_mobile']
+                    );
+                }
+                if (isset($sec['settings']) && is_array($sec['settings'])) {
+                    unset(
+                        $sec['settings']['hide_desktop'],
+                        $sec['settings']['hide_laptop'],
+                        $sec['settings']['hide_tablet'],
+                        $sec['settings']['hide_mobile']
+                    );
+                }
+            }
+        }
+        unset($sec);
 
         $part = new ThemePart(
             $id,

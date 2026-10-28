@@ -54,7 +54,10 @@ class ThemeController
                 $baseUrl = $this->urlResolver->getBaseUrl();
                 $siteName = 'Domain-System OS';
                 require $themePath;
-                $html = ob_get_clean();
+                $html = (string)ob_get_clean();
+                if ($this->shortcodes !== null) {
+                    $html = $this->shortcodes->parse($html);
+                }
                 return new Response($html);
             }
         }
@@ -159,10 +162,10 @@ HTML;
 
     public function renderDoc(Request $request, string $slug): Response
     {
-        $siteState = new \DomainSystem\Core\Theme\EnvSiteState();
+        $siteState = $this->siteState;
         $themeName = $siteState->getActiveTheme();
-        $baseRoot = dirname(__DIR__, 4);
-        $resolver = new \DomainSystem\Core\Theme\SafeThemeResolver([
+        $baseRoot = $this->baseRoot;
+        $resolver = new SafeThemeResolver([
             $baseRoot . '/themes',
             __DIR__ . '/../themes'
         ]);
