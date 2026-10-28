@@ -10,6 +10,8 @@ class HelpersTest extends TestCase
     {
         // Define APP_KEY válida de 32 bytes para o teste
         putenv('APP_KEY=12345678901234567890123456789012');
+        $_ENV['APP_KEY'] = '12345678901234567890123456789012';
+        $_SERVER['APP_KEY'] = '12345678901234567890123456789012';
         
         // Garante que os helpers estão carregados
         require_once __DIR__ . '/../../src/Core/helpers.php';
@@ -44,11 +46,12 @@ class HelpersTest extends TestCase
 
     public function testBackwardCompatibilityCbc()
     {
-        $key = getenv('APP_KEY');
+        $key = getenv('APP_KEY') ?: '12345678901234567890123456789012';
         $plaintext = "Dados legado em CBC";
         
         // Simula a criação de um payload legado em AES-256-CBC
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-256-CBC'));
+        $ivLen = openssl_cipher_iv_length('AES-256-CBC');
+        $iv = openssl_random_pseudo_bytes($ivLen);
         $ciphertext = openssl_encrypt($plaintext, 'AES-256-CBC', $key, 0, $iv);
         $legacyPayload = base64_encode($iv . '::' . $ciphertext);
         
