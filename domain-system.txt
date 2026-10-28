@@ -1,7 +1,7 @@
 /* ====================================================================== */
 /* PROJETO: domain-system
-/* DATA DE GERAÇÃO: 2026-10-28 19:08:25
-/* TOTAL DE ARQUIVOS CONSOLIDADOS: 605
+/* DATA DE GERAÇÃO: 2026-10-28 19:11:00
+/* TOTAL DE ARQUIVOS CONSOLIDADOS: 602
 /* FERRAMENTA: Update-Project (Codebase Context Packer)
 /* FINALIDADE: Auditoria de código, revisão estática e contexto para IAs (LLMs)
 /* ====================================================================== */
@@ -270,10 +270,6 @@
 │   │   │   ├── 🐘 PasswordAnalyzer.php
 │   │   │   ├── 🐘 PasswordPolicy.php
 │   │   │   └── 🐘 SessionManager.php
-│   │   ├── 📁 Storage/
-│   │   │   ├── 🐘 AtomicJsonStore.php
-│   │   │   ├── 🐘 LocalPublicStorage.php
-│   │   │   └── 🐘 StateSnapshotManager.php
 │   │   ├── 📁 Theme/
 │   │   │   ├── 📁 Parts/
 │   │   │   │   ├── 📁 Blocks/
@@ -506,6 +502,7 @@
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 analytics/
+│   │   │   ├── 📁 assets/
 │   │   │   ├── 📁 Controllers/
 │   │   │   │   └── 🐘 TrackerController.php
 │   │   │   ├── 📁 Widgets/
@@ -638,6 +635,7 @@
 │   │   │   │       ├── 📁 pages/
 │   │   │   │       │   ├── 📁 architecture/
 │   │   │   │       │   │   └── 🐘 01-ciclo-de-confianca-verificavel.php
+│   │   │   │       │   ├── 📁 modulo-01-estrutura-de-dados/
 │   │   │   │       │   ├── 📁 modulo-2-estrutura-de-dados/
 │   │   │   │       │   │   └── 🐘 aula-1.php
 │   │   │   │       │   ├── 📁 tutoriais/
@@ -813,16 +811,19 @@
 │       │   ├── 📋 plugin.json
 │       │   └── 🐘 Plugin.php
 │       ├── 📁 SystemAdmin/
+│       │   ├── 📁 Contracts/
 │       │   ├── 📁 Controllers/
 │       │   │   ├── 🐘 AclController.php
 │       │   │   ├── 🐘 AdminController.php
 │       │   │   ├── 🐘 DashboardController.php
 │       │   │   ├── 🐘 DevModeController.php
 │       │   │   └── 🐘 EmergencyController.php
+│       │   ├── 📁 Repositories/
 │       │   ├── 📁 views/
 │       │   │   └── 🐘 dev_mode_prompt.php
 │       │   ├── 📁 Widgets/
 │       │   │   └── 🐘 SystemWidgetProvider.php
+│       │   ├── 📁 Workspace/
 │       │   ├── 📋 plugin.json
 │       │   ├── 🐘 Plugin.php
 │       │   └── 📄 SystemAdmin.zip
@@ -863,6 +864,7 @@
 │   ├── 📄 .htaccess
 │   └── 📄 setup.token
 ├── 📁 tools/
+│   ├── 📁 debug/
 │   ├── 📁 release/
 │   │   └── 🐘 ReleaseBuilder.php
 │   └── 🐘 build-release.php
@@ -882,6 +884,8 @@
 ├── 📄 composer.lock
 ├── 📄 composer.phar
 ├── 📝 DEVELOPER_GUIDE.md
+├── 📝 domain-system.txt
+├── 📄 domain-system.zip
 ├── 📄 flextheme-update.zip
 ├── 📄 LICENSE
 ├── 🐘 os-cli.php
@@ -17660,443 +17664,6 @@ class SessionManager implements SessionManagerInterface
     public function regenerate(): void
     {
         session_regenerate_id(true);
-    }
-}
-
-
-/* ---------------------------------------------------------------------- */
-// Arquivo: domain-system/src/Core/Storage/AtomicJsonStore.php
-/* ---------------------------------------------------------------------- */
-
-<?php
-
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Storage;
-
-use DomainSystem\Core\Contracts\JsonStoreInterface;
-
-/**
- * Implementação atômica de leitura/gravação JSON com proteção contra concorrência (Pilar 1 v2.4).
- *
- * Previne truncamento e corrupção de estado em requisições simultâneas usando:
- * - Leitura com lock compartilhado (LOCK_SH)
- * - Escrita atômica em arquivo temporário + LOCK_EX + rename()
- * - Mutação transacional via arquivo de lock dedicado (.lock)
- */
-class AtomicJsonStore implements JsonStoreInterface
-{
-    public function read(string $filePath, array $default = []): array
-    {
-        if (!is_file($filePath)) {
-            return $default;
-        }
-
-        $fp = @fopen($filePath, 'rb');
-        if ($fp === false) {
-            return $default;
-        }
-
-        $content = '';
-        if (@flock($fp, LOCK_SH)) {
-            $content = (string)stream_get_contents($fp);
-            @flock($fp, LOCK_UN);
-        } else {
-            $content = (string)stream_get_contents($fp);
-        }
-        @fclose($fp);
-
-        if (trim($content) === '') {
-            return $default;
-        }
-
-        $decoded = json_decode($content, true);
-        return is_array($decoded) ? $decoded : $default;
-    }
-
-    public function write(string $filePath, array $data): bool
-    {
-        $dir = dirname($filePath);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json === false) {
-            return false;
-        }
-
-        $tmpFile = $filePath . '.tmp.' . bin2hex(random_bytes(4));
-        if (@file_put_contents($tmpFile, $json, LOCK_EX) === false) {
-            return false;
-        }
-
-        if (!@rename($tmpFile, $filePath)) {
-            $ok = @file_put_contents($filePath, $json, LOCK_EX) !== false;
-            @unlink($tmpFile);
-            return $ok;
-        }
-
-        return true;
-    }
-
-    public function update(string $filePath, callable $mutator, array $default = []): array
-    {
-        $dir = dirname($filePath);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-
-        $lockFile = $filePath . '.lock';
-        $lockFp = @fopen($lockFile, 'cb');
-
-        if ($lockFp !== false && @flock($lockFp, LOCK_EX)) {
-            try {
-                $current = $this->read($filePath, $default);
-                $updated = $mutator($current);
-                if (!is_array($updated)) {
-                    $updated = $default;
-                }
-                $this->write($filePath, $updated);
-                return $updated;
-            } finally {
-                @flock($lockFp, LOCK_UN);
-                @fclose($lockFp);
-            }
-        }
-
-        if ($lockFp !== false) {
-            @fclose($lockFp);
-        }
-
-        $current = $this->read($filePath, $default);
-        $updated = $mutator($current);
-        if (!is_array($updated)) {
-            $updated = $default;
-        }
-        $this->write($filePath, $updated);
-        return $updated;
-    }
-}
-
-
-/* ---------------------------------------------------------------------- */
-// Arquivo: domain-system/src/Core/Storage/LocalPublicStorage.php
-/* ---------------------------------------------------------------------- */
-
-<?php
-
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Storage;
-
-use DomainSystem\Core\Contracts\PublicStorageInterface;
-use InvalidArgumentException;
-use RuntimeException;
-
-/**
- * Implementação local e agnóstica do armazenamento público.
- *
- * Resolve dinamicamente a raiz de arquivos e URLs web sem acoplar
- * o sistema ou plugins a servidores específicos (XAMPP, Apache, Nginx, Hostinger, etc).
- */
-class LocalPublicStorage implements PublicStorageInterface
-{
-    private string $basePath;
-    /** @var callable|string */
-    private $baseUrlProvider;
-    private string $uploadSubdir;
-
-    public function __construct(
-        string $basePath,
-        callable|string $baseUrlProvider = '',
-        string $uploadSubdir = 'uploads'
-    ) {
-        $this->basePath = rtrim($basePath, '/\\');
-        $this->baseUrlProvider = $baseUrlProvider;
-        $this->uploadSubdir = trim($uploadSubdir, '/\\');
-    }
-
-    public function getUploadPath(string $subpath = ''): string
-    {
-        $cleanSubpath = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $subpath), DIRECTORY_SEPARATOR);
-        $this->assertSafePath($cleanSubpath);
-
-        $normalizedUploads = $this->uploadSubdir . DIRECTORY_SEPARATOR;
-        if (str_starts_with($cleanSubpath, $normalizedUploads)) {
-            $cleanSubpath = substr($cleanSubpath, strlen($normalizedUploads));
-        }
-
-        $publicDir = is_dir($this->basePath . DIRECTORY_SEPARATOR . 'public')
-            ? $this->basePath . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . $this->uploadSubdir
-            : $this->basePath . DIRECTORY_SEPARATOR . $this->uploadSubdir;
-
-        $target = $cleanSubpath === '' 
-            ? $publicDir 
-            : $publicDir . DIRECTORY_SEPARATOR . $cleanSubpath;
-
-        $dirToEnsure = (is_dir($target) || pathinfo($target, PATHINFO_EXTENSION) === '')
-            ? $target
-            : dirname($target);
-
-        if (!is_dir($dirToEnsure)) {
-            @mkdir($dirToEnsure, 0755, true);
-        }
-
-        return $target;
-    }
-
-    public function getPublicUrl(string $relativePath): string
-    {
-        $trimmed = trim($relativePath);
-        if ($trimmed === '') {
-            return '';
-        }
-
-        if (str_starts_with($trimmed, 'http://') || 
-            str_starts_with($trimmed, 'https://') || 
-            str_starts_with($trimmed, 'data:') || 
-            str_starts_with($trimmed, '//')) {
-            return $trimmed;
-        }
-
-        $baseUrl = is_callable($this->baseUrlProvider) 
-            ? (string)($this->baseUrlProvider)() 
-            : (string)$this->baseUrlProvider;
-
-        $baseUrl = rtrim($baseUrl, '/');
-        $cleanRelative = ltrim(str_replace('\\', '/', $trimmed), '/');
-
-        if (!str_starts_with($cleanRelative, $this->uploadSubdir . '/') && $cleanRelative !== $this->uploadSubdir) {
-            $cleanRelative = $this->uploadSubdir . '/' . $cleanRelative;
-        }
-
-        return $baseUrl !== '' ? $baseUrl . '/' . $cleanRelative : '/' . $cleanRelative;
-    }
-
-    public function put(string $relativePath, string $contents): string
-    {
-        $cleanRelative = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
-        $this->assertSafePath($cleanRelative);
-
-        $normalizedUploads = $this->uploadSubdir . DIRECTORY_SEPARATOR;
-        if (str_starts_with($cleanRelative, $normalizedUploads)) {
-            $cleanRelative = substr($cleanRelative, strlen($normalizedUploads));
-        }
-
-        $fullPath = $this->getUploadPath($cleanRelative);
-        $dir = dirname($fullPath);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-
-        if (@file_put_contents($fullPath, $contents) === false) {
-            throw new RuntimeException("Falha ao gravar arquivo no armazenamento público: {$fullPath}");
-        }
-
-        return $this->uploadSubdir . '/' . str_replace('\\', '/', $cleanRelative);
-    }
-
-    public function delete(string $relativePath): bool
-    {
-        $cleanRelative = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
-        $this->assertSafePath($cleanRelative);
-
-        $normalizedUploads = $this->uploadSubdir . DIRECTORY_SEPARATOR;
-        if (str_starts_with($cleanRelative, $normalizedUploads)) {
-            $cleanRelative = substr($cleanRelative, strlen($normalizedUploads));
-        }
-
-        $fullPath = $this->getUploadPath($cleanRelative);
-
-        $deleted = false;
-        if (file_exists($fullPath) && is_file($fullPath)) {
-            $deleted = @unlink($fullPath);
-        }
-
-        $legacyDir = $this->basePath . DIRECTORY_SEPARATOR . $this->uploadSubdir . DIRECTORY_SEPARATOR . $cleanRelative;
-        if ($legacyDir !== $fullPath && file_exists($legacyDir) && is_file($legacyDir)) {
-            @unlink($legacyDir);
-            $deleted = true;
-        }
-
-        return $deleted;
-    }
-
-    public function exists(string $relativePath): bool
-    {
-        $cleanRelative = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
-        $this->assertSafePath($cleanRelative);
-
-        $normalizedUploads = $this->uploadSubdir . DIRECTORY_SEPARATOR;
-        if (str_starts_with($cleanRelative, $normalizedUploads)) {
-            $cleanRelative = substr($cleanRelative, strlen($normalizedUploads));
-        }
-
-        $fullPath = $this->getUploadPath($cleanRelative);
-        return file_exists($fullPath) && is_file($fullPath);
-    }
-
-    private function assertSafePath(string $path): void
-    {
-        $normalized = str_replace('\\', '/', $path);
-        if (str_contains($normalized, '../') || str_contains($normalized, '/..') || $normalized === '..') {
-            throw new InvalidArgumentException("Tentativa de travessia de diretório detectada: {$path}");
-        }
-    }
-}
-
-
-/* ---------------------------------------------------------------------- */
-// Arquivo: domain-system/src/Core/Storage/StateSnapshotManager.php
-/* ---------------------------------------------------------------------- */
-
-<?php
-
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Storage;
-
-use DomainSystem\Core\Contracts\JsonStoreInterface;
-use InvalidArgumentException;
-
-/**
- * Gerenciador de Snapshots e Rollback 1-Clique do Estado do CockPit (Pilar 6 v2.4).
- *
- * Captura e restaura de forma atômica os arquivos vitais de estado:
- * - config/plugins.json
- * - config/disarmed.json
- * - database.sqlite (quando presente)
- */
-class StateSnapshotManager
-{
-    private string $basePath;
-    private string $snapshotsDir;
-    private JsonStoreInterface $jsonStore;
-
-    public function __construct(?string $basePath = null, JsonStoreInterface $jsonStore = new AtomicJsonStore())
-    {
-        $this->basePath = rtrim($basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 3)), '/\\');
-        $this->snapshotsDir = $this->basePath . '/storage/snapshots';
-        $this->jsonStore = $jsonStore;
-    }
-
-    /**
-     * Cria um novo snapshot do estado atual do sistema.
-     *
-     * @return array{id: string, label: string, created_at: string, files: array<int, string>}
-     */
-    public function createSnapshot(string $label = 'Snapshot Manual'): array
-    {
-        if (!is_dir($this->snapshotsDir)) {
-            @mkdir($this->snapshotsDir, 0755, true);
-            @file_put_contents($this->snapshotsDir . '/.htaccess', "Deny from all\n", LOCK_EX);
-        }
-
-        $id = 'snap_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3));
-        $targetDir = $this->snapshotsDir . DIRECTORY_SEPARATOR . $id;
-        @mkdir($targetDir, 0755, true);
-
-        $copiedFiles = [];
-        $candidates = [
-            'plugins.json'  => $this->basePath . '/config/plugins.json',
-            'disarmed.json' => $this->basePath . '/config/disarmed.json',
-        ];
-
-        foreach ($candidates as $name => $srcPath) {
-            if (is_file($srcPath)) {
-                if (@copy($srcPath, $targetDir . DIRECTORY_SEPARATOR . $name)) {
-                    $copiedFiles[] = $name;
-                }
-            }
-        }
-
-        $meta = [
-            'id'         => $id,
-            'label'      => trim($label) !== '' ? trim($label) : 'Snapshot Manual',
-            'created_at' => date('Y-m-d H:i:s'),
-            'files'      => $copiedFiles,
-        ];
-
-        $this->jsonStore->write($targetDir . DIRECTORY_SEPARATOR . 'metadata.json', $meta);
-        return $meta;
-    }
-
-    /**
-     * Lista todos os snapshots disponíveis ordenados do mais recente para o mais antigo.
-     *
-     * @return array<int, array{id: string, label: string, created_at: string, files: array<int, string>}>
-     */
-    public function listSnapshots(): array
-    {
-        if (!is_dir($this->snapshotsDir)) {
-            return [];
-        }
-
-        $entries = scandir($this->snapshotsDir);
-        if ($entries === false) {
-            return [];
-        }
-
-        $snapshots = [];
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            $metaFile = $this->snapshotsDir . DIRECTORY_SEPARATOR . $entry . DIRECTORY_SEPARATOR . 'metadata.json';
-            if (is_file($metaFile)) {
-                $meta = $this->jsonStore->read($metaFile, []);
-                if (!empty($meta['id'])) {
-                    $snapshots[] = $meta;
-                }
-            }
-        }
-
-        usort($snapshots, static fn(array $a, array $b): int => strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')));
-        return $snapshots;
-    }
-
-    /**
-     * Restaura um snapshot pelo seu ID.
-     */
-    public function restoreSnapshot(string $snapshotId): bool
-    {
-        $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $snapshotId) ?? '';
-        if ($cleanId === '' || $cleanId !== $snapshotId) {
-            throw new InvalidArgumentException("ID de snapshot inválido.");
-        }
-
-        $sourceDir = $this->snapshotsDir . DIRECTORY_SEPARATOR . $cleanId;
-        if (!is_dir($sourceDir) || !is_file($sourceDir . DIRECTORY_SEPARATOR . 'metadata.json')) {
-            throw new InvalidArgumentException("Snapshot não encontrado: {$cleanId}");
-        }
-
-        $restoredAny = false;
-        $targets = [
-            'plugins.json'    => $this->basePath . '/config/plugins.json',
-            'disarmed.json'   => $this->basePath . '/config/disarmed.json',
-            'database.sqlite' => $this->basePath . '/database.sqlite',
-        ];
-
-        foreach ($targets as $name => $destPath) {
-            $snapFile = $sourceDir . DIRECTORY_SEPARATOR . $name;
-            if (is_file($snapFile)) {
-                $destDir = dirname($destPath);
-                if (!is_dir($destDir)) {
-                    @mkdir($destDir, 0755, true);
-                }
-                $tmpDest = $destPath . '.restore.' . bin2hex(random_bytes(3));
-                if (@copy($snapFile, $tmpDest)) {
-                    if (!@rename($tmpDest, $destPath)) {
-                        @copy($tmpDest, $destPath);
-                        @unlink($tmpDest);
-                    }
-                    $restoredAny = true;
-                }
-            }
-        }
-
-        return $restoredAny;
     }
 }
 
