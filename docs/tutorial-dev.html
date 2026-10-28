@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Construindo Apps no Web OS (v2.3)</h1>
+        <h1>Construindo Apps no Web OS (v2.5)</h1>
         <p>O <strong>Domain System</strong> agora orquestra Plugins no Ring 3 usando estritamente Contratos e Interfaces. Siga este tutorial definitivo para criar o seu primeiro App (Plugin) moderno, completo com Widgets de Dashboard, Permissões de Segurança (ACL) e Auto-Descoberta de Manual (<code>ManualModuleInterface</code>).</p>
 
         <div class="alert">
@@ -41,7 +41,7 @@ php os-cli.php make:plugin meu_app
     <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
     <span class="string">"description"</span>: <span class="string">"Um App Moderno para o Web OS"</span>,
     <span class="string">"author"</span>: <span class="string">"Sua Empresa"</span>,
-    <span class="string">"os_version"</span>: <span class="string">"2.3"</span>
+    <span class="string">"os_version"</span>: <span class="string">"2.5"</span>
 }
 </pre>
 
@@ -138,7 +138,7 @@ php os-cli.php make:plugin meu_app
 </pre>
 
         <h2>Passo 4: Auto-Descoberta no Manual de Instruções (manual/module.php)</h2>
-        <p>Na versão <strong>2.3.0</strong>, basta criar a pasta <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>. O motor <code>PluginManualScanner</code> irá rastreá-la automaticamente e exibir seu tutorial interativo e seus itens de checklist no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit!</p>
+        <p>Na versão <strong>2.5.0</strong>, basta criar a pasta <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>. O motor <code>PluginManualScanner</code> irá rastreá-la automaticamente e exibir seu tutorial interativo e seus itens de checklist no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit!</p>
 <pre>
 <span class="comment">// src/Plugins/meu_app/manual/module.php</span>
 <span class="keyword">require_once</span> __DIR__ . <span class="string">'/MeuAppManualModule.php'</span>;

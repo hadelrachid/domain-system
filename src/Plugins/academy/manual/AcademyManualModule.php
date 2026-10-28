@@ -29,7 +29,7 @@ class AcademyManualModule implements ManualModuleInterface
 
     public function getBadge(): string
     {
-        return 'Módulo Auto-Descoberto • Academy v2.3.0';
+        return 'Módulo Auto-Descoberto • Academy v2.5.0';
     }
 
     public function getAccentColor(): string
@@ -83,7 +83,7 @@ class AcademyManualModule implements ManualModuleInterface
         ?>
         <div style="color: var(--text-main, #c5c6c7); font-size: 14px; line-height: 1.75;">
             <p style="margin-top: 0;">
-                O <strong>Plugin Academy (v2.3.0)</strong> é o motor de ensino (<strong>LMS Híbrido</strong>) do Domain-System OS. Ele foi projetado sob os princípios <strong>SOLID</strong> e <strong>Inversão de Dependência (DIP)</strong> para permitir que você crie cursos completos de quatro maneiras integradas: digitando diretamente no <strong>Editor Visual em Blocos</strong>, fabricando automaticamente <strong>arquivos <code>.php</code> responsivos</strong> no tema ativo, vinculando páginas existentes ou importando pastas inteiras com 1 clique.
+                O <strong>Plugin Academy (v2.5.0)</strong> é o motor de ensino (<strong>LMS Híbrido</strong>) do Domain-System OS. Ele foi projetado sob os princípios <strong>SOLID</strong> e <strong>Inversão de Dependência (DIP)</strong> para permitir que você crie cursos completos de quatro maneiras integradas: digitando diretamente no <strong>Editor Visual em Blocos</strong>, fabricando automaticamente <strong>arquivos <code>.php</code> responsivos</strong> no tema ativo, vinculando páginas existentes ou importando pastas inteiras com 1 clique.
             </p>
 
             <!-- SEÇÃO 1: OS 4 MODOS DE CRIAÇÃO -->

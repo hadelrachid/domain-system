@@ -2,7 +2,7 @@
 
 Bem-vindo ao **Ambiente Operacional Web (Web OS)** definitivo. O Domain System deixou de ser um simples CMS para se tornar um Kernel puro (Ring 0) que orquestra Plugins de Nível de Usuário (Ring 3).
 
-Este guia oficial foi atualizado para a versão **2.4** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
+Este guia oficial foi atualizado para a versão **2.5** e ensina o "Padrão Ouro" da nossa arquitetura orientada a Contratos (Interfaces).
 
 ---
 
@@ -19,11 +19,11 @@ Crie uma pasta em `src/Plugins/nome_do_plugin/` contendo:
 ```json
 {
     "name": "meu_app",
-    "version": "1.0.0",
+    "version": "2.5.0",
     "description": "Um aplicativo de exemplo",
     "author": "Sua Empresa",
     "core": false,
-    "os_version": "2.4"
+    "os_version": "2.5"
 }
 ```
 
@@ -91,7 +91,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 ---
 
-## 🔒 Segurança, Capabilities (ACL) e Proibição de Superglobais
+## 🔒 Segurança, Capabilities (ACL) e Isolamento HTTP (`Request::json()`)
 
 O sistema de permissões abandonou o modelo rígido de "Cargos" por um modelo microscópico de **Capabilities**.
 Sempre que seu plugin for instalado, ele deve registrar suas Capabilities no método `activate()`, usando:
@@ -100,7 +100,7 @@ Sempre que seu plugin for instalado, ele deve registrar suas Capabilities no mé
 $runtime->registerCapability('slug_da_permissao', 'Nome Visível no Painel');
 ```
 O SysAdmin poderá, através da interface do sistema, atrelar essa permissão a qualquer grupo (Admin, Editor, Visitante).
-> **Regra de Ouro (SOLID):** Jamais acesse `$_SESSION`, `$_POST` ou `$_GET` diretamente dentro de Controllers! Utilize sempre `SessionManagerInterface` e `Request` injetados via Construtor (validado pelo teste de arquitetura `NoSuperglobalsInControllersTest`).
+> **Regra de Ouro (SOLID):** Jamais acesse `$_SESSION`, `$_POST`, `$_GET` ou `php://input` diretamente dentro de Controllers! Utilize sempre `SessionManagerInterface` e `Request` (`$request->input()`, `$request->json()`, `$request->withJsonBody()`) injetados via Construtor (validado pelo teste de arquitetura `NoSuperglobalsInControllersTest`).
 
 ```php
 $identity = $runtime->getLink('core.identity');
@@ -113,9 +113,37 @@ if (!$identity->userCan($userId, 'slug_da_permissao')) {
 
 ---
 
+## 🏗️ Arquitetura do Flex Builder FSE & Contratos Visuais (`src/Core/Theme/Parts`)
+
+Na **v2.5.0**, o motor visual **Flex Builder** (`/admin/builder`) segue uma separação estrita de responsabilidades entre o **Core (`src/Core/Theme/Parts`)** e o plugin **`flextheme`**:
+
+1. **Caminho Único de Compilação (`ThemePartCompilerInterface` & `ThemePartRendererInterface`):**
+   - O `ThemePartRenderer` implementa ambos os contratos. O serviço de preview do Studio (`ThemePartPreviewService`) delega **100%** da compilação para `ThemePartCompilerInterface::compilePart()`, garantindo que regras de compatibilidade de blocos (`getAllowedPartTypes()`), estilos inline (`ElementStyleRendererInterface`), classes de visibilidade responsiva e reajuste do CSS Grid funcionem de maneira idêntica no Preview e na Produção.
+2. **Validação Estrutural Pré-Persistência (`ThemePartValidatorInterface`):**
+   - Antes de gravar qualquer parte visual, `ThemePartManagementService::saveFromPayload()` executa `ThemePartValidator::validate()`, verificando tipos (`header`, `footer`, `section`), presets (`LayoutGridInterface::getPresets()`), existência e compatibilidade dos blocos no `BlockRegistryInterface`, e limites de profundidade/quantidade. Se uma associação posterior (`setGlobalDefault`, `assignPart`, `assignTemplateToSection`) falhar, o serviço executa **compensação automática** restaurando o estado anterior.
+3. **Visibilidade Responsiva por Elemento nas 4 Resoluções + Auto-Reflow de CSS Grid:**
+   - A visibilidade responsiva nunca oculta o container da seção inteira (`.ds-section-wrapper`). As flags `hide_desktop`, `hide_laptop`, `hide_tablet` e `hide_mobile` geram as classes `.ds-hide-desktop`, `.ds-hide-laptop`, `.ds-hide-tablet` e `.ds-hide-mobile` exclusivamente no elemento individual (`.ds-element-wrapper`).
+   - Quando todos os elementos de uma coluna ficam ocultos em uma resolução, `LayoutGridRenderer` aplica `ds-hide-{resolução}` na coluna vazia (`.ds-grid-col`) e recalcula automaticamente `grid-template-columns` para as colunas visíveis restantes (ex.: `1fr 2fr 1fr` $\rightarrow$ `2fr 1fr` ou `1fr`).
+4. **Criando Novos Blocos via Contrato (`BlockProviderInterface` — OCP):**
+   - Qualquer plugin pode registrar novos blocos sem alterar o Core implementando `BlockInterface` e `BlockProviderInterface`:
+   ```php
+   use DomainSystem\Core\Theme\Parts\Contracts\BlockProviderInterface;
+   use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
+
+   final class MeuPluginBlockProvider implements BlockProviderInterface
+   {
+       public function registerBlocks(BlockRegistryInterface $registry): void
+       {
+           $registry->register(new MeuBlocoCustomizado());
+       }
+   }
+   ```
+
+---
+
 ## 📖 Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
 
-A partir da **v2.3.0**, qualquer plugin pode fornecer sua própria documentação interativa e checklist de QA que serão carregados **automaticamente** no menu **Manual de Instruções (`/admin/manual`)** do Cockpit.
+Qualquer plugin pode fornecer sua própria documentação interativa e checklist de QA que serão carregados **automaticamente** no menu **Manual de Instruções (`/admin/manual` e `/manual`)** do Cockpit.
 
 O motor `PluginManualScanner` varre todos os plugins em `src/Plugins/*/manual/module.php` (e `bundled_plugins/*/manual/module.php`) procurando instâncias que assinem o contrato `DomainSystem\Core\Contracts\ManualModuleInterface`:
 
@@ -130,15 +158,15 @@ class MeuAppManualModule implements ManualModuleInterface
 {
     public function getId(): string { return 'meu_app'; }
     public function getTitle(): string { return 'Meu App — Guia de Operação'; }
-    public function getIcon(): string { return '🚀'; }
-    public function getBadge(): string { return 'Plugin v2.3 • SOLID'; }
-    public function getVersion(): string { return '1.0.0'; }
-    public function getOrder(): int { return 30; }
+    public function getSubtitle(): string { return 'Resumo rápido do módulo.'; }
+    public function getBadge(): string { return 'Plugin v2.5 • SOLID'; }
+    public function getAccentColor(): string { return '#38bdf8'; }
+    public function getAdminUrl(): ?string { return '/admin/meu-app'; }
 
     public function getChecklistItems(): array
     {
         return [
-            ['id' => 'chk_meu_app_1', 'label' => 'Meu App: Testar criação de registro e validação CSRF.'],
+            ['id' => 'chk_meu_app_1', 'label' => '1. Testar criação de registro e validação CSRF.'],
         ];
     }
 
@@ -155,15 +183,13 @@ class MeuAppManualModule implements ManualModuleInterface
 require_once __DIR__ . '/MeuAppManualModule.php';
 return new \DomainSystem\Plugins\meu_app\manual\MeuAppManualModule();
 ```
-Assim que a pasta `manual/module.php` existir, o Cockpit exibirá automaticamente o cartão do módulo e adicionará seus itens à barra de progresso de Homologação (QA)! Veja a implementação de referência em `src/Plugins/academy/manual/`.
+Veja as implementações de referência em `src/Plugins/flextheme/manual/FlexBuilderManualModule.php` e `src/Plugins/academy/manual/AcademyManualModule.php`.
 
 ---
 
 ## 🧩 Criando Widgets para o Dashboard Profissional
 
-No Painel Administrativo (`/admin`), os Widgets **não** são strings HTML cruas injetadas num hook. Eles seguem um Contrato estrito para permitir customização drag-and-drop.
-
-Você deve criar uma classe separada implementando `DashboardWidgetProviderInterface`:
+No Painel Administrativo (`/admin`), os Widgets seguem um Contrato estrito (`DashboardWidgetProviderInterface`):
 
 ```php
 <?php
@@ -194,23 +220,28 @@ class MeuWidgetProvider implements DashboardWidgetProviderInterface
     }
 }
 ```
-Lembre-se de instanciar e registrar esse Provider lá dentro do Hook `dashboard.register_widgets` no seu `Plugin.php`.
 
 ---
 
-## 🎨 Como criar Temas Visuais
+## 🎨 Como criar Temas Visuais Integrados ao Flex Builder
 
-Os Temas vivem em `themes/nome_do_tema/` e devem focar apenas na **Renderização Front-end**. Toda a lógica de negócios pertence aos plugins.
+Os Temas vivem em `src/Plugins/flextheme/themes/{nome_do_tema}/` (ou `themes/{nome_do_tema}/`) e focam exclusivamente na **Renderização Front-end**.
+No `layouts/main.php`, integre o `ThemePartRendererInterface` para suportar Headers e Footers dinâmicos do Flex Builder com fallback automático para `partials/header.php` e `partials/footer.php`:
 
-A view principal do painel administrativo, por exemplo, deve usar a engine de rotas para renderizar as saídas. Quando um Plugin emite:
 ```php
-return $this->theme->render('admin/dashboard_modular', ['dados' => $dados]);
+<?php
+$partRenderer = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class))
+    ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
+    : null;
+$themeFolder = basename($themeDir);
+$customHeader = ($partRenderer !== null) ? $partRenderer->renderHeader($themeFolder, get_defined_vars()) : '';
+if (trim($customHeader) !== '') {
+    echo $customHeader;
+} else {
+    require $themeDir . '/partials/header.php';
+}
+?>
 ```
-O arquivo procurado será `themes/admin/dashboard_modular.php`.
-
-### Dicas para Temas:
-- **Segurança XSS:** Sempre use `htmlspecialchars($var, ENT_QUOTES, 'UTF-8')` antes de imprimir qualquer variável na tela.
-- **Isolamento:** Temas não devem fazer `SELECT` direto no banco de dados. Deixe os Repositórios do plugin fazerem o trabalho pesado via Contratos.
 
 ---
 
@@ -219,7 +250,6 @@ O arquivo procurado será `themes/admin/dashboard_modular.php`.
 No plugin **Academy**, a criação e vinculação de páginas físicas `.php` dentro do tema ativo é governada por dois contratos principais:
 1. **`ThemePageResolverInterface`**: Resolve de forma segura (`realpath`) o diretório do tema público ativo e lista páginas disponíveis em `pages/`.
 2. **`LessonFileScaffolderInterface`**: Fabrica pastas (`createFolder`) e arquivos `.php` pré-configurados (`fabricateLessonFile`) com CSS/JS responsivos (Desktop, Tablet e Mobile) e estado de blocos embutido (`DS_BLOCKS_B64`).
-   - Exemplo: Ao salvar uma aula intitulada **"Estrutura de Dados"**, o arquivo `pages/estrutura-de-dados.php` é gerado automaticamente e responde na rota `/cursos/estrutura-de-dados`.
 
 ---
 
@@ -229,14 +259,12 @@ O Domain-System OS (ocupando apenas **~30 MB** descompactado em servidores Linux
 
 1. **Documento Mestre Universal ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md))**:
    - Na raiz do repositório encontra-se o guia canônico para LLMs contendo as **10 Leis Inegociáveis do Ring 3**, árvores de diretórios e templates prontos.
-   - Os arquivos `.github/copilot-instructions.md`, `.cursorrules` e `.clinerules` carregam essas regras automaticamente no seu editor.
 2. **Gerador de Boilerplate SOLID via Terminal (`os-cli.php`)**:
    ```bash
    php os-cli.php make:plugin nome_do_plugin
    ```
-   Esse comando já cria automaticamente `plugin.json`, `Plugin.php` (`OsExtensionInterface`), `Contracts/`, `Controllers/`, `views/` e `manual/module.php` (`ManualModuleInterface`).
 3. **Agnosticismo Total do SO (Ring 0)**:
-   - O Sistema Operacional (Ring 0) nunca conhece detalhes de SGBDs (MySQL, SQLite, PostgreSQL) ou de sistemas operacionais (Windows, Linux, macOS). Toda comunicação entre o Kernel e os módulos ocorre exclusivamente via **Injeção de Dependências e Contratos** (`SchemaDoctorInterface`, `JsonStoreInterface`, `DatabaseConnectionInterface`), validada por **309 testes automatizados (1.400 asserções)**.
+   - O Sistema Operacional (Ring 0) nunca conhece detalhes de SGBDs ou de sistemas operacionais. Toda comunicação ocorre via **Injeção de Dependências e Contratos**, validada por **433 testes automatizados (2.340+ asserções)**.
 
 ---
 
@@ -244,13 +272,7 @@ O Domain-System OS (ocupando apenas **~30 MB** descompactado em servidores Linux
 
 Para que o atualizador automático via GitHub Releases (`SystemUpdater` / `CoreUpdater`) opere com segurança em hospedagens compartilhadas (MySQL/SQLite):
 
-1. **Migrations Estritamente Aditivas:** Dentro da mesma versão maior (`2.x`), toda migration (`src/Core/Database/migrations/*.php` ou `src/Plugins/<slug>/migrations/*.php`) deve ser **aditiva** (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ADD COLUMN`). Nunca remova ou renomeie tabelas/colunas em uma atualização menor, pois o MySQL realiza *implicit commit* em DDL.
-2. **Atualização Obrigatória do Contrato `release/schema-expects.json`:** Sempre que criar uma migration que adicione tabela ou coluna essencial ao sistema, registre-a em `release/schema-expects.json` para que o `SchemaVerifier` valide sua presença após a atualização.
+1. **Migrations Estritamente Aditivas e Sem `use` Simples no Namespace Global:** Dentro da mesma versão maior (`2.x`), toda migration deve ser **aditiva** (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ADD COLUMN`) e referenciar `\PDO` diretamente caso o arquivo de migration não declare `namespace`.
+2. **Atualização Obrigatória do Contrato `release/schema-expects.json`:** Registre novas tabelas/colunas essenciais em `release/schema-expects.json` para que o `SchemaVerifier` valide sua presença após a atualização.
 3. **Consistência de Versão (`Tag = DS_VERSION = composer.json`):** Antes de publicar uma tag `vX.Y.Z`, atualize `DS_VERSION` em `bootstrap.php`, `version` em `composer.json` e os `plugin.json` oficiais. O teste `VersionConsistencyTest` e o workflow `.github/workflows/release.yml` bloqueiam pacotes divergentes.
-4. **Estado Atômico (`AtomicJsonStore`):** Qualquer estado persistido em JSON (`storage/`, `config/`, `temp/`) deve usar escrita atômica com `LOCK_EX` via `JsonStoreInterface`.
-
----
-
-O seu código é isolado em Sandboxes. Use Exceções à vontade. O **No-Break Shield** garantirá que um erro de lógica no seu Plugin não derrube o sistema inteiro, apenas exiba um aviso elegante ao administrador!
-
-
+4. **Exclusão de Estado Local (`release/exclude.txt`):** Arquivos de configuração locais (`config/theme_parts/`, `config/active_theme.json`, `.env*`, `project.txt`, `manual/`, `content/`, `resources/`) são filtrados por `release/exclude.txt` para que o pacote oficial passe 100% na política de `CoreProtectedPaths` na Hostinger.

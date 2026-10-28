@@ -347,7 +347,7 @@ O `plugin.json` ganha um campo opcional, lido pelo `UpdateTargetResolver`:
 {
   "name": "meu_plugin",
   "version": "1.2.0",
-  "os_version": "2.3",
+  "os_version": "2.5",
   "update_source": { "type": "github", "repository": "autor/meu-plugin" }
 }
 ```

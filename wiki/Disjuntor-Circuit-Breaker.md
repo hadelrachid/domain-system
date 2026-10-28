@@ -44,7 +44,7 @@ try {
 Essa abordagem garante que uma falha em cadeia seja contida com elegância, provando que o Kernel é uma muralha indestrutível frente às instabilidades de código ou infraestrutura.
 
 ## 🛠️ Isolamento Granular por Rota (Threshold) & Modo Desenvolvedor
-Na **v2.3.0**, o Disjuntor opera com granularidade cirúrgica e persistência atômica (`AtomicJsonStore` com `flock` + `rename`):
+Na **v2.5.0**, o Disjuntor opera com granularidade cirúrgica e persistência atômica (`AtomicJsonStore` com `flock` + `rename`):
 - **Disjuntor por Rota com Threshold (`recordRouteFailure`):** Uma falha isolada em uma rota específica (ex: `/admin/academy/edit/6`) **não derruba o plugin inteiro de imediato**. O Kernel isola apenas a rota falha e contabiliza o incidente; o plugin só é ejetado globalmente se atingir o limite (*threshold*, padrão: 3 falhas consecutivas) ou se falhar durante o boot.
 - **Modo Desenvolvedor (Bypass Seguro na Sessão):** Quando um plugin do Ring 3 é desarmado pelo Disjuntor (`temp/disarmed.json`), o administrador pode ativar o **Modo Desenvolvedor** no painel de Supervisão (`/admin/supervision`). Isso contorna o bloqueio apenas para a sessão do administrador (`SessionManagerInterface`), mantendo os visitantes e alunos protegidos enquanto o bug é depurado em tempo real.
 
@@ -90,7 +90,7 @@ try {
 ```
 
 ## 🛠️ Route-Level Isolation (Threshold) & Developer Mode
-In **v2.3.0**, the Circuit Breaker operates with surgical granularity and atomic persistence (`AtomicJsonStore` using `flock` + `rename`):
+In **v2.5.0**, the Circuit Breaker operates with surgical granularity and atomic persistence (`AtomicJsonStore` using `flock` + `rename`):
 - **Route-Level Circuit Breaker with Threshold (`recordRouteFailure`):** An isolated runtime error in a single route (e.g., `/admin/academy/edit/6`) **does not immediately take down the entire plugin**. The Kernel isolates the failing route first and only ejects the whole plugin if it reaches the consecutive failure threshold (default: 3) or fails during boot.
 - **Developer Mode (Session-Scoped Safe Bypass):** When a Ring 3 plugin is tripped by the Circuit Breaker (`temp/disarmed.json`), the administrator can enable **Developer Mode** inside the Supervision panel (`/admin/supervision`). This bypasses the lock exclusively for the administrator's active session (`SessionManagerInterface`), keeping regular visitors and students shielded while the bug is debugged live.
 

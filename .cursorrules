@@ -1,4 +1,4 @@
-# Cursor & Cline AI Rules — Domain-System OS (v2.3)
+# Cursor & Cline AI Rules — Domain-System OS (v2.5)
 # Read AI_CONTRACT_GUIDE.md for full templates and architectural contracts.
 
 1. Every PHP file MUST start with `declare(strict_types=1);`.

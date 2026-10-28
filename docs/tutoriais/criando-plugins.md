@@ -1,4 +1,4 @@
-# Como Criar Plugins no Domain-System (v2.3.0)
+# Como Criar Plugins no Domain-System (v2.5.0)
 
 Os Plugins são a alma do sistema. Eles estendem rotas, conectam menus, injetam lógicas de negócios, carregam seus próprios *CockPITs* (Temas Empacotados) e expõem manuais interativos auto-descobertos por contrato.
 
@@ -6,7 +6,7 @@ Os Plugins são a alma do sistema. Eles estendem rotas, conectam menus, injetam 
 
 ```
 /meu_plugin
-├── plugin.json         <-- Metadados de instalação e UI (os_version: "2.3")
+├── plugin.json         <-- Metadados de instalação e UI (os_version: "2.5")
 ├── Plugin.php          <-- A classe central que herda de AbstractPlugin e implementa OsExtensionInterface
 ├── /Controllers        <-- Seus controladores (sem acesso direto a superglobais $_SESSION)
 ├── /Services           <-- Camada de serviços de domínio (ex: conversores, importadores)

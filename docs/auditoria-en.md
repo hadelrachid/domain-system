@@ -5,7 +5,7 @@
 > No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Ambiente Operacional Web (Web Operating Environment), que pode ser instalado em uma máquina ou container.
 > Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
 
-# 🛡️ Architectural and Security Audit (Domain System v2.3)
+# 🛡️ Architectural and Security Audit (Domain System v2.5)
 
 **Last Updated:** October 18, 2026
 
@@ -13,13 +13,13 @@ This document reflects the historic architectural transition of the Domain Syste
 
 ---
 
-## 🏛️ Architectural Evolution (From v1.0 to v2.3)
+## 🏛️ Architectural Evolution (From v1.0 to v2.5)
 
 The system's core underwent a deep overhaul across all its structural pillars to ensure compatibility with market standards (SOLID, PSRs, advanced Design Patterns).
 
 ### 1. Absolute Decoupling (Zero Business Logic in the Core)
 - **Before (v1.0):** The Kernel and authentication knew business concepts (Doctor, clinic, patient tables, and hardcoded roles).
-- **Now (v2.3):** The Kernel is 100% agnostic. Generic roles (`admin`, `manager`, `subscriber`, `user`) control universal RBAC. All business logic was extracted and transferred to the plugin layer.
+- **Now (v2.5):** The Kernel is 100% agnostic. Generic roles (`admin`, `manager`, `subscriber`, `user`) control universal RBAC. All business logic was extracted and transferred to the plugin layer.
 
 ### 2. Inversion of Control and Dependency Injection (DIP)
 - **Before:** Widespread use of `new Class()` and Service Locators like `$this->db()` scattered throughout controllers.
@@ -29,10 +29,10 @@ The system's core underwent a deep overhaul across all its structural pillars to
 - **Before:** Broad raw access to `$_SESSION`, `$_POST`, `$_GET`.
 - **Now:** All communications flow immutably and sanitized through the `Request` class and `SessionManagerInterface`, continuously enforced by `NoSuperglobalsInControllersTest`.
 
-### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` - v2.3.0)
+### 4. Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` - v2.5.0)
 - **Architectural Innovation:** The Cockpit (`/admin/manual` and `/manual/index.php`) uses `PluginManualScanner` to automatically scan `manual/module.php` inside installed plugins (`academy`, `flextheme`, `pages`, `seo`). Any plugin implementing `ManualModuleInterface` injects its interactive tutorial and QA homologation checklist items with zero Kernel coupling.
 
-### 5. Hybrid SOLID Architecture in Academy LMS & Automatic `.php` Lesson Factory (`v2.3.0`)
+### 5. Hybrid SOLID Architecture in Academy LMS & Automatic `.php` Lesson Factory (`v2.5.0`)
 - The `academy` plugin sets the ecosystem gold standard: strict separation between Contracts (`CourseRepositoryInterface`, `LessonFileScaffolderInterface`, `ThemePageResolverInterface`, `LessonBlockRendererInterface`, `HtmlSanitizerInterface`), Services, and Controllers, offering:
   - **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderService`):** Scaffolds physical module folders and ready-to-use `.php` files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php` $\rightarrow$ `/cursos/estrutura-de-dados`).
   - **Hybrid Authoring (4 Modes, 8 Blocks & 3 Mobile Profiles):** Supports Raw HTML/Markdown, 8-block Visual Editor, Fabricated `.php` Lessons with code or blocks, and 3 mobile layout profiles (`drawer`, `bottom_bar`, `cinema`) with a 5-Viewport Multi-Device Simulator.
@@ -43,7 +43,7 @@ The system's core underwent a deep overhaul across all its structural pillars to
 
 ---
 
-## 🔒 Surgical Audit & Hardening (Patches 2.1.0 to 2.3.0 - Oct/2026)
+## 🔒 Surgical Audit & Hardening (Patches 2.1.0 to 2.5.0 - Oct/2026)
 
 1. **Ring 0 Route Collision Protection:** Core Kernel routes (`/login`, `/admin/*`) are locked against Ring 3 hijacking (`RouteAlreadyRegisteredException`).
 2. **AES-256-GCM Authenticated Encryption:** Upgraded from `AES-256-CBC` to authenticated `AES-256-GCM` with integrity tag verification.
@@ -73,7 +73,7 @@ Creation of the Troubleshooting artifact (`ERROR_DICTIONARY.md`), packaging raw 
 
 ## 📈 Conclusion
 
-The **Domain System v2.3.0** (with an unpacked folder footprint of only **~30MB** on Linux servers) reaches the "Enterprise-Ready & AI-Ready" benchmark. Its agnostic Micro-Kernel is clean, cohesive, tested by **183 automated unit and architecture tests (751 assertions)**, and shielded against cascading crashes.
+The **Domain System v2.5.0** (with an unpacked folder footprint of only **~30MB** on Linux servers) reaches the "Enterprise-Ready & AI-Ready" benchmark. Its agnostic Micro-Kernel is clean, cohesive, tested by **433 automated unit and architecture tests (2,340+ assertions)**, and shielded against cascading crashes.
 
 
 

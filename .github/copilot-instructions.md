@@ -1,4 +1,4 @@
-# GitHub Copilot & AI Coding Instructions — Domain-System OS (v2.3)
+# GitHub Copilot & AI Coding Instructions — Domain-System OS (v2.5)
 
 Always read and strictly follow [`AI_CONTRACT_GUIDE.md`](../AI_CONTRACT_GUIDE.md) at the root of this repository before generating or modifying any code.
 

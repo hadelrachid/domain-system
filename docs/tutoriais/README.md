@@ -1,10 +1,10 @@
-# 🎓 Tutoriais para Desenvolvedores (Domain-System v2.3.0)
+# 🎓 Tutoriais para Desenvolvedores (Domain-System v2.5.0)
 
 Aqui estão reunidos os guias passo-a-passo ensinando como utilizar e expandir o ecossistema do **Domain System** (uma alternativa leve e resiliente de **~30MB** em servidores Linux).
 
 ## O que você vai aprender?
 
-1. **[Desenvolvimento de Plugins & CLI Scaffolding (v2.3.0)](criando-plugins.md):**
+1. **[Desenvolvimento de Plugins & CLI Scaffolding (v2.5.0)](criando-plugins.md):**
    - Gerando a árvore completa de contratos com `php os-cli.php make:plugin <slug>` em `src/Plugins/<slug>`
    - Implementando `OsExtensionInterface` e `AbstractPlugin`
    - Registrando Rotas com Filtros (ACL) e utilizando Injeção de Dependência (`Container`) sem tocar em `$_SESSION` ou `PDO` no Controller

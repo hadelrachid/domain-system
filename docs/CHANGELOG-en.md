@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
 
+## [2.5.0] - 2026-10-27
+### Added
+- **Flex Builder FSE (Full Site Editing, Single Compiler Path, Structural Validator & Auto-Reflow Grid):**
+  - **Unified Compilation Path (`ThemePartCompilerInterface` & `ThemePartRenderer`):** `ThemePartPreviewService` delegates 100% of section, column, block, style, and responsive visibility compilation to `ThemePartCompilerInterface`, guaranteeing total parity between Studio Live Preview and Frontend output.
+  - **Pre-Save Structural Validation (`ThemePartValidatorInterface` / `ThemePartValidator`):** Strict validation of part types (`header`, `footer`, `section`), layout presets (`LayoutGridInterface`), block registration and part-type compatibility (`getAllowedPartTypes()`), ID/title bounds, and nesting depth before any write occurs.
+  - **Transactional Association Compensation (`ThemePartManagementService`):** Verifies boolean results of `setGlobalDefault()`, `assignPart()`, and `assignTemplateToSection()`, automatically rolling back part and association state on partial failure.
+  - **Per-Element Responsive Visibility across 4 Resolutions (`Desktop 100%`, `1024px`, `768px`, `375px`):** Visibility toggles apply exclusively to the individual element wrapper (`.ds-element-wrapper` with `.ds-hide-desktop`, `.ds-hide-laptop`, `.ds-hide-tablet`, `.ds-hide-mobile`), never hiding the entire section container (`.ds-section-wrapper`).
+  - **Automatic CSS Grid Dimension Readjustment (Auto-Reflow):** When all elements in a column are hidden at a breakpoint, the empty column receives `.ds-hide-{resolution}` and `LayoutGridRenderer` automatically recalculates `grid-template-columns` for the remaining visible columns (e.g., `1fr 2fr 1fr` -> `2fr 1fr` or `1fr`).
+  - **Enhanced Security (`SafeHtmlSanitizer`, `MediaUploadService` & `Request::json()`):** Positive URL scheme whitelist (`http`, `https`, `mailto`, `tel`), `DOMDocument` XML validation for SVG uploads (`LIBXML_NONET`) against XXE/XSS, native `Request::json()` / `Request::withJsonBody()` isolation from `php://input`, and controlled HTTP error responses (`422` for validation, `500` without leaking internal exception details).
+
+### Fixed
+- **Release Packaging (`release/exclude.txt`):** Excluded workspace/documentation artifacts (`.env*`, `project.txt`, `content/`, `manual/`, `resources/`) and local runtime state (`config/theme_parts/`, `config/theme_parts_associations.json`, `config/active_theme.json`, `config/active_skin.json`, `config/*.lock`) to ensure 100% compliance with `CoreProtectedPaths` and `Sha256PackageVerifier` when updating via the Hostinger Admin Updater button.
+- **Academy LMS Migrations:** Removed redundant global-namespace `use PDO;` statements from Academy migrations to prevent `ErrorHandler` warnings.
+
 ## [2.4.0] - 2026-10-19
 ### Added
 - **Contract-Driven GitHub Releases Self-Updater (`SystemUpdater` / `CoreUpdater` — Model A):**

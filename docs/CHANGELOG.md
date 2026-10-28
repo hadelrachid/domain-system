@@ -8,6 +8,20 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.5.0] - 2026-10-27
+### Added
+- **Flex Builder FSE (Full Site Editing, Compilador Único, Validador Estrutural & Grid Auto-Reflow):**
+  - **Caminho Único de Compilação (`ThemePartCompilerInterface` & `ThemePartRenderer`):** O serviço de pré-visualização (`ThemePartPreviewService`) delega 100% da compilação de seções, colunas, blocos, estilos e classes responsivas ao `ThemePartCompilerInterface`, garantindo paridade absoluta entre o Studio Ao Vivo e a publicação no Frontend.
+  - **Validação Estrutural Pré-Persistência (`ThemePartValidatorInterface` / `ThemePartValidator`):** Validação estrita de tipo da parte (`header`, `footer`, `section`), existência do preset no `LayoutGridInterface`, existência e compatibilidade de cada bloco no `BlockRegistryInterface` (`getAllowedPartTypes()`), tamanho de IDs/títulos e limites de profundidade/quantidade antes de qualquer gravação.
+  - **Compensação Transacional nas Associações (`ThemePartManagementService`):** Verificação obrigatória do resultado booleano de `setGlobalDefault()`, `assignPart()` e `assignTemplateToSection()`, com restauração automática do estado anterior em caso de falha parcial.
+  - **Visibilidade Responsiva Isolada por Elemento nas 4 Resoluções (`Desktop 100%`, `1024px`, `768px`, `375px`):** As configurações de ocultação atuam exclusivamente sobre o elemento selecionado (`.ds-element-wrapper` com `.ds-hide-desktop`, `.ds-hide-laptop`, `.ds-hide-tablet`, `.ds-hide-mobile`), nunca ocultando o container da seção inteira (`.ds-section-wrapper`).
+  - **Reajuste Automático de Dimensões do CSS Grid (Auto-Reflow):** Quando todos os elementos de uma coluna ficam ocultos em uma resolução, a coluna vazia recebe `.ds-hide-{resolução}` e o `LayoutGridRenderer` recalcula automaticamente o `grid-template-columns` para as colunas visíveis restantes (ex.: `1fr 2fr 1fr` -> `2fr 1fr` ou `1fr`).
+  - **Segurança Avançada (`SafeHtmlSanitizer`, `MediaUploadService` & `Request::json()`):** Whitelist positiva de esquemas de URL (`http`, `https`, `mailto`, `tel`), validação XML de SVG via `DOMDocument` (`LIBXML_NONET`) contra XXE/XSS, método nativo `Request::json()` / `Request::withJsonBody()` para isolamento de `php://input` e respostas HTTP controladas (`422` para validação e `500` sem vazamento de detalhes internos).
+
+### Fixed
+- **Empacotador de Releases (`release/exclude.txt`):** Exclusão de arquivos de desenvolvimento/ambiente (`.env*`, `project.txt`, `content/`, `manual/`, `resources/`) e estado local (`config/theme_parts/`, `config/theme_parts_associations.json`, `config/active_theme.json`, `config/active_skin.json`, `config/*.lock`) para compatibilidade 100% com `CoreProtectedPaths` e `Sha256PackageVerifier` no botão de atualização da Hostinger.
+- **Migrations do Academy LMS:** Remoção de `use PDO;` sem namespace nas migrations do Academy para eliminar warnings no `ErrorHandler`.
+
 ## [2.4.0] - 2026-10-19
 ### Added
 - **Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` / `CoreUpdater` — Modelo A):**

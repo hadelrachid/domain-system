@@ -38,12 +38,12 @@
         <h3>Explicação dos Métodos:</h3>
         <ul>
             <li><strong>register() / osRegister():</strong> O lugar certo para negociar capacidades com o Gatekeeper e registrar Rotas, Listeners de Eventos e Menus no painel.</li>
-            <li><strong>boot() / osBoot():</strong> Executado após todos os plugins terminarem de se registrar. O <code>osBoot(OsRuntimeInterface $runtime)</code> é o padrão 2.3 para acesso seguro ao Kernel.</li>
+            <li><strong>boot() / osBoot():</strong> Executado após todos os plugins terminarem de se registrar. O <code>osBoot(OsRuntimeInterface $runtime)</code> é o padrão 2.5 para acesso seguro ao Kernel.</li>
             <li><strong>activate():</strong> Rodado <strong>apenas uma vez</strong> quando você liga o Plugin no Painel (Ideal para Migrations e criação de tabelas).</li>
             <li><strong>deactivate() / uninstall():</strong> Usados para limpar os rastros que o plugin deixou quando for desativado ou deletado.</li>
         </ul>
 
-        <h2>ManualModuleInterface (Auto-Descoberta de Manuais v2.3.0)</h2>
+        <h2>ManualModuleInterface (Auto-Descoberta de Manuais v2.5.0)</h2>
         <p>Qualquer plugin que possua um arquivo <code>manual/module.php</code> retornando uma instância de <code>ManualModuleInterface</code> é descoberto automaticamente pelo <code>PluginManualScanner</code> e injetado no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit:</p>
         <pre><code>interface ManualModuleInterface
 {
@@ -59,7 +59,7 @@
         <p>Isso permite que plugins (como <strong>Academy LMS</strong>, <strong>FlexTheme</strong>, <strong>Pages</strong> e <strong>SEO</strong>) entreguem seus próprios tutoriais interativos e checklists de Homologação (QA) sem nenhum acoplamento com o código-fonte do Kernel!</p>
 
         <h2>SchemaDoctorInterface &amp; JsonStoreInterface (Kernel 100% Agnóstico a Banco e SO)</h2>
-        <p>No Domain-System v2.3.0, o Kernel (Ring 0) não sabe se existe SQLite, MySQL, Windows ou Linux:</p>
+        <p>No Domain-System v2.5.0, o Kernel (Ring 0) não sabe se existe SQLite, MySQL, Windows ou Linux:</p>
         <ul>
             <li><strong><code>SchemaDoctorInterface</code>:</strong> Injetado no <code>MonitorController</code> e no <code>StateSnapshotManager</code> para diagnosticar e auto-reparar (<code>healAll()</code>) migrações de plugins com SQL ANSI puro.</li>
             <li><strong><code>JsonStoreInterface</code> (<code>AtomicJsonStore</code>):</strong> Persistência atômica com <code>flock(LOCK_EX)</code> + arquivo temporário + <code>rename()</code> atômico para proteger <code>config/*.json</code> e <code>temp/*.json</code> contra <em>Race Conditions</em>.</li>

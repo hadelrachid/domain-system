@@ -4,7 +4,7 @@
  * DOMAIN-SYSTEM — MANUAL DE INSTRUÇÕES & TESTABILIDADE
  * ════════════════════════════════════════════════════════════════════════════
  * Guia Oficial de Testabilidade, Resolução, Módulos Auto-Descobertos e Contratos para IAs.
- * Versão: 2.3.0 | Compatível com Acesso Direto e Painel Admin.
+ * Versão: 2.5.0 | Compatível com Acesso Direto e Painel Admin.
  */
 
 $rootDir = dirname(__DIR__);
@@ -17,7 +17,7 @@ $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : (
     ($_SERVER['HTTP_HOST'] ?? 'localhost') .
     preg_replace('#/manual.*$#', '', $_SERVER['SCRIPT_NAME'] ?? '')
 );
-$version = defined('DS_VERSION') ? DS_VERSION : '2.3.0';
+$version = defined('DS_VERSION') ? DS_VERSION : '2.5.0';
 
 $pluginManuals = [];
 if (class_exists(\DomainSystem\Core\Manual\PluginManualScanner::class)) {

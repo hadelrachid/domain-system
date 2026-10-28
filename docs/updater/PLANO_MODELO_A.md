@@ -21,7 +21,7 @@
 | Backup de código e de banco, manutenção, aplicação, saúde, rollback | Canais beta, downgrade |
 | CLI (`system:*`) e pipeline de Release (GitHub Actions) | Atualização de plugins de terceiros |
 
-**Versão:** o sistema continua em `2.3.0`. Não altere `DS_VERSION`, `composer.json` nem badges. O número da primeira Release com o atualizador é decisão do usuário (seção 8).
+**Versão:** o sistema continua em `2.5.0`. Não altere `DS_VERSION`, `composer.json` nem badges. O número da primeira Release com o atualizador é decisão do usuário (seção 8).
 
 ---
 
@@ -29,7 +29,7 @@
 
 | # | Fato | Consequência para o plano |
 |---|---|---|
-| 1 | Tags `v2.1.0`, `v2.2.0`, `v2.3.0` existem. A tag **`v2.3.0` aponta para `24e6c53`, 5 commits atrás do `main`** | A Release `v2.3.0` publicada está **defasada**. **Nunca mover tag publicada sozinho**; decidir com o usuário (seção 8) |
+| 1 | Tags `v2.1.0`, `v2.2.0`, `v2.5.0` existem. A tag **`v2.5.0` aponta para `24e6c53`, 5 commits atrás do `main`** | A Release `v2.5.0` publicada está **defasada**. **Nunca mover tag publicada sozinho**; decidir com o usuário (seção 8) |
 | 2 | Já existe `.github/workflows/release.yml` (tag `v*`): `composer install --no-dev`, apaga arquivos de dev, gera `domain-system-core.zip` (árvore inteira), `radio_online.zip` e `clock_widget.zip` | **Evoluir** este workflow, não criar outro. Manter os três assets atuais intactos |
 | 3 | `.github/workflows/tests.yml` roda `composer test` em push/PR (PHP 8.2) | O `release.yml` deve rodar os testes antes de publicar |
 | 4 | Modo manutenção **já existe no Core**: arquivo `<raiz>/.maintenance`, saída antecipada em `public/index.php` (linhas ~59–75) e `MaintenancePolicy`. Rotas `/admin`, `/login`, `/logout`, `/api`, `/setup` são isentas. O botão fica em `SettingsController::toggleMaintenance` (plugin `settings`) | O atualizador **não cria** outro mecanismo: `MaintenanceModeInterface` é um adaptador fino sobre o mesmo `.maintenance`. As rotas de `/admin/...` do atualizador continuam acessíveis durante a manutenção |
@@ -118,7 +118,7 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 - `MigrationRunner::runForPlugin()`: **parar na primeira falha** (não executar as migrations seguintes). Manter o formato de retorno e acrescentar a chave `stopped_at` (nome da migration que falhou, ou `null`). Conferir quem usa o runner (`PluginMigrationScanner::healAll`, Auto-Heal do monitor) e ajustar a exibição para mostrar que o processo parou.
 - Teste `tests/Unit/MigrationRunnerStopsOnFirstFailureTest.php` (SQLite em memória, pasta temporária com 3 migrations: ok, falha, ok → a terceira **não** roda e a segunda **não** é registrada).
 - Teste `tests/Unit/VersionConsistencyTest.php`: o valor de `DS_VERSION` em `bootstrap.php` (ler por regex, sem `include`) é igual a `version` do `composer.json`.
-- Relatar ao usuário a situação da tag `v2.3.0` (achado 1). **Não mover a tag.**
+- Relatar ao usuário a situação da tag `v2.5.0` (achado 1). **Não mover a tag.**
 
 **Aceite:** suíte verde; comportamento do Auto-Heal documentado no comentário da classe.
 
@@ -155,8 +155,8 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 **Aceite:** nenhum teste faz acesso real à internet.
 
 ### Passo 4 — Versões (SemVer)
-- `SemverComparator` implementa `VersionComparatorInterface`. SemVer estrito: `MAJOR.MINOR.PATCH` com `-prerelease` opcional; aceita prefixo `v` apenas em `normalize()` (tags). `2.4.0-beta.1 < 2.4.0`; `2.10.0 > 2.9.9`.
-- **Testes** com tabela de casos (válidos, inválidos como `2.3`, `abc`, `2.3.0.1`; comparações; `isNewer`).
+- `SemverComparator` implementa `VersionComparatorInterface`. SemVer estrito: `MAJOR.MINOR.PATCH` com `-prerelease` opcional; aceita prefixo `v` apenas em `normalize()` (tags). `2.5.0-beta.1 < 2.5.0`; `2.10.0 > 2.9.9`.
+- **Testes** com tabela de casos (válidos, inválidos como `2.3`, `abc`, `2.5.0.1`; comparações; `isNewer`).
 
 ### Passo 5 — Estado e bloqueio
 - `JsonUpdateStateStore` (`UpdateStateStoreInterface`) sobre `JsonStoreInterface`/`AtomicJsonStore`, arquivo `storage/state/update-core.json`. `load()` sem arquivo devolve estado `Idle`.
@@ -173,7 +173,7 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 
 ### Passo 7 — Interface somente leitura (marco M1: aviso de nova versão)
 **Objetivo:** o aviso funcionando, sem nenhuma capacidade de alterar o sistema.
-- Criar o SystemApp `src/SystemApps/SystemUpdater/` copiando a estrutura do `SystemMonitor` (`plugin.json` com `"core": true`, `"entrypoint": "Plugin"`, `"os_version": "2.3"`). **Descobrir como o `SystemMonitor` é carregado** (buscar `SystemMonitor` no código) e replicar o mesmo registro.
+- Criar o SystemApp `src/SystemApps/SystemUpdater/` copiando a estrutura do `SystemMonitor` (`plugin.json` com `"core": true`, `"entrypoint": "Plugin"`, `"os_version": "2.5"`). **Descobrir como o `SystemMonitor` é carregado** (buscar `SystemMonitor` no código) e replicar o mesmo registro.
 - `Plugin.php`: `osRegister`/`osBoot` com os hooks do achado 11; faz `bind` dos contratos aos adaptadores (verificar no `ContainerInterface` como registrar *singleton* ou fábrica com parâmetros; se não houver, criar uma fábrica pequena no próprio `Plugin.php`). Registrar a capability `system.update` em `activate()`.
 - `Controllers/UpdateController.php`: `GET /admin/settings/updates` (página) e `POST /admin/settings/updates/core/check` (força verificação). Somente `admin`, CSRF, sem superglobais.
 - `views/updates.php`: versão instalada, versão disponível, data, changelog **escapado**, botão "Verificar agora". Sem botão de atualizar ainda.
@@ -187,8 +187,8 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 - `JsonUpdateManifestParser` (`UpdateManifestParserInterface`, protocolos suportados `[1]`). Formato do `manifest.json`:
   ```json
   {
-    "protocol": 1, "minUpdaterProtocol": 1, "kind": "core", "slug": "core", "version": "2.4.0",
-    "requires": {"php": "8.1", "extensions": ["pdo","zip","mbstring","openssl","json","curl"], "osVersion": "2.3"},
+    "protocol": 1, "minUpdaterProtocol": 1, "kind": "core", "slug": "core", "version": "2.5.0",
+    "requires": {"php": "8.1", "extensions": ["pdo","zip","mbstring","openssl","json","curl"], "osVersion": "2.5"},
     "files": [{"path": "src/Core/Foo.php", "sha256": "…", "size": 123, "mode": "replace"}],
     "removed": ["src/Core/Velho.php"],
     "migrations": [{"scope": "__core__", "name": "2026_11_01_000001_x", "sha256": "…", "type": "additive"}],
@@ -256,7 +256,7 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 - `tools/release/ReleaseBuilder.php` e `tools/build-release.php`: lê a versão de `DS_VERSION`; exige `vendor/autoload.php` presente; monta a lista de arquivos = `git ls-files` (menos `release/exclude.txt`) + todo o `vendor/`; calcula hash e tamanho; lê `migrations/*.php` de `src/Core/Database/migrations/` (escopo `__core__`) e de `src/Plugins/*/migrations/` (escopo = slug); lê `release/schema-expects.json`; gera `dist/domain-system-X.Y.Z.zip` (arquivos na raiz do ZIP + `manifest.json`) e `dist/domain-system-X.Y.Z.zip.sha256`.
 - `release/exclude.txt`: `.git*`, `tests/`, `docs/`, `wiki/`, `auditoria/`, `scratch/`, `token/`, `storage/`, `temp/`, `*.phar`, `*.zip`, `.env`, `database.sqlite`, `.kilo/`, `workstation/`, `.github/`, `phpunit.xml`, arquivos `PLANO_*`.
 - `release/schema-expects.json`: tabelas/colunas obrigatórias (começar com `academy_modules: [folder_slug]` e `academy_lessons: [mobile_profile]`).
-- Evoluir `.github/workflows/release.yml`: (1) instalar dependências **com dev** e rodar `composer test`; (2) conferir que a tag (`v2.4.0`) é igual a `DS_VERSION` **e** a `composer.json`; (3) `composer install --no-dev --optimize-autoloader`; (4) rodar `php tools/build-release.php`; (5) publicar **os assets atuais** (`domain-system-core.zip`, `radio_online.zip`, `clock_widget.zip`) **mais** `domain-system-X.Y.Z.zip` e `.sha256`.
+- Evoluir `.github/workflows/release.yml`: (1) instalar dependências **com dev** e rodar `composer test`; (2) conferir que a tag (`v2.5.0`) é igual a `DS_VERSION` **e** a `composer.json`; (3) `composer install --no-dev --optimize-autoloader`; (4) rodar `php tools/build-release.php`; (5) publicar **os assets atuais** (`domain-system-core.zip`, `radio_online.zip`, `clock_widget.zip`) **mais** `domain-system-X.Y.Z.zip` e `.sha256`.
 - **Teste de ida e volta** `tests/Integration/ReleaseBuilderRoundTripTest.php`: gera um pacote a partir de uma árvore de fixture e faz o `JsonUpdateManifestParser` + `Sha256PackageVerifier` aceitá-lo; adulterar 1 byte ⇒ rejeição.
 - **Aceite:** `php tools/build-release.php` roda localmente; o pacote gerado passa no verificador.
 
@@ -290,7 +290,7 @@ Cada passo termina com a suíte verde e um commit. Marcos de entrega: **M1** ap�
 - [ ] Nada enviado ao GitHub sem autorização.
 
 ## 8. Perguntas que o implementador deve fazer ao usuário (não decidir sozinho)
-1. **Tag `v2.3.0` defasada** (aponta 5 commits atrás): mover a tag (reescreve histórico público), ou publicar a primeira Release com o atualizador em uma versão nova? Qual número?
+1. **Tag `v2.5.0` defasada** (aponta 5 commits atrás): mover a tag (reescreve histórico público), ou publicar a primeira Release com o atualizador em uma versão nova? Qual número?
 2. **Repositório público** (necessário para o GitHub sem token)? Confirmar.
 3. **Rollback automático ligado por padrão** (`auto_rollback: true`)? Confirmar.
 4. **Backup de banco MySQL acima de 200 MB:** bloquear ou permitir com confirmação explícita? (Plano: permitir só com confirmação.)

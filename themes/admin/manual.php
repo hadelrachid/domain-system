@@ -3,7 +3,7 @@
  * View do Manual de Instruções & Testabilidade no Painel Admin.
  */
 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
-$version = defined('DS_VERSION') ? DS_VERSION : '2.3.0';
+$version = defined('DS_VERSION') ? DS_VERSION : '2.5.0';
 if (!isset($pluginManuals) || !is_array($pluginManuals)) {
     $scanner = new \DomainSystem\Core\Manual\PluginManualScanner();
     $pluginManuals = $scanner->discover();

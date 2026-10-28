@@ -344,16 +344,34 @@
 <span class="tag">&lt;/head&gt;</span>
 <span class="tag">&lt;body&gt;</span>
 
-    <span class="c">&lt;!-- 1. Incluindo o Cabeçalho (Partial) --&gt;</span>
-    <span class="c">&lt;?php</span> <span class="k">require</span> <span class="v">$themeDir</span> . <span class="s">'/partials/header.php'</span>; <span class="c">?&gt;</span>
+    <span class="c">&lt;!-- 1. Cabeçalho via Flex Builder (com fallback automático para partials/header.php) --&gt;</span>
+    <span class="c">&lt;?php</span>
+        <span class="v">$partRenderer</span> = (<span class="f">isset</span>(<span class="v">$GLOBALS</span>[<span class="s">'app'</span>]) &amp;&amp; <span class="v">$GLOBALS</span>[<span class="s">'app'</span>]-&gt;<span class="f">getContainer</span>()-&gt;<span class="f">has</span>(<span class="v">\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface</span>::class))
+            ? <span class="v">$GLOBALS</span>[<span class="s">'app'</span>]-&gt;<span class="f">getContainer</span>()-&gt;<span class="f">make</span>(<span class="v">\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface</span>::class)
+            : <span class="k">null</span>;
+        <span class="v">$themeFolder</span> = <span class="f">basename</span>(<span class="v">$themeDir</span>);
+        <span class="v">$customHeader</span> = (<span class="v">$partRenderer</span> !== <span class="k">null</span>) ? <span class="v">$partRenderer</span>-&gt;<span class="f">renderHeader</span>(<span class="v">$themeFolder</span>, <span class="f">get_defined_vars</span>()) : <span class="s">''</span>;
+        <span class="k">if</span> (<span class="f">trim</span>(<span class="v">$customHeader</span>) !== <span class="s">''</span>) {
+            <span class="k">echo</span> <span class="v">$customHeader</span>;
+        } <span class="k">else</span> {
+            <span class="k">require</span> <span class="v">$themeDir</span> . <span class="s">'/partials/header.php'</span>;
+        }
+    <span class="c">?&gt;</span>
 
     <span class="c">&lt;!-- 2. Renderizando o miolo da página atual --&gt;</span>
     <span class="tag">&lt;main&gt;</span>
         <span class="k">&lt;?=</span> <span class="v">$content</span> <span class="k">?&gt;</span>
     <span class="tag">&lt;/main&gt;</span>
 
-    <span class="c">&lt;!-- 3. Incluindo o Rodapé (Partial) --&gt;</span>
-    <span class="c">&lt;?php</span> <span class="k">require</span> <span class="v">$themeDir</span> . <span class="s">'/partials/footer.php'</span>; <span class="c">?&gt;</span>
+    <span class="c">&lt;!-- 3. Rodapé via Flex Builder (com fallback automático para partials/footer.php) --&gt;</span>
+    <span class="c">&lt;?php</span>
+        <span class="v">$customFooter</span> = (<span class="v">$partRenderer</span> !== <span class="k">null</span>) ? <span class="v">$partRenderer</span>-&gt;<span class="f">renderFooter</span>(<span class="v">$themeFolder</span>, <span class="f">get_defined_vars</span>()) : <span class="s">''</span>;
+        <span class="k">if</span> (<span class="f">trim</span>(<span class="v">$customFooter</span>) !== <span class="s">''</span>) {
+            <span class="k">echo</span> <span class="v">$customFooter</span>;
+        } <span class="k">else</span> {
+            <span class="k">require</span> <span class="v">$themeDir</span> . <span class="s">'/partials/footer.php'</span>;
+        }
+    <span class="c">?&gt;</span>
 
 <span class="tag">&lt;/body&gt;</span>
 <span class="tag">&lt;/html&gt;</span></pre>

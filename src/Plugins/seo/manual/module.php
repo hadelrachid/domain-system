@@ -22,7 +22,7 @@ return new class implements ManualModuleInterface {
 
     public function getBadge(): string
     {
-        return 'Módulo Auto-Descoberto • SEO v2.3.0';
+        return 'Módulo Auto-Descoberto • SEO v2.5.0';
     }
 
     public function getAccentColor(): string

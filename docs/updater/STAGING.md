@@ -7,7 +7,7 @@ Este documento registra o roteiro e os resultados de homologação em ambiente r
 ## Pré-requisitos do Ambiente de Teste
 1. Repositório público **sandbox** no GitHub (ex.: `hadelrachid/domain-system-sandbox`).
 2. Na instância de staging da Hostinger, apontar `config/update.json` → `"core_repository": "hadelrachid/domain-system-sandbox"`.
-3. Publicar no repositório sandbox uma Release com versão superior (ex.: `v2.4.0`) contendo os artefatos gerados por `php tools/build-release.php` (`domain-system-2.4.0.zip` e `domain-system-2.4.0.zip.sha256`), incluindo uma migration aditiva de teste.
+3. Publicar no repositório sandbox uma Release com versão superior (ex.: `v2.5.0`) contendo os artefatos gerados por `php tools/build-release.php` (`domain-system-2.5.0.zip` e `domain-system-2.5.0.zip.sha256`), incluindo uma migration aditiva de teste.
 
 ---
 

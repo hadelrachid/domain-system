@@ -6,12 +6,12 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Version-2.4.0-blueviolet?style=for-the-badge" alt="Version 2.4.0">
+  <img src="https://img.shields.io/badge/Version-2.5.0-blueviolet?style=for-the-badge" alt="Version 2.5.0">
   <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Weight-~30MB-orange?style=for-the-badge" alt="Weight">
   <br><br>
-  <h1>🛸 Domain System (v2.4)</h1>
+  <h1>🛸 Domain System (v2.5)</h1>
   <p><strong>Uma Plataforma Web alternativa, leve, modular e resiliente, estruturada em SOLID e Contratos.</strong></p>
 </div>
 
@@ -39,24 +39,30 @@ Proteção total contra ZIPs maliciosos. O instalador não confia cegamente em u
 ### 🔋 3. No-Break Shield, Persistência Atômica & Snapshot 1-Clique
 Esqueça a "Tela Branca da Morte" (WSOD). O Domain System roda com o **No-Break Shield**: um *Circuit Breaker* inteligente (no boot e por rota com limiar configurável) aliado ao `AtomicJsonStore` (`LOCK_EX` + escrita atômica), **Schema Doctor** (`SchemaDoctorInterface`) e **Snapshot & Rollback em 1 Clique** no painel de Supervisão (`/admin/monitor`).
 
-### 🎓 4. Academy LMS Híbrido, Fábrica Automática de Arquivos PHP & Simulador Multi-Dispositivos
+### 🏗️ 4. Flex Builder FSE (Full Site Editing, 14 Blocos, 4 Resoluções & Auto-Reflow de CSS Grid)
+O ecossistema conta com o **Flex Builder (`/admin/builder`)** em arquitetura 100% SOLID (`src/Core/Theme/Parts`):
+- **Compilador Único (`ThemePartCompilerInterface`) & Validador Estrutural (`ThemePartValidatorInterface`):** O Preview do Studio e o Frontend publicado compartilham exatamente o mesmo motor de compilação, com validação pré-persistência de tipos, presets, compatibilidade de blocos e compensação transacional nas associações.
+- **Visibilidade Responsiva Isolada por Elemento (4 Resoluções) + Auto-Reflow de Grid:** Oculte elementos individualmente em **Desktop (`100%`)**, **Laptop (`1024px`)**, **Tablet (`768px`)** e **Mobile (`375px`)** sem jamais ocultar a seção inteira. Quando todos os elementos de uma coluna ficam ocultos em uma resolução, o `LayoutGridRenderer` colapsa a coluna vazia e recalcula automaticamente o `grid-template-columns` para as colunas restantes (`1fr 2fr 1fr` $\rightarrow$ `2fr 1fr` ou `1fr`).
+- **14 Blocos Semânticos, Design Tokens Globais & Vinculação Direta a Templates:** Componha *Headers*, *Footers* e *Seções Centrais* vinculadas diretamente a templates do tema (`home.php`, `sobre.php`, etc.) ou via shortcode `[section id="..."]`, com fallback 100% seguro para `partials/header.php` e `partials/footer.php`. Saiba mais em [wiki/Flex-Builder.md](wiki/Flex-Builder.md).
+
+### 🎓 5. Academy LMS Híbrido, Fábrica Automática de Arquivos PHP & Simulador Multi-Dispositivos
 O ecossistema conta com o **Academy (Cursos)** em arquitetura 100% SOLID:
 - **Fábrica Automática de Pastas e Aulas PHP (`LessonFileScaffolderInterface`):** Crie pastas físicas de módulos (`📁 Criar Pasta`) e fabrique automaticamente arquivos `.php` pré-configurados com CSS e JS responsivos (Mobile, Tablet e Desktop) a partir do título da aula. Exemplo: ao salvar a aula **"Estrutura de Dados"**, o sistema gera automaticamente `pages/estrutura-de-dados.php` e disponibiliza a rota amigável `/cursos/estrutura-de-dados`.
 - **Modo Híbrido de Aulas:** Suporta **Editor em Blocos Estruturado** (`header`, `paragraph`, `video`, `code`, `callout`, `list`, `image`, `delimiter`), **Arquivos PHP Fabricados/Tema** (`ThemePageResolverInterface`) e **Importação de Pasta em 1 Clique**.
 - **Simulador Multi-Dispositivos & 3 Perfis de Layout Mobile:** Alterne entre `🖥️ Desktop` e `📱 Mobile` com **5 tamanhos de dispositivos padrão** (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) e escolha entre **3 Perfis Mobile** por curso/aula: **Gaveta Deslizante (`drawer`)**, **Barra Inferior Fixa (`bottom_bar`)** e **Modo Cinema 16:9 Sticky (`cinema`)**.
 
-### 🤖 5. "Vibe Coding sobre Trilhos" (DX Oficial para Inteligência Artificial)
+### 🤖 6. "Vibe Coding sobre Trilhos" (DX Oficial para Inteligência Artificial)
 O Domain System foi preparado para a era do desenvolvimento acelerado por IA sem permitir código espaguete:
 - **Documento Mestre Universal ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md))** + regras nativas (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`): qualquer IA (ChatGPT, Claude, DeepSeek, Gemini, Copilot, Cursor, Kilo Code) lê as **10 Leis do Ring 3** e gera plugins, aulas e temas 100% tipados e aderentes aos contratos SOLID.
 - **Gerador de Boilerplate (`os-cli.php make:plugin <nome>`):** Cria instantaneamente toda a estrutura de contratos (`Plugin.php`, `Contracts/`, `Controllers/`, `views/`, `manual/module.php`).
 
-### 📖 6. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
+### 📖 7. Auto-Descoberta de Manuais por Contrato (`ManualModuleInterface`)
 Qualquer plugin em `src/Plugins/<slug>/manual/module.php` que implemente a interface `ManualModuleInterface` é rastreado e injetado automaticamente pelo `PluginManualScanner` dentro do **Manual de Instruções & QA do Cockpit (`/admin/manual` e `/manual`)**, adicionando sua documentação interativa e seus itens de checklist de homologação sem acoplamento com o Kernel.
 
-### 🎨 7. Administrador de Conteúdo, SEO e Segurança Anti-CSRF / ACL
-Gerencie páginas web (CMS), Menus Dinâmicos Atômicos, SEO OpenGraph/Schema.org e Controle de Acesso baseado em **Capabilities** com proteção nativa Anti-CSRF, Anti-XSS e suporte a 2FA.
+### 🎨 8. Administrador de Conteúdo, SEO e Segurança Anti-CSRF / ACL
+Gerencie páginas web (CMS), Menus Dinâmicos Atômicos, SEO OpenGraph/Schema.org e Controle de Acesso baseado em **Capabilities** com proteção nativa Anti-CSRF, Anti-XSS (whitelist positiva de URLs e sanitização XML de SVG via `DOMDocument`) e suporte a 2FA.
 
-### 🔄 8. Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` — Modelo A)
+### 🔄 9. Atualizador Automático via GitHub Releases por Contrato (`SystemUpdater` — Modelo A)
 Notificação automática de novas versões (painel, widget e sino), download em streaming com validação dupla SHA-256 + `manifest.json`, pré-checagem, backup automático de código e banco (MySQL/SQLite com fallback `\PharData` para ambientes Windows/XAMPP), aplicação atômica preservando `.env`/`config/`/`storage/`, execução de migrations verificadas por contrato (`SchemaVerifier`) e rollback automático em 1 clique ou via CLI (`php os-cli.php system:update`). Saiba mais em [wiki/Atualizacoes.md](wiki/Atualizacoes.md).
 
 ## ⚙️ Como Instalar
@@ -77,7 +83,7 @@ Notificação automática de novas versões (painel, widget e sino), download em
 
 ## 👨‍💻 Para Desenvolvedores & IAs (SDK)
 
-O sistema possui uma engine de **Hooks (Event-Driven)** e **Contratos (`src/Core/Contracts`)** validada por **309 testes automatizados (1.400 asserções)** no PHPUnit.
+O sistema possui uma engine de **Hooks (Event-Driven)** e **Contratos (`src/Core/Contracts`)** validada por **433 testes automatizados (2.340+ asserções)** no PHPUnit.
 Para criar seu próprio módulo com ou sem auxílio de IA, consulte:
 - [Guia de Desenvolvimento de Plugins (Humanos)](DEVELOPER_GUIDE.md)
 - [Guia Oficial de Contratos para IAs (`AI_CONTRACT_GUIDE.md`)](AI_CONTRACT_GUIDE.md)
