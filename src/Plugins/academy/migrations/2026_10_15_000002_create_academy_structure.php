@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-use PDO;
-
 return [
-    'up' => function (PDO $db) {
-        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    'up' => function (\PDO $db) {
+        $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $autoInc = $driver === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY';
 
         $db->exec("
@@ -69,7 +67,7 @@ return [
             }
         }
     },
-    'down' => function (PDO $db) {
+    'down' => function (\PDO $db) {
         $db->exec("DROP TABLE IF EXISTS academy_lessons");
         $db->exec("DROP TABLE IF EXISTS academy_modules");
     },
