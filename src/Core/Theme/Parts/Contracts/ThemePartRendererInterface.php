@@ -7,7 +7,7 @@ namespace DomainSystem\Core\Theme\Parts\Contracts;
 /**
  * Orquestrador de Renderização de Partes com Garantia de Fallback Gracioso.
  */
-interface ThemePartRendererInterface
+interface ThemePartRendererInterface extends ThemePartCompilerInterface
 {
     /**
      * Renderiza o Header ativo do tema.

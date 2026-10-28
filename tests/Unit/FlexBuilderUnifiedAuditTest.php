@@ -24,6 +24,11 @@ use DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
 use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
+use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Theme\ShortcodeManager;
+use DomainSystem\Plugins\flextheme\Controllers\ThemePartsAdminController;
+use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
 use DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService;
 use DomainSystem\Plugins\flextheme\Services\ThemePartManagementService;
 use DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService;
@@ -392,5 +397,244 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $urlResolver = new BaseUrlResolver('https://meusite.com/app');
         $this->assertSame('https://meusite.com/app', $urlResolver->getBaseUrl());
         $this->assertSame('https://meusite.com/app/admin/builder', $urlResolver->resolve('/admin/builder'));
+    }
+
+    /**
+     * 10. Validação Estrutural Completa (Checklist ChatGPT: Itens 1, 2, 3, 4 e 11).
+     * Rejeita tipo inválido, preset inexistente, bloco desconhecido, bloco proibido na parte e profundidade excessiva.
+     */
+    public function testValidatorRejectsInvalidPartTypePresetUnknownBlockForbiddenBlockAndExcessiveDepth(): void
+    {
+        $registry = DefaultBlockRegistryFactory::create();
+        $grid = new LayoutGridRenderer();
+        $validator = new ThemePartValidator($registry, $grid);
+
+        // 10.1 Tipo de parte inválido
+        try {
+            $validator->validate(['type' => 'sidebar_invalido', 'layout_preset' => '1_col']);
+            $this->fail('Deveria rejeitar tipo de parte inválido.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Tipo de parte visual inválido', $e->getMessage());
+        }
+
+        // 10.2 Preset inexistente
+        try {
+            $validator->validate(['type' => 'header', 'layout_preset' => '99_cols_inexistente']);
+            $this->fail('Deveria rejeitar preset inexistente.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Preset de layout inexistente', $e->getMessage());
+        }
+
+        // 10.3 Bloco desconhecido
+        try {
+            $validator->validate([
+                'type'          => 'header',
+                'layout_preset' => '1_col',
+                'columns_data'  => [
+                    0 => [['type' => 'bloco_fantasma_xyz', 'data' => []]],
+                ],
+            ]);
+            $this->fail('Deveria rejeitar bloco desconhecido.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('Bloco desconhecido', $e->getMessage());
+        }
+
+        // 10.4 Bloco proibido no tipo de parte (post_cards_grid em header)
+        try {
+            $validator->validate([
+                'type'          => 'header',
+                'layout_preset' => '1_col',
+                'columns_data'  => [
+                    0 => [['type' => 'post_cards_grid', 'data' => []]],
+                ],
+            ]);
+            $this->fail('Deveria rejeitar bloco incompatível com header.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('não é compatível com partes do tipo', $e->getMessage());
+        }
+
+        // 10.5 Profundidade excessiva nos dados do bloco (> 10 níveis)
+        $deepData = ['val' => 'fim'];
+        for ($i = 0; $i < 12; $i++) {
+            $deepData = ['nested' => $deepData];
+        }
+        try {
+            $validator->validate([
+                'type'          => 'section',
+                'layout_preset' => '1_col',
+                'columns_data'  => [
+                    0 => [['type' => 'heading', 'data' => $deepData]],
+                ],
+            ]);
+            $this->fail('Deveria rejeitar estrutura excessivamente profunda.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('profundidade máxima', $e->getMessage());
+        }
+    }
+
+    /**
+     * 11. Compensação Transacional nas Associações (Checklist ChatGPT: Item 6).
+     * Se uma atribuição falha após salvar a parte, o estado anterior é restaurado e uma exceção é lançada.
+     */
+    public function testManagementServiceCompensatesAndRollsBackWhenAssociationFailsAfterSave(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/parts');
+        $failingAssoc = $this->createMock(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface::class);
+        $failingAssoc->method('getGlobalDefault')->willReturn(null);
+        $failingAssoc->method('getAssignedPartId')->willReturn(null);
+        $failingAssoc->method('assignPart')->willReturn(false); // Simula falha ao gravar associação
+
+        $discovery = new ThemeDiscoveryService($this->tempDir);
+        $service = new ThemePartManagementService(
+            $repo,
+            $failingAssoc,
+            $discovery,
+            new ThemePartValidator(DefaultBlockRegistryFactory::create(), new LayoutGridRenderer())
+        );
+
+        try {
+            $service->saveFromPayload([
+                'id'             => 'part_rollback_test',
+                'type'           => 'header',
+                'title'          => 'Header que deve sofrer rollback',
+                'layout_preset'  => '1_col',
+                'assigned_theme' => 'default',
+            ]);
+            $this->fail('Deveria lançar RuntimeException quando assignPart falha.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('Falha ao associar a parte visual ao tema', $e->getMessage());
+        }
+
+        // A parte recém-criada deve ter sido removida pela compensação!
+        $this->assertNull($repo->findById('part_rollback_test'));
+    }
+
+    /**
+     * 12. Whitelist Positiva de URLs e Sanitização XML de SVG via DOMDocument (Checklist ChatGPT: Itens 7 e 8).
+     */
+    public function testPositiveUrlSchemeWhitelistAndDomDocumentSvgSanitization(): void
+    {
+        $sanitizer = new SafeHtmlSanitizer();
+
+        // Esquemas não listados na whitelist positiva devem ser bloqueados
+        $this->assertSame('#', $sanitizer->sanitizeUrl('javascript:alert(1)'));
+        $this->assertSame('#', $sanitizer->sanitizeUrl('data:text/html;base64,PHNjcmlwdD4='));
+        $this->assertSame('#', $sanitizer->sanitizeUrl('file:///etc/passwd'));
+        $this->assertSame('#', $sanitizer->sanitizeUrl('ftp://malicious.local/file'));
+        $this->assertSame('#', $sanitizer->sanitizeUrl('customscheme:payload'));
+        $this->assertSame('#', $sanitizer->sanitizeUrl('//evil-redirect.com/phish'));
+
+        // Esquemas permitidos e caminhos relativos devem passar intactos
+        $this->assertSame('https://rachidd.com/cursos', $sanitizer->sanitizeUrl('https://rachidd.com/cursos'));
+        $this->assertSame('mailto:contato@rachidd.com', $sanitizer->sanitizeUrl('mailto:contato@rachidd.com'));
+        $this->assertSame('tel:+5511999999999', $sanitizer->sanitizeUrl('tel:+5511999999999'));
+        $this->assertSame('/sobre', $sanitizer->sanitizeUrl('/sobre'));
+        $this->assertSame('#ancora', $sanitizer->sanitizeUrl('#ancora'));
+
+        // MediaUploadService: bloqueio de XXE / DOCTYPE, XML malformado e tags perigosas em SVG
+        $uploader = new MediaUploadService($this->tempDir, 'https://rachidd.com');
+
+        $xxeSvg = '<?xml version="1.0"?><!DOCTYPE svg [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]><svg xmlns="http://www.w3.org/2000/svg"><text>&xxe;</text></svg>';
+        $this->assertSame('', $uploader->sanitizeSvgContent($xxeSvg));
+
+        $malformedSvg = '<svg xmlns="http://www.w3.org/2000/svg"><g><path d="M0 0"</svg>';
+        $this->assertSame('', $uploader->sanitizeSvgContent($malformedSvg));
+
+        $dirtySvg = '<svg xmlns="http://www.w3.org/2000/svg" onload="evil()"><script>alert(1)</script><iframe src="https://evil.com"></iframe><a href="javascript:alert(2)"><path d="M10 10" onclick="hack()"/></a></svg>';
+        $cleanSvg = $uploader->sanitizeSvgContent($dirtySvg);
+        $this->assertNotEmpty($cleanSvg);
+        $this->assertStringNotContainsString('<script', $cleanSvg);
+        $this->assertStringNotContainsString('<iframe', $cleanSvg);
+        $this->assertStringNotContainsString('onload', $cleanSvg);
+        $this->assertStringNotContainsString('onclick', $cleanSvg);
+        $this->assertStringNotContainsString('javascript:', $cleanSvg);
+        $this->assertStringContainsString('<path d="M10 10"/>', $cleanSvg);
+    }
+
+    /**
+     * 13. Isolamento HTTP via Request::withJsonBody() e Respostas de Erro Controladas (Checklist ChatGPT: Itens 5, 9 e 12).
+     */
+    public function testControllerUsesRequestJsonWithoutPhpInputAndReturnsControlledErrorResponses(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/assoc.json');
+        $tokens = new DesignTokens($this->tempDir . '/tokens.json');
+        $grid = new LayoutGridRenderer();
+        $registry = DefaultBlockRegistryFactory::create();
+        $styleRenderer = new ElementStyleRenderer();
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
+        $themeManager = $this->createMock(\DomainSystem\Core\Contracts\ThemeManagerInterface::class);
+        $shortcodes = new ShortcodeManager();
+
+        $controller = new ThemePartsAdminController(
+            $repo,
+            $assoc,
+            $tokens,
+            $registry,
+            $grid,
+            $renderer,
+            $themeManager,
+            $shortcodes,
+            null,
+            null,
+            $this->tempDir
+        );
+
+        // 13.1 Sucesso via Request::withJsonBody (sem usar php://input)
+        $validReq = (new Request())->withJsonBody([
+            'id'            => 'part_via_json_body',
+            'type'          => 'header',
+            'title'         => 'Header Isolado',
+            'layout_preset' => '3_cols_header',
+            'columns_data'  => [
+                0 => [['type' => 'logo', 'data' => ['text' => 'Marca']]],
+            ],
+        ]);
+        $resOk = $controller->savePart($validReq);
+        $this->assertSame(200, $resOk->getStatusCode());
+        $dataOk = json_decode($resOk->getContent(), true);
+        $this->assertTrue($dataOk['success']);
+        $this->assertSame('part_via_json_body', $dataOk['id']);
+
+        // 13.2 Erro de validação retorna HTTP 422
+        $invalidReq = (new Request())->withJsonBody([
+            'type'          => 'header',
+            'layout_preset' => '1_col',
+            'columns_data'  => [
+                0 => [['type' => 'bloco_inexistente', 'data' => []]],
+            ],
+        ]);
+        $res422 = $controller->savePart($invalidReq);
+        $this->assertSame(422, $res422->getStatusCode());
+        $data422 = json_decode($res422->getContent(), true);
+        $this->assertFalse($data422['success']);
+
+        // 13.3 Erro inesperado no Preview retorna HTTP 500 e NÃO vaza detalhes internos da exceção
+        $explodingPreview = $this->createMock(\DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface::class);
+        $explodingPreview->method('renderPreview')->willThrowException(new \Error('SegredoInternoDoServidor:/var/www/secret.php'));
+
+        $controllerWithExplodingPreview = new ThemePartsAdminController(
+            $repo,
+            $assoc,
+            $tokens,
+            $registry,
+            $grid,
+            $renderer,
+            $themeManager,
+            $shortcodes,
+            null,
+            null,
+            $this->tempDir,
+            null,
+            null,
+            null,
+            $styleRenderer,
+            $explodingPreview
+        );
+
+        $resPreview500 = $controllerWithExplodingPreview->preview((new Request())->withJsonBody(['type' => 'section']));
+        $this->assertSame(500, $resPreview500->getStatusCode());
+        $this->assertStringNotContainsString('SegredoInternoDoServidor', $resPreview500->getContent());
+        $this->assertStringContainsString('Não foi possível gerar a pré-visualização.', $resPreview500->getContent());
     }
 }

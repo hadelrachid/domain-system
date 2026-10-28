@@ -177,10 +177,13 @@ class ThemePartRenderer implements ThemePartRendererInterface
 
                             $block = $this->blockRegistry->get($blockType);
                             if ($block !== null) {
-                                // Validação estrita por contrato: impede que blocos de conteúdo vazem para headers ou footers
-                                $allowedTypes = $block->getAllowedPartTypes();
-                                if (!empty($allowedTypes) && !in_array($part->getType(), $allowedTypes, true)) {
-                                    continue;
+                                $enforcePartType = ($context['_enforce_part_type'] ?? true) !== false;
+                                if ($enforcePartType) {
+                                    // Validação estrita por contrato: impede que blocos de conteúdo vazem para headers ou footers
+                                    $allowedTypes = $block->getAllowedPartTypes();
+                                    if (!empty($allowedTypes) && !in_array($part->getType(), $allowedTypes, true)) {
+                                        continue;
+                                    }
                                 }
 
                                 $renderedHtml = $block->render($blockData, $context);

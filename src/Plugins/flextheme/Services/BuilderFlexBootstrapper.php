@@ -18,8 +18,11 @@ use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartCompilerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface;
+use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
 use DomainSystem\Core\Theme\ShortcodeManager;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\ContainerWidget;
@@ -50,12 +53,22 @@ class BuilderFlexBootstrapper
         $runtime->singleton(ThemeDiscoveryServiceInterface::class, fn() => new ThemeDiscoveryService($basePath));
         $runtime->singleton(MediaUploadServiceInterface::class, fn() => new MediaUploadService($basePath));
 
+        $runtime->singleton(ThemePartCompilerInterface::class, fn($c) => $c->make(ThemePartRendererInterface::class));
+
+        $runtime->singleton(ThemePartValidatorInterface::class, function ($c) {
+            return new ThemePartValidator(
+                $c->make(BlockRegistryInterface::class),
+                $c->make(LayoutGridInterface::class)
+            );
+        });
+
         $runtime->singleton(ThemePartPreviewServiceInterface::class, function ($c) {
             return new ThemePartPreviewService(
                 $c->make(BlockRegistryInterface::class),
                 $c->make(LayoutGridInterface::class),
                 $c->make(DesignTokensInterface::class),
-                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null
+                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null,
+                $c->make(ThemePartCompilerInterface::class)
             );
         });
 
@@ -63,7 +76,10 @@ class BuilderFlexBootstrapper
             return new ThemePartManagementService(
                 $c->make(ThemePartRepositoryInterface::class),
                 $c->make(ThemePartAssociationInterface::class),
-                $c->make(ThemeDiscoveryServiceInterface::class)
+                $c->make(ThemeDiscoveryServiceInterface::class),
+                $c->make(ThemePartValidatorInterface::class),
+                $c->make(BlockRegistryInterface::class),
+                $c->make(LayoutGridInterface::class)
             );
         });
 

@@ -22,8 +22,10 @@ use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
+use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
 use DomainSystem\Core\Theme\ShortcodeManager;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
@@ -32,6 +34,8 @@ use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
 use DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService;
 use DomainSystem\Plugins\flextheme\Services\ThemePartManagementService;
 use DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService;
+use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -96,8 +100,15 @@ class ThemePartsAdminController
         $this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
         $this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
         $this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
-        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->blockRegistry, $this->layoutGrid, $this->tokens, $this->styleRenderer);
-        $this->managementService = $managementService ?? new ThemePartManagementService($this->partRepo, $this->partAssoc, $this->themeDiscovery);
+        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->blockRegistry, $this->layoutGrid, $this->tokens, $this->styleRenderer, $this->renderer);
+        $this->managementService = $managementService ?? new ThemePartManagementService(
+            $this->partRepo,
+            $this->partAssoc,
+            $this->themeDiscovery,
+            new ThemePartValidator($this->blockRegistry, $this->layoutGrid),
+            $this->blockRegistry,
+            $this->layoutGrid
+        );
         $this->urlResolver       = $urlResolver ?? new BaseUrlResolver();
     }
 
@@ -192,11 +203,24 @@ class ThemePartsAdminController
                 'title'   => $part->getTitle(),
                 'message' => 'Parte "' . $part->getTitle() . '" salva com sucesso no Flex Builder!',
             ], JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
-        } catch (Throwable $e) {
+        } catch (InvalidArgumentException $e) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Erro de validação: ' . $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE), 422, ['Content-Type' => 'application/json']);
+        } catch (RuntimeException $e) {
             return new Response(json_encode([
                 'success' => false,
                 'message' => 'Erro ao salvar parte: ' . $e->getMessage(),
             ], JSON_UNESCAPED_UNICODE), 400, ['Content-Type' => 'application/json']);
+        } catch (Throwable $e) {
+            if (!class_exists(\PHPUnit\Framework\TestCase::class, false)) {
+                error_log('[FlexBuilder][savePart] ' . $e->getMessage());
+            }
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Erro interno ao processar o salvamento da parte visual.',
+            ], JSON_UNESCAPED_UNICODE), 500, ['Content-Type' => 'application/json']);
         }
     }
 
@@ -234,17 +258,17 @@ class ThemePartsAdminController
     public function assign(Request $request): Response
     {
         $input = $this->extractInput($request);
-        $this->managementService->assignFromPayload($input);
+        $assigned = $this->managementService->assignFromPayload($input);
 
         if ($this->isAjax($request)) {
             return new Response(json_encode([
-                'success' => true,
-                'message' => 'Atribuição atualizada com sucesso!',
-            ], JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
+                'success' => $assigned,
+                'message' => $assigned ? 'Atribuição atualizada com sucesso!' : 'Falha ao atualizar atribuição.',
+            ], JSON_UNESCAPED_UNICODE), $assigned ? 200 : 400, ['Content-Type' => 'application/json']);
         }
 
         if ($this->session) {
-            $this->session->setFlash('success', 'Atribuição atualizada com sucesso!');
+            $this->session->setFlash($assigned ? 'success' : 'error', $assigned ? 'Atribuição atualizada com sucesso!' : 'Falha ao atualizar atribuição.');
         }
 
         return Response::redirect($this->urlResolver->resolve('/admin/builder'));
@@ -305,8 +329,21 @@ class ThemePartsAdminController
             $html = $this->previewService->renderPreview($input);
 
             return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+        } catch (InvalidArgumentException $e) {
+            return new Response(
+                '<div style="padding:20px; color:#f87171; background:rgba(239,68,68,0.1); border-radius:6px;">Dados de pré-visualização inválidos.</div>',
+                422,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
         } catch (Throwable $e) {
-            return new Response('<div style="padding:20px; color:#f87171; background:rgba(239,68,68,0.1); border-radius:6px;">Erro no preview: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>', 200, ['Content-Type' => 'text/html; charset=utf-8']);
+            if (!class_exists(\PHPUnit\Framework\TestCase::class, false)) {
+                error_log('[FlexBuilder][preview] ' . $e->getMessage());
+            }
+            return new Response(
+                '<div style="padding:20px; color:#f87171; background:rgba(239,68,68,0.1); border-radius:6px;">Não foi possível gerar a pré-visualização.</div>',
+                500,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
         }
     }
 
@@ -451,10 +488,22 @@ class ThemePartsAdminController
     }
 
     /**
-     * Extrai dados enviados via JSON payload ou form POST.
+     * Extrai dados enviados via objeto Request (JSON ou form POST) sem depender de leitura direta de php://input quando Request já foi populado.
      */
     private function extractInput(Request $request): array
     {
+        if (method_exists($request, 'json')) {
+            $jsonBody = $request->json();
+            if (!empty($jsonBody)) {
+                return $jsonBody;
+            }
+        }
+
+        $all = $request->all();
+        if (!empty($all)) {
+            return $all;
+        }
+
         $raw = file_get_contents('php://input');
         if (!empty($raw)) {
             $json = json_decode($raw, true);
@@ -463,7 +512,7 @@ class ThemePartsAdminController
             }
         }
 
-        return $request->all();
+        return [];
     }
 
     private function isAjax(Request $request): bool

@@ -4,32 +4,42 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\Services;
 
+use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
+use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 use RuntimeException;
+use Throwable;
 
 /**
- * Serviço de aplicação responsável pela criação, persistência verificada e atribuição
- * de partes visuais de tema e templates (SOLID - SRP / DIP).
+ * Serviço de aplicação responsável pela criação, validação estrutural, persistência verificada
+ * e atribuição consistente (com compensação em caso de falha) de partes visuais de tema (SOLID - SRP / DIP).
  */
 class ThemePartManagementService
 {
     private ThemePartRepositoryInterface $partRepo;
     private ThemePartAssociationInterface $partAssoc;
     private ThemeDiscoveryServiceInterface $themeDiscovery;
+    private ThemePartValidatorInterface $validator;
 
     public function __construct(
         ThemePartRepositoryInterface $partRepo,
         ThemePartAssociationInterface $partAssoc,
-        ThemeDiscoveryServiceInterface $themeDiscovery
+        ThemeDiscoveryServiceInterface $themeDiscovery,
+        ?ThemePartValidatorInterface $validator = null,
+        ?BlockRegistryInterface $blockRegistry = null,
+        ?LayoutGridInterface $layoutGrid = null
     ) {
         $this->partRepo = $partRepo;
         $this->partAssoc = $partAssoc;
         $this->themeDiscovery = $themeDiscovery;
+        $this->validator = $validator ?? new ThemePartValidator($blockRegistry, $layoutGrid);
     }
 
     /**
@@ -89,12 +99,16 @@ class ThemePartManagementService
     }
 
     /**
-     * Salva uma ThemePart verificando obrigatoriamente o sucesso da operação de escrita e aplicando atribuições.
+     * Valida estruturalmente o documento, salva a ThemePart e aplica atribuições verificadas
+     * com compensação automática caso uma atribuição posterior falhe.
      *
      * @param array<string, mixed> $input
      */
     public function saveFromPayload(array $input): ThemePartInterface
     {
+        // 1. Validação estrutural completa antes de qualquer efeito colateral
+        $this->validator->validate($input);
+
         $id = trim((string)($input['id'] ?? ''));
         if ($id === '') {
             $id = uniqid('part_', true);
@@ -110,6 +124,7 @@ class ThemePartManagementService
         $mobileToggleAlign = (string)($input['mobile_toggle_align'] ?? 'right');
         $isDefault = !empty($input['is_default']);
         $sections = (array)($input['sections'] ?? []);
+
         foreach ($sections as &$sec) {
             if (is_array($sec)) {
                 if (isset($sec['container_settings']) && is_array($sec['container_settings'])) {
@@ -132,6 +147,12 @@ class ThemePartManagementService
         }
         unset($sec);
 
+        // Captura snapshot anterior da parte para compensação caso uma associação falhe após o save
+        $previousPart = $this->partRepo->findById($id);
+        $previousGlobalDefault = $this->partAssoc->getGlobalDefault($type);
+        $assignedTheme = !empty($input['assigned_theme']) ? (string)$input['assigned_theme'] : '';
+        $previousThemeAssignedId = $assignedTheme !== '' ? $this->partAssoc->getAssignedPartId($assignedTheme, $type) : null;
+
         $part = new ThemePart(
             $id,
             $type,
@@ -141,7 +162,7 @@ class ThemePartManagementService
             $columnsData,
             $mobileToggleStyle,
             $isDefault,
-            isset($input['created_at']) ? (int)$input['created_at'] : null,
+            isset($input['created_at']) ? (int)$input['created_at'] : ($previousPart?->getCreatedAt()),
             time(),
             $sections,
             $mobileToggleAlign
@@ -152,20 +173,47 @@ class ThemePartManagementService
             throw new RuntimeException('Falha ao gravar os dados da parte visual no armazenamento.');
         }
 
-        if ($isDefault) {
-            $this->partAssoc->setGlobalDefault($type, $id);
-        }
+        try {
+            if ($isDefault) {
+                if (!$this->partAssoc->setGlobalDefault($type, $id)) {
+                    throw new RuntimeException('Falha ao definir a parte visual como padrão global.');
+                }
+            }
 
-        if (!empty($input['assigned_theme'])) {
-            $this->partAssoc->assignPart((string)$input['assigned_theme'], $type, $id);
-        }
+            if ($assignedTheme !== '') {
+                if (!$this->partAssoc->assignPart($assignedTheme, $type, $id)) {
+                    throw new RuntimeException("Falha ao associar a parte visual ao tema '{$assignedTheme}'.");
+                }
+            }
 
-        if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
-            $targetTheme = !empty($input['assigned_theme'])
-                ? (string)$input['assigned_theme']
-                : $this->themeDiscovery->getActiveThemeFolder();
-            $templateChoice = trim((string)$input['assigned_template']);
-            $this->partAssoc->assignTemplateToSection($targetTheme, $id, $templateChoice);
+            if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
+                $targetTheme = $assignedTheme !== ''
+                    ? $assignedTheme
+                    : $this->themeDiscovery->getActiveThemeFolder();
+                $templateChoice = trim((string)$input['assigned_template']);
+                $effectiveTemplate = ($templateChoice !== '' && $templateChoice !== 'none') ? $templateChoice : null;
+                if (!$this->partAssoc->assignTemplateToSection($targetTheme, $id, $effectiveTemplate)) {
+                    throw new RuntimeException("Falha ao associar a seção ao template '{$templateChoice}'.");
+                }
+            }
+        } catch (Throwable $e) {
+            // Compensação: restaura o estado anterior da parte e das associações já alteradas
+            if ($isDefault) {
+                $this->partAssoc->setGlobalDefault($type, $previousGlobalDefault);
+            }
+            if ($assignedTheme !== '') {
+                $this->partAssoc->assignPart($assignedTheme, $type, $previousThemeAssignedId);
+            }
+            if ($previousPart !== null) {
+                $this->partRepo->save($previousPart);
+            } else {
+                $this->partRepo->delete($id);
+            }
+
+            if ($e instanceof RuntimeException) {
+                throw $e;
+            }
+            throw new RuntimeException('Falha ao atualizar as associações da parte visual: ' . $e->getMessage(), 0, $e);
         }
 
         return $part;
@@ -184,12 +232,16 @@ class ThemePartManagementService
         $sectionId   = trim((string)($input['section_id'] ?? $partId));
         $isGlobal    = !empty($input['is_global']);
 
+        if ($partType === '') {
+            return false;
+        }
+
         $resolvedPartId = ($partId !== '' && $partId !== 'none' && $partId !== 'fallback') ? $partId : null;
 
         if (str_starts_with($partType, 'template:')) {
             $slug = substr($partType, strlen('template:'));
             $targetSectionId = $resolvedPartId ?? $sectionId;
-            if ($targetSectionId === '' || $targetSectionId === 'none') {
+            if ($targetSectionId === '' || $targetSectionId === 'none' || $themeFolder === '') {
                 return false;
             }
             $effectiveSlug = ($partType !== 'template:none' && $resolvedPartId !== null) ? $slug : null;
@@ -198,6 +250,10 @@ class ThemePartManagementService
 
         if ($isGlobal) {
             return $this->partAssoc->setGlobalDefault($partType, $resolvedPartId);
+        }
+
+        if ($themeFolder === '') {
+            return false;
         }
 
         return $this->partAssoc->assignPart($themeFolder, $partType, $resolvedPartId);

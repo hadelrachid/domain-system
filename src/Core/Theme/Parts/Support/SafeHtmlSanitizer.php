@@ -107,14 +107,40 @@ class SafeHtmlSanitizer implements HtmlSanitizerInterface
     {
         $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         // Remove caracteres de controle e espaços invisíveis
-        $normalized = strtolower(preg_replace('/[\x00-\x20\s]+/', '', $decoded) ?? '');
-
-        if (
-            str_starts_with($normalized, 'javascript:') ||
-            str_starts_with($normalized, 'vbscript:') ||
-            str_starts_with($normalized, 'data:')
-        ) {
+        $normalized = trim(preg_replace('/[\x00-\x20]+/', '', $decoded) ?? '');
+        if ($normalized === '') {
             return false;
+        }
+
+        $lower = strtolower($normalized);
+
+        // Bloqueia URLs protocol-relative (//dominio-externo) ou com barras invertidas de evasão
+        if (str_starts_with($lower, '//') || str_contains($lower, '\\')) {
+            return false;
+        }
+
+        // Se possuir esquema explícito (ex: http:, https:, mailto:, javascript:, data:, file:), exige whitelist positiva
+        if (preg_match('/^([a-z][a-z0-9+.\-]*):/i', $lower, $matches)) {
+            $scheme = strtolower($matches[1]);
+            if (!in_array($scheme, ['http', 'https', 'mailto', 'tel'], true)) {
+                return false;
+            }
+            if (in_array($scheme, ['http', 'https'], true) && !preg_match('/^https?:\/\/[a-z0-9]/i', $normalized)) {
+                return false;
+            }
+            return true;
+        }
+
+        // Se contiver dois-pontos antes de qualquer '/', '?' ou '#' (tentativa de esquema ofuscado), bloqueia
+        $firstColon = strpos($lower, ':');
+        if ($firstColon !== false) {
+            $firstSlash = strpos($lower, '/');
+            $firstQuery = strpos($lower, '?');
+            $firstHash  = strpos($lower, '#');
+            $firstDelimiter = min(array_filter([$firstSlash, $firstQuery, $firstHash], static fn($v) => $v !== false) ?: [PHP_INT_MAX]);
+            if ($firstColon < $firstDelimiter) {
+                return false;
+            }
         }
 
         return true;

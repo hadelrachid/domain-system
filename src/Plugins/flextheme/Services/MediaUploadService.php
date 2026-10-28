@@ -171,39 +171,134 @@ class MediaUploadService implements MediaUploadServiceInterface
     }
 
     /**
-     * Remove vetores de XSS de arquivos SVG (<script>, <foreignObject>, handlers on*= e URIs javascript:/data:text/html).
+     * Valida a árvore XML do SVG via DOMDocument e remove quaisquer elementos ou atributos fora da whitelist segura.
      */
     public function sanitizeSvgContent(string $svg): string
     {
-        // 1. Remove blocos <script> e <foreignObject> completos
+        if (trim($svg) === '') {
+            return '';
+        }
+
+        // Bloqueia declarações DOCTYPE / ENTITY (prevenção contra XXE / Billion Laughs)
+        if (preg_match('/<!(?:DOCTYPE|ENTITY)\b/i', $svg)) {
+            return '';
+        }
+
+        // 1. Pré-limpeza de blocos perigosos antes do parser XML
         $clean = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $svg) ?? $svg;
         $clean = preg_replace('#<script\b[^>]*/?>#is', '', $clean) ?? $clean;
         $clean = preg_replace('#<foreignObject\b[^>]*>.*?</foreignObject>#is', '', $clean) ?? $clean;
         $clean = preg_replace('#<foreignObject\b[^>]*/?>#is', '', $clean) ?? $clean;
 
-        // 2. Remove atributos de eventos inline (onload, onclick, onerror, onmouseover, etc.)
-        $clean = preg_replace('/\s+on[a-zA-Z0-9_-]+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean) ?? $clean;
+        if (!class_exists(\DOMDocument::class)) {
+            return '';
+        }
 
-        // 3. Neutraliza esquemas javascript:, vbscript: e data:text/html em href / xlink:href
-        $clean = preg_replace_callback(
-            '/\b((?:xlink:)?href)\s*=\s*(["\'])(.*?)\2/is',
-            static function (array $m): string {
-                $attr = $m[1];
-                $quote = $m[2];
-                $val = html_entity_decode($m[3], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $norm = strtolower(preg_replace('/[\x00-\x20\s]+/', '', $val) ?? '');
-                if (
-                    str_starts_with($norm, 'javascript:') ||
-                    str_starts_with($norm, 'vbscript:') ||
-                    str_starts_with($norm, 'data:')
-                ) {
-                    return $attr . '=' . $quote . '#' . $quote;
+        $dom = new \DOMDocument();
+        $prevUseErrors = libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($clean, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prevUseErrors);
+
+        if (!$loaded || $dom->documentElement === null || strtolower($dom->documentElement->localName ?? $dom->documentElement->nodeName) !== 'svg') {
+            return '';
+        }
+
+        $allowedTags = [
+            'svg', 'g', 'a', 'image', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon',
+            'text', 'tspan', 'defs', 'lineargradient', 'radialgradient', 'stop', 'clippath',
+            'mask', 'pattern', 'symbol', 'use', 'title', 'desc', 'metadata', 'style',
+            'filter', 'fegaussianblur', 'feoffset', 'feblend', 'fecolormatrix', 'femerge', 'femergenode', 'fedropshadow',
+        ];
+
+        $this->sanitizeDomElement($dom->documentElement, $allowedTags);
+
+        $serialized = $dom->saveXML($dom->documentElement);
+        return is_string($serialized) ? $serialized : '';
+    }
+
+    /**
+     * @param list<string> $allowedTags
+     */
+    private function sanitizeDomElement(\DOMElement $element, array $allowedTags): void
+    {
+        // Sanitiza atributos do elemento atual
+        if ($element->hasAttributes()) {
+            $attrsToRemove = [];
+            foreach ($element->attributes as $attr) {
+                if (!$attr instanceof \DOMAttr) {
+                    continue;
                 }
-                return $m[0];
-            },
-            $clean
-        ) ?? $clean;
+                $attrName = strtolower($attr->nodeName);
+                $localName = strtolower($attr->localName ?? $attrName);
+                $val = html_entity_decode($attr->nodeValue ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $normVal = strtolower(preg_replace('/[\x00-\x20\s]+/', '', $val) ?? '');
 
-        return $clean;
+                if (str_starts_with($attrName, 'on') || str_starts_with($localName, 'on')) {
+                    $attrsToRemove[] = $attr->nodeName;
+                    continue;
+                }
+
+                if ($localName === 'href' || $attrName === 'href' || $attrName === 'xlink:href') {
+                    if (
+                        str_starts_with($normVal, 'javascript:') ||
+                        str_starts_with($normVal, 'vbscript:') ||
+                        str_starts_with($normVal, 'data:') ||
+                        str_starts_with($normVal, '//') ||
+                        (preg_match('/^([a-z][a-z0-9+.\-]*):/i', $normVal, $m) && !in_array(strtolower($m[1]), ['http', 'https'], true))
+                    ) {
+                        $attr->nodeValue = '#';
+                    }
+                    continue;
+                }
+
+                if ($localName === 'style') {
+                    if (
+                        str_contains($normVal, 'expression(') ||
+                        str_contains($normVal, 'javascript:') ||
+                        str_contains($normVal, 'vbscript:') ||
+                        str_contains($normVal, '@import') ||
+                        str_contains($normVal, 'url(javascript:') ||
+                        str_contains($normVal, 'url(data:')
+                    ) {
+                        $attrsToRemove[] = $attr->nodeName;
+                    }
+                }
+            }
+
+            foreach ($attrsToRemove as $attrName) {
+                $element->removeAttribute($attrName);
+            }
+        }
+
+        if (strtolower($element->localName ?? $element->nodeName) === 'style') {
+            $css = html_entity_decode($element->textContent ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $normCss = strtolower(preg_replace('/[\x00-\x20\s]+/', '', $css) ?? '');
+            if (
+                str_contains($normCss, 'expression(') ||
+                str_contains($normCss, 'javascript:') ||
+                str_contains($normCss, 'vbscript:') ||
+                str_contains($normCss, '@import')
+            ) {
+                $element->nodeValue = '';
+            }
+        }
+
+        // Percorre filhos (copia para array estático antes de remover nós)
+        $children = [];
+        foreach ($element->childNodes as $child) {
+            $children[] = $child;
+        }
+
+        foreach ($children as $child) {
+            if ($child instanceof \DOMElement) {
+                $tagName = strtolower($child->localName ?? $child->nodeName);
+                if (!in_array($tagName, $allowedTags, true)) {
+                    $element->removeChild($child);
+                    continue;
+                }
+                $this->sanitizeDomElement($child, $allowedTags);
+            }
+        }
     }
 }
