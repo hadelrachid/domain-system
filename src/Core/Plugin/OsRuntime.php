@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -18,10 +20,16 @@ class OsRuntime implements OsRuntimeInterface
     private OsConnector $connectorManifest;
     private LinkRegistry $linkRegistry;
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher;
-    
+
     private string $pluginNamespace = '';
 
-    public function __construct(ContainerInterface $container, OsConnector $connectorManifest, LinkRegistry $linkRegistry, \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher, string $pluginNamespace = '') {
+    public function __construct(
+        ContainerInterface $container,
+        OsConnector $connectorManifest,
+        LinkRegistry $linkRegistry,
+        \DomainSystem\Core\Contracts\EventDispatcherInterface $eventDispatcher,
+        string $pluginNamespace = ''
+    ) {
         $this->pluginNamespace = $pluginNamespace;
         $this->container = $container;
         $this->connectorManifest = $connectorManifest;
@@ -35,7 +43,7 @@ class OsRuntime implements OsRuntimeInterface
     public function getLink(string $linkName)
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
-        if (!in_array($linkName, $this->connectorManifest->getRequiredLinks())) {
+        if (!in_array($linkName, $this->connectorManifest->getRequiredLinks(), true)) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou acessar o Link '{$linkName}', mas não o requisitou durante a Fase de Registro.");
         }
 
@@ -48,11 +56,9 @@ class OsRuntime implements OsRuntimeInterface
     public function contributeTo(string $slotName, mixed $payload): void
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
-        if (!in_array($slotName, $this->connectorManifest->getRequestedSlots())) {
+        if (!in_array($slotName, $this->connectorManifest->getRequestedSlots(), true)) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou modificar o Slot visual '{$slotName}', mas não pediu permissão no registro.");
         }
-
-        // No futuro: Injeta o $payload no sistema visual.
     }
 
     /**
@@ -61,7 +67,7 @@ class OsRuntime implements OsRuntimeInterface
     public function onHook(string $hookName, callable $callback, int $priority = 0): void
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
-        if (!in_array($hookName, $this->connectorManifest->getListenedHooks())) {
+        if (!in_array($hookName, $this->connectorManifest->getListenedHooks(), true)) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou escutar o Evento/Hook '{$hookName}', mas não declarou intenção no registro.");
         }
 
@@ -75,7 +81,7 @@ class OsRuntime implements OsRuntimeInterface
     public function dispatchHook(string $hookName, mixed ...$payload): void
     {
         // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
-        if (!in_array($hookName, $this->connectorManifest->getProvidedHooks())) {
+        if (!in_array($hookName, $this->connectorManifest->getProvidedHooks(), true)) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou disparar o Evento/Hook '{$hookName}', mas não declarou que o forneceria no registro.");
         }
 
@@ -88,8 +94,8 @@ class OsRuntime implements OsRuntimeInterface
      */
     public function applyFilter(string $filterName, mixed $value, mixed ...$args): mixed
     {
-        // ?? O GUARDIÃO DE PERMISSÕES ??
-        if (!in_array($filterName, $this->connectorManifest->getProvidedHooks())) {
+        // 🚨 O GUARDIÃO DE PERMISSÕES 🚨
+        if (!in_array($filterName, $this->connectorManifest->getProvidedHooks(), true)) {
             throw new Exception("Auditoria de Segurança (Bloqueio): O plugin tentou aplicar o filtro '$filterName', mas não declarou que o forneceria no registro.");
         }
 
@@ -97,7 +103,7 @@ class OsRuntime implements OsRuntimeInterface
         if (method_exists($this->eventDispatcher, 'applyFilters')) {
             return $this->eventDispatcher->applyFilters($filterName, $value, ...$args);
         }
-        
+
         return $value;
     }
 
@@ -113,18 +119,20 @@ class OsRuntime implements OsRuntimeInterface
 
     public function make(string $class)
     {
-        if (str_starts_with($class, 'DomainSystem\\Core\\')) {
+        $normalized = ltrim($class, '\\');
+        if (str_starts_with($normalized, 'DomainSystem\\Core\\')) {
             throw new \Exception("Auditoria de Seguranca: Um Plugin Ring 3 nao pode instanciar Core classes diretamente. Use getLink().");
         }
         $ringZeroAppsPrefix = 'DomainSystem\\' . 'SystemApps\\';
-        if (str_starts_with($class, $ringZeroAppsPrefix) || str_starts_with($class, 'DomainSystem\\Plugins\\')) {
-            if (empty($this->pluginNamespace) || !str_starts_with($class, $this->pluginNamespace)) {
+        if (str_starts_with($normalized, $ringZeroAppsPrefix) || str_starts_with($normalized, 'DomainSystem\\Plugins\\')) {
+            $ownPrefix = ltrim($this->pluginNamespace, '\\');
+            if (empty($ownPrefix) || !str_starts_with($normalized, $ownPrefix)) {
                 throw new \Exception("Auditoria de Seguranca: Isolamento quebrado. Nao e permitido instanciar classes de outros plugins ou SystemApps diretamente ($class). Use getLink().");
             }
         }
-        return $this->container->make($class);
+        return $this->container->make($normalized);
     }
-    
+
     public function has(string $abstract): bool
     {
         return $this->container->has($abstract);
