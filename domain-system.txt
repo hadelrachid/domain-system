@@ -1,6 +1,6 @@
 /* ====================================================================== */
 /* PROJETO: domain-system
-/* DATA DE GERAÇÃO: 2026-10-28 18:38:37
+/* DATA DE GERAÇÃO: 2026-10-28 19:08:25
 /* TOTAL DE ARQUIVOS CONSOLIDADOS: 605
 /* FERRAMENTA: Update-Project (Codebase Context Packer)
 /* FINALIDADE: Auditoria de código, revisão estática e contexto para IAs (LLMs)
@@ -11,13 +11,870 @@
 /* ---------------------------------------------------------------------- */
 
 📦 domain-system/
+├── 📁 .github/
+│   ├── 📁 workflows/
+│   │   ├── ⚙️ release.yml
+│   │   └── ⚙️ tests.yml
+│   └── 📝 copilot-instructions.md
+├── 📁 bin/
+│   └── 🐘 migrate.php
+├── 📁 config/
+│   ├── 📁 skins/
+│   │   ├── 📋 dark_futurista.json
+│   │   └── 📋 dracula.json
+│   ├── 📁 theme_parts/
+│   │   ├── 📋 part_6adfb6db551853_36372298.json
+│   │   └── 📋 part_6adffa90a454f0_08376171.json
+│   ├── 📋 active_skin.json
+│   ├── 📋 active_theme.json
+│   ├── 📋 design_tokens.json
+│   ├── 📄 installed.lock
+│   ├── 📋 plugins.json
+│   ├── 📄 plugins.json.lock
+│   ├── 📋 theme_parts_associations.json
+│   └── 📋 update.json
+├── 📁 manual/
+│   └── 🐘 index.php
+├── 📁 public/
+│   ├── 📁 assets/
+│   │   ├── 📁 css/
+│   │   │   └── 🎨 builder-studio.css
+│   │   ├── 📁 img/
+│   │   │   ├── 📁 site-home/
+│   │   │   │   ├── 🖼️ book.svg
+│   │   │   │   ├── 🖼️ cart.svg
+│   │   │   │   ├── 🖼️ check.svg
+│   │   │   │   ├── 🖼️ code.svg
+│   │   │   │   ├── 🖼️ fire.svg
+│   │   │   │   ├── 🖼️ hero-pag-inicial.svg
+│   │   │   │   ├── 🖼️ livro-solid.png
+│   │   │   │   ├── 🖼️ logo-footer.svg
+│   │   │   │   ├── 🖼️ logo-lampada.svg
+│   │   │   │   ├── 🖼️ logo-rachidd-com.svg
+│   │   │   │   ├── 🖼️ logo-rd.png
+│   │   │   │   ├── 🖼️ logo-rd.svg
+│   │   │   │   └── 🖼️ og-image.jpg
+│   │   │   ├── 🖼️ logo-cockpit.png
+│   │   │   ├── 🖼️ logo.png
+│   │   │   └── 📄 logos.zip
+│   │   └── 📁 js/
+│   │       ├── 📁 core/
+│   │       │   ├── 📜 api.js
+│   │       │   ├── 📜 ds.js
+│   │       │   ├── 📜 events.js
+│   │       │   └── 📜 toast.js
+│   │       ├── 📜 doctor-calendar.js
+│   │       └── 📜 password-meter.js
+│   ├── 📁 uploads/
+│   │   ├── 📁 academy/
+│   │   │   └── 🖼️ course_2fee7ac57fd3261645ec.png
+│   │   ├── 📁 builder/
+│   │   │   ├── 🖼️ media_1792710330_55bb3c6d28408b84.png
+│   │   │   └── 🖼️ media_1792711149_8a0eb0e8706be764.png
+│   │   ├── 📁 prefs/
+│   │   │   ├── 📋 user_1.json
+│   │   │   ├── 📋 user_2.json
+│   │   │   ├── 📋 user_3.json
+│   │   │   ├── 📋 user_5.json
+│   │   │   └── 📋 user_7.json
+│   │   ├── 📄 doctor_1_1789154213.webp
+│   │   ├── 📄 doctor_2_1789154214.webp
+│   │   ├── 📄 doctor_3_1789154215.webp
+│   │   ├── 🖼️ doctor_5_1789081093.jpg
+│   │   ├── 🖼️ doctor_5_1789081260.jpg
+│   │   ├── 🖼️ doctor_5_1789081582.jpg
+│   │   ├── 🖼️ doctor_5_1789081595.jpg
+│   │   ├── 🖼️ doctor_new_1789434408.png
+│   │   ├── 🖼️ doctor_new_1789434480.png
+│   │   ├── 🖼️ doctor_new_1789434603.png
+│   │   ├── 🖼️ logo.png
+│   │   ├── 🖼️ profile_5_1789152574.jpg
+│   │   ├── 🖼️ profile_5_1789434787.jpg
+│   │   ├── 🖼️ profile_5_1789434868.jpg
+│   │   ├── 🖼️ profile_5_1789435068.jpg
+│   │   ├── 🖼️ profile_7_1789078832.jpg
+│   │   ├── 🖼️ profile_7_1789080094.jpg
+│   │   └── 🖼️ profile_7_1789080265.jpg
+│   ├── 📄 .htaccess
+│   ├── 🐘 index.php
+│   ├── 🐘 maintenance.php
+│   ├── 🐘 migrate_pages.php
+│   └── 🐘 reset_opcache.php
+├── 📁 release/
+│   ├── 📝 exclude.txt
+│   └── 📋 schema-expects.json
+├── 📁 repo_examples/
+│   ├── 📁 health_insurances/
+│   │   ├── 📁 Contracts/
+│   │   │   └── 🐘 HealthInsuranceInterface.php
+│   │   ├── 📁 Providers/
+│   │   │   ├── 🐘 PrivateProvider.php
+│   │   │   └── 🐘 UnimedProvider.php
+│   │   ├── 📁 Services/
+│   │   │   └── 🐘 BillingService.php
+│   │   ├── 📁 views/
+│   │   │   └── 🐘 shortcode_test.php
+│   │   ├── 📋 plugin.json
+│   │   └── 🐘 Plugin.php
+│   └── 📁 legal_cases/
+│       ├── 📁 Contracts/
+│       │   └── 🐘 LegalCaseRepositoryInterface.php
+│       ├── 📁 Controllers/
+│       │   └── 🐘 LegalController.php
+│       ├── 📁 Repositories/
+│       │   └── 🐘 SqliteLegalCaseRepository.php
+│       ├── 📁 views/
+│       │   └── 🐘 admin_legal.php
+│       ├── 📁 Workspace/
+│       │   └── 🐘 LawyerWorkspace.php
+│       ├── 📋 plugin.json
+│       └── 🐘 Plugin.php
+├── 📁 resources/
+│   └── 📁 lang/
+│       ├── 📋 en_US.json
+│       ├── 📋 es_ES.json
+│       ├── 📋 pt_BR.json
+│       └── 📋 zh_CN.json
+├── 📁 src/
+│   ├── 📁 Core/
+│   │   ├── 📁 Bootstrap/
+│   │   │   └── 🐘 RuntimeDirectories.php
+│   │   ├── 📁 Cockpit/
+│   │   │   └── 🐘 CockpitRegistry.php
+│   │   ├── 📁 Config/
+│   │   │   └── 🐘 DatabaseConfig.php
+│   │   ├── 📁 Container/
+│   │   │   └── 🐘 Container.php
+│   │   ├── 📁 Contracts/
+│   │   │   ├── 📁 Update/
+│   │   │   │   ├── 🐘 BackupInterface.php
+│   │   │   │   ├── 🐘 CoreUpdaterInterface.php
+│   │   │   │   ├── 🐘 DatabaseBackupInterface.php
+│   │   │   │   ├── 🐘 HealthCheckInterface.php
+│   │   │   │   ├── 🐘 HttpClientInterface.php
+│   │   │   │   ├── 🐘 InstalledStateProviderInterface.php
+│   │   │   │   ├── 🐘 MaintenanceModeInterface.php
+│   │   │   │   ├── 🐘 MigrationRegistryInterface.php
+│   │   │   │   ├── 🐘 PreflightCheckInterface.php
+│   │   │   │   ├── 🐘 PreflightInterface.php
+│   │   │   │   ├── 🐘 ProtectedPathsInterface.php
+│   │   │   │   ├── 🐘 ReleaseSourceInterface.php
+│   │   │   │   ├── 🐘 SchemaMigratorInterface.php
+│   │   │   │   ├── 🐘 SchemaPlannerInterface.php
+│   │   │   │   ├── 🐘 SchemaProbeInterface.php
+│   │   │   │   ├── 🐘 SchemaVerifierInterface.php
+│   │   │   │   ├── 🐘 UpdateApplierInterface.php
+│   │   │   │   ├── 🐘 UpdateCheckerInterface.php
+│   │   │   │   ├── 🐘 UpdateLockInterface.php
+│   │   │   │   ├── 🐘 UpdateManifestParserInterface.php
+│   │   │   │   ├── 🐘 UpdatePackageVerifierInterface.php
+│   │   │   │   ├── 🐘 UpdaterInterface.php
+│   │   │   │   ├── 🐘 UpdateStateStoreInterface.php
+│   │   │   │   ├── 🐘 UpdateTargetResolverInterface.php
+│   │   │   │   └── 🐘 VersionComparatorInterface.php
+│   │   │   ├── 🐘 CapabilityRegistrarInterface.php
+│   │   │   ├── 🐘 CockpitProviderInterface.php
+│   │   │   ├── 🐘 CockpitRegistryInterface.php
+│   │   │   ├── 🐘 ContainerInterface.php
+│   │   │   ├── 🐘 DashboardWidgetProviderInterface.php
+│   │   │   ├── 🐘 DatabaseConnectionInterface.php
+│   │   │   ├── 🐘 EventDispatcherInterface.php
+│   │   │   ├── 🐘 JsonStoreInterface.php
+│   │   │   ├── 🐘 ManualModuleInterface.php
+│   │   │   ├── 🐘 MiddlewareInterface.php
+│   │   │   ├── 🐘 NavigationManagerInterface.php
+│   │   │   ├── 🐘 NotificationManagerInterface.php
+│   │   │   ├── 🐘 OsConnectorInterface.php
+│   │   │   ├── 🐘 OsExtensionInterface.php
+│   │   │   ├── 🐘 OsRuntimeInterface.php
+│   │   │   ├── 🐘 PageLookupInterface.php
+│   │   │   ├── 🐘 PageTreeRendererInterface.php
+│   │   │   ├── 🐘 PasswordPolicyInterface.php
+│   │   │   ├── 🐘 PluginLifecycleInterface.php
+│   │   │   ├── 🐘 PluginMetadataInterface.php
+│   │   │   ├── 🐘 PluginStateInterface.php
+│   │   │   ├── 🐘 PublicStorageInterface.php
+│   │   │   ├── 🐘 RequestInterface.php
+│   │   │   ├── 🐘 ResponseInterface.php
+│   │   │   ├── 🐘 RouterInterface.php
+│   │   │   ├── 🐘 SchemaDoctorInterface.php
+│   │   │   ├── 🐘 SessionManagerInterface.php
+│   │   │   ├── 🐘 SiteStateInterface.php
+│   │   │   ├── 🐘 ThemeActivatorInterface.php
+│   │   │   ├── 🐘 ThemeManagerInterface.php
+│   │   │   └── 🐘 TranslatorInterface.php
+│   │   ├── 📁 Database/
+│   │   │   ├── 📁 migrations/
+│   │   │   │   └── 📄 .gitkeep
+│   │   │   ├── 📁 Update/
+│   │   │   │   ├── 🐘 PdoMigrationRegistry.php
+│   │   │   │   ├── 🐘 PdoSchemaProbe.php
+│   │   │   │   └── 🐘 RunnerSchemaMigrator.php
+│   │   │   ├── 🐘 MigrationRunner.php
+│   │   │   └── 🐘 PluginMigrationScanner.php
+│   │   ├── 📁 Error/
+│   │   │   ├── 🐘 CircuitBreaker.php
+│   │   │   ├── 🐘 ErrorHandler.php
+│   │   │   ├── 🐘 ErrorLogger.php
+│   │   │   └── 🐘 ErrorRenderer.php
+│   │   ├── 📁 Events/
+│   │   │   ├── 🐘 EventDispatcher.php
+│   │   │   └── 🐘 HookPriority.php
+│   │   ├── 📁 Exceptions/
+│   │   │   ├── 🐘 HttpResponseException.php
+│   │   │   └── 🐘 RouteAlreadyRegisteredException.php
+│   │   ├── 📁 Http/
+│   │   │   ├── 📁 Responses/
+│   │   │   │   ├── 🐘 JsonResponse.php
+│   │   │   │   ├── 🐘 RedirectResponse.php
+│   │   │   │   └── 🐘 ViewResponse.php
+│   │   │   ├── 🐘 CachePolicy.php
+│   │   │   ├── 🐘 HttpKernel.php
+│   │   │   ├── 🐘 MaintenancePolicy.php
+│   │   │   ├── 🐘 Request.php
+│   │   │   ├── 🐘 Response.php
+│   │   │   └── 🐘 SessionManager.php
+│   │   ├── 📁 I18n/
+│   │   │   └── 🐘 Translator.php
+│   │   ├── 📁 Manual/
+│   │   │   ├── 🐘 ArrayManualModuleAdapter.php
+│   │   │   └── 🐘 PluginManualScanner.php
+│   │   ├── 📁 Monitoring/
+│   │   │   ├── 🐘 NotificationManager.php
+│   │   │   └── 🐘 RequestMetricsRecorder.php
+│   │   ├── 📁 Plugin/
+│   │   │   ├── 📁 Services/
+│   │   │   │   ├── 🐘 PluginBootStack.php
+│   │   │   │   ├── 🐘 PluginBootstrapper.php
+│   │   │   │   ├── 🐘 PluginDiscoverer.php
+│   │   │   │   ├── 🐘 PluginInstaller.php
+│   │   │   │   ├── 🐘 PluginStateManager.php
+│   │   │   │   └── 🐘 ProcessRegistry.php
+│   │   │   ├── 🐘 AbstractPlugin.php
+│   │   │   ├── 🐘 LinkRegistry.php
+│   │   │   ├── 🐘 OsConnector.php
+│   │   │   ├── 🐘 OsRuntime.php
+│   │   │   ├── 🐘 PluginInterface.php
+│   │   │   └── 🐘 PluginManager.php
+│   │   ├── 📁 Providers/
+│   │   │   └── 🐘 CoreServiceProvider.php
+│   │   ├── 📁 Registry/
+│   │   │   └── 🐘 DashboardWidgetRegistry.php
+│   │   ├── 📁 Routing/
+│   │   │   ├── 📁 Middlewares/
+│   │   │   │   ├── 🐘 AuthMiddleware.php
+│   │   │   │   └── 🐘 CsrfMiddleware.php
+│   │   │   └── 🐘 Router.php
+│   │   ├── 📁 Security/
+│   │   │   ├── 🐘 IdentityManager.php
+│   │   │   ├── 🐘 PasswordAnalyzer.php
+│   │   │   ├── 🐘 PasswordPolicy.php
+│   │   │   └── 🐘 SessionManager.php
+│   │   ├── 📁 Storage/
+│   │   │   ├── 🐘 AtomicJsonStore.php
+│   │   │   ├── 🐘 LocalPublicStorage.php
+│   │   │   └── 🐘 StateSnapshotManager.php
+│   │   ├── 📁 Theme/
+│   │   │   ├── 📁 Parts/
+│   │   │   │   ├── 📁 Blocks/
+│   │   │   │   │   ├── 📁 Traits/
+│   │   │   │   │   │   └── 🐘 AllowedPartTypesTrait.php
+│   │   │   │   │   ├── 🐘 BlockRegistry.php
+│   │   │   │   │   ├── 🐘 ButtonBlock.php
+│   │   │   │   │   ├── 🐘 CopyrightBlock.php
+│   │   │   │   │   ├── 🐘 CoreBlockProvider.php
+│   │   │   │   │   ├── 🐘 CtaButtonBlock.php
+│   │   │   │   │   ├── 🐘 CustomCodeBlock.php
+│   │   │   │   │   ├── 🐘 DefaultBlockRegistryFactory.php
+│   │   │   │   │   ├── 🐘 DividerBlock.php
+│   │   │   │   │   ├── 🐘 HeadingBlock.php
+│   │   │   │   │   ├── 🐘 ImageBlock.php
+│   │   │   │   │   ├── 🐘 LogoBlock.php
+│   │   │   │   │   ├── 🐘 NavMenuBlock.php
+│   │   │   │   │   ├── 🐘 ParagraphBlock.php
+│   │   │   │   │   ├── 🐘 PostCardsGridBlock.php
+│   │   │   │   │   ├── 🐘 ShortcodeBlock.php
+│   │   │   │   │   ├── 🐘 SocialIconsBlock.php
+│   │   │   │   │   └── 🐘 VideoBlock.php
+│   │   │   │   ├── 📁 Contracts/
+│   │   │   │   │   ├── 📁 Icons/
+│   │   │   │   │   │   └── 🐘 SvgIconRegistryInterface.php
+│   │   │   │   │   ├── 📁 Layout/
+│   │   │   │   │   │   ├── 🐘 LayoutPresetInterface.php
+│   │   │   │   │   │   └── 🐘 LayoutPresetRegistryInterface.php
+│   │   │   │   │   ├── 📁 Responsive/
+│   │   │   │   │   │   └── 🐘 ResponsiveContractInterface.php
+│   │   │   │   │   ├── 📁 Styles/
+│   │   │   │   │   │   ├── 🐘 AnimationContractInterface.php
+│   │   │   │   │   │   ├── 🐘 BorderContractInterface.php
+│   │   │   │   │   │   ├── 🐘 ColorContractInterface.php
+│   │   │   │   │   │   ├── 🐘 DimensionContractInterface.php
+│   │   │   │   │   │   ├── 🐘 ShadowContractInterface.php
+│   │   │   │   │   │   ├── 🐘 StylableElementInterface.php
+│   │   │   │   │   │   └── 🐘 TypographyContractInterface.php
+│   │   │   │   │   ├── 🐘 BlockInterface.php
+│   │   │   │   │   ├── 🐘 BlockProviderInterface.php
+│   │   │   │   │   ├── 🐘 BlockRegistryInterface.php
+│   │   │   │   │   ├── 🐘 DesignTokensInterface.php
+│   │   │   │   │   ├── 🐘 ElementStyleRendererInterface.php
+│   │   │   │   │   ├── 🐘 HtmlSanitizerInterface.php
+│   │   │   │   │   ├── 🐘 LayerTreeInterface.php
+│   │   │   │   │   ├── 🐘 LayoutContainerInterface.php
+│   │   │   │   │   ├── 🐘 LayoutGridInterface.php
+│   │   │   │   │   ├── 🐘 MenuProviderInterface.php
+│   │   │   │   │   ├── 🐘 MobileToggleAwareInterface.php
+│   │   │   │   │   ├── 🐘 MobileToggleStyleInterface.php
+│   │   │   │   │   ├── 🐘 PostProviderInterface.php
+│   │   │   │   │   ├── 🐘 PublicUrlResolverInterface.php
+│   │   │   │   │   ├── 🐘 RenderableBlockInterface.php
+│   │   │   │   │   ├── 🐘 SchemaAwareBlockInterface.php
+│   │   │   │   │   ├── 🐘 SectionedPartInterface.php
+│   │   │   │   │   ├── 🐘 ThemePartAssociationInterface.php
+│   │   │   │   │   ├── 🐘 ThemePartCompilerInterface.php
+│   │   │   │   │   ├── 🐘 ThemePartInterface.php
+│   │   │   │   │   ├── 🐘 ThemePartRendererInterface.php
+│   │   │   │   │   ├── 🐘 ThemePartRepositoryInterface.php
+│   │   │   │   │   └── 🐘 ThemePartValidatorInterface.php
+│   │   │   │   ├── 📁 Grid/
+│   │   │   │   │   ├── 🐘 DefaultLayoutPresetsFactory.php
+│   │   │   │   │   ├── 🐘 LayoutGridRenderer.php
+│   │   │   │   │   ├── 🐘 LayoutPreset.php
+│   │   │   │   │   └── 🐘 LayoutPresetRegistry.php
+│   │   │   │   ├── 📁 Icons/
+│   │   │   │   │   ├── 🐘 DefaultSvgIconsFactory.php
+│   │   │   │   │   └── 🐘 SvgIconRegistry.php
+│   │   │   │   ├── 📁 Models/
+│   │   │   │   │   ├── 🐘 DesignTokens.php
+│   │   │   │   │   └── 🐘 ThemePart.php
+│   │   │   │   ├── 📁 Providers/
+│   │   │   │   │   ├── 🐘 MockPostProvider.php
+│   │   │   │   │   └── 🐘 PagesPostProvider.php
+│   │   │   │   ├── 📁 Repositories/
+│   │   │   │   │   ├── 🐘 JsonThemePartAssociation.php
+│   │   │   │   │   └── 🐘 JsonThemePartRepository.php
+│   │   │   │   ├── 📁 Services/
+│   │   │   │   │   └── 🐘 ThemePartRenderer.php
+│   │   │   │   ├── 📁 Styles/
+│   │   │   │   │   ├── 📁 Traits/
+│   │   │   │   │   │   └── 🐘 StylableElementTrait.php
+│   │   │   │   │   ├── 📁 Values/
+│   │   │   │   │   │   ├── 🐘 ColorValue.php
+│   │   │   │   │   │   ├── 🐘 CssUnit.php
+│   │   │   │   │   │   └── 🐘 DimensionValue.php
+│   │   │   │   │   └── 🐘 ElementStyleRenderer.php
+│   │   │   │   ├── 📁 Support/
+│   │   │   │   │   ├── 🐘 BaseUrlResolver.php
+│   │   │   │   │   └── 🐘 SafeHtmlSanitizer.php
+│   │   │   │   ├── 📁 Tree/
+│   │   │   │   │   └── 🐘 LayerTreeBuilder.php
+│   │   │   │   └── 📁 Validation/
+│   │   │   │       └── 🐘 ThemePartValidator.php
+│   │   │   ├── 🐘 EnvSiteState.php
+│   │   │   ├── 🐘 NavigationManager.php
+│   │   │   ├── 🐘 SafeThemeResolver.php
+│   │   │   ├── 🐘 ShortcodeManager.php
+│   │   │   ├── 🐘 ThemeActivator.php
+│   │   │   └── 🐘 ThemeManager.php
+│   │   ├── 📁 Update/
+│   │   │   ├── 📁 Enum/
+│   │   │   │   ├── 🐘 CheckLevel.php
+│   │   │   │   ├── 🐘 UpdateKind.php
+│   │   │   │   ├── 🐘 UpdateStatus.php
+│   │   │   │   └── 🐘 UpdateStep.php
+│   │   │   ├── 📁 Exception/
+│   │   │   │   ├── 🐘 ApplyException.php
+│   │   │   │   ├── 🐘 InvalidManifestException.php
+│   │   │   │   ├── 🐘 PackageIntegrityException.php
+│   │   │   │   ├── 🐘 PreflightFailedException.php
+│   │   │   │   ├── 🐘 RollbackFailedException.php
+│   │   │   │   ├── 🐘 SchemaMigrationException.php
+│   │   │   │   ├── 🐘 SchemaPlanException.php
+│   │   │   │   ├── 🐘 SourceUnavailableException.php
+│   │   │   │   ├── 🐘 TransportException.php
+│   │   │   │   └── 🐘 UpdateException.php
+│   │   │   ├── 📁 Infrastructure/
+│   │   │   │   ├── 📁 Preflight/
+│   │   │   │   │   ├── 🐘 DiskSpaceCheck.php
+│   │   │   │   │   ├── 🐘 DowngradeCheck.php
+│   │   │   │   │   ├── 🐘 ExtensionsCheck.php
+│   │   │   │   │   ├── 🐘 PhpVersionCheck.php
+│   │   │   │   │   ├── 🐘 PluginCompatibilityCheck.php
+│   │   │   │   │   ├── 🐘 ProtocolCheck.php
+│   │   │   │   │   ├── 🐘 SchemaPlanCheck.php
+│   │   │   │   │   └── 🐘 WritablePathsCheck.php
+│   │   │   │   ├── 🐘 CoreHealthCheck.php
+│   │   │   │   ├── 🐘 CoreProtectedPaths.php
+│   │   │   │   ├── 🐘 CurlHttpClient.php
+│   │   │   │   ├── 🐘 FileMaintenanceMode.php
+│   │   │   │   ├── 🐘 FilesystemInstalledState.php
+│   │   │   │   ├── 🐘 FileUpdateLock.php
+│   │   │   │   ├── 🐘 GitHubReleaseSource.php
+│   │   │   │   ├── 🐘 HostAllowlist.php
+│   │   │   │   ├── 🐘 JsonUpdateStateStore.php
+│   │   │   │   ├── 🐘 Sha256PackageVerifier.php
+│   │   │   │   ├── 🐘 StagedUpdateApplier.php
+│   │   │   │   ├── 🐘 UpdateConfig.php
+│   │   │   │   ├── 🐘 UpdateServiceBinder.php
+│   │   │   │   ├── 🐘 ZipDirectoryBackup.php
+│   │   │   │   └── 🐘 ZipPackageExtractor.php
+│   │   │   ├── 📁 Service/
+│   │   │   │   ├── 🐘 CoreUpdater.php
+│   │   │   │   ├── 🐘 JsonUpdateManifestParser.php
+│   │   │   │   ├── 🐘 Preflight.php
+│   │   │   │   ├── 🐘 SchemaPlanner.php
+│   │   │   │   ├── 🐘 SchemaVerifier.php
+│   │   │   │   ├── 🐘 SemverComparator.php
+│   │   │   │   ├── 🐘 UpdateChecker.php
+│   │   │   │   ├── 🐘 UpdateNotifier.php
+│   │   │   │   └── 🐘 UpdateTargetResolver.php
+│   │   │   └── 📁 Value/
+│   │   │       ├── 🐘 ApplyResult.php
+│   │   │       ├── 🐘 BackupRecord.php
+│   │   │       ├── 🐘 BackupScope.php
+│   │   │       ├── 🐘 DownloadedPackage.php
+│   │   │       ├── 🐘 DumpResult.php
+│   │   │       ├── 🐘 HealthReport.php
+│   │   │       ├── 🐘 HttpResponse.php
+│   │   │       ├── 🐘 InstalledPlugin.php
+│   │   │       ├── 🐘 PreflightCheck.php
+│   │   │       ├── 🐘 PreflightReport.php
+│   │   │       ├── 🐘 ReleaseInfo.php
+│   │   │       ├── 🐘 SchemaPlan.php
+│   │   │       ├── 🐘 SchemaResult.php
+│   │   │       ├── 🐘 SchemaVerification.php
+│   │   │       ├── 🐘 UpdateCheckResult.php
+│   │   │       ├── 🐘 UpdateManifest.php
+│   │   │       ├── 🐘 UpdateState.php
+│   │   │       ├── 🐘 UpdateTarget.php
+│   │   │       └── 🐘 VerifiedPackage.php
+│   │   ├── 📁 Utils/
+│   │   │   └── 📁 Archive/
+│   │   │       ├── 🐘 ExtractorFactory.php
+│   │   │       ├── 🐘 ExtractorInterface.php
+│   │   │       ├── 🐘 PharDataExtractor.php
+│   │   │       └── 🐘 ZipArchiveExtractor.php
+│   │   ├── 📁 Workspace/
+│   │   │   ├── 🐘 DefaultWorkspace.php
+│   │   │   ├── 🐘 WorkspaceInterface.php
+│   │   │   └── 🐘 WorkspaceManager.php
+│   │   ├── 🐘 Application.php
+│   │   └── 🐘 helpers.php
+│   ├── 📁 Plugins/
+│   │   ├── 📁 academy/
+│   │   │   ├── 📁 Contracts/
+│   │   │   │   ├── 🐘 CourseCatalogRendererInterface.php
+│   │   │   │   ├── 🐘 CourseImageStorageInterface.php
+│   │   │   │   ├── 🐘 CourseNavigationInterface.php
+│   │   │   │   ├── 🐘 CourseRepositoryInterface.php
+│   │   │   │   ├── 🐘 CourseStructureRepositoryInterface.php
+│   │   │   │   ├── 🐘 LessonBlockRendererInterface.php
+│   │   │   │   ├── 🐘 LessonFileScaffolderInterface.php
+│   │   │   │   └── 🐘 ThemePageResolverInterface.php
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   ├── 🐘 CourseAdminController.php
+│   │   │   │   ├── 🐘 CourseFrontController.php
+│   │   │   │   └── 🐘 LessonAdminController.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   ├── 🐘 AcademyManualModule.php
+│   │   │   │   └── 🐘 module.php
+│   │   │   ├── 📁 migrations/
+│   │   │   │   ├── 🐘 2026_10_15_000001_create_academy_courses.php
+│   │   │   │   └── 🐘 2026_10_15_000002_create_academy_structure.php
+│   │   │   ├── 📁 Repositories/
+│   │   │   │   ├── 🐘 PdoCourseRepository.php
+│   │   │   │   └── 🐘 PdoCourseStructureRepository.php
+│   │   │   ├── 📁 Services/
+│   │   │   │   ├── 🐘 CourseCatalogRenderer.php
+│   │   │   │   ├── 🐘 CourseNavigationService.php
+│   │   │   │   ├── 🐘 CourseService.php
+│   │   │   │   ├── 🐘 LessonBlockRenderer.php
+│   │   │   │   ├── 🐘 LocalCourseImageStorage.php
+│   │   │   │   ├── 🐘 ThemeLessonFileScaffolder.php
+│   │   │   │   └── 🐘 ThemePageResolver.php
+│   │   │   ├── 📁 views/
+│   │   │   │   ├── 📁 admin/
+│   │   │   │   │   ├── 📁 courses/
+│   │   │   │   │   │   ├── 🐘 edit.php
+│   │   │   │   │   │   └── 🐘 index.php
+│   │   │   │   │   └── 📁 lessons/
+│   │   │   │   │       └── 🐘 editor.php
+│   │   │   │   └── 📁 front/
+│   │   │   │       ├── 🐘 catalog.php
+│   │   │   │       ├── 🐘 course.php
+│   │   │   │       └── 🐘 lesson.php
+│   │   │   ├── 📝 academy.txt
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 analytics/
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   └── 🐘 TrackerController.php
+│   │   │   ├── 📁 Widgets/
+│   │   │   │   └── 🐘 AnalyticsWidgetProvider.php
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 clock_widget/
+│   │   │   ├── 🐘 ClockWidgetProvider.php
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 flextheme/
+│   │   │   ├── 📁 assets/
+│   │   │   │   └── 📁 css/
+│   │   │   │       └── 🎨 builder-studio.css
+│   │   │   ├── 📁 BuilderFlex/
+│   │   │   │   ├── 📁 assets/
+│   │   │   │   │   ├── 📁 css/
+│   │   │   │   │   │   ├── 🎨 base.css
+│   │   │   │   │   │   ├── 🎨 inspector.css
+│   │   │   │   │   │   ├── 🎨 layout.css
+│   │   │   │   │   │   ├── 🎨 modal.css
+│   │   │   │   │   │   ├── 🎨 paragraph.css
+│   │   │   │   │   │   └── 🎨 responsive.css
+│   │   │   │   │   ├── 📁 js/
+│   │   │   │   │   │   ├── 📁 core/
+│   │   │   │   │   │   │   ├── 📜 BreakpointManager.js
+│   │   │   │   │   │   │   ├── 📜 Editor.js
+│   │   │   │   │   │   │   ├── 📜 escape.js
+│   │   │   │   │   │   │   ├── 📜 EventBus.js
+│   │   │   │   │   │   │   ├── 📜 IViewportResolver.js
+│   │   │   │   │   │   │   ├── 📜 namespace.js
+│   │   │   │   │   │   │   └── 📜 ParagraphEditor.js
+│   │   │   │   │   │   ├── 📁 export/
+│   │   │   │   │   │   │   └── 📜 JsonExporter.js
+│   │   │   │   │   │   ├── 📁 inspector/
+│   │   │   │   │   │   │   ├── 📜 FieldFactory.js
+│   │   │   │   │   │   │   └── 📜 InspectorPanel.js
+│   │   │   │   │   │   ├── 📁 interaction/
+│   │   │   │   │   │   │   ├── 📜 DragController.js
+│   │   │   │   │   │   │   └── 📜 ResizeController.js
+│   │   │   │   │   │   ├── 📁 layout/
+│   │   │   │   │   │   │   ├── 📜 AbsoluteLayout.js
+│   │   │   │   │   │   │   ├── 📜 FlowLayout.js
+│   │   │   │   │   │   │   ├── 📜 GridLayout.js
+│   │   │   │   │   │   │   └── 📜 ILayoutStrategy.js
+│   │   │   │   │   │   ├── 📁 state/
+│   │   │   │   │   │   │   ├── 📜 EditorState.js
+│   │   │   │   │   │   │   └── 📜 NodeTree.js
+│   │   │   │   │   │   ├── 📁 ui/
+│   │   │   │   │   │   │   ├── 📜 CanvasRenderer.js
+│   │   │   │   │   │   │   ├── 📜 ContextMenu.js
+│   │   │   │   │   │   │   ├── 📜 ExportModal.js
+│   │   │   │   │   │   │   ├── 📜 LayerNavigator.js
+│   │   │   │   │   │   │   └── 📜 PalettePanel.js
+│   │   │   │   │   │   ├── 📁 widgets/
+│   │   │   │   │   │   │   ├── 📜 AbstractContainerWidget.js
+│   │   │   │   │   │   │   ├── 📜 BaseWidget.js
+│   │   │   │   │   │   │   ├── 📜 ButtonWidget.js
+│   │   │   │   │   │   │   ├── 📜 ContainerWidget.js
+│   │   │   │   │   │   │   ├── 📜 GridWidget.js
+│   │   │   │   │   │   │   ├── 📜 ImageWidget.js
+│   │   │   │   │   │   │   ├── 📜 LayoutWidgets.js
+│   │   │   │   │   │   │   ├── 📜 ParagraphWidget.js
+│   │   │   │   │   │   │   ├── 📜 SectionWidget.js
+│   │   │   │   │   │   │   ├── 📜 ShortcodeWidget.js
+│   │   │   │   │   │   │   ├── 📜 TextWidget.js
+│   │   │   │   │   │   │   └── 📜 WidgetRegistry.js
+│   │   │   │   │   │   └── 📜 main.js
+│   │   │   │   │   └── 🐘 manifest.php
+│   │   │   │   ├── 📁 Contracts/
+│   │   │   │   │   ├── 🐘 WidgetInterface.php
+│   │   │   │   │   └── 🐘 WidgetManagerInterface.php
+│   │   │   │   ├── 📁 Controllers/
+│   │   │   │   │   └── 🐘 BuilderAdminController.php
+│   │   │   │   ├── 📁 Core/
+│   │   │   │   │   ├── 🐘 AbstractWidget.php
+│   │   │   │   │   ├── 🐘 AssetBundle.php
+│   │   │   │   │   ├── 🐘 ContainerWidget.php
+│   │   │   │   │   ├── 🐘 DtoRenderer.php
+│   │   │   │   │   ├── 🐘 JsonRenderer.php
+│   │   │   │   │   └── 🐘 WidgetManager.php
+│   │   │   │   ├── 📁 views/
+│   │   │   │   │   └── 🐘 builder_editor.php
+│   │   │   │   ├── 📁 Widgets/
+│   │   │   │   │   ├── 🐘 LogoWidget.php
+│   │   │   │   │   └── 🐘 TextWidget.php
+│   │   │   │   └── 📋 plugin.json
+│   │   │   ├── 📁 Contracts/
+│   │   │   │   ├── 🐘 MediaUploadServiceInterface.php
+│   │   │   │   ├── 🐘 ThemeDiscoveryServiceInterface.php
+│   │   │   │   └── 🐘 ThemePartPreviewServiceInterface.php
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   ├── 🐘 ThemeController.php
+│   │   │   │   └── 🐘 ThemePartsAdminController.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   ├── 🐘 FlexBuilderManualModule.php
+│   │   │   │   └── 🐘 module.php
+│   │   │   ├── 📁 Services/
+│   │   │   │   ├── 🐘 BuilderFlexBootstrapper.php
+│   │   │   │   ├── 🐘 MediaUploadService.php
+│   │   │   │   ├── 🐘 ThemeDiscoveryService.php
+│   │   │   │   ├── 🐘 ThemePartManagementService.php
+│   │   │   │   └── 🐘 ThemePartPreviewService.php
+│   │   │   ├── 📁 themes/
+│   │   │   │   ├── 📁 default/
+│   │   │   │   │   ├── 📁 assets/
+│   │   │   │   │   │   └── 📄 .gitkeep
+│   │   │   │   │   ├── 📁 layouts/
+│   │   │   │   │   │   └── 🐘 main.php
+│   │   │   │   │   ├── 📁 pages/
+│   │   │   │   │   │   └── 🐘 index.php
+│   │   │   │   │   ├── 📁 partials/
+│   │   │   │   │   │   ├── 🐘 footer.php
+│   │   │   │   │   │   └── 🐘 header.php
+│   │   │   │   │   ├── 📁 templates/
+│   │   │   │   │   │   ├── 🐘 academy.php
+│   │   │   │   │   │   ├── 🐘 blog.php
+│   │   │   │   │   │   ├── 🐘 home.php
+│   │   │   │   │   │   ├── 🐘 privacidade.php
+│   │   │   │   │   │   ├── 🐘 sobre.php
+│   │   │   │   │   │   └── 🐘 termos.php
+│   │   │   │   │   ├── 🐘 index.php
+│   │   │   │   │   └── 📋 theme.json
+│   │   │   │   └── 📁 rachidd/
+│   │   │   │       ├── 📁 assets/
+│   │   │   │       │   └── 📁 img/
+│   │   │   │       │       └── 🖼️ livro-solid.png
+│   │   │   │       ├── 📁 layouts/
+│   │   │   │       │   └── 🐘 main.php
+│   │   │   │       ├── 📁 pages/
+│   │   │   │       │   ├── 📁 architecture/
+│   │   │   │       │   │   └── 🐘 01-ciclo-de-confianca-verificavel.php
+│   │   │   │       │   ├── 📁 modulo-2-estrutura-de-dados/
+│   │   │   │       │   │   └── 🐘 aula-1.php
+│   │   │   │       │   ├── 📁 tutoriais/
+│   │   │   │       │   │   ├── 🐘 01-instalacao.php
+│   │   │   │       │   │   ├── 🐘 02-a-escotilha-de-emergencia.php
+│   │   │   │       │   │   └── 🐘 03-pacotes-de-plugins.php
+│   │   │   │       │   ├── 🐘 01-o-contrato-do-sistema.php
+│   │   │   │       │   ├── 🐘 arquitetura.php
+│   │   │   │       │   ├── 🐘 arquitetura_en.php
+│   │   │   │       │   ├── 🐘 circuit-breaker.php
+│   │   │   │       │   ├── 🐘 circuit-breaker_en.php
+│   │   │   │       │   ├── 🐘 contratos.php
+│   │   │   │       │   ├── 🐘 contratos_en.php
+│   │   │   │       │   ├── 🐘 criando-plugins.php
+│   │   │   │       │   ├── 🐘 criando-plugins_en.php
+│   │   │   │       │   ├── 🐘 index.php
+│   │   │   │       │   ├── 🐘 index_en.php
+│   │   │   │       │   ├── 🐘 lifecycle.php
+│   │   │   │       │   ├── 🐘 proposito.php
+│   │   │   │       │   ├── 🐘 proposito_en.php
+│   │   │   │       │   ├── 🐘 tutorial-dev.php
+│   │   │   │       │   └── 🐘 tutorial-theme.php
+│   │   │   │       ├── 📁 partials/
+│   │   │   │       │   ├── 🐘 footer.php
+│   │   │   │       │   └── 🐘 header.php
+│   │   │   │       ├── 📁 templates/
+│   │   │   │       │   ├── 🐘 academy.php
+│   │   │   │       │   ├── 🐘 home.php
+│   │   │   │       │   ├── 🐘 privacidade.php
+│   │   │   │       │   ├── 🐘 sobre.php
+│   │   │   │       │   └── 🐘 termos.php
+│   │   │   │       ├── 🐘 index.php
+│   │   │   │       └── 📋 theme.json
+│   │   │   ├── 📁 views/
+│   │   │   │   └── 📁 admin/
+│   │   │   │       ├── 🐘 builder_editor.php
+│   │   │   │       ├── 🐘 parts_list.php
+│   │   │   │       └── 🐘 tokens_editor.php
+│   │   │   ├── 📄 BuilderFlex.zip
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 nobreak_shield/
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 pages/
+│   │   │   ├── 📁 Contracts/
+│   │   │   │   └── 🐘 PageRepositoryInterface.php
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   ├── 🐘 PageAdminController.php
+│   │   │   │   └── 🐘 PageFrontController.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
+│   │   │   ├── 📁 Repositories/
+│   │   │   │   └── 🐘 PageRepository.php
+│   │   │   ├── 📁 Services/
+│   │   │   │   ├── 🐘 DefaultPagesSeeder.php
+│   │   │   │   └── 🐘 PageSlugHelper.php
+│   │   │   ├── 📁 views/
+│   │   │   │   ├── 🐘 admin_page_form.php
+│   │   │   │   └── 🐘 admin_pages.php
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 radio_online/
+│   │   │   ├── 📋 plugin.json
+│   │   │   ├── 🐘 Plugin.php
+│   │   │   ├── 🐘 RadioWidgetProvider.php
+│   │   │   └── 📝 README.md
+│   │   ├── 📁 seo/
+│   │   │   ├── 📁 Contracts/
+│   │   │   │   ├── 🐘 AssetMinifierInterface.php
+│   │   │   │   ├── 🐘 HtmlOptimizerInterface.php
+│   │   │   │   └── 🐘 SeoManagerInterface.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
+│   │   │   ├── 📁 Middlewares/
+│   │   │   │   └── 🐘 SeoMiddleware.php
+│   │   │   ├── 📁 Services/
+│   │   │   │   ├── 🐘 AssetPipeline.php
+│   │   │   │   ├── 🐘 HtmlOptimizer.php
+│   │   │   │   ├── 🐘 NativeAssetMinifier.php
+│   │   │   │   └── 🐘 SeoManager.php
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📁 settings/
+│   │   │   ├── 📁 Contracts/
+│   │   │   │   └── 🐘 SettingRepositoryInterface.php
+│   │   │   ├── 📁 Controllers/
+│   │   │   │   └── 🐘 SettingsController.php
+│   │   │   ├── 📁 Repositories/
+│   │   │   │   └── 🐘 SettingRepository.php
+│   │   │   ├── 📁 views/
+│   │   │   │   └── 🐘 admin_settings.php
+│   │   │   ├── 📋 plugin.json
+│   │   │   ├── 🐘 Plugin.php
+│   │   │   └── 📄 settings.zip
+│   │   ├── 📁 visual_themes/
+│   │   │   ├── 📋 plugin.json
+│   │   │   └── 🐘 Plugin.php
+│   │   ├── 📄 clinic_pack.zip
+│   │   └── 📄 dev_simulator.zip
+│   └── 📁 SystemApps/
+│       ├── 📁 auth/
+│       │   ├── 📁 Contracts/
+│       │   │   ├── 🐘 AuthenticatorInterface.php
+│       │   │   ├── 🐘 CapabilityRepositoryInterface.php
+│       │   │   ├── 🐘 EmailSenderInterface.php
+│       │   │   ├── 🐘 RoleRepositoryInterface.php
+│       │   │   ├── 🐘 TwoFactorCodeStoreInterface.php
+│       │   │   └── 🐘 UserRepositoryInterface.php
+│       │   ├── 📁 Controllers/
+│       │   │   ├── 🐘 AuthController.php
+│       │   │   └── 🐘 UserController.php
+│       │   ├── 📁 Repositories/
+│       │   │   ├── 🐘 CapabilityRepository.php
+│       │   │   ├── 🐘 RoleRepository.php
+│       │   │   ├── 🐘 TwoFactorCodeStore.php
+│       │   │   └── 🐘 UserRepository.php
+│       │   ├── 📁 Services/
+│       │   │   ├── 📁 Providers/
+│       │   │   │   ├── 🐘 AppProvider.php
+│       │   │   │   ├── 🐘 EmailProvider.php
+│       │   │   │   └── 🐘 TwoFactorProviderInterface.php
+│       │   │   ├── 🐘 GoogleAuthenticatorAdapter.php
+│       │   │   ├── 🐘 PhpMailSender.php
+│       │   │   └── 🐘 TwoFactorService.php
+│       │   ├── 📁 views/
+│       │   │   ├── 🐘 admin_2fa.php
+│       │   │   └── 🐘 admin_users.php
+│       │   ├── 🐘 GoogleAuthenticator.php
+│       │   ├── 📋 plugin.json
+│       │   └── 🐘 Plugin.php
+│       ├── 📁 Database/
+│       │   ├── 📁 Backup/
+│       │   │   ├── 🐘 DatabaseBackupFactory.php
+│       │   │   ├── 🐘 MysqlDatabaseBackup.php
+│       │   │   └── 🐘 SqliteDatabaseBackup.php
+│       │   ├── 📁 Schema/
+│       │   │   ├── 📁 Grammars/
+│       │   │   │   ├── 🐘 GrammarInterface.php
+│       │   │   │   ├── 🐘 MysqlGrammar.php
+│       │   │   │   └── 🐘 SqliteGrammar.php
+│       │   │   ├── 🐘 Blueprint.php
+│       │   │   └── 🐘 SchemaBuilder.php
+│       │   ├── 🐘 Connection.php
+│       │   ├── 📋 plugin.json
+│       │   ├── 🐘 Plugin.php
+│       │   └── 🐘 QueryBuilder.php
+│       ├── 📁 installer/
+│       │   ├── 📁 Contracts/
+│       │   │   └── 🐘 InstallerServiceInterface.php
+│       │   ├── 📁 Controllers/
+│       │   │   └── 🐘 SetupController.php
+│       │   ├── 📁 Services/
+│       │   │   └── 🐘 InstallerService.php
+│       │   ├── 📁 views/
+│       │   │   ├── 🐘 step1.php
+│       │   │   ├── 🐘 step2.php
+│       │   │   └── 🐘 success.php
+│       │   ├── 📋 plugin.json
+│       │   └── 🐘 Plugin.php
+│       ├── 📁 nav_menus/
+│       │   ├── 📁 Contracts/
+│       │   │   └── 🐘 MenuRepositoryInterface.php
+│       │   ├── 📁 Controllers/
+│       │   │   └── 🐘 MenuAdminController.php
+│       │   ├── 📁 Repositories/
+│       │   │   └── 🐘 PdoMenuRepository.php
+│       │   ├── 📁 Services/
+│       │   │   ├── 🐘 MenuRenderer.php
+│       │   │   └── 🐘 NavMenuProviderAdapter.php
+│       │   ├── 📁 views/
+│       │   │   └── 🐘 admin_menus.php
+│       │   ├── 📋 plugin.json
+│       │   └── 🐘 Plugin.php
+│       ├── 📁 SystemAdmin/
+│       │   ├── 📁 Controllers/
+│       │   │   ├── 🐘 AclController.php
+│       │   │   ├── 🐘 AdminController.php
+│       │   │   ├── 🐘 DashboardController.php
+│       │   │   ├── 🐘 DevModeController.php
+│       │   │   └── 🐘 EmergencyController.php
+│       │   ├── 📁 views/
+│       │   │   └── 🐘 dev_mode_prompt.php
+│       │   ├── 📁 Widgets/
+│       │   │   └── 🐘 SystemWidgetProvider.php
+│       │   ├── 📋 plugin.json
+│       │   ├── 🐘 Plugin.php
+│       │   └── 📄 SystemAdmin.zip
+│       ├── 📁 SystemMonitor/
+│       │   ├── 📁 Controllers/
+│       │   │   └── 🐘 MonitorController.php
+│       │   ├── 📁 views/
+│       │   │   └── 🐘 admin_monitor.php
+│       │   ├── 📋 plugin.json
+│       │   └── 🐘 Plugin.php
+│       └── 📁 SystemUpdater/
+│           ├── 📁 Console/
+│           │   └── 🐘 UpdateCliCommandHandler.php
+│           ├── 📁 Controllers/
+│           │   └── 🐘 UpdateController.php
+│           ├── 📁 manual/
+│           │   └── 🐘 module.php
+│           ├── 📁 views/
+│           │   └── 🐘 updates.php
+│           ├── 📁 Widgets/
+│           │   └── 🐘 UpdateWidgetProvider.php
+│           ├── 📋 plugin.json
+│           └── 🐘 Plugin.php
+├── 📁 themes/
+│   └── 📁 admin/
+│       ├── 🐘 acl_panel.php
+│       ├── 🐘 dashboard.php
+│       ├── 🐘 dashboard_doctor.php
+│       ├── 🐘 dashboard_modular.php
+│       ├── 🐘 emergency.php
+│       ├── 🐘 layout.php
+│       ├── 🐘 login.php
+│       ├── 🐘 manual.php
+│       ├── 🐘 plugins.php
+│       ├── 🐘 shortcodes.php
+│       └── 🐘 themes_panel.php
+├── 📁 token/
+│   ├── 📄 .htaccess
+│   └── 📄 setup.token
+├── 📁 tools/
+│   ├── 📁 release/
+│   │   └── 🐘 ReleaseBuilder.php
+│   └── 🐘 build-release.php
+├── 📁 workstation/
+│   └── 📄 .gitignore
 ├── 📄 .clinerules
 ├── 📄 .cursorrules
 ├── 📄 .env.example
 ├── 📄 .gitignore
 ├── 📄 .htaccess
 ├── 📝 AI_CONTRACT_GUIDE.md
-├── 📄 bootstrap.php
+├── 🐘 bootstrap.php
 ├── 🎨 bundle.css
 ├── 📜 bundle.js
 ├── 📄 cockpit
@@ -27,7 +884,7 @@
 ├── 📝 DEVELOPER_GUIDE.md
 ├── 📄 flextheme-update.zip
 ├── 📄 LICENSE
-├── 📄 os-cli.php
+├── 🐘 os-cli.php
 ├── 📄 phpunit.phar
 ├── 🔖 phpunit.xml
 ├── 📝 PLANO_MELHORIA_ESTABILIDADE_RESILIENCIA_V2_4.md
@@ -817,17 +1674,20 @@ The system adheres to **Clean Architecture** and **Dependency Inversion (DIP)** 
 
 ---
 
-## 🔍 Open Auditing & AI Analysis: `project.txt`
+## 🔍 Open Auditing, AI Context & `update-project`
 
-To support open collaboration, static analysis, and code auditing by both software engineers and large language models (LLMs), this repository includes an aggregated source map at the root:
+To support collaboration, static analysis, and code auditing by both software engineers and large language models (Claude, ChatGPT, Gemini, etc.), this repository provides consolidated codebase context files at the root:
 
-📄 **[`project.txt`](project.txt)**
+- 📄 **[`domain-system.txt`](domain-system.txt)** (or **[`project.txt`](project.txt)**)
 
-This file compiles the system structure, namespaces, interface contracts, and source code into a single structured document.
+These files compile the complete directory tree, interface contracts, and source code into a clean, structured document.
 
-> **Tip for Code Review and AI Auditing:** If you wish to audit the architecture or analyze how contracts communicate, you can load `project.txt` directly into your AI tool of choice (Claude, ChatGPT, Gemini, etc.) or static code analyzer. This provides full global context of the codebase without fragmented assumptions.
+### How to audit the codebase with AI without fragmentation:
+1. Download `domain-system.txt` (or clone the repository).
+2. Attach the file directly to your preferred AI model.
+3. Request your technical audit (e.g., verifying interface compliance in `src/Core/Contracts`, input sanitization, or fault-isolation rules). Because the model receives the entire architectural scope at once, it audits with global context and zero fragmentation.
 
-Technical feedback, discussions, and pull requests are welcome in GitHub *Issues* and *Discussions*.
+> **Tooling:** This consolidated context file and the clean distribution zip are packaged using [**Update-Project**](https://github.com/hadelrachid/update-project) — an open-source Python utility (CLI & GUI) engineered to pack codebases into structured context files for AI audits. You can freely use it for your own projects.
 
 ---
 
@@ -919,17 +1779,20 @@ O sistema adota princípios de **Clean Architecture** e **Inversão de Dependên
 
 ---
 
-## 🔍 Auditoria, Transparência e IA: `project.txt`
+## 🔍 Auditoria Aberta, Contexto para IAs e `update-project`
 
-Para facilitar a colaboração, análise estática e revisão de código por desenvolvedores humanos ou ferramentas de inteligência artificial (LLMs), este repositório disponibiliza na raiz o arquivo:
+Para facilitar a colaboração, análise estática e revisão de código por desenvolvedores humanos ou modelos de linguagem (Claude, ChatGPT, Gemini, etc.), este repositório disponibiliza na raiz os arquivos de contexto consolidado:
 
-📄 **[`project.txt`](project.txt)**
+- 📄 **[`domain-system.txt`](domain-system.txt)** (ou **[`project.txt`](project.txt)**)
 
-Esse arquivo reúne a estrutura completa do sistema, namespaces, interfaces e código-fonte em um único documento padronizado. 
+Esses arquivos reúnem a árvore completa de diretórios, interfaces e o código-fonte integral de forma limpa e estruturada.
 
-> **Dica para revisão e auditoria:** Caso queira auditar o código ou entender como os contratos se comunicam, você pode carregar o `project.txt` diretamente no seu modelo de IA de preferência (Claude, ChatGPT, Gemini, etc.) ou em ferramentas de análise estática. Isso permite que a IA tenha contexto global do projeto, sem depender de análises parciais ou suposições.
+### Como auditar o projeto com IAs sem fragmentação:
+1. Baixe o arquivo `domain-system.txt` (ou clone o repositório).
+2. Anexe o arquivo na sua ferramenta de IA de preferência.
+3. Solicite a análise técnica desejada (por exemplo: conformidade dos contratos em `src/Core/Contracts`, sanitização de entradas, ou regras de tolerância a falhas). Como o arquivo contém a visão global da arquitetura, a IA realiza a auditoria sem amnésia de contexto nem alucinações.
 
-Críticas técnicas e sugestões sobre a arquitetura e segurança são bem-vindas nas *Issues* e *Discussions*.
+> **Ferramenta Utilizada:** O arquivo consolidado e o pacote limpo de distribuição são gerados com o [**Update-Project**](https://github.com/hadelrachid/update-project) — um utilitário aberto em Python (CLI/GUI) desenvolvido para empacotar bases de código em documentos estruturados de contexto para auditorias por IA. Você também pode utilizá-lo nos seus próprios projetos.
 
 ---
 
@@ -8058,6 +8921,7 @@ database.sqlite
 phpunit.xml
 composer.lock
 project.txt
+domain-system.txt
 content/
 manual/
 resources/
