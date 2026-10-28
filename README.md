@@ -38,17 +38,20 @@ O sistema adota princípios de **Clean Architecture** e **Inversão de Dependên
 
 ---
 
-## 🔍 Auditoria, Transparência e IA: `project.txt`
+## 🔍 Auditoria Aberta, Contexto para IAs e `update-project`
 
-Para facilitar a colaboração, análise estática e revisão de código por desenvolvedores humanos ou ferramentas de inteligência artificial (LLMs), este repositório disponibiliza na raiz o arquivo:
+Para facilitar a colaboração, análise estática e revisão de código por desenvolvedores humanos ou modelos de linguagem (Claude, ChatGPT, Gemini, etc.), este repositório disponibiliza na raiz os arquivos de contexto consolidado:
 
-📄 **[`project.txt`](project.txt)**
+- 📄 **[`domain-system.txt`](domain-system.txt)** (ou **[`project.txt`](project.txt)**)
 
-Esse arquivo reúne a estrutura completa do sistema, namespaces, interfaces e código-fonte em um único documento padronizado. 
+Esses arquivos reúnem a árvore completa de diretórios, interfaces e o código-fonte integral de forma limpa e estruturada.
 
-> **Dica para revisão e auditoria:** Caso queira auditar o código ou entender como os contratos se comunicam, você pode carregar o `project.txt` diretamente no seu modelo de IA de preferência (Claude, ChatGPT, Gemini, etc.) ou em ferramentas de análise estática. Isso permite que a IA tenha contexto global do projeto, sem depender de análises parciais ou suposições.
+### Como auditar o projeto com IAs sem fragmentação:
+1. Baixe o arquivo `domain-system.txt` (ou clone o repositório).
+2. Anexe o arquivo na sua ferramenta de IA de preferência.
+3. Solicite a análise técnica desejada (por exemplo: conformidade dos contratos em `src/Core/Contracts`, sanitização de entradas, ou regras de tolerância a falhas). Como o arquivo contém a visão global da arquitetura, a IA realiza a auditoria sem amnésia de contexto nem alucinações.
 
-Críticas técnicas e sugestões sobre a arquitetura e segurança são bem-vindas nas *Issues* e *Discussions*.
+> **Ferramenta Utilizada:** O arquivo consolidado e o pacote limpo de distribuição são gerados com o [**Update-Project**](https://github.com/hadelrachid/update-project) — um utilitário aberto em Python (CLI/GUI) desenvolvido para empacotar bases de código em documentos estruturados de contexto para auditorias por IA. Você também pode utilizá-lo nos seus próprios projetos.
 
 ---
 

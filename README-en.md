@@ -38,17 +38,20 @@ The system adheres to **Clean Architecture** and **Dependency Inversion (DIP)** 
 
 ---
 
-## 🔍 Open Auditing & AI Analysis: `project.txt`
+## 🔍 Open Auditing, AI Context & `update-project`
 
-To support open collaboration, static analysis, and code auditing by both software engineers and large language models (LLMs), this repository includes an aggregated source map at the root:
+To support collaboration, static analysis, and code auditing by both software engineers and large language models (Claude, ChatGPT, Gemini, etc.), this repository provides consolidated codebase context files at the root:
 
-📄 **[`project.txt`](project.txt)**
+- 📄 **[`domain-system.txt`](domain-system.txt)** (or **[`project.txt`](project.txt)**)
 
-This file compiles the system structure, namespaces, interface contracts, and source code into a single structured document.
+These files compile the complete directory tree, interface contracts, and source code into a clean, structured document.
 
-> **Tip for Code Review and AI Auditing:** If you wish to audit the architecture or analyze how contracts communicate, you can load `project.txt` directly into your AI tool of choice (Claude, ChatGPT, Gemini, etc.) or static code analyzer. This provides full global context of the codebase without fragmented assumptions.
+### How to audit the codebase with AI without fragmentation:
+1. Download `domain-system.txt` (or clone the repository).
+2. Attach the file directly to your preferred AI model.
+3. Request your technical audit (e.g., verifying interface compliance in `src/Core/Contracts`, input sanitization, or fault-isolation rules). Because the model receives the entire architectural scope at once, it audits with global context and zero fragmentation.
 
-Technical feedback, discussions, and pull requests are welcome in GitHub *Issues* and *Discussions*.
+> **Tooling:** This consolidated context file and the clean distribution zip are packaged using [**Update-Project**](https://github.com/hadelrachid/update-project) — an open-source Python utility (CLI & GUI) engineered to pack codebases into structured context files for AI audits. You can freely use it for your own projects.
 
 ---
 

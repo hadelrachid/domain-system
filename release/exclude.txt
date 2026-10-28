@@ -23,6 +23,7 @@ database.sqlite
 phpunit.xml
 composer.lock
 project.txt
+domain-system.txt
 content/
 manual/
 resources/
