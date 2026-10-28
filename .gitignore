@@ -4,7 +4,7 @@ public/uploads/
 uploads/
 vendor/
 update_project.py
-project.txt
+# project.txt (mantido versionado no repo para facilitar análise por IAs e desenvolvedores)
 .env
 *.zip
 *.phar
