@@ -113,15 +113,36 @@ class LayoutGridRenderer implements LayoutGridInterface
         $extraStyles = array_filter([$border, $borderRadius, $boxShadow, $opacity]);
         $extraStylesStr = !empty($extraStyles) ? ' ' . implode(' ', $extraStyles) : '';
 
-        $gridTemplate = $presetConfig['template'];
-        $tabletTemplate = $presetConfig['tablet'];
-        $mobileTemplate = $presetConfig['mobile'];
+        $baseDesktopTemplate = $presetConfig['template'];
+        $baseTabletTemplate = $presetConfig['tablet'];
+        $baseMobileTemplate = $presetConfig['mobile'];
 
-        $numCols = $presetConfig['columns'];
+        $numCols = (int)$presetConfig['columns'];
+        $colHiddenMap = is_array($settings['_col_hidden'] ?? null) ? $settings['_col_hidden'] : [];
+
+        $gridTemplate = $this->resolveResponsiveGridTemplate($baseDesktopTemplate, $numCols, $colHiddenMap, 'desktop');
+        $laptopTemplate = $this->resolveResponsiveGridTemplate($baseDesktopTemplate, $numCols, $colHiddenMap, 'laptop');
+        $tabletTemplate = $this->resolveResponsiveGridTemplate($baseTabletTemplate, $numCols, $colHiddenMap, 'tablet');
+        $mobileTemplate = $this->resolveResponsiveGridTemplate($baseMobileTemplate, $numCols, $colHiddenMap, 'mobile');
+
         $colsOutput = [];
         for ($i = 0; $i < $numCols; $i++) {
             $colContent = $columnsHtml[$i] ?? '';
-            $colsOutput[] = "<div class=\"ds-grid-col ds-grid-col-{$i}\">{$colContent}</div>";
+            $colVisClasses = [];
+            if (!empty($colHiddenMap[$i]['desktop'])) {
+                $colVisClasses[] = 'ds-hide-desktop';
+            }
+            if (!empty($colHiddenMap[$i]['laptop'])) {
+                $colVisClasses[] = 'ds-hide-laptop';
+            }
+            if (!empty($colHiddenMap[$i]['tablet'])) {
+                $colVisClasses[] = 'ds-hide-tablet';
+            }
+            if (!empty($colHiddenMap[$i]['mobile'])) {
+                $colVisClasses[] = 'ds-hide-mobile';
+            }
+            $colClassStr = trim("ds-grid-col ds-grid-col-{$i} " . implode(' ', $colVisClasses));
+            $colsOutput[] = "<div class=\"{$colClassStr}\">{$colContent}</div>";
         }
         $innerHtml = implode("\n", $colsOutput);
 
@@ -146,19 +167,29 @@ class LayoutGridRenderer implements LayoutGridInterface
             min-width: 0;
             box-sizing: border-box;
         }
-        @media (max-width: 900px) {
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
+                grid-template-columns: {$laptopTemplate} !important;
+            }
+        }
+        @media (min-width: 481px) and (max-width: 768px) {
             body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
                 grid-template-columns: {$tabletTemplate} !important;
                 gap: 16px !important;
             }
         }
-        @media (max-width: 640px) {
+        @media (max-width: 480px) {
             body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
                 grid-template-columns: {$mobileTemplate} !important;
                 gap: 12px !important;
                 padding-left: 12px !important;
                 padding-right: 12px !important;
             }
+        }
+        .ds-laptop-mode #{$sectionId} .ds-section-grid,
+        .ds-is-laptop #{$sectionId} .ds-section-grid,
+        .ds-device-1024 #{$sectionId} .ds-section-grid {
+            grid-template-columns: {$laptopTemplate} !important;
         }
         .ds-tablet-mode #{$sectionId} .ds-section-grid,
         .ds-is-tablet #{$sectionId} .ds-section-grid,
@@ -180,5 +211,92 @@ class LayoutGridRenderer implements LayoutGridInterface
     </div>
 </div>
 HTML;
+    }
+
+    /**
+     * Reajusta dinamicamente as colunas do CSS Grid quando todos os elementos de uma ou mais colunas
+     * estão ocultos na resolução alvo, redistribuindo 100% da largura entre as colunas visíveis restantes.
+     *
+     * @param array<int, array<string, bool>> $colHiddenMap
+     */
+    private function resolveResponsiveGridTemplate(
+        string $baseTemplate,
+        int $numCols,
+        array $colHiddenMap,
+        string $resolution
+    ): string {
+        if ($numCols <= 1 || empty($colHiddenMap)) {
+            return $baseTemplate;
+        }
+
+        $visibleIndices = [];
+        for ($i = 0; $i < $numCols; $i++) {
+            if (empty($colHiddenMap[$i][$resolution])) {
+                $visibleIndices[] = $i;
+            }
+        }
+
+        $visibleCount = count($visibleIndices);
+        if ($visibleCount === $numCols || $visibleCount === 0) {
+            return $baseTemplate;
+        }
+
+        if ($visibleCount === 1) {
+            return '1fr';
+        }
+
+        $tracks = $this->parseGridTracks($baseTemplate);
+        if (count($tracks) === $numCols) {
+            $remainingTracks = [];
+            foreach ($visibleIndices as $idx) {
+                $remainingTracks[] = $tracks[$idx];
+            }
+            return implode(' ', $remainingTracks);
+        }
+
+        return $baseTemplate;
+    }
+
+    /**
+     * Divide um template CSS Grid em suas tracks individuais (suportando repeat() e funções como minmax()).
+     *
+     * @return array<int, string>
+     */
+    private function parseGridTracks(string $template): array
+    {
+        $trimmed = trim($template);
+        if (preg_match('/^repeat\(\s*(\d+)\s*,\s*(.+)\)$/i', $trimmed, $m)) {
+            $count = max(1, (int)$m[1]);
+            return array_fill(0, $count, trim($m[2]));
+        }
+
+        $tracks = [];
+        $current = '';
+        $depth = 0;
+        $len = strlen($trimmed);
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $trimmed[$i];
+            if ($ch === '(') {
+                $depth++;
+                $current .= $ch;
+            } elseif ($ch === ')') {
+                $depth = max(0, $depth - 1);
+                $current .= $ch;
+            } elseif (ctype_space($ch) && $depth === 0) {
+                if ($current !== '') {
+                    $tracks[] = $current;
+                    $current = '';
+                }
+            } else {
+                $current .= $ch;
+            }
+        }
+
+        if ($current !== '') {
+            $tracks[] = $current;
+        }
+
+        return $tracks;
     }
 }

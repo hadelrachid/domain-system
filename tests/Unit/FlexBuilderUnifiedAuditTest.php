@@ -222,6 +222,58 @@ class FlexBuilderUnifiedAuditTest extends TestCase
     }
 
     /**
+     * 4b. Reajuste automático de dimensões do Grid quando uma coluna tem todos os seus elementos ocultados.
+     */
+    public function testGridReadjustsDimensionsWhenColumnElementsAreHidden(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/assoc.json');
+        $tokens = new DesignTokens($this->tempDir . '/tokens.json');
+        $grid = new LayoutGridRenderer();
+        $registry = DefaultBlockRegistryFactory::create();
+        $styleRenderer = new ElementStyleRenderer();
+        $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
+
+        // Header de 3 colunas (1fr 2fr 1fr): Col 0 (Logo) oculto em 1024px (laptop), Col 0 e Col 2 ocultos em 768px (tablet)
+        $payload = [
+            'id'            => 'part_header_reflow',
+            'type'          => ThemePartInterface::TYPE_HEADER,
+            'title'         => 'Header Reflow',
+            'layout_preset' => '3_cols_header',
+            'sections'      => [
+                [
+                    'id'            => 'sec_1',
+                    'layout_preset' => '3_cols_header',
+                    'columns_data'  => [
+                        0 => [
+                            ['type' => 'logo', 'data' => ['text' => 'Logo', 'hide_laptop' => true, 'hide_tablet' => true]],
+                        ],
+                        1 => [
+                            ['type' => 'nav_menu', 'data' => ['align' => 'center']],
+                        ],
+                        2 => [
+                            ['type' => 'cta_button', 'data' => ['label' => 'Entrar', 'hide_tablet' => true]],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $html = $previewService->renderPreview($payload);
+
+        // Col 0 recebe ds-hide-laptop e ds-hide-tablet; Col 2 recebe ds-hide-tablet
+        $this->assertStringContainsString('ds-grid-col ds-grid-col-0 ds-hide-laptop ds-hide-tablet', $html);
+        $this->assertStringContainsString('ds-grid-col ds-grid-col-2 ds-hide-tablet', $html);
+
+        // Em Desktop (todas as 3 visíveis): 1fr 2fr 1fr
+        $this->assertStringContainsString('grid-template-columns: 1fr 2fr 1fr;', $html);
+        // Em 1024px (Col 0 oculta, restam Col 1 e Col 2): reajusta automaticamente para 2fr 1fr!
+        $this->assertStringContainsString('grid-template-columns: 2fr 1fr !important;', $html);
+        // Em 768px (Col 0 e Col 2 ocultas, resta apenas Col 1): reajusta automaticamente para 1fr (100% da largura)!
+        $this->assertStringContainsString('grid-template-columns: 1fr !important;', $html);
+    }
+
+    /**
      * 5. Persistência Atômica, Bloqueio de Path Traversal e Verificação de Retorno de save().
      */
     public function testRepositoryBlocksPathTraversalAndPerformsAtomicSave(): void

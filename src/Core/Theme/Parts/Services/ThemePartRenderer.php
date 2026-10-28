@@ -146,8 +146,17 @@ class ThemePartRenderer implements ThemePartRendererInterface
                 $columnsData = (array)($section['columns_data'] ?? []);
 
                 $columnsHtml = [];
+                $colHiddenMap = [];
                 foreach ($columnsData as $colIndex => $blocksList) {
                     $colBlocksOutput = [];
+                    $validBlocksCount = 0;
+                    $hiddenCounts = [
+                        'desktop' => 0,
+                        'laptop'  => 0,
+                        'tablet'  => 0,
+                        'mobile'  => 0,
+                    ];
+
                     if (is_array($blocksList)) {
                         foreach ($blocksList as $blockDef) {
                             if (!is_array($blockDef)) {
@@ -178,6 +187,20 @@ class ThemePartRenderer implements ThemePartRendererInterface
                                 $elementStyles = $this->styleRenderer->renderStyleString($blockData);
                                 $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($blockData);
 
+                                $validBlocksCount++;
+                                if (str_contains($visibilityClasses, 'ds-hide-desktop')) {
+                                    $hiddenCounts['desktop']++;
+                                }
+                                if (str_contains($visibilityClasses, 'ds-hide-laptop')) {
+                                    $hiddenCounts['laptop']++;
+                                }
+                                if (str_contains($visibilityClasses, 'ds-hide-tablet')) {
+                                    $hiddenCounts['tablet']++;
+                                }
+                                if (str_contains($visibilityClasses, 'ds-hide-mobile')) {
+                                    $hiddenCounts['mobile']++;
+                                }
+
                                 if ($elementStyles !== '' || $visibilityClasses !== '') {
                                     $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
                                     $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
@@ -187,9 +210,20 @@ class ThemePartRenderer implements ThemePartRendererInterface
                             }
                         }
                     }
-                    $columnsHtml[(int)$colIndex] = implode("\n", $colBlocksOutput);
+
+                    $cIdx = (int)$colIndex;
+                    $columnsHtml[$cIdx] = implode("\n", $colBlocksOutput);
+                    if ($validBlocksCount > 0) {
+                        $colHiddenMap[$cIdx] = [
+                            'desktop' => $hiddenCounts['desktop'] === $validBlocksCount,
+                            'laptop'  => $hiddenCounts['laptop'] === $validBlocksCount,
+                            'tablet'  => $hiddenCounts['tablet'] === $validBlocksCount,
+                            'mobile'  => $hiddenCounts['mobile'] === $validBlocksCount,
+                        ];
+                    }
                 }
 
+                $settings['_col_hidden'] = $colHiddenMap;
                 $sectionsOutput[] = $this->gridRenderer->renderSection($preset, $columnsHtml, $settings);
             }
 

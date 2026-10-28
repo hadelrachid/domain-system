@@ -79,8 +79,17 @@ class ThemePartPreviewService implements ThemePartPreviewServiceInterface
             $secColsData = (array)($sec['columns_data'] ?? []);
 
             $colsHtml = [];
+            $colHiddenMap = [];
             foreach ($secColsData as $colIndex => $blocksList) {
                 $colBlocks = [];
+                $validBlocksCount = 0;
+                $hiddenCounts = [
+                    'desktop' => 0,
+                    'laptop'  => 0,
+                    'tablet'  => 0,
+                    'mobile'  => 0,
+                ];
+
                 if (is_array($blocksList)) {
                     foreach ($blocksList as $bDef) {
                         if (!is_array($bDef)) {
@@ -111,6 +120,20 @@ class ThemePartPreviewService implements ThemePartPreviewServiceInterface
                             $elementStyles = $this->styleRenderer->renderStyleString($bData);
                             $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($bData);
 
+                            $validBlocksCount++;
+                            if (str_contains($visibilityClasses, 'ds-hide-desktop')) {
+                                $hiddenCounts['desktop']++;
+                            }
+                            if (str_contains($visibilityClasses, 'ds-hide-laptop')) {
+                                $hiddenCounts['laptop']++;
+                            }
+                            if (str_contains($visibilityClasses, 'ds-hide-tablet')) {
+                                $hiddenCounts['tablet']++;
+                            }
+                            if (str_contains($visibilityClasses, 'ds-hide-mobile')) {
+                                $hiddenCounts['mobile']++;
+                            }
+
                             if ($elementStyles !== '' || $visibilityClasses !== '') {
                                 $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
                                 $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
@@ -120,8 +143,18 @@ class ThemePartPreviewService implements ThemePartPreviewServiceInterface
                         }
                     }
                 }
-                $colsHtml[(int)$colIndex] = implode("\n", $colBlocks);
+                $cIdx = (int)$colIndex;
+                $colsHtml[$cIdx] = implode("\n", $colBlocks);
+                if ($validBlocksCount > 0) {
+                    $colHiddenMap[$cIdx] = [
+                        'desktop' => $hiddenCounts['desktop'] === $validBlocksCount,
+                        'laptop'  => $hiddenCounts['laptop'] === $validBlocksCount,
+                        'tablet'  => $hiddenCounts['tablet'] === $validBlocksCount,
+                        'mobile'  => $hiddenCounts['mobile'] === $validBlocksCount,
+                    ];
+                }
             }
+            $secSettings['_col_hidden'] = $colHiddenMap;
             $sectionsOutput[] = $this->layoutGrid->renderSection($secPreset, $colsHtml, $secSettings);
         }
 
