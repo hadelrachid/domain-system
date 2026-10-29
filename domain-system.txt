@@ -1,8 +1,8 @@
 /* ============================================================================ */
 /* PROJETO: domain-system
-/* DATA DE GERAÇÃO: 2026-10-28 23:15:23
+/* DATA DE GERAÇÃO: 2026-10-28 23:28:22
 /* PERFIL DE EXPORTAÇÃO: AUDIT
-/* TOTAL DE ARQUIVOS CONSOLIDADOS: 792
+/* TOTAL DE ARQUIVOS CONSOLIDADOS: 794
 /* FERRAMENTA: Update-Project v1.1.0 (Codebase Context Packer & Auditor)
 /* FINALIDADE: Auditoria de código, revisão estática e contexto integral para IAs
 /* ---------------------------------------------------------------------------- */
@@ -1109,6 +1109,8 @@
 ├── 📄 .env.example
 ├── 📄 .gitignore
 ├── 📄 .htaccess
+├── 📝 ABOUT-en.md
+├── 📝 ABOUT.md
 ├── 📝 AI_CONTRACT_GUIDE.md
 ├── 🐘 bootstrap.php
 ├── 🎨 bundle.css
@@ -1246,6 +1248,208 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist
       - run: composer test
+
+
+/* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/ABOUT-en.md
+/* ---------------------------------------------------------------------------- */
+
+# Building My Own Modular PHP Platform: Lessons Learned Along the Way
+
+> 🇧🇷 [Ler em Português](ABOUT.md) | 🇺🇸 [Read in English](ABOUT-en.md)
+
+---
+
+I am a self-taught developer and, for some time now, I have been building a project called **Domain System**.
+
+It all started with a simple question: what if I could design my own PHP web platform where core foundations and application plugins have strictly defined boundaries, without excessive coupling or brittle dependencies?
+
+As work progressed, the codebase grew significantly. I had to solve practical architecture challenges: how to organize services, how plugins should communicate with the core runtime, how to isolate runtime errors, and how to prevent existing features from breaking unexpectedly.
+
+I won't pretend I have all the answers. I am still learning, making mistakes, and continuously iterating to improve things. That journey of problem-solving is precisely what makes this project so rewarding to me.
+
+You can explore the open source repository here:  
+👉 [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+
+---
+
+## Why I Started Thinking Differently About PHP
+
+While designing the architecture, I became fascinated by how modern operating systems isolate core system services from user applications running on top of them.
+
+I wondered: can we bring that architectural discipline into a modular PHP web platform?
+
+In **Domain System**, I aim to keep two elements clearly decoupled:
+
+- **The Core:** Fundamental services necessary for application life-cycle — dependency injection, routing, atomic storage, and event dispatching.
+- **The Plugins:** Components providing business capabilities (such as the Academy LMS, visual layout builder, navigation menus, and SEO pipelines).
+
+The idea is straightforward: the core should have zero awareness of plugin business details. Communication occurs exclusively through interfaces and contracts; this ensures one part can be refactored without breaking the rest of the application.
+
+In practice, getting this right is much harder than it sounds. One can define interfaces and still end up with excessive coupling between concrete classes. That is an area I pay closer attention to with every iteration.
+
+---
+
+## Areas I Have Been Focusing On
+
+### Safer Plugin Installation
+
+Allowing users to upload zip packages required careful defensive design.
+
+When extracting an archive, one cannot assume every file is safe or intended for extraction.
+
+I introduced pre-extraction inspections that sanitize filenames and paths, guarding against *path traversal* and *Zip Slip* attacks.
+
+While no single check guarantees immunity against every security threat, defensive measures and constant vigilance are essential practices in software engineering.
+
+### Resilience and Graceful Recovery
+
+Another constant challenge is handling runtime errors without leaving the system in an inconsistent or corrupted state.
+
+*Domain System* incorporates atomic JSON persistence (`AtomicJsonStore`), exclusive file-locking (`LOCK_EX`), database schema diagnostics (`SchemaDoctorInterface`), extension-level fault isolation (Circuit Breaker), and automated pre-update backups with rollback capability.
+
+The objective is simple: make issues easier to diagnose and recover from. Unforeseen problems will always happen in production, but building recovery paths into the architecture is better than assuming nothing will ever fail.
+
+### Building a Custom Visual Page Builder (Flex Builder)
+
+I have also been developing **Flex Builder**, a visual Full Site Editing (FSE) engine for headers, footers, and page sections.
+
+A primary requirement was ensuring that the Studio live preview matched the published frontend output down to the pixel. Both environments share the exact same compilation pipeline through `ThemePartCompilerInterface`.
+
+Additionally, the builder implements a 12-column CSS Grid with responsive visibility controls across 4 breakpoints (Desktop, Laptop, Tablet, Mobile) and automatic column readjustment (*auto-reflow*), eliminating awkward blank spaces when elements are hidden.
+
+Building an interactive block editor involves hundreds of subtle edge cases, making it a tremendous learning experience.
+
+### Leveraging AI Without Losing Control of the Codebase
+
+I use AI coding tools as an accelerator throughout development.
+
+They are remarkably productive, especially across a repository spanning tens of thousands of lines. However, practical experience taught me that code that works in isolation does not necessarily integrate well into an existing architecture.
+
+An AI-generated snippet might resolve an immediate bug while introducing hidden coupling that makes future changes painful.
+
+To prevent architectural drift, I created strict contract guidelines ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md)) and automated architectural tests (`UpdateArchitectureTest`, `RingIsolationTest`). I also built a CLI generator (`php os-cli.php make:plugin`) to bootstrap plugins with proper contract compliance.
+
+I continue to explore how best to leverage AI without sacrificing maintainability. Detailed documentation helps, but human oversight, thorough code reviews, and automated test suites remain irreplaceable.
+
+---
+
+## The Tech Stack
+
+Domain System is built on **PHP 8.2+**. It natively supports MySQL/MariaDB and SQLite via PDO, along with concurrency-safe atomic JSON persistence.
+
+The test suite is powered by **PHPUnit**, currently featuring **438 unit tests** and over **2,320 automated assertions** covering lifecycle, security guards, routing, contracts, and visual compilation.
+
+Test metrics provide confidence, but they don't tell the whole story. Green tests are important, but writing code that is clear, well-structured, and maintainable over time is what truly matters.
+
+---
+
+## Sharing to Learn and Grow
+
+Building a platform from scratch is challenging; keeping it clean, secure, and comprehensible as it grows is an even greater challenge.
+
+Honest feedback, constructive critiques, and architectural discussions from fellow developers are always genuinely appreciated!
+
+
+/* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/ABOUT.md
+/* ---------------------------------------------------------------------------- */
+
+# Estou construindo minha própria plataforma PHP e tenho aprendido muito ao longo do caminho
+
+> 🇧🇷 [Ler em Português](ABOUT.md) | 🇺🇸 [Read in English](ABOUT-en.md)
+
+---
+
+Sou um desenvolvedor autodidata e, há algum tempo, venho trabalhando em um projeto chamado **Domain System**.
+
+Tudo começou com uma ideia simples: e se eu pudesse criar minha própria plataforma PHP, na qual o sistema principal e seus plugins tivessem responsabilidades bem definidas, sem depender excessivamente uns dos outros?
+
+À medida que continuei trabalhando, o projeto cresceu. Precisei pensar em como organizar o código, como os plugins deveriam se comunicar com o núcleo (*core*), como tratar erros e como evitar que algo que já funcionava parasse de funcionar repentinamente.
+
+Não vou fingir que tenho todas as respostas. Ainda estou aprendendo, cometendo erros e voltando atrás para aprimorar as coisas. Mas é justamente isso que torna este projeto fascinante para mim.
+
+Você pode conferir o código-fonte aberto no GitHub aqui:  
+👉 [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+
+---
+
+## Por que comecei a pensar de forma diferente sobre o PHP
+
+Ao refletir sobre como organizar o projeto, comecei a me interessar pela maneira como os sistemas operacionais modernos separam seus componentes essenciais das aplicações que rodam sobre eles.
+
+Pensei: será que posso aplicar um pouco desse conceito a uma plataforma web em PHP?
+
+No **Domain System**, busco manter dois elementos fundamentais e distintos:
+
+- **O núcleo (core):** A parte responsável pelos fundamentos necessários para o funcionamento do sistema, como roteamento, injeção de dependências, armazenamento e outros serviços compartilhados.
+- **Os plugins:** Os componentes que adicionam funcionalidades de negócio à plataforma (como LMS de cursos, construtor visual de páginas, gestão de links e SEO).
+
+A ideia é direta: não quero que o núcleo precise conhecer os detalhes específicos de cada plugin. Prefiro que a comunicação ocorra estritamente por meio de interfaces e contratos; assim, posso alterar uma parte sem precisar modificar todo o restante.
+
+Na prática, acertar isso é bem mais difícil do que parece. É possível criar interfaces e, ainda assim, acabar com um código excessivamente dependente de classes concretas. Esse é um aspecto ao qual tenho prestado cada vez mais atenção conforme o projeto evolui.
+
+---
+
+## Algumas coisas nas quais tenho trabalhado
+
+### Instalação de plugins de forma mais segura
+
+Um aspecto que exigiu reflexão cuidadosa foi a instalação de plugins via painel.
+
+Ao enviar um arquivo compactado (ZIP), não se pode simplesmente presumir que todos os arquivos contidos nele sejam seguros para serem extraídos em qualquer lugar do servidor.
+
+Por isso, adicionei uma etapa em que os arquivos enviados são inspecionados antes de serem movidos para o destino final. O processo inclui verificações contra problemas clássicos como *path traversal* (travessia de diretórios) e *ZIP Slip*.
+
+Não diria que isso garante a prevenção de todos os ataques possíveis. A segurança exige muito mais do que apenas algumas verificações, e sei que essa é uma área que requer estudo e atenção contínua.
+
+### Facilitando a recuperação após problemas
+
+Outro desafio constante é lidar com erros sem deixar o sistema em um estado instável ou comprometido.
+
+O *Domain System* inclui persistência atômica em JSON (`AtomicJsonStore`), técnicas de bloqueio de arquivos (*file-locking* com `LOCK_EX`), ferramentas de verificação de esquema de banco de dados (`SchemaDoctorInterface`), além de isolamento de falhas em plugins (Circuit Breaker) e rotinas de *snapshot* e *rollback* automático antes de atualizações.
+
+Essas medidas visam facilitar a identificação de problemas e a recuperação após a ocorrência deles. Sei que imprevistos ainda podem acontecer, mas prefiro criar mecanismos para lidar com falhas do que simplesmente presumir que elas nunca ocorrerão.
+
+### Criando meu próprio editor visual de páginas
+
+Também tenho trabalhado no **Flex Builder**, um editor visual para a criação de layouts de páginas, cabeçalhos e rodapés (Full Site Editing).
+
+Um dos meus objetivos principais era que a pré-visualização no editor fosse o mais fiel possível ao site real publicado. Para garantir isso, ambos utilizam exatamente o mesmo processo de compilação por meio de um contrato compartilhado (`ThemePartCompilerInterface`).
+
+Além disso, tenho trabalhado em layouts responsivos em CSS Grid de 12 colunas, de modo que, ao ocultar um elemento em uma tela menor (tablet ou mobile), as colunas restantes se reorganizem automaticamente sem deixar espaços vazios indesejados (*auto-reflow*).
+
+Um editor como esse envolve centenas de detalhes, e tem sido uma excelente experiência de aprendizado.
+
+### Usando IA sem perder o controle do código
+
+Também utilizo ferramentas de IA voltadas para programação para me auxiliarem no desenvolvimento do projeto.
+
+Elas podem ser incrivelmente úteis, especialmente ao lidar com uma base de código que já conta com dezenas de milhares de linhas. No entanto, aprendi na prática que obter um trecho de código que funciona isoladamente não é o mesmo que obter um código que se integre bem à arquitetura do projeto.
+
+Às vezes, uma alteração gerada pode resolver um problema imediato, mas acabar criando outro oculto. Uma nova classe, por exemplo, pode funcionar corretamente no teste pontual, mas introduzir dependências que tornam futuras modificações muito mais difíceis.
+
+Para ajudar a evitar isso, criei documentações de contratos ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md)) e testes de arquitetura automatizados que explicam como o projeto é organizado e como novos plugins devem ser desenvolvidos. Também existe uma ferramenta de linha de comando (`os-cli.php make:plugin`) para gerar a estrutura básica padronizada de um plugin.
+
+Ainda estou buscando a melhor forma de utilizar a IA sem tornar o código difícil de manter. A documentação e os contratos ajudam, mas o desenvolvedor ainda precisa revisar cada alteração, rodar testes e entender profundamente o que o código faz.
+
+---
+
+## Um pouco sobre a tecnologia
+
+O Domain System é construído em **PHP 8.2+**. Ele oferece suporte a MySQL/MariaDB e SQLite por meio de PDO, além de contar com uma opção própria de armazenamento estruturado em JSON com travas concorrentes.
+
+Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **438 testes unitários** e mais de **2.320 asserções** automatizadas cobrindo ciclo de vida, segurança, roteamento, contratos e compilação visual.
+
+Esses números são úteis como métrica de estabilidade, mas não contam a história completa. É importante que os testes passem, mas também é fundamental verificar continuamente se o código está organizado de maneira compreensível e sustentável ao longo do tempo.
+
+---
+
+## Estou compartilhando isso porque gostaria de aprender com outras pessoas
+
+Este projeto me ensinou que criar algo do zero é um desafio enorme; mantê-lo limpo, seguro e compreensível à medida que cresce é um desafio ainda maior.
+
+Feedbacks sinceros, críticas construtivas e sugestões de arquitetura são sempre muito bem-vindos de qualquer colega desenvolvedor!
 
 
 /* ---------------------------------------------------------------------------- */
@@ -1877,10 +2081,12 @@ A lightweight modular web platform in PHP 8.2+ for managing pages, services, and
 The project aims to provide a decoupled and uncluttered alternative to traditional CMS engines, maintaining low memory usage (~5 MB of Zend RAM per typical request) and an unpacked footprint of approximately 30 MB on disk.
 
 > **Project Status:** Domain System is in an active cycle of ongoing development, real-world production testing, and continuous improvement. Refactorings, performance optimizations, and architectural enhancements are rolled out regularly based on automated test suites and practical ecosystem feedback.
+> 
+> 💡 **Author's Note & Journey:** I am a self-taught developer building Domain System as a continuous learning ecosystem focused on Clean Architecture, resilience, and the disciplined use of AI in software engineering. [Read the full story, motivations, and lessons learned in ABOUT-en.md](ABOUT-en.md).
 
 ---
 
-[🇧🇷 Versão em Português](README.md) | [📖 Documentation](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md)
+[🇧🇷 Versão em Português](README.md) | [📖 Documentation](https://hadelrachid.github.io/domain-system/) | [🌱 About the Author & Project](ABOUT-en.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md)
 
 ---
 
@@ -1982,10 +2188,12 @@ Plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas
 O objetivo do projeto é oferecer uma alternativa enxuta e desacoplada aos CMSs tradicionais, mantendo consumo reduzido de memória (~5 MB de RAM no motor Zend em requisições típicas) e um espaço em disco de aproximadamente 30 MB descompactado.
 
 > **Status do Projeto:** O Domain System está em ciclo ativo de desenvolvimento, testes em produção e melhorias contínuas. Novas refatorações, otimizações e correções são aplicadas regularmente com base em testes automatizados e no uso prático do ecossistema.
+> 
+> 💡 **Nota do Autor & Jornada:** Sou um desenvolvedor autodidata construindo o Domain System como um ecossistema de aprendizado contínuo sobre Clean Architecture, resiliência e o uso disciplinado de IA no desenvolvimento de software. [Leia a história completa, motivações e lições aprendidas em ABOUT.md](ABOUT.md).
 
 ---
 
-[🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
+[🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🌱 Sobre o Autor & Projeto](ABOUT.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
 
 ---
 
