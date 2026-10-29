@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // Layout Base Principal (Main HTML Shell)
 // O array $seo (SeoManagerInterface) já foi injetado pelo ThemeController
 

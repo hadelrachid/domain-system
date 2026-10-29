@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database;
 
 use DomainSystem\Core\Contracts\DatabaseConnectionInterface;

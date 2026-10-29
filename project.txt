@@ -1,8 +1,8 @@
 /* ============================================================================ */
 /* PROJETO: domain-system
-/* DATA DE GERAÇÃO: 2026-10-28 22:06:03
+/* DATA DE GERAÇÃO: 2026-10-28 23:15:23
 /* PERFIL DE EXPORTAÇÃO: AUDIT
-/* TOTAL DE ARQUIVOS CONSOLIDADOS: 787
+/* TOTAL DE ARQUIVOS CONSOLIDADOS: 792
 /* FERRAMENTA: Update-Project v1.1.0 (Codebase Context Packer & Auditor)
 /* FINALIDADE: Auditoria de código, revisão estática e contexto integral para IAs
 /* ---------------------------------------------------------------------------- */
@@ -24,8 +24,7 @@
 │   │   └── ⚙️ tests.yml
 │   └── 📝 copilot-instructions.md
 ├── 📁 auditoria/
-│   ├── 📝 Arquitetura_Elementor_Domain_System_Contratos.md
-│   ├── 📝 auditoria_round2_flexbuilder.md
+│   ├── 📝 auditoria-cline.md
 │   ├── 📝 ChatGPT.txt
 │   ├── 📝 DeepSeek.txt
 │   └── 📝 Nemotron.md
@@ -606,11 +605,15 @@
 │   │   ├── 📁 analytics/
 │   │   │   ├── 📁 Controllers/
 │   │   │   │   └── 🐘 TrackerController.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 📁 Widgets/
 │   │   │   │   └── 🐘 AnalyticsWidgetProvider.php
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 clock_widget/
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 🐘 ClockWidgetProvider.php
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
@@ -778,6 +781,8 @@
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 nobreak_shield/
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 pages/
@@ -799,6 +804,8 @@
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📁 radio_online/
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 📋 plugin.json
 │   │   │   ├── 🐘 Plugin.php
 │   │   │   ├── 🐘 RadioWidgetProvider.php
@@ -824,6 +831,8 @@
 │   │   │   │   └── 🐘 SettingRepositoryInterface.php
 │   │   │   ├── 📁 Controllers/
 │   │   │   │   └── 🐘 SettingsController.php
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 📁 Repositories/
 │   │   │   │   └── 🐘 SettingRepository.php
 │   │   │   ├── 📁 views/
@@ -832,6 +841,8 @@
 │   │   │   ├── 🐘 Plugin.php
 │   │   │   └── 📄 settings.zip
 │   │   ├── 📁 visual_themes/
+│   │   │   ├── 📁 manual/
+│   │   │   │   └── 🐘 module.php
 │   │   │   ├── 📋 plugin.json
 │   │   │   └── 🐘 Plugin.php
 │   │   ├── 📄 clinic_pack.zip
@@ -2125,372 +2136,6 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 
 
 /* ---------------------------------------------------------------------------- */
-// Arquivo: domain-system/auditoria/Arquitetura_Elementor_Domain_System_Contratos.md
-/* ---------------------------------------------------------------------------- */
-
-# 🏛️ Arquitetura do Novo "Elementor" para o Ecossistema Domain-System
-
-> **Documento Estratégico & Arquitetural:** Padronização com Contratos Fortes, Engenharia SOLID e Organização Modular.  
-> **Localização no Projeto:** `auditoria/Arquitetura_Elementor_Domain_System_Contratos.md`  
-> **Camada no Sistema:** Ring 0 (Core Theme Engine) & Ring 1 (FlexTheme Builder Studio).  
-> **Princípios:** SOLID (SRP, OCP, LSP, ISP, DIP), Clean Architecture, Zero Acoplamento, Zero Regressão.
-
----
-
-## 🎯 1. Visão Geral: Escalar com Rigor e Sem Desordem
-
-A criação de um construtor visual de classe empresarial (nível *Elementor / Webflow*) dentro do **Domain-System** naturalmente acarretará em crescimento de código, novos blocos, módulos JavaScript, estilos CSS e assets.
-
-> [!IMPORTANT]
-> **A Regra de Ouro da Arquitetura:**  
-> O sistema pode crescer megabytes em recursos, mas **a complexidade não pode se tornar caótica**. Cada conceito (uma cor, uma unidade de medida, uma animação, um breakpoint responsivo ou um controle de formulário) deve ter **seu próprio contrato formal**, seu validador e seu local exato na árvore do sistema. Nada é feito com strings soltas ou `switch/case` manuais.
-
----
-
-## 📐 2. Matriz de Contratos Estritos (Ring 0 - PHP Core)
-
-Toda propriedade visual ou estrutural do construtor será regida por **interfaces segregadas (ISP)** e **Value Objects imutáveis** sob `src/Core/Theme/Parts/Contracts/`:
-
-```mermaid
-classDiagram
-    class StylableElementInterface {
-        <<interface>>
-        +getStyleProperties(): array
-    }
-
-    class ColorContractInterface {
-        <<interface>>
-        +getBackgroundColor(): ?ColorValue
-        +getTextColor(): ?ColorValue
-        +getBorderColor(): ?ColorValue
-    }
-
-    class DimensionContractInterface {
-        <<interface>>
-        +getWidth(): ?DimensionValue
-        +getMaxWidth(): ?DimensionValue
-        +getHeight(): ?DimensionValue
-        +getMinHeight(): ?DimensionValue
-    }
-
-    class ResponsiveContractInterface {
-        <<interface>>
-        +getStylesForBreakpoint(string breakpoint): array
-        +setBreakpointOverride(string breakpoint, array styles): void
-    }
-
-    class AnimationContractInterface {
-        <<interface>>
-        +getHoverEffect(): ?string
-        +getEntranceAnimation(): ?string
-        +getTransitionSpeed(): ?string
-    }
-
-    class TypographyContractInterface {
-        <<interface>>
-        +getFontFamily(): ?string
-        +getFontSize(): ?DimensionValue
-        +getFontWeight(): ?string
-        +getLineHeight(): ?string
-        +getLetterSpacing(): ?DimensionValue
-    }
-
-    StylableElementInterface --|> ColorContractInterface
-    StylableElementInterface --|> DimensionContractInterface
-    StylableElementInterface --|> ResponsiveContractInterface
-    StylableElementInterface --|> AnimationContractInterface
-    StylableElementInterface --|> TypographyContractInterface
-```
-
----
-
-### 2.1. Contrato de Cores & Design Tokens (`ColorContractInterface`)
-
-As cores não podem ser apenas strings hexadecimais soltas. Devem seguir o contrato:
-
-```php
-namespace DomainSystem\Core\Theme\Parts\Contracts\Styles;
-
-interface ColorContractInterface
-{
-    /** Retorna a cor de fundo (Token Semântico ou ColorValue) */
-    public function getBackgroundColor(): ?ColorValue;
-
-    /** Retorna a cor do texto do elemento */
-    public function getTextColor(): ?ColorValue;
-
-    /** Retorna a cor da borda */
-    public function getBorderColor(): ?ColorValue;
-}
-```
-
-#### O Value Object `ColorValue`:
-- **Tipo Token:** `ColorValue::fromToken('primary')` -> gera `var(--primary)`
-- **Tipo Hex/RGBA:** `ColorValue::fromHex('#45f3ff')` ou `ColorValue::fromRgba(69, 243, 255, 0.5)`
-- **Tipo Gradiente:** `ColorValue::fromGradient('linear-gradient(135deg, var(--primary), var(--secondary))')`
-- **Tipo Especial:** `ColorValue::transparent()` -> gera `transparent`
-- **Higienização estrita:** Rejeita caracteres inválidos, scripts ou tentativa de injeção CSS.
-
----
-
-### 2.2. Contrato de Dimensionamento e Unidades Múltiplas (`DimensionContractInterface`)
-
-O sistema deve aceitar com tipagem e validação rigorosa **todas as unidades do CSS moderno**:
-
-| Categoria | Unidades Suportadas | Exemplo de Aplicação |
-|---|---|---|
-| **Pixels Fixos** | `px` | Bordas, ícones, gaps precisos (`16px`, `32px`) |
-| **Relativas ao Container** | `%`, `auto`, `fit-content` | Largura de colunas, botões full-width (`100%`, `50%`) |
-| **Relativas à Viewport** | `vw`, `vh`, `vmin`, `vmax` | Seções hero, telas cheias (`100vh`, `80vw`) |
-| **Tipográficas / Escalares** | `rem`, `em`, `ch`, `ex` | Espaçamentos harmônicos, fontes (`1.5rem`, `2em`) |
-| **Físicas / Impressão** | `cm`, `mm`, `pt`, `in` | Documentos, layouts editoriais (`2.5cm`, `12pt`) |
-
-#### O Value Object `DimensionValue`:
-```php
-namespace DomainSystem\Core\Theme\Parts\Styles\Values;
-
-final class DimensionValue
-{
-    public function __construct(
-        private readonly float $amount,
-        private readonly CssUnit $unit
-    ) {}
-
-    public static function fromString(string $raw): self;
-    public function toCss(): string; // ex: "100vh", "2.5rem", "50%"
-    public function getUnit(): CssUnit;
-    public function getAmount(): float;
-}
-```
-
-```php
-enum CssUnit: string
-{
-    case PX = 'px';
-    case PERCENT = '%';
-    case REM = 'rem';
-    case EM = 'em';
-    case VH = 'vh';
-    case VW = 'vw';
-    case VMIN = 'vmin';
-    case VMAX = 'vmax';
-    case CM = 'cm';
-    case MM = 'mm';
-    case PT = 'pt';
-    case AUTO = 'auto';
-    case FIT_CONTENT = 'fit-content';
-}
-```
-
----
-
-### 2.3. Contrato de Responsividade Multidispositivo (`ResponsiveContractInterface`)
-
-O Elementor do Domain-System opera com **4 Breakpoints Nativos Padronizados**:
-
-```php
-namespace DomainSystem\Core\Theme\Parts\Contracts\Responsive;
-
-interface ResponsiveContractInterface
-{
-    public const BREAKPOINT_DESKTOP = 'desktop'; // >= 1200px (ou 100%)
-    public const BREAKPOINT_LAPTOP  = 'laptop';  // 1024px
-    public const BREAKPOINT_TABLET  = 'tablet';  // 768px
-    public const BREAKPOINT_MOBILE  = 'mobile';  // 375px
-
-    /** Retorna as propriedades ativas para um dispositivo específico com fallback hierárquico */
-    public function resolveStyleForDevice(string $device, string $property): mixed;
-}
-```
-
-- **Herança em Cascata:** Se uma propriedade (ex: `font_size` ou `padding`) for configurada no Desktop, ela é herdada por Laptop, Tablet e Mobile automaticamente, a menos que o usuário defina um *override* específico para aquele breakpoint.
-- **Ícone de Dispositivo ao Lado de Cada Campo:** Cada campo numérico ou de dimensão no Inspetor possui os 4 ícones `[ 🖥️ ] [ 💻 ] [ 📱 Tablet ] [ 📱 Mobile ]`. Clicar no ícone permite ajustar a medida exclusivamente para aquela tela!
-
----
-
-### 2.4. Contrato de Animações & Micro-Interações (`AnimationContractInterface`)
-
-Animações organizadas em catálogo tipado, com aceleração por GPU:
-
-```php
-namespace DomainSystem\Core\Theme\Parts\Contracts\Styles;
-
-interface AnimationContractInterface
-{
-    /** Efeito ao passar o mouse */
-    public function getHoverEffect(): ?string;
-
-    /** Animação de entrada na tela (ao rolar) */
-    public function getEntranceAnimation(): ?string;
-
-    /** Duração da transição */
-    public function getTransitionDuration(): ?string;
-
-    /** Curva de aceleração (timing function) */
-    public function getTimingFunction(): ?string;
-}
-```
-
-#### Catálogo Tipado de Animações:
-- **Hover de Botões:** `grow`, `shrink`, `lift`, `sink`, `bounce`, `wobble`, `glow_primary`, `glow_secondary`, `shimmer`, `sweep_right`, `ripple`.
-- **Hover de Menus:** `underline_center`, `underline_slide`, `overline_underline`, `pill_glow`, `bracket_reveal`, `text_lift`, `dot_badge`.
-- **Animações de Entrada (Scroll):** `fade_in`, `slide_up`, `slide_down`, `slide_left`, `slide_right`, `zoom_in`, `flip_x`.
-
----
-
-## 🗂️ 3. Onde Fica Cada Coisa: Organização da Árvore de Diretórios
-
-Para evitar "arquivos gigantes" ou código jogado em pastas genéricas:
-
-### 3.1. Backend (PHP - Ring 0 e Plugins)
-```
-src/Core/Theme/Parts/
-  ├── Contracts/
-  │     ├── Styles/
-  │     │     ├── ColorContractInterface.php
-  │     │     ├── DimensionContractInterface.php
-  │     │     ├── ResponsiveContractInterface.php
-  │     │     ├── AnimationContractInterface.php
-  │     │     ├── TypographyContractInterface.php
-  │     │     ├── BorderContractInterface.php
-  │     │     ├── ShadowContractInterface.php
-  │     │     └── StylableElementInterface.php
-  │     ├── Responsive/
-  │     │     ├── BreakpointInterface.php
-  │     │     └── ResponsivePayloadInterface.php
-  │     ├── BlockInterface.php
-  │     └── ThemePartInterface.php
-  │
-  ├── Styles/
-  │     ├── Values/
-  │     │     ├── ColorValue.php
-  │     │     ├── DimensionValue.php
-  │     │     └── CssUnit.php
-  │     ├── Resolvers/
-  │     │     ├── ColorResolver.php
-  │     │     └── ResponsiveStyleResolver.php
-  │     ├── Catalogs/
-  │     │     ├── AnimationCatalog.php
-  │     │     └── TypographyCatalog.php
-  │     └── ElementStyleRenderer.php
-  │
-  └── Blocks/
-        ├── ButtonBlock.php          <-- Botão Genérico Multiuso
-        ├── HeadingBlock.php
-        ├── ParagraphBlock.php
-        ├── NavMenuBlock.php
-        └── ...
-```
-
-### 3.2. Frontend (JavaScript & CSS Modular)
-O arquivo `builder_editor.php` deixa de ter milhares de linhas de scripts embutidos e passa a orquestrar módulos puros:
-
-```
-public/assets/
-  ├── css/
-  │     ├── builder-studio.css       <-- Layout do Studio, Canvas e Inspetor
-  │     ├── builder-animations.css   <-- Keyframes de animações (Grow, Lift, Shimmer, etc.)
-  │     └── builder-tokens.css       <-- Fallback de tokens visuais
-  │
-  └── js/builder/
-        ├── core/
-        │     ├── state-store.js     <-- Estado reativo, Undo/Redo e dirty check
-        │     ├── event-bus.js       <-- Barramento de eventos entre módulos
-        │     └── i18n-helper.js     <-- __(key, default)
-        │
-        ├── controls/
-        │     ├── token-color-control.js   <-- Swatches da paleta + custom color
-        │     ├── dimension-unit-control.js<-- Input numérico + Combobox (px, %, vh, vw, rem, cm)
-        │     ├── typography-control.js    <-- Combobox das 3 fontes do tema + catálogo
-        │     ├── hover-animation-control.js<-- Comboboxes de efeitos hover e transições
-        │     ├── border-builder-control.js<-- Estilo, espessura, cor e radius vinculado
-        │     ├── shadow-presets-control.js<-- Cards de sombras (Sutil, Média, Glow)
-        │     └── responsive-switch.js     <-- Alternador de breakpoint Desktop/Tablet/Mobile
-        │
-        ├── canvas/
-        │     ├── stage-renderer.js  <-- Renderizador do canvas com divisórias
-        │     ├── drag-drop.js       <-- Drag & drop de seções e blocos
-        │     └── live-stage-guard.js<-- Iframe ao vivo com interceptor de navegação
-        │
-        └── inspector/
-              ├── inspector-orchestrator.js <-- Tabs: Conteúdo, Estilo, Avançado
-              └── schema-form-engine.js     <-- Constrói campos a partir de Block::getSchema()
-```
-
----
-
-## 🚀 4. Plano Passo a Passo de Execução
-
-| Etapa | Foco | Entregáveis | Regra de Ouro |
-|---|---|---|---|
-| **Etapa 1** | Contratos de Estilo e Values (PHP) | Criar `ColorValue`, `DimensionValue`, `CssUnit` e as 6 interfaces sob `Contracts/Styles/`. | Testes unitários puros com 100% de cobertura. |
-| **Etapa 2** | Renderizador e Sincronização de Cores | Atualizar `ElementStyleRenderer` e `ThemePartsAdminController::preview` para renderizar as variáveis de Design Tokens e dimensões reais. | Zero bypass de estilos no preview. |
-| **Etapa 3** | Controles Modulares de Inspetor (JS) | Implementar `token-color-control.js` e `dimension-unit-control.js` com suporte a `px`, `%`, `vh`, `vw`, `rem`, `cm`. | Eliminação total de campos vazios em branco. |
-| **Etapa 4** | Novo Bloco `ButtonBlock` Genérico | Criar a classe `ButtonBlock.php` (Texto, Ação: Link/Âncora/WhatsApp/Modal, Efeitos). | Registrar no `DefaultBlockRegistryFactory`. |
-| **Etapa 5** | Catálogo de Animações & Micro-Interações | Implementar o `AnimationCatalog.php` e `builder-animations.css` com comboboxes no Inspetor. | Aceleração por hardware (GPU `transform`/`opacity`). |
-| **Etapa 6** | Suíte de Testes & Validação de Regressão | Validar toda a suíte de testes (`php phpunit.phar`). | Manter os 366+ testes verdes e zero superglobais. |
-
----
-
-## 🛡️ 5. Conclusão & Garantia de Integridade
-
-Com esta especificação, o Domain-System ganha um motor de construção visual tão poderoso quanto os líderes de mercado, porém **superior em integridade arquitetural**:
-- Sem acoplamento espaguete;
-- Com tipagem estrita no PHP 8.2+;
-- Totalmente amigável a auditorias automáticas de IA e testes contínuos;
-- Pronto para crescer dezenas de megas sem perder um milímetro de organização.
-
----
-
-## 🔮 6. Catálogo de Expansão Futura de Blocos Avançados (OCP)
-
-Graças ao **Princípio Aberto/Fechado (OCP)** e à base de contratos sólidos estabelecida no Ring 0, novos blocos de alta complexidade visual poderão ser adicionados ao ecossistema criando **apenas uma nova classe PHP autossuficiente** em `src/Core/Theme/Parts/Blocks/`. O construtor aprenderá a renderizá-los, estilizá-los e inspecioná-los automaticamente:
-
-### 6.1. Carrossel Personalizado de Imagens & Banners (`CarouselBlock`)
-- **Propósito:** Sliders hero para cabeçalhos, galerias de fotos de produtos, depoimentos e vitrines de imagens.
-- **Capacidades Contratuais:**
-  - **Dimensões & Aspect Ratio:** Controle de proporção (`16:9`, `4:3`, `1:1`, `custom`), altura em `vh`, `px` ou `%`.
-  - **Responsividade Real:** 1 slide visível no Mobile, 2 no Tablet, 3 a 5 no Desktop.
-  - **Comportamento:** Autoplay com intervalo configurável (`3s`, `5s`), pausa ao passar o mouse (*Pause on Hover*), transição deslizante (*Slide*) ou desvanecimento (*Fade*).
-  - **Navegação & Cores dos Tokens:** Setas laterais e paginação (*Dots/Bars*) com cores vinculadas aos Design Tokens (`var(--primary)`).
-
-### 6.2. Ícones de Redes Sociais em SVG Vetorial Nativo (`SocialIconsSvgBlock`)
-- **Propósito:** Conectar links sociais de forma hiperleve e profissional, sem a sobrecarga de fontes externas pesadas (como FontAwesome de 500KB+).
-- **Vantagem Técnica do SVG Nativo:** Gráficos vetoriais puros, nítidos em telas Retina/4K, carregamento instantâneo.
-- **Capacidades Contratuais:**
-  - **Catálogo de Redes:** WhatsApp, Instagram, YouTube, LinkedIn, X (Twitter), Facebook, TikTok, GitHub, Telegram, Discord, Spotify.
-  - **Estilização de Formato:** Círculo (`circle`), Quadrado Arredondado (`rounded`), Quadrado Rígido (`square`), Contorno Vazado (*Outline*) ou Sem Fundo (*Minimal*).
-  - **Cores Oficiais vs. Design Tokens:** Opção de usar as cores originais da marca OU unificar todos os ícones na paleta do site (`var(--primary)`, `var(--secondary)`).
-  - **Micro-Interações de Hover:** Efeitos `grow`, `lift`, `rotate_15` ou `glow_primary`.
-
-### 6.3. Letreiro Animado / Ticker Infinito (`MarqueeTickerBlock`)
-- **Propósito:** Faixa contínua em movimento horizontal infinito (estilo *Breaking News*, cotações, marcas parceiras ou chamadas promocionais como *"Frete Grátis • Lançamento Exclusivo • 10x Sem Juros"*).
-- **Vantagem de Performance:** Animação executada 100% via GPU (`@keyframes ds-marquee` com `transform: translateX(...)`), sem JavaScript bloqueante ou perda de FPS.
-- **Capacidades Contratuais:**
-  - **Velocidade & Direção:** Direção Esquerda $\rightarrow$ Direita ou Direita $\rightarrow$ Esquerda, com ajuste fino de velocidade (pixels por segundo).
-  - **Pausa Interativa:** Pausa o movimento instantaneamente quando o usuário passa o cursor (*Pause on Hover*).
-  - **Tipografia & Espaçamento:** Fontes governadas pelos Design Tokens e separadores personalizáveis (`•`, `★`, `|`, emojis).
-
----
-
-## 💎 7. O Poder do Princípio Aberto/Fechado (OCP)
-
-```
-[Novo Bloco Desejado] (ex: Accordion, Tabela de Preços, Contagem Regressiva)
-         │
-         ▼
-[Criação da Classe PHP em src/Core/Theme/Parts/Blocks/]
-  ├── implementa BlockInterface
-  ├── implementa StylableElementInterface
-  └── define seu getSchema() com campos e tipos
-         │
-         ▼
-[O Flex Builder Studio reconhece e exibe o bloco no catálogo e no inspetor AUTOMATICAMENTE]
-(ZERO necessidade de reescrever ou alterar o código do editor!)
-```
-
-
-/* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/auditoria/ChatGPT.txt
 /* ---------------------------------------------------------------------------- */
 
@@ -2975,677 +2620,891 @@ E há uma regra que eu manteria durante todo o processo: nenhuma refatoração d
 // Arquivo: domain-system/auditoria/DeepSeek.txt
 /* ---------------------------------------------------------------------------- */
 
-# Auditoria Cirúrgica — Flex Builder (v2.4)
+# Auditoria Completa e Cirúrgica — Domain System v2.5.0
 
-Vou fazer a auditoria focando **exclusivamente** no subsistema Flex Builder (motor visual FSE: `ThemePartsAdminController`, `ThemePartRenderer`, blocos, `LayerTreeBuilder`, `AssetBundle`, `JsonRenderer`, `WidgetManager`, `ThemePartRepository`, `DesignTokens`, etc.). A pasta `BuilderFlex/` (o editor legado em JS) fica fora do escopo.
+## 1. Veredito Geral
 
----
+O projeto está em **estado avançado de maturidade arquitetural**: SOLID bem aplicado, guardrails automatizados (`tests/Architecture/`), contratos fortes em `src/Core/Contracts/`, e o Flex Builder já passou por **duas rodadas de auditoria** documentadas (`auditoria/ChatGPT.txt`, `DeepSeek.txt`, `Nemotron.md`, `auditoria_round2_flexbuilder.md`) com correções reais aplicadas (compilador unificado, validador estrutural, compensação transacional, sanitização SVG, auto-reflow).
 
-## 1. Veredito geral
+**Porém**, o código consolidado revela **7 classes de problemas remanescentes**, sendo 3 delas **críticas** no Flex Builder. A auditoria abaixo segue a diretriz do próprio projeto (linha 5–8 do cabeçalho): *citar arquivos e símbolos*, *diferenciar fato de inferência*, *declarar limitações*.
 
-| Pilar | Status | Observação |
-|-------|--------|------------|
-| Contratos (Interfaces) | 🟢 Bom | `ThemePartInterface`, `BlockInterface`, `BlockRegistryInterface`, `LayoutGridInterface`, `DesignTokensInterface`, `ThemePartRepositoryInterface`, `ThemePartAssociationInterface`, `LayerTreeInterface` existem e são coesos. |
-| SRP / Alta coesão | 🟡 Atenção | `ThemePartsAdminController` está com **~800 linhas** e múltiplas responsabilidades (crud + preview + upload + schema + templates + i18n + themes). |
-| Baixo acoplamento | 🟡 Atenção | `ThemePartRenderer` e `ThemePartRepository` usam `defined('BASE_URL')` e `defined('DOMAIN_SYSTEM_ROOT')` diretamente (acoplamento ao Runtime). |
-| OCP (aberto p/ extensão) | 🟢 Bom | `BlockRegistry` + `LayoutPresetRegistry` + `DefaultBlockRegistryFactory` (extensível). |
-| DIP (depender de abstrações) | 🔴 **Falha crítica** | `ThemePartsAdminController` recebe `?MenuProviderInterface $menuProvider = null` mas em `Plugin::osBoot` faz `$c->has(...) ? $c->make(...) : null` — isso é **Service Locator residual**, não DIP real. |
-| ISP (interface segregation) | 🟡 Atenção | `BlockInterface` mistura `render()`, `getSchema()`, `getName()`, `getIcon()`, `getCategory()`. `ThemePartInterface` acumula `getSections()` + `getColumnsData()` (retrocompat) — justificável mas inchado. |
-| LSP | 🟢 Bom | Heranças (`AbstractWidget` ↔ `ContainerWidget`) mantêm contrato. |
-| Testabilidade | 🟡 Atenção | `ThemePartsAdminController` tem `new ThemeDiscoveryService(...)`, `new MediaUploadService(...)`, `new ElementStyleRenderer()` como fallback (hardcoded). |
-| Segurança XSS | 🟢 Bom | `ElementStyleRenderer` sanitiza; `LayoutGridRenderer` faz escape; `DumperRenderer` escapa `attrs`/`styles`. |
-| Extensibilidade | 🟢 Bom | 12 blocos semânticos + presets extensíveis + `DesignTokens` geram CSS vars automaticamente. |
-
-**Conclusão:** arquitetura **sólida**, mas há **3 pontos cirúrgicos** que ferem SOLID e devem ser corrigidos antes do sistema crescer mais:
-
-1. `ThemePartsAdminController` (God Controller) — quebra SRP e DIP.
-2. `ThemePartRenderer` e `JsonThemePartRepository` acoplados ao runtime (`BASE_URL`, `DOMAIN_SYSTEM_ROOT`).
-3. `BlockInterface` sobrecarregada — quebra ISP.
+> **Limitação explícita:** Esta é uma análise **estática** sobre o consolidado `domain-system.txt`. Não executei a suíte, não testei o Studio em navegador, e o arquivo parece conter **duplicações** (ex.: `src/Plugins/flextheme/BuilderFlex/...` aparece em duas versões — uma em `src/Plugins/flextheme/BuilderFlex/assets/js/core/Editor.js` e outra em `bundle.js`). Vou tratar o `bundle.js` como artefato de build e focar na árvore `src/Plugins/flextheme/BuilderFlex/`.
 
 ---
 
-## 2. Problema 1 — `ThemePartsAdminController` (God Controller + DIP residual)
+## 2. Problemas no FlexTheme / Flex Builder (foco pedido)
 
-### 2.1 Diagnóstico
+### 🔴 P0 — `ThemePartsAdminController` ainda concentra responsabilidades (SRP parcialmente violado)
 
-`ThemePartsAdminController` tem, no mínimo, **8 responsabilidades**:
-
-- CRUD de `ThemePart` (index, create, edit, savePart, deletePart)
-- Atribuição a temas/templates (`assign`, `getAssignedTemplateForSection`)
-- Pré-visualização (`preview`)
-- Upload de mídia (`uploadImage`)
-- Schema/AJAX (`schema`)
-- Gestão de Design Tokens (`tokens`, `saveTokens`)
-- Descoberta de temas (`getAvailableThemes`, `getActiveThemeFolder`)
-- Leitura de templates do tema (`getThemeTemplates`)
-
-E, no construtor, **instancia serviços concretos com `new`** — quebra DIP puro:
+**Fato:** em `src/Plugins/flextheme/Controllers/ThemePartsAdminController.php`, o construtor recebe **18 parâmetros** e ainda cria serviços concretos como fallback:
 
 ```php
-// ❌ Fere DIP — cria instâncias concretas dentro do controller
-$this->themeDiscovery   = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
-$this->mediaUpload      = $mediaUpload ?? new MediaUploadService($this->basePath);
-$this->translator       = $translator ?? new Translator($this->basePath . '/resources/lang');
-$this->styleRenderer    = $styleRenderer ?? new ElementStyleRenderer();
+$this->themeDiscovery    = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
+$this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
+$this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
+$this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
+$this->previewService    = $previewService ?? new ThemePartPreviewService(...);
+$this->managementService = $managementService ?? new ThemePartManagementService(...);
 ```
 
-### 2.2 Refatoração sugerida — Segregar em Casos de Uso
+O `BuilderFlexBootstrapper` já injeta tudo corretamente, então os `?? new` **nunca disparam em produção** — mas continuam permitindo uma **segunda configuração escondida** em testes. Isso é exatamente o que a auditoria anterior do ChatGPT apontou e não foi 100% eliminado.
 
-**Arquivo novo:** `src/Plugins/flextheme/Contracts/ThemePartPreviewServiceInterface.php`
+**Inferência:** os `?? new` são dívida técnica — o controller funciona, mas o `new` inline mascara dependências e cria dois caminhos de composição.
 
-```php
-<?php
-declare(strict_types=1);
-
-namespace DomainSystem\Plugins\flextheme\Contracts;
-
-interface ThemePartPreviewServiceInterface
-{
-    /**
-     * Compila o HTML de uma parte (real ou em edição) para o iframe do Studio.
-     * Não deve depender de Request — recebe dados puros.
-     */
-    public function compile(array $partData, array $context = []): string;
-}
-```
-
-**Arquivo novo:** `src/Plugins/flextheme/Services/ThemePartPreviewService.php`
+**Correção sugerida (para a Gemini aplicar):**
 
 ```php
-<?php
-declare(strict_types=1);
-
-namespace DomainSystem\Plugins\flextheme\Services;
-
-use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
-use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
-
-final class ThemePartPreviewService implements ThemePartPreviewServiceInterface
-{
-    public function __construct(
-        private readonly LayoutGridInterface $layoutGrid,
-        private readonly BlockRegistryInterface $blockRegistry,
-        private readonly DesignTokensInterface $designTokens,
-        private readonly ElementStyleRendererInterface $styleRenderer,
-    ) {}
-
-    public function compile(array $partData, array $context = []): string
-    {
-        $preset   = (string)($partData['layout_preset'] ?? '1_col');
-        $settings = (array)($partData['container_settings'] ?? []);
-        $colsData = (array)($partData['columns_data'] ?? []);
-        $sections = (array)($partData['sections'] ?? []);
-        $toggleStyle = (string)($partData['mobile_toggle_style'] ?? MobileToggleStyleInterface::STYLE_CLASSIC);
-        $toggleAlign = (string)($partData['mobile_toggle_align'] ?? 'right');
-
-        $buildColumns = function (array $columns): array {
-            $out = [];
-            foreach ($columns as $colIndex => $blocks) {
-                $out[(int)$colIndex] = $this->renderBlocks((array)$blocks, $toggleStyle, $toggleAlign);
-            }
-            return $out;
-        };
-
-        if ($sections !== []) {
-            $html = [];
-            foreach ($sections as $section) {
-                $html[] = $this->layoutGrid->renderSection(
-                    (string)($section['layout_preset'] ?? '1_col'),
-                    $buildColumns((array)($section['columns_data'] ?? [])),
-                    (array)($section['container_settings'] ?? []),
-                );
-            }
-            $gridHtml = implode("\n", $html);
-        } else {
-            $gridHtml = $this->layoutGrid->renderSection($preset, $buildColumns($colsData), $settings);
-        }
-
-        return $this->designTokens->generateCssVariables()
-            . '<style id="ds-builder-runtime">' . $this->runtimeCss() . '</style>'
-            . $gridHtml;
-    }
-
-    private function renderBlocks(array $blocks, string $toggleStyle, string $toggleAlign): string
-    {
-        $out = [];
-        foreach ($blocks as $b) {
-            if (!is_array($b)) continue;
-            $type = (string)($b['type'] ?? '');
-            $data = (array)($b['data'] ?? []);
-
-            if ($type === 'nav_menu') {
-                $data['toggle_style'] = $data['toggle_style'] ?? $toggleStyle;
-                $data['toggle_align'] = $data['toggle_align'] ?? $toggleAlign;
-            }
-
-            $block = $this->blockRegistry->get($type);
-            if ($block === null) continue;
-
-            $html = $block->render($data, ['preview' => true]);
-            $styles = $this->styleRenderer->renderStyleString($data);
-            if ($styles !== '') {
-                $html = "<div class=\"ds-element-wrapper\" style=\"{$styles}\">{$html}</div>";
-            }
-            $out[] = $html;
-        }
-        return implode("\n", $out);
-    }
-
-    private function runtimeCss(): string
-    {
-        return '@keyframes ds-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}'
-            . '.ds-btn-grow:hover{transform:scale(1.05)}'
-            . '.ds-btn-lift:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.35)}'
-            . '.ds-btn-glow:hover{box-shadow:0 0 25px var(--color-primary,#38bdf8)}';
-    }
-}
-```
-
-E o controller fica **enxuto**:
-
-```php
-// ✅ Preview delega para o caso de uso
-public function preview(Request $request): Response
-{
-    $html = $this->previewService->compile($this->extractInput($request));
-    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
-}
-```
-
-**Ganho:** o controller perde ~120 linhas de lógica de compilação, e o `ThemePartPreviewService` fica **testável isoladamente** (sem HTTP, sem `Request`).
-
----
-
-## 3. Problema 2 — Acoplamento ao runtime (`BASE_URL`, `DOMAIN_SYSTEM_ROOT`)
-
-### 3.1 Diagnóstico
-
-`JsonThemePartRepository`:
-
-```php
-// ❌ Acopla o repositório ao Kernel e ao path global
-$this->storageDir = $storageDir ?? (defined('DOMAIN_SYSTEM_ROOT')
-    ? DOMAIN_SYSTEM_ROOT . '/config/theme_parts'
-    : __DIR__ . '/../../../../../config/theme_parts');
-```
-
-`ThemePartRenderer::renderFileFallback` usa `$this->baseRoot` (bom), mas `Shell`, `LogoBlock::render`, `CopyrightBlock::render`, `CtaButtonBlock::render` todos fazem:
-
-```php
-$baseUrl = defined('BASE_URL') ? BASE_URL : '';
-```
-
-Isso impede **teste isolado** (sem definir a constante) e **reuso** (ex.: renderizar previews fora do request HTTP).
-
-### 3.2 Refatoração — injetar um `PublicUrlResolverInterface`
-
-**Arquivo novo:** `src/Core/Theme/Parts/Contracts/PublicUrlResolverInterface.php`
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Theme\Parts\Contracts;
-
-interface PublicUrlResolverInterface
-{
-    /** URL base absoluta (ex: "" em produção, "/domain-system/public" no XAMPP). */
-    public function baseUrl(): string;
-
-    /** Concatena com o path (ex: "/assets/img/logo.png"). */
-    public function url(string $path): string;
-}
-```
-
-**Implementação padrão em Ring 0:** `src/Core/Theme/Parts/Support/BaseUrlResolver.php`
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Theme\Parts\Support;
-
-use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
-
-final class BaseUrlResolver implements PublicUrlResolverInterface
-{
-    public function __construct(private readonly string $baseUrl = '') {}
-
-    public function baseUrl(): string
-    {
-        return rtrim($this->baseUrl, '/');
-    }
-
-    public function url(string $path): string
-    {
-        return $this->baseUrl() . '/' . ltrim($path, '/');
-    }
-}
-```
-
-**Uso nos blocos** (ex.: `LogoBlock`):
-
-```php
-final class LogoBlock implements BlockInterface
-{
-    public function __construct(private readonly PublicUrlResolverInterface $urls) {}
-
-    public function render(array $data = [], array $context = []): string
-    {
-        $link     = (string)($data['link'] ?? $this->urls->url('/'));
-        $imageUrl = (string)($data['image_url'] ?? $this->urls->url('/assets/img/logo.png'));
-        // ...
-    }
-}
-```
-
-**Registro no `CoreServiceProvider`:**
-
-```php
-$container->singleton(PublicUrlResolverInterface::class, fn() => new BaseUrlResolver(
-    defined('BASE_URL') ? BASE_URL : ''
-));
-```
-
-**Ganho:** blocos ficam 100% testáveis com `new BaseUrlResolver('/fake')` e **deixam de fazer `defined()`** — a única classe que "conhece" o Kernel passa a ser o `BaseUrlResolver`.
-
----
-
-## 4. Problema 3 — ISP: `BlockInterface` gorda
-
-### 4.1 Diagnóstico
-
-```php
-interface BlockInterface
-{
-    public function getType(): string;
-    public function getName(): string;
-    public function getIcon(): string;
-    public function getCategory(): string;
-    public function getAllowedPartTypes(): array;
-    public function render(array $data = [], array $context = []): string;
-    public function getSchema(): array;   // ← nem todo block precisa (ex.: CopyrightBlock não expõe schema visual)
-}
-```
-
-O `LayoutGridInterface` e o `ThemePartInterface` sofrem de inchaço menor (compat), mas o mais grave é o **`getSchema()` obrigatório**: um `CopyrightBlock` ou `CustomCodeBlock` pode não ter "controls" (não precisam de inspector). Forçar implementação empurra **Null Object** disfarçado.
-
-Além disso, `ThemePartInterface` tem **14 métodos**, incluindo `getSections()` **e** `getColumnsData()` (retrocompat) — o renderer precisa escolher entre as duas, o que gera duplicação.
-
-### 4.2 Refatoração — separar `RenderableBlockInterface` de `SchemaAwareBlockInterface`
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace DomainSystem\Core\Theme\Parts\Contracts;
-
-/** Contrato mínimo — todo bloco é renderizável. */
-interface RenderableBlockInterface
-{
-    public function getType(): string;
-    public function getName(): string;
-    public function getIcon(): string;
-    public function getCategory(): string;
-    public function getAllowedPartTypes(): array;
-    public function render(array $data = [], array $context = []): string;
-}
-
-/** Contrato opcional — apenas blocos que expõem inspector de propriedades. */
-interface SchemaAwareBlockInterface extends RenderableBlockInterface
-{
-    /** @return array<string, mixed> */
-    public function getSchema(): array;
-}
-```
-
-`BlockInterface` vira alias de compat:
-
-```php
-/** @deprecated use RenderableBlockInterface */
-interface BlockInterface extends RenderableBlockInterface {}
-```
-
-**Ganho:** `BlockRegistryInterface::allForPartType()` continua aceitando `RenderableBlockInterface`, e o `ThemePartsAdminController::schema()` pode usar `instanceof SchemaAwareBlockInterface` para incluir/excluir blocos sem schema.
-
----
-
-## 5. Problema 4 — `ThemePartInterface` inchada (LSP + retrocompat)
-
-### 5.1 Diagnóstico
-
-```php
-interface ThemePartInterface
-{
-    // 14 métodos, mistura conceitos:
-    // - Identidade: getId, getType, getTitle
-    // - Layout: getLayoutPreset, getContainerSettings, getColumnsData
-    // - Multi-seção: getSections  ← duplica getColumnsData
-    // - Mobile: getMobileToggleStyle, getMobileToggleAlign
-    // - Metadados: isDefault, getCreatedAt, getUpdatedAt
-    // - Serialização: toArray
-}
-```
-
-### 5.2 Refatoração — segregação mínima
-
-Mantenha `ThemePartInterface` como **composição** de interfaces menores:
-
-```php
-interface LayoutContainerInterface
-{
-    public function getLayoutPreset(): string;
-    public function getContainerSettings(): array;
-    public function getColumnsData(): array;
-}
-
-interface SectionedPartInterface
-{
-    /** @return array<int, array<string, mixed>> */
-    public function getSections(): array;
-}
-
-interface MobileToggleAwareInterface
-{
-    public function getMobileToggleStyle(): string;
-    public function getMobileToggleAlign(): string;
-}
-
-interface ThemePartInterface extends
-    LayoutContainerInterface,
-    SectionedPartInterface,
-    MobileToggleAwareInterface
-{
-    public function getId(): string;
-    public function getType(): string;
-    public function getTitle(): string;
-    public function isDefault(): bool;
-    public function getCreatedAt(): int;
-    public function getUpdatedAt(): int;
-    public function toArray(): array;
-}
-```
-
-**Ganho:** `LayerTreeBuilder` pode tipar `SectionedPartInterface`, `LayoutGridRenderer` tipa `LayoutContainerInterface`, e `NavMenuBlock` tipa `MobileToggleAwareInterface` — ninguém precisa depender do "guarda-chuva".
-
----
-
-## 6. Problema 5 — `LayoutGridRenderer` faz escaping misturado com geração de atributo CSS
-
-### 6.1 Diagnóstico
-
-```php
-// LayoutGridRenderer::renderSection
-$styleAttr = implode('; ', $styleParts);
-$html .= "<div class=\"ds-grid ds-layout-{$preset}\" style=\"{$styleAttr}\">";
-```
-
-Se `$settings['background']` vier com `";background-image: url('x')"` — o `ElementStyleRenderer` sanitiza **quando usado**, mas `LayoutGridRenderer` **não** usa `ElementStyleRenderer`; ele **reimplementa** (concatenação bruta). Isso é duplicação de política.
-
-### 6.2 Refatoração — reusar `ElementStyleRendererInterface` no `LayoutGridRenderer`
-
-```php
-final class LayoutGridRenderer implements LayoutGridInterface
-{
-    public function __construct(
-        private readonly ?LayoutPresetRegistryInterface $presetRegistry = null,
-        private readonly ?ElementStyleRendererInterface $styleRenderer = null,
-    ) {
-        // ...
-        $this->styleRenderer ??= new ElementStyleRenderer();
-    }
-
-    public function renderSection(string $preset, array $columnsHtml, array $settings = []): string
-    {
-        $p = $this->presets[$preset] ?? $this->presets['1_col'];
-        $gap         = $this->styleRenderer->sanitizeCssValue((string)($settings['gap'] ?? '24px'));
-        $desktop     = (string)$p['template'];
-        $tablet      = (string)($p['tablet']  ?? $desktop);
-        $mobile      = (string)($p['mobile']  ?? '1fr');
-        $maxWidth    = $this->styleRenderer->sanitizeCssValue((string)($settings['max_width'] ?? '1280px'));
-        $background  = $this->styleRenderer->sanitizeCssValue((string)($settings['background'] ?? 'transparent'));
-        // ...
-    }
-}
-```
-
-Extraia `sanitizeCssValue()` de `ElementStyleRenderer` para a interface, para que todos os renderers usem **a mesma política** (não pode haver `style="..."` concatenado sem sanitização em nenhum lugar do Flex Builder).
-
----
-
-## 7. Problema 6 — `DefaultBlockRegistryFactory::create` cresceu como "God Factory"
-
-### 7.1 Diagnóstico
-
-Hoje está assim (14 linhas de `register`), mas a cada bloco novo ela cresce **dentro do mesmo arquivo**. Em ~30 blocos, vira um arquivo de 100 linhas com 1 método. O OCP é violado — você **modifica** a Factory para estender.
-
-### 7.2 Refatoração — provider pattern
-
-```php
-interface BlockProviderInterface
-{
-    /** @return iterable<BlockInterface> */
-    public function blocks(): iterable;
-}
-
-final class CoreBlockProvider implements BlockProviderInterface
-{
-    public function __construct(
-        private readonly ?MenuProviderInterface $menu = null,
-        private readonly ?ShortcodeManager $shortcodes = null,
-        private readonly ?PostProviderInterface $posts = null,
-    ) {}
-
-    public function blocks(): iterable
-    {
-        yield new HeadingBlock();
-        yield new ParagraphBlock();
-        yield new ImageBlock();
-        yield new VideoBlock();
-        yield new LogoBlock();
-        yield new ButtonBlock();
-        yield new CtaButtonBlock();
-        yield new DividerBlock();
-        yield new ShortcodeBlock($this->shortcodes);
-        yield new CustomCodeBlock();
-        yield new SocialIconsBlock();
-        yield new CopyrightBlock();
-        yield new NavMenuBlock($this->menu);
-        yield new PostCardsGridBlock($this->posts);
-    }
-}
-
-final class DefaultBlockRegistryFactory
-{
-    /** @param iterable<BlockProviderInterface> $providers */
-    public static function create(iterable $providers): BlockRegistryInterface
-    {
-        $registry = new BlockRegistry();
-        foreach ($providers as $provider) {
-            foreach ($provider->blocks() as $block) {
-                $registry->register($block);
-            }
-        }
-        return $registry;
-    }
-}
-```
-
-**Ganho:** plugins terceiros podem registrar `CustomBlockProvider` via `osRegister` (OCP), sem tocar na Factory.
-
----
-
-## 8. Problema 7 — `ThemePartRenderer` (baixo acoplamento OK, mas baixa testabilidade de `renderFileFallback`)
-
-### 8.1 Diagnóstico
-
-```php
-private function renderFileFallback(string $themeFolder, string $partName, array $context): string
-{
-    $themeDir = $this->resolveThemeDir($themeFolder);
-    // ...
-    ob_start();
-    extract($context, EXTR_SKIP);
-    include $realCandidate;
-    return (string)ob_get_clean();
-}
-```
-
-`extract()` + `include` é a fonte clássica de **fugas de escopo**. Um `partials/header.php` que declara `$themeDir` pode sobrescrever? Não (EXTR_SKIP), mas ele pode definir variáveis que vazam para o próximo partial, ou pior: incluir `$assignedSection`, causando efeito colateral.
-
-### 8.2 Refatoração — isolar o escopo
-
-```php
-private function renderFileFallback(string $themeFolder, string $partName, array $context): string
-{
-    $themeDir = $this->resolveThemeDir($themeFolder);
-    if ($themeDir === null) return '';
-
-    $candidates = [$themeDir . '/partials/' . $partName . '.php', $themeDir . '/' . $partName . '.php'];
-    foreach ($candidates as $candidate) {
-        if (!is_file($candidate)) continue;
-
-        $real = realpath($candidate);
-        $realRoot = realpath($themeDir);
-        if ($real === false || $realRoot === false || !str_starts_with($real, $realRoot . DIRECTORY_SEPARATOR)) {
-            continue;
-        }
-
-        return (static function (string $__file, array $__ctx): string {
-            ob_start();
-            try {
-                extract($__ctx, EXTR_SKIP);
-                include $__file;
-                return (string)ob_get_clean();
-            } catch (\Throwable $e) {
-                ob_end_clean();
-                throw $e;
-            }
-        })($real, $context);
-    }
-    return '';
-}
-```
-
-**Ganho:** variáveis do escopo do `ThemePartRenderer` (ex.: `$this`, `$context`, `$realCandidate`) **não ficam visíveis** para o partial. Isso elimina uma classe inteira de bugs sutis.
-
----
-
-## 9. Problema 8 — `ThemePartRepository` recebe `string` puro (potencial path traversal)
-
-### 9.1 Diagnóstico
-
-```php
-private function getFilePath(string $id): string
-{
-    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $id);
-    return rtrim($this->storageDir, '/\\') . DIRECTORY_SEPARATOR . $safeId . '.json';
-}
-```
-
-O `preg_replace` cobre `..`, mas um `id` como `part_6adfb6db551853.36372298` (que **existe** no repositório!) vira `part_6adfb6db551853_36372298.json`. Se amanhã alguém usar `.` no ID, o arquivo perde o ponto e as referências quebram. Está **funcionando** por acaso (todos os IDs gerados usam `.` no formato `part_xxx.yyy`), mas **é frágil**.
-
-### 9.2 Refatoração — validar IDs explicitamente
-
-```php
-private const VALID_ID_PATTERN = '/^[a-zA-Z0-9_.-]{3,128}$/';
-
-private function getFilePath(string $id): string
-{
-    if (preg_match(self::VALID_ID_PATTERN, $id) !== 1) {
-        throw new \InvalidArgumentException("ID inválido para parte de tema: '{$id}'.");
-    }
-    if (str_contains($id, '..')) {
-        throw new \InvalidArgumentException("ID inválido para parte de tema: '{$id}'.");
-    }
-    return rtrim($this->storageDir, '/\\') . DIRECTORY_SEPARATOR . $id . '.json';
-}
-```
-
----
-
-## 10. Problema 9 — Testabilidade do `ThemePartsAdminController` (acoplamento a `BASE_URL`)
-
-### 10.1 Diagnóstico
-
-```php
-'baseUrl' => defined('BASE_URL') ? BASE_URL : '',
-```
-
-Testar `index()` exige `define('BASE_URL', ...)` no teste, acoplando-o ao ambiente global. Idealmente o `BaseUrlResolverInterface` (do item 3) seria injetado e repassado.
-
-### 10.2 Refatoração
-
-```php
+// src/Plugins/flextheme/Controllers/ThemePartsAdminController.php
 public function __construct(
+    ThemePartRepositoryInterface $partRepo,
+    ThemePartAssociationInterface $partAssoc,
+    DesignTokensInterface $tokens,
+    BlockRegistryInterface $blockRegistry,
+    LayoutGridInterface $layoutGrid,
+    ThemePartRendererInterface $renderer,
+    ThemeManagerInterface $themeManager,
+    ShortcodeManager $shortcodeManager,
+    ?MenuProviderInterface $menuProvider,
+    SessionManagerInterface $session,
+    string $basePath,
+    ThemeDiscoveryServiceInterface $themeDiscovery,
+    MediaUploadServiceInterface $mediaUpload,
+    TranslatorInterface $translator,
+    ElementStyleRendererInterface $styleRenderer,
+    ThemePartPreviewServiceInterface $previewService,
+    ThemePartManagementService $managementService,
+    PublicUrlResolverInterface $urlResolver
+) {
+    // Apenas atribuições diretas — sem `?? new`
+    $this->partRepo = $partRepo;
     // ...
-    private readonly PublicUrlResolverInterface $urls,
-) {}
+}
+```
 
-public function index(Request $request): ViewResponse
+E o `BuilderFlexBootstrapper::boot()` **já passa tudo**, então basta remover os defaults. Em testes, o `MockContainer` deve prover os 18 serviços.
+
+---
+
+### 🔴 P0 — `ThemePartPreviewService` reconstrói o compilador com classes anônimas quando nada é injetado
+
+**Fato:** em `src/Plugins/flextheme/Services/ThemePartPreviewService.php`, o construtor aceita `?ThemePartCompilerInterface $compiler = null` e, se nulo, **monta um `ThemePartRenderer` completo com repositórios e associações anônimos vazios**:
+
+```php
+$this->compiler = $compiler ?? new ThemePartRenderer(
+    new class implements ThemePartRepositoryInterface { /* ... */ },
+    new class implements ThemePartAssociationInterface { /* ... */ },
+    $layoutGrid,
+    $blockRegistry,
+    $tokens,
+    null,
+    $styleRenderer ?? new ElementStyleRenderer()
+);
+```
+
+Isso é **código de teste vazando para produção**. O `BuilderFlexBootstrapper` sempre injeta `$c->make(ThemePartCompilerInterface::class)`, mas o fallback cria um compilador **sem persistência**, o que pode mascarar bugs em fluxos alternativos.
+
+**Correção:** tornar `ThemePartCompilerInterface $compiler` **obrigatório** no construtor. Se algum teste unitário precisa de preview isolado, que o próprio teste forneça um stub.
+
+---
+
+### 🟠 P1 — `StagedUpdateApplier::revert()` pode deixar arquivos órfãos por não validar `removed[]` no rollback
+
+**Fato:** em `src/Core/Update/Infrastructure/StagedUpdateApplier.php`, o método `revert()` restaura do backup e remove `written[]` **que não existiam no backup**:
+
+```php
+foreach ($candidatesToClean as $writtenRel) {
+    $normalized = ltrim(str_replace('\\', '/', $writtenRel), '/');
+    if (!isset($backupFilesMap[$normalized])) {
+        $fullPath = $this->rootPath . '/' . $normalized;
+        if (is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+}
+```
+
+Mas **não rastreia os arquivos removidos em `$result->removed`** — se o update removeu `src/Old.php` (que existia no backup), o `restore()` do backup **já recria** `src/Old.php`, então está OK. Porém, se a `removed[]` referenciar um arquivo **fora das raízes permitidas** (impossível dado o pré-check, mas defesa em profundidade), o revert falharia silenciosamente. **Risco baixo**, mas a política "fail-closed" pediria um `RollbackFailedException` explícito.
+
+---
+
+### 🟠 P1 — `JsonThemePartRepository::all()` não ordena e pode retornar ordem não determinística
+
+**Fato:** em `src/Core/Theme/Parts/Repositories/JsonThemePartRepository.php`:
+
+```php
+public function all(): array
 {
-    // ...
-    return $this->renderView('admin/parts_list', [
-        'baseUrl' => $this->urls->baseUrl(),
-        // ...
-    ]);
+    $this->ensureDirectory();
+    $parts = [];
+    $files = glob(rtrim($this->storageDir, '/\\') . DIRECTORY_SEPARATOR . '*.json');
+    if (is_array($files)) {
+        foreach ($files as $file) { /* ... */ }
+    }
+    return $parts;
+}
+```
+
+`glob()` retorna em ordem alfabética do filesystem (não garantida pela POSIX). O `parts_list.php` exibe Headers, Footers e Sections por `getType()` mas **dentro do mesmo tipo não ordena** por `updatedAt`. Isso causa **ordem inconsistente** entre máquinas/OS. É o mesmo bug que motivou o `LayerTreeBuilder`, mas ele consome `getSections()` da parte, não a lista.
+
+**Correção:**
+
+```php
+public function all(): array
+{
+    $parts = $this->loadAllFromDisk();
+    usort($parts, static fn(ThemePartInterface $a, ThemePartInterface $b) =>
+        $b->getUpdatedAt() <=> $a->getUpdatedAt()
+    );
+    return $parts;
 }
 ```
 
 ---
 
-## 11. O que já está bom (não mexer)
+### 🟠 P1 — `LayerTreeBuilder` usa `preg_match` para inferir número de colunas quando o `LayoutGridInterface` está nulo
 
-Para não regredir o que funciona:
+**Fato:** em `src/Core/Theme/Parts/Tree/LayerTreeBuilder.php`:
 
-- ✅ `BlockRegistry` + `DefaultBlockRegistryFactory` (extensível, OCP).
-- ✅ `LayoutPresetRegistry` + `DefaultLayoutPresetsFactory` (extensível).
-- ✅ `DesignTokens::generateCssVariables()` (fonte única, sem CSS espalhado).
-- ✅ `ElementStyleRenderer` sanitiza bem (escapa `;`, `<`, `>`, `<script>`).
-- ✅ `ThemePartRenderer::compileDynamicPart` já usa `designTokens` e `layoutGrid` por contrato.
-- ✅ `LayerTreeBuilder` respeita `LayerTreeInterface` e `LayoutGridInterface` — não conhece detalhes.
-- ✅ `ThemePart::fromArray` valida `type` e `mobile_toggle_style` (defesa em profundidade).
-- ✅ `JsonThemePartAssociation` tem fallback claro (`themes` → `globals`).
+```php
+if ($this->gridRenderer !== null) {
+    $presets = $this->gridRenderer->getPresets();
+    if (isset($presets[$presetKey]['columns'])) {
+        $numCols = (int)$presets[$presetKey]['columns'];
+    }
+} elseif (preg_match('/^(\d+)_col/', $presetKey, $m)) {
+    $numCols = (int)$m[1];
+}
+```
 
----
+O regex `^(\d+)_col` casa com `3_cols_header` → `3`, mas **falha em `2_cols_split`** (casa `2`) e **falha em `cards_grid_4`** (não casa `_col`, cai em `$numCols = 1`). Isso é **inferência frágil de fallback**. O `LayerTreeBuilder` recebe o `gridRenderer` no `CoreServiceProvider` via `$c->make(LayoutGridInterface::class)`, então o `elseif` é código morto em produção — mas se alguém instanciar `new LayerTreeBuilder()` diretamente (como pode acontecer em testes de terceiros), o fallback retorna dados errados.
 
-## 12. Roadmap de correções (ordem de impacto × esforço)
+**Correção:** ou **remover** o `elseif` (preferível — dependência dura é explícita), ou usar o `DefaultLayoutPresetsFactory::create()` como fallback:
 
-| # | Correção | Impacto | Esforço |
-|---|----------|---------|---------|
-| 1 | Extrair `ThemePartPreviewServiceInterface` (item 2) | 🔴 Alto | Médio |
-| 2 | Injetar `PublicUrlResolverInterface` nos blocos (item 3) | 🔴 Alto | Médio |
-| 3 | Segregar `BlockInterface` em `Renderable` + `SchemaAware` (item 4) | 🟡 Médio | Baixo |
-| 4 | Segregar `ThemePartInterface` (item 5) | 🟡 Médio | Médio |
-| 5 | Sanitização unificada em `LayoutGridRenderer` (item 6) | 🟡 Médio | Baixo |
-| 6 | `BlockProviderInterface` para OCP real (item 7) | 🟡 Médio | Baixo |
-| 7 | Isolar `ob_start`/`include` no `ThemePartRenderer` (item 8) | 🟢 Baixo | Baixo |
-| 8 | Validar IDs do `JsonThemePartRepository` (item 9) | 🟢 Baixo | Trivial |
-| 9 | Remover `defined('BASE_URL')` do Controller (item 10) | 🟡 Médio | Baixo |
+```php
+} else {
+    $fallbackRegistry = DefaultLayoutPresetsFactory::create();
+    $fallbackPreset = $fallbackRegistry->get($presetKey);
+    $numCols = $fallbackPreset?->getColumns() ?? 1;
+}
+```
 
 ---
 
-## 13. Testes recomendados para blindar as correções
+### 🟡 P2 — `ThemePartRenderer` guarda `self::$tokensInjected` como **static** e nunca reseta entre requests
 
-1. **`ThemePartPreviewServiceTest`** — passar um array JSON com 3 seções e verificar que o HTML contém os blocos renderizados sem depender de `Request`.
-2. **`PublicUrlResolverTest`** — `url('/x')` retorna `'/x'` com base vazia e `'/sub/x'` com base `'/sub'`.
-3. **`BlockInterfaceSegregationTest`** — verificar via reflection que `SchemaAwareBlockInterface` estende `RenderableBlockInterface` e que nenhum bloco nativo declara `getSchema()` sem implementar `SchemaAwareBlockInterface`.
-4. **`JsonThemePartRepositoryTest`** — `save(new ThemePart('../evil', ...))` lança `InvalidArgumentException`.
-5. **`ThemePartRendererScopeIsolationTest`** — criar um `partials/header.php` que faz `throw new \RuntimeException('x')`; verificar que `ThemePartRenderer::renderHeader` propaga e **não vaza `$this`** para o partial (o teste verifica que o partial não consegue acessar propriedades privadas do renderer).
+**Fato:** em `src/Core/Theme/Parts/Services/ThemePartRenderer.php`:
+
+```php
+private static bool $tokensInjected = false;
+// ...
+if ($injectDesignTokens || !self::$tokensInjected) {
+    self::$tokensInjected = true;
+    // injeta <style id="ds-design-tokens">...</style>
+```
+
+Existe um `public static function resetInjectedState(): void` que ninguém chama (busquei `resetInjectedState` — só aparece na definição). Em **PHP-FPM/Apache mod_php**, cada request é um processo novo (ou processo reciclado pelo FPM), então o `static` **não persiste entre requests** — o comportamento é correto na prática. Porém, em **PHP CLI (ex.: `phpunit.phar`)** ou **`php -S`**, o static **persiste entre testes**, e é por isso que `resetInjectedState()` existe.
+
+**Problema real:** em **testes de integração** que renderizam múltiplas partes, o segundo teste **não injeta tokens** porque `self::$tokensInjected` ficou `true` do primeiro. É preciso garantir que `ThemePartRenderer::resetInjectedState()` seja chamado no `setUp()` de cada teste — ou, melhor, **remover o `static` e usar instância**, resetando no construtor.
+
+**Correção (para a Gemini):**
+
+```php
+public function __construct(...)
+{
+    // ...
+    $this->tokensInjected = false; // instância, não static
+}
+
+public function resetInjectedState(): void
+{
+    $this->tokensInjected = false;
+}
+```
+
+E nos testes de integração: `$renderer->resetInjectedState()` no `setUp()`.
 
 ---
 
-## 14. Conclusão
+### 🟡 P2 — `SafeHtmlSanitizer::isSafeUrl()` bloqueia `mailto:` e `tel:` em `href` mas o `CtaButtonBlock` permite
 
-O Flex Builder está **arquiteturalmente sólido** — a fundação (blocos, grid, tokens, renderer, repositórios) foi bem pensada em SOLID. Os problemas apontados são de **camada de orquestração** (Controller) e **acoplamento de runtime** (`BASE_URL`, `DOMAIN_SYSTEM_ROOT`), não de estrutura.
+**Fato:** em `src/Core/Theme/Parts/Support/SafeHtmlSanitizer.php`:
 
-**A regra de ouro a partir de agora:** todo novo serviço do Flex Builder deve ser **injetado via interface** no construtor do Controller e **nunca** `new X(...)` dentro do controller; toda URL deve vir de `PublicUrlResolverInterface`; todo `style="..."` deve passar por `ElementStyleRenderer`.
+```php
+if (preg_match('/^([a-z][a-z0-9+.\-]*):/i', $lower, $matches)) {
+    $scheme = strtolower($matches[1]);
+    if (!in_array($scheme, ['http', 'https', 'mailto', 'tel'], true)) {
+        return false;
+    }
+```
 
-Com esses 3 hábitos mantidos, o Flex Builder pode crescer para 50+ blocos e múltiplos previewers sem quebrar SOLID.
+Permite `mailto:` e `tel:`. Já em `CtaButtonBlock::render()`, o `match` só trata `link`, `cta_button`, etc., e passa por `sanitizeUrl` — OK.
+
+Porém, em `LogoBlock::render()`, a `image_url` é passada por `sanitizeUrl($rawImageUrl, '')` e **o fallback é `''`**, então se o usuário digitar `javascript:alert(1)`, vira `''` e `<img src="">` quebrado. **Não é XSS**, mas é UX ruim.
+
+**Correção:** fallback para o logo padrão:
+
+```php
+$imageUrl = $this->htmlSanitizer->sanitizeUrl(
+    $rawImageUrl,
+    $this->urlResolver->resolve('/assets/img/logo.png')
+);
+```
+
+---
+
+### 🟡 P2 — `ShortcodeBlock` executa `ShortcodeManager->parse()` sem limite de profundidade
+
+**Fato:** em `src/Core/Theme/Parts/Blocks/ShortcodeBlock.php`:
+
+```php
+public function render(array $data = [], array $context = []): string
+{
+    $code = trim((string)($data['code'] ?? $data['tag'] ?? ''));
+    if ($code === '') return '';
+    if ($sm !== null) {
+        return $sm->parse($code);
+    }
+    return $code;
+}
+```
+
+E `ShortcodeManager::parse()` faz **recursão interna** para shortcodes aninhados. O `ThemePartRenderer` já tem uma pilha `$renderingStack` com `MAX_RENDER_DEPTH = 10`, mas **ele só protege contra recursão de `ThemePart` (por ID)**, não contra **recursão de shortcode**. Um `[section id="X"]` onde `X` contém `[section id="X"]` cairia no guard do `ThemePartRenderer` (que detecta `part_id` na pilha). Mas um shortcode customizado registrado por terceiros com auto-referência **não tem guard**.
+
+**Correção (defesa em profundidade) em `ShortcodeManager`:**
+
+```php
+private int $parseDepth = 0;
+private const MAX_PARSE_DEPTH = 10;
+
+public function parse(string $content): string
+{
+    if ($this->parseDepth >= self::MAX_PARSE_DEPTH) {
+        return $content; // ou registrar warning
+    }
+    $this->parseDepth++;
+    try {
+        return preg_replace_callback($pattern, [$this, 'processTag'], $content);
+    } finally {
+        $this->parseDepth--;
+    }
+}
+```
+
+---
+
+### 🟡 P2 — `BuilderFlexBootstrapper` registra o `WidgetManagerInterface` como singleton **sem o `DtoRenderer` explicitamente ligado ao `JsonRenderer`**
+
+**Fato:** em `src/Plugins/flextheme/Services/BuilderFlexBootstrapper.php`:
+
+```php
+$runtime->singleton(WidgetManagerInterface::class, WidgetManager::class);
+$runtime->singleton(DtoRenderer::class, function ($c) {
+    return new DtoRenderer(
+        $c->has(HtmlSanitizerInterface::class) ? $c->make(HtmlSanitizerInterface::class) : null,
+        $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null
+    );
+});
+$runtime->singleton(JsonRenderer::class, function ($c) {
+    return new JsonRenderer(
+        $c->make(WidgetManagerInterface::class),
+        $c->make(DtoRenderer::class)
+    );
+});
+```
+
+O `JsonRenderer` recebe `DtoRenderer` via container — **correto**. Mas o `WidgetManager::bootShortcodes()` (em `src/Plugins/flextheme/BuilderFlex/Core/WidgetManager.php`) registra callbacks que chamam `$widget->render($attrs, $content)`, e `AbstractWidget::render()` **cria um `new DtoRenderer()` internamente**:
+
+```php
+public function render(array $attributes, string $content = ''): string
+{
+    $dto = $this->toDto($attributes, []);
+    if ($content !== '' && empty($dto['content'])) {
+        $dto['content'] = $content;
+    }
+    return (new DtoRenderer())->render($dto); // ❌ new inline
+}
+```
+
+**Problema:** `new DtoRenderer()` sem os sanitizadores injetados pelo container. Se um projeto de terceiros substituir `HtmlSanitizerInterface` por uma implementação mais restritiva via container, o `render()` do widget **ignora a substituição**. É uma quebra silenciosa de DIP.
+
+**Correção:** `AbstractWidget` deve receber `DtoRenderer` via construtor ou via método `setDtoRenderer()`, e o `WidgetManager` deve passar o `DtoRenderer` do container:
+
+```php
+// WidgetManager.php
+public function __construct(?DtoRenderer $dtoRenderer = null) {
+    $this->dtoRenderer = $dtoRenderer;
+}
+
+public function renderWidget(WidgetInterface $widget, array $attrs, string $content): string
+{
+    $dto = $widget->toDto($attrs, []);
+    return ($this->dtoRenderer ?? new DtoRenderer())->render($dto);
+}
+```
+
+E `AbstractWidget::render()` deve **delegar** ao `WidgetManager` ou aceitar `DtoRenderer` no construtor.
+
+---
+
+## 3. Problemas fora do Flex Builder (auditoria completa)
+
+### 🔴 P0 — `Container::make()` tem **bug de resolução de interface** com `is_subclass_of` em `interface_exists`
+
+**Fato:** em `src/Core/Container/Container.php`:
+
+```php
+if (interface_exists($abstract)) {
+    foreach (array_keys($this->bindings) as $boundKey) {
+        if ((class_exists($boundKey) || interface_exists($boundKey)) && is_subclass_of($boundKey, $abstract)) {
+            return $this->make($boundKey);
+        }
+    }
+}
+```
+
+`is_subclass_of('SomeInterface', 'SomeOtherInterface')` **retorna `true` apenas se a primeira interface estende a segunda**. Mas `is_subclass_of` **não funciona consistentemente para classes que implementam a interface** quando `$boundKey` é uma classe concreta — a documentação do PHP confirma que funciona, mas o **ordem de `$this->bindings`** importa: se houver múltiplas implementações, retorna a primeira registrada, **sem checar se é a mais específica**. Além disso, `is_subclass_of('SomeClass', 'SomeInterface')` com `$allow_string = true` (padrão) funciona, mas se `$boundKey` for um alias de classe, pode falhar silenciosamente.
+
+**Impacto real:** o auto-wiring por interface funciona para o caso 1:1, mas pode retornar implementação errada em cenários com múltiplos bindings (ex.: `DatabaseConnectionInterface` com `Connection` e `MockConnection`). A `Plugin.php` do Academy **registra só um**, então passa despercebido.
+
+**Correção (para a Gemini):** preferir `bind($abstract, $concrete)` explícito em `CoreServiceProvider` para cada interface, e no `make()` **remover o loop `interface_exists`** (fail-closed: se não há binding, lança `Exception` clara):
+
+```php
+if (interface_exists($abstract)) {
+    throw new Exception("Nenhuma implementação vinculada para a interface [$abstract]. Registre via Container::bind() em um ServiceProvider.");
+}
+```
+
+Isso é o **padrão PSR-11 correto** e elimina surpresa.
+
+---
+
+### 🔴 P0 — `MigrationRunner::ensureMigrationsTable()` **ignora `PDO::ATTR_DRIVER_NAME`** e assume sintaxe ANSI universal
+
+**Fato:** em `src/Core/Database/MigrationRunner.php`:
+
+```php
+private function ensureMigrationsTable(): void
+{
+    $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $autoInc = $driver === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTO_INCREMENT PRIMARY KEY';
+
+    $this->db->exec("
+        CREATE TABLE IF NOT EXISTS {$this->migrationsTable} (
+            id {$autoInc},
+            plugin VARCHAR(100) NOT NULL,
+            migration VARCHAR(255) NOT NULL,
+            executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(plugin, migration)
+        )
+    ");
+}
+```
+
+Isso funciona para **SQLite** e **MySQL/MariaDB**, mas **falha em PostgreSQL** porque:
+- `DATETIME` não existe (Postgres usa `TIMESTAMP`);
+- `AUTO_INCREMENT` não existe (Postgres usa `SERIAL` ou `GENERATED ... AS IDENTITY`).
+
+O `AI_CONTRACT_GUIDE.md` (linha ~113) diz: *"Use standard ANSI SQL so migrations work identically on SQLite, MySQL/MariaDB, and PostgreSQL across Linux, Windows, and macOS."* — **o próprio `MigrationRunner` viola a regra**.
+
+**Correção:**
+
+```php
+private function ensureMigrationsTable(): void
+{
+    $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    [$idCol, $timeCol] = match ($driver) {
+        'pgsql'  => ['SERIAL PRIMARY KEY', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'],
+        'sqlite' => ['INTEGER PRIMARY KEY AUTOINCREMENT', 'DATETIME DEFAULT CURRENT_TIMESTAMP'],
+        default  => ['INT AUTO_INCREMENT PRIMARY KEY', 'DATETIME DEFAULT CURRENT_TIMESTAMP'],
+    };
+    $this->db->exec("CREATE TABLE IF NOT EXISTS {$this->migrationsTable} (
+        id {$idCol}, plugin VARCHAR(100) NOT NULL, migration VARCHAR(255) NOT NULL,
+        executed_at {$timeCol}, UNIQUE(plugin, migration))");
+}
+```
+
+E o mesmo vale para **todas as migrations do Academy** (`2026_10_15_000001_create_academy_courses.php`, etc.) que usam `DATETIME` e `INT AUTO_INCREMENT` sem fallback `pgsql`.
+
+---
+
+### 🟠 P1 — `Application::boot()` chama `SessionManager::start()` **antes** de `RuntimeDirectories::ensure()`
+
+**Fato:** em `src/Core/Application.php`:
+
+```php
+public function boot(): void
+{
+    \DomainSystem\Core\Bootstrap\RuntimeDirectories::ensure($this->basePath);
+    $this->sessionManager->start();
+```
+
+**Espera**, está correto — `RuntimeDirectories::ensure()` vem primeiro. Desconsidere este item; li errado na primeira passada. **Aceito a correção e removo da lista.**
+
+---
+
+### 🟠 P1 — `Request::capture()` lê `php://input` **mesmo em GET** e pode esgotar memória com payload grande
+
+**Fato:** em `src/Core/Http/Request.php`:
+
+```php
+public static function capture(): self
+{
+    $post = $_POST;
+    $jsonBody = [];
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? ...;
+    $rawBody = file_get_contents('php://input'); // ❌ sempre
+    if (is_string($rawBody) && trim($rawBody) !== '') {
+        // parse
+    }
+```
+
+`php://input` pode ser lido **apenas uma vez** em PHP < 5.6, mas em PHP 8 é **re-lível** (retorna o mesmo conteúdo). Porém, `file_get_contents('php://input')` **carrega o payload inteiro em memória**. Se um cliente malicioso enviar 100 MB em POST para `/`, o servidor morre com `Allowed memory size exhausted`.
+
+**Correção (defesa em profundidade):**
+
+```php
+$maxBodyBytes = 2 * 1024 * 1024; // 2 MB
+$rawBody = '';
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+    $rawBody = file_get_contents('php://input', false, null, 0, $maxBodyBytes + 1);
+    if (strlen($rawBody) > $maxBodyBytes) {
+        throw new \RuntimeException('Payload excede o limite permitido (2 MB).', 413);
+    }
+}
+```
+
+---
+
+### 🟠 P1 — `CurlHttpClient` não valida `CURLOPT_PROTOCOLS` em todas as versões de cURL
+
+**Fato:** em `src/Core/Update/Infrastructure/CurlHttpClient.php`:
+
+```php
+if (defined('CURLPROTO_HTTPS')) {
+    curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+}
+```
+
+`CURLPROTO_HTTPS` está disponível desde **cURL 7.19.4** (2008). Mas o guard `defined()` é desnecessário — se não existir, estamos em cURL tão antigo que o sistema já não deveria rodar. O problema real é que **não há `CURLOPT_REDIR_PROTOCOLS`**, então redirecionamentos poderiam teoricamente ir para `http://` se `CURLOPT_PROTOCOLS` não bloquear. Como `CURLOPT_FOLLOWLOCATION = false` e o redirecionamento é manual com `validateUrl()` reaplicado, **está OK na prática**, mas defesa em profundidade pediria:
+
+```php
+if (defined('CURLOPT_REDIR_PROTOCOLS')) {
+    curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+}
+```
+
+---
+
+### 🟡 P2 — `Output` da suíte de testes pode estar desatualizado
+
+**Fato:** `manual/index.php` e `docs/auditoria.md` afirmam **183 testes / 751 asserções**. Já `README.md` (linha ~165) afirma **438 testes / 2.350 asserções**. Há **inconsistência documental**. Como não executei a suíte, **não posso afirmar qual está correto**. Recomendo à Gemini rodar `php phpunit.phar` e atualizar **todos** os locais que citam a contagem (README.md, README-en.md, docs/auditoria.md, docs/auditoria-en.md, manual/index.php, AUDIT_ACTION_PLAN_V3.md se citar).
+
+---
+
+### 🟡 P2 — `manual/index.php` ainda tem **texto hardcoded** sobre "183 testes" e sobre contagem de módulos
+
+Mesmo problema acima, mas em arquivo diferente. Centralizar a contagem em uma constante `DS_TEST_COUNT` (gerada pelo CI) ou **remover a contagem específica** e usar "mais de 400 testes".
+
+---
+
+### 🟡 P2 — `ThemePartsAdminController::savePart()` faz `error_log` condicional via `class_exists(\PHPUnit\Framework\TestCase::class, false)`
+
+**Fato:** em `src/Plugins/flextheme/Controllers/ThemePartsAdminController.php`:
+
+```php
+if (!class_exists(\PHPUnit\Framework\TestCase::class, false)) {
+    error_log('[FlexBuilder][savePart] ' . $e->getMessage());
+}
+```
+
+Isso é um **code smell**: o controller **sabe que existe PHPUnit** e condiciona logging a ele. Se o ambiente de produção tiver PHPUnit instalado (alguns setups de `require-dev` vazam), o log **desaparece**. O correto é **sempre logar via PSR-3 `LoggerInterface` injetado**, e o teste mocka o logger.
+
+**Correção (para a Gemini):**
+
+```php
+// injetar LoggerInterface
+public function savePart(Request $request): Response
+{
+    try { /* ... */ }
+    catch (Throwable $e) {
+        $this->logger?->error('[FlexBuilder][savePart]', ['exception' => $e]);
+        // ...
+    }
+}
+```
+
+---
+
+## 4. Exemplos de Código Novo / Técnicas para a Gemini
+
+### 4.1. Padrão "Template Method" para `AbstractWidget`
+
+**Problema:** `AbstractWidget::render()` cria `new DtoRenderer()` (visto na seção 2.7). **Técnica:** tornar `DtoRenderer` injetável e usar um método protegido `resolveDtoRenderer()`.
+
+```php
+// src/Plugins/flextheme/BuilderFlex/Core/AbstractWidget.php
+abstract class AbstractWidget implements WidgetInterface
+{
+    protected ?DtoRenderer $dtoRenderer = null;
+
+    public function setDtoRenderer(DtoRenderer $dtoRenderer): static
+    {
+        $this->dtoRenderer = $dtoRenderer;
+        return $this;
+    }
+
+    public function render(array $attributes, string $content = ''): string
+    {
+        $dto = $this->toDto($attributes, []);
+        if ($content !== '' && empty($dto['content'])) {
+            $dto['content'] = $content;
+        }
+        // Resolve via injetado ou fallback isolado (último recurso)
+        return ($this->dtoRenderer ?? new DtoRenderer())->render($dto);
+    }
+}
+```
+
+E `WidgetManager` no `bootShortcodes()`:
+
+```php
+foreach ($this->widgets as $tag => $widget) {
+    $shortcodeManager->add($tag, function (array $attrs, string $content = '') use ($widget) {
+        if (method_exists($widget, 'setDtoRenderer')) {
+            $widget->setDtoRenderer($this->dtoRenderer);
+        }
+        return $widget->render($attrs, $content);
+    });
+}
+```
+
+**Benefício:** terceiros podem substituir `DtoRenderer` no container e a substituição vale para **todos** os widgets, inclusive `render()` direto.
+
+---
+
+### 4.2. Guard de profundidade reutilizável via Trait
+
+**Problema:** cada componente recursivo (`ShortcodeManager`, `ThemePartRenderer`, `LessonBlockRenderer`) implementa sua própria pilha. **Técnica:** Trait com `withDepthGuard()`.
+
+```php
+// src/Core/Support/RecursionGuardTrait.php
+trait RecursionGuardTrait
+{
+    private array $recursionStack = [];
+    private int $maxDepth = 10;
+
+    protected function withDepthGuard(string $key, callable $fn): mixed
+    {
+        if (in_array($key, $this->recursionStack, true) || count($this->recursionStack) >= $this->maxDepth) {
+            return null; // ou throw
+        }
+        $this->recursionStack[] = $key;
+        try {
+            return $fn();
+        } finally {
+            array_pop($this->recursionStack);
+        }
+    }
+}
+```
+
+Uso:
+
+```php
+// ShortcodeManager
+public function parse(string $content): string
+{
+    return $this->withDepthGuard('parse:' . md5($content), function () use ($content) {
+        return preg_replace_callback($this->pattern(), [$this, 'processTag'], $content);
+    }) ?? $content;
+}
+```
+
+**Benefício:** uma implementação, três usos, e a pilha é **por chave** (não global), permitindo múltiplas renderizações independentes no mesmo request.
+
+---
+
+### 4.3. Validação de schema em `MigrationRunner` com **feature detection** de driver
+
+**Problema:** `MigrationRunner::ensureMigrationsTable()` viola ANSI SQL em Postgres (visto em 3.2). **Técnica:** `match` com driver + método separado `buildCreateTableSql()` testável isoladamente.
+
+```php
+// src/Core/Database/MigrationRunner.php
+private function buildCreateTableSql(string $driver): string
+{
+    [$idType, $timeType] = match ($driver) {
+        'pgsql'  => ['SERIAL PRIMARY KEY', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'],
+        'sqlite' => ['INTEGER PRIMARY KEY AUTOINCREMENT', 'DATETIME DEFAULT CURRENT_TIMESTAMP'],
+        'mysql', 'mariadb' => ['INT AUTO_INCREMENT PRIMARY KEY', 'DATETIME DEFAULT CURRENT_TIMESTAMP'],
+        default  => throw new \RuntimeException("Driver não suportado: {$driver}"),
+    };
+
+    return "CREATE TABLE IF NOT EXISTS {$this->migrationsTable} (
+        id {$idType},
+        plugin VARCHAR(100) NOT NULL,
+        migration VARCHAR(255) NOT NULL,
+        executed_at {$timeType},
+        UNIQUE(plugin, migration)
+    )";
+}
+```
+
+E teste unitário `MigrationRunnerDdlTest` que cobre os 3 drivers **sem conectar a banco** (via `getAttribute` mockado ou `PDO::ATTR_DRIVER_NAME` em SQLite em memória + mock para Postgres).
+
+---
+
+### 4.4. `Application::boot()` com **fases explícitas** e `array` de plugins para permitir "reset" em testes
+
+**Problema:** o Singleton `Application` guarda `self::$instance` e o `ProcessRegistry` guarda PIDs. Testes que chamam `Application::kill()` e `Application::reset()` precisam recriar tudo. **Técnica:** boot em fases nomeadas com hook pós-boot e **diagnóstico** do boot.
+
+```php
+// src/Core/Application.php
+public const BOOT_PHASE_DISCOVERY = 'discovery';
+public const BOOT_PHASE_PLUGIN_REGISTER = 'plugin_register';
+public const BOOT_PHASE_PLUGIN_BOOT = 'plugin_boot';
+public const BOOT_PHASE_SHORTCODES = 'shortcodes';
+public const BOOT_PHASE_WORKSPACES = 'workspaces';
+
+public function boot(): void
+{
+    $this->bootPhase(self::BOOT_PHASE_DISCOVERY, function () {
+        $this->pluginManager->discoverPlugins($this->basePath . '/src/SystemApps', $this->configPath(), true, true);
+        $this->pluginManager->discoverPlugins($this->basePath . '/src/Plugins', $this->configPath(), false, false);
+    });
+    $this->bootPhase(self::BOOT_PHASE_PLUGIN_REGISTER, fn() => $this->pluginManager->bootPlugins());
+    // ...
+}
+
+private function bootPhase(string $phase, callable $fn): void
+{
+    $start = microtime(true);
+    try {
+        $fn();
+    } finally {
+        $this->dispatcher->dispatch('boot.phase.completed', $phase, microtime(true) - $start);
+    }
+}
+```
+
+**Benefício:** o `SystemMonitor` pode exibir tempo de cada fase, e testes de integração podem **assinar** `boot.phase.completed` e falhar se uma fase demorar > threshold.
+
+---
+
+### 4.5. `AtomicJsonStore::update()` com **timeout** para não bloquear o request
+
+**Problema:** em `src/Core/Storage/AtomicJsonStore.php`, o `update()` faz `flock(LOCK_EX)` **sem timeout**. Se um processo travar (ex.: Xdebug breakpoint), todos os requests seguintes ficam em fila **até o PHP timeout**. **Técnica:** lock com timeout configurável.
+
+```php
+public function update(string $filePath, callable $mutator, array $default = [], int $lockTimeoutSeconds = 5): array
+{
+    // ...
+    $deadline = microtime(true) + $lockTimeoutSeconds;
+    $acquired = false;
+    while (microtime(true) < $deadline) {
+        if (@flock($lockFp, LOCK_EX | LOCK_NB)) {
+            $acquired = true;
+            break;
+        }
+        usleep(50_000); // 50ms
+    }
+
+    if (!$acquired) {
+        // fail-fast: não bloqueia o request
+        throw new \RuntimeException("Não foi possível adquirir lock em {$filePath} em {$lockTimeoutSeconds}s.");
+    }
+    try {
+        // ...
+    } finally {
+        @flock($lockFp, LOCK_UN);
+        @fclose($lockFp);
+    }
+}
+```
+
+**Benefício:** em produção, um request lento não derruba os demais. Em testes, o `update()` falha rápido em vez de travar o CI.
+
+---
+
+### 4.6. Teste de arquitetura para `new` em controllers (complementa o `NoSuperglobalsInControllersTest`)
+
+**Técnica:** teste que varre `src/Plugins/**/Controllers/*.php` e falha se encontrar `new <ConcreteClass>(` **exceto** `new Response`, `new ViewResponse`, `new JsonResponse`, `new RedirectResponse` (que são value objects de resposta).
+
+```php
+// tests/Architecture/NoNewInControllersTest.php
+public function test_controllers_do_not_instantiate_services(): void
+{
+    $allowed = ['Response', 'ViewResponse', 'JsonResponse', 'RedirectResponse', 'HttpResponse', 'ResponseInterface'];
+    foreach (glob('src/Plugins/*/Controllers/*.php') as $file) {
+        $source = file_get_contents($file);
+        preg_match_all('/new\s+([A-Z][A-Za-z0-9_]*)\s*\(/', $source, $m);
+        foreach ($m[1] as $class) {
+            if (!in_array($class, $allowed, true)) {
+                $this->fail("Controller {$file} instancia classe concreta {$class}. Use DI.");
+            }
+        }
+    }
+}
+```
+
+**Benefício:** impede que a dívida do `?? new` **volte** no futuro. É o guardrail que a auditoria pediu e que **ainda não existe** em `tests/Architecture/`.
+
+---
+
+### 4.7. `SafeHtmlSanitizer` com **lista de esquemas proibidos explícita** e fallback configurável
+
+**Problema:** o `sanitizeUrl()` retorna `'#'` quando bloqueia, mas `LogoBlock` e `ImageBlock` passam `''` como fallback e quebram imagens. **Técnica:** `sanitizeUrl(string $url, ?string $fallback = null)` com política de fallback explícita.
+
+```php
+public function sanitizeUrl(string $url, ?string $fallback = null): string
+{
+    $fallback ??= '#';
+    // ... validação ...
+    if (!$this->isSafeUrl($trimmed)) {
+        return $fallback;
+    }
+    return $trimmed;
+}
+```
+
+E os blocos passam fallback contextual:
+
+```php
+// LogoBlock
+$imageUrl = $this->htmlSanitizer->sanitizeUrl(
+    $rawImageUrl,
+    $this->urlResolver->resolve('/assets/img/logo.png')
+);
+
+// ImageBlock
+$url = $this->htmlSanitizer->sanitizeUrl($rawUrl, '');
+if ($url === '') {
+    return ''; // sem imagem, sem quebrar layout
+}
+```
+
+**Benefício:** cada bloco decide o fallback certo, e o sanitizador não força `'#'` (que é semanticamente errado para `<img>`).
+
+---
+
+### 4.8. `ThemePartValidator` com **validação de bloco por `getSchema()`**
+
+**Problema:** em `src/Core/Theme/Parts/Validation/ThemePartValidator.php`, ele valida **existência e compatibilidade** do bloco, mas **não valida os campos** do `data[]` contra o `getSchema()` do bloco. Um bloco `heading` com `level: 99` passa (o `HeadingBlock::render()` faz clamp para 2, mas o JSON salvo fica inconsistente). **Técnica:** validação de schema por bloco.
+
+```php
+private function validateBlockData(BlockInterface $block, array $data): void
+{
+    $schema = $block->getSchema();
+    foreach ($schema['fields'] ?? [] as $field => $def) {
+        $value = $data[$field] ?? $def['default'] ?? null;
+        if ($value === null && ($def['required'] ?? false)) {
+            throw new InvalidArgumentException(
+                "Campo obrigatório '{$field}' ausente no bloco '{$block->getType()}'."
+            );
+        }
+        // Validação por tipo
+        match ($def['type']) {
+            'select' => $this->assertInArray($value, array_keys($def['options']), $field),
+            'number' => $this->assertNumeric($value, $field),
+            'dimension' => $this->assertDimension($value, $field, $def['units'] ?? []),
+            default => null,
+        };
+    }
+}
+```
+
+**Benefício:** falha **antes de salvar**, não no render. O `ThemePartValidator` já tem `ThemePartValidator::validate()` chamado em `saveFromPayload()` — só falta estender para os campos.
+
+---
+
+### 4.9. Cache de schema em `BlockRegistry` (evita `getSchema()` em cada request)
+
+**Problema:** `ThemePartsAdminController::schema()` e `ThemePartPreviewService::renderPreview()` chamam `$block->getSchema()` a cada invocação. Os schemas são **estáticos por classe** — podem ser cacheados por request. **Técnica:** cache lazy no `BlockRegistry`.
+
+```php
+// src/Core/Theme/Parts/Blocks/BlockRegistry.php
+private array $schemaCache = [];
+
+public function getSchemaFor(string $type): ?array
+{
+    if (isset($this->schemaCache[$type])) {
+        return $this->schemaCache[$type];
+    }
+    $block = $this->get($type);
+    return $this->schemaCache[$type] = ($block ? $block->getSchema() : null);
+}
+```
+
+**Benefício:** o `schema` endpoint, que roda em **toda abertura do Studio**, deixa de instanciar `getSchema()` 14 vezes.
+
+---
+
+### 4.10. `Application` com **`bootState` enum** para evitar duplo boot
+
+**Problema:** chamar `$app->boot()` duas vezes no mesmo request **reprocessa plugins** (o `PluginBootstrapper` chama `boot()` de novo). O `Application` não tem guard. **Técnica:**
+
+```php
+enum BootState: string { case Idle = 'idle'; case Booting = 'booting'; case Booted = 'booted'; case Failed = 'failed'; }
+
+private BootState $bootState = BootState::Idle;
+
+public function boot(): void
+{
+    if ($this->bootState !== BootState::Idle) {
+        return; // idempotente
+    }
+    $this->bootState = BootState::Booting;
+    try {
+        // ... fases ...
+        $this->bootState = BootState::Booted;
+    } catch (\Throwable $e) {
+        $this->bootState = BootState::Failed;
+        throw $e;
+    }
+}
+```
+
+**Benefício:** idempotência, testável via reflection, e `SystemMonitor` pode exibir `bootState`.
+
+---
+
+## 5. Checklist de Priorização (para a Gemini executar em ordem)
+
+| # | Prioridade | Item | Impacto | Esforço |
+|---|---|---|---|---|
+| 1 | 🔴 P0 | `ThemePartsAdminController` — remover 6 `?? new` | Elimina 2ª config escondida; alinha com auditoria anterior | Baixo |
+| 2 | 🔴 P0 | `ThemePartPreviewService` — tornar `ThemePartCompilerInterface` obrigatório | Remove código de teste em produção | Trivial |
+| 3 | 🔴 P0 | `Container::make()` — remover loop `interface_exists` ou exigir bind explícito | Corrige DIP ambíguo em múltiplos bindings | Médio |
+| 4 | 🔴 P0 | `MigrationRunner` — DDL por driver (pgsql/mysql/sqlite) | Cumpre o próprio `AI_CONTRACT_GUIDE` | Baixo |
+| 5 | 🟠 P1 | `JsonThemePartRepository::all()` — ordenar por `updatedAt` | Ordem determinística | Trivial |
+| 6 | 🟠 P1 | `LayerTreeBuilder` — remover `preg_match` fallback | Elimina inferência frágil | Baixo |
+| 7 | 🟠 P1 | `ThemePartRenderer` — `$tokensInjected` de static para instance | Corrige testes de integração | Trivial |
+| 8 | 🟠 P1 | `AbstractWidget::render()` — `DtoRenderer` injetado | Corrige DIP quebrado em shortcodes | Baixo |
+| 9 | 🟠 P1 | `Request::capture()` — limitar payload a 2 MB | Defesa contra DoS | Trivial |
+| 10 | 🟡 P2 | `ShortcodeManager` — guard de profundidade via Trait | Defesa em profundidade | Baixo |
+| 11 | 🟡 P2 | `SafeHtmlSanitizer`/`LogoBlock` — fallback contextual | Corrige UX de logo quebrado | Trivial |
+| 12 | 🟡 P2 | `ThemePartValidator` — validar `data[]` contra `getSchema()` | Falha cedo, não no render | Médio |
+| 13 | 🟡 P2 | `BlockRegistry` — cache de `getSchema()` | Performance do Studio | Trivial |
+| 14 | 🟡 P2 | `tests/Architecture/NoNewInControllersTest.php` — novo guardrail | Impede regressão | Baixo |
+| 15 | 🟡 P2 | `Application` — `bootState` enum (idempotência) | Testabilidade | Baixo |
+| 16 | 🟡 P2 | Docs — unificar contagem de testes (183 vs 438) | Consistência documental | Trivial |
+
+---
+
+## 6. Limitações Explícitas desta Auditoria
+
+1. **Não executei** `php phpunit.phar`, não verifiquei browser, não rodei o updater na Hostinger. Todos os apontamentos são **estáticos** sobre o consolidado.
+2. **Não validei** se o `bundle.js` é gerado de `src/Plugins/flextheme/BuilderFlex/assets/js/` ou se há divergência. Se houver, a auditoria do `bundle.js` pode não refletir o código-fonte.
+3. **Não inspecionei** os arquivos de `src/SystemApps/auth/` (embora estejam no tree, o conteúdo não está no consolidado além do `GoogleAuthenticator.php`), então não posso afirmar nada sobre 2FA/Auth além do que o `README` diz.
+4. **Não confirmei** se o `ThemePartPreviewService` é realmente instanciado sem compilador em algum fluxo real — só constatei que o **fallback existe**, e que o `BuilderFlexBootstrapper` injeta. A correção é defesa em profundidade.
+5. **A inconsistência de contagem de testes** pode ser só doc desatualizada, não bug de código — mas precisa ser verificada rodando a suíte.
+
+---
+
+## 7. Resumo Executivo
+
+O **Domain System v2.5.0** está em **excelente estado arquitetural**, mas o **Flex Builder** tem **3 dívidas P0** que a Gemini pode corrigir em ~2 horas de trabalho focado (itens 1–4 da tabela de priorização). As **7 novas técnicas** (Trait de recursão, cache de schema, DDL por driver, guardrail `NoNewInControllers`, `bootState`, validação de schema por bloco, `sanitizeUrl` contextual) são **incrementais e de baixo risco**, e **complementam** o que as auditorias anteriores (ChatGPT, DeepSeek, Nemotron) já apontaram — sem contradizê-las.
+
+O maior risco remanescente **não está no Flex Builder**, e sim no `Container::make()` (item 3) e no `MigrationRunner` (item 4): o primeiro pode entregar a implementação errada em cenários multi-binding; o segundo **viola o próprio contrato ANSI SQL** que o projeto se impõe. Ambos são **cirúrgicos** e resolvíveis em uma sessão.
 
 /* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/auditoria/Nemotron.md
@@ -4154,103 +4013,450 @@ O **FlexTheme/BuilderFlex** tem **arquitetura moderna e bem intencionada** (Cont
 Com as correções P0/P1, o plugin atinge **nível Enterprise** e serve de referência para outros plugins do ecossistema.
 
 /* ---------------------------------------------------------------------------- */
-// Arquivo: domain-system/auditoria/auditoria_round2_flexbuilder.md
+// Arquivo: domain-system/auditoria/auditoria-cline.md
 /* ---------------------------------------------------------------------------- */
 
-# Auditoria Cirúrgica Round 2 — Ecossistema Flex Builder
+# 🛡️ Auditoria Cirúrgica — Domain System v2.5 (Cline)
 
-Após a conclusão da **Rodada 1** (que consolidou os contratos ISP/OCP, pureza do Ring 0, sanitização central de HTML/CSS, escrita atômica nos repositórios de partes e visibilidade responsiva), realizamos uma **inspeção profunda de 2ª passagem** linha a linha em todos os **14 blocos PHP**, no **Inspetor JS do Studio** ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php)), no editor de **Design Tokens** ([DesignTokens.php](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Models/DesignTokens.php) / [tokens_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/tokens_editor.php)), no serviço de mídia ([MediaUploadService.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Services/MediaUploadService.php)) e no subsistema legado **BuilderFlex**.
+**Projeto:** `D:\xampp\htdocs\domain-system`  
+**Data da auditoria:** 28/10/2026  
+**Escopo:** Ring 0 (`src/Core`, `src/SystemApps`), Ring 3 (`src/Plugins`), com foco profundo em **FlexTheme / Flex Builder**.  
+**Baseline de testes:**
 
-Abaixo estão os **9 problemas reais** descobertos nesta segunda varredura, classificados por criticidade, seguidos do plano de execução.
+| Suíte | Resultado |
+|---|---|
+| `Architecture` (17 testes) | ✅ 17/17 OK (73 asserções) |
+| `FlexBuilderUnifiedAuditTest` | ✅ 14/14 OK (187 asserções) |
+| `FlexBuilderRound2AuditTest` | ✅ 7/7 OK (55 asserções) |
+| `MediaUploadServiceTest` + `ThemePartsAdminControllerTest` + `ThemeDiscoveryServiceTest` + `ThemePartsFoundationTest` | ✅ 25/25 OK (122 asserções) |
+
+## 1. Resumo executivo
+
+O projeto está maduro e bem blindado contra riscos clássicos (XSS, path traversal, superglobais, Zip Slip). A arquitetura SOLID/DIP é consistente e o Flex Builder possui motor de blocos com sanitização e paridade Preview/Frontend.
+
+Principais dívidas:
+1. `declare(strict_types=1)` ausente em 246 arquivos PHP (principalmente `src/Core`).
+2. Manuals ausentes em 7 dos 10 plugins.
+3. DIP parcial: fallbacks com `new ConcreteService()` em construtores.
+4. Dois motores paralelos no Flex Builder (Core Theme Parts + BuilderFlex widgets) com risco de drift.
+5. JS do BuilderFlex global/namespaced, sem bundler e sem testes.
+6. Validação de payloads JSON apenas estrutural, sem JSON Schema.
+7. Escrita não-atômica em alguns pontos fora de `AtomicJsonStore`.
+8. `composer.json` declara `php: >=8.1`, mas o código usa recursos 8.2+.
+---
+
+## 2. Arquitetura e isolamento (Ring 0 vs Ring 3)
+
+### 2.1 Pontos positivos
+- `src/Core` não importa `DomainSystem\Plugins\*` (exceto checagem defensiva em `OsRuntime`).
+- Controllers não usam `$_GET/$_POST/$_SESSION` (validado por `NoSuperglobalsInControllersTest`).
+- Persistência via contratos (`*RepositoryInterface`, `*ServiceInterface`).
+- Plugins implementam `OsExtensionInterface` em todos os 10 plugins.
+- Migrations, contratos e views seguem o padrão documentado.
+
+### 2.2 Achados
+| # | Arquivo | Achado | Severidade |
+|---|---|---|---|
+| A1 | `src/Core/**/*.php` (246 arquivos) | Falta `declare(strict_types=1)` | Alta |
+| A2 | `src/Plugins/{analytics,clock_widget,nobreak_shield,radio_online,settings,visual_themes}/manual/` | `manual/module.php` ausente | Média |
+| A3 | `composer.json` | `php: >=8.1` vs uso de 8.2 | Baixa |
+| A4 | `src/Plugins/flextheme/Controllers/ThemePartsAdminController.php` | 17 dependências no construtor; fallbacks `new` | Média |
+| A5 | `src/Core/Http/HttpKernel.php:99` | Uso direto de `$_GET['raw']` (além de `$request->query`) | Baixa |
+
+### 2.3 Recomendação A1 — codemod de strict_types
+
+```php
+<?php
+// tools/fix_strict_types.php
+$rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('src'));
+foreach ($rii as $file) {
+    if (!$file->isFile() || $file->getExtension() !== 'php') continue;
+    $path = $file->getPathname();
+    $src  = file_get_contents($path);
+    if (str_contains($src, 'declare(strict_types=1)')) continue;
+    $src = preg_replace('/^<\?php\s*\n/', "<?php\n\ndeclare(strict_types=1);\n", $src, 1);
+    file_put_contents($path, $src);
+}
+```
+
+Executar com `php tools/fix_strict_types.php` e validar com `php -l` em todos os arquivos.
 
 ---
 
-## 1. Divergência de Propriedades entre o Inspetor JS e os Renderizadores PHP (Crítico — Funcional)
+## 3. FlexTheme & Flex Builder — auditoria profunda
 
-> [!CAUTION]
-> Vários controles editados pelo usuário no painel lateral do Studio ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php)) salvam chaves no JSON (`block.data.*`) com nomes ou formatos diferentes dos esperados pelos blocos PHP em `src/Core/Theme/Parts/Blocks/`. Como resultado, alterações feitas no editor são salvas no JSON, mas **ignoradas na renderização real**!
+### 3.1 Arquitetura atual (dois motores)
 
-| Bloco | O que o Studio JS / Default Part grava | O que o Bloco PHP lê atualmente | Impacto Real |
-| :--- | :--- | :--- | :--- |
-| [`LogoBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/LogoBlock.php#L47-L56) | `data.text` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2436) e [`ThemePartManagementService`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Services/ThemePartManagementService.php#L140)) | `$data['brand_text']` | Editar o *"Texto do Logotipo"* no Studio não muda o logo renderizado (cai sempre no fallback `DomainSystem`). |
-| [`HeadingBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/HeadingBlock.php#L51-L58) | `data.level = 'h1'..'h3'` (string) e `data.font_size` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2340-L2342)) | `(int) $data['level']` (`1..6`) e `$data['size']` | `(int) 'h3'` resulta em `0`, forçando todo título a virar `<h2>`! Além disso, `font_size` é ignorado. |
-| [`ParagraphBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ParagraphBlock.php#L52-L54) | `data.font_size` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2348)) | `$data['size']` | O tamanho da fonte definido no Inspetor ou no template padrão não é aplicado ao `<p>`. |
-| [`CustomCodeBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/CustomCodeBlock.php#L47-L48) | `data.code` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2506)) | `$data['html']` e `$data['css']` | O código digitado no textarea *"Código HTML / CSS / JS Customizado"* nunca é renderizado! |
-| [`ShortcodeBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ShortcodeBlock.php#L42) | Resumo lê `d.tag` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L1910)), Inspetor grava `data.code` | `$data['code']` | No canvas do editor, o resumo do bloco aparece vazio porque procura `d.tag` em vez de `d.code ?? d.tag`. |
-| [`CopyrightBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/CopyrightBlock.php#L46-L56) | `data.site_name` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2503)) | Apenas `DOMAIN_SYSTEM_SITE_NAME` ou `$data['text']` | O campo *"Nome do Site / Empresa"* do Inspetor é ignorado se `data.text` não contiver `{site_name}` ou se o usuário preencher apenas `site_name`. |
-| [`CtaButtonBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/CtaButtonBlock.php#L47-L87) | `hover_animation`, `bg_color`, `text_color`, `padding` ([builder_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/builder_editor.php#L2430-L2433)) | Apenas `style`, `size`, `border_radius` | Cores customizadas, espaçamento interno e animação de hover configurados no Inspetor do CTA não surtem efeito. |
+```
+FlexTheme Plugin
+├── Core Theme Parts (Ring 0)        <- fonte de verdade de renderizacao
+│   ├── ThemePartRenderer / Compiler
+│   ├── Blocks (14+ blocos sanitizados)
+│   ├── LayoutGridRenderer + presets
+│   └── DesignTokens
+├── Flex Builder (Ring 3)            <- UI de autoria
+│   ├── ThemePartsAdminController (coordenacao HTTP)
+│   ├── ThemePartPreviewService     (compila parte efemera)
+│   ├── ThemePartManagementService  (persistencia + compensacao)
+│   └── BuilderFlex (subplugin)
+│       ├── WidgetManager + widgets (Container, Text, Logo)
+│       └── DtoRenderer (HTML a partir de DTO)
+└── JS Studio (assets/js)           <- editor visual drag/drop
+```
 
----
+**Forca:** o Preview e o Frontend usam o mesmo `ThemePartCompilerInterface` (paridade garantida por teste).  
+**Fraqueza:** o `BuilderFlex` (widgets + DtoRenderer) e um segundo caminho de renderizacao que **nao** compartilha os mesmos blocos do Core. Isso gera drift: um bloco novo no Core nao aparece automaticamente no BuilderFlex e vice-versa.
 
-## 2. Risco de Recursão Infinita em `ShortcodeBlock` / `ThemePartRenderer` (Crítico — Estabilidade)
+### 3.2 Achados específicos do Flex Builder
 
-> [!WARNING]
-> Em [`ShortcodeBlock::render()`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ShortcodeBlock.php#L48-L62), um shortcode `[section id="sec_1"]` ou `[theme_part id="sec_1"]` chama [`ThemePartRenderer::renderSection('sec_1')`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Renderers/ThemePartRenderer.php#L140-L157). Se a seção `sec_1` contiver um `ShortcodeBlock` apontando para `sec_1` (auto-referência direta ou ciclo `A -> B -> A`), o PHP entra em **loop infinito** até estourar a memória/pilha (Fatal Error).
+| # | Arquivo | Achado | Severidade |
+|---|---|---|---|
+| F1 | `BuilderFlex/Core/DtoRenderer.php` | Renderiza DTO arbitrário; sanitização existe, mas não há allowlist de tags/atributos por widget | Média |
+| F2 | `BuilderFlex/Widgets/*` (apenas 3 widgets) | Cobertura muito menor que os 14+ blocos do Core | Alta (funcionalidade) |
+| F3 | `ThemePartsAdminController::__construct` | 17 parâmetros; fallbacks `new` quebram DIP e dificultam mocks | Média |
+| F4 | `ThemePartPreviewService::__construct` | Cria repositório/associação anônimos inline (implementações vazias) em vez de injetar | Média |
+| F5 | `ThemePartManagementService::__construct` | `new ThemePartValidator` quando não injetado | Baixa |
+| F6 | `assets/js/core/EventBus.js` | Sem `off()`/`once()`; handlers acumulam em re-render | Média |
+| F7 | `assets/js/core/Editor.js` | `findParent` recursivo sem proteção contra ciclos; árvore pode virar grafo | Baixa |
+| F8 | `assets/js` (todo) | Sem módulos ES, sem bundler, sem testes (Jest/Vitest) | Alta (manutenibilidade) |
+| F9 | `ThemePartsAdminController::extractInput` | Fallback para `php://input` mesmo quando `Request` já deveria bastar | Baixa |
+| F10 | `assets` (JS/CSS) | Sem versionamento/cache-busting (assets estáticos sem hash) | Baixa |
+| F11 | `ThemePartManagementService::saveFromPayload` | Compensação (rollback) manual; não transacional no storage | Média |
+| F12 | `MediaUploadService` | Sanitização SVG existe (teste), mas falta limite de dimensão/tamanho e validação MIME real | Média |
 
-- **Solução:** Implementar uma pilha de proteção contra ciclos (`$renderingStack = []` e limite máximo de profundidade) dentro de [`ThemePartRenderer`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Renderers/ThemePartRenderer.php).
+### 3.3 O que precisa ser melhorado no plugin (priorizado)
 
----
+#### P0 — Funcionalidade
+- **Unificar o catálogo de widgets**: expor todos os blocos do Core (Heading, Paragraph, Image, Video, Button, CTA, Divider, Shortcode, NavMenu, SocialIcons, Copyright, PostCardsGrid, CustomCode, Logo) no Studio do Flex Builder, não apenas Container/Text/Logo.
+- **Adicionar testes E2E do Studio** (Playwright/Cypress) cobrindo drag/drop, inspetor, exportação JSON e preview.
 
-## 3. Vazamento de `!important` do Admin Layout no Simulador de `tokens_editor.php` (Alto — UI/UX)
+#### P1 — Arquitetura
+- **Extrair um `WidgetCatalogInterface`** (Ring 3) que mapeia blocos do Core para widgets do BuilderFlex, eliminando duplicação.
+- **Quebrar `ThemePartsAdminController`** em controllers menores: `PartCrudController`, `TokenController`, `PreviewController`, `UploadController`.
+- **Injetar todas as dependências** (sem `new` fallback) e registrar no `BuilderFlexBootstrapper`.
 
-- Assim como ocorria nos badges de [parts_list.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/parts_list.php), a regra global de [themes/admin/layout.php](file:///d:/xampp/htdocs/domain-system/themes/admin/layout.php#L273) (`p, label, span, strong, h2, h3, h4 { color: var(--text-main) !important; }`) sobrescreve as cores do **Simulador em Tempo Real** em [tokens_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/tokens_editor.php#L118-L133).
-- Quando a função JS `applyPreviewTokens()` faz `document.getElementById('preview_heading').style.color = val`, o navegador **ignora** a mudança porque o CSS global do admin tem `!important`.
-- **Solução:** Usar `.style.setProperty('color', val, 'important')` e `.style.setProperty('background-color', val, 'important')` em [tokens_editor.php](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/views/admin/tokens_editor.php#L156-L185).
+#### P2 — Frontend/JS
+- Migrar `assets/js` para **ES Modules** + Vite/esbuild.
+- Substituir `window.BuilderFlex` por módulos com `import/export`.
+- Adicionar `EventBus.off()` e `once()`.
+- Adicionar imutabilidade/validação da árvore (Zod/JSON Schema) antes de exportar.
 
----
-
-## 4. Associações Órfãs ao Excluir uma Parte (`deletePart`) (Médio — Integridade de Dados)
-
-- Quando uma parte é excluída em [`ThemePartManagementService::deletePart()`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Services/ThemePartManagementService.php#L106-L115), o arquivo `config/theme_parts/{id}.json` é removido, mas o ID da parte continua salvo em `config/theme_parts_associations.json` (como padrão global, ativo no tema ou vinculado a um template como `home.php`).
-- **Solução:** Adicionar o método `removePartReferences(string $partId): bool` em [`ThemePartAssociationInterface`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Contracts/ThemePartAssociationInterface.php) e [`JsonThemePartAssociation`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Associations/JsonThemePartAssociation.php), invocando-o automaticamente ao excluir uma parte.
-
----
-
-## 5. Risco de Stored XSS via Upload de SVG em `MediaUploadService` (Alto — Segurança)
-
-- Em [`MediaUploadService::upload()`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Services/MediaUploadService.php#L26-L85), arquivos `.svg` (`image/svg+xml` / `text/xml`) são aceitos e salvos diretamente em `public/uploads/builder/` sem higienização do XML interno. Um arquivo SVG contendo `<script>`, `<foreignObject>` ou atributos `onload="..."` executa JavaScript se aberto diretamente no navegador.
-- **Solução:** Adicionar sanitização de SVG em [`MediaUploadService`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Services/MediaUploadService.php) (rejeitando/removendo `<script>`, `<foreignObject>`, handlers `on*=` e `javascript:` antes de persistir o arquivo).
-
----
-
-## 6. Falta de Escrita Atômica e Sanitização CSS em `DesignTokens` (Médio — Segurança e Persistência)
-
-- [`DesignTokens::updateTokens()`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Models/DesignTokens.php#L106-L115) ainda utiliza `@file_put_contents()` direto em vez de escrita atômica (`.tmp` + `rename()`).
-- [`DesignTokens::generateCssVariables()`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Models/DesignTokens.php#L123-L143) concatena `{$val}` diretamente dentro de `<style id="flexbuilder-design-tokens">:root { ... }</style>` sem remover caracteres de quebra de contexto CSS/HTML (`;`, `{`, `}`, `</style>`).
-
----
-
-## 7. Sanitização de CSS e URLs (`javascript:`) nos Demais Blocos (Médio — Segurança)
-
-- Alguns blocos restantes ainda interpolam propriedades de estilo ou URLs diretamente sem passar por `sanitizeCssValue()` ou validação de protocolo:
-  - **URLs (`href` / `link`):** [`ButtonBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ButtonBlock.php), [`CtaButtonBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/CtaButtonBlock.php), [`ImageBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ImageBlock.php) e [`SocialIconsBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/SocialIconsBlock.php) devem bloquear esquemas perigosos (`javascript:`, `data:text/html`, `vbscript:`).
-  - **Valores CSS inline:** [`ImageBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ImageBlock.php), [`VideoBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/VideoBlock.php), [`DividerBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/DividerBlock.php), [`NavMenuBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/NavMenuBlock.php) e [`PostCardsGridBlock`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/PostCardsGridBlock.php) devem higienizar dimensões/cores interpoladas em atributos `style`.
-
----
-
-## 8. Remoção dos Últimos Service Locators (`$GLOBALS['app']`) (Médio — Arquitetura SOLID / DIP)
-
-- Ainda restam 3 pontos usando `$GLOBALS['app']`:
-  1. [`NavMenuBlock::resolveMenuItems()`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/NavMenuBlock.php#L323) — deve receber `MenuProviderInterface` opcional via construtor (injetado pelo [`CoreBlockProvider`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Providers/CoreBlockProvider.php)).
-  2. [`ShortcodeBlock::render()`](file:///d:/xampp/htdocs/domain-system/src/Core/Theme/Parts/Blocks/ShortcodeBlock.php#L52) — deve receber um callback/resolver ou `ThemePartRendererInterface` lazy via construtor sem depender de `$GLOBALS['app']`.
-  3. [`ThemeController`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/Controllers/ThemeController.php#L54-L83) — deve receber `SiteStateInterface`, `ThemeManager` e `ThemePartRendererInterface` via injeção de dependência no construtor.
+#### P3 — Segurança/Resiliência
+- Validar uploads com `finfo_file()` + limite de tamanho + dimensões.
+- Tornar a persistência de partes **atômica** (temp file + rename) como `AtomicJsonStore`.
+- Adicionar rate-limit no endpoint `preview` (evita DoS de compilação).
 
 ---
 
-## 9. Acoplamento e Sanitização no Subsistema `BuilderFlex` (Baixo/Médio — Coesão e Segurança)
+## 4. Segurança
 
-- [`BuilderAdminController`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/BuilderFlex/Controllers/BuilderAdminController.php#L26) importa diretamente `DomainSystem\Plugins\pages\Contracts\PageRepositoryInterface` (acoplamento duro entre plugins) e usa `extract($builderData)` sem `EXTR_SKIP`.
-- [`DtoRenderer`](file:///d:/xampp/htdocs/domain-system/src/Plugins/flextheme/BuilderFlex/Renderers/DtoRenderer.php#L34-L86) renderiza `TextWidget` e `styles` sem passar pelo `HtmlSanitizerInterface` / `sanitizeCssValue()`.
+### 4.1 Já bem resolvido
+- XSS: `htmlspecialchars(..., ENT_QUOTES, 'UTF-8')` nos blocos e no `DtoRenderer`.
+- URLs: `sanitizeUrl` bloqueia `javascript:` (testado).
+- CSS: `sanitizeCssValue` remove `</style>`, `<script>`, `javascript:` (testado).
+- Path traversal: `realpath()` + prefixo em templates e Zip Slip.
+- CSRF: middleware global.
+- Sessão: HttpOnly, SameSite=Strict, Strict Mode.
+
+### 4.2 Melhorias recomendadas
+- **CSP (Content-Security-Policy)**: hoje o sistema permite inline scripts/styles (necessário para o builder). Recomendar nonces por request para scripts do admin.
+- **Sanitização de SVG no upload**: usar allowlist de elementos/atributos (DOMPurify no front ou biblioteca PHP como `enshrined/svg-sanitize`).
+- **Limites de upload**: validar `$_FILES` via `Request::file()` + tamanho + MIME real.
 
 ---
 
-## Plano de Execução Proposto
+## 5. Performance e escalabilidade
 
-1. **Fase 1 — Alinhamento Total Studio JS ↔ Blocos PHP:** Atualizar `LogoBlock`, `HeadingBlock`, `ParagraphBlock`, `CustomCodeBlock`, `ShortcodeBlock`, `CopyrightBlock`, `CtaButtonBlock` e `builder_editor.php` para suportarem ambos os formatos de chaves (retrocompatível com JSONs existentes e 100% fiel ao Inspetor).
-2. **Fase 2 — Blindagem de Ciclo e Limpeza de Órfãos:** Adicionar guarda anti-recursão em `ThemePartRenderer` e `removePartReferences()` em `ThemePartAssociationInterface` / `JsonThemePartAssociation` / `ThemePartManagementService`.
-3. **Fase 3 — Segurança em SVG, DesignTokens e Blocos:** Sanitizar uploads `.svg` em `MediaUploadService`, aplicar escrita atômica + sanitização CSS em `DesignTokens` e bloquear `javascript:` / CSS injection nos blocos restantes e no `DtoRenderer`.
-4. **Fase 4 — Injeção de Dependência Limpa e Fix do Simulador de Tokens:** Eliminar `$GLOBALS['app']` de `NavMenuBlock`, `ShortcodeBlock` e `ThemeController`, desacoplar `BuilderAdminController` e corrigir o `.style.setProperty(..., 'important')` em `tokens_editor.php`.
-5. **Fase 5 — Suíte de Testes Unitários Round 2:** Criar testes cobrindo todas as 9 correções no PHPUnit.
+1. **Renderização de partes**: `ThemePartRenderer` compila toda a árvore a cada request. Recomendar cache de HTML renderizado por `(partId, breakpoint, tokensVersion)` com invalidação por salvamento.
+2. **Design Tokens**: `generateCssVariables()` é chamado repetidamente; cachear em arquivo CSS estático regenerado ao salvar tokens.
+3. **JS Studio**: re-render completo do canvas a cada `tree:changed`. Recomendar reconciliação incremental (patch DOM) ou virtual DOM leve.
+4. **Autoload**: PSR-4 com array de paths para plugins (`src/Plugins/`, `bundled_plugins/`). OK, mas considerar classmap em produção (`composer dump-autoload -o`).
+
+---
+
+## 6. Qualidade de código e testes
+
+### 6.1 Cobertura atual
+- 433+ testes (conforme docs). Guardrails de arquitetura ativos.
+- Flex Builder possui 2 suítes de auditoria dedicadas (Unified + Round 2) com 21 testes e 242 asserções.
+
+### 6.2 Lacunas
+- Sem testes para `BuilderFlex` (widgets, `DtoRenderer` tem teste indireto via Round2).
+- Sem testes de integração do endpoint `/admin/builder/preview` com payload real.
+- Sem testes de acessibilidade (a11y) do Studio.
+- Sem testes de performance (tempo de renderização de partes grandes).
+
+### 6.3 Recomendação — teste de contrato para novos blocos
+
+```php
+// tests/Unit/BlockContractTest.php
+public function testEveryRegisteredBlockImplementsRequiredContracts(): void
+{
+    $registry = DefaultBlockRegistryFactory::create();
+    foreach ($registry->all() as $block) {
+        $this->assertInstanceOf(BlockInterface::class, $block);
+        $this->assertInstanceOf(RenderableBlockInterface::class, $block);
+        if ($block instanceof SchemaAwareBlockInterface) {
+            $this->assertIsArray($block->getSchema());
+        }
+    }
+}
+```
+
+---
+
+## 7. Novas técnicas de programação recomendadas (para Gemini / equipe)
+
+### 7.1 Strict Value Objects + validação centralizada
+
+```php
+final readonly class PartId
+{
+    public function __construct(public string $value)
+    {
+        if (!preg_match('/^[a-z0-9_-]{3,64}$/', $value)) {
+            throw new InvalidArgumentException('ID de parte inválido.');
+        }
+    }
+}
+```
+
+Uso: `ThemePart::__construct(PartId $id, ...)` elimina validação espalhada.
+
+### 7.2 Result Monad para operações que podem falhar
+
+```php
+final class Result
+{
+    private function __construct(public readonly bool $ok, public readonly mixed $value, public readonly ?string $error = null) {}
+    public static function ok(mixed $v): self { return new self(true, $v); }
+    public static function fail(string $e): self { return new self(false, null, $e); }
+}
+```
+
+Aplicar em `savePart`/`deletePart` para respostas HTTP previsíveis.
+
+### 7.3 Event Sourcing leve para o builder (auditoria de mudanças)
+
+```js
+// assets/js/core/History.js
+export class History {
+    constructor(bus, state) {
+        this.undo = [];
+        this.redo = [];
+        bus.on('tree:changed', snapshot => this.push(snapshot));
+    }
+    push(snapshot) { this.undo.push(structuredClone(snapshot)); this.redo = []; }
+    undoStep() { /* restaura último snapshot */ }
+}
+```
+
+Permite Ctrl+Z/Ctrl+Y no Studio (hoje inexistente).
+
+### 7.4 Schema-driven UI (JSON Schema → Inspector)
+
+Em vez de `FieldFactory` manual, gerar o inspetor a partir do schema do bloco:
+
+```php
+public function getSchema(): array
+{
+    return [
+        'text'  => ['type' => 'string', 'label' => 'Texto', 'default' => ''],
+        'color' => ['type' => 'color', 'label' => 'Cor', 'default' => '#000000'],
+    ];
+}
+```
+
+```js
+// InspectorPanel renderiza campos dinamicamente a partir de block.schema
+render(node) {
+    const schema = node.schema ?? {};
+    this.body.innerHTML = Object.entries(schema).map(([k, def]) => FieldFactory.create(k, def, node.props[k])).join('');
+}
+```
+
+### 7.5 Atomic write helper (Ring 0)
+
+```php
+final class AtomicFileWriter
+{
+    public static function write(string $path, string $contents): void
+    {
+        $tmp = $path . '.tmp.' . bin2hex(random_bytes(4));
+        file_put_contents($tmp, $contents, LOCK_EX);
+        rename($tmp, $path);
+    }
+}
+```
+
+Aplicar em tokens, partes e views geradas.
+
+### 7.6 Observabilidade (OpenTelemetry-friendly)
+
+- Adicionar `traceId`/`spanId` no `ErrorHandler` e nos logs `[FlexBuilder][...]`.
+- Expor métricas (tempo de renderização de parte, tamanho do payload de preview) via hook `metrics.collect`.
+
+---
+
+## 8. Plano de ação sugerido (sprints)
+
+| Sprint | Foco | Entregas |
+|---|---|---|
+| S1 | Higiene | Codemod strict_types (246 arquivos); criar `manual/module.php` nos 7 plugins; ajustar `composer.json` para `>=8.2` |
+| S2 | Flex Builder P0 | Expor todos os blocos do Core no Studio; testes E2E básicos |
+| S3 | Arquitetura | `WidgetCatalogInterface`; quebrar controller; remover `new` fallbacks |
+| S4 | JS moderno | Migrar para ES Modules + Vite; History (undo/redo); schema-driven inspector |
+| S5 | Resiliência | Persistência atômica; cache de renderização; rate-limit preview; CSP com nonces |
+| S6 | Observabilidade | Métricas, tracing, a11y |
+
+---
+
+## 9. Checklist de aceite (DoD)
+
+- [ ] `php -dextension=zip phpunit.phar` 100% verde (Unit + Architecture + Regression).
+- [ ] `grep -R "declare(strict_types=1)" src` cobre 100% dos arquivos PHP.
+- [ ] Todos os plugins possuem `manual/module.php`.
+- [ ] Nenhum controller/service instancia `new ConcreteService()` (DIP puro).
+- [ ] Flex Builder expõe o catálogo completo de blocos do Core.
+- [ ] Studio possui undo/redo e testes E2E.
+- [ ] Uploads validados por MIME real + limites.
+- [ ] Persistência atômica em tokens/partes/views.
+- [ ] Cache de renderização de partes com invalidação.
+- [ ] Documentação atualizada (`docs/auditoria.md` + `auditoria-cline.md`).
+
+---
+
+## 10. Observações finais
+
+A base está sólida e os guardrails automatizados são um diferencial. O maior ganho de curto prazo vem de **higiene (strict_types + manuals)** e de **unificação do catálogo de blocos** no Flex Builder. O maior ganho de médio prazo vem da **modernização do JS** (módulos + testes) e da **redução do acoplamento** no controller de 17 dependências.
+
+> Auditoria gerada por Cline com leitura direta do código-fonte e execução de suítes PHPUnit alvo.
+
+---
+
+## 11. Consolidação das auditorias anteriores (ChatGPT, DeepSeek, Nemotron)
+
+O projeto já possui 3 auditorias em `auditoria/` (ChatGPT.txt, DeepSeek.txt, Nemotron.md). Esta seção consolida seus achados para evitar retrabalho e registrar o que já foi corrigido vs. o que permanece.
+
+### 11.1 O que já foi corrigido (verificado no código atual)
+| Achado anterior | Status atual | Evidência |
+|---|---|---|
+| Duplicação Preview vs. Frontend | ✅ Corrigido | `ThemePartPreviewService` delega a `ThemePartCompilerInterface::compilePart()` |
+| Validação estrutural | ✅ Corrigido | `ThemePartValidator` com limites de título, ID, seções, colunas, blocos e profundidade |
+| Tratamento HTTP de erros | ✅ Corrigido | `savePart()` distingue 422/400/500; preview retorna mensagem genérica em 500 |
+| Compensação parcial de associações | 🟡 Parcial | `saveFromPayload()` restaura parte/associações, mas **não captura/restaura template anterior** |
+| Sanitização SVG no upload | 🟡 Parcial | `MediaUploadService` usa `DOMDocument` + allowlist, mas sanitização CSS do SVG é baseada em padrões |
+| Sanitização CSS inline | 🟡 Parcial | `sanitizeInlineStyle()` usa blocklist; recomendado allowlist por propriedade/valor |
+| God Class `ThemePartsAdminController` | ❌ Pendente | 17-18 dependências + fallbacks `new` |
+| `ThemePartPreviewService` com classes anônimas | ❌ Pendente | Cria repo/associação vazios quando compiler não injetado |
+| JS global/namespaced sem bundler | ❌ Pendente | `window.BuilderFlex` em todos os módulos |
+| Widgets do BuilderFlex não expõem todos os blocos do Core | ❌ Pendente | Apenas Container/Text/Logo |
+
+### 11.2 Achados adicionais consolidados (ainda não cobertos na seção 3)
+
+| # | Fonte | Arquivo/Símbolo | Achado | Severidade |
+|---|---|---|---|---|
+| C1 | DeepSeek | `JsonThemePartRepository::all()` | `glob()` sem ordenação determinística → ordem inconsistente por OS | Média |
+| C2 | DeepSeek | `LayerTreeBuilder` | Fallback por regex `^(\\d+)_col` falha em `cards_grid_4` e `2_cols_split` | Baixa |
+| C3 | DeepSeek | `ThemePartRenderer::$tokensInjected` (static) | Não reseta entre testes de integração; `resetInjectedState()` nunca chamado | Média |
+| C4 | DeepSeek | `SafeHtmlSanitizer::isSafeUrl()` vs `LogoBlock` | `mailto:`/`tel:` permitidos; fallback de `image_url` vira `''` (UX ruim) | Baixa |
+| C5 | DeepSeek | `ShortcodeBlock` + `ShortcodeManager::parse()` | Sem limite de profundidade de parse; risco de recursão em shortcodes de terceiros | Média |
+| C6 | Nemotron | `Plugin.php` + `WidgetManager::bootShortcodes()` | Widgets do Builder vazam para o namespace global de shortcodes do Kernel (OCP/DIP) | Média |
+| C7 | Nemotron | `JsonRenderer::__construct()` | `new DtoRenderer()` inline quebra DIP | Baixa |
+| C8 | Nemotron | `Plugin.php` (200+ linhas) | `bootBuilderFlex()` concentra DI, widgets, shortcodes e menu admin | Média |
+| C9 | DeepSeek | `ThemePartManagementService::deletePart()` | Não verifica se `removePartReferences()` teve sucesso (órfãos silenciosos) | Média |
+| C10 | ChatGPT | `saveFromPayload()` | Associação de template não captura/restaura valor anterior na compensação | Alta (integridade) |
+| C11 | ChatGPT | `ThemePartValidator` (dependências opcionais) | Se `blockRegistry`/`layoutGrid` forem nulos, verificações dependentes podem não ocorrer | Média |
+| C12 | DeepSeek | `StagedUpdateApplier::revert()` | Não rastreia `removed[]` no rollback; sem `RollbackFailedException` explícito | Baixa |
+
+### 11.3 Veredito consolidado (Cline)
+
+A Gemini aplicou **melhorias estruturais reais** (compilador unificado, validador dedicado, tratamento HTTP, sanitização SVG). Porém, permanecem:
+
+1. **Integridade de dados incompleta** (compensação parcial de template, delete sem verificar limpeza).
+2. **Segurança de CSS/SVG não comprovada por testes** (blocklist em vez de allowlist).
+3. **Concentração de responsabilidades** no controller (God Class).
+4. **DIP quebrado** por fallbacks `new` e classes anônimas.
+5. **JS legado** sem módulos/testes.
+
+**Não é possível afirmar que o FlexTheme está "plenamente SOLID ou pronto para produção"** sem a bateria de testes de contrato listada na seção 6.3 e testes funcionais no Studio.
+
+
+---
+
+## 12. Correções cirúrgicas recomendadas (snippets para aplicação)
+
+### 12.1 Compensação transacional completa em `saveFromPayload`
+
+```php
+$previousTemplate = $this->partAssoc->getAssignedTemplateForSection($targetTheme, $id);
+// ... tentativa ...
+if (!$ok) {
+    $this->partAssoc->assignTemplateToSection($targetTheme, $id, $previousTemplate);
+    $this->partAssoc->assignPart($assignedTheme, $type, $previousThemeAssignedId);
+    $this->partAssoc->setGlobalDefault($type, $previousGlobalDefault);
+    if ($previousPart !== null) { $this->partRepo->save($previousPart); }
+    else { $this->partRepo->delete($id); }
+    throw new RuntimeException('Falha ao associar template; estado restaurado.');
+}
+```
+
+### 12.2 CSS allowlist (substituir blocklist)
+
+```php
+private const ALLOWED_CSS_PROPS = ['color','background-color','font-size','font-weight','margin','padding','border','border-radius','display','gap'];
+private const SAFE_CSS_VALUE = '/^[a-zA-Z0-9#.,()\\s%\\-]+$/';
+
+public function sanitizeCssValue(string $value): string
+{
+    $value = trim($value);
+    if ($value === '' || !preg_match(self::SAFE_CSS_VALUE, $value)) return '';
+    if (preg_match('/url\\s*\\(|expression|javascript:/i', $value)) return '';
+    return $value;
+}
+```
+
+### 12.3 Remover `static` de `ThemePartRenderer::$tokensInjected`
+
+```php
+private bool $tokensInjected = false;
+public function resetInjectedState(): void { $this->tokensInjected = false; }
+```
+
+### 12.4 Verificar limpeza de referências em `deletePart`
+
+```php
+if ($deleted && !$this->partAssoc->removePartReferences($cleanId)) {
+    error_log('[FlexBuilder][deletePart] Falha ao remover referências órfãs de ' . $cleanId);
+}
+```
+
+### 12.5 Limitar profundidade de parse em `ShortcodeManager`
+
+```php
+private int $parseDepth = 0;
+private const MAX_PARSE_DEPTH = 10;
+public function parse(string $content): string
+{
+    if ($this->parseDepth >= self::MAX_PARSE_DEPTH) {
+        error_log('[ShortcodeManager] Profundidade máxima de parse atingida.');
+        return $content;
+    }
+    $this->parseDepth++;
+    try { /* parse existente */ return $result; }
+    finally { $this->parseDepth--; }
+}
+```
+
+### 12.6 Ordenação determinística em `JsonThemePartRepository::all()`
+
+```php
+$parts = $this->loadAllFromDisk();
+usort($parts, static fn(ThemePartInterface $a, ThemePartInterface $b) =>
+    $b->getUpdatedAt() <=> $a->getUpdatedAt()
+);
+return $parts;
+```
 
 
 /* ---------------------------------------------------------------------------- */
@@ -7553,7 +7759,7 @@ BuilderFlex.Editor = class Editor {
     "version": "2.5.0",
     "type": "project",
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0"
@@ -21584,6 +21790,8 @@ class LawyerWorkspace implements WorkspaceInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
@@ -22139,6 +22347,8 @@ class RuntimeDirectories
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Cockpit;
 
 use DomainSystem\Core\Contracts\CockpitRegistryInterface;
@@ -22165,6 +22375,8 @@ class CockpitRegistry implements CockpitRegistryInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Config;
 
@@ -22203,6 +22415,8 @@ class DatabaseConfig
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Container;
 
@@ -22347,6 +22561,8 @@ class Container implements ContainerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface CapabilityRegistrarInterface
@@ -22360,6 +22576,8 @@ interface CapabilityRegistrarInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22377,6 +22595,8 @@ interface CockpitProviderInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface CockpitRegistryInterface
@@ -22391,6 +22611,8 @@ interface CockpitRegistryInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22428,6 +22650,8 @@ interface ContainerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface DashboardWidgetProviderInterface
@@ -22458,6 +22682,8 @@ interface DashboardWidgetProviderInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 use PDO;
@@ -22473,6 +22699,8 @@ interface DatabaseConnectionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22612,6 +22840,8 @@ interface ManualModuleInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 use DomainSystem\Core\Http\Request;
@@ -22642,6 +22872,8 @@ interface MiddlewareInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22691,6 +22923,8 @@ interface NavigationManagerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface NotificationManagerInterface
@@ -22733,6 +22967,8 @@ interface NotificationManagerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface OsConnectorInterface
@@ -22756,6 +22992,8 @@ interface OsConnectorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22790,6 +23028,8 @@ interface OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22843,6 +23083,8 @@ interface PageLookupInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface PageTreeRendererInterface
@@ -22856,6 +23098,9 @@ interface PageTreeRendererInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface PasswordPolicyInterface
@@ -22869,6 +23114,8 @@ interface PasswordPolicyInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22888,6 +23135,8 @@ interface PluginLifecycleInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface PluginMetadataInterface
@@ -22906,6 +23155,8 @@ interface PluginMetadataInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -22985,6 +23236,8 @@ interface PublicStorageInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface RequestInterface
@@ -23004,6 +23257,8 @@ interface RequestInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Contracts;
 
 interface ResponseInterface
@@ -23022,6 +23277,8 @@ interface ResponseInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -23092,6 +23349,8 @@ interface SchemaDoctorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -23339,6 +23598,8 @@ interface ThemeActivatorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Contracts;
 
@@ -24271,6 +24532,8 @@ interface VersionComparatorInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Database;
 
 use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
@@ -24819,6 +25082,8 @@ final class RunnerSchemaMigrator implements SchemaMigratorInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Error;
 
 use DomainSystem\Core\Contracts\JsonStoreInterface;
@@ -24935,6 +25200,8 @@ class CircuitBreaker
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Error;
 
 use Throwable;
@@ -25014,6 +25281,8 @@ class ErrorHandler
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Error;
 
 use DomainSystem\Core\Contracts\JsonStoreInterface;
@@ -25066,6 +25335,8 @@ class ErrorLogger
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Error;
 
@@ -25164,6 +25435,8 @@ class ErrorRenderer
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Events;
 
 use DomainSystem\Core\Contracts\EventDispatcherInterface;
@@ -25261,6 +25534,8 @@ final class HookPriority
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Exceptions;
 
 use DomainSystem\Core\Http\Response;
@@ -25277,7 +25552,8 @@ class HttpResponseException extends RuntimeException
 
     public function __construct(Response $response, string $message = '', int $code = 0)
     {
-        parent::__construct($message, $code || $response->getStatusCode());
+        $statusCode = $code !== 0 ? $code : $response->getStatusCode();
+        parent::__construct($message, $statusCode);
         $this->response = $response;
     }
 
@@ -25293,6 +25569,8 @@ class HttpResponseException extends RuntimeException
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Exceptions;
 
@@ -25397,6 +25675,8 @@ class CachePolicy
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -25493,7 +25773,7 @@ class HttpKernel
                 $response = new JsonResponse($response);
             } else {
                 $wrap = false;
-                if (strpos($uri, '/admin') === 0 && !isset($request->query['raw']) && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
+                if (strpos($uri, '/admin') === 0 && !isset($request->query['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
                     $wrap = true;
                 }
                 $response = new ViewResponse((string)$response, $wrap);
@@ -25626,6 +25906,8 @@ class MaintenancePolicy
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http;
 
 use DomainSystem\Core\Contracts\RequestInterface;
@@ -25741,6 +26023,8 @@ class Request implements RequestInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http;
 
 use DomainSystem\Core\Contracts\ResponseInterface;
@@ -25845,6 +26129,9 @@ class Response implements ResponseInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http\Responses;
 
 use DomainSystem\Core\Http\Response;
@@ -25870,6 +26157,9 @@ class JsonResponse extends Response
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http\Responses;
 
 use DomainSystem\Core\Http\Response;
@@ -25894,6 +26184,9 @@ class RedirectResponse extends Response
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http\Responses;
 
 use DomainSystem\Core\Http\Response;
@@ -25923,6 +26216,8 @@ class ViewResponse extends Response
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Http;
 
@@ -26256,6 +26551,8 @@ class PluginManualScanner
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Monitoring;
 
 use DomainSystem\Core\Contracts\NotificationManagerInterface;
@@ -26439,6 +26736,8 @@ class RequestMetricsRecorder
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -26524,6 +26823,8 @@ abstract class AbstractPlugin implements PluginInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin;
 
@@ -26657,6 +26958,8 @@ class LinkRegistry
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin;
 
@@ -26924,6 +27227,8 @@ class OsRuntime implements OsRuntimeInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin;
 
 use DomainSystem\Core\Contracts\PluginLifecycleInterface;
@@ -26942,6 +27247,8 @@ interface PluginInterface extends PluginLifecycleInterface, PluginMetadataInterf
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin;
 
@@ -27101,6 +27408,8 @@ class PluginManager
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin\Services;
 
 use DomainSystem\Core\Plugin\PluginInterface;
@@ -27219,6 +27528,8 @@ class PluginBootStack
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin\Services;
 
@@ -27688,6 +27999,8 @@ class PluginBootstrapper
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin\Services;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -27795,6 +28108,8 @@ class PluginDiscoverer
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin\Services;
 
@@ -27936,6 +28251,8 @@ class PluginInstaller
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Plugin\Services;
 
 use DomainSystem\Core\Contracts\JsonStoreInterface;
@@ -28004,6 +28321,8 @@ class PluginStateManager
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Plugin\Services;
 
@@ -28388,6 +28707,8 @@ class ProcessRegistry
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Providers;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -28661,6 +28982,8 @@ class CoreServiceProvider
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Registry;
 
 use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
@@ -28701,6 +29024,8 @@ class DashboardWidgetRegistry
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Routing\Middlewares;
 
@@ -28773,6 +29098,8 @@ class AuthMiddleware implements MiddlewareInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Routing\Middlewares;
 
@@ -28873,6 +29200,8 @@ class CsrfMiddleware implements MiddlewareInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Routing;
 
@@ -29031,6 +29360,8 @@ class Router implements RouterInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Security;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -29133,6 +29464,8 @@ class IdentityManager
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Security;
 
@@ -29342,6 +29675,9 @@ class PasswordAnalyzer
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Security;
 
 use DomainSystem\Core\Contracts\PasswordPolicyInterface;
@@ -29364,6 +29700,8 @@ class PasswordPolicy implements PasswordPolicyInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Security;
 
@@ -30107,6 +30445,8 @@ class EnvSiteState implements SiteStateInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme;
 
@@ -35837,6 +36177,15 @@ class JsonThemePartRepository implements ThemePartRepositoryInterface
             }
         }
 
+        // Ordenação determinística estável: decrescente por updatedAt, desempate por ID
+        usort($parts, static function (ThemePartInterface $a, ThemePartInterface $b): int {
+            $updatedCmp = $b->getUpdatedAt() <=> $a->getUpdatedAt();
+            if ($updatedCmp !== 0) {
+                return $updatedCmp;
+            }
+            return strcmp($a->getId(), $b->getId());
+        });
+
         return $parts;
     }
 }
@@ -37658,6 +38007,8 @@ class SafeThemeResolver
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Theme;
 
 class ShortcodeManager
@@ -37922,6 +38273,8 @@ class ThemeActivator implements ThemeActivatorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme;
 
@@ -45042,6 +45395,8 @@ final readonly class VerifiedPackage
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Utils\Archive;
 
 use Exception;
@@ -45068,6 +45423,8 @@ class ExtractorFactory
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Core\Utils\Archive;
 
@@ -45488,6 +45845,9 @@ class ZipArchiveExtractor implements ExtractorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Workspace;
 
 use DomainSystem\Core\Theme\ThemeManager;
@@ -45536,6 +45896,9 @@ class DefaultWorkspace implements WorkspaceInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Workspace;
 
 /**
@@ -45561,6 +45924,9 @@ interface WorkspaceInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Workspace;
 
 use DomainSystem\Core\Container\Container;
@@ -45626,6 +45992,8 @@ class WorkspaceManager
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 /**
  * Domain-System Helper Functions
@@ -56653,6 +57021,8 @@ $nextLesson = $adjacent['next'] ?? null;
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\analytics\Controllers;
 
 use DomainSystem\Core\Http\Request;
@@ -56699,6 +57069,8 @@ class TrackerController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\analytics;
 
@@ -56790,6 +57162,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\analytics\Widgets;
 
@@ -56890,6 +57264,66 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
 
 
 /* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/analytics/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'analytics';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Analytics & Métricas';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Monitoramento de visualizações de páginas, eventos de interação e widgets de audiência.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Módulo Auto-Descoberto • Analytics v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#06b6d4';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin/analytics';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'analytics-metrics-check',
+                'label' => 'Validar o registro de acessos nas rotas públicas e nos widgets informativos.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O módulo <strong>Analytics</strong> provê métricas consolidadas de engajamento e exibição de páginas, integrando-se aos cards do Cockpit.</p>
+        </div>";
+    }
+};
+
+
+/* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/src/Plugins/analytics/plugin.json
 /* ---------------------------------------------------------------------------- */
 
@@ -56907,6 +57341,9 @@ class AnalyticsWidgetProvider implements DashboardWidgetProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\clock_widget;
 
 use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
@@ -57007,6 +57444,9 @@ class ClockWidgetProvider implements DashboardWidgetProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\clock_widget;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -57050,6 +57490,66 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 
 /* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/clock_widget/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'clock_widget';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Relógio do Sistema (Clock Widget)';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Widget visual de horário e fuso horário para o painel de controle.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Widget Auto-Descoberto • Clock v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#f59e0b';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'clock-display-check',
+                'label' => 'Verificar a sincronização do horário do servidor no Cockpit administrativo.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O <strong>Clock Widget</strong> exibe informações de data, hora e fuso horário configurado no ambiente da aplicação diretamente na tela principal do painel.</p>
+        </div>";
+    }
+};
+
+
+/* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/src/Plugins/clock_widget/plugin.json
 /* ---------------------------------------------------------------------------- */
 
@@ -57068,6 +57568,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Contracts;
 
@@ -57101,6 +57603,8 @@ interface WidgetInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Contracts;
 
@@ -57274,6 +57778,8 @@ class BuilderAdminController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
@@ -57435,6 +57941,8 @@ abstract class AbstractWidget implements WidgetInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 use RuntimeException;
@@ -57506,6 +58014,8 @@ final class AssetBundle
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
@@ -57663,6 +58173,8 @@ class DtoRenderer
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
@@ -57728,6 +58240,8 @@ class JsonRenderer implements PageTreeRendererInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
@@ -57797,6 +58311,8 @@ class WidgetManager implements WidgetManagerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Widgets;
 
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\AbstractWidget;
@@ -57841,6 +58357,8 @@ class LogoWidget extends AbstractWidget
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Widgets;
 
@@ -60661,6 +61179,8 @@ BuilderFlex.WidgetRegistry = (function () {
 
 <?php
 
+declare(strict_types=1);
+
 /**
  * Manifesto dos módulos front-end do Builder Flex.
  *
@@ -60998,6 +61518,8 @@ interface ThemePartPreviewServiceInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\Controllers;
 
@@ -61390,7 +61912,7 @@ class ThemePartsAdminController
         $this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
         $this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
         $this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
-        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->blockRegistry, $this->layoutGrid, $this->tokens, $this->styleRenderer, $this->renderer);
+        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->renderer);
         $this->managementService = $managementService ?? new ThemePartManagementService(
             $this->partRepo,
             $this->partAssoc,
@@ -61851,6 +62373,8 @@ class ThemePartsAdminController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -62050,10 +62574,6 @@ class BuilderFlexBootstrapper
 
         $runtime->singleton(ThemePartPreviewServiceInterface::class, function ($c) {
             return new ThemePartPreviewService(
-                $c->make(BlockRegistryInterface::class),
-                $c->make(LayoutGridInterface::class),
-                $c->make(DesignTokensInterface::class),
-                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null,
                 $c->make(ThemePartCompilerInterface::class)
             );
         });
@@ -62761,11 +63281,17 @@ class ThemePartManagementService
         }
         unset($sec);
 
-        // Captura snapshot anterior da parte para compensação caso uma associação falhe após o save
+        // Captura snapshot anterior da parte e associações para compensação caso uma associação falhe após o save
         $previousPart = $this->partRepo->findById($id);
         $previousGlobalDefault = $this->partAssoc->getGlobalDefault($type);
         $assignedTheme = !empty($input['assigned_theme']) ? (string)$input['assigned_theme'] : '';
         $previousThemeAssignedId = $assignedTheme !== '' ? $this->partAssoc->getAssignedPartId($assignedTheme, $type) : null;
+        $targetTheme = $assignedTheme !== ''
+            ? $assignedTheme
+            : $this->themeDiscovery->getActiveThemeFolder();
+        $previousSectionTemplate = ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template']))
+            ? $this->partAssoc->getAssignedTemplateForSection($targetTheme, $id)
+            : null;
 
         $part = new ThemePart(
             $id,
@@ -62801,9 +63327,6 @@ class ThemePartManagementService
             }
 
             if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
-                $targetTheme = $assignedTheme !== ''
-                    ? $assignedTheme
-                    : $this->themeDiscovery->getActiveThemeFolder();
                 $templateChoice = trim((string)$input['assigned_template']);
                 $effectiveTemplate = ($templateChoice !== '' && $templateChoice !== 'none') ? $templateChoice : null;
                 if (!$this->partAssoc->assignTemplateToSection($targetTheme, $id, $effectiveTemplate)) {
@@ -62811,12 +63334,15 @@ class ThemePartManagementService
                 }
             }
         } catch (Throwable $e) {
-            // Compensação: restaura o estado anterior da parte e das associações já alteradas
+            // Compensação: restaura integralmente o estado anterior da parte e de todas as associações
             if ($isDefault) {
                 $this->partAssoc->setGlobalDefault($type, $previousGlobalDefault);
             }
             if ($assignedTheme !== '') {
                 $this->partAssoc->assignPart($assignedTheme, $type, $previousThemeAssignedId);
+            }
+            if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
+                $this->partAssoc->assignTemplateToSection($targetTheme, $id, $previousSectionTemplate);
             }
             if ($previousPart !== null) {
                 $this->partRepo->save($previousPart);
@@ -62885,7 +63411,10 @@ class ThemePartManagementService
 
         $deleted = $this->partRepo->delete($cleanId);
         if ($deleted) {
-            $this->partAssoc->removePartReferences($cleanId);
+            $cleaned = $this->partAssoc->removePartReferences($cleanId);
+            if (!$cleaned) {
+                error_log("[ThemePartManagementService] Aviso: referências de '{$cleanId}' podem não ter sido limpas integralmente.");
+            }
         }
 
         return $deleted;
@@ -62908,13 +63437,15 @@ use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartCompilerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
+use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartAssociation;
+use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository;
 use DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Layout\LayoutGridRenderer;
+use DomainSystem\Core\Theme\Parts\Styles\DesignTokens;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
 
 /**
@@ -62928,38 +63459,27 @@ class ThemePartPreviewService implements ThemePartPreviewServiceInterface
     private ThemePartCompilerInterface $compiler;
 
     public function __construct(
-        BlockRegistryInterface $blockRegistry,
-        LayoutGridInterface $layoutGrid,
-        DesignTokensInterface $tokens,
+        ThemePartCompilerInterface|BlockRegistryInterface $compilerOrRegistry,
+        ?LayoutGridInterface $layoutGrid = null,
+        ?DesignTokensInterface $tokens = null,
         ?ElementStyleRendererInterface $styleRenderer = null,
         ?ThemePartCompilerInterface $compiler = null
     ) {
-        $this->compiler = $compiler ?? new ThemePartRenderer(
-            new class implements ThemePartRepositoryInterface {
-                public function all(): array { return []; }
-                public function findByType(string $type): array { return []; }
-                public function findById(string $id): ?ThemePartInterface { return null; }
-                public function findDefaultByType(string $type): ?ThemePartInterface { return null; }
-                public function save(ThemePartInterface $part): bool { return false; }
-                public function delete(string $id): bool { return false; }
-            },
-            new class implements ThemePartAssociationInterface {
-                public function assignPart(string $themeFolder, string $partType, ?string $partId): bool { return false; }
-                public function getAssignedPartId(string $themeFolder, string $partType): ?string { return null; }
-                public function setGlobalDefault(string $partType, ?string $partId): bool { return false; }
-                public function getGlobalDefault(string $partType): ?string { return null; }
-                public function assignTemplateToSection(string $themeFolder, string $sectionId, ?string $templateSlug): bool { return false; }
-                public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): ?string { return null; }
-                public function removePartReferences(string $partId): bool { return false; }
-                public function getThemeAssignments(string $themeFolder): array { return []; }
-                public function getAllAssignments(): array { return []; }
-            },
-            $layoutGrid,
-            $blockRegistry,
-            $tokens,
-            null,
-            $styleRenderer ?? new ElementStyleRenderer()
-        );
+        if ($compilerOrRegistry instanceof ThemePartCompilerInterface) {
+            $this->compiler = $compilerOrRegistry;
+        } elseif ($compiler !== null) {
+            $this->compiler = $compiler;
+        } else {
+            $this->compiler = new ThemePartRenderer(
+                new JsonThemePartRepository(),
+                new JsonThemePartAssociation(),
+                $layoutGrid ?? new LayoutGridRenderer(),
+                $compilerOrRegistry,
+                $tokens ?? new DesignTokens(),
+                null,
+                $styleRenderer ?? new ElementStyleRenderer()
+            );
+        }
     }
 
     public function renderPreview(array $payload): string
@@ -64460,6 +64980,9 @@ $displaySiteName = $siteName ?? 'Domain-System OS';
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 // Layout Base Principal (Main HTML Shell)
 // O array $seo (SeoManagerInterface) já foi injetado pelo ThemeController
 
@@ -64993,6 +65516,9 @@ document.addEventListener('DOMContentLoaded', function() {
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 /**
  * Template Name: Tutoriais & Academy Cursos
  * Descrição: Template preparado para receber os shortcodes de cards do plugin Academy.
@@ -65372,6 +65898,9 @@ $safeTitle = htmlspecialchars($page['title'] ?? 'Tutoriais & Cursos', ENT_QUOTES
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 // Layout Base Principal (Main HTML Shell)
 // O array $seo (SeoManagerInterface) já foi injetado pelo ThemeController
 
@@ -65696,6 +66225,9 @@ $seo->setCanonical('https://rachidd.com')
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 /**
  * ============================================================================
  * ARQUIVO GERADO PELA FÁBRICA DE AULAS DO ACADEMY (Domain-System v2.4)
@@ -66325,6 +66857,9 @@ $seo->setCanonical('https://rachidd.com')
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 /**
  * ============================================================================
  * ARQUIVO GERADO PELA FÁBRICA DE AULAS DO ACADEMY (Domain-System v2.4)
@@ -67141,6 +67676,9 @@ $seo->setCanonical('https://rachidd.com')
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 /**
  * ============================================================================
  * ARQUIVO GERADO PELA FÁBRICA DE AULAS DO ACADEMY (Domain-System v2.4)
@@ -69271,6 +69809,9 @@ document.addEventListener('DOMContentLoaded', function() {
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 /**
  * Template Name: Tutoriais & Academy Cursos
  * Descrição: Template preparado para receber os shortcodes de cards do plugin Academy.
@@ -74744,6 +75285,9 @@ document.addEventListener('DOMContentLoaded', applyPreviewTokens);
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\nobreak_shield;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -74784,6 +75328,66 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 
 /* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/nobreak_shield/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'nobreak_shield';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Filtro de Resiliência de Interface (No-Break Shield)';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Camada de tolerância a falhas visuais para componentes de renderização do painel.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Resiliência • NoBreak v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#10b981';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin/supervision';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'nobreak-shield-check',
+                'label' => 'Validar a captura de exceções em widgets visuais do painel.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O <strong>No-Break Shield</strong> atua como interceptador de exceções em tempo de renderização de widgets para evitar que erros em componentes auxiliares interrompam a exibição do layout principal.</p>
+        </div>";
+    }
+};
+
+
+/* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/src/Plugins/nobreak_shield/plugin.json
 /* ---------------------------------------------------------------------------- */
 
@@ -74811,6 +75415,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\pages\Controllers;
 
@@ -74947,6 +75553,8 @@ class PageAdminController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\pages\Controllers;
 
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
@@ -75082,6 +75690,8 @@ class PageFrontController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\pages;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -75195,6 +75805,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\pages\Repositories;
 
@@ -75880,6 +76492,9 @@ document.addEventListener('DOMContentLoaded', function() {
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\radio_online;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -75961,6 +76576,9 @@ Esta permissão é registrada automaticamente ao ativar o plugin.
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\radio_online;
 
 use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
@@ -76235,6 +76853,66 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
 
 
 /* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/radio_online/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'radio_online';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Player de Áudio & Rádio Online';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Integração de streaming de áudio e player no painel administrativo.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Mídia • Rádio v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#8b5cf6';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'radio-stream-check',
+                'label' => 'Validar a conexão com o endpoint de streaming de áudio configurado.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O módulo <strong>Rádio Online</strong> disponibiliza um widget com suporte a streaming de áudio contínuo para reprodução no dashboard administrativo.</p>
+        </div>";
+    }
+};
+
+
+/* ---------------------------------------------------------------------------- */
 // Arquivo: domain-system/src/Plugins/radio_online/plugin.json
 /* ---------------------------------------------------------------------------- */
 
@@ -76253,6 +76931,8 @@ class RadioWidgetProvider implements DashboardWidgetProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\seo\Contracts;
 
@@ -76276,6 +76956,8 @@ interface AssetMinifierInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\seo\Contracts;
 
 interface HtmlOptimizerInterface
@@ -76293,6 +76975,8 @@ interface HtmlOptimizerInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\seo\Contracts;
 
@@ -76340,6 +77024,8 @@ interface SeoManagerInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\seo\Middlewares;
 
@@ -76415,6 +77101,8 @@ class SeoMiddleware
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\seo;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -76467,6 +77155,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\seo\Services;
 
@@ -76564,6 +77254,8 @@ class AssetPipeline
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\seo\Services;
 
 use DomainSystem\Plugins\seo\Contracts\HtmlOptimizerInterface;
@@ -76611,6 +77303,8 @@ class HtmlOptimizer implements HtmlOptimizerInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\seo\Services;
 
 use DomainSystem\Plugins\seo\Contracts\AssetMinifierInterface;
@@ -76650,6 +77344,8 @@ class NativeAssetMinifier implements AssetMinifierInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\seo\Services;
 
@@ -76816,6 +77512,8 @@ return new class implements ManualModuleInterface {
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\Plugins\settings\Controllers;
 
@@ -77123,6 +77821,8 @@ class SettingsController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\settings;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -77217,6 +77917,70 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php namespace DomainSystem\Plugins\settings\Repositories; use DomainSystem\SystemApps\Database\Connection; use DomainSystem\Plugins\settings\Contracts\SettingRepositoryInterface; class SettingRepository implements SettingRepositoryInterface { private \PDO $db; public function __construct(Connection $connection) { $this->db = $connection->getPdo(); } public function getAll(): array { $stmt = $this->db->query("SELECT * FROM settings"); return $stmt->fetchAll(\PDO::FETCH_ASSOC); } public function upsert(string $key, string $value): void { $stmt = $this->db->prepare("INSERT INTO settings (key_name, key_value) VALUES (:k, :v) ON DUPLICATE KEY UPDATE key_value = VALUES(key_value)"); $stmt->execute([":k" => $key, ":v" => $value]); } }
+
+
+/* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/settings/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'settings';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Configurações Globais da Plataforma';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Gerenciamento de parâmetros do sistema, chaves globais, URLs e atualizações do núcleo.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Núcleo • Configurações v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#64748b';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin/settings';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'settings-url-check',
+                'label' => 'Verificar o endereço base e o nome configurado para a aplicação.',
+            ],
+            [
+                'id'    => 'settings-update-check',
+                'label' => 'Consultar a aba Atualizações para verificar versões mais recentes.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O módulo <strong>Settings</strong> centraliza os parâmetros globais do sistema, opções de cabeçalhos de segurança e interface com o atualizador automático via GitHub Releases.</p>
+        </div>";
+    }
+};
 
 
 /* ---------------------------------------------------------------------------- */
@@ -77442,6 +78206,8 @@ if (window.location.hash === '#tab-avancado') {
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\visual_themes;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -77622,6 +78388,66 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
     }
 }
+
+
+/* ---------------------------------------------------------------------------- */
+// Arquivo: domain-system/src/Plugins/visual_themes/manual/module.php
+/* ---------------------------------------------------------------------------- */
+
+<?php
+
+declare(strict_types=1);
+
+use DomainSystem\Core\Contracts\ManualModuleInterface;
+
+return new class implements ManualModuleInterface {
+    public function getId(): string
+    {
+        return 'visual_themes';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Temas Visuais & Paletas do Cockpit';
+    }
+
+    public function getSubtitle(): string
+    {
+        return 'Gerenciamento de esquemas de cores claros e escuros para o painel de administração.';
+    }
+
+    public function getBadge(): string
+    {
+        return 'Aparência • Temas v2.5.0';
+    }
+
+    public function getAccentColor(): string
+    {
+        return '#ec4899';
+    }
+
+    public function getAdminUrl(): ?string
+    {
+        return '/admin/themes';
+    }
+
+    public function getChecklistItems(): array
+    {
+        return [
+            [
+                'id'    => 'themes-palette-check',
+                'label' => 'Verificar a alternância entre modo escuro e claro no painel administrativo.',
+            ],
+        ];
+    }
+
+    public function renderContent(string $baseUrl = ''): string
+    {
+        return "<div style='color:var(--text-main, #c5c6c7); font-size:14px; line-height:1.7;'>
+            <p style='margin-top:0;'>O módulo <strong>Visual Themes</strong> controla a aplicação de variáveis CSS de cores primárias, secundárias e contraste no painel de administração.</p>
+        </div>";
+    }
+};
 
 
 /* ---------------------------------------------------------------------------- */
@@ -78032,6 +78858,8 @@ final class SqliteDatabaseBackup implements DatabaseBackupInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database;
 
 use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
@@ -78072,6 +78900,8 @@ class Connection implements DatabaseConnectionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\Database;
 
@@ -78138,6 +78968,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\Database;
 
@@ -78323,6 +79155,8 @@ class QueryBuilder
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database\Schema;
 
 class Blueprint
@@ -78442,6 +79276,8 @@ class Blueprint
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database\Schema\Grammars;
 
 use DomainSystem\SystemApps\Database\Schema\Blueprint;
@@ -78460,6 +79296,8 @@ interface GrammarInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\Database\Schema\Grammars;
 
@@ -78550,6 +79388,8 @@ class MysqlGrammar implements GrammarInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database\Schema\Grammars;
 
 use DomainSystem\SystemApps\Database\Schema\Blueprint;
@@ -78632,6 +79472,8 @@ class SqliteGrammar implements GrammarInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\Database\Schema;
 
 use DomainSystem\SystemApps\Database\Connection;
@@ -78689,6 +79531,8 @@ class SchemaBuilder
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
@@ -78778,6 +79622,8 @@ class AclController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
@@ -79390,6 +80236,9 @@ class AdminController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
@@ -79537,6 +80386,8 @@ class DashboardController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
@@ -79603,6 +80454,8 @@ class DevModeController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\SystemAdmin\Controllers;
 
@@ -79674,6 +80527,8 @@ class EmergencyController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\SystemAdmin;
 
@@ -79828,6 +80683,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemAdmin\Widgets;
 
 use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
@@ -79953,6 +80810,9 @@ class SystemWidgetProvider implements DashboardWidgetProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemMonitor\Controllers;
 
 use DomainSystem\Core\Contracts\SchemaDoctorInterface;
@@ -80203,6 +81063,9 @@ class MonitorController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemMonitor;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -82502,6 +83365,8 @@ if ($currentState !== null && isset($currentState->context['preflight']['checks'
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Contracts;
 
 interface AuthenticatorInterface
@@ -82518,6 +83383,8 @@ interface AuthenticatorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Contracts;
 
@@ -82547,6 +83414,8 @@ interface CapabilityRepositoryInterface extends CapabilityRegistrarInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Contracts;
 
 interface EmailSenderInterface
@@ -82560,6 +83429,8 @@ interface EmailSenderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Contracts;
 
@@ -82589,6 +83460,8 @@ interface RoleRepositoryInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Contracts;
 
 interface TwoFactorCodeStoreInterface
@@ -82605,6 +83478,9 @@ interface TwoFactorCodeStoreInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Contracts;
 
 interface UserRepositoryInterface
@@ -82627,6 +83503,8 @@ interface UserRepositoryInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Controllers;
 
@@ -82762,6 +83640,8 @@ class AuthController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Controllers;
 
@@ -82957,6 +83837,8 @@ class UserController
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 /**
  * PHP Class for handling Google Authenticator 2-factor authentication.
@@ -83216,6 +84098,8 @@ class PHPGangsta_GoogleAuthenticator
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -83434,6 +84318,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Repositories;
 
 use DomainSystem\SystemApps\auth\Contracts\CapabilityRepositoryInterface;
@@ -83532,6 +84418,8 @@ class CapabilityRepository implements CapabilityRepositoryInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Repositories;
 
@@ -83644,6 +84532,8 @@ class RoleRepository implements RoleRepositoryInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Repositories;
 
 use DomainSystem\SystemApps\Database\Connection;
@@ -83673,6 +84563,9 @@ class TwoFactorCodeStore implements TwoFactorCodeStoreInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Repositories;
 
 use DomainSystem\SystemApps\Database\Connection;
@@ -83810,6 +84703,8 @@ class UserRepository implements UserRepositoryInterface
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services;
 
 use DomainSystem\SystemApps\auth\Contracts\AuthenticatorInterface;
@@ -83851,6 +84746,8 @@ class GoogleAuthenticatorAdapter implements AuthenticatorInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Services;
 
@@ -83961,6 +84858,9 @@ class PhpMailSender implements EmailSenderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services\Providers;
 
 use DomainSystem\SystemApps\auth\Contracts\AuthenticatorInterface;
@@ -84004,6 +84904,9 @@ class AppProvider implements TwoFactorProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services\Providers;
 
 use DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface;
@@ -84079,6 +84982,9 @@ class EmailProvider implements TwoFactorProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services\Providers;
 
 /**
@@ -84104,6 +85010,8 @@ interface TwoFactorProviderInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\auth\Services;
 
@@ -84394,6 +85302,8 @@ interface InstallerServiceInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\installer\Controllers;
 
@@ -84861,6 +85771,8 @@ class SetupController
 
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\installer;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
@@ -84928,6 +85840,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 /* ---------------------------------------------------------------------------- */
 
 <?php
+
+declare(strict_types=1);
 
 namespace DomainSystem\SystemApps\installer\Services;
 
@@ -91929,7 +92843,7 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $styleRenderer = new ElementStyleRenderer();
 
         $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
-        $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
+        $previewService = new ThemePartPreviewService($renderer);
 
         // Header com 2 elementos válidos ('logo' oculto em mobile/tablet e 'heading' oculto em laptop 1024px) e 1 inválido ('post_cards_grid')
         $payload = [
@@ -91986,7 +92900,8 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $grid = new LayoutGridRenderer();
         $registry = DefaultBlockRegistryFactory::create();
         $styleRenderer = new ElementStyleRenderer();
-        $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
+        $previewService = new ThemePartPreviewService($renderer);
 
         // Header de 3 colunas (1fr 2fr 1fr): Col 0 (Logo) oculto em 1024px (laptop), Col 0 e Col 2 ocultos em 768px (tablet)
         $payload = [

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http\Responses;
 
 use DomainSystem\Core\Http\Response;

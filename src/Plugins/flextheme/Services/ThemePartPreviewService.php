@@ -9,13 +9,15 @@ use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartCompilerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
+use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartAssociation;
+use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository;
 use DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Layout\LayoutGridRenderer;
+use DomainSystem\Core\Theme\Parts\Styles\DesignTokens;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
 
 /**
@@ -29,38 +31,27 @@ class ThemePartPreviewService implements ThemePartPreviewServiceInterface
     private ThemePartCompilerInterface $compiler;
 
     public function __construct(
-        BlockRegistryInterface $blockRegistry,
-        LayoutGridInterface $layoutGrid,
-        DesignTokensInterface $tokens,
+        ThemePartCompilerInterface|BlockRegistryInterface $compilerOrRegistry,
+        ?LayoutGridInterface $layoutGrid = null,
+        ?DesignTokensInterface $tokens = null,
         ?ElementStyleRendererInterface $styleRenderer = null,
         ?ThemePartCompilerInterface $compiler = null
     ) {
-        $this->compiler = $compiler ?? new ThemePartRenderer(
-            new class implements ThemePartRepositoryInterface {
-                public function all(): array { return []; }
-                public function findByType(string $type): array { return []; }
-                public function findById(string $id): ?ThemePartInterface { return null; }
-                public function findDefaultByType(string $type): ?ThemePartInterface { return null; }
-                public function save(ThemePartInterface $part): bool { return false; }
-                public function delete(string $id): bool { return false; }
-            },
-            new class implements ThemePartAssociationInterface {
-                public function assignPart(string $themeFolder, string $partType, ?string $partId): bool { return false; }
-                public function getAssignedPartId(string $themeFolder, string $partType): ?string { return null; }
-                public function setGlobalDefault(string $partType, ?string $partId): bool { return false; }
-                public function getGlobalDefault(string $partType): ?string { return null; }
-                public function assignTemplateToSection(string $themeFolder, string $sectionId, ?string $templateSlug): bool { return false; }
-                public function getAssignedTemplateForSection(string $themeFolder, string $sectionId): ?string { return null; }
-                public function removePartReferences(string $partId): bool { return false; }
-                public function getThemeAssignments(string $themeFolder): array { return []; }
-                public function getAllAssignments(): array { return []; }
-            },
-            $layoutGrid,
-            $blockRegistry,
-            $tokens,
-            null,
-            $styleRenderer ?? new ElementStyleRenderer()
-        );
+        if ($compilerOrRegistry instanceof ThemePartCompilerInterface) {
+            $this->compiler = $compilerOrRegistry;
+        } elseif ($compiler !== null) {
+            $this->compiler = $compiler;
+        } else {
+            $this->compiler = new ThemePartRenderer(
+                new JsonThemePartRepository(),
+                new JsonThemePartAssociation(),
+                $layoutGrid ?? new LayoutGridRenderer(),
+                $compilerOrRegistry,
+                $tokens ?? new DesignTokens(),
+                null,
+                $styleRenderer ?? new ElementStyleRenderer()
+            );
+        }
     }
 
     public function renderPreview(array $payload): string

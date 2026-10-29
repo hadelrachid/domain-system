@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\seo\Services;
 
 use DomainSystem\Plugins\seo\Contracts\HtmlOptimizerInterface;

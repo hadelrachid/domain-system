@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Template Name: Tutoriais & Academy Cursos
  * Descrição: Template preparado para receber os shortcodes de cards do plugin Academy.

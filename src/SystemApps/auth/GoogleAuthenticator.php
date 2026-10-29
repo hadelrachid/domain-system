@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * PHP Class for handling Google Authenticator 2-factor authentication.
  *

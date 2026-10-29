@@ -180,7 +180,7 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $styleRenderer = new ElementStyleRenderer();
 
         $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
-        $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
+        $previewService = new ThemePartPreviewService($renderer);
 
         // Header com 2 elementos válidos ('logo' oculto em mobile/tablet e 'heading' oculto em laptop 1024px) e 1 inválido ('post_cards_grid')
         $payload = [
@@ -237,7 +237,8 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $grid = new LayoutGridRenderer();
         $registry = DefaultBlockRegistryFactory::create();
         $styleRenderer = new ElementStyleRenderer();
-        $previewService = new ThemePartPreviewService($registry, $grid, $tokens, $styleRenderer);
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir, $styleRenderer);
+        $previewService = new ThemePartPreviewService($renderer);
 
         // Header de 3 colunas (1fr 2fr 1fr): Col 0 (Logo) oculto em 1024px (laptop), Col 0 e Col 2 ocultos em 768px (tablet)
         $payload = [

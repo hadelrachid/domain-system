@@ -147,11 +147,17 @@ class ThemePartManagementService
         }
         unset($sec);
 
-        // Captura snapshot anterior da parte para compensação caso uma associação falhe após o save
+        // Captura snapshot anterior da parte e associações para compensação caso uma associação falhe após o save
         $previousPart = $this->partRepo->findById($id);
         $previousGlobalDefault = $this->partAssoc->getGlobalDefault($type);
         $assignedTheme = !empty($input['assigned_theme']) ? (string)$input['assigned_theme'] : '';
         $previousThemeAssignedId = $assignedTheme !== '' ? $this->partAssoc->getAssignedPartId($assignedTheme, $type) : null;
+        $targetTheme = $assignedTheme !== ''
+            ? $assignedTheme
+            : $this->themeDiscovery->getActiveThemeFolder();
+        $previousSectionTemplate = ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template']))
+            ? $this->partAssoc->getAssignedTemplateForSection($targetTheme, $id)
+            : null;
 
         $part = new ThemePart(
             $id,
@@ -187,9 +193,6 @@ class ThemePartManagementService
             }
 
             if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
-                $targetTheme = $assignedTheme !== ''
-                    ? $assignedTheme
-                    : $this->themeDiscovery->getActiveThemeFolder();
                 $templateChoice = trim((string)$input['assigned_template']);
                 $effectiveTemplate = ($templateChoice !== '' && $templateChoice !== 'none') ? $templateChoice : null;
                 if (!$this->partAssoc->assignTemplateToSection($targetTheme, $id, $effectiveTemplate)) {
@@ -197,12 +200,15 @@ class ThemePartManagementService
                 }
             }
         } catch (Throwable $e) {
-            // Compensação: restaura o estado anterior da parte e das associações já alteradas
+            // Compensação: restaura integralmente o estado anterior da parte e de todas as associações
             if ($isDefault) {
                 $this->partAssoc->setGlobalDefault($type, $previousGlobalDefault);
             }
             if ($assignedTheme !== '') {
                 $this->partAssoc->assignPart($assignedTheme, $type, $previousThemeAssignedId);
+            }
+            if ($type === ThemePartInterface::TYPE_SECTION && isset($input['assigned_template'])) {
+                $this->partAssoc->assignTemplateToSection($targetTheme, $id, $previousSectionTemplate);
             }
             if ($previousPart !== null) {
                 $this->partRepo->save($previousPart);
@@ -271,7 +277,10 @@ class ThemePartManagementService
 
         $deleted = $this->partRepo->delete($cleanId);
         if ($deleted) {
-            $this->partAssoc->removePartReferences($cleanId);
+            $cleaned = $this->partAssoc->removePartReferences($cleanId);
+            if (!$cleaned) {
+                error_log("[ThemePartManagementService] Aviso: referências de '{$cleanId}' podem não ter sido limpas integralmente.");
+            }
         }
 
         return $deleted;

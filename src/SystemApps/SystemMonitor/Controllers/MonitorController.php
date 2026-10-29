@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\SystemMonitor\Controllers;
 
 use DomainSystem\Core\Contracts\SchemaDoctorInterface;

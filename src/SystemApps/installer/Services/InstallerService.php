@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\installer\Services;
 
 use DomainSystem\SystemApps\installer\Contracts\InstallerServiceInterface;

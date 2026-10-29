@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\nobreak_shield;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Theme;
 
 use DomainSystem\Core\Contracts\NavigationManagerInterface;

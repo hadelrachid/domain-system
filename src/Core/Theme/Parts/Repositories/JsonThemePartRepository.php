@@ -142,6 +142,15 @@ class JsonThemePartRepository implements ThemePartRepositoryInterface
             }
         }
 
+        // Ordenação determinística estável: decrescente por updatedAt, desempate por ID
+        usort($parts, static function (ThemePartInterface $a, ThemePartInterface $b): int {
+            $updatedCmp = $b->getUpdatedAt() <=> $a->getUpdatedAt();
+            if ($updatedCmp !== 0) {
+                return $updatedCmp;
+            }
+            return strcmp($a->getId(), $b->getId());
+        });
+
         return $parts;
     }
 }

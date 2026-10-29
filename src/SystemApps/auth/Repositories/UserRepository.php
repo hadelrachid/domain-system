@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Repositories;
 
 use DomainSystem\SystemApps\Database\Connection;

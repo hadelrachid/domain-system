@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 use RuntimeException;

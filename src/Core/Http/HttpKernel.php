@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Http;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
@@ -96,7 +98,7 @@ class HttpKernel
                 $response = new JsonResponse($response);
             } else {
                 $wrap = false;
-                if (strpos($uri, '/admin') === 0 && !isset($request->query['raw']) && !isset($_GET['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
+                if (strpos($uri, '/admin') === 0 && !isset($request->query['raw']) && !str_starts_with($uri, '/admin/themes/preview')) {
                     $wrap = true;
                 }
                 $response = new ViewResponse((string)$response, $wrap);

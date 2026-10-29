@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\clock_widget;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;

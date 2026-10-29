@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\radio_online;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;

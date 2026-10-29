@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Contracts;
 
 use DomainSystem\Core\Contracts\CapabilityRegistrarInterface;

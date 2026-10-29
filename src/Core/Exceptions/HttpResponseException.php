@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Core\Exceptions;
 
 use DomainSystem\Core\Http\Response;
@@ -16,7 +18,8 @@ class HttpResponseException extends RuntimeException
 
     public function __construct(Response $response, string $message = '', int $code = 0)
     {
-        parent::__construct($message, $code || $response->getStatusCode());
+        $statusCode = $code !== 0 ? $code : $response->getStatusCode();
+        parent::__construct($message, $statusCode);
         $this->response = $response;
     }
 

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services\Providers;
 
 use DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface;

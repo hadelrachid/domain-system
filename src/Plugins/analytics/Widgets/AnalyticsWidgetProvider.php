@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\analytics\Widgets;
 
 use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;

@@ -64,10 +64,6 @@ class BuilderFlexBootstrapper
 
         $runtime->singleton(ThemePartPreviewServiceInterface::class, function ($c) {
             return new ThemePartPreviewService(
-                $c->make(BlockRegistryInterface::class),
-                $c->make(LayoutGridInterface::class),
-                $c->make(DesignTokensInterface::class),
-                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null,
                 $c->make(ThemePartCompilerInterface::class)
             );
         });

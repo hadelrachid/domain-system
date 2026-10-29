@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\pages;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;

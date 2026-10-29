@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\Plugins\flextheme;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;

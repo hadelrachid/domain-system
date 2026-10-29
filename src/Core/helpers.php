@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Domain-System Helper Functions
  * (Inspirado no WordPress e Laravel)

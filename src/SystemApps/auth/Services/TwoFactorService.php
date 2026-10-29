@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainSystem\SystemApps\auth\Services;
 
 use DomainSystem\SystemApps\auth\Services\Providers\TwoFactorProviderInterface;

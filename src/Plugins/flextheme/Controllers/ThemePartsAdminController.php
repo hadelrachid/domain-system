@@ -100,7 +100,7 @@ class ThemePartsAdminController
         $this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
         $this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
         $this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
-        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->blockRegistry, $this->layoutGrid, $this->tokens, $this->styleRenderer, $this->renderer);
+        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->renderer);
         $this->managementService = $managementService ?? new ThemePartManagementService(
             $this->partRepo,
             $this->partAssoc,

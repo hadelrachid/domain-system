@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Manifesto dos módulos front-end do Builder Flex.
  *
