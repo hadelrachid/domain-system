@@ -38,16 +38,24 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 
 ---
 
-## 🔵 Etapa 3: Planejamento Futuro (Melhorias Contínuas)
+## 🔵 Etapa 3: Planejamento Futuro (v2.6)
 
-### 3.1. Otimização de Performance e Cache
+### 3.1. 💳 [PRIORIDADE ALTA] Motor de Comércio Eletrônico & Pagamentos (`Plugin Commerce`)
+*Documento de especificação detalhada:* [`docs/PLANO_PLUGIN_COMMERCE.md`](docs/PLANO_PLUGIN_COMMERCE.md)
+- [ ] **Contratos de Liquidação Financeira (`PaymentGatewayInterface`):** Suporte desacoplado a múltiplos provedores (Mercado Pago, Stripe, Asaas, Efí) sem amarras de fornecedor.
+- [ ] **Pagamento Instantâneo via Pix:** Geração nativa de QR Code e chave Copia-e-Cola com confirmação em tempo real via Webhook seguro.
+- [ ] **Cartão de Crédito com Tokenização:** Pagamento seguro sem armazenamento de dados sensíveis de cartão no servidor.
+- [ ] **Integração Automática com Academy LMS:** Evento `commerce.order_paid` liberando acesso imediato aos cursos e aulas.
+- [ ] **Blocos de E-commerce no Flex Builder FSE:** Blocos nativos `product_card`, `cart_button` e checkout incorporado.
+
+### 3.2. Otimização de Performance e Cache
 - [ ] **Headers de Cache HTTP:** Suporte padronizado a cabeçalhos `ETag` e `Cache-Control` nas respostas de páginas estáticas e temas.
 - [ ] **Minificação Opcional de Assets:** Otimização de entrega de folhas de estilo e scripts públicos.
 
-### 3.2. Endpoints e Integrações
+### 3.3. Endpoints e Integrações
 - [ ] **Endpoints REST Básicos:** Padronização de endpoints para consulta externa de páginas e conteúdo publicado.
 - [ ] **Autenticação via Tokens:** Suporte a chaves de API para leitura programática de dados.
 
-### 3.3. Interface e Usabilidade
+### 3.4. Interface e Usabilidade
 - [ ] **Personalização do Painel:** Reorganização personalizável dos cards informativos no dashboard administrativo.
 - [ ] **Expansão da Biblioteca de Blocos:** Adição de novos blocos semânticos para o Flex Builder conforme demandas práticas de uso.
