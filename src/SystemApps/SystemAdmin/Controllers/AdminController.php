@@ -593,7 +593,7 @@ class AdminController
 
             return $this->theme->render('manual', [
                 'baseUrl' => defined('BASE_URL') ? BASE_URL : '',
-                'version' => defined('DS_VERSION') ? DS_VERSION : '2.3.0',
+                'version' => defined('DS_VERSION') ? DS_VERSION : '2.6.0',
                 'pluginManuals' => is_array($discoveredManuals) ? $discoveredManuals : [],
             ]);
         } catch (Exception $e) {
