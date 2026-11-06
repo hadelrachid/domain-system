@@ -7,8 +7,6 @@ namespace DomainSystem\SystemApps\auth\Controllers;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\PasswordPolicyInterface;
-
-use DomainSystem\Core\Theme\ThemeManager;
 use DomainSystem\SystemApps\auth\Contracts\UserRepositoryInterface;
 use DomainSystem\SystemApps\auth\Services\TwoFactorService;
 
@@ -17,9 +15,16 @@ class UserController
     private ThemeManagerInterface $theme;
     private UserRepositoryInterface $userRepo;
     private TwoFactorService $twoFactor;
+    private SessionManagerInterface $session;
+    private PasswordPolicyInterface $passwordPolicy;
 
-    public function __construct(ThemeManagerInterface $theme, UserRepositoryInterface $userRepo, TwoFactorService $twoFactor, SessionManagerInterface $session, PasswordPolicyInterface $passwordPolicy)
-    {
+    public function __construct(
+        ThemeManagerInterface $theme,
+        UserRepositoryInterface $userRepo,
+        TwoFactorService $twoFactor,
+        SessionManagerInterface $session,
+        PasswordPolicyInterface $passwordPolicy
+    ) {
         $this->theme = $theme;
         $this->userRepo = $userRepo;
         $this->twoFactor = $twoFactor;
@@ -27,12 +32,31 @@ class UserController
         $this->passwordPolicy = $passwordPolicy;
     }
 
-    public function index()
+    public function index(?\DomainSystem\Core\Http\Request $request = null)
     {
-        $users = $this->userRepo->getAllUsers();
-        
+        $search = $request !== null ? trim((string)$request->input('q', '')) : '';
+        $role = $request !== null ? trim((string)$request->input('role', 'all')) : 'all';
+        $status = $request !== null ? trim((string)$request->input('status', 'all')) : 'all';
+        $page = $request !== null ? max(1, (int)$request->input('page', 1)) : 1;
+        $perPage = 15;
+
+        $searchFilter = $search !== '' ? $search : null;
+        $roleFilter = $role !== 'all' ? $role : null;
+        $statusFilter = $status !== 'all' ? $status : null;
+
+        $total = $this->userRepo->countUsers($roleFilter, $searchFilter, $statusFilter);
+        $users = $this->userRepo->getPaginatedUsers($page, $perPage, $roleFilter, $searchFilter, $statusFilter);
+        $totalPages = max(1, (int)ceil($total / $perPage));
+
         return $this->theme->render('admin_users', [
             'users' => $users,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => $totalPages,
+            'currentSearch' => $search,
+            'currentRole' => $role,
+            'currentStatus' => $status,
             'theme' => $this->theme
         ], __DIR__ . '/../views');
     }
@@ -56,7 +80,8 @@ class UserController
                     'name' => $name,
                     'email' => $email,
                     'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'role' => $role
+                    'role' => $role,
+                    'status' => 'active'
                 ]);
                 $this->session->setFlash('success', 'Usuário criado com sucesso!');
             } catch (\Exception $e) {
@@ -67,10 +92,39 @@ class UserController
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 
+    public function changeStatus(\DomainSystem\Core\Http\Request $request)
+    {
+        $userId = (int)($request->input('user_id') ?? 0);
+        $status = (string)($request->input('status') ?? '');
+        $currentLoggedIn = (int)($this->session->get('user_id') ?? 0);
+
+        if ($userId <= 0 || !in_array($status, ['active', 'suspended', 'banned'], true)) {
+            $this->session->setFlash('error', 'Parâmetros inválidos para alteração de status.');
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
+        }
+
+        if ($userId === $currentLoggedIn && in_array($status, ['suspended', 'banned'], true)) {
+            $this->session->setFlash('error', 'Você não pode suspender ou banir sua própria conta administrativa.');
+            return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
+        }
+
+        try {
+            $this->userRepo->updateStatus($userId, $status);
+            $labels = [
+                'active' => 'ativado',
+                'suspended' => 'suspenso temporariamente',
+                'banned' => 'banido da plataforma'
+            ];
+            $this->session->setFlash('success', "Status do usuário atualizado: {$labels[$status]}.");
+        } catch (\Throwable $e) {
+            $this->session->setFlash('error', 'Falha ao atualizar status: ' . $e->getMessage());
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
+    }
+
     public function generate2fa(\DomainSystem\Core\Http\Request $request)
     {
-
-        
         $user_id = $request->input('id') ?? null;
         if (!$user_id) {
             return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
@@ -84,7 +138,6 @@ class UserController
         $appProvider = $this->twoFactor->getProvider('app');
         $appSecret = $appProvider->generateSecret('DomainSystem');
         
-        // Simulação p/ Dev Mode
         $user['two_factor_secret'] = $appSecret['secret'];
         $appProvider->challenge($user);
 
@@ -98,8 +151,6 @@ class UserController
 
     public function confirm2fa(\DomainSystem\Core\Http\Request $request)
     {
-
-
         $user_id = $request->input('user_id') ?? null;
         $secret = $request->input('secret') ?? null;
         $code = $request->input('code') ?? null;
@@ -119,8 +170,6 @@ class UserController
 
     public function disable2fa(\DomainSystem\Core\Http\Request $request)
     {
-
-
         $user_id = $request->input('id') ?? null;
         if ($user_id) {
             $this->userRepo->updateTwoFactorSecret($user_id, null);
@@ -132,8 +181,6 @@ class UserController
 
     public function change2faType(\DomainSystem\Core\Http\Request $request)
     {
-
-
         $user_id = $request->input('user_id') ?? null;
         $two_factor_type = $request->input('two_factor_type') ?? 'none';
 
@@ -147,8 +194,6 @@ class UserController
 
     public function resetPassword(\DomainSystem\Core\Http\Request $request)
     {
-
-
         $user_id = $request->input('user_id') ?? null;
         $new_password = $request->input('new_password') ?? '';
 
@@ -188,4 +233,3 @@ class UserController
         return \DomainSystem\Core\Http\Response::redirect(BASE_URL . "/admin/users");
     }
 }
-

@@ -182,4 +182,67 @@ class CourseFrontControllerTest extends TestCase
         $this->assertStringContainsString('/cursos/mastering-os-2-0/02-plugins', $html);
         $this->assertStringContainsString('Próxima Aula', $html);
     }
+
+    public function testRestrictedLessonRendersStudentAuthLinksWhenUnauthenticated(): void
+    {
+        $enrollmentMock = $this->createMock(\DomainSystem\Plugins\academy\Contracts\CourseEnrollmentInterface::class);
+        $enrollmentMock->method('hasActiveEnrollment')->willReturn(false);
+
+        $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $sessionMock->method('get')->willReturnCallback(function ($key, $default = null) {
+            return $default;
+        });
+
+        $controller = new CourseFrontController(
+            $this->courseRepo,
+            $this->structureRepo,
+            $this->navService,
+            $this->catalogRenderer,
+            $this->seoMock,
+            $this->themeManagerMock,
+            new \DomainSystem\Plugins\academy\Services\LessonBlockRenderer(),
+            null,
+            $enrollmentMock,
+            $sessionMock
+        );
+
+        $courseId = $this->courseRepo->create([
+            'title'       => 'Curso de PHP Pago',
+            'slug'        => 'curso-php-pago',
+            'description' => 'Curso completo de PHP 8',
+            'status'      => 'published',
+            'price'       => 10.00,
+            'is_free'     => 0,
+        ]);
+
+        $this->structureRepo->replaceCourseStructure($courseId, [
+            [
+                'title'    => 'Módulo 1',
+                'position' => 1,
+                'lessons'  => [
+                    [
+                        'title'      => 'Aula 1 - Segredo',
+                        'slug'       => 'aula-1-segredo',
+                        'content'    => '<p>Segredo do PHP.</p>',
+                        'position'   => 1,
+                    ],
+                ],
+            ],
+        ]);
+
+        $response = $controller->showLesson('curso-php-pago', 'aula-1-segredo');
+        $this->assertSame(200, $response->getStatusCode());
+        $html = $response->getContent();
+
+        // O conteúdo secreto não deve aparecer
+        $this->assertStringNotContainsString('Segredo do PHP', $html);
+
+        // Deve exibir o box restrito com link para checkout e links de autenticação do ALUNO
+        $this->assertStringContainsString('ds-academy-restricted-box', $html);
+        $this->assertStringContainsString('/checkout/curso/' . $courseId, $html);
+        $this->assertStringContainsString('/aluno/login?redirect=', $html);
+        $this->assertStringContainsString('/aluno/cadastro?redirect=', $html);
+        $this->assertStringContainsString('Já sou Aluno (Entrar)', $html);
+        $this->assertStringContainsString('Criar Conta de Aluno', $html);
+    }
 }

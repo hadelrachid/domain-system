@@ -1,94 +1,85 @@
-# Domain System (v2.5)
+# Domain System (v2.6)
 
-Plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas, projetada com base em contratos de interfaces e injeção de dependências.
+O **Domain System** é um CMS e plataforma de cursos online (LMS) feito em **PHP 8.2+**. Ele foi criado com um objetivo simples: ser muito leve, rápido e fácil de manter, sem o peso, a lentidão e a montanha de plugins de CMSs como o WordPress.
 
-O objetivo do projeto é oferecer uma alternativa enxuta e desacoplada aos CMSs tradicionais, mantendo consumo reduzido de memória (~5 MB de RAM no motor Zend em requisições típicas) e um espaço em disco de aproximadamente 30 MB descompactado.
-
-> **Status do Projeto:** O Domain System está em ciclo ativo de desenvolvimento, testes em produção e melhorias contínuas. Novas refatorações, otimizações e correções são aplicadas regularmente com base em testes automatizados e no uso prático do ecossistema.
-> 
-> 💡 **Nota do Autor & Jornada:** Sou um desenvolvedor autodidata construindo o Domain System como um ecossistema de aprendizado contínuo sobre Clean Architecture, resiliência e o uso disciplinado de IA no desenvolvimento de software. [Leia a história completa, motivações e lições aprendidas em ABOUT.md](ABOUT.md).
+O sistema consome cerca de **5 MB de RAM** por requisição e ocupa apenas **~30 MB de espaço em disco**, rodando liso em qualquer VPS barata ou até em hospedagem compartilhada simples com PHP e MySQL/SQLite.
 
 ---
 
-[🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🌱 Sobre o Autor & Projeto](ABOUT.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
+[🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🌱 Sobre o Projeto](ABOUT.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
 
 ---
 
-## 🎯 Proposta e Arquitetura
+## 💡 O que o Domain System traz pronto?
 
-O sistema adota princípios de **Clean Architecture** e **Inversão de Dependência (DIP)**:
+O projeto já vem pronto para colocar sites, lojas e escolas de cursos no ar:
 
-1. **Núcleo Agnóstico (`src/Core`)**:
-   - Fornece apenas serviços de infraestrutura básica: container de injeção de dependências, despachante de eventos (hooks), roteador agnóstico de ambiente (raiz ou subpasta), armazenamento atômico de arquivos de configuração e verificadores de esquema de banco de dados.
-   - O núcleo não possui acoplamento com modelos de negócio ou regras específicas de banco de dados.
+### 🎓 1. Plataforma de Cursos Completa (Academy)
+- **Área do Aluno Segura:** Tela de login e cadastro com recuperação de acesso e painel intuitivo.
+- **Estrutura de Aulas:** Cursos organizados por módulos e aulas sequenciais com controle de progresso (barra de porcentagem e marcação de aula concluída).
+- **Formatos de Aulas Flexíveis:** Vídeos (YouTube, Vimeo ou links diretos), textos formatados em blocos e **leitor de apostilas/PDF embutido** (com modos de visualização em canvas leve ou embutido).
+- **Certificados Automáticos:** Emissão de certificado de conclusão quando o aluno atinge 100% das aulas.
 
-2. **Separação em Camadas (`SystemApps` e `Plugins`)**:
-   - **`src/SystemApps` (Módulos Base)**: Componentes estruturais essenciais (banco de dados, autenticação/RBAC, painel administrativo, monitoramento e atualizador). Possuem prioridade no processo de inicialização e não são desativados automaticamente em caso de exceções transitórias.
-   - **`src/Plugins` (Extensões de Domínio)**: Módulos de aplicação (como construtor de temas, LMS, páginas e SEO). Conectam-se ao núcleo por meio do mediador `OsRuntime`, que verifica os contratos e serviços declarados durante o registro de cada módulo.
+### 💳 2. Pagamentos e Cobrança Direta (DomainCommerce)
+- **Mercado Pago Oficial (Brasil):**
+  - **Pix Instantâneo na Tela:** Gera o QR Code dinâmico e o código Copia-e-Cola direto na página, com checagem automática de recebimento a cada 3 segundos e liberação imediata da matrícula.
+  - **Cartão de Crédito:** Parcelamento em até 12x (com opção de usar 2 cartões de crédito na mesma compra).
+  - **Boleto Bancário** e Checkout Pro oficial.
+- **PayPal Oficial (Vendas Internacionais):** Cobrança em moeda estrangeira ou saldo PayPal com proteção ao comprador.
+- **Webhooks de Afiliados:** Recebimento automático de notificações de venda da Hotmart, Eduzz, Monetizze e ClickBank, criando o usuário e matriculando o aluno na hora.
 
-3. **Tolerância a Falhas e Circuit Breaker**:
-   - Tratamento de exceções no ciclo de vida dos módulos: se uma extensão de domínio lançar um erro fatal durante a inicialização ou renderização de rotas, o sistema isola o módulo com falha e preserva o funcionamento do restante da aplicação.
+### 🎨 3. Construtor Visual de Layouts (Flex Builder)
+- Criação e personalização de cabeçalhos, rodapés e seções centrais em CSS Grid de 12 colunas.
+- **Menus Responsivos:** Criação visual de menus com submenus (arraste horizontal e indentação fácil).
+- **Gaveta Mobile:** Menu móvel personalizável com estilos variados de botões hambúrguer e visual moderno.
+- **Visibilidade Responsiva:** Defina quais blocos aparecem ou somem em Desktop, Laptop, Tablet ou Celular.
 
-4. **Flex Builder (FSE - Full Site Editing)**:
-   - Motor visual para montagem de cabeçalhos, rodapés e seções centrais em CSS Grid de 12 colunas.
-   - Suporte a visibilidade responsiva independente por elemento em 4 resoluções (Desktop, Laptop 1024px, Tablet 768px e Mobile 375px) com reajuste automático das colunas (*Auto-Reflow*).
-   - Validação estrutural de payloads antes da persistência e sanitização estrita de HTML e vetores SVG contra XSS.
+### 🔄 4. Atualizador Integrado (1 Clique)
+- Atualização direta pelo painel administrativo conectando aos pacotes de versão do GitHub Releases.
+- Verificação de integridade com SHA-256 e backup automático do banco e arquivos antes de aplicar qualquer atualização.
 
-5. **Atualizador Integrado (`SystemUpdater`)**:
-   - Verificação e aplicação de versões publicadas no GitHub Releases via empacotamento assinado por SHA-256.
-   - Processo de substituição atômica de arquivos com pré-checagem de ambiente (*Preflight*) e preservação de arquivos de configuração (`.env`, `config/`, banco de dados e mídias).
-
----
-
-## 🔍 Auditoria Aberta, Contexto para IAs e `update-project`
-
-Para facilitar a colaboração, análise estática e revisão de código por desenvolvedores humanos ou modelos de linguagem (Claude, ChatGPT, Gemini, etc.), este repositório disponibiliza na raiz os arquivos de contexto consolidado:
-
-- 📄 **[`domain-system.txt`](domain-system.txt)** (ou **[`project.txt`](project.txt)**)
-
-Esses arquivos reúnem a árvore completa de diretórios, interfaces e o código-fonte integral de forma limpa e estruturada.
-
-### Como auditar o projeto com IAs sem fragmentação:
-1. Baixe o arquivo `domain-system.txt` (ou clone o repositório).
-2. Anexe o arquivo na sua ferramenta de IA de preferência.
-3. Solicite a análise técnica desejada (por exemplo: conformidade dos contratos em `src/Core/Contracts`, sanitização de entradas, ou regras de tolerância a falhas). Como o arquivo contém a visão global da arquitetura, a IA realiza a auditoria sem amnésia de contexto nem alucinações.
-
-> **Ferramenta Utilizada:** O arquivo consolidado e o pacote limpo de distribuição são gerados com o [**Update-Project**](https://github.com/hadelrachid/update-project) — um utilitário aberto em Python (CLI/GUI) desenvolvido para empacotar bases de código em documentos estruturados de contexto para auditorias por IA. Você também pode utilizá-lo nos seus próprios projetos.
+### 🛡️ 5. Resiliência e Estabilidade
+- **Isolamento de Falhas (Circuit Breaker):** Se um plugin de terceiros apresentar algum erro inesperado, o sistema isola o problema para não derrubar o restante do site.
+- **Segurança Nativa:** Proteção automática contra ataques de CSRF, injeção SQL via PDO com prepared statements e sanitização estrita de HTML contra XSS.
 
 ---
 
-## 📊 Métricas e Testes
+## 📊 Estatísticas e Testes
 
-- **Linguagem:** PHP 8.2+ (com tipagem estrita `declare(strict_types=1)`).
-- **Testes Automatizados:** 438 testes unitários e de integração no PHPUnit (mais de 2.350 asserções cobrindo contratos, sanitização, migrações e atualizador).
-- **Consumo de Memória (Telemetria):** ~4.94 MB de uso ativo no motor Zend em requisições de página (~12 MB de pico de alocação do sistema operacional).
-- **Dependências Externas em Produção:** Zero dependências de terceiros no núcleo (apenas extensões padrão do PHP: PDO, Zip, Mbstring, OpenSSL e cURL).
+- **Linguagem:** PHP 8.2 ou superior (código moderno e tipado com `strict_types=1`).
+- **Suíte de Testes Automatizados:** **536 testes unitários e de integração** no PHPUnit com **2.999 asserções** cobrindo segurança, checkout, gateways, matrículas e rotas.
+- **Banco de Dados:** Suporte nativo e transparente para **MySQL** e **SQLite**.
+- **Dependências Externas no Núcleo:** Zero. Não depende de frameworks gigantescos; utiliza apenas as extensões oficiais do PHP (`pdo`, `mbstring`, `zip`, `curl` e `openssl`).
 
 ---
 
-## 🚀 Instalação e Execução
+## 🚀 Como Rodar Localmente
 
-### Requisitos
-- PHP 8.2 ou superior com as extensões `pdo`, `pdo_sqlite` (ou `pdo_mysql`), `mbstring`, `zip`, `curl` e `openssl`.
-- Servidor Web (Apache, Nginx ou o servidor embutido do PHP).
+### Requisitos Mínimos
+- PHP 8.2 ou superior com as extensões comuns ativadas: `pdo`, `mbstring`, `zip`, `curl`, `openssl` (e `pdo_mysql` ou `pdo_sqlite`).
+- Servidor web (Apache, Nginx ou o próprio servidor embutido do PHP).
 
-### Execução Local Rápida
+### Passo a Passo
+
 ```bash
-# 1. Clonar o repositório
+# 1. Clone o repositório
 git clone https://github.com/hadelrachid/domain-system.git
 cd domain-system
 
-# 2. Iniciar servidor embutido do PHP para testes
+# 2. Inicie o servidor interno do PHP para testar
 php -S localhost:8000 -t public
 ```
 
-Acesse `http://localhost:8000` no navegador para executar o assistente de configuração inicial.
+Abra o seu navegador e acesse:
+👉 `http://localhost:8000`
+
+O instalador inicial do sistema será exibido para você configurar o banco de dados e criar seu primeiro usuário administrador.
 
 ---
 
-## 🧪 Executando os Testes
+## 🧪 Executando os Testes Automatizados
 
-Para executar a suíte completa de testes automatizados com o PHPUnit:
+Para rodar todos os testes do sistema com o PHPUnit:
 
 ```bash
 php phpunit.phar
@@ -96,6 +87,19 @@ php phpunit.phar
 
 ---
 
+## 📁 Estrutura das Pastas
+
+Para quem for explorar o código-fonte, a estrutura é bem organizada e intuitiva:
+
+- `public/`: Ponto de entrada web (`index.php`) e arquivos estáticos (CSS, JS, imagens).
+- `src/Core/`: Núcleo da aplicação (roteador, container de injeção de dependências e eventos).
+- `src/SystemApps/`: Módulos de infraestrutura interna (autenticação, banco de dados, painel admin e atualizador).
+- `src/Plugins/`: Módulos e extensões (LMS Academy, DomainCommerce, temas, construtor de páginas e SEO).
+- `themes/`: Temas e layouts visuais do site.
+- `tests/`: Bateria completa de testes automatizados com PHPUnit.
+
+---
+
 ## 📄 Licença
 
-Este projeto é distribuído sob a licença [MIT](LICENSE).
+Este projeto é software livre sob a licença [MIT](LICENSE).

@@ -16,6 +16,12 @@ return [
                 description TEXT NULL,
                 status VARCHAR(50) NOT NULL DEFAULT 'draft',
                 link VARCHAR(255) NULL,
+                price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                is_free INTEGER NOT NULL DEFAULT 1,
+                max_installments INTEGER NOT NULL DEFAULT 12,
+                external_platform VARCHAR(50) NULL,
+                external_product_id VARCHAR(100) NULL,
+                external_checkout_url VARCHAR(255) NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");

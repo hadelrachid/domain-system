@@ -55,6 +55,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             \DomainSystem\Core\Contracts\CapabilityRegistrarInterface::class,
             \DomainSystem\SystemApps\auth\Repositories\CapabilityRepository::class
         );
+        $runtime->bind(
+            \DomainSystem\Core\Contracts\AccountStatusProviderInterface::class,
+            \DomainSystem\SystemApps\auth\Services\UserAccountStatusProvider::class
+        );
+        $runtime->bind(
+            \DomainSystem\SystemApps\auth\Contracts\LoginThrottleInterface::class,
+            \DomainSystem\SystemApps\auth\Services\PdoLoginThrottle::class
+        );
 
         $runtime->bind(
             \DomainSystem\SystemApps\auth\Contracts\TwoFactorCodeStoreInterface::class,
@@ -99,6 +107,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/users/2fa-disable', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'disable2fa'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/2fa-type', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'change2faType'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/reset-password', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'resetPassword'], 'auth', ['admin']);
+            $router->addRoute('POST', '/admin/users/status', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'changeStatus'], 'auth', ['admin']);
             $router->addRoute('POST', '/admin/users/delete', [\DomainSystem\SystemApps\auth\Controllers\UserController::class, 'delete'], 'auth', ['admin']);
         });
 
@@ -135,6 +144,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $table->string('email')->unique();
                 $table->string('password');
                 $table->string('role', 50)->default('admin');
+                $table->string('status', 20)->default('active');
                 $table->string('two_factor_secret')->nullable();
                 $table->string('two_factor_type', 20)->default('none');
                 $table->string('email_2fa_code', 6)->nullable();
@@ -204,6 +214,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Fallback for existing installations (SQLite/MySQL ADD COLUMN)
         $db = $runtime->getLink('core.db')->getPdo();
         try { $db->exec("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'admin'"); } catch (\Exception $e) {}
+        try { $db->exec("ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'active'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(255) NULL"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN two_factor_type VARCHAR(20) DEFAULT 'none'"); } catch (\Exception $e) {}
         try { $db->exec("ALTER TABLE users ADD COLUMN email_2fa_code VARCHAR(6) NULL"); } catch (\Exception $e) {}

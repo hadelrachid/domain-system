@@ -1,4 +1,4 @@
-# 🤖 DOMAIN SYSTEM (v2.5) — AI CONTRACT & ARCHITECTURE GUIDE
+# 🤖 DOMAIN SYSTEM (v2.6) — AI CONTRACT & ARCHITECTURE GUIDE
 
 > **PURPOSE OF THIS DOCUMENT FOR AI ASSISTANTS (ChatGPT, Claude, DeepSeek, Gemini, GitHub Copilot, Cursor, Cline, Kilo Code):**
 > You are generating or refactoring code for **Domain System**, a modular web platform in PHP 8.2+ built on strict **SOLID**, **Dependency Inversion (DIP)**, clear architectural boundaries between **Core/SystemApps** and **Plugins**, and **Contract-Driven Architecture**.
@@ -43,7 +43,7 @@ When asked to create a plugin named `<slug>` (e.g., `blog` or `store`), always g
 
 ```text
 src/Plugins/<slug>/
-├── plugin.json                        # Plugin manifest (name, version, author, description, os_version: "2.4")
+├── plugin.json                        # Plugin manifest (name, version, author, description, os_version: "2.6")
 ├── Plugin.php                         # Implements OsExtensionInterface (osRegister & osBoot)
 ├── Contracts/
 │   └── <PascalSlug>RepositoryInterface.php
@@ -73,11 +73,11 @@ src/Plugins/<slug>/
 ```json
 {
     "name": "my_plugin",
-    "version": "1.0.0",
+    "version": "2.6.0",
     "author": "Developer",
     "description": "Clean plugin module following Domain-System SOLID contracts.",
     "core": false,
-    "os_version": "2.4"
+    "os_version": "2.6"
 }
 ```
 

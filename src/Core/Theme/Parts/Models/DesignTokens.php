@@ -86,13 +86,18 @@ class DesignTokens implements DesignTokensInterface
             $val = $this->styleRenderer->sanitizeCssValue((string)$rawVal);
             $rootVars[] = "    --ds-color-{$cssKey}: {$val};";
             $scopedVars[] = "    --color-{$cssKey}: {$val};";
+            $scopedVars[] = "    --{$cssKey}: {$val};";
             if ($key === 'primary') {
                 $rootVars[] = "    --ds-primary: {$val};";
-                $scopedVars[] = "    --primary: {$val};";
             }
             if ($key === 'secondary') {
                 $rootVars[] = "    --ds-secondary: {$val};";
-                $scopedVars[] = "    --secondary: {$val};";
+            }
+            if ($key === 'tertiary') {
+                $rootVars[] = "    --ds-tertiary: {$val};";
+                $rootVars[] = "    --ds-color-accent: {$val};";
+                $scopedVars[] = "    --color-accent: {$val};";
+                $scopedVars[] = "    --accent: {$val};";
             }
             if ($key === 'background') {
                 $rootVars[] = "    --ds-bg-color: {$val};";
@@ -100,19 +105,17 @@ class DesignTokens implements DesignTokensInterface
             }
             if ($key === 'surface') {
                 $rootVars[] = "    --ds-surface: {$val};";
-                $scopedVars[] = "    --surface: {$val};";
             }
             if ($key === 'text_main') {
                 $rootVars[] = "    --ds-text-main: {$val};";
-                $scopedVars[] = "    --text-main: {$val};";
+                $scopedVars[] = "    --text_main: {$val};";
             }
             if ($key === 'text_muted') {
                 $rootVars[] = "    --ds-text-muted: {$val};";
-                $scopedVars[] = "    --text-muted: {$val};";
+                $scopedVars[] = "    --text_muted: {$val};";
             }
             if ($key === 'border') {
                 $rootVars[] = "    --ds-border: {$val};";
-                $scopedVars[] = "    --border: {$val};";
             }
         }
 

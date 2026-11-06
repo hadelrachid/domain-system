@@ -22,7 +22,7 @@ return new class implements ManualModuleInterface {
 
     public function getBadge(): string
     {
-        return 'Aparência • Temas v2.5.0';
+        return 'Aparência • Temas v2.6.0';
     }
 
     public function getAccentColor(): string

@@ -50,8 +50,18 @@ class MenuAdminController
 
         if ($activeMenuIdRaw === 'new') {
             $activeMenuId = null;
+        } elseif ($activeMenuIdRaw) {
+            $activeMenuId = (int)$activeMenuIdRaw;
         } else {
-            $activeMenuId = $activeMenuIdRaw ? (int)$activeMenuIdRaw : ($menus[0]['id'] ?? null);
+            // Prioriza sempre o Menu Principal (header) como padrão ao entrar na tela
+            $headerMenuId = null;
+            foreach ($menus as $m) {
+                if (($m['location'] ?? '') === 'header') {
+                    $headerMenuId = (int)$m['id'];
+                    break;
+                }
+            }
+            $activeMenuId = $headerMenuId ?? (isset($menus[0]['id']) ? (int)$menus[0]['id'] : null);
         }
 
         $menuItems = [];

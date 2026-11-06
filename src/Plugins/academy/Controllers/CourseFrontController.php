@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Controllers;
 
+use DomainSystem\Core\Contracts\AccountStatusProviderInterface;
+use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Plugins\academy\Contracts\CourseCatalogRendererInterface;
+use DomainSystem\Plugins\academy\Contracts\CourseEnrollmentInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseNavigationInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonBlockRendererInterface;
+use DomainSystem\Plugins\academy\Contracts\StudentProgressInterface;
 use DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface;
 use DomainSystem\Plugins\academy\Services\LessonBlockRenderer;
 use DomainSystem\Plugins\seo\Contracts\SeoManagerInterface;
@@ -27,6 +31,10 @@ class CourseFrontController
     private ?ThemeManagerInterface $themeManager;
     private LessonBlockRendererInterface $blockRenderer;
     private ?ThemePageResolverInterface $pageResolver;
+    private ?CourseEnrollmentInterface $enrollment;
+    private ?SessionManagerInterface $session;
+    private ?StudentProgressInterface $progressService;
+    private ?AccountStatusProviderInterface $accountStatus;
 
     public function __construct(
         CourseRepositoryInterface $courseRepo,
@@ -36,7 +44,11 @@ class CourseFrontController
         ?SeoManagerInterface $seo = null,
         ?ThemeManagerInterface $themeManager = null,
         LessonBlockRendererInterface $blockRenderer = new LessonBlockRenderer(),
-        ?ThemePageResolverInterface $pageResolver = null
+        ?ThemePageResolverInterface $pageResolver = null,
+        ?CourseEnrollmentInterface $enrollment = null,
+        ?SessionManagerInterface $session = null,
+        ?StudentProgressInterface $progressService = null,
+        ?AccountStatusProviderInterface $accountStatus = null
     ) {
         $this->courseRepo = $courseRepo;
         $this->structureRepo = $structureRepo;
@@ -46,6 +58,10 @@ class CourseFrontController
         $this->themeManager = $themeManager;
         $this->blockRenderer = $blockRenderer;
         $this->pageResolver = $pageResolver;
+        $this->enrollment = $enrollment;
+        $this->session = $session;
+        $this->progressService = $progressService;
+        $this->accountStatus = $accountStatus;
     }
 
     /**
@@ -131,6 +147,7 @@ class CourseFrontController
 
         $navHtml = $this->navService->renderCourseNav($courseSlug);
         $tree = $this->navService->getCourseTree($courseSlug);
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
         $firstLessonUrl = null;
         if (($course['status'] ?? '') === 'published') {
@@ -142,16 +159,37 @@ class CourseFrontController
             }
         }
 
+        $price = (float)($course['price'] ?? 0.0);
+        $isFree = ($price > 0.0) ? false : (isset($course['is_free']) ? (bool)$course['is_free'] : true);
+        $externalCheckout = trim((string)($course['external_checkout_url'] ?? ''));
+        $externalLink = trim((string)($course['link'] ?? ''));
+
         $ctaButton = '';
-        if ($firstLessonUrl) {
-            $ctaButton = "<a href='{$firstLessonUrl}' class='btn btn-primary' style='display:inline-block; margin-top:20px; text-decoration:none;'>🚀 Começar Agora &rarr;</a>";
+        if ($isFree || $price <= 0.0) {
+            if ($firstLessonUrl) {
+                $ctaButton = "<a href='{$firstLessonUrl}' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#45f3ff; color:#0b0c10; font-weight:700; text-decoration:none;'>🚀 Começar Agora &rarr;</a>";
+            }
+        } else {
+            // Curso pago: direciona para checkout externo ou DomainCommerce interno
+            if ($externalCheckout !== '') {
+                $checkoutUrl = htmlspecialchars($externalCheckout, ENT_QUOTES, 'UTF-8');
+                $ctaButton = "<a href='{$checkoutUrl}' target='_blank' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#00d284; color:#0b0c10; font-weight:700; text-decoration:none;'>🛒 Comprar / Matricular-se &rarr;</a>";
+            } elseif ($externalLink !== '' && (str_starts_with($externalLink, 'http://') || str_starts_with($externalLink, 'https://'))) {
+                $checkoutUrl = htmlspecialchars($externalLink, ENT_QUOTES, 'UTF-8');
+                $ctaButton = "<a href='{$checkoutUrl}' target='_blank' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#00d284; color:#0b0c10; font-weight:700; text-decoration:none;'>🛒 Comprar / Matricular-se &rarr;</a>";
+            } else {
+                $commerceUrl = htmlspecialchars($baseUrl . '/checkout/curso/' . (int)$course['id'], ENT_QUOTES, 'UTF-8');
+                $ctaButton = "<a href='{$commerceUrl}' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 28px; border-radius:6px; background:linear-gradient(135deg, #00d284, #00b370); color:#000; font-weight:800; text-decoration:none; box-shadow:0 4px 16px rgba(0,210,132,0.35); font-size:1.05rem;'>Comprar</a>";
+            }
         }
 
         $html = $this->renderView('front/course', [
+            'course'    => $course,
             'title'     => $title,
             'desc'      => $desc,
             'ctaButton' => $ctaButton,
             'navHtml'   => $navHtml,
+            'baseUrl'   => $baseUrl,
         ]);
 
         return new Response($html);
@@ -195,41 +233,130 @@ class CourseFrontController
         $navHtml = $this->navService->renderCourseNav($courseSlug, $lessonSlug);
         $adjacent = $this->navService->getAdjacentLessons($courseSlug, $lessonSlug);
 
+        $studentId = 0;
+        if ($this->session !== null) {
+            $studentId = (int)$this->session->get('academy_student_id', 0);
+            if ($studentId <= 0) {
+                $studentId = (int)$this->session->get('user_id', 0);
+            }
+        }
+
+        // T12: Se o usuário foi banido ou suspenso, destrói a sessão e redireciona
+        if ($studentId > 0 && $this->accountStatus !== null && $this->accountStatus->statusOf($studentId) !== 'active') {
+            $this->session?->destroy();
+            $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+            return new Response('', 302, ['Location' => $baseUrl . '/login']);
+        }
+
+        // Guarda de Acesso (Matrícula Ativa / Aulas Fechadas vs. Gratuitas)
+        $isRestricted = false;
+        $coursePrice = (float)($course['price'] ?? 0.0);
+        $isCoursePaid = $coursePrice > 0.0;
+        $isLessonFreePreview = !empty($lesson['is_free']) || !empty($lesson['is_preview']);
+
+        if ($this->enrollment !== null && $isCoursePaid && !$isLessonFreePreview) {
+            $userRole = $this->session !== null ? (string)$this->session->get('user_role', '') : '';
+            $isAdmin = in_array($userRole, ['admin', 'manager', 'instructor'], true);
+
+            if (!$isAdmin && !$this->enrollment->hasActiveEnrollment($studentId, (int)$course['id'])) {
+                $isRestricted = true;
+            }
+        }
+
         $bodyContent = '';
-        $themeFile = $lesson['source'] ?? $lesson['theme_file'] ?? null;
-        if (!empty($themeFile) && ($lesson['source_type'] ?? '') !== 'content') {
-            $bodyContent = $this->renderThemeFile((string)$themeFile, [
-                'course'   => $course,
-                'lesson'   => $lesson,
-                'adjacent' => $adjacent,
-                'navHtml'  => $navHtml,
-            ]);
-        } elseif (!empty($lesson['content'])) {
-            $bodyContent = $this->blockRenderer->render((string)$lesson['content']);
-        } elseif (!empty($themeFile)) {
-            $bodyContent = $this->renderThemeFile((string)$themeFile, [
-                'course'   => $course,
-                'lesson'   => $lesson,
-                'adjacent' => $adjacent,
-                'navHtml'  => $navHtml,
-            ]);
+        if ($isRestricted) {
+            $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+            $checkoutUrl = $baseUrl . '/checkout/curso/' . (int)$course['id'];
+            $loginUrl = $baseUrl . '/aluno/login?redirect=' . urlencode($checkoutUrl);
+            $registerUrl = $baseUrl . '/aluno/cadastro?redirect=' . urlencode($checkoutUrl);
+            $formattedPrice = number_format($coursePrice, 2, ',', '.');
+
+            $thumb = (string)($course['thumbnail'] ?? $course['image'] ?? '');
+            $imgHtml = '';
+            if (!empty($thumb)) {
+                $imgSrc = (str_starts_with($thumb, 'http://') || str_starts_with($thumb, 'https://') || str_starts_with($thumb, 'data:'))
+                    ? htmlspecialchars($thumb, ENT_QUOTES, 'UTF-8')
+                    : htmlspecialchars($baseUrl . '/' . ltrim($thumb, '/'), ENT_QUOTES, 'UTF-8');
+                $imgHtml = "<div style='margin-bottom: 22px; display: flex; justify-content: center;'>
+                    <img src='{$imgSrc}' alt='Capa do Curso' style='max-width: 380px; width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; border: 1px solid rgba(69,243,255,0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.55);'>
+                </div>";
+            }
+
+            $bodyContent = "
+            <div class='ds-academy-restricted-box' style='margin: 30px 0; padding: 40px 24px; border-radius: 12px; background: #0f141c; border: 1px solid rgba(69,243,255,0.3); text-align: center; box-shadow: 0 12px 35px rgba(0,0,0,0.55);'>
+                {$imgHtml}
+                <div style='font-size: 2.4rem; margin-bottom: 12px;'>🔒</div>
+                <h3 style='color: #fff; font-size: 1.45rem; font-weight: 700; margin-bottom: 10px;'>Conteúdo Exclusivo para Alunos Matriculados</h3>
+                <p style='color: #94a3b8; max-width: 540px; margin: 0 auto 24px auto; font-size: 0.96rem; line-height: 1.65;'>
+                    Esta aula faz parte do curso <strong>" . htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8') . "</strong>.
+                    Para desbloquear os vídeos, apostilas e códigos completos, garanta sua vaga agora mesmo!
+                </p>
+                <div style='display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap;'>
+                    <a href='{$checkoutUrl}' style='display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #00d284, #00b370); color: #000; font-weight: 800; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-size: 1rem; box-shadow: 0 4px 18px rgba(0,210,132,0.35); transition: transform 0.2s;'>
+                        🛒 Matricular-se por R$ {$formattedPrice} (Mercado Pago)
+                    </a>
+                    <a href='{$loginUrl}' style='display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); padding: 13px 22px; border-radius: 8px; text-decoration: none; font-size: 0.94rem;'>
+                        🔑 Já sou Aluno (Entrar)
+                    </a>
+                    <a href='{$registerUrl}' style='display: inline-flex; align-items: center; gap: 6px; background: rgba(69,243,255,0.08); color: #45f3ff; border: 1px solid rgba(69,243,255,0.3); padding: 13px 22px; border-radius: 8px; text-decoration: none; font-size: 0.94rem;'>
+                        📝 Criar Conta de Aluno
+                    </a>
+                </div>
+            </div>";
         } else {
-            $bodyContent = "<div class='ds-academy-empty-lesson' style='padding:40px; text-align:center; color:var(--text-muted);'><p>O conteúdo desta aula está sendo preparado.</p></div>";
+            $themeFile = $lesson['source'] ?? $lesson['theme_file'] ?? null;
+            if (!empty($themeFile) && ($lesson['source_type'] ?? '') !== 'content') {
+                $bodyContent = $this->renderThemeFile((string)$themeFile, [
+                    'course'   => $course,
+                    'lesson'   => $lesson,
+                    'adjacent' => $adjacent,
+                    'navHtml'  => $navHtml,
+                ]);
+            } elseif (!empty($lesson['content'])) {
+                $bodyContent = $this->blockRenderer->render((string)$lesson['content']);
+            } elseif (!empty($themeFile)) {
+                $bodyContent = $this->renderThemeFile((string)$themeFile, [
+                    'course'   => $course,
+                    'lesson'   => $lesson,
+                    'adjacent' => $adjacent,
+                    'navHtml'  => $navHtml,
+                ]);
+            } else {
+                $bodyContent = "<div class='ds-academy-empty-lesson' style='padding:40px; text-align:center; color:var(--text-muted);'><p>O conteúdo desta aula está sendo preparado.</p></div>";
+            }
         }
 
         $paginationHtml = $this->renderPagination($adjacent);
         $courseUrl = (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '') . '/cursos/' . urlencode($courseSlug);
         $mobileProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
 
+        $studentId = 0;
+        if ($this->session !== null) {
+            $studentId = (int)$this->session->get('academy_student_id', 0);
+            if ($studentId <= 0) {
+                $studentId = (int)$this->session->get('user_id', 0);
+            }
+        }
+        $isLessonCompleted = false;
+        if ($studentId > 0 && $this->progressService !== null && isset($lesson['id'])) {
+            $isLessonCompleted = $this->progressService->isLessonCompleted($studentId, (int)$lesson['id']);
+        }
+
         $html = $this->renderView('front/lesson', [
-            'courseUrl'      => $courseUrl,
-            'courseTitle'    => $courseTitle,
-            'lessonTitle'    => $lessonTitle,
-            'bodyContent'    => $bodyContent,
-            'navHtml'        => $navHtml,
-            'paginationHtml' => $paginationHtml,
-            'adjacent'       => $adjacent,
-            'mobileProfile'  => $mobileProfile,
+            'courseUrl'         => $courseUrl,
+            'courseTitle'       => $courseTitle,
+            'lessonTitle'       => $lessonTitle,
+            'bodyContent'       => $bodyContent,
+            'navHtml'           => $navHtml,
+            'paginationHtml'    => $paginationHtml,
+            'adjacent'          => $adjacent,
+            'mobileProfile'     => $mobileProfile,
+            'lessonId'          => (int)($lesson['id'] ?? 0),
+            'courseId'          => (int)($course['id'] ?? 0),
+            'userId'            => $studentId,
+            'isCompleted'       => $isLessonCompleted,
+            'isRestricted'      => $isRestricted,
+            'csrfToken'         => $this->session ? (string)$this->session->getCsrfToken() : '',
         ]);
 
         return new Response($html);

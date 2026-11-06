@@ -8,6 +8,7 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\PageContentRepositoryInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Core\AssetBundle;
 use Throwable;
@@ -20,19 +21,18 @@ use Throwable;
  * Responsável por renderizar a interface do editor visual e expor a API
  * de schema dos widgets (controles de propriedade) para o JavaScript.
  *
- * Desacoplado de classes concretas/interfaces de outros plugins (suporta
- * repositório de páginas opcional via duck-typing/contrato agnóstico).
+ * Desacoplado via PageContentRepositoryInterface (SOLID - DIP / ISP).
  */
 class BuilderAdminController
 {
     private ThemeManagerInterface $theme;
     private WidgetManagerInterface $widgetManager;
-    private ?object $pageRepo;
+    private ?PageContentRepositoryInterface $pageRepo;
 
     public function __construct(
         ThemeManagerInterface $theme,
         WidgetManagerInterface $widgetManager,
-        ?object $pageRepo = null
+        ?PageContentRepositoryInterface $pageRepo = null
     ) {
         $this->theme         = $theme;
         $this->widgetManager = $widgetManager;
@@ -47,7 +47,7 @@ class BuilderAdminController
         $pageId = $request->input('page_id');
         $pageContent = '';
 
-        if ($pageId && $this->pageRepo !== null && method_exists($this->pageRepo, 'findById')) {
+        if ($pageId && $this->pageRepo !== null) {
             $page = $this->pageRepo->findById((int)$pageId);
             if (is_array($page) && !empty($page['content'])) {
                 $pageContent = (string)$page['content'];
@@ -134,7 +134,7 @@ class BuilderAdminController
             return new Response(json_encode(['success' => false, 'error' => 'Missing page_id or content']), 400, ['Content-Type' => 'application/json']);
         }
 
-        if ($this->pageRepo === null || !method_exists($this->pageRepo, 'update')) {
+        if ($this->pageRepo === null) {
             return new Response(json_encode(['success' => false, 'error' => 'Page repository unavailable']), 503, ['Content-Type' => 'application/json']);
         }
 

@@ -2,7 +2,7 @@
 
 ---
 
-# 🇧🇷 Flex Builder FSE (v2.5.0) — Motor Visual em Blocos & Grid Auto-Reflow 🏗️
+# 🇧🇷 Flex Builder FSE (v2.6.0) — Motor Visual em Blocos & Grid Auto-Reflow 🏗️
 
 O **Flex Builder** (`/admin/builder`) é o motor oficial de *Full Site Editing (FSE)* do **Domain System**. Ele permite compor visualmente **Cabeçalhos (`header`)**, **Rodapés (`footer`)** e **Seções Centrais (`section`)** com **Design Tokens Globais**, **14 Blocos Semânticos**, **Visibilidade Responsiva Isolada por Elemento nas 4 Resoluções** e **Reajuste Automático de Dimensões do CSS Grid (Auto-Reflow)**.
 
@@ -63,7 +63,7 @@ Quando **todos** os elementos de uma coluna ficam ocultos em uma resolução esp
 
 ---
 
-# 🇺🇸 Flex Builder FSE (v2.5.0) — Visual Block Engine & Auto-Reflow Grid 🏗️
+# 🇺🇸 Flex Builder FSE (v2.6.0) — Visual Block Engine & Auto-Reflow Grid 🏗️
 
 **Flex Builder** (`/admin/builder`) is the official *Full Site Editing (FSE)* visual engine of **Domain System**. It enables visual composition of **Headers (`header`)**, **Footers (`footer`)**, and **Central Sections (`section`)** powered by **Global Design Tokens**, **14 Semantic Blocks**, **Per-Element Responsive Visibility across 4 Resolutions**, and **Automatic CSS Grid Dimension Readjustment (Auto-Reflow)**.
 

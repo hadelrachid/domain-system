@@ -82,7 +82,7 @@ Ainda estou buscando a melhor forma de utilizar a IA sem tornar o código difíc
 
 O Domain System é construído em **PHP 8.2+**. Ele oferece suporte a MySQL/MariaDB e SQLite por meio de PDO, além de contar com uma opção própria de armazenamento estruturado em JSON com travas concorrentes.
 
-Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **438 testes unitários** e mais de **2.320 asserções** automatizadas cobrindo ciclo de vida, segurança, roteamento, contratos e compilação visual.
+Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **536 testes automatizados** e quase **3.000 asserções** cobrindo pagamentos, matrículas, ciclo de vida, segurança, roteamento e compilação visual.
 
 Esses números são úteis como métrica de estabilidade, mas não contam a história completa. É importante que os testes passem, mas também é fundamental verificar continuamente se o código está organizado de maneira compreensível e sustentável ao longo do tempo.
 

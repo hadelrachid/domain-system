@@ -579,4 +579,93 @@ class AcademyCourseTest extends TestCase
         $this->assertFalse($service->deleteCourse(5));
         $this->assertFileExists($fullPath, 'A capa não deve ser apagada se o DELETE no banco falhar');
     }
+
+    public function testCoursePricingAndFreeToggleWorkflow(): void
+    {
+        $repo = new PdoCourseRepository($this->pdo);
+        $storage = new LocalCourseImageStorage($this->tempUploadDir);
+        $service = new CourseService($repo, $storage);
+
+        // 1. Cadastra curso pago
+        $paidId = $service->createCourse([
+            'title'       => 'Curso Pro de PHP 8.2',
+            'description' => 'Curso com precificação ativa',
+            'status'      => 'published',
+            'price'       => 197.50,
+            'is_free'     => 0,
+        ]);
+
+        $paidCourse = $repo->findById($paidId);
+        $this->assertNotNull($paidCourse);
+        $this->assertEquals(197.50, (float)$paidCourse['price']);
+        $this->assertSame(0, (int)$paidCourse['is_free']);
+
+        // 2. Atualiza para gratuito
+        $service->updateCourse($paidId, [
+            'title'       => 'Curso Pro de PHP 8.2 (Gratuito)',
+            'description' => 'Liberado para todos',
+            'status'      => 'published',
+            'price'       => 0.00,
+            'is_free'     => 1,
+        ]);
+
+        $updatedCourse = $repo->findById($paidId);
+        $this->assertEquals(0.00, (float)$updatedCourse['price']);
+        $this->assertSame(1, (int)$updatedCourse['is_free']);
+
+        // 3. Cadastra com preço > 0 mas com is_free = 1 (simulação de conflito no formulário)
+        $autoPaidId = $service->createCourse([
+            'title'       => 'Curso Com Preço e Flag Conflitante',
+            'description' => 'Preço deve prevalecer',
+            'status'      => 'published',
+            'price'       => 10.00,
+            'is_free'     => 1,
+        ]);
+
+        $autoPaidCourse = $repo->findById($autoPaidId);
+        $this->assertNotNull($autoPaidCourse);
+        $this->assertEquals(10.00, (float)$autoPaidCourse['price']);
+        $this->assertSame(0, (int)$autoPaidCourse['is_free'], 'Preço maior que zero deve forçar is_free = 0');
+
+        // 4. Update com preço > 0 mas is_free = 1
+        $service->updateCourse($autoPaidId, [
+            'title'       => 'Curso Com Preço e Flag Conflitante Atualizado',
+            'description' => 'Preço deve prevalecer no update',
+            'status'      => 'published',
+            'price'       => 25.00,
+            'is_free'     => 1,
+        ]);
+
+        $updatedAutoPaid = $repo->findById($autoPaidId);
+        $this->assertEquals(25.00, (float)$updatedAutoPaid['price']);
+        $this->assertSame(0, (int)$updatedAutoPaid['is_free'], 'Update com preço > 0 deve forçar is_free = 0');
+    }
+
+    public function testStoreRejectsPaidCourseWithZeroPrice(): void
+    {
+        $repo = new PdoCourseRepository($this->pdo);
+        $storage = new LocalCourseImageStorage($this->tempUploadDir, 'uploads/academy');
+        $service = new CourseService($repo, $storage);
+
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('getCsrfToken')->willReturn('valid_csrf_token');
+        $sessionMock->expects($this->once())
+            ->method('setFlash')
+            ->with('error', 'Informe um preço maior que zero para cursos pagos ou marque o curso como gratuito.');
+
+        $controller = new CourseAdminController($repo, $service, $sessionMock);
+
+        // Post com is_free = 0 mas price = 0
+        $request = new Request([], [
+            'csrf_token' => 'valid_csrf_token',
+            'title' => 'Curso Pago Sem Preço',
+            'is_free' => '0',
+            'price' => '0.00',
+        ]);
+
+        $response = $controller->store($request);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertEmpty($repo->findAll(), 'Nenhum curso deve ter sido gravado no banco');
+    }
 }

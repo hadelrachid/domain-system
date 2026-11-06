@@ -22,6 +22,13 @@ interface CourseRepositoryInterface
     public function findBySlug(string $slug): ?array;
 
     /**
+     * Busca curso por identificador/código de produto externo (Hotmart, Eduzz, Monetizze, ClickBank).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findByExternalProductId(string $externalProductId): ?array;
+
+    /**
      * @param array{limit?: int, status?: string} $filters
      * @return array<int, array<string, mixed>>
      */

@@ -22,7 +22,7 @@ return new class implements ManualModuleInterface {
 
     public function getBadge(): string
     {
-        return 'SystemApp Ring 0 • v2.5.0';
+        return 'SystemApp Ring 0 • v2.6.0';
     }
 
     public function getAccentColor(): string

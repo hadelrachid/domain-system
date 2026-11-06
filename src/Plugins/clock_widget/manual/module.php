@@ -22,7 +22,7 @@ return new class implements ManualModuleInterface {
 
     public function getBadge(): string
     {
-        return 'Widget Auto-Descoberto • Clock v2.5.0';
+        return 'Widget Auto-Descoberto • Clock v2.6.0';
     }
 
     public function getAccentColor(): string

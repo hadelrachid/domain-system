@@ -1,0 +1,8 @@
+{
+    "name": "DomainCommerce",
+    "version": "2.6.0",
+    "author": "Rachid",
+    "description": "DomainCommerce: Motor de Comércio Eletrônico e Liquidação Financeira Desacoplado (Pix, Cartão e Boleto via Mercado Pago e PayPal) com Webhooks Reativos para o Domain-System OS.",
+    "core": false,
+    "os_version": "2.6"
+}

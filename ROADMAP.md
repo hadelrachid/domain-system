@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.5)
+# Roteiro de Desenvolvimento — Domain System (v2.6)
 
 Este documento descreve as etapas de evolução do **Domain System**. O objetivo é manter uma base de código modular, previsível e com testes automatizados em PHP 8.2+.
 
@@ -38,15 +38,30 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 
 ---
 
-## 🔵 Etapa 3: Planejamento Futuro (v2.6)
+## 🟢 Etapa 3: Auditoria Cirúrgica SOLID & Evoluções do Flex Builder (Concluída na v2.6)
 
-### 3.1. 💳 [PRIORIDADE ALTA] Motor de Comércio Eletrônico & Pagamentos (`Plugin Commerce`)
-*Documento de especificação detalhada:* [`docs/PLANO_PLUGIN_COMMERCE.md`](docs/PLANO_PLUGIN_COMMERCE.md)
-- [ ] **Contratos de Liquidação Financeira (`PaymentGatewayInterface`):** Suporte desacoplado a múltiplos provedores (Mercado Pago, Stripe, Asaas, Efí) sem amarras de fornecedor.
-- [ ] **Pagamento Instantâneo via Pix:** Geração nativa de QR Code e chave Copia-e-Cola com confirmação em tempo real via Webhook seguro.
-- [ ] **Cartão de Crédito com Tokenização:** Pagamento seguro sem armazenamento de dados sensíveis de cartão no servidor.
-- [ ] **Integração Automática com Academy LMS:** Evento `commerce.order_paid` liberando acesso imediato aos cursos e aulas.
-- [ ] **Blocos de E-commerce no Flex Builder FSE:** Blocos nativos `product_card`, `cart_button` e checkout incorporado.
+### 3.0. 🛡️ Auditoria Cirúrgica SOLID (ChatGPT + DeepSeek) & Release v2.6.0
+*Documento de especificação detalhada:* [`docs/PLANO_AUDITORIA_SOLID_E_RELEASE_V2_6.md`](docs/PLANO_AUDITORIA_SOLID_E_RELEASE_V2_6.md)
+- [x] **Novos Contratos Formais (ISP/DIP):** `ShortcodeManagerInterface`, `ThemePathResolverInterface`, `ThemePartManagementServiceInterface`, `PageContentRepositoryInterface`, `DtoRendererInterface` e `MenuTreeBuilderInterface`.
+- [x] **Desacoplamento Total de Serviços e Controllers:** Remoção de todos os fallbacks concretos (`?? new ...`) em `ThemePartPreviewService`, `ThemePartManagementService`, `ThemePartsAdminController` e `ThemeController`.
+- [x] **Refinamentos de Core:** Estado de instância em `ThemePartRenderer`, precedência de `layoutPreset` em `ThemePart` e validação de schema em `ThemePartValidator`.
+- [x] **Menus Hierárquicos com Submenus & Mobile Drawer Customizável:** Árvore recursiva (`MenuTreeBuilder`), Drag & Drop estilo WordPress, 8 estilos de botão Hambúrguer e 7 formatos de botões de menu mobile.
+- [x] **Leitor de PDF Híbrido no Academy LMS (`LessonPdfStorageInterface` & Bloco `pdf`):** Suporte a PDFs na nuvem (HTTP/HTTPS, CDN, Google Drive) ou pasta local na Hostinger, renderização por página sob demanda (*PDF.js Lazy Canvas*), recorte de páginas (`start_page` / `end_page`) e controle de download.
+- [x] **Release v2.6.0 & Sincronização de Documentação:** Atualização da versão (`v2.5.0` → `v2.6.0`) em todo o código, `README`, `CHANGELOG`, `AI_CONTRACT_GUIDE`, `wiki/` e manual interativo.
+
+---
+
+## 🔵 Etapa 4: Planejamento Futuro (v2.7)
+
+### 3.1. 🎓 [PRIORIDADE ALTA] Portal do Aluno (Cockpit EAD) & Pagamentos (Mercado Pago / PayPal)
+*Documento de especificação detalhada:* [`docs/PLANO_PORTAL_DO_ALUNO_E_PAGAMENTOS_MERCADOPAGO_PAYPAL.md`](docs/PLANO_PORTAL_DO_ALUNO_E_PAGAMENTOS_MERCADOPAGO_PAYPAL.md)  
+*Documento complementar do motor de comércio:* [`docs/PLANO_PLUGIN_COMMERCE.md`](docs/PLANO_PLUGIN_COMMERCE.md)
+- [ ] **Cockpit do Aluno (Student Workspace):** Perfil de usuário `student`, painel do aluno com barra de progresso, pasta pessoal isolada de anotações e preferências individuais (estilo usuário do SO).
+- [ ] **Motor de Matrículas do Academy LMS (`CourseEnrollmentInterface`):** Controle automático de acesso a aulas pagas vs. aulas de degustação públicas.
+- [ ] **Gateway Mercado Pago (Mercado Livre):** Liquidação instantânea via Pix (QR Code + Copia-e-Cola), Cartão de Crédito em até 12x e Boleto Bancário com confirmação automática via Webhook.
+- [ ] **Gateway PayPal (Internacional):** Pagamentos em moedas estrangeiras (USD, EUR, BRL) para vendas globais.
+- [ ] **Modelos de Venda Flexíveis:** Compra avulsa de cursos, pacotes promocionais (*bundles*) e assinaturas mensais recorrentes (Clube de Membros).
+- [ ] **Blocos de Venda no Flex Builder FSE:** Blocos nativos `buy_button`, `course_pricing_card` e checkout incorporado.
 
 ### 3.2. Otimização de Performance e Cache
 - [ ] **Headers de Cache HTTP:** Suporte padronizado a cabeçalhos `ETag` e `Cache-Control` nas respostas de páginas estáticas e temas.

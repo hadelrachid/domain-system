@@ -89,6 +89,20 @@
             text-shadow: 0 0 8px rgba(0, 210, 132, 0.4);
         }
 
+        #adminmenu li.has-submenu > a {
+            cursor: pointer;
+            user-select: none;
+        }
+        #adminmenu li.has-submenu > a::after {
+            content: '▾';
+            margin-left: auto;
+            font-size: 11px;
+            opacity: 0.7;
+            transition: transform 0.2s ease;
+        }
+        #adminmenu li.has-submenu.menu-closed > a::after {
+            transform: rotate(-90deg);
+        }
         #adminmenu li ul {
             background: rgba(13, 17, 23, 0.9);
             border-left: 1px solid var(--border);
@@ -451,18 +465,24 @@
                     $menus = $this->dispatcher->applyFilters('admin.menu', [], $userRole);
                     foreach ($menus as $menu) {
                         $icon = $menu['icon'] ?? '';
-                        $hasSub = isset($menu['submenu']) && is_array($menu['submenu']);
-                        $liClass = $hasSub ? 'class="has-submenu"' : '';
-                        echo '<li ' . $liClass . '><a href="' . htmlspecialchars(ltrim($menu['url'] ?? '#', '/')) . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a>';
+                        $hasSub = !empty($menu['submenu']) && is_array($menu['submenu']);
+                        $menuId = 'menu-' . preg_replace('/[^a-z0-9_-]/i', '', strtolower($menu['title'] ?? 'item'));
+                        
                         if ($hasSub) {
-                            echo '<ul style="list-style: none; padding-left: 15px; margin: 0; display: none;">';
+                            echo '<li class="has-submenu" data-menu-id="' . $menuId . '">';
+                            echo '<a href="javascript:void(0);" class="submenu-toggle" onclick="toggleAdminSubmenu(this, event);" role="button" aria-expanded="false">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a>';
+                            echo '<ul id="' . $menuId . '-sub" style="list-style: none; padding-left: 15px; margin: 0; display: none;">';
                             foreach ($menu['submenu'] as $sub) {
                                 $subIcon = $sub['icon'] ?? '';
-                                echo '<li><a href="' . htmlspecialchars(ltrim($sub['url'] ?? '#', '/')) . '">' . $subIcon . ' ' . htmlspecialchars($sub['title']) . '</a></li>';
+                                $subUrl = htmlspecialchars(ltrim($sub['url'] ?? '#', '/'));
+                                echo '<li><a href="' . $subUrl . '" onclick="saveSubmenuClick(\'' . $menuId . '\');">' . $subIcon . ' ' . htmlspecialchars($sub['title']) . '</a></li>';
                             }
                             echo '</ul>';
+                            echo '</li>';
+                        } else {
+                            $menuUrl = htmlspecialchars(ltrim($menu['url'] ?? '#', '/'));
+                            echo '<li><a href="' . $menuUrl . '">' . $icon . ' ' . htmlspecialchars($menu['title']) . '</a></li>';
                         }
-                        echo '</li>';
                     } 
                 }
 
@@ -470,13 +490,12 @@
             
             <?php if (isset($_SESSION['user_id'])): ?>
             <li style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 10px;">
-                <a href="#" style="color: var(--text-muted); cursor: default; font-size: 12px; text-transform: uppercase;">👤 <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?></a>
+                <a href="javascript:void(0);" style="color: var(--text-muted); cursor: default; font-size: 12px; text-transform: uppercase;">👤 <?= htmlspecialchars($_SESSION['user_name'] ?? 'Admin') ?></a>
             </li>
             <li><a href="logout" style="color: var(--accent-orange);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Encerrar Sessão</a></li>
             <?php endif; ?>
         </ul>
     </div>
-    
     
     <div id="wpcontent">
         <div class="wrap">
@@ -485,57 +504,81 @@
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const hasSubmenuLinks = document.querySelectorAll('.has-submenu > a');
-            const currentPath = window.location.pathname.replace(/\/$/, "");
+        function toggleAdminSubmenu(el, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const li = el.closest(".has-submenu");
+            if (!li) return;
+            const ul = li.querySelector("ul");
+            if (!ul) return;
+            const menuId = li.getAttribute("data-menu-id") || "menu-default";
             
-            let activeLinkFound = false;
-            document.querySelectorAll('#adminmenu a').forEach(link => {
-                let href = link.getAttribute('href');
-                if (!href.startsWith('http')) {
-                    href = '<?= BASE_URL ?>/' + href;
-                }
+            const isVisible = ul.style.display === "block" || (ul.style.display !== "none" && window.getComputedStyle(ul).display === "block");
+            if (isVisible) {
+                ul.style.display = "none";
+                li.classList.add("menu-closed");
+                localStorage.setItem("adminMenu_" + menuId, "closed");
+            } else {
+                ul.style.display = "block";
+                li.classList.remove("menu-closed");
+                localStorage.setItem("adminMenu_" + menuId, "open");
+            }
+        }
+
+        function saveSubmenuClick(menuId) {
+            try {
+                localStorage.setItem("adminMenu_" + menuId, "open");
+            } catch (_) {}
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Aplica o estado persistido no localStorage (open/closed) para cada submenu
+            document.querySelectorAll(".has-submenu").forEach(function(li) {
+                const menuId = li.getAttribute("data-menu-id") || "menu-default";
+                const ul = li.querySelector("ul");
+                if (!ul) return;
                 
-                let linkPath = new URL(href, window.location.origin).pathname.replace(/\/$/, "");
-                
-                if (linkPath === currentPath) {
-                    link.parentElement.classList.add('current');
-                    let parentUl = link.parentElement.parentElement;
-                    if(parentUl && parentUl.tagName === 'UL' && parentUl.id !== 'adminmenu') {
-                        parentUl.style.display = 'block';
-                        localStorage.setItem('openMenu_' + parentUl.previousElementSibling.textContent.trim(), 'open');
-                        activeLinkFound = true;
-                    }
+                const state = localStorage.getItem("adminMenu_" + menuId);
+                if (state === "open") {
+                    ul.style.display = "block";
+                    li.classList.remove("menu-closed");
+                } else if (state === "closed") {
+                    ul.style.display = "none";
+                    li.classList.add("menu-closed");
                 }
             });
 
-            hasSubmenuLinks.forEach(link => {
-                const parent = link.parentElement;
-                const ul = parent.querySelector('ul');
-                const menuTitle = link.textContent.trim();
-                
-                if (localStorage.getItem('openMenu_' + menuTitle) === 'open') {
-                    ul.style.display = 'block';
-                }
-
-                link.addEventListener('click', function(e) {
-                    if (this.getAttribute('href') === '#') {
-                        e.preventDefault();
-                        if (ul) {
-                            if (ul.style.display === 'none' || ul.style.display === '') {
-                                ul.style.display = 'block';
-                                localStorage.setItem('openMenu_' + menuTitle, 'open');
-                            } else {
-                                ul.style.display = 'none';
-                                localStorage.setItem('openMenu_' + menuTitle, 'closed');
+            // 2. Destaca o link ativo na URL atual e assegura que seu submenu pai esteja expandido
+            try {
+                const currentPath = window.location.pathname.replace(/\/$/, "");
+                document.querySelectorAll("#adminmenu a").forEach(function(link) {
+                    const rawHref = link.getAttribute("href");
+                    if (!rawHref || rawHref === "#" || rawHref.startsWith("javascript:")) return;
+                    
+                    let fullHref = rawHref.startsWith("http") ? rawHref : ("<?= BASE_URL ?>/" + rawHref);
+                    let linkPath = new URL(fullHref, window.location.origin).pathname.replace(/\/$/, "");
+                    
+                    if (linkPath === currentPath) {
+                        link.parentElement.classList.add("current");
+                        const parentUl = link.parentElement.closest("ul");
+                        if (parentUl && parentUl.id !== "adminmenu") {
+                            parentUl.style.display = "block";
+                            const parentLi = parentUl.closest(".has-submenu");
+                            if (parentLi) {
+                                parentLi.classList.remove("menu-closed");
+                                const menuId = parentLi.getAttribute("data-menu-id");
+                                if (menuId && localStorage.getItem("adminMenu_" + menuId) !== "closed") {
+                                    localStorage.setItem("adminMenu_" + menuId, "open");
+                                }
                             }
                         }
-                    } else {
-                        // Para links reais, apenas garante que abra no próximo reload
-                        localStorage.setItem('openMenu_' + menuTitle, 'open');
                     }
                 });
-            });
+            } catch (err) {
+                console.error("[Cockpit Menu] Erro ao sincronizar link ativo:", err);
+            }
         });
     </script>
         <?php

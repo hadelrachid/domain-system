@@ -117,6 +117,21 @@ $seo->setCanonical($canonicalUrl)
                 z-index: 100;
             }
             .nav-menu.active { display: flex; }
+            .nav-menu .ds-header-auth-area {
+                margin-left: 0 !important;
+                margin-top: 16px !important;
+                padding-top: 16px !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 10px !important;
+            }
+            .nav-menu .ds-auth-nav-link {
+                width: 100% !important;
+                justify-content: center !important;
+                text-align: center !important;
+                padding: 10px 14px !important;
+            }
             
             /* Typography adjustments */
             h1 { font-size: 2.5rem !important; }

@@ -31,6 +31,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     {
         $runtime->bind(MenuRepositoryInterface::class, PdoMenuRepository::class);
         $runtime->bind(
+            \DomainSystem\Core\Theme\Parts\Contracts\MenuTreeBuilderInterface::class,
+            \DomainSystem\Core\Theme\Parts\Support\MenuTreeBuilder::class
+        );
+        $runtime->bind(
             \DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface::class,
             \DomainSystem\SystemApps\nav_menus\Services\NavMenuProviderAdapter::class
         );

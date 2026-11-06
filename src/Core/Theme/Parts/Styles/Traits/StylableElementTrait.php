@@ -30,19 +30,90 @@ trait StylableElementTrait
     public function getBackgroundColor(): ?ColorValue
     {
         $raw = $this->styleData['background'] ?? ($this->styleData['bg_color'] ?? null);
-        return $raw !== null ? ColorValue::fromString((string)$raw) : null;
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
     }
 
     public function getTextColor(): ?ColorValue
     {
-        $raw = $this->styleData['color'] ?? ($this->styleData['text_color'] ?? null);
-        return $raw !== null ? ColorValue::fromString((string)$raw) : null;
+        $raw = $this->styleData['text_color'] ?? ($this->styleData['color'] ?? null);
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
+    }
+
+    public function getHeadingColor(): ?ColorValue
+    {
+        $raw = $this->styleData['heading_color'] ?? ($this->styleData['title_color'] ?? null);
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
+    }
+
+    public function getLinkColor(): ?ColorValue
+    {
+        $raw = $this->styleData['link_color'] ?? null;
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
+    }
+
+    public function getLinkHoverColor(): ?ColorValue
+    {
+        $raw = $this->styleData['link_hover_color'] ?? ($this->styleData['active_color'] ?? null);
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
     }
 
     public function getBorderColor(): ?ColorValue
     {
         $raw = $this->styleData['border_color'] ?? null;
-        return $raw !== null ? ColorValue::fromString((string)$raw) : null;
+        return $raw !== null && (string)$raw !== '' ? ColorValue::fromString((string)$raw) : null;
+    }
+
+    public function getFontFamily(): ?string
+    {
+        if (!isset($this->styleData['font_family']) || (string)$this->styleData['font_family'] === '') {
+            return null;
+        }
+        $raw = (string)$this->styleData['font_family'];
+        return match ($raw) {
+            'primary'   => 'var(--font-primary, sans-serif)',
+            'secondary' => 'var(--font-secondary, monospace)',
+            'tertiary'  => 'var(--font-tertiary, sans-serif)',
+            default     => $raw,
+        };
+    }
+
+    public function getFontSize(): ?DimensionValue
+    {
+        $raw = $this->styleData['font_size'] ?? ($this->styleData['size'] ?? null);
+        return $raw !== null && (string)$raw !== '' ? DimensionValue::fromString((string)$raw) : null;
+    }
+
+    public function getFontWeight(): ?string
+    {
+        return isset($this->styleData['font_weight']) && (string)$this->styleData['font_weight'] !== ''
+            ? (string)$this->styleData['font_weight']
+            : null;
+    }
+
+    public function getLineHeight(): ?string
+    {
+        return isset($this->styleData['line_height']) && (string)$this->styleData['line_height'] !== ''
+            ? (string)$this->styleData['line_height']
+            : null;
+    }
+
+    public function getLetterSpacing(): ?DimensionValue
+    {
+        $raw = $this->styleData['letter_spacing'] ?? null;
+        return $raw !== null && (string)$raw !== '' ? DimensionValue::fromString((string)$raw) : null;
+    }
+
+    public function getTextTransform(): ?string
+    {
+        return isset($this->styleData['text_transform']) && (string)$this->styleData['text_transform'] !== ''
+            ? (string)$this->styleData['text_transform']
+            : null;
+    }
+
+    public function getTextAlign(): ?string
+    {
+        $raw = $this->styleData['text_align'] ?? ($this->styleData['align'] ?? null);
+        return $raw !== null && (string)$raw !== '' ? (string)$raw : null;
     }
 
     public function getWidth(): ?DimensionValue

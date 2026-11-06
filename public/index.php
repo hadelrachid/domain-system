@@ -84,8 +84,14 @@ $app->getDispatcher()->dispatch('kernel_pre_boot');
 
 $earlyRequest = \DomainSystem\Core\Http\Request::capture();
 
-// Boot the Kernel
+// Normalização 100% agnóstica de BASE_URL e Rota (Garante BASE_URL disponível antes de qualquer serviço ou plugin carregar)
+[$baseUrl, $routeUri] = $resolveAgnosticPath($earlyRequest->uri());
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $baseUrl);
+}
+$earlyRequest->server['REQUEST_URI'] = $routeUri;
 
+// Boot the Kernel
 $app->boot();
 
 // Dispatch a post-boot event
@@ -97,16 +103,6 @@ $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 // Dispatch the request
 try {
     $request = $earlyRequest;
-    
-    // Normalização 100% agnóstica de BASE_URL e Rota
-    [$baseUrl, $routeUri] = $resolveAgnosticPath($request->uri());
-    
-    if (!defined('BASE_URL')) {
-        define('BASE_URL', $baseUrl);
-    }
-    
-    // Atualiza o Request com a URI limpa para o Router
-    $request->server['REQUEST_URI'] = $routeUri;
 
     $httpKernel = new \DomainSystem\Core\Http\HttpKernel(
         $app->getRouter(),

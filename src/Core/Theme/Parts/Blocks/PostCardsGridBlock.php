@@ -142,6 +142,36 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
                 'label' => 'Texto do Botão / Link',
                 'default' => 'Ler Artigo →',
             ],
+            'title_color' => [
+                'type' => 'color',
+                'label' => 'Cor dos Títulos dos Cards',
+                'default' => 'var(--color-primary)',
+            ],
+            'excerpt_color' => [
+                'type' => 'color',
+                'label' => 'Cor do Resumo (Texto)',
+                'default' => 'var(--color-text-main)',
+            ],
+            'meta_color' => [
+                'type' => 'color',
+                'label' => 'Cor da Data / Autor',
+                'default' => 'var(--color-text-muted)',
+            ],
+            'readmore_color' => [
+                'type' => 'color',
+                'label' => 'Cor do Link "Ler Artigo"',
+                'default' => 'var(--color-primary)',
+            ],
+            'badge_bg_color' => [
+                'type' => 'color',
+                'label' => 'Cor de Fundo da Categoria (Badge)',
+                'default' => 'var(--color-primary)',
+            ],
+            'badge_text_color' => [
+                'type' => 'color',
+                'label' => 'Cor do Texto da Categoria (Badge)',
+                'default' => '#0b0c10',
+            ],
         ];
     }
 
@@ -165,6 +195,13 @@ class PostCardsGridBlock implements BlockInterface, StylableElementInterface
         $showExcerpt = (bool)($data['show_excerpt'] ?? true);
         $showReadMore = (bool)($data['show_read_more'] ?? true);
         $readMoreText = htmlspecialchars((string)($data['read_more_text'] ?? 'Ler Artigo →'), ENT_QUOTES, 'UTF-8');
+
+        $titleColor = $this->styleRenderer->sanitizeCssValue((string)($data['title_color'] ?? $data['heading_color'] ?? 'var(--ds-local-heading-color, var(--color-primary, #38bdf8))'));
+        $excerptColor = $this->styleRenderer->sanitizeCssValue((string)($data['excerpt_color'] ?? $data['text_color'] ?? $data['color'] ?? 'var(--ds-local-text-color, var(--text-main, #c5c6c7))'));
+        $metaColor = $this->styleRenderer->sanitizeCssValue((string)($data['meta_color'] ?? 'var(--text-muted, #8b8c8d)'));
+        $readmoreColor = $this->styleRenderer->sanitizeCssValue((string)($data['readmore_color'] ?? $data['link_color'] ?? 'var(--ds-local-link-color, var(--color-primary, #38bdf8))'));
+        $badgeBgColor = $this->styleRenderer->sanitizeCssValue((string)($data['badge_bg_color'] ?? 'var(--color-primary, #38bdf8)'));
+        $badgeTextColor = $this->styleRenderer->sanitizeCssValue((string)($data['badge_text_color'] ?? '#0b0c10'));
 
         // Se o usuário passou posts manuais estáticos no schema, usa-os; caso contrário consulta o provedor
         if (isset($data['manual_posts']) && is_array($data['manual_posts']) && !empty($data['manual_posts'])) {
@@ -241,7 +278,7 @@ HTML;
         $allCards = implode("\n", $cardsHtml);
 
         return <<<HTML
-<div class="ds-post-cards-grid ds-cols-{$columns}" style="--ds-grid-cols: {$columns}; --ds-grid-gap: {$gap};">
+<div class="ds-post-cards-grid ds-cols-{$columns}" style="--ds-grid-cols: {$columns}; --ds-grid-gap: {$gap}; --ds-card-title-color: {$titleColor}; --ds-card-excerpt-color: {$excerptColor}; --ds-card-meta-color: {$metaColor}; --ds-card-readmore-color: {$readmoreColor}; --ds-card-badge-bg: {$badgeBgColor}; --ds-card-badge-text: {$badgeTextColor};">
 {$allCards}
 </div>
 <style>
@@ -330,8 +367,8 @@ HTML;
     position: absolute;
     top: 12px;
     left: 12px;
-    background: var(--color-primary, #38bdf8);
-    color: #0b0c10;
+    background: var(--ds-card-badge-bg, var(--color-primary, #38bdf8));
+    color: var(--ds-card-badge-text, #0b0c10);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -348,7 +385,7 @@ HTML;
 }
 .ds-card-meta {
     font-size: 0.8rem;
-    color: var(--text-muted, #8b8c8d);
+    color: var(--ds-card-meta-color, var(--text-muted, #8b8c8d));
     margin-bottom: 10px;
     font-family: var(--font-secondary, monospace);
     display: flex;
@@ -364,17 +401,17 @@ HTML;
     font-family: var(--font-primary, sans-serif);
 }
 .ds-card-title a {
-    color: var(--color-primary, #38bdf8);
+    color: var(--ds-card-title-color, var(--color-primary, #38bdf8));
     text-decoration: none;
     transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 .ds-card-title a:hover {
     color: #fff;
-    text-shadow: 0 0 8px var(--color-primary, #38bdf8);
+    text-shadow: 0 0 8px var(--ds-card-title-color, var(--color-primary, #38bdf8));
 }
 .ds-card-excerpt {
     font-size: 0.92rem;
-    color: var(--text-main, #c5c6c7);
+    color: var(--ds-card-excerpt-color, var(--text-main, #c5c6c7));
     line-height: 1.6;
     margin: 0 0 16px 0;
     flex-grow: 1;
@@ -388,7 +425,7 @@ HTML;
     align-items: center;
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--color-primary, #38bdf8);
+    color: var(--ds-card-readmore-color, var(--color-primary, #38bdf8));
     text-decoration: none;
     transition: transform 0.2s ease, color 0.2s ease;
 }

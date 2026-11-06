@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\DtoRendererInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 
 class JsonRenderer implements PageTreeRendererInterface
 {
     private WidgetManagerInterface $widgetManager;
-    private DtoRenderer $dtoRenderer;
+    private DtoRendererInterface $dtoRenderer;
 
-    public function __construct(WidgetManagerInterface $widgetManager, ?DtoRenderer $dtoRenderer = null)
+    public function __construct(WidgetManagerInterface $widgetManager, ?DtoRendererInterface $dtoRenderer = null)
     {
         $this->widgetManager = $widgetManager;
         $this->dtoRenderer = $dtoRenderer ?? new DtoRenderer();

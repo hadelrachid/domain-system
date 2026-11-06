@@ -115,8 +115,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/emergency', [\DomainSystem\SystemApps\SystemAdmin\Controllers\EmergencyController::class, 'login']);
 
             // Dashboard base
-            $router->addRoute('GET', '/admin', [DashboardController::class, 'index'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
-            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
+            $router->addRoute('GET', '/admin', [DashboardController::class, 'index'], 'system-admin', ['admin', 'manager']);
+            $router->addRoute('POST', '/admin/dashboard/save-layout', [DashboardController::class, 'saveLayout'], 'system-admin', ['admin', 'manager']);
 
             $router->addRoute('GET', '/admin/shortcodes', [AdminController::class, 'listShortcodes'], 'system-admin', ['admin']);
             $router->addRoute('GET', '/admin/plugins', [AdminController::class, 'listPlugins'], 'system-admin', ['admin']);
@@ -137,7 +137,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/acl/save', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'save'], 'system-admin', ['admin']);
 
             // Manual de Instruções & Testabilidade
-            $router->addRoute('GET', '/admin/manual', [AdminController::class, 'manual'], 'system-admin', ['admin', 'manager', 'subscriber', 'user']);
+            $router->addRoute('GET', '/admin/manual', [AdminController::class, 'manual'], 'system-admin', ['admin', 'manager']);
         });
     }
 }

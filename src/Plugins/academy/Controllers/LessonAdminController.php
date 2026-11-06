@@ -12,6 +12,7 @@ use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonFileScaffolderInterface;
+use DomainSystem\Plugins\academy\Contracts\LessonPdfStorageInterface;
 use Throwable;
 
 class LessonAdminController
@@ -20,17 +21,20 @@ class LessonAdminController
     private CourseStructureRepositoryInterface $structureRepo;
     private SessionManagerInterface $session;
     private ?LessonFileScaffolderInterface $scaffolder;
+    private ?LessonPdfStorageInterface $pdfStorage;
 
     public function __construct(
         CourseRepositoryInterface $courseRepo,
         CourseStructureRepositoryInterface $structureRepo,
         SessionManagerInterface $session,
-        ?LessonFileScaffolderInterface $scaffolder = null
+        ?LessonFileScaffolderInterface $scaffolder = null,
+        ?LessonPdfStorageInterface $pdfStorage = null
     ) {
         $this->courseRepo = $courseRepo;
         $this->structureRepo = $structureRepo;
         $this->session = $session;
         $this->scaffolder = $scaffolder;
+        $this->pdfStorage = $pdfStorage;
     }
 
     public function editor(Request $request, $id): ResponseInterface
@@ -177,6 +181,9 @@ class LessonAdminController
             }
         }
 
+        if ($token === '' && !empty($request->server['HTTP_X_CSRF_TOKEN'])) {
+            $token = (string)$request->server['HTTP_X_CSRF_TOKEN'];
+        }
         $expectedToken = (string)$this->session->getCsrfToken();
         if ($token === '' || !hash_equals($expectedToken, $token)) {
             if ($this->isAjax($request)) {
@@ -263,6 +270,76 @@ class LessonAdminController
 
             $this->session->setFlash('error', "Erro ao salvar aula: " . $e->getMessage());
             return Response::redirect($baseUrl . '/admin/academy/lessons/' . $lessonId . '/editor');
+        }
+    }
+
+    /**
+     * Endpoint AJAX para envio de arquivo PDF local (pasta na Hostinger / XAMPP) vinculado a um bloco da aula.
+     */
+    public function uploadPdf(Request $request, $id): ResponseInterface
+    {
+        if (ob_get_length() > 0) {
+            @ob_clean();
+        }
+
+        $token = (string)($request->input('csrf_token') ?? '');
+        if ($token === '' && !empty($request->server['HTTP_X_CSRF_TOKEN'])) {
+            $token = (string)$request->server['HTTP_X_CSRF_TOKEN'];
+        }
+        $expectedToken = (string)$this->session->getCsrfToken();
+
+        if ($token === '' || !hash_equals($expectedToken, $token)) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Token CSRF inválido ou tamanho do arquivo excedeu o post_max_size do PHP (' . ini_get('post_max_size') . ').',
+            ], JSON_UNESCAPED_UNICODE), 403, ['Content-Type' => 'application/json']);
+        }
+
+        if ($this->pdfStorage === null) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Serviço de armazenamento de PDF indisponível.',
+            ], JSON_UNESCAPED_UNICODE), 503, ['Content-Type' => 'application/json']);
+        }
+
+        $file = $request->file('pdf') ?? ($request->file('file') ?? null);
+        if (!is_array($file)) {
+            $contentLength = (int)($request->server['CONTENT_LENGTH'] ?? ($request->server['HTTP_CONTENT_LENGTH'] ?? 0));
+            if ($contentLength > 0) {
+                $mbSent = number_format($contentLength / 1048576, 1, ',', '.');
+                $postMax = (string)ini_get('post_max_size');
+                return new Response(json_encode([
+                    'success' => false,
+                    'message' => "O arquivo PDF enviado ({$mbSent} MB) excede o limite de post_max_size do servidor PHP ({$postMax}).",
+                ], JSON_UNESCAPED_UNICODE), 413, ['Content-Type' => 'application/json']);
+            }
+
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Nenhum arquivo PDF foi enviado.',
+            ], JSON_UNESCAPED_UNICODE), 400, ['Content-Type' => 'application/json']);
+        }
+
+        try {
+            $stored = $this->pdfStorage->storePdfUpload($file);
+            return new Response(json_encode([
+                'success'       => true,
+                'url'           => $stored['url'],
+                'relative_path' => $stored['relative_path'],
+                'file_name'     => $stored['file_name'],
+                'size'          => $stored['size'],
+                'message'       => 'Arquivo PDF enviado com sucesso!',
+            ], JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
+        } catch (\InvalidArgumentException $e) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE), 422, ['Content-Type' => 'application/json']);
+        } catch (Throwable $e) {
+            return new Response(json_encode([
+                'success' => false,
+                'message' => 'Falha ao salvar o arquivo PDF no servidor.',
+            ], JSON_UNESCAPED_UNICODE), 500, ['Content-Type' => 'application/json']);
         }
     }
 

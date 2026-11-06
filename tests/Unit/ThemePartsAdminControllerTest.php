@@ -58,6 +58,17 @@ class ThemePartsAdminControllerTest extends TestCase
         );
 
         $themeManagerMock = $this->createMock(ThemeManagerInterface::class);
+        $discovery = new \DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService($this->tempDir);
+        $uploader = new \DomainSystem\Plugins\flextheme\Services\MediaUploadService($this->tempDir);
+        $styleRenderer = new \DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer();
+        $previewService = new \DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService($this->renderer);
+        $managementService = new \DomainSystem\Plugins\flextheme\Services\ThemePartManagementService(
+            $this->partRepo,
+            $this->partAssoc,
+            $discovery,
+            new \DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator($blockRegistry, $this->layoutGrid)
+        );
+        $urlResolver = new \DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver();
 
         $this->controller = new ThemePartsAdminController(
             $this->partRepo,
@@ -70,7 +81,14 @@ class ThemePartsAdminControllerTest extends TestCase
             $this->shortcodeManager,
             null,
             null,
-            $this->tempDir
+            $this->tempDir,
+            $discovery,
+            $uploader,
+            null,
+            $styleRenderer,
+            $previewService,
+            $managementService,
+            $urlResolver
         );
     }
 
@@ -127,18 +145,33 @@ class ThemePartsAdminControllerTest extends TestCase
             ['id' => 1, 'name' => 'Menu Principal', 'location' => 'header'],
         ]);
 
+        $regWithMenu = DefaultBlockRegistryFactory::create(null, $this->shortcodeManager);
+        $discovery = new \DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService($this->tempDir);
+
         $ctrlWithMenu = new ThemePartsAdminController(
             $this->partRepo,
             $this->partAssoc,
             $this->tokens,
-            DefaultBlockRegistryFactory::create(null, $this->shortcodeManager),
+            $regWithMenu,
             $this->layoutGrid,
             $this->renderer,
             $this->createMock(ThemeManagerInterface::class),
             $this->shortcodeManager,
             $menuMock,
             null,
-            $this->tempDir
+            $this->tempDir,
+            $discovery,
+            new \DomainSystem\Plugins\flextheme\Services\MediaUploadService($this->tempDir),
+            null,
+            new \DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer(),
+            new \DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService($this->renderer),
+            new \DomainSystem\Plugins\flextheme\Services\ThemePartManagementService(
+                $this->partRepo,
+                $this->partAssoc,
+                $discovery,
+                new \DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator($regWithMenu, $this->layoutGrid)
+            ),
+            new \DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver()
         );
 
         $request = new Request(['type' => 'header'], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/builder/create']);
@@ -345,7 +378,8 @@ class ThemePartsAdminControllerTest extends TestCase
         $data = json_decode($response->getContent(), true);
 
         $this->assertArrayHasKey('blocks', $data);
-        $this->assertCount(14, $data['blocks']);
+        $this->assertCount(15, $data['blocks']);
+        $this->assertArrayHasKey('user_auth', $data['blocks']);
         $this->assertArrayHasKey('heading', $data['blocks']);
         $this->assertArrayHasKey('button', $data['blocks']);
         $this->assertArrayHasKey('cta_button', $data['blocks']);

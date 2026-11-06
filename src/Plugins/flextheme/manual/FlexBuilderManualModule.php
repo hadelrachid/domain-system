@@ -7,7 +7,7 @@ namespace DomainSystem\Plugins\flextheme\manual;
 use DomainSystem\Core\Contracts\ManualModuleInterface;
 
 /**
- * Manual Oficial e Guia Interativo de Homologação (QA) do Flex Builder (v2.5.0).
+ * Manual Oficial e Guia Interativo de Homologação (QA) do Flex Builder (v2.6.0).
  * Descoberto automaticamente pelo sistema de Manuais do Domain-System OS (/admin/manual e /manual).
  */
 class FlexBuilderManualModule implements ManualModuleInterface
@@ -29,7 +29,7 @@ class FlexBuilderManualModule implements ManualModuleInterface
 
     public function getBadge(): string
     {
-        return 'Flex Builder v2.5.0 • Full Site Editing';
+        return 'Flex Builder v2.6.0 • Full Site Editing';
     }
 
     public function getAccentColor(): string
@@ -104,7 +104,7 @@ class FlexBuilderManualModule implements ManualModuleInterface
         <div style="color: var(--text-main, #c5c6c7); font-size: 14px; line-height: 1.75;">
             
             <p style="margin-top: 0;">
-                O <strong>Flex Builder (v2.5.0)</strong> é o motor oficial de composição visual <em>Full Site Editing (FSE)</em> do Domain-System OS. Construído rigorosamente sobre <strong>Contratos SOLID (Ring 0 e Ring 3)</strong>, ele une um <strong>Compilador Único (`ThemePartCompilerInterface`)</strong> entre Preview e Publicação, <strong>Validação Estrutural Completa (`ThemePartValidatorInterface`)</strong>, <strong>Visibilidade Responsiva Isolada por Elemento nas 4 Resoluções</strong> e <strong>Reajuste Automático de Dimensões do CSS Grid (Auto-Reflow)</strong>.
+                O <strong>Flex Builder (v2.6.0)</strong> é o motor oficial de composição visual <em>Full Site Editing (FSE)</em> do Domain-System OS. Construído rigorosamente sobre <strong>Contratos SOLID (Ring 0 e Ring 3)</strong>, ele une um <strong>Compilador Único (`ThemePartCompilerInterface`)</strong> entre Preview e Publicação, <strong>Validação Estrutural Completa (`ThemePartValidatorInterface`)</strong>, <strong>Visibilidade Responsiva Isolada por Elemento nas 4 Resoluções</strong> e <strong>Reajuste Automático de Dimensões do CSS Grid (Auto-Reflow)</strong>.
             </p>
 
             <!-- PILARES DO MOTOR -->

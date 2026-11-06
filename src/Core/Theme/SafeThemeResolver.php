@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme;
 
+use DomainSystem\Core\Contracts\ThemePathResolverInterface;
+
 /**
  * Resolvedor seguro de diretórios de temas.
  * Suporta múltiplos diretórios de busca (raiz /themes e /src/Plugins/flextheme/themes)
  * e previne falhas 404 caso o tema configurado não exista fisicamente no disco.
  */
-class SafeThemeResolver
+class SafeThemeResolver implements ThemePathResolverInterface
 {
     /** @var array<string> */
     private array $searchPaths = [];

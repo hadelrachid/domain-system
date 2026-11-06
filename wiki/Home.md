@@ -24,40 +24,36 @@ O núcleo do sistema provê apenas a infraestrutura básica:
 Módulos essenciais para o funcionamento da plataforma (Banco de Dados, Autenticação, Painel Administrativo, Monitoramento e Atualizador). Possuem prioridade na ordem de inicialização do sistema.
 
 ### 3. Extensões de Domínio (`src/Plugins`)
-Módulos de negócio e funcionalidades específicas (Construtor de Temas, Academy LMS, Páginas e SEO). Comunicam-se com os serviços do núcleo através do mediador `OsRuntime`.
-
-### 4. Flex Builder (FSE)
-Construtor visual de cabeçalhos, rodapés e seções centrais em CSS Grid de 12 colunas, com validação de payload antes do salvamento e controle de visibilidade responsiva por elemento em 4 resoluções.
-
-### 5. Atualizador Automático (`SystemUpdater`)
-Módulo integrado para verificação de versões e aplicação de atualizações via GitHub Releases com verificação de integridade por SHA-256 e substituição atômica de arquivos.
+Módulos de negócio e funcionalidades da plataforma:
+- **Academy LMS:** Gestão completa de cursos, aulas com vídeos e apostilas em PDF, área do aluno e certificados.
+- **DomainCommerce:** Pagamentos integrados via Mercado Pago (Pix instantâneo e Cartão até 12x), PayPal oficial e webhooks de plataformas de afiliados (Hotmart, Eduzz, Monetizze, ClickBank).
+- **Flex Builder:** Construtor visual de cabeçalhos, rodapés e seções em grid responsivo.
+- **Páginas e SEO:** Criação de páginas de conteúdo e otimização para motores de busca.
 
 ---
 
 ## 🛡️ Resiliência e Estabilidade
 
-- **Circuit Breaker:** Captura de exceções e isolamento de falhas em tempo de execução para evitar interrupções completas do serviço.
-- **Persistência Atômica (`AtomicJsonStore`):** Gravação segura de arquivos de configuração com bloqueio exclusivo (`LOCK_EX`) e gravação temporária com renomeação atômica.
-- **Verificação de Esquema (`SchemaDoctorInterface`):** Verificação da integridade das tabelas de banco de dados (SQLite e MySQL).
-- **Controle de Acesso por Capabilities:** Permissões granulares associadas a perfis no painel administrativo, com proteção anti-CSRF e tipagem estrita.
+- **Circuit Breaker:** Isolamento de falhas em tempo de execução para evitar que erros em extensões derrubem o site.
+- **Persistência Segura (`AtomicJsonStore`):** Gravação segura de arquivos de configuração com bloqueio concorrente (`LOCK_EX`).
+- **Verificação de Banco (`SchemaDoctorInterface`):** Verificação da integridade das tabelas de banco de dados (SQLite e MySQL).
+- **Segurança de Acesso:** Proteção anti-CSRF, controle de permissões por perfil e tipagem estrita no PHP 8.2+.
 
 ---
 
-## 🔍 Auditoria Aberta: `project.txt`
+## 🔍 Visão Geral do Código: `project.txt`
 
-O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)**, contendo o mapeamento consolidado da arquitetura, interfaces e código do sistema. 
-
-Esse recurso permite que desenvolvedores ou modelos de IA (Claude, ChatGPT, Gemini) realizem análises estáticas e auditorias completas com contexto integral do projeto.
+O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)**, contendo o mapeamento consolidado da arquitetura, contratos e código-fonte, facilitando auditorias e revisões completas da base de código.
 
 ---
 
 ## 📚 Documentos da Wiki
 
-* **[Flex Builder FSE](Flex-Builder.md)** — Funcionamento dos 14 blocos semânticos, visibilidade responsiva em 4 resoluções com Auto-Reflow e contratos visuais.
+* **[Flex Builder FSE](Flex-Builder.md)** — Funcionamento dos blocos semânticos, visibilidade responsiva em 4 resoluções com Auto-Reflow e contratos visuais.
 * **[Atualizações e Deploy](Atualizacoes.md)** — Guia do atualizador automático via GitHub Releases e rotinas de backup.
-* **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Funcionamento do isolamento de falhas em plugins e desativação em cascata.
-* **[Controle de Acesso Centralizado](Global-Gatekeeper.md)** — Autorização declarativa no roteador e validação antecipada de permissões.
-* **[Modo de Recuperação Administrativa](Emergency-Hatch.md)** — Mecanismo de contingência para acesso ao painel em caso de indisponibilidade de autenticação.
+* **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Isolamento de falhas em plugins para garantir alta disponibilidade.
+* **[Controle de Acesso Centralizado](Global-Gatekeeper.md)** — Autorização declarativa no roteador e validação de permissões.
+* **[Modo de Recuperação Administrativa](Emergency-Hatch.md)** — Mecanismo de contingência para acesso seguro ao painel administrativo.
 
 ---
 
@@ -65,39 +61,46 @@ Esse recurso permite que desenvolvedores ou modelos de IA (Claude, ChatGPT, Gemi
 
 # 🇺🇸 Domain System Overview
 
-**Domain System** is a modular web platform in PHP 8.2+ designed for managing pages, services, and themes, structured around **Clean Architecture**, **SOLID**, and **Dependency Inversion (DIP)** principles.
+**Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, online courses, and content, built with clean, decoupled architecture.
 
-The platform operates with a lightweight footprint (~30 MB on disk and ~5 MB of Zend RAM), where business features are decoupled into independent modules.
+The platform operates with a minimal footprint (~30 MB on disk and ~5 MB of Zend RAM), where business features live in decoupled modules.
 
 ---
 
 ## 🏛️ System Architecture
 
-The architecture is organized into distinct layers:
+The architecture is organized into clear layers:
 
 ### 1. Core Infrastructure (`src/Core`)
-Provides fundamental runtime services:
-- **Dependency Injection:** Container for service resolution and lifecycle management.
-- **Event Dispatcher (Hooks):** Inter-module communication through event publication and listeners.
+Provides essential foundation services:
+- **Dependency Injection:** Container for service resolution.
+- **Event Dispatcher (Hooks):** Inter-module communication through event publication.
 - **Environment-Agnostic Router:** Native execution in domain root or subfolder paths.
 
 ### 2. Infrastructure Modules (`src/SystemApps`)
-Core system components (Database, Authentication, Cockpit Admin, Monitoring, and Auto-Updater). These modules receive boot sequence priority.
+Core system components (Database, Authentication, Cockpit Admin, Monitoring, and Auto-Updater).
 
-### 3. Domain Extensions (`src/Plugins`)
-Application-level features (Theme Builder, Academy LMS, Pages, and SEO). Plugins interact with core services via the `OsRuntime` mediator.
-
-### 4. Flex Builder (FSE)
-Visual layout engine for headers, footers, and page sections using a 12-column CSS Grid, featuring payload validation and per-element responsive visibility across 4 resolutions.
-
-### 5. Automated Updates (`SystemUpdater`)
-Built-in update manager that retrieves releases from GitHub Releases, validates packages with SHA-256 checksums, and performs atomic file swaps.
+### 3. Feature Extensions (`src/Plugins`)
+Business modules and platform capabilities:
+- **Academy LMS:** Complete course management, video and PDF lessons, student dashboard, and automated certificates.
+- **DomainCommerce:** Integrated checkout with Mercado Pago (Instant Pix, credit cards up to 12x), official PayPal, and affiliate webhooks (Hotmart, Eduzz, Monetizze, ClickBank).
+- **Flex Builder:** Visual layout builder for headers, footers, and page sections on a responsive 12-column grid.
+- **Pages & SEO:** Content pages and search engine optimization.
 
 ---
 
 ## 🛡️ Resilience and Stability
 
-- **Circuit Breaker:** Exception trapping and fault isolation during runtime to prevent cascading failures.
+- **Circuit Breaker:** Runtime failure isolation ensuring plugins cannot crash the core system.
+- **Safe Persistence (`AtomicJsonStore`):** Concurrency-safe configuration writes using `LOCK_EX`.
+- **Database Schema Validation (`SchemaDoctorInterface`):** Automatic integrity checks for MySQL and SQLite tables.
+- **Access Security:** Strict CSRF validation, role-based capabilities, and modern PHP 8.2+ type safety.
+
+---
+
+## 🔍 Codebase Overview: `project.txt`
+
+The repository provides a consolidated **[`project.txt`](../project.txt)** file at the root, mapping out the complete architecture and code tree for quick technical reviews.
 - **Atomic Persistence (`AtomicJsonStore`):** Safe configuration writes using exclusive file locking (`LOCK_EX`) and atomic renames.
 - **Schema Doctor (`SchemaDoctorInterface`):** Table structure verification across SQLite and MySQL engines.
 - **Capability-Based Access Control:** Granular permissions configurable via the admin panel, featuring CSRF tokens and strict typing.

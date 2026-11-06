@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DomainSystem\Core\Http;
 
 use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\RouteBoundaryGuardInterface;
 use DomainSystem\Core\Contracts\RouterInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\SiteStateInterface;
@@ -19,7 +20,7 @@ use Throwable;
 /**
  * Orquestrador HTTP do Kernel (SRP & Testabilidade E2E).
  * Centraliza o despacho da requisição, política de manutenção, normalização de Response,
- * envelopamento de Workspace, CachePolicy, telemetria e Circuit Breaker de Rotas (Pilar 2 v2.4).
+ * isolamento de fronteiras via RouteBoundaryGuardInterface, CachePolicy e telemetria.
  */
 class HttpKernel
 {
@@ -28,19 +29,22 @@ class HttpKernel
     private ?WorkspaceManager $workspaceManager;
     private CachePolicy $cachePolicy;
     private int $routeFailureThreshold;
+    private RouteBoundaryGuardInterface $boundaryGuard;
 
     public function __construct(
         RouterInterface $router,
         ContainerInterface $container,
         ?WorkspaceManager $workspaceManager = null,
         ?CachePolicy $cachePolicy = null,
-        int $routeFailureThreshold = 3
+        int $routeFailureThreshold = 3,
+        ?RouteBoundaryGuardInterface $boundaryGuard = null
     ) {
         $this->router = $router;
         $this->container = $container;
         $this->workspaceManager = $workspaceManager;
         $this->cachePolicy = $cachePolicy ?? new CachePolicy();
         $this->routeFailureThreshold = max(1, $routeFailureThreshold);
+        $this->boundaryGuard = $boundaryGuard ?? new RouteBoundaryGuard();
     }
 
     public function handle(
@@ -105,7 +109,9 @@ class HttpKernel
             }
         }
 
-        if ($response instanceof ViewResponse && $response->shouldWrapLayout()) {
+        // GUARDA DE FRONTEIRA E SEGURANÇA (DIP / SOLID):
+        // Nenhuma rota pública ou de aluno pode jamais ser envelopada pela casca do admin!
+        if ($this->boundaryGuard->canWrapInAdminWorkspace($uri, $response) && $userRole !== '') {
             $workspaceManager = $this->workspaceManager;
             if ($workspaceManager === null) {
                 try {
@@ -116,8 +122,7 @@ class HttpKernel
             }
 
             if ($workspaceManager !== null) {
-                $role = $userRole !== '' ? $userRole : 'admin';
-                $workspace = $workspaceManager->getWorkspace($role);
+                $workspace = $workspaceManager->getWorkspace($userRole);
                 $wrappedContent = $workspace->wrap($response->getContent());
                 $response->setContent($wrappedContent);
             }

@@ -182,9 +182,59 @@ class StylableContractsFoundationTest extends TestCase
                 return ColorValue::fromToken('text_main');
             }
 
+            public function getHeadingColor(): ?ColorValue
+            {
+                return ColorValue::fromToken('color-primary');
+            }
+
+            public function getLinkColor(): ?ColorValue
+            {
+                return ColorValue::fromToken('color-secondary');
+            }
+
+            public function getLinkHoverColor(): ?ColorValue
+            {
+                return ColorValue::fromToken('color-tertiary');
+            }
+
             public function getBorderColor(): ?ColorValue
             {
                 return ColorValue::fromHex('#ffffff');
+            }
+
+            public function getFontFamily(): ?string
+            {
+                return 'var(--font-primary)';
+            }
+
+            public function getFontSize(): ?DimensionValue
+            {
+                return DimensionValue::rem(1.2);
+            }
+
+            public function getFontWeight(): ?string
+            {
+                return '700';
+            }
+
+            public function getLineHeight(): ?string
+            {
+                return '1.5';
+            }
+
+            public function getLetterSpacing(): ?DimensionValue
+            {
+                return DimensionValue::px(0);
+            }
+
+            public function getTextTransform(): ?string
+            {
+                return 'none';
+            }
+
+            public function getTextAlign(): ?string
+            {
+                return 'left';
             }
 
             public function getWidth(): ?DimensionValue
@@ -278,5 +328,96 @@ class StylableContractsFoundationTest extends TestCase
         $this->assertSame('1200px', $styles['max_width']);
         $this->assertSame('80vh', $styles['height']);
         $this->assertSame('lift', $styles['hover']);
+        $this->assertSame('var(--color-primary)', $element->getHeadingColor()?->toCss());
+        $this->assertSame('var(--color-secondary)', $element->getLinkColor()?->toCss());
+        $this->assertSame('var(--color-tertiary)', $element->getLinkHoverColor()?->toCss());
+        $this->assertSame('var(--font-primary)', $element->getFontFamily());
+        $this->assertSame('1.2rem', $element->getFontSize()?->toCss());
+        $this->assertSame('700', $element->getFontWeight());
+    }
+
+    public function testGlobalColorTokensAndContainerTypographyCascading(): void
+    {
+        $styleRenderer = new \DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer();
+        $gridRenderer = new \DomainSystem\Core\Theme\Parts\Grid\LayoutGridRenderer(null, $styleRenderer);
+        $headingBlock = new \DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock($styleRenderer);
+        $paragraphBlock = new \DomainSystem\Core\Theme\Parts\Blocks\ParagraphBlock(null, $styleRenderer);
+        $logoBlock = new \DomainSystem\Core\Theme\Parts\Blocks\LogoBlock(null, null, $styleRenderer);
+        $copyrightBlock = new \DomainSystem\Core\Theme\Parts\Blocks\CopyrightBlock(null, $styleRenderer);
+        $postCardsBlock = new \DomainSystem\Core\Theme\Parts\Blocks\PostCardsGridBlock(null, $styleRenderer);
+
+        // 1. Verifica contrato StylableElementInterface em todos os blocos de texto
+        $this->assertInstanceOf(StylableElementInterface::class, $headingBlock);
+        $this->assertInstanceOf(StylableElementInterface::class, $paragraphBlock);
+        $this->assertInstanceOf(StylableElementInterface::class, $logoBlock);
+        $this->assertInstanceOf(StylableElementInterface::class, $copyrightBlock);
+        $this->assertInstanceOf(StylableElementInterface::class, $postCardsBlock);
+
+        // 2. Verifica seleção de cores Primária, Secundária e Terciária nos blocos
+        $hHtml = $headingBlock->render([
+            'text'           => 'Título Terciário',
+            'level'          => 'h2',
+            'text_color'     => 'var(--color-tertiary)',
+            'font_family'    => 'tertiary',
+            'font_weight'    => '900',
+            'letter_spacing' => '2px',
+            'text_transform' => 'uppercase',
+        ]);
+        $this->assertStringContainsString('color: var(--color-tertiary)', $hHtml);
+        $this->assertStringContainsString('font-family: var(--font-tertiary, sans-serif)', $hHtml);
+        $this->assertStringContainsString('font-weight: 900', $hHtml);
+        $this->assertStringContainsString('letter-spacing: 2px', $hHtml);
+        $this->assertStringContainsString('text-transform: uppercase', $hHtml);
+        $this->assertSame('var(--color-tertiary)', $headingBlock->getTextColor()?->toCss());
+
+        $pHtml = $paragraphBlock->render([
+            'text'       => 'Parágrafo com cor secundária',
+            'text_color' => 'var(--color-secondary)',
+        ]);
+        $this->assertStringContainsString('color: var(--color-secondary)', $pHtml);
+
+        $logoHtml = $logoBlock->render([
+            'brand_text' => 'MinhaMarca',
+            'text_color' => 'var(--color-primary)',
+            'font_size'  => '2rem',
+        ]);
+        $this->assertStringContainsString('color: var(--color-primary)', $logoHtml);
+        $this->assertStringContainsString('font-size: 2rem', $logoHtml);
+
+        $copyHtml = $copyrightBlock->render([
+            'site_name'  => 'DomainSystem',
+            'text_color' => 'var(--color-primary)',
+            'link_color' => 'var(--color-tertiary)',
+        ]);
+        $this->assertStringContainsString('color: var(--color-primary)', $copyHtml);
+        $this->assertStringContainsString('color: var(--color-tertiary)', $copyHtml);
+
+        // 3. Verifica ElementStyleRenderer gerando variáveis locais de cascata para qualquer bloco
+        $elemStyle = $styleRenderer->renderStyleString([
+            'text_color'       => 'var(--color-primary)',
+            'heading_color'    => 'var(--color-secondary)',
+            'link_color'       => 'var(--color-tertiary)',
+            'link_hover_color' => '#ffffff',
+        ]);
+        $this->assertStringContainsString('color: var(--color-primary)', $elemStyle);
+        $this->assertStringContainsString('--ds-local-text-color: var(--color-primary)', $elemStyle);
+        $this->assertStringContainsString('--ds-local-heading-color: var(--color-secondary)', $elemStyle);
+        $this->assertStringContainsString('--ds-local-link-color: var(--color-tertiary)', $elemStyle);
+        $this->assertStringContainsString('--ds-local-link-hover-color: #ffffff', $elemStyle);
+
+        // 4. Verifica cascata de cores tipográficas no Container / Seção (LayoutGridRenderer)
+        $sectionHtml = $gridRenderer->renderSection('1_col', [$hHtml . $pHtml], [
+            'text_color'       => 'var(--color-text-main)',
+            'heading_color'    => 'var(--color-primary)',
+            'link_color'       => 'var(--color-tertiary)',
+            'link_hover_color' => 'var(--color-secondary)',
+            'font_family'      => 'tertiary',
+            'text_transform'   => 'capitalize',
+        ]);
+        $this->assertStringContainsString('--ds-local-text-color: var(--color-text-main);', $sectionHtml);
+        $this->assertStringContainsString('--ds-local-heading-color: var(--color-primary);', $sectionHtml);
+        $this->assertStringContainsString('--ds-local-link-color: var(--color-tertiary);', $sectionHtml);
+        $this->assertStringContainsString('font-family: var(--font-tertiary, sans-serif);', $sectionHtml);
+        $this->assertStringContainsString('text-transform: capitalize;', $sectionHtml);
     }
 }

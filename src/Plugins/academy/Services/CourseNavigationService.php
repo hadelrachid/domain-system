@@ -24,6 +24,14 @@ class CourseNavigationService implements CourseNavigationInterface
         $this->baseUrl = $baseUrl ?? (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '');
     }
 
+    private function getBaseUrl(): string
+    {
+        if ($this->baseUrl !== '') {
+            return $this->baseUrl;
+        }
+        return defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+    }
+
     private function resolveCourse(string|int $courseIdentifier): ?array
     {
         if (is_numeric($courseIdentifier)) {
@@ -54,7 +62,7 @@ class CourseNavigationService implements CourseNavigationInterface
                 continue;
             }
             $lessonSlug = (string)$lesson['slug'];
-            $lesson['url'] = $this->baseUrl . '/cursos/' . urlencode($courseSlug) . '/' . urlencode($lessonSlug);
+            $lesson['url'] = $this->getBaseUrl() . '/cursos/' . urlencode($courseSlug) . '/' . urlencode($lessonSlug);
 
             $modId = $lesson['module_id'] !== null ? (int)$lesson['module_id'] : null;
             if ($modId !== null && $modId > 0) {
@@ -103,7 +111,7 @@ class CourseNavigationService implements CourseNavigationInterface
 
         $courseTitle = htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8');
         $courseSlug = (string)$course['slug'];
-        $courseUrl = $this->baseUrl . '/cursos/' . urlencode($courseSlug);
+        $courseUrl = $this->getBaseUrl() . '/cursos/' . urlencode($courseSlug);
 
         $html = '<nav class="course-nav ds-academy-nav" aria-label="Navegação do Curso ' . $courseTitle . '">';
         $html .= '<div class="course-nav-header">';
@@ -174,7 +182,7 @@ class CourseNavigationService implements CourseNavigationInterface
                 'id'    => (int)$l['id'],
                 'title' => (string)$l['title'],
                 'slug'  => $slug,
-                'url'   => $this->baseUrl . '/cursos/' . urlencode($courseSlug) . '/' . urlencode($slug),
+                'url'   => $this->getBaseUrl() . '/cursos/' . urlencode($courseSlug) . '/' . urlencode($slug),
             ];
         }
 

@@ -25,9 +25,17 @@ class SeoMiddleware
         // 1. Executa a rota (Controller)
         $response = $next($request);
 
-        // Se a rota for admin ou API, ignora a minificação/envelopamento
-        $uri = strtok($request->uri(), '?');
-        if (strpos($uri, '/admin') === 0 || strpos($uri, '/api') === 0) {
+        // Se for JsonResponse, rota admin, API, webhook ou se a resposta contiver cabeçalho JSON, ignora minificação/envelopamento
+        $uri = strtok($request->uri(), '?') ?: '/';
+        $contentType = strtolower((string)($response instanceof Response ? $response->getHeader('Content-Type') : ''));
+        if (
+            $response instanceof \DomainSystem\Core\Http\Responses\JsonResponse ||
+            strpos($uri, '/admin') === 0 ||
+            strpos($uri, '/api') === 0 ||
+            strpos($uri, '/webhook') === 0 ||
+            strpos($uri, '/checkout/process') === 0 ||
+            str_contains($contentType, 'application/json')
+        ) {
             return $response;
         }
 

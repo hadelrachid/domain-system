@@ -12,6 +12,7 @@ use DomainSystem\Core\Theme\Parts\Contracts\Responsive\ResponsiveContractInterfa
  */
 interface StylableElementInterface extends
     ColorContractInterface,
+    TypographyContractInterface,
     DimensionContractInterface,
     BorderContractInterface,
     ShadowContractInterface,

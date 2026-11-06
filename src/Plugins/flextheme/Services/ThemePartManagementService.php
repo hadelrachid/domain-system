@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\Services;
 
-use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
-use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
+use DomainSystem\Plugins\flextheme\Contracts\ThemePartManagementServiceInterface;
 use RuntimeException;
 use Throwable;
 
@@ -21,7 +19,7 @@ use Throwable;
  * Serviço de aplicação responsável pela criação, validação estrutural, persistência verificada
  * e atribuição consistente (com compensação em caso de falha) de partes visuais de tema (SOLID - SRP / DIP).
  */
-class ThemePartManagementService
+class ThemePartManagementService implements ThemePartManagementServiceInterface
 {
     private ThemePartRepositoryInterface $partRepo;
     private ThemePartAssociationInterface $partAssoc;
@@ -32,14 +30,12 @@ class ThemePartManagementService
         ThemePartRepositoryInterface $partRepo,
         ThemePartAssociationInterface $partAssoc,
         ThemeDiscoveryServiceInterface $themeDiscovery,
-        ?ThemePartValidatorInterface $validator = null,
-        ?BlockRegistryInterface $blockRegistry = null,
-        ?LayoutGridInterface $layoutGrid = null
+        ThemePartValidatorInterface $validator
     ) {
         $this->partRepo = $partRepo;
         $this->partAssoc = $partAssoc;
         $this->themeDiscovery = $themeDiscovery;
-        $this->validator = $validator ?? new ThemePartValidator($blockRegistry, $layoutGrid);
+        $this->validator = $validator;
     }
 
     /**

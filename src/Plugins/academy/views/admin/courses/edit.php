@@ -67,6 +67,195 @@
             </div>
         </div>
 
+        <!-- Preço de Venda, Parcelamento e Modo Gratuito / Combobox Oficial -->
+        <div style="margin-bottom:18px; padding:16px; background:rgba(0,210,132,0.05); border:1px solid rgba(0,210,132,0.25); border-radius:8px;">
+            <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
+                <div style="flex:1; min-width:220px;">
+                    <label style="display:block; margin-bottom:6px; font-weight:700; color:#45f3ff; font-size:13px;">
+                        📌 Modalidade de Acesso do Curso
+                    </label>
+                    <?php 
+                        $coursePrice = (float)($course['price'] ?? 0.0);
+                        $isCourseFree = ($coursePrice <= 0.0 && !empty($course['is_free']));
+                    ?>
+                    <select name="is_free" id="edit_course_is_free" onchange="toggleCoursePricingMode(this.value)" style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-weight:700; font-size:13px; box-sizing:border-box;">
+                        <option value="1" <?= $isCourseFree ? 'selected' : '' ?>>🟢 Gratuito (Acesso Livre / Sem Cobrança)</option>
+                        <option value="0" <?= !$isCourseFree ? 'selected' : '' ?>>💳 Pago (Venda com Checkout / Matrícula)</option>
+                    </select>
+                </div>
+                <div id="box_edit_course_price" style="flex:1; min-width:140px; <?= $isCourseFree ? 'display:none;' : '' ?>">
+                    <label style="display:block; margin-bottom:6px; font-weight:600; color:#00d284; font-size:13px;">Preço de Venda (R$)</label>
+                    <input type="number" step="0.01" min="0" id="edit_course_price" name="price" value="<?= number_format($coursePrice > 0 ? $coursePrice : 10.00, 2, '.', '') ?>" placeholder="10.00" style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#00d284; font-weight:700; box-sizing:border-box;">
+                </div>
+                <div id="box_edit_course_installments" style="flex:1; min-width:140px; <?= $isCourseFree ? 'display:none;' : '' ?>">
+                    <label style="display:block; margin-bottom:6px; font-weight:600; color:#45f3ff; font-size:13px;">Máximo de Parcelas</label>
+                    <?php $currentInstallments = (int)($course['max_installments'] ?? 12); ?>
+                    <select name="max_installments" id="edit_course_installments" style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; box-sizing:border-box;">
+                        <option value="1" <?= $currentInstallments === 1 ? 'selected' : '' ?>>1x à vista</option>
+                        <option value="2" <?= $currentInstallments === 2 ? 'selected' : '' ?>>Até 2x</option>
+                        <option value="3" <?= $currentInstallments === 3 ? 'selected' : '' ?>>Até 3x</option>
+                        <option value="6" <?= $currentInstallments === 6 ? 'selected' : '' ?>>Até 6x</option>
+                        <option value="10" <?= $currentInstallments === 10 ? 'selected' : '' ?>>Até 10x</option>
+                        <option value="12" <?= $currentInstallments === 12 ? 'selected' : '' ?>>Até 12x (Recomendado)</option>
+                        <option value="18" <?= $currentInstallments === 18 ? 'selected' : '' ?>>Até 18x</option>
+                        <option value="24" <?= $currentInstallments === 24 ? 'selected' : '' ?>>Até 24x</option>
+                    </select>
+                </div>
+            </div>
+            <div id="box_free_notice" style="padding:10px 14px; background:rgba(69,243,255,0.06); border:1px solid rgba(69,243,255,0.2); border-radius:6px; font-size:12px; line-height:1.5; color:#cbd5e1; <?= !$isCourseFree ? 'display:none;' : '' ?>">
+                ℹ️ <strong>Curso Gratuito:</strong> Todos os visitantes e alunos cadastrados terão acesso livre e irrestrito a todas as aulas deste curso, sem necessidade de pagamento ou checkout.
+            </div>
+        </div>
+
+        <!-- Integração com Plataformas Externas / Afiliados -->
+        <div id="box_payment_options_wrapper" style="margin-bottom:18px; padding:16px; background:rgba(69,243,255,0.04); border:1px solid rgba(69,243,255,0.2); border-radius:6px; <?= $isCourseFree ? 'display:none;' : '' ?>">
+            <label style="display:block; margin-bottom:8px; font-weight:600; color:#45f3ff; font-size:13px;">
+                💳 Método de Cobrança &amp; Checkout (Gateways Nativos ou Plataformas de Afiliados)
+            </label>
+            <p style="margin:0 0 12px 0; font-size:12px; color:#8c8f94; line-height:1.5;">
+                Escolha se o curso será vendido pelo <strong>Checkout Nativo do site</strong> (com PIX, Cartão até 12x ou Boleto via Mercado Pago Oficial) ou através de uma <strong>Plataforma Externa de Afiliados</strong> (Hotmart, Eduzz, Monetizze ou ClickBank).
+            </p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+                <div style="flex:1; min-width:260px;">
+                    <label style="display:block; margin-bottom:4px; font-size:12px; color:#8c8f94;">Provedor de Checkout / Pagamento</label>
+                    <?php $plat = (string)($course['external_platform'] ?? ''); ?>
+                    <select name="external_platform" id="course_edit_platform_select" onchange="toggleExternalPlatformFields(this.value)" style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; box-sizing:border-box; font-size:13px;">
+                        <optgroup label="💳 Checkout Nativo no seu Site (DomainCommerce)">
+                            <option value="" <?= in_array($plat, ['', 'native'], true) ? 'selected' : '' ?>>⭐ Checkout Multigateway Completo (Pix, Mercado Pago, Stripe &amp; PayPal)</option>
+                            <option value="mercadopago" <?= $plat === 'mercadopago' ? 'selected' : '' ?>>Mercado Pago Oficial (PIX Instantâneo, Cartão até 12x, Boleto &amp; Checkout Pro)</option>
+                            <option value="stripe" <?= $plat === 'stripe' ? 'selected' : '' ?>>Stripe Oficial (Cartão de Crédito Global, Apple Pay &amp; Google Pay)</option>
+                            <option value="paypal" <?= $plat === 'paypal' ? 'selected' : '' ?>>PayPal Oficial (Saldo &amp; Cartão Internacional)</option>
+                        </optgroup>
+                        <optgroup label="🚀 Plataformas de Afiliados Externas">
+                            <option value="hotmart" <?= $plat === 'hotmart' ? 'selected' : '' ?>>Hotmart (Checkout Externo)</option>
+                            <option value="eduzz" <?= $plat === 'eduzz' ? 'selected' : '' ?>>Eduzz (Checkout Externo)</option>
+                            <option value="monetizze" <?= $plat === 'monetizze' ? 'selected' : '' ?>>Monetizze (Checkout Externo)</option>
+                            <option value="clickbank" <?= $plat === 'clickbank' ? 'selected' : '' ?>>ClickBank (Checkout Internacional)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div id="box_external_product_id" style="flex:1; min-width:160px; <?= !in_array($plat, ['hotmart', 'eduzz', 'monetizze', 'clickbank'], true) ? 'display:none;' : '' ?>">
+                    <label style="display:block; margin-bottom:4px; font-size:12px; color:#8c8f94;">ID / Código do Produto Externo</label>
+                    <input type="text" name="external_product_id" value="<?= htmlspecialchars((string)($course['external_product_id'] ?? '')) ?>" placeholder="Ex: 1234567" style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; box-sizing:border-box; font-size:13px;">
+                </div>
+            </div>
+            <div id="box_external_checkout_url" style="margin-bottom:10px; <?= !in_array($plat, ['hotmart', 'eduzz', 'monetizze', 'clickbank'], true) ? 'display:none;' : '' ?>">
+                <label style="display:block; margin-bottom:4px; font-size:12px; color:#8c8f94;">URL de Checkout Direto da Plataforma Externa</label>
+                <input type="text" name="external_checkout_url" value="<?= htmlspecialchars((string)($course['external_checkout_url'] ?? '')) ?>" placeholder="https://pay.hotmart.com/... ou https://sun.eduzz.com/..." style="width:100%; padding:9px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; box-sizing:border-box; font-size:13px;">
+            </div>
+
+            <div id="box_native_gateway_tip" style="padding:10px 14px; background:rgba(0,210,132,0.08); border:1px solid rgba(0,210,132,0.25); border-radius:6px; font-size:12px; line-height:1.5; color:#cbd5e1; <?= in_array($plat, ['hotmart', 'eduzz', 'monetizze', 'clickbank'], true) ? 'display:none;' : '' ?>">
+                💡 <strong>Checkout Nativo Ativo:</strong> Os alunos pagarão no seu próprio site com opções de <strong>PIX Instantâneo</strong>, <strong>Mercado Pago</strong>, <strong>Stripe</strong> ou <strong>PayPal</strong>. As chaves de API e configurações ficam em <a href="<?= $baseUrl ?>/admin/commerce/settings" target="_blank" style="color:#00d284; font-weight:700; text-decoration:underline;">Admin &rarr; Commerce &rarr; Configurações</a>.
+            </div>
+
+            <!-- Box de Credenciais PayPal (Exibido ao escolher PayPal) -->
+            <div id="box_paypal_settings" style="<?= $plat === 'paypal' ? 'display:block;' : 'display:none;' ?> margin-top:12px; padding:14px; background:#0d1520; border:1px solid #38bdf8; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <strong style="color:#38bdf8; font-size:13px;">🅿️ Chaves e Token da sua Conta PayPal</strong>
+                    <a href="https://developer.paypal.com/dashboard/applications/sandbox" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; font-size:11px; text-decoration:underline;">🔗 Abrir developer.paypal.com para copiar suas chaves &rarr;</a>
+                </div>
+                <p style="font-size:11.5px; color:#94a3b8; margin:0 0 10px 0; line-height:1.4;">
+                    O PayPal utiliza o <strong>Client ID</strong> para identificar sua conta e o <strong>Client Secret</strong> (token seguro) para autorizar cobranças.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+                    <div>
+                        <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Client ID da sua Conta</label>
+                        <input type="text" name="paypal_client_id" value="<?= htmlspecialchars((string)($commerceSettings['paypal_client_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="YS..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Client Secret (Token de Autorização)</label>
+                        <input type="password" name="paypal_client_secret" value="<?= htmlspecialchars((string)($commerceSettings['paypal_client_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="E..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                    </div>
+                </div>
+                <label style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:#cbd5e1; cursor:pointer;">
+                    <input type="checkbox" name="paypal_sandbox" value="1" <?= (!isset($commerceSettings['paypal_sandbox']) || !empty($commerceSettings['paypal_sandbox'])) ? 'checked' : '' ?>>
+                    Modo Sandbox (Ambiente de Testes da PayPal)
+                </label>
+            </div>
+
+            <!-- Box de Credenciais Stripe (Exibido ao escolher Stripe) -->
+            <div id="box_stripe_settings" style="<?= $plat === 'stripe' ? 'display:block;' : 'display:none;' ?> margin-top:12px; padding:14px; background:#171124; border:1px solid #c084fc; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <strong style="color:#c084fc; font-size:13px;">💳 Chaves e Token da sua Conta Stripe</strong>
+                    <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" style="color:#c084fc; font-size:11px; text-decoration:underline;">🔗 Abrir dashboard.stripe.com/apikeys &rarr;</a>
+                </div>
+                <p style="font-size:11.5px; color:#94a3b8; margin:0 0 10px 0; line-height:1.4;">
+                    O Stripe utiliza a <strong>Secret Key</strong> (token privado da sua conta) e a <strong>Publishable Key</strong> para aceitar cartões e Apple/Google Pay.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+                    <div>
+                        <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Secret Key (sk_test_... ou sk_live_...)</label>
+                        <input type="password" name="stripe_secret_key" value="<?= htmlspecialchars((string)($commerceSettings['stripe_secret_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="sk_test_..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Publishable Key (pk_test_... ou pk_live_...)</label>
+                        <input type="text" name="stripe_publishable_key" value="<?= htmlspecialchars((string)($commerceSettings['stripe_publishable_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="pk_test_..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                    </div>
+                </div>
+                <label style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:#cbd5e1; cursor:pointer;">
+                    <input type="checkbox" name="stripe_sandbox" value="1" <?= !empty($commerceSettings['stripe_sandbox']) ? 'checked' : '' ?>>
+                    Modo Teste (Test Mode do Stripe)
+                </label>
+            </div>
+
+            <script>
+                function toggleCoursePricingMode(val) {
+                    const isFree = (val === '1' || val === 1);
+                    const priceBox = document.getElementById('box_edit_course_price');
+                    const instBox = document.getElementById('box_edit_course_installments');
+                    const freeNotice = document.getElementById('box_free_notice');
+                    const payWrapper = document.getElementById('box_payment_options_wrapper');
+                    const priceInput = document.getElementById('edit_course_price');
+
+                    if (isFree) {
+                        if (priceBox) priceBox.style.display = 'none';
+                        if (instBox) instBox.style.display = 'none';
+                        if (freeNotice) freeNotice.style.display = 'block';
+                        if (payWrapper) payWrapper.style.display = 'none';
+                        if (priceInput) priceInput.value = '0.00';
+                    } else {
+                        if (priceBox) priceBox.style.display = 'block';
+                        if (instBox) instBox.style.display = 'block';
+                        if (freeNotice) freeNotice.style.display = 'none';
+                        if (payWrapper) payWrapper.style.display = 'block';
+                        if (priceInput && (parseFloat(priceInput.value) <= 0 || priceInput.value === '')) {
+                            priceInput.value = '10.00';
+                        }
+                    }
+                }
+
+                function toggleExternalPlatformFields(val) {
+                    const isExternal = ['hotmart', 'eduzz', 'monetizze', 'clickbank'].includes(val);
+                    const isPp = (val === 'paypal');
+                    const isStripe = (val === 'stripe');
+
+                    const idBox = document.getElementById('box_external_product_id');
+                    const urlBox = document.getElementById('box_external_checkout_url');
+                    const tipBox = document.getElementById('box_native_gateway_tip');
+                    const ppBox = document.getElementById('box_paypal_settings');
+                    const stripeBox = document.getElementById('box_stripe_settings');
+
+                    if (idBox) idBox.style.display = isExternal ? 'block' : 'none';
+                    if (urlBox) urlBox.style.display = isExternal ? 'block' : 'none';
+                    if (ppBox) ppBox.style.display = isPp ? 'block' : 'none';
+                    if (stripeBox) stripeBox.style.display = isStripe ? 'block' : 'none';
+
+                    if (tipBox) {
+                        tipBox.style.display = isExternal ? 'none' : 'block';
+                        if (val === 'stripe') {
+                            tipBox.innerHTML = '💡 <strong>Stripe Selecionado:</strong> O aluno pagará via Cartão de Crédito Global / Apple Pay diretamente pelo Stripe Checkout. Configure suas chaves acima ou em <a href="<?= $baseUrl ?>/admin/commerce/settings" target="_blank" style="color:#00d284; font-weight:700; text-decoration:underline;">Commerce &rarr; Configurações</a>.';
+                        } else if (val === 'paypal') {
+                            tipBox.innerHTML = '💡 <strong>PayPal Selecionado:</strong> O aluno pagará com Saldo PayPal ou Cartão Internacional via API oficial v2 do PayPal. Configure suas chaves acima ou em <a href="<?= $baseUrl ?>/admin/commerce/settings" target="_blank" style="color:#00d284; font-weight:700; text-decoration:underline;">Commerce &rarr; Configurações</a>.';
+                        } else if (val === 'mercadopago') {
+                            tipBox.innerHTML = '💡 <strong>Mercado Pago Selecionado:</strong> O aluno pagará com Pix Instantâneo (QR Code na tela), Cartão até 12x ou Boleto via Mercado Pago Oficial. Credenciais em <a href="<?= $baseUrl ?>/admin/commerce/settings" target="_blank" style="color:#00d284; font-weight:700; text-decoration:underline;">Commerce &rarr; Configurações</a>.';
+                        } else {
+                            tipBox.innerHTML = '💡 <strong>Checkout Multigateway:</strong> O aluno terá na tela de compra as opções ativas: Pix Instantâneo, Mercado Pago, Stripe e PayPal. Credenciais em <a href="<?= $baseUrl ?>/admin/commerce/settings" target="_blank" style="color:#00d284; font-weight:700; text-decoration:underline;">Commerce &rarr; Configurações</a>.';
+                        }
+                    }
+                }
+            </script>
+        </div>
+
         <div style="margin-bottom:24px; padding:18px; background:rgba(0,0,0,0.25); border:1px solid #4a545a; border-radius:6px; box-sizing:border-box; width:100%; max-width:100%; overflow:hidden;">
             <label style="display:block; margin-bottom:8px; font-weight:500;">Imagem de Capa (Card)</label>
             

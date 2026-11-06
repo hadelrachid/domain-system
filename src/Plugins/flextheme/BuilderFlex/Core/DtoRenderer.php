@@ -8,12 +8,13 @@ use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\DtoRendererInterface;
 
 /**
  * Renderer central: transforma um DTO de widget em HTML.
  * Único ponto no BuilderFlex responsável por serializar DTOs em HTML com sanitização contra XSS/CSS injection.
  */
-class DtoRenderer
+class DtoRenderer implements DtoRendererInterface
 {
     private HtmlSanitizerInterface $htmlSanitizer;
     private ElementStyleRendererInterface $styleRenderer;

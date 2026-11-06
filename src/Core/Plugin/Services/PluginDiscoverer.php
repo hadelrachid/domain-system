@@ -51,7 +51,8 @@ class PluginDiscoverer
 
         foreach ($directories as $dir) {
             $jsonPath = $dir . '/plugin.json';
-            $pluginName = basename($dir);
+            $folderName = basename($dir);
+            $pluginName = $folderName;
             if (file_exists($jsonPath)) {
                 $metadata = json_decode(file_get_contents($jsonPath), true);
                 if (isset($metadata['name'])) {
@@ -59,8 +60,11 @@ class PluginDiscoverer
                 }
             }
 
-            $isExplicitlyDisabled = isset($activeStates[$pluginName]) && $activeStates[$pluginName] === false;
-            $isActive = (!$isExplicitlyDisabled && $forceActive) || (!empty($activeStates[$pluginName]));
+            $isExplicitlyDisabled = (isset($activeStates[$pluginName]) && $activeStates[$pluginName] === false)
+                || (isset($activeStates[$folderName]) && $activeStates[$folderName] === false);
+            $isActive = (!$isExplicitlyDisabled && $forceActive)
+                || (!empty($activeStates[$pluginName]))
+                || (!empty($activeStates[$folderName]));
             $isCore = isset($metadata['core']) && $metadata['core'] === true;
 
             if ($isActive || $isCore) {

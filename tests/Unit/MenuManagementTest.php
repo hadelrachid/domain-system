@@ -31,6 +31,8 @@ class MenuManagementTest extends TestCase
 
         $menus = $this->menuRepo->getMenus();
         $this->assertCount(2, $menus, "Deve ter 2 menus criados no auto-seed (header e footer).");
+        $this->assertEquals('header', $menus[0]['location'], "O primeiro menu da lista deve ser sempre o Menu Principal (header).");
+        $this->assertEquals('Menu Principal', $menus[0]['name']);
 
         $headerMenu = $this->menuRepo->getMenuByLocation('header');
         $this->assertNotNull($headerMenu);
@@ -188,5 +190,41 @@ class MenuManagementTest extends TestCase
         $response = $controller->index($request);
 
         $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\ViewResponse::class, $response);
+    }
+
+    public function testHierarchicalSubmenusInRepositoryAndRenderer(): void
+    {
+        $this->menuRepo->ensureTables();
+        $header = $this->menuRepo->getMenuByLocation('header');
+        $menuId = (int)$header['id'];
+
+        // Simula o envio do Gerenciador de Menus (wpNavMenu drag-and-drop com depth 0, 1, 2)
+        $saved = $this->menuRepo->replaceMenuItems($menuId, [
+            ['id' => 'item_1', 'depth' => 0, 'title' => 'Especialidades', 'url' => '#', 'target' => '_self'],
+            ['id' => 'item_2', 'depth' => 1, 'title' => 'Cirurgia Plástica', 'url' => '/cirurgia-plastica', 'target' => '_self'],
+            ['id' => 'item_3', 'depth' => 2, 'title' => 'Rinoplastia', 'url' => '/rinoplastia', 'target' => '_blank', 'css_classes' => 'destaque-sub'],
+            ['id' => 'item_4', 'depth' => 0, 'title' => 'Contato', 'url' => '/contato', 'target' => '_self'],
+        ]);
+
+        $this->assertTrue($saved);
+
+        $items = $this->menuRepo->getMenuItems($menuId);
+        $this->assertCount(4, $items);
+        $this->assertNull($items[0]['parent_id']);
+        $this->assertEquals((int)$items[0]['id'], (int)$items[1]['parent_id']);
+        $this->assertEquals((int)$items[1]['id'], (int)$items[2]['parent_id']);
+        $this->assertEquals(2, (int)$items[2]['depth']);
+        $this->assertEquals('_blank', $items[2]['target']);
+        $this->assertNull($items[3]['parent_id']);
+
+        $renderer = new MenuRenderer($this->menuRepo);
+        $html = $renderer->render('header');
+
+        $this->assertStringContainsString('menu-item-has-children', $html);
+        $this->assertStringContainsString('class="sub-menu"', $html);
+        $this->assertStringContainsString('Cirurgia Plástica', $html);
+        $this->assertStringContainsString('Rinoplastia', $html);
+        $this->assertStringContainsString('target="_blank"', $html);
+        $this->assertStringContainsString('destaque-sub', $html);
     }
 }

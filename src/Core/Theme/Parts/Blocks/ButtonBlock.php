@@ -91,10 +91,10 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
 
         // Resolução de cores via Value Object ColorValue
         $bgColor = $this->styleRenderer->sanitizeCssValue(
-            ColorValue::fromString((string)($data['bg_color'] ?? 'var(--color-primary, #38bdf8)'))->getCssValue()
+            ColorValue::fromString((string)($data['bg_color'] ?? $data['background'] ?? 'var(--color-primary, #38bdf8)'))->getCssValue()
         );
         $textColor = $this->styleRenderer->sanitizeCssValue(
-            ColorValue::fromString((string)($data['text_color'] ?? '#0f172a'))->getCssValue()
+            ColorValue::fromString((string)($data['text_color'] ?? $data['color'] ?? '#0f172a'))->getCssValue()
         );
         $borderRadius = $this->styleRenderer->sanitizeCssValue((string)($data['border_radius'] ?? '8px'));
         $padding = $this->styleRenderer->sanitizeCssValue((string)($data['padding'] ?? '12px 24px'));

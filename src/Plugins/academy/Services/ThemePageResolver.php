@@ -6,6 +6,7 @@ namespace DomainSystem\Plugins\academy\Services;
 
 use DomainSystem\Core\Contracts\SiteStateInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
+use DomainSystem\Core\Contracts\ThemePathResolverInterface;
 use DomainSystem\Core\Theme\EnvSiteState;
 use DomainSystem\Core\Theme\SafeThemeResolver;
 use DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface;
@@ -16,13 +17,13 @@ use RecursiveIteratorIterator;
 class ThemePageResolver implements ThemePageResolverInterface
 {
     private ?ThemeManagerInterface $themeManager;
-    private ?SafeThemeResolver $themeResolver;
+    private ?ThemePathResolverInterface $themeResolver;
     private ?SiteStateInterface $siteState;
     private string $baseRoot;
 
     public function __construct(
         ?ThemeManagerInterface $themeManager = null,
-        ?SafeThemeResolver $themeResolver = null,
+        ?ThemePathResolverInterface $themeResolver = null,
         ?SiteStateInterface $siteState = null,
         ?string $baseRoot = null
     ) {

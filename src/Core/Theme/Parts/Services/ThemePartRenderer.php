@@ -28,14 +28,19 @@ class ThemePartRenderer implements ThemePartRendererInterface
     private DesignTokensInterface $designTokens;
     private ElementStyleRendererInterface $styleRenderer;
     private ?string $baseRoot;
-    private static bool $tokensInjected = false;
+    private bool $tokensInjected = false;
     /** @var array<int, string> Pilha de proteção contra recursão infinita (ex: Shortcode [section] auto-referenciado) */
     private array $renderingStack = [];
     private const MAX_RENDER_DEPTH = 10;
 
+    public function resetTokensInjection(): void
+    {
+        $this->tokensInjected = false;
+    }
+
     public static function resetInjectedState(): void
     {
-        self::$tokensInjected = false;
+        // Mantido por retrocompatibilidade; o controle de injeção agora é escopado por instância (SOLID - SRP).
     }
 
     public function __construct(
@@ -141,7 +146,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
             $sectionsOutput = [];
 
             foreach ($sections as $section) {
-                $preset = (string)($section['layout_preset'] ?? '1_col');
+                $preset = (string)($section['layout_preset'] ?? ($part->getLayoutPreset() !== '' ? $part->getLayoutPreset() : '1_col'));
                 $settings = (array)($section['container_settings'] ?? []);
                 $columnsData = (array)($section['columns_data'] ?? []);
 
@@ -254,8 +259,8 @@ class ThemePartRenderer implements ThemePartRendererInterface
             }
 
             // Injeta variáveis CSS, animações runtime e utilitários responsivos dos Design Tokens
-            if ($injectDesignTokens || !self::$tokensInjected) {
-                self::$tokensInjected = true;
+            if ($injectDesignTokens || !$this->tokensInjected) {
+                $this->tokensInjected = true;
                 $tokensCss = $this->designTokens->generateCssVariables();
                 $runtimeCss = self::getRuntimeCss();
                 $tokensTag = "<style id=\"ds-design-tokens\">\n{$tokensCss}\n</style>\n<style id=\"ds-builder-runtime\">\n{$runtimeCss}\n</style>\n";
@@ -277,6 +282,20 @@ class ThemePartRenderer implements ThemePartRendererInterface
 @keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .ds-part-wrapper { position: relative; width: 100%; box-sizing: border-box; }
 .ds-part-wrapper * { box-sizing: border-box; }
+.ds-element-wrapper[style*="--ds-local-heading-color"] h1,
+.ds-element-wrapper[style*="--ds-local-heading-color"] h2,
+.ds-element-wrapper[style*="--ds-local-heading-color"] h3,
+.ds-element-wrapper[style*="--ds-local-heading-color"] h4,
+.ds-element-wrapper[style*="--ds-local-heading-color"] h5,
+.ds-element-wrapper[style*="--ds-local-heading-color"] h6,
+.ds-element-wrapper[style*="--ds-local-heading-color"] .ds-block-heading,
+.ds-element-wrapper[style*="--ds-local-heading-color"] .ds-logo-text { color: var(--ds-local-heading-color) !important; }
+.ds-element-wrapper[style*="--ds-local-text-color"] p,
+.ds-element-wrapper[style*="--ds-local-text-color"] span:not(.ds-btn-label):not(.ds-btn-subtext):not(.ds-btn-icon),
+.ds-element-wrapper[style*="--ds-local-text-color"] .ds-block-paragraph,
+.ds-element-wrapper[style*="--ds-local-text-color"] .ds-block-copyright { color: var(--ds-local-text-color); }
+.ds-element-wrapper[style*="--ds-local-link-color"] a:not(.ds-block-btn):not(.ds-block-cta) { color: var(--ds-local-link-color); }
+.ds-element-wrapper[style*="--ds-local-link-hover-color"] a:not(.ds-block-btn):not(.ds-block-cta):hover { color: var(--ds-local-link-hover-color) !important; }
 .ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
 .ds-btn-grow:hover { transform: scale(1.05) !important; }
 .ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }

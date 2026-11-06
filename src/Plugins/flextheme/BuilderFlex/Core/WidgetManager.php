@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
-use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
+use DomainSystem\Core\Contracts\ShortcodeManagerInterface;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\DtoRendererInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
 
 class WidgetManager implements WidgetManagerInterface
 {
@@ -15,8 +17,19 @@ class WidgetManager implements WidgetManagerInterface
     /** @var array<string, WidgetInterface> Índice O(1) por nome curto e nome da classe */
     protected array $shortNameIndex = [];
 
+    private ?DtoRendererInterface $dtoRenderer;
+
+    public function __construct(?DtoRendererInterface $dtoRenderer = null)
+    {
+        $this->dtoRenderer = $dtoRenderer;
+    }
+
     public function registerWidget(WidgetInterface $widget): void
     {
+        if ($this->dtoRenderer !== null && $widget instanceof AbstractWidget) {
+            $widget->setDtoRenderer($this->dtoRenderer);
+        }
+
         $tag = $widget->getShortcodeTag();
         $this->widgets[$tag] = $widget;
 
@@ -53,11 +66,11 @@ class WidgetManager implements WidgetManagerInterface
     }
 
     // Acopla todos os widgets registrados dinamicamente ao motor de Shortcodes do Kernel
-    public function bootShortcodes($shortcodeManager): void
+    public function bootShortcodes(ShortcodeManagerInterface $shortcodeManager): void
     {
         foreach ($this->widgets as $tag => $widget) {
-            $shortcodeManager->add($tag, function (array $attrs, string $content = '') use ($widget) {
-                return $widget->render($attrs, $content);
+            $shortcodeManager->add($tag, function (array $attrs, ?string $content = '') use ($widget) {
+                return $widget->render($attrs, (string)$content);
             });
         }
     }

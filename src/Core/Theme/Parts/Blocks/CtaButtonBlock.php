@@ -62,9 +62,12 @@ class CtaButtonBlock implements BlockInterface
         $hoverAnim = (string)($data['hover_animation'] ?? '');
         $borderRadius = $this->styleRenderer->sanitizeCssValue((string)($data['border_radius'] ?? '8px'));
         $customPadding = $this->styleRenderer->sanitizeCssValue((string)($data['padding'] ?? ''));
-        $customBg = $this->styleRenderer->sanitizeCssValue((string)($data['bg_color'] ?? ''));
-        $customText = $this->styleRenderer->sanitizeCssValue((string)($data['text_color'] ?? ''));
+        $customBg = $this->styleRenderer->sanitizeCssValue((string)($data['bg_color'] ?? $data['background'] ?? ''));
+        $customText = $this->styleRenderer->sanitizeCssValue((string)($data['text_color'] ?? $data['color'] ?? ''));
         $fontFamily = $this->styleRenderer->sanitizeCssValue((string)($data['font_family'] ?? ''));
+        $fontSize = $this->styleRenderer->sanitizeCssValue((string)($data['font_size'] ?? ''));
+        $fontWeight = $this->styleRenderer->sanitizeCssValue((string)($data['font_weight'] ?? '700'));
+        $textTransform = $this->styleRenderer->sanitizeCssValue((string)($data['text_transform'] ?? ''));
 
         $sizeCss = match ($size) {
             'small'  => 'padding: 8px 16px; font-size: 0.85rem;',
@@ -74,11 +77,17 @@ class CtaButtonBlock implements BlockInterface
         if ($customPadding !== '') {
             $sizeCss .= " padding: {$customPadding};";
         }
+        if ($fontSize !== '') {
+            $sizeCss .= " font-size: {$fontSize};";
+        }
         if ($fontFamily !== '') {
             $sizeCss .= " font-family: {$fontFamily};";
         }
+        if ($textTransform !== '') {
+            $sizeCss .= " text-transform: {$textTransform};";
+        }
 
-        $baseStyles = "display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border-radius: {$borderRadius}; text-decoration: none; transition: all 0.25s ease; cursor: pointer; {$sizeCss}";
+        $baseStyles = "display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: {$fontWeight}; border-radius: {$borderRadius}; text-decoration: none; transition: all 0.25s ease; cursor: pointer; {$sizeCss}";
 
         $variantStyles = match ($variant) {
             'secondary' => "background: var(--color-secondary, #1f2833); color: #fff; border: 1px solid rgba(255,255,255,0.15);",
@@ -128,12 +137,17 @@ HTML;
         return [
             'type' => 'cta_button',
             'fields' => [
-                'label'   => ['type' => 'text', 'label' => 'Texto do Botão', 'default' => 'Começar Agora'],
-                'url'     => ['type' => 'text', 'label' => 'Link de Destino', 'default' => '#'],
-                'variant' => ['type' => 'select', 'label' => 'Estilo Visual', 'options' => ['primary', 'secondary', 'outline', 'glow'], 'default' => 'primary'],
-                'size'    => ['type' => 'select', 'label' => 'Tamanho', 'options' => ['small', 'medium', 'large'], 'default' => 'medium'],
-                'align'   => ['type' => 'select', 'label' => 'Alinhamento', 'options' => ['left', 'center', 'right'], 'default' => 'left'],
-                'target'  => ['type' => 'select', 'label' => 'Abrir em', 'options' => ['_self', '_blank'], 'default' => '_self'],
+                'label'       => ['type' => 'text', 'label' => 'Texto do Botão', 'default' => 'Começar Agora'],
+                'url'         => ['type' => 'text', 'label' => 'Link de Destino', 'default' => '#'],
+                'variant'     => ['type' => 'select', 'label' => 'Estilo Visual', 'options' => ['primary', 'secondary', 'outline', 'glow'], 'default' => 'primary'],
+                'bg_color'    => ['type' => 'color', 'label' => 'Cor de Fundo', 'default' => 'var(--color-primary)'],
+                'text_color'  => ['type' => 'color', 'label' => 'Cor do Texto', 'default' => '#0b0c10'],
+                'font_family' => ['type' => 'font', 'label' => 'Família da Fonte', 'default' => 'var(--font-primary)'],
+                'font_size'   => ['type' => 'dimension', 'label' => 'Tamanho da Fonte', 'default' => '0.95rem'],
+                'font_weight' => ['type' => 'select', 'label' => 'Peso da Fonte', 'options' => ['400', '500', '600', '700', '800'], 'default' => '700'],
+                'size'        => ['type' => 'select', 'label' => 'Tamanho', 'options' => ['small', 'medium', 'large'], 'default' => 'medium'],
+                'align'       => ['type' => 'select', 'label' => 'Alinhamento', 'options' => ['left', 'center', 'right'], 'default' => 'left'],
+                'target'      => ['type' => 'select', 'label' => 'Abrir em', 'options' => ['_self', '_blank'], 'default' => '_self'],
             ],
         ];
     }

@@ -46,6 +46,13 @@ class CoreServiceProvider
         });
 
         // 1.5 Security & ACL Engine
+        $container->singleton(\DomainSystem\Core\Contracts\SafeRedirectValidatorInterface::class, function() {
+            return new \DomainSystem\Core\Security\SafeRedirectValidator();
+        });
+        $container->singleton(\DomainSystem\Core\Security\SafeRedirectValidator::class, function($c) {
+            return $c->make(\DomainSystem\Core\Contracts\SafeRedirectValidatorInterface::class);
+        });
+
         $container->singleton(\DomainSystem\Core\Security\IdentityManager::class, function($c) {
             return new \DomainSystem\Core\Security\IdentityManager($c);
         });
@@ -156,6 +163,16 @@ class CoreServiceProvider
         $container->singleton(\DomainSystem\Core\Theme\ShortcodeManager::class, function($c) {
             return new \DomainSystem\Core\Theme\ShortcodeManager($c);
         });
+        $container->singleton(\DomainSystem\Core\Contracts\ShortcodeManagerInterface::class, function($c) {
+            return $c->make(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        });
+
+        $container->singleton(\DomainSystem\Core\Contracts\ThemePathResolverInterface::class, function() use ($basePath) {
+            return new \DomainSystem\Core\Theme\SafeThemeResolver([
+                $basePath . '/themes',
+                $basePath . '/src/Plugins/flextheme/themes',
+            ]);
+        });
 
         $container->singleton(\DomainSystem\Core\Theme\ThemeManager::class, function($c) use ($basePath, $dispatcher) {
             $themePath = $basePath . '/themes/admin';
@@ -248,6 +265,17 @@ class CoreServiceProvider
                 $c->make(\DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface::class),
                 $basePath,
                 $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
+            );
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartCompilerInterface::class, function($c) {
+            return $c->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
+        });
+
+        $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface::class, function($c) {
+            return new \DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator(
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class),
+                $c->make(\DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface::class)
             );
         });
 

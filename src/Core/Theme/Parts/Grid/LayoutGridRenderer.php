@@ -111,7 +111,77 @@ class LayoutGridRenderer implements LayoutGridInterface
         $opacity = $opacityVal !== '' ? "opacity: {$opacityVal};" : '';
 
         $extraStyles = array_filter([$border, $borderRadius, $boxShadow, $opacity]);
+
+        // Cores Tipográficas & Formatação de Texto da Seção / Container (Cascading via Contrato)
+        $rawTextColor = (string)($settings['text_color'] ?? $settings['color'] ?? '');
+        $secTextColor = $rawTextColor !== '' ? $this->styleRenderer->sanitizeCssValue($rawTextColor) : '';
+        $secHeadingColor = !empty($settings['heading_color']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['heading_color']) : '';
+        $secLinkColor = !empty($settings['link_color']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['link_color']) : '';
+        $secLinkHoverColor = !empty($settings['link_hover_color']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['link_hover_color']) : '';
+        $secFontFamily = !empty($settings['font_family']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['font_family']) : '';
+        $secFontSize = !empty($settings['font_size']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['font_size']) : '';
+        $secFontWeight = !empty($settings['font_weight']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['font_weight']) : '';
+        $secLineHeight = !empty($settings['line_height']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['line_height']) : '';
+        $secLetterSpacing = !empty($settings['letter_spacing']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['letter_spacing']) : '';
+        $secTextTransform = !empty($settings['text_transform']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['text_transform']) : '';
+        $secTextAlign = !empty($settings['text_align']) ? $this->styleRenderer->sanitizeCssValue((string)$settings['text_align']) : '';
+
+        if ($secTextColor !== '') {
+            $extraStyles[] = "color: {$secTextColor};";
+            $extraStyles[] = "--ds-local-text-color: {$secTextColor};";
+        }
+        if ($secHeadingColor !== '') {
+            $extraStyles[] = "--ds-local-heading-color: {$secHeadingColor};";
+        }
+        if ($secLinkColor !== '') {
+            $extraStyles[] = "--ds-local-link-color: {$secLinkColor};";
+        }
+        if ($secLinkHoverColor !== '') {
+            $extraStyles[] = "--ds-local-link-hover-color: {$secLinkHoverColor};";
+        }
+        if ($secFontFamily !== '') {
+            $resolvedSecFont = match ($secFontFamily) {
+                'primary'   => 'var(--font-primary, sans-serif)',
+                'secondary' => 'var(--font-secondary, monospace)',
+                'tertiary'  => 'var(--font-tertiary, sans-serif)',
+                default     => $secFontFamily,
+            };
+            $extraStyles[] = "font-family: {$resolvedSecFont};";
+        }
+        if ($secFontSize !== '') {
+            $extraStyles[] = "font-size: {$secFontSize};";
+        }
+        if ($secFontWeight !== '') {
+            $extraStyles[] = "font-weight: {$secFontWeight};";
+        }
+        if ($secLineHeight !== '') {
+            $extraStyles[] = "line-height: {$secLineHeight};";
+        }
+        if ($secLetterSpacing !== '') {
+            $extraStyles[] = "letter-spacing: {$secLetterSpacing};";
+        }
+        if ($secTextTransform !== '') {
+            $extraStyles[] = "text-transform: {$secTextTransform};";
+        }
+        if ($secTextAlign !== '') {
+            $extraStyles[] = "text-align: {$secTextAlign};";
+        }
+
         $extraStylesStr = !empty($extraStyles) ? ' ' . implode(' ', $extraStyles) : '';
+
+        $secCascadingCss = '';
+        if ($secHeadingColor !== '') {
+            $secCascadingCss .= "\n        #{$sectionId} h1, #{$sectionId} h2, #{$sectionId} h3, #{$sectionId} h4, #{$sectionId} h5, #{$sectionId} h6, #{$sectionId} .ds-block-heading, #{$sectionId} .ds-logo-text, #{$sectionId} .ds-card-title a { color: {$secHeadingColor}; }";
+        }
+        if ($secTextColor !== '') {
+            $secCascadingCss .= "\n        #{$sectionId} p, #{$sectionId} .ds-block-paragraph, #{$sectionId} .ds-block-copyright, #{$sectionId} .ds-card-excerpt { color: {$secTextColor}; }";
+        }
+        if ($secLinkColor !== '') {
+            $secCascadingCss .= "\n        #{$sectionId} a:not(.ds-block-btn):not(.ds-block-cta), #{$sectionId} .ds-nav-link, #{$sectionId} .ds-card-readmore { color: {$secLinkColor}; }";
+        }
+        if ($secLinkHoverColor !== '') {
+            $secCascadingCss .= "\n        #{$sectionId} a:not(.ds-block-btn):not(.ds-block-cta):hover, #{$sectionId} .ds-nav-link:hover, #{$sectionId} .ds-card-readmore:hover { color: {$secLinkHoverColor} !important; }";
+        }
 
         $baseDesktopTemplate = $presetConfig['template'];
         $baseTabletTemplate = $presetConfig['tablet'];
@@ -166,7 +236,7 @@ class LayoutGridRenderer implements LayoutGridInterface
         #{$sectionId} .ds-grid-col {
             min-width: 0;
             box-sizing: border-box;
-        }
+        }{$secCascadingCss}
         @media (min-width: 769px) and (max-width: 1024px) {
             body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {
                 grid-template-columns: {$laptopTemplate} !important;

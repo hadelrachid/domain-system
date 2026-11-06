@@ -24,12 +24,12 @@ class AcademyManualModule implements ManualModuleInterface
 
     public function getSubtitle(): string
     {
-        return 'Guia completo de criação de cursos, fábrica automática de pastas e arquivos PHP, editor em blocos e simulador mobile/tablet.';
+        return 'Guia completo de criação de cursos, fábrica de arquivos PHP, PDFs híbridos multi-cloud, cockpit do aluno (LGPD) e integração com DomainCommerce.';
     }
 
     public function getBadge(): string
     {
-        return 'Módulo Auto-Descoberto • Academy v2.5.0';
+        return 'Módulo Auto-Descoberto • Academy v2.6.0';
     }
 
     public function getAccentColor(): string
@@ -66,12 +66,24 @@ class AcademyManualModule implements ManualModuleInterface
                 'label' => '5. Abrir o "⚡ Editor de Blocos" da aula, adicionar Título, Parágrafo, Vídeo 16:9, Código e Alerta (Callout), e salvar com Ctrl+S (ou botão Salvar) vendo o Preview Dinâmico atualizar em tempo real.',
             ],
             [
+                'id'    => 'academy-pdf-hybrid',
+                'label' => '6. No Editor de Blocos, adicionar o bloco "📄 Visualizador de PDF": colar link do Google Drive, OneDrive ou fazer upload local de arquivo (até 128MB) e verificar a renderização protegida.',
+            ],
+            [
                 'id'    => 'academy-device-simulator',
-                'label' => '6. Alternar no Simulador entre Desktop e os 5 tamanhos Mobile/Tablet (320px, 375px, 430px, 768px, 1024px) e testar os 3 Perfis de Layout Mobile (Gaveta, Barra Fixa e Modo Cinema 16:9).',
+                'label' => '7. Alternar no Simulador entre Desktop e os 5 tamanhos Mobile/Tablet (320px, 375px, 430px, 768px, 1024px) e testar os 3 Perfis de Layout Mobile (Gaveta, Barra Fixa e Modo Cinema 16:9).',
+            ],
+            [
+                'id'    => 'academy-student-cockpit',
+                'label' => '8. Fazer login como aluno e acessar o Cockpit (/aluno/painel): verificar cálculo de progresso percentual, marcação de conclusão e anotações isoladas (LGPD).',
+            ],
+            [
+                'id'    => 'academy-access-guard',
+                'label' => '9. Definir um preço para o curso (ex: R$ 197,00) e verificar que visitantes não-matriculados veem o card de matrícula com checkout integrado ao DomainCommerce.',
             ],
             [
                 'id'    => 'academy-public-classroom',
-                'label' => '7. Acessar a sala de aula pública (/cursos/{curso}/{aula} ou rota direta /cursos/estrutura-de-dados) e o catálogo [hub_de_cursos].',
+                'label' => '10. Acessar a sala de aula pública (/cursos/{curso}/{aula} ou rota direta /cursos/estrutura-de-dados) e o catálogo [hub_de_cursos].',
             ],
         ];
     }
@@ -83,7 +95,7 @@ class AcademyManualModule implements ManualModuleInterface
         ?>
         <div style="color: var(--text-main, #c5c6c7); font-size: 14px; line-height: 1.75;">
             <p style="margin-top: 0;">
-                O <strong>Plugin Academy (v2.5.0)</strong> é o motor de ensino (<strong>LMS Híbrido</strong>) do Domain-System OS. Ele foi projetado sob os princípios <strong>SOLID</strong> e <strong>Inversão de Dependência (DIP)</strong> para permitir que você crie cursos completos de quatro maneiras integradas: digitando diretamente no <strong>Editor Visual em Blocos</strong>, fabricando automaticamente <strong>arquivos <code>.php</code> responsivos</strong> no tema ativo, vinculando páginas existentes ou importando pastas inteiras com 1 clique.
+                O <strong>Plugin Academy (v2.6.0)</strong> é o motor de ensino (<strong>LMS Híbrido</strong>) do Domain-System OS. Ele foi projetado sob os princípios <strong>SOLID</strong> e <strong>Inversão de Dependência (DIP)</strong> para permitir que você crie cursos completos de quatro maneiras integradas: digitando diretamente no <strong>Editor Visual em Blocos</strong>, fabricando automaticamente <strong>arquivos <code>.php</code> responsivos</strong> no tema ativo, vinculando páginas existentes ou importando pastas inteiras com 1 clique.
             </p>
 
             <!-- SEÇÃO 1: OS 4 MODOS DE CRIAÇÃO -->
@@ -92,14 +104,14 @@ class AcademyManualModule implements ManualModuleInterface
                 <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 14px 16px;">
                     <div style="color: #c084fc; font-weight: 800; font-size: 13px; margin-bottom: 6px;">⚡ 1. Editor Visual em Blocos</div>
                     <div style="color: var(--text-muted, #8c8f94); font-size: 12.5px; line-height: 1.55;">
-                        Construa a aula visualmente com <strong>8 tipos de blocos nativos</strong>: <em>Título (H2/H3/H4)</em>, <em>Parágrafo rico</em>, <em>Vídeo 16:9 (YouTube/Vimeo/MP4)</em>, <em>Código com destaque</em>, <em>Callout (Info/Sucesso/Aviso/Erro)</em>, <em>Lista</em>, <em>Imagem</em> e <em>Divisor</em>.
+                        Construa a aula visualmente com <strong>blocos nativos</strong>: <em>Título (H2/H3/H4)</em>, <em>Parágrafo rico</em>, <em>Vídeo 16:9</em>, <em>Código com destaque</em>, <em>Callout</em>, <em>Lista</em>, <em>Imagem</em>, <em>Divisor</em> e <strong>Visualizador de PDF Híbrido</strong>.
                     </div>
                 </div>
 
                 <div style="background: rgba(0, 210, 132, 0.08); border: 1px solid rgba(0, 210, 132, 0.3); border-radius: 8px; padding: 14px 16px;">
                     <div style="color: #00d284; font-weight: 800; font-size: 13px; margin-bottom: 6px;">🏭 2. Fábrica Automática de Arquivos PHP</div>
                     <div style="color: var(--text-muted, #8c8f94); font-size: 12.5px; line-height: 1.55;">
-                        Não quer criar arquivos na mão? Basta digitar o título da aula (ex: <strong>"Estrutura de Dados"</strong>) e salvar! O contrato <code>LessonFileScaffolderInterface</code> cria automaticamente <code>pages/estrutura-de-dados.php</code> já com CSS/JS Desktop &amp; Mobile e libera a URL <code>/cursos/estrutura-de-dados</code>.
+                        Basta digitar o título da aula (ex: <strong>"Estrutura de Dados"</strong>) e salvar! O contrato <code>LessonFileScaffolderInterface</code> cria automaticamente <code>pages/estrutura-de-dados.php</code> já com CSS/JS Desktop &amp; Mobile e libera a rota direta <code>/cursos/estrutura-de-dados</code>.
                     </div>
                 </div>
 
@@ -119,60 +131,84 @@ class AcademyManualModule implements ManualModuleInterface
             </div>
 
             <!-- SEÇÃO 2: ROTEIRO PRÁTICO PASSO A PASSO -->
-            <h3 style="color: #fff; font-size: 15px; margin: 22px 0 10px;">2. Guia Passo a Passo: Do Zero até a Aula Publicada</h3>
+            <h3 style="color: #fff; font-size: 15px; margin: 22px 0 10px;">2. Guia Passo a Passo: Do Cadastro à Publicação</h3>
             <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 16px 20px; margin-bottom: 22px;">
                 <ol style="margin: 0 0 0 18px; padding: 0; line-height: 1.9; font-size: 13.5px;">
                     <li style="margin-bottom: 8px;">
                         <strong>Passo 1 — Cadastrar o Curso (<code>/admin/academy</code>):</strong>
-                        No painel esquerdo lateral (ou modal), preencha o <em>Título do Curso</em>, escolha o status <strong>Publicado</strong>, adicione uma descrição resumida e envie uma imagem de capa em proporção <strong>16:9</strong> (mínimo <code>640&times;360 px</code>). Clique em <strong>Salvar Curso</strong> e depois em <strong>Editar</strong>.
+                        Preencha o <em>Título do Curso</em>, escolha o status <strong>Publicado</strong>, defina o preço (ou deixe zerado para gratuito), envie uma imagem de capa <strong>16:9</strong> (mínimo <code>640&times;360 px</code>) e clique em <strong>Salvar Curso</strong>.
                     </li>
                     <li style="margin-bottom: 8px;">
-                        <strong>Passo 2 — Criar uma Pasta/Módulo Físico (<code>📁 Criar Pasta (ou Módulo)</code>):</strong>
-                        Dentro da tela de edição do curso, clique no botão verde <strong>"📁 Criar Pasta (ou Módulo)"</strong>. Se você digitar <code>Módulo 01 - Fundamentos</code>, o sistema criará automaticamente a pasta física <code>pages/modulo-01-fundamentos/</code> no tema ativo e adicionará o módulo na árvore do curso. (Se preferir que os arquivos fiquem direto na raiz <code>pages/</code>, basta deixar o campo de subpasta do módulo em branco).
+                        <strong>Passo 2 — Criar Módulos ou Pastas Físicas (<code>📁 Criar Pasta (ou Módulo)</code>):</strong>
+                        Ao digitar o nome do módulo (ex: <code>Módulo 01 - Fundamentos</code>), o sistema pode criar opcionalmente a pasta física <code>pages/modulo-01-fundamentos/</code> no tema ativo.
                     </li>
                     <li style="margin-bottom: 8px;">
-                        <strong>Passo 3 — Criar a Aula e Fabricar o Arquivo <code>.php</code> Automaticamente:</strong>
-                        Clique em <strong>"+ Adicionar Aula"</strong> dentro do módulo e digite o título, por exemplo: <strong><code>Estrutura de Dados</code></strong>.
-                        <ul style="margin: 4px 0 6px 18px; color: #cbd5e1; font-size: 13px;">
-                            <li>O slug será preenchido automaticamente como <code>estrutura-de-dados</code>.</li>
-                            <li>Com a caixa <strong>"🏭 Fábrica Automática de Arquivos PHP"</strong> marcada no rodapé, ao clicar em <strong>"💾 Salvar Estrutura Completa"</strong>, o sistema fabrica o arquivo físico <code>pages/estrutura-de-dados.php</code> (ou <code>pages/{pasta}/estrutura-de-dados.php</code>) pré-configurado para Desktop e Mobile!</li>
-                            <li>A aula passa a responder tanto em <code><?= htmlspecialchars($baseUrl) ?>/cursos/{slug-do-curso}/estrutura-de-dados</code> quanto na rota direta amigável <code><?= htmlspecialchars($baseUrl) ?>/cursos/estrutura-de-dados</code>.</li>
-                        </ul>
+                        <strong>Passo 3 — Criar Aulas com Fábrica PHP:</strong>
+                        Adicione aulas com a caixa <strong>"🏭 Fábrica Automática de Arquivos PHP"</strong> marcada. O arquivo <code>.php</code> responsivo é gerado no tema e a URL direta amigável <code>/cursos/{slug-da-aula}</code> é liberada no mesmo instante.
                     </li>
                     <li style="margin-bottom: 8px;">
-                        <strong>Passo 4 — Editar os Blocos da Aula (<code>⚡ Editor de Blocos</code>):</strong>
-                        Clique no botão <strong>"⚡ Editor de Blocos"</strong> na linha da aula. Você entrará no estúdio visual:
-                        <ul style="margin: 4px 0 6px 18px; color: #cbd5e1; font-size: 13px;">
-                            <li>Use a barra de ferramentas inferior para inserir blocos de <strong>Título</strong>, <strong>Parágrafo</strong>, <strong>Vídeo 16:9</strong>, <strong>Código</strong>, <strong>Alerta (Callout)</strong>, <strong>Lista</strong>, <strong>Imagem</strong> ou <strong>Divisor</strong>.</li>
-                            <li>Marque a opção <strong>"🏭 Fabricar .php"</strong> na barra superior se quiser que qualquer alteração feita nos blocos também atualize instantaneamente o arquivo <code>.php</code> físico do tema.</li>
-                            <li>Pressione <code>Ctrl + S</code> (ou clique em <strong>Salvar Aula</strong>) para gravar via AJAX sem recarregar a página.</li>
-                        </ul>
-                    </li>
-                    <li>
-                        <strong>Passo 5 — Testar no Simulador Mobile/Tablet e Escolher Perfis de Layout:</strong>
-                        No painel de Preview ao vivo à direita, alterne entre <strong>🖥️ Desktop</strong> e os <strong>5 dispositivos Mobile/Tablet</strong> (<code>320&times;568</code>, <code>375&times;667</code>, <code>430&times;932</code>, <code>768&times;1024</code> e <code>1024&times;768</code>) e escolha entre os <strong>3 Perfis Mobile</strong>:
-                        <ul style="margin: 4px 0 0 18px; color: #cbd5e1; font-size: 13px;">
-                            <li><strong>📱 Gaveta Deslizante (<code>drawer</code>):</strong> Menu lateral recolhido em um botão flutuante que abre uma gaveta suave (Off-Canvas).</li>
-                            <li><strong>📲 Barra Inferior Fixa (<code>bottom_bar</code>):</strong> Barra estilo aplicativo nativo fixa no rodapé do celular com botões <em>Anterior</em>, <em>Módulos</em> e <em>Próxima</em>.</li>
-                            <li><strong>🎬 Modo Cinema 16:9 (<code>cinema</code>):</strong> O player de vídeo 16:9 permanece fixo (<em>sticky</em>) no topo da tela do celular enquanto o aluno rola o texto e os códigos da aula!</li>
-                        </ul>
+                        <strong>Passo 4 — Editor em Blocos &amp; Preview com Simulador Mobile/Tablet:</strong>
+                        No estúdio de blocos da aula, teste entre Desktop e os 5 dispositivos móveis no <strong>Simulador Mobile/Tablet</strong> (320px até 1024px) e escolha entre os 3 perfis mobile: <strong>📱 Gaveta (drawer)</strong>, <strong>📲 Barra Inferior Fixa (bottom_bar)</strong> ou <strong>🎬 Modo Cinema 16:9 (cinema)</strong>.
                     </li>
                 </ol>
             </div>
 
-            <!-- SEÇÃO 3: SHORTCODE E ROTAS -->
-            <h3 style="color: #00d284; font-size: 15px; margin: 20px 0 10px;">3. Shortcode e Rotas Públicas</h3>
-            <div style="background: rgba(0, 210, 132, 0.06); border: 1px solid rgba(0, 210, 132, 0.25); border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; font-size: 13px;">
-                <div><strong>• Catálogo Completo:</strong> <a href="<?= htmlspecialchars($baseUrl) ?>/cursos" target="_blank" style="color:#45f3ff;"><code><?= htmlspecialchars($baseUrl) ?>/cursos</code></a></div>
+            <!-- SEÇÃO 3: VISUALIZADOR DE PDF HÍBRIDO -->
+            <h3 style="color: #45f3ff; font-size: 15px; margin: 22px 0 10px;">3. Apostilas e PDFs Híbridos Multi-Cloud</h3>
+            <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(69, 243, 255, 0.2); border-radius: 8px; padding: 16px 20px; margin-bottom: 22px;">
+                <p style="margin: 0 0 10px 0;">
+                    O bloco <strong>📄 Visualizador de PDF</strong> suporta tanto armazenamento local quanto as principais nuvens corporativas do mercado:
+                </p>
+                <ul style="margin: 0 0 0 18px; padding: 0; line-height: 1.8; font-size: 13px;">
+                    <li><strong>Google Drive:</strong> Cole o link de compartilhamento. O sistema converte automaticamente para o modo de preview seguro <code>/preview</code>.</li>
+                    <li><strong>Microsoft OneDrive &amp; SharePoint:</strong> Suporte nativo com conversão automática para o player embutido corporativo (<code>action=embedview</code>).</li>
+                    <li><strong>Dropbox:</strong> Suporte com streaming direto (<code>?raw=1</code>).</li>
+                    <li><strong>Upload Local no Servidor (Até 128 MB):</strong> Validação estrita do cabeçalho binário (<em>Magic Bytes <code>%PDF-</code></em>) armazenado de forma segura em <code>storage/academy/lessons_pdf/</code> com bloqueio anti-download e modo Canvas inteligente.</li>
+                </ul>
+            </div>
+
+            <!-- SEÇÃO 4: COCKPIT DO ALUNO & LGPD -->
+            <h3 style="color: #00d284; font-size: 15px; margin: 22px 0 10px;">4. Cockpit do Aluno &amp; Armazenamento Isolado (LGPD)</h3>
+            <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(0, 210, 132, 0.25); border-radius: 8px; padding: 16px 20px; margin-bottom: 22px;">
+                <p style="margin: 0 0 10px 0;">
+                    Cada aluno matriculado possui um <strong>Cockpit Pessoal</strong> em <a href="<?= htmlspecialchars($baseUrl) ?>/aluno/painel" target="_blank" style="color:#00d284;"><code>/aluno/painel</code></a>:
+                </p>
+                <ul style="margin: 0 0 0 18px; padding: 0; line-height: 1.8; font-size: 13px;">
+                    <li><strong>Barra de Progresso em Tempo Real:</strong> Acompanhamento percentual de conclusão por curso.</li>
+                    <li><strong>Botão "Concluir Aula" no Player:</strong> O aluno marca a aula assistida com 1 clique e a plataforma sincroniza automaticamente.</li>
+                    <li><strong>Gaveta Lateral "Minhas Anotações":</strong> Durante a aula, o aluno abre a gaveta de anotações privadas. Seus textos são armazenados no diretório isolado <code>storage/students/{id}/</code>, garantindo privacidade e conformidade rigorosa com a <strong>LGPD</strong>.</li>
+                </ul>
+            </div>
+
+            <!-- SEÇÃO 5: INTEGRAÇÃO COM DOMAINCOMMERCE -->
+            <h3 style="color: #f5a623; font-size: 15px; margin: 22px 0 10px;">5. Vendas de Cursos com DomainCommerce</h3>
+            <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(245, 166, 35, 0.25); border-radius: 8px; padding: 16px 20px; margin-bottom: 22px;">
+                <p style="margin: 0 0 10px 0;">
+                    Ao definir um valor monetário para o curso (ex: <code>R$ 197,00</code>), o sistema ativa a <strong>Guarda de Matrícula</strong>:
+                </p>
+                <ul style="margin: 0 0 0 18px; padding: 0; line-height: 1.8; font-size: 13px;">
+                    <li>Aulas não marcadas como "Prévia Gratuita" exibem o card de bloqueio com o botão <strong>🛒 Matricular-se</strong>.</li>
+                    <li>O checkout é processado pelo <strong>DomainCommerce</strong> via <strong>Pix (QR Code instantâneo)</strong>, <strong>Cartão até 12x</strong> e <strong>Boleto Bancário</strong> diretamente pelo <strong>Mercado Pago Oficial</strong>.</li>
+                    <li>Assim que o webhook confirma o pagamento, o evento <code>payment.approved</code> é disparado e a matrícula do aluno é ativada no mesmo segundo!</li>
+                </ul>
+            </div>
+
+            <!-- SEÇÃO 6: SHORTCODE E ROTAS -->
+            <h3 style="color: #fff; font-size: 15px; margin: 20px 0 10px;">6. Shortcode e Rotas Públicas</h3>
+            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; font-size: 13px;">
+                <div><strong>• Catálogo Geral de Cursos:</strong> <a href="<?= htmlspecialchars($baseUrl) ?>/cursos" target="_blank" style="color:#45f3ff;"><code><?= htmlspecialchars($baseUrl) ?>/cursos</code></a></div>
+                <div style="margin-top: 4px;"><strong>• Login do Aluno:</strong> <a href="<?= htmlspecialchars($baseUrl) ?>/aluno/login" target="_blank" style="color:#45f3ff;"><code><?= htmlspecialchars($baseUrl) ?>/aluno/login</code></a></div>
+                <div style="margin-top: 4px;"><strong>• Cadastro do Aluno:</strong> <a href="<?= htmlspecialchars($baseUrl) ?>/aluno/cadastro" target="_blank" style="color:#00d284;"><code><?= htmlspecialchars($baseUrl) ?>/aluno/cadastro</code></a></div>
+                <div style="margin-top: 4px;"><strong>• Cockpit do Aluno:</strong> <a href="<?= htmlspecialchars($baseUrl) ?>/aluno/painel" target="_blank" style="color:#00d284;"><code><?= htmlspecialchars($baseUrl) ?>/aluno/painel</code></a></div>
                 <div style="margin-top: 4px;"><strong>• Rota Direta da Aula Fabricada:</strong> <code><?= htmlspecialchars($baseUrl) ?>/cursos/{slug-da-aula}</code> (ex: <code>/cursos/estrutura-de-dados</code>)</div>
                 <div style="margin-top: 4px;"><strong>• Rota Hierárquica do Curso:</strong> <code><?= htmlspecialchars($baseUrl) ?>/cursos/{slug-do-curso}/{slug-da-aula}</code></div>
-                <div style="margin-top: 4px;"><strong>• Shortcode para Páginas do Tema:</strong> Insira <code>[hub_de_cursos]</code> (ou <code>[hub_de_cursos status="published" limit="6"]</code>) em qualquer página gerenciada pelo módulo Pages.</div>
+                <div style="margin-top: 4px;"><strong>• Shortcode para Páginas do Tema:</strong> Insira <code>[hub_de_cursos]</code> em qualquer página gerenciada pelo módulo Pages.</div>
             </div>
 
             <!-- DESTAQUE ARQUITETURAL SOLID -->
             <div style="background: rgba(168, 85, 247, 0.08); border-left: 4px solid #a855f7; padding: 12px 16px; margin: 16px 0 0; border-radius: 0 6px 6px 0; font-size: 13px;">
                 <strong>Blindagem SOLID &amp; Contratos (Ring 3):</strong>
-                O Academy opera 100% desacoplado através dos contratos <code>CourseRepositoryInterface</code>, <code>CourseStructureRepositoryInterface</code>, <code>LessonBlockRendererInterface</code>, <code>ThemePageResolverInterface</code>, <code>LessonFileScaffolderInterface</code> e <code>ManualModuleInterface</code>.
+                O Academy opera 100% desacoplado através dos contratos <code>CourseRepositoryInterface</code>, <code>CourseStructureRepositoryInterface</code>, <code>CourseEnrollmentInterface</code>, <code>StudentProgressInterface</code>, <code>StudentStorageInterface</code>, <code>LessonBlockRendererInterface</code>, <code>ThemePageResolverInterface</code>, <code>LessonFileScaffolderInterface</code> e <code>ManualModuleInterface</code>.
             </div>
         </div>
         <?php

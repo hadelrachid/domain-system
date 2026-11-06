@@ -58,12 +58,13 @@ class CourseAdminController
         $flashMsg = $flash['msg'] ?? null;
 
         $html = $this->renderView('admin/courses/index', [
-            'courses'   => $courses,
-            'csrfToken' => $csrfToken,
-            'baseUrl'   => $baseUrl,
-            'flashType' => $flashType,
-            'flashMsg'  => $flashMsg,
-            'storage'   => $this->storage,
+            'courses'          => $courses,
+            'csrfToken'        => $csrfToken,
+            'baseUrl'          => $baseUrl,
+            'flashType'        => $flashType,
+            'flashMsg'         => $flashMsg,
+            'storage'          => $this->storage,
+            'commerceSettings' => $this->getCommerceSettings(),
         ]);
 
         return new ViewResponse($html);
@@ -156,6 +157,7 @@ class CourseAdminController
             'hasStructureRepo' => $this->structureRepo !== null,
             'initialStructure' => $initialStructure,
             'availablePages'   => $availablePages,
+            'commerceSettings' => $this->getCommerceSettings(),
         ]);
 
         return new ViewResponse($html);
@@ -323,14 +325,38 @@ class CourseAdminController
 
         try {
             $file = $this->extractUploadedThumbnail($request);
+            $rawPrice = str_replace(',', '.', (string)($request->input('price') ?? '0'));
+            $price = max(0.0, (float)$rawPrice);
+            $isFreeInput = $request->input('is_free');
+            if ($isFreeInput !== null && (string)$isFreeInput === '1') {
+                $isFree = 1;
+                $price = 0.00;
+            } elseif ($isFreeInput !== null && (string)$isFreeInput === '0') {
+                $isFree = 0;
+                if ($price <= 0.0) {
+                    $this->session->setFlash('error', 'Informe um preço maior que zero para cursos pagos ou marque o curso como gratuito.');
+                    return Response::redirect($baseUrl . '/admin/academy');
+                }
+            } else {
+                $isFree = ($price > 0.0) ? 0 : 1;
+            }
+            $maxInstallments = max(1, min(24, (int)($request->input('max_installments') ?? 12)));
+
             $data = [
-                'title'       => $request->input('title'),
-                'description' => $request->input('description'),
-                'status'      => $request->input('status'),
-                'link'        => $request->input('link'),
+                'title'                 => $request->input('title'),
+                'description'           => $request->input('description'),
+                'status'                => $request->input('status'),
+                'link'                  => $request->input('link'),
+                'price'                 => $price,
+                'is_free'               => $isFree,
+                'max_installments'      => $maxInstallments,
+                'external_platform'     => $request->input('external_platform'),
+                'external_product_id'   => $request->input('external_product_id'),
+                'external_checkout_url' => $request->input('external_checkout_url'),
             ];
 
             $this->service->createCourse($data, $file);
+            $this->syncGatewaySettingsFromRequest($request);
             $this->session->setFlash('success', "Curso cadastrado com sucesso!");
         } catch (Throwable $e) {
             $this->session->setFlash('error', "Erro ao cadastrar curso: " . $e->getMessage());
@@ -349,14 +375,38 @@ class CourseAdminController
 
         try {
             $file = $this->extractUploadedThumbnail($request);
+            $rawPrice = str_replace(',', '.', (string)($request->input('price') ?? '0'));
+            $price = max(0.0, (float)$rawPrice);
+            $isFreeInput = $request->input('is_free');
+            if ($isFreeInput !== null && (string)$isFreeInput === '1') {
+                $isFree = 1;
+                $price = 0.00;
+            } elseif ($isFreeInput !== null && (string)$isFreeInput === '0') {
+                $isFree = 0;
+                if ($price <= 0.0) {
+                    $this->session->setFlash('error', 'Informe um preço maior que zero para cursos pagos ou marque o curso como gratuito.');
+                    return Response::redirect($baseUrl . '/admin/academy/edit/' . $id);
+                }
+            } else {
+                $isFree = ($price > 0.0) ? 0 : 1;
+            }
+            $maxInstallments = max(1, min(24, (int)($request->input('max_installments') ?? 12)));
+
             $data = [
-                'title'       => $request->input('title'),
-                'description' => $request->input('description'),
-                'status'      => $request->input('status'),
-                'link'        => $request->input('link'),
+                'title'                 => $request->input('title'),
+                'description'           => $request->input('description'),
+                'status'                => $request->input('status'),
+                'link'                  => $request->input('link'),
+                'price'                 => $price,
+                'is_free'               => $isFree,
+                'max_installments'      => $maxInstallments,
+                'external_platform'     => $request->input('external_platform'),
+                'external_product_id'   => $request->input('external_product_id'),
+                'external_checkout_url' => $request->input('external_checkout_url'),
             ];
 
             $this->service->updateCourse((int)$id, $data, $file);
+            $this->syncGatewaySettingsFromRequest($request);
             $this->session->setFlash('success', "Curso atualizado com sucesso!");
         } catch (Throwable $e) {
             $this->session->setFlash('error', "Erro ao atualizar curso: " . $e->getMessage());
@@ -447,5 +497,61 @@ class CourseAdminController
         extract($data, EXTR_SKIP);
         include $viewFile;
         return (string)ob_get_clean();
+    }
+
+    /**
+     * Retorna as configurações ativas do DomainCommerce para pré-preenchimento dos gateways.
+     *
+     * @return array<string, mixed>
+     */
+    private function getCommerceSettings(): array
+    {
+        if (class_exists(\DomainSystem\Plugins\commerce\Services\JsonCommerceSettings::class)) {
+            return (new \DomainSystem\Plugins\commerce\Services\JsonCommerceSettings())->all();
+        }
+        return [];
+    }
+
+    /**
+     * Salva ou sincroniza credenciais do PayPal ou Stripe enviadas diretamente pelo formulário do curso.
+     */
+    private function syncGatewaySettingsFromRequest(Request $request): void
+    {
+        if (!class_exists(\DomainSystem\Plugins\commerce\Services\JsonCommerceSettings::class)) {
+            return;
+        }
+
+        $commSettings = new \DomainSystem\Plugins\commerce\Services\JsonCommerceSettings();
+        $toSave = [];
+
+        // PayPal
+        if ($request->input('paypal_client_id') !== null) {
+            $cid = trim((string)$request->input('paypal_client_id'));
+            $csec = trim((string)$request->input('paypal_client_secret'));
+            if ($cid !== '') $toSave['paypal_client_id'] = $cid;
+            if ($csec !== '') $toSave['paypal_client_secret'] = $csec;
+            if ($cid !== '' && $csec !== '') $toSave['paypal_enabled'] = true;
+            // Checkbox HTML: se não vier no POST, significa que foi desmarcado (false)
+            $toSave['paypal_sandbox'] = !empty($request->input('paypal_sandbox'));
+        }
+
+        // Stripe
+        if ($request->input('stripe_secret_key') !== null) {
+            $ssec = trim((string)$request->input('stripe_secret_key'));
+            $spub = trim((string)$request->input('stripe_publishable_key'));
+            if ($ssec !== '') $toSave['stripe_secret_key'] = $ssec;
+            if ($spub !== '') $toSave['stripe_publishable_key'] = $spub;
+            if ($ssec !== '') $toSave['stripe_enabled'] = true;
+            // Checkbox HTML: se não vier no POST, significa que foi desmarcado (false)
+            $toSave['stripe_sandbox'] = !empty($request->input('stripe_sandbox'));
+        }
+
+        if (!empty($toSave)) {
+            $commSettings->save($toSave);
+        }
+
+        if (!empty($toSave)) {
+            $commSettings->save($toSave);
+        }
     }
 }

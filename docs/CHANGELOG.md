@@ -8,6 +8,34 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.6.0] - 2026-11-06
+### Added
+- **DomainCommerce & Gateways Nativos (Mercado Pago, PayPal, Stripe e Afiliados):**
+  - **Mercado Pago Oficial (Brasil):** Pix instantâneo direto na tela (QR Code dinâmico e código Copia-e-Cola), checagem em tempo real a cada 3,5s com liberação automática de matrícula, cartão em até 12x (e opção de 2 cartões) e boleto.
+  - **PayPal Oficial (Vendas Internacionais):** Suporte à API REST v2 de Checkout para pagamentos internacionais com saldo e cartões globais, com redirecionamento limpo e verificação de retorno.
+  - **Injeção de Dependências Condicional:** Os gateways agora só aparecem no checkout se tiverem credenciais válidas configuradas no sistema, evitando erros para o comprador.
+  - **Webhooks de Plataformas de Afiliados:** Integração com Hotmart, Eduzz, Monetizze e ClickBank, provisionando automaticamente o aluno ao receber a confirmação de venda.
+- **Portal do Aluno e Plataforma de Cursos (Academy LMS):**
+  - Área do aluno com tela de login/cadastro, painel do estudante, acompanhamento de progresso percentual e emissão de certificados automáticos.
+  - Leitor de PDF embutido para apostilas e materiais de apoio com modos canvas leve e visualização direta.
+- **Flex Builder e Menus Hierárquicos:**
+  - Construtor visual de menus com suporte a submenus (arraste horizontal e indentação fácil).
+  - Gaveta mobile personalizável com 8 estilos de botão hambúrguer.
+  - Suporte a cores de texto e tipografia globais vinculadas a Design Tokens.
+- **Menus Hierárquicos com Submenus (`Walker` SOLID + Drag & Drop Estilo WordPress):**
+  - **Árvore Recursiva (`MenuTreeBuilderInterface` / `MenuTreeBuilder`):** Transformação de itens planos (`parent_id`) em árvore hierárquica com proteção anti-ciclo e profundidade máxima (`MAX_DEPTH = 5`), além de migração automática de `parent_id` em `PdoMenuRepository`.
+  - **Interface Drag & Drop Horizontal (`wpNavMenu`) & Prioridade do Menu Principal (`header`):** Arraste horizontal para criar/remover submenus tanto em `/admin/themes/menus` quanto no modal do Flex Builder, com seleção padrão automática do **Menu Principal (`header`)**.
+  - **Estilização de Submenus Desktop e Mobile (`NavMenuBlock`):** Controles visuais para dropdowns desktop (fundo, borda, raio, sombra, largura mínima, seta indicadora e cores hover) e submenus mobile (acordeão expansível ou indentado).
+- **Personalização da Gaveta Mobile (`ds-mobile-drawer`), 8 Estilos de Hambúrguer & 7 Formatos de Botões Mobile:**
+  - **8 Estilos de Botão Toggle (`MobileToggleStyleInterface`):** `bars`, `bars_staggered`, `dots_vertical`, `dots_grid`, `plus_cross`, `chevron_down`, `pill_label` e `minimal_two_lines`, com 4 formatos de caixa (`rounded`, `square`, `pill`, `ghost`) e cores customizáveis.
+  - **7 Formatos de Botões de Menu Mobile:** `flat`, `rounded`, `pill`, `outlined`, `filled_soft`, `left_accent` e `underlined`, além de personalização de largura e cores da janela lateral (`ds-mobile-drawer`).
+- **Sistema Global de Cores de Texto e Tipografia (Inspirado em Pro-Elements / Elementor):**
+  - Suporte a `text_color`, `heading_color`, `link_color` e `link_hover_color` em nível de Seção, Coluna e Bloco via `ElementStyleSchema` e `ElementStyleRenderer`, integrado aos Tokens Globais (`var(--primary-color)`, `var(--secondary-color)`, `var(--text-color)`, `var(--accent-color)`).
+- **Leitor de PDF Híbrido no Academy LMS (`LessonPdfStorageInterface` & Bloco `pdf`):**
+  - Suporte a documentos PDF hospedados na nuvem (`https://...`, CDN, S3, Cloudflare R2, Google Drive `/preview`) ou enviados para a pasta local na Hostinger/servidor (`POST /admin/academy/lessons/{id}/upload-pdf` com validação de assinatura mágica `%PDF-`).
+  - **3 Modos de Visualização:** Renderização sob demanda por página via **PDF.js Lazy Canvas** (`pdfjs_canvas` — ideal para apostilas pesadas com gráficos e figuras), **Leitor Nativo / Iframe** (`native_embed`) e **Cartão Compacto Expansível** (`card_modal`).
+  - **Recorte Cirúrgico de Páginas (`start_page` & `end_page`) e Proteção de Download (`allow_download`):** Permite abrir diretamente na página de um gráfico/diagrama específico, limitar o intervalo de páginas navegáveis e ocultar/bloquear download e menu de contexto.
+
 ## [2.5.0] - 2026-10-27
 ### Added
 - **Flex Builder FSE (Full Site Editing, Compilador Único, Validador Estrutural & Grid Auto-Reflow):**

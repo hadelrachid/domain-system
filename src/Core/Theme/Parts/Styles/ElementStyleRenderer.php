@@ -59,8 +59,19 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         if (!empty($data['background'])) {
             $rules[] = 'background: ' . $this->sanitizeCssValue((string)$data['background']);
         }
-        if (!empty($data['color'])) {
-            $rules[] = 'color: ' . $this->sanitizeCssValue((string)$data['color']);
+        $resolvedTextColor = !empty($data['text_color']) ? (string)$data['text_color'] : (!empty($data['color']) ? (string)$data['color'] : '');
+        if ($resolvedTextColor !== '') {
+            $rules[] = 'color: ' . $this->sanitizeCssValue($resolvedTextColor);
+            $rules[] = '--ds-local-text-color: ' . $this->sanitizeCssValue($resolvedTextColor);
+        }
+        if (!empty($data['heading_color'])) {
+            $rules[] = '--ds-local-heading-color: ' . $this->sanitizeCssValue((string)$data['heading_color']);
+        }
+        if (!empty($data['link_color'])) {
+            $rules[] = '--ds-local-link-color: ' . $this->sanitizeCssValue((string)$data['link_color']);
+        }
+        if (!empty($data['link_hover_color'])) {
+            $rules[] = '--ds-local-link-hover-color: ' . $this->sanitizeCssValue((string)$data['link_hover_color']);
         }
         if (!empty($data['border'])) {
             $rules[] = 'border: ' . $this->sanitizeCssValue((string)$data['border']);

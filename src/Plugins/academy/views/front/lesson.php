@@ -49,6 +49,25 @@ $nextLesson = $adjacent['next'] ?? null;
                         <a href='<?= $courseUrl ?>' style='color: var(--primary, #45f3ff); text-decoration: none;'>&larr; <?= $courseTitle ?></a>
                     </div>
                     <h1 class='ds-academy-lesson-h1' style='color: #fff; font-size: 2.2rem; font-weight: 800; margin: 0;'><?= $lessonTitle ?></h1>
+
+                    <?php if (!empty($userId) && empty($isRestricted) && !empty($lessonId)): ?>
+                        <div class="ds-academy-student-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 12px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(69,243,255,0.2); border-radius: 8px; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <button type="button" id="ds-btn-toggle-complete" onclick="window.toggleLessonComplete()" class="ds-btn-complete <?= !empty($isCompleted) ? 'is-completed' : '' ?>">
+                                    <span id="ds-complete-icon"><?= !empty($isCompleted) ? '✓' : '○' ?></span>
+                                    <span id="ds-complete-text"><?= !empty($isCompleted) ? 'Aula Concluída' : 'Marcar como Concluída' ?></span>
+                                </button>
+                                <button type="button" onclick="window.toggleStudentNotes(true)" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 6px; font-size: 0.86rem; cursor: pointer;">
+                                    📝 Minhas Anotações
+                                </button>
+                            </div>
+                            <div>
+                                <a href="<?= (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '') ?>/aluno/painel" style="color: #45f3ff; font-size: 0.86rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    👤 Área do Aluno &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </header>
 
                 <div class='ds-academy-lesson-body' style='line-height: 1.8; color: var(--text-main, #c5c6c7);'>
@@ -82,7 +101,33 @@ $nextLesson = $adjacent['next'] ?? null;
     </div>
 </section>
 
+<!-- Drawer Lateral de Anotações do Aluno (Isolamento LGPD) -->
+<div id="ds-student-notes-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1500; backdrop-filter:blur(3px);" onclick="window.toggleStudentNotes(false)"></div>
+<div id="ds-student-notes-drawer" style="display:none; position:fixed; top:0; right:0; bottom:0; width:440px; max-width:92vw; background:#0b0e14; border-left:1px solid rgba(69,243,255,0.3); z-index:1510; box-shadow:-10px 0 35px rgba(0,0,0,0.8); flex-direction:column; padding:24px; box-sizing:border-box;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="color:#fff; margin:0; font-size:1.15rem; display:flex; align-items:center; gap:8px;">
+            <span>📝</span> Minhas Anotações
+        </h3>
+        <button type="button" onclick="window.toggleStudentNotes(false)" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;" aria-label="Fechar">✕</button>
+    </div>
+    <p style="color:#94a3b8; font-size:0.82rem; margin:0 0 14px 0; line-height:1.5;">
+        Suas anotações são pessoais, salvas automaticamente em seu armazenamento isolado e privado.
+    </p>
+    <textarea id="ds-student-notes-textarea" placeholder="Digite aqui suas observações, dúvidas e códigos desta aula..." style="flex:1; width:100%; box-sizing:border-box; background:#121824; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:14px; color:#fff; font-size:0.9rem; font-family:system-ui, -apple-system, sans-serif; resize:none; line-height:1.6;"></textarea>
+    <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center;">
+        <span id="ds-notes-status" style="font-size:0.8rem; color:#64748b;">Pronto</span>
+        <button type="button" id="ds-btn-save-notes" onclick="window.saveStudentNotes()" style="background:linear-gradient(135deg, #00d284, #00b370); color:#000; border:none; padding:10px 20px; border-radius:6px; font-weight:700; font-size:0.88rem; cursor:pointer;">
+            💾 Salvar Anotação
+        </button>
+    </div>
+</div>
+
 <script>
+    var dsLessonId = <?= (int)($lessonId ?? 0) ?>;
+    var dsCsrfToken = <?= json_encode((string)($csrfToken ?? '')) ?>;
+    var dsBaseUrl = <?= json_encode((defined('BASE_URL') ? rtrim(BASE_URL, '/') : '')) ?>;
+    var dsNotesLoaded = false;
+
     window.toggleAcademyMobileDrawer = function(open) {
         var sidebar = document.getElementById('ds-academy-sidebar');
         var backdrop = document.getElementById('ds-academy-drawer-backdrop');
@@ -97,12 +142,136 @@ $nextLesson = $adjacent['next'] ?? null;
             document.body.style.overflow = '';
         }
     };
+
+    window.toggleStudentNotes = function(open) {
+        var drawer = document.getElementById('ds-student-notes-drawer');
+        var backdrop = document.getElementById('ds-student-notes-backdrop');
+        if (!drawer || !backdrop) return;
+        if (open) {
+            drawer.style.display = 'flex';
+            backdrop.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+
+            if (!dsNotesLoaded && dsLessonId > 0) {
+                document.getElementById('ds-notes-status').textContent = 'Carregando anotações...';
+                fetch(dsBaseUrl + '/aluno/aulas/' + dsLessonId + '/notes', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data.success) {
+                        document.getElementById('ds-student-notes-textarea').value = data.content || '';
+                        document.getElementById('ds-notes-status').textContent = 'Anotações carregadas.';
+                        dsNotesLoaded = true;
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('ds-notes-status').textContent = 'Nova anotação.';
+                });
+            }
+        } else {
+            drawer.style.display = 'none';
+            backdrop.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.saveStudentNotes = function() {
+        if (dsLessonId <= 0) return;
+        var btn = document.getElementById('ds-btn-save-notes');
+        var status = document.getElementById('ds-notes-status');
+        var content = document.getElementById('ds-student-notes-textarea').value;
+
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+        status.textContent = 'Salvando no seu workspace privado...';
+
+        var fd = new FormData();
+        fd.append('content', content);
+        fd.append('csrf_token', dsCsrfToken);
+
+        fetch(dsBaseUrl + '/aluno/aulas/' + dsLessonId + '/notes', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': dsCsrfToken },
+            body: fd
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.textContent = '💾 Salvar Anotação';
+            if (data && data.success) {
+                status.textContent = '✓ Anotação salva com sucesso!';
+                setTimeout(function() { status.textContent = 'Pronto'; }, 3000);
+            } else {
+                status.textContent = 'Erro ao salvar anotação.';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.textContent = '💾 Salvar Anotação';
+            status.textContent = 'Erro de conexão.';
+        });
+    };
+
+    window.toggleLessonComplete = function() {
+        if (dsLessonId <= 0) return;
+        var btn = document.getElementById('ds-btn-toggle-complete');
+        var icon = document.getElementById('ds-complete-icon');
+        var text = document.getElementById('ds-complete-text');
+
+        btn.style.opacity = '0.6';
+
+        var fd = new FormData();
+        fd.append('csrf_token', dsCsrfToken);
+
+        fetch(dsBaseUrl + '/aluno/aulas/' + dsLessonId + '/toggle-complete', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': dsCsrfToken },
+            body: fd
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.style.opacity = '1';
+            if (data && data.success) {
+                if (data.completed) {
+                    btn.classList.add('is-completed');
+                    icon.textContent = '✓';
+                    text.textContent = 'Aula Concluída';
+                } else {
+                    btn.classList.remove('is-completed');
+                    icon.textContent = '○';
+                    text.textContent = 'Marcar como Concluída';
+                }
+            }
+        })
+        .catch(function() {
+            btn.style.opacity = '1';
+        });
+    };
+
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') window.toggleAcademyMobileDrawer(false);
+        if (e.key === 'Escape') {
+            window.toggleAcademyMobileDrawer(false);
+            window.toggleStudentNotes(false);
+        }
     });
 </script>
 
 <style>
+    .ds-btn-complete {
+        background: rgba(255, 255, 255, 0.06);
+        color: #cbd5e1;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .ds-btn-complete:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+    .ds-btn-complete.is-completed {
+        background: rgba(0, 210, 132, 0.2) !important;
+        color: #00d284 !important;
+        border: 1px solid rgba(0, 210, 132, 0.5) !important;
+    }
+
     .ds-academy-mobile-bar {
         display: none;
         margin-bottom: 18px;

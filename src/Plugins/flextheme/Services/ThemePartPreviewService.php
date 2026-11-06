@@ -4,54 +4,26 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\Services;
 
-use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MobileToggleStyleInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartCompilerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Models\ThemePart;
-use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartAssociation;
-use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository;
-use DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer;
-use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
-use DomainSystem\Core\Theme\Parts\Layout\LayoutGridRenderer;
-use DomainSystem\Core\Theme\Parts\Styles\DesignTokens;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
 
 /**
  * Serviço dedicado à pré-visualização ao vivo (Preview) no Studio do Flex Builder (SOLID - SRP / DIP).
  *
  * Delega integralmente a compilação da parte visual ao motor oficial (ThemePartCompilerInterface),
- * garantindo caminho único de compilação entre o Preview do Studio e a publicação no Frontend.
+ * garantindo caminho único de compilação entre o Preview do Studio e a publicação no Frontend,
+ * sem qualquer instanciação direta de classes concretas de infraestrutura.
  */
 class ThemePartPreviewService implements ThemePartPreviewServiceInterface
 {
     private ThemePartCompilerInterface $compiler;
 
-    public function __construct(
-        ThemePartCompilerInterface|BlockRegistryInterface $compilerOrRegistry,
-        ?LayoutGridInterface $layoutGrid = null,
-        ?DesignTokensInterface $tokens = null,
-        ?ElementStyleRendererInterface $styleRenderer = null,
-        ?ThemePartCompilerInterface $compiler = null
-    ) {
-        if ($compilerOrRegistry instanceof ThemePartCompilerInterface) {
-            $this->compiler = $compilerOrRegistry;
-        } elseif ($compiler !== null) {
-            $this->compiler = $compiler;
-        } else {
-            $this->compiler = new ThemePartRenderer(
-                new JsonThemePartRepository(),
-                new JsonThemePartAssociation(),
-                $layoutGrid ?? new LayoutGridRenderer(),
-                $compilerOrRegistry,
-                $tokens ?? new DesignTokens(),
-                null,
-                $styleRenderer ?? new ElementStyleRenderer()
-            );
-        }
+    public function __construct(ThemePartCompilerInterface $compiler)
+    {
+        $this->compiler = $compiler;
     }
 
     public function renderPreview(array $payload): string

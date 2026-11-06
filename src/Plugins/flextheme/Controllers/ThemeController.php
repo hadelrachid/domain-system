@@ -4,45 +4,43 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\Controllers;
 
+use DomainSystem\Core\Contracts\ShortcodeManagerInterface;
 use DomainSystem\Core\Contracts\SiteStateInterface;
+use DomainSystem\Core\Contracts\ThemePathResolverInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
-use DomainSystem\Core\Theme\EnvSiteState;
 use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
-use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
-use DomainSystem\Core\Theme\SafeThemeResolver;
-use DomainSystem\Core\Theme\ShortcodeManager;
 
 class ThemeController
 {
     private SiteStateInterface $siteState;
     private ?ThemePartRendererInterface $partRenderer;
-    private ?ShortcodeManager $shortcodes;
+    private ?ShortcodeManagerInterface $shortcodes;
     private PublicUrlResolverInterface $urlResolver;
+    private ThemePathResolverInterface $themeResolver;
     private string $baseRoot;
 
     public function __construct(
-        ?SiteStateInterface $siteState = null,
-        ?ThemePartRendererInterface $partRenderer = null,
-        ?ShortcodeManager $shortcodes = null,
-        ?PublicUrlResolverInterface $urlResolver = null,
+        SiteStateInterface $siteState,
+        ?ThemePartRendererInterface $partRenderer,
+        ?ShortcodeManagerInterface $shortcodes,
+        PublicUrlResolverInterface $urlResolver,
+        ThemePathResolverInterface $themeResolver,
         ?string $baseRoot = null
     ) {
-        $this->siteState = $siteState ?? new EnvSiteState();
+        $this->siteState = $siteState;
         $this->partRenderer = $partRenderer;
         $this->shortcodes = $shortcodes;
-        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
+        $this->urlResolver = $urlResolver;
+        $this->themeResolver = $themeResolver;
         $this->baseRoot = $baseRoot ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
     }
 
     public function renderHome(Request $request): Response
     {
         $siteState = $this->siteState;
-        $resolver = new SafeThemeResolver([
-            $this->baseRoot . '/themes',
-            __DIR__ . '/../themes'
-        ]);
+        $resolver = $this->themeResolver;
 
         $previewTheme = $request->input('preview_theme');
         if (!empty($previewTheme) && $resolver->themeExists($previewTheme)) {
@@ -166,11 +164,7 @@ HTML;
     {
         $siteState = $this->siteState;
         $themeName = $siteState->getActiveTheme();
-        $baseRoot = $this->baseRoot;
-        $resolver = new SafeThemeResolver([
-            $baseRoot . '/themes',
-            __DIR__ . '/../themes'
-        ]);
+        $resolver = $this->themeResolver;
         $themeDir = $resolver->resolveThemePath($themeName);
         
         // Evitar directory traversal hacker

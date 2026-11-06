@@ -4,10 +4,22 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\flextheme\BuilderFlex\Core;
 
+use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\DtoRendererInterface;
 use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetInterface;
 
 abstract class AbstractWidget implements WidgetInterface
 {
+    protected ?DtoRendererInterface $dtoRenderer;
+
+    public function __construct(?DtoRendererInterface $dtoRenderer = null)
+    {
+        $this->dtoRenderer = $dtoRenderer;
+    }
+
+    public function setDtoRenderer(DtoRendererInterface $dtoRenderer): void
+    {
+        $this->dtoRenderer = $dtoRenderer;
+    }
     /**
      * Constrói o mapa estruturado de estilos CSS a partir das propriedades do widget.
      */
@@ -70,7 +82,7 @@ abstract class AbstractWidget implements WidgetInterface
     }
 
     /**
-     * Renderização de compatibilidade (ex: Shortcodes diretos) delegando ao DtoRenderer.
+     * Renderização de compatibilidade (ex: Shortcodes diretos) delegando ao DtoRendererInterface.
      */
     public function render(array $attributes, string $content = ''): string
     {
@@ -78,7 +90,8 @@ abstract class AbstractWidget implements WidgetInterface
         if ($content !== '' && empty($dto['content'])) {
             $dto['content'] = $content;
         }
-        return (new DtoRenderer())->render($dto);
+        $renderer = $this->dtoRenderer ?? new DtoRenderer();
+        return $renderer->render($dto);
     }
 
     // Helpers legados mantidos como protected para retrocompatibilidade

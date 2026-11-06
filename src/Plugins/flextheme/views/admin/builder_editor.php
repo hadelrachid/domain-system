@@ -338,6 +338,34 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                                 <div class="toggle-card-desc">3 Pontos</div>
                             </div>
                         </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'boxed' ? 'active' : '' ?>" id="toggle_card_boxed" onclick="selectGlobalToggleStyle('boxed')">
+                            <div class="toggle-card-preview" style="background:var(--primary); color:#000; border-radius:4px; padding:1px 5px; font-size:12px;">☰</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Sólido</div>
+                                <div class="toggle-card-desc">Preenchido</div>
+                            </div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'grid' ? 'active' : '' ?>" id="toggle_card_grid" onclick="selectGlobalToggleStyle('grid')">
+                            <div class="toggle-card-preview">⠿</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Bento Grid</div>
+                                <div class="toggle-card-desc">9 Pontos</div>
+                            </div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'rounded_glow' ? 'active' : '' ?>" id="toggle_card_rounded_glow" onclick="selectGlobalToggleStyle('rounded_glow')">
+                            <div class="toggle-card-preview" style="border:1px solid var(--primary); border-radius:999px; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; box-shadow:0 0 8px rgba(56,189,248,0.4);">☰</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Circular Glow</div>
+                                <div class="toggle-card-desc">Redondo Neon</div>
+                            </div>
+                        </div>
+                        <div class="toggle-card <?= $part->getMobileToggleStyle() === 'cyber' ? 'active' : '' ?>" id="toggle_card_cyber" onclick="selectGlobalToggleStyle('cyber')">
+                            <div class="toggle-card-preview" style="font-family:monospace; font-size:11px; font-weight:800;">[☰]</div>
+                            <div class="toggle-card-info">
+                                <div class="toggle-card-name">Tech Cyber</div>
+                                <div class="toggle-card-desc">Colchetes</div>
+                            </div>
+                        </div>
                     </div>
                     <input type="hidden" id="setting_mobile_toggle" value="<?= htmlspecialchars($part->getMobileToggleStyle()) ?>">
                 </div>
@@ -406,8 +434,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             <div id="device-viewport">
                 <div id="device-screen-bar">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span>Simulador: <strong id="cur_device_name">Desktop (100%)</strong></span>
-                        <span id="cur_device_px" style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px;">100%</span>
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Simulador:</span>
+                        <div style="display: flex; gap: 2px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 4px; padding: 1px;">
+                            <button type="button" class="header-btn active" id="bar_dev_desktop" onclick="setDevice('100%')" title="Desktop (100%)" style="padding: 2px 6px; font-size: 10px;">💻 Desktop</button>
+                            <button type="button" class="header-btn" id="bar_dev_laptop" onclick="setDevice('1024px')" title="Laptop (1024px)" style="padding: 2px 6px; font-size: 10px;">💻 1024px</button>
+                            <button type="button" class="header-btn" id="bar_dev_tablet" onclick="setDevice('768px')" title="Tablet (768px)" style="padding: 2px 6px; font-size: 10px;">📱 768px</button>
+                            <button type="button" class="header-btn" id="bar_dev_mobile" onclick="setDevice('375px')" title="Mobile (375px)" style="padding: 2px 6px; font-size: 10px;">📱 375px</button>
+                        </div>
+                        <span id="cur_device_px" style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px; color: var(--primary); font-weight: 700;">100%</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <!-- SELETOR DE ALTURA VERTICAL / CONTEÚDO CENTRAL -->
@@ -420,7 +454,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                                 <button type="button" class="header-btn active" id="btn_vh_auto" onclick="setLiveViewportHeight('auto')" title="Auto: Altura Total do Conteúdo" style="padding: 2px 6px; font-size: 10px;">Auto (Total)</button>
                             </div>
                         </div>
-                        <span id="active_sections_count_badge" style="font-size: 11px; color: var(--primary); font-weight: 700;">1 Seção</span>
+                        <button type="button" class="header-btn" id="active_sections_count_badge" onclick="switchSidebarTab('layout')" title="Clique para gerenciar seções e estruturas" style="font-size: 10px; color: var(--primary); font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); cursor: pointer;">1 Seção</button>
                     </div>
                 </div>
                 <div id="canvas-content">
@@ -541,6 +575,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         { type: 'image', name: 'Imagem', icon: '🖼️', desc: 'Imagem com dimensões dinâmicas, upload e link.' },
         { type: 'video', name: 'Vídeo', icon: '🎥', desc: 'YouTube, Vimeo ou MP4 direto responsivo.' },
         { type: 'nav_menu', name: 'Menu de Navegação', icon: '🧭', desc: 'Menu dinâmico com 4 tipos de toggle hamburguer.' },
+        { type: 'user_auth', name: 'Área de Login / Aluno', icon: '👤', desc: 'Botões de Login e Cadastro (quando deslogado) ou Painel do Aluno e Logout (quando logado).' },
         { type: 'logo', name: 'Logotipo', icon: '🛡️', desc: 'Logo com upload de imagem ou texto estilizado.' },
         { type: 'cta_button', name: 'Botão CTA', icon: '🚀', desc: 'Botão de ação com variantes primária e outline.' },
         { type: 'shortcode', name: 'Shortcode Pronto', icon: '⚡', desc: 'Insere qualquer shortcode ativo do sistema.' },
@@ -692,39 +727,57 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var iframe = document.getElementById('live_stage_iframe');
         var container = document.getElementById('live-stage-container');
         var viewport = document.getElementById('device-viewport');
-        if (!iframe) return;
+        var canvas = document.getElementById('canvas-content');
+        if (!viewport) return;
 
         var isSection = (state.type === 'section');
-        var minBase = isSection ? 850 : 500;
+        var minBase = isSection ? 850 : 480;
 
         if (currentLiveHeightPreset === 'auto') {
-            try {
-                var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
-                if (doc && doc.body) {
-                    var scrollH = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-                    var finalH = Math.max(minBase, scrollH + 40);
-                    iframe.style.height = finalH + 'px';
-                    if (container) {
-                        container.style.height = finalH + 'px';
-                        container.style.minHeight = finalH + 'px';
-                    }
-                    if (viewport) {
-                        viewport.style.minHeight = finalH + 'px';
-                    }
-                    return;
-                }
-            } catch(e) {}
-            iframe.style.height = minBase + 'px';
-            if (container) container.style.minHeight = minBase + 'px';
-            if (viewport) viewport.style.minHeight = minBase + 'px';
-        } else {
-            iframe.style.height = currentLiveHeightPreset;
-            if (container) {
-                container.style.height = currentLiveHeightPreset;
-                container.style.minHeight = currentLiveHeightPreset;
+            viewport.style.minHeight = minBase + 'px';
+            viewport.style.height = 'auto';
+            if (canvas) {
+                canvas.style.minHeight = 'auto';
+                canvas.style.height = 'auto';
+                canvas.style.overflowY = 'visible';
             }
-            if (viewport) {
-                viewport.style.minHeight = currentLiveHeightPreset;
+            if (iframe) {
+                try {
+                    var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                    if (doc && doc.body) {
+                        var scrollH = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+                        var finalH = Math.max(minBase, scrollH + 40);
+                        iframe.style.height = finalH + 'px';
+                        if (container) {
+                            container.style.height = finalH + 'px';
+                            container.style.minHeight = finalH + 'px';
+                        }
+                        viewport.style.minHeight = finalH + 'px';
+                        return;
+                    }
+                } catch(e) {}
+                iframe.style.height = minBase + 'px';
+            }
+            if (container) {
+                container.style.height = minBase + 'px';
+                container.style.minHeight = minBase + 'px';
+            }
+        } else {
+            var targetH = currentLiveHeightPreset;
+            viewport.style.minHeight = targetH;
+            viewport.style.height = targetH;
+            if (canvas) {
+                var offset = (targetH === 'calc(100vh - 160px)') ? 'calc(100vh - 210px)' : (parseInt(targetH) - 50) + 'px';
+                canvas.style.minHeight = offset;
+                canvas.style.height = offset;
+                canvas.style.overflowY = 'auto';
+            }
+            if (iframe) {
+                iframe.style.height = targetH;
+            }
+            if (container) {
+                container.style.height = targetH;
+                container.style.minHeight = targetH;
             }
         }
     }
@@ -843,31 +896,45 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         currentDevice = width;
         var viewport = document.getElementById('device-viewport');
         viewport.style.maxWidth = width;
-        document.getElementById('cur_device_px').textContent = width;
+        var pxEl = document.getElementById('cur_device_px');
+        if (pxEl) pxEl.textContent = width;
         
         ['desktop', 'laptop', 'tablet', 'mobile'].forEach(function(d) {
-            document.getElementById('btn_dev_' + d).classList.remove('active');
+            var b1 = document.getElementById('btn_dev_' + d);
+            if (b1) b1.classList.remove('active');
+            var b2 = document.getElementById('bar_dev_' + d);
+            if (b2) b2.classList.remove('active');
         });
 
         viewport.classList.remove('ds-desktop-mode', 'ds-laptop-mode', 'ds-mobile-mode', 'ds-tablet-mode', 'ds-device-desktop', 'ds-device-1024', 'ds-device-375', 'ds-device-768');
 
+        var activeKey = 'desktop';
+        var devName = 'Desktop (100%)';
         if (width === '100%') {
-            document.getElementById('btn_dev_desktop').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Desktop (100%)';
+            activeKey = 'desktop';
+            devName = 'Desktop (100%)';
             viewport.classList.add('ds-desktop-mode', 'ds-device-desktop');
         } else if (width === '1024px') {
-            document.getElementById('btn_dev_laptop').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Laptop (1024px)';
+            activeKey = 'laptop';
+            devName = 'Laptop (1024px)';
             viewport.classList.add('ds-laptop-mode', 'ds-device-1024');
         } else if (width === '768px') {
-            document.getElementById('btn_dev_tablet').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Tablet (768px) - 📱 Hamburguer Ativo';
+            activeKey = 'tablet';
+            devName = 'Tablet (768px) - 📱 Hamburguer Ativo';
             viewport.classList.add('ds-tablet-mode', 'ds-device-768');
         } else if (width === '375px') {
-            document.getElementById('btn_dev_mobile').classList.add('active');
-            document.getElementById('cur_device_name').textContent = 'Mobile (375px) - 📱 Hamburguer Ativo';
+            activeKey = 'mobile';
+            devName = 'Mobile (375px) - 📱 Hamburguer Ativo';
             viewport.classList.add('ds-mobile-mode', 'ds-device-375');
         }
+
+        var b1 = document.getElementById('btn_dev_' + activeKey);
+        if (b1) b1.classList.add('active');
+        var b2 = document.getElementById('bar_dev_' + activeKey);
+        if (b2) b2.classList.add('active');
+
+        var nameEl = document.getElementById('cur_device_name');
+        if (nameEl) nameEl.textContent = devName;
 
         var curSec = getSelectedSection();
         if (curSec) {
@@ -1213,6 +1280,33 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         // 1. Cor de Fundo da Seção com Design Tokens
         html += renderAdvancedBackgroundControl('Cor de Fundo da Seção (Background)', 'background', cs.background || 'transparent', 'transparent', true);
 
+        // 1.5 Cores de Texto e Tipografia da Seção / Container (Cascading via Contrato)
+        html += '<div style="margin-top:12px; background:rgba(15,23,42,0.45); padding:10px; border-radius:8px; border:1px solid rgba(56,189,248,0.2);">' +
+                '<div style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:8px;">🔤 Cores de Texto & Tipografia do Container (Seção)</div>' +
+                renderSectionTokenColorPicker('Cor do Texto Geral (Text Color)', 'text_color', cs.text_color || cs.color || '', 'text_main') +
+                renderSectionTokenColorPicker('Cor dos Títulos Internos (Heading Color)', 'heading_color', cs.heading_color || '', 'primary') +
+                renderSectionTokenColorPicker('Cor dos Links Internos (Link Color)', 'link_color', cs.link_color || '', 'primary') +
+                renderSectionTokenColorPicker('Cor dos Links no Hover (Link Hover)', 'link_hover_color', cs.link_hover_color || '', 'tertiary') +
+                renderSectionFontSelector('Família de Fonte Padrão da Seção', 'font_family', cs.font_family || '') +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+                '<div class="inspector-field" style="margin-bottom:0;"><label class="inspector-label">Alinhamento Texto</label>' +
+                '<select class="inspector-select" onchange="updateActiveSecSetting(\'text_align\', this.value); renderCanvas(); renderSidebarLayoutTab();">' +
+                '<option value=""' + (!cs.text_align ? ' selected' : '') + '>Herdar / Padrão</option>' +
+                '<option value="left"' + (cs.text_align === 'left' ? ' selected' : '') + '>Esquerda (left)</option>' +
+                '<option value="center"' + (cs.text_align === 'center' ? ' selected' : '') + '>Centro (center)</option>' +
+                '<option value="right"' + (cs.text_align === 'right' ? ' selected' : '') + '>Direita (right)</option>' +
+                '<option value="justify"' + (cs.text_align === 'justify' ? ' selected' : '') + '>Justificado</option>' +
+                '</select></div>' +
+                '<div class="inspector-field" style="margin-bottom:0;"><label class="inspector-label">Transformação</label>' +
+                '<select class="inspector-select" onchange="updateActiveSecSetting(\'text_transform\', this.value); renderCanvas(); renderSidebarLayoutTab();">' +
+                '<option value=""' + (!cs.text_transform ? ' selected' : '') + '>Nenhuma</option>' +
+                '<option value="uppercase"' + (cs.text_transform === 'uppercase' ? ' selected' : '') + '>MAIÚSCULAS</option>' +
+                '<option value="lowercase"' + (cs.text_transform === 'lowercase' ? ' selected' : '') + '>minúsculas</option>' +
+                '<option value="capitalize"' + (cs.text_transform === 'capitalize' ? ' selected' : '') + '>Capitalizar</option>' +
+                '</select></div>' +
+                '</div>' +
+                '</div>';
+
         // 2. Arredondamento de Borda da Seção (Border Radius)
         var curRadiusNum = parseFloat(cs.border_radius || '0') || 0;
         html += '<div class="inspector-field" style="margin-top:12px;">' +
@@ -1346,19 +1440,20 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         };
 
         var tokenList = [
-            { id: 'transparent', label: 'Transparente', var: 'transparent', hex: 'transparent' },
-            { id: 'background', label: 'Fundo', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
-            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
-            { id: 'primary', label: 'Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
-            { id: 'secondary', label: 'Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
-            { id: 'tertiary', label: 'Terciária', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
+            { id: 'primary', label: 'Cor Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
+            { id: 'secondary', label: 'Cor Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
+            { id: 'tertiary', label: 'Cor Terciária / Destaque', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
             { id: 'text_main', label: 'Texto Principal', var: 'var(--color-text-main)', hex: palette.text_main || '#c5c6c7' },
-            { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' }
+            { id: 'text_muted', label: 'Texto Suave (Muted)', var: 'var(--color-text-muted)', hex: palette.text_muted || '#8b8c8d' },
+            { id: 'background', label: 'Fundo Global', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
+            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
+            { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' },
+            { id: 'transparent', label: 'Herdar / Transparente', var: '', hex: 'transparent' }
         ];
 
         var swatchesHtml = '';
         tokenList.forEach(function(t) {
-            var isAct = (curVal === t.var || curVal === t.hex || (!curVal && defaultToken === t.id));
+            var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && t.id === 'transparent'));
             var actClass = isAct ? ' active' : '';
             var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
             var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
@@ -1366,10 +1461,19 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             
             swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
                             'style="' + bgStyle + '" ' +
-                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Transparente' : t.hex) + ')') + '" ' +
+                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão' : t.var) + ')') + '" ' +
                             'onclick="updateActiveSecSetting(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
                             '</button>';
         });
+
+        var selectHtml = '<select class="inspector-select" style="margin-top:4px; font-size:11px; padding:4px 6px;" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();">' +
+                         '<option value=""' + (!curVal ? ' selected' : '') + '>🌐 Token Global (Selecione Primária, Secundária, Terciária...)</option>';
+        tokenList.forEach(function(t) {
+            if (t.id === 'transparent') return;
+            var isSel = (curVal === t.var);
+            selectHtml += '<option value="' + escapeAttr(t.var) + '"' + (isSel ? ' selected' : '') + '>🎨 ' + escapeHtml(t.label) + ' (' + escapeHtml(t.var) + ')</option>';
+        });
+        selectHtml += '</select>';
 
         var hexVal = curVal || '';
         if (hexVal.indexOf('var(') === 0) {
@@ -1377,24 +1481,53 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (matched && matched.hex && matched.hex !== 'transparent' && matched.hex.indexOf('#') === 0) {
                 hexVal = matched.hex;
             } else {
-                hexVal = '#0b0c10';
+                hexVal = '#38bdf8';
             }
         }
         if (!hexVal.startsWith('#') || hexVal.length !== 7) {
-            hexVal = '#0b0c10';
+            hexVal = '#38bdf8';
         }
 
         return '<div class="inspector-field">' +
                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
                '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
-               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'transparent') + '</span>' +
+               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'Herdado') + '</span>' +
                '</div>' +
                '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
+               selectHtml +
                '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
                '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value)" placeholder="var(--color-surface) ou #hex ou rgba">' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value)" placeholder="var(--color-primary), var(--color-secondary) ou #hex">' +
                '</div>' +
                '</div>';
+    }
+
+    function renderSectionFontSelector(label, key, curVal) {
+        var dt = window.DS_DESIGN_TOKENS || {};
+        var typo = dt.typography || {};
+        var fontPrimary = typo.primary_font || 'Inter, sans-serif';
+        var fontSecondary = typo.secondary_font || 'Fira Code, monospace';
+        var fontTertiary = typo.tertiary_font || 'Montserrat, sans-serif';
+
+        var opts = [
+            { value: '', label: 'Herdar Fonte Global' },
+            { value: 'var(--font-primary)', label: '⭐ Fonte Primária (' + fontPrimary.split(',')[0].replace(/['"]/g, '') + ')' },
+            { value: 'var(--font-secondary)', label: '⭐ Fonte Secundária (' + fontSecondary.split(',')[0].replace(/['"]/g, '') + ')' },
+            { value: 'var(--font-tertiary)', label: '⭐ Fonte Terciária (' + fontTertiary.split(',')[0].replace(/['"]/g, '') + ')' },
+            { value: 'Inter, sans-serif', label: 'Inter' },
+            { value: 'Montserrat, sans-serif', label: 'Montserrat' },
+            { value: 'Poppins, sans-serif', label: 'Poppins' },
+            { value: 'Roboto, sans-serif', label: 'Roboto' },
+            { value: "'Fira Code', monospace", label: 'Fira Code' }
+        ];
+
+        return '<div class="inspector-field">' +
+               '<label class="inspector-label">' + label + '</label>' +
+               '<select class="inspector-select" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();">' +
+               opts.map(function(o) {
+                   return '<option value="' + escapeAttr(o.value) + '"' + (curVal === o.value ? ' selected' : '') + '>' + escapeHtml(o.label) + '</option>';
+               }).join('') +
+               '</select></div>';
     }
 
     function stepSecSingleValue(key, delta, minVal, maxVal) {
@@ -1560,6 +1693,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         delete curSec.container_settings.border_radius;
         delete curSec.container_settings.box_shadow;
         delete curSec.container_settings.opacity;
+        delete curSec.container_settings.text_color;
+        delete curSec.container_settings.color;
+        delete curSec.container_settings.heading_color;
+        delete curSec.container_settings.link_color;
+        delete curSec.container_settings.link_hover_color;
+        delete curSec.container_settings.font_family;
+        delete curSec.container_settings.text_align;
+        delete curSec.container_settings.text_transform;
 
         renderSidebarLayoutTab();
         renderCanvas();
@@ -1673,6 +1814,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (sec.container_settings) {
                 if (sec.container_settings.margin) secCard.style.margin = sec.container_settings.margin;
                 if (sec.container_settings.background) secCard.style.background = sec.container_settings.background;
+                if (sec.container_settings.text_color || sec.container_settings.color) secCard.style.color = sec.container_settings.text_color || sec.container_settings.color;
                 if (sec.container_settings.border) secCard.style.border = sec.container_settings.border;
                 if (sec.container_settings.border_radius) secCard.style.borderRadius = sec.container_settings.border_radius;
                 if (sec.container_settings.box_shadow) secCard.style.boxShadow = sec.container_settings.box_shadow;
@@ -1874,6 +2016,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (block.data.margin) card.style.margin = block.data.margin;
             if (block.data.padding) card.style.padding = block.data.padding;
             if (block.data.background) card.style.background = block.data.background;
+            if (block.data.text_color || block.data.color) card.style.color = block.data.text_color || block.data.color;
             if (block.data.border_radius) card.style.borderRadius = block.data.border_radius;
             if (block.data.border) card.style.border = block.data.border;
             if (block.data.box_shadow) card.style.boxShadow = block.data.box_shadow;
@@ -2028,6 +2171,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:var(--primary); color:#000;">' + 
                    escapeHtml(d.label || 'Botão CTA') + '</span>';
         }
+        if (block.type === 'user_auth') {
+            return '<span style="display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:rgba(69,243,255,0.15); border:1px solid rgba(69,243,255,0.3); color:#45f3ff;">👤 ' + 
+                   escapeHtml(d.login_text || 'Entrar') + ' / ' + escapeHtml(d.register_text || 'Cadastrar') + '</span>';
+        }
         if (block.type === 'shortcode') return '<code style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">' + escapeHtml(d.code || d.tag || '[shortcode]') + '</code>';
         if (block.type === 'logo') {
             var logoTxt = d.text || d.brand_text || 'DomainSystem';
@@ -2044,19 +2191,25 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             var curAlign = d.toggle_align || d.align || state.mobile_toggle_align || 'right';
             var isMobile = (currentDevice === '375px' || currentDevice === '768px');
             var toggleLabel = '☰';
-            if (curStyle === 'pill') toggleLabel = 'MENU ☰';
+            if (curStyle === 'pill') toggleLabel = (d.toggle_label || 'MENU') + ' ☰';
             if (curStyle === 'minimal') toggleLabel = '═';
             if (curStyle === 'dots') toggleLabel = '⋮';
+            if (curStyle === 'boxed') toggleLabel = '▣ ☰';
+            if (curStyle === 'grid') toggleLabel = '⠿';
+            if (curStyle === 'rounded_glow') toggleLabel = '◉ ☰';
+            if (curStyle === 'cyber') toggleLabel = '[☰]';
 
             var justifyVal = (curAlign === 'left') ? 'flex-start' : ((curAlign === 'center') ? 'center' : 'flex-end');
+            var itemStyleLabel = d.mobile_item_style || 'card';
 
             if (isMobile) {
                 return '<div style="display:flex; justify-content:' + justifyVal + '; width:100%; align-items:center; gap:8px;">' +
-                       '<button type="button" class="header-btn" style="padding:2px 8px; font-size:12px; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);" onclick="event.stopPropagation(); testMobileDrawer(\'' + curStyle + '\')">' + toggleLabel + '</button>' +
-                       '<span style="font-size:11px; color:#38bdf8;">📱 ' + (curAlign === 'left' ? '⬅️ Esq' : (curAlign === 'center' ? '🎯 Centro' : '➡️ Dir')) + ' (' + curStyle + ')</span>' +
+                       '<button type="button" class="header-btn" style="padding:3px 10px; font-size:12px; background:' + escapeAttr(d.toggle_bg_color || 'rgba(56,189,248,0.2)') + '; border-color:' + escapeAttr(d.toggle_border_color || 'var(--primary)') + '; color:' + escapeAttr(d.toggle_color || 'var(--primary)') + ';" onclick="event.stopPropagation(); testMobileDrawer(\'' + escapeAttr(curStyle) + '\')">' + escapeHtml(toggleLabel) + '</button>' +
+                       '<span style="font-size:11px; color:#38bdf8;">📱 ' + (curAlign === 'left' ? '⬅️ Esq' : (curAlign === 'center' ? '🎯 Centro' : '➡️ Dir')) + ' (' + escapeHtml(curStyle) + ' · ' + escapeHtml(itemStyleLabel) + ')</span>' +
                        '</div>';
             } else {
-                var alignText = (curAlign === 'left') ? '⬅️ Esquerda' : ((curAlign === 'center') ? '🎯 Centro' : '➡️ Direita'); return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> <span style="font-size:10px; color:#38bdf8; margin-left:8px; padding:2px 6px; background:rgba(56,189,248,0.1); border-radius:4px;">📱 Toggle: ' + alignText + ' (' + curStyle + ')</span>';
+                var alignText = (curAlign === 'left') ? '⬅️ Esquerda' : ((curAlign === 'center') ? '🎯 Centro' : '➡️ Direita');
+                return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> <span style="font-size:10px; color:#38bdf8; margin-left:8px; padding:2px 6px; background:rgba(56,189,248,0.1); border-radius:4px;">📱 Toggle: ' + alignText + ' (' + escapeHtml(curStyle) + ' · Botões: ' + escapeHtml(itemStyleLabel) + ')</span>';
             }
         }
         if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid') + ' (' + (d.height || '20px') + ')';
@@ -2076,8 +2229,157 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         return block.type;
     }
 
+    var isEditorMobileDrawerOpen = false;
+
+    function findActiveOrFirstNavBlock() {
+        var blk = getSelectedBlock();
+        if (blk && blk.type === 'nav_menu') return blk;
+        if (state.sections) {
+            for (var s = 0; s < state.sections.length; s++) {
+                var sec = state.sections[s];
+                if (sec && sec.columns_data) {
+                    for (var col in sec.columns_data) {
+                        var list = sec.columns_data[col];
+                        if (Array.isArray(list)) {
+                            for (var b = 0; b < list.length; b++) {
+                                if (list[b] && list[b].type === 'nav_menu') return list[b];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     function testMobileDrawer(style) {
-        showToast('📱 Botão Toggle Mobile (' + style + ') clicado! No modo Ao Vivo você pode testar a gaveta 100% interativa.');
+        isEditorMobileDrawerOpen = !isEditorMobileDrawerOpen;
+        renderEditorMobileDrawerOverlay(isEditorMobileDrawerOpen);
+    }
+
+    function closeEditorMobileDrawer() {
+        isEditorMobileDrawerOpen = false;
+        renderEditorMobileDrawerOverlay(false);
+    }
+
+    function renderEditorMobileDrawerOverlay(open) {
+        var viewport = document.getElementById('device-viewport');
+        if (!viewport) return;
+        var existing = document.getElementById('studio_mobile_drawer_overlay');
+        if (!open) {
+            if (existing) existing.remove();
+            return;
+        }
+
+        var navBlock = findActiveOrFirstNavBlock();
+        var d = (navBlock && navBlock.data) ? navBlock.data : {};
+        var toggleAlign = d.toggle_align || d.align || state.mobile_toggle_align || 'right';
+        var drawerPos = d.drawer_position || (toggleAlign === 'left' ? 'left' : 'right');
+        var drawerTitle = (d.drawer_title !== undefined) ? d.drawer_title : 'Navegação';
+        var activeColor = d.active_color || 'var(--color-primary, #38bdf8)';
+        var linkColor = d.link_color || 'var(--color-text-main, #c5c6c7)';
+        var drawerTitleColor = d.drawer_title_color || activeColor;
+        var drawerBg = d.drawer_bg || 'var(--color-surface, rgba(11, 14, 18, 0.98))';
+        var drawerBorderColor = d.drawer_border_color || 'var(--color-border, rgba(255, 255, 255, 0.08))';
+        var drawerWidth = d.drawer_width || '320px';
+
+        var itemStyle = d.mobile_item_style || 'card';
+        var itemAlign = d.mobile_item_align || 'left';
+        var itemJustify = (itemAlign === 'center') ? 'center' : (itemAlign === 'right' ? 'flex-end' : 'flex-start');
+        var itemGap = d.mobile_item_gap || '8px';
+        var itemPadding = d.mobile_item_padding || '12px 16px';
+        var mobileLinkColor = d.mobile_link_color || (itemStyle === 'filled' ? 'var(--color-background, #0b0c10)' : linkColor);
+        var mobileHoverTextColor = d.mobile_hover_text_color || activeColor;
+
+        var defaultItemBg = 'transparent';
+        if (itemStyle === 'card') defaultItemBg = 'rgba(255, 255, 255, 0.04)';
+        else if (itemStyle === 'pill') defaultItemBg = 'rgba(255, 255, 255, 0.05)';
+        else if (itemStyle === 'filled') defaultItemBg = 'var(--color-primary, #38bdf8)';
+        else if (itemStyle === 'cyber_bar') defaultItemBg = 'rgba(56, 189, 248, 0.05)';
+        var mobileItemBg = d.mobile_item_bg || defaultItemBg;
+
+        var defaultItemBorder = '1px solid transparent';
+        if (itemStyle === 'card') defaultItemBorder = '1px solid rgba(255, 255, 255, 0.07)';
+        else if (itemStyle === 'pill') defaultItemBorder = '1px solid rgba(255, 255, 255, 0.08)';
+        else if (itemStyle === 'outlined') defaultItemBorder = '1px solid ' + (d.mobile_item_border_color || 'var(--color-border, rgba(255,255,255,0.18))');
+        else if (itemStyle === 'divider') defaultItemBorder = 'none';
+        if (d.mobile_item_border_color && itemStyle !== 'divider') {
+            defaultItemBorder = '1px solid ' + d.mobile_item_border_color;
+        }
+
+        var defaultRadius = '8px';
+        if (itemStyle === 'pill') defaultRadius = '999px';
+        else if (itemStyle === 'divider' || itemStyle === 'cyber_bar') defaultRadius = '4px';
+        var itemRadius = d.mobile_item_radius || defaultRadius;
+
+        var hoverBg = d.mobile_hover_bg_color || 'rgba(56, 189, 248, 0.14)';
+        var hoverBorder = d.mobile_hover_border_color || mobileHoverTextColor;
+        var hoverEffect = d.mobile_hover_effect || 'slide_right';
+        var hoverTransform = '';
+        if (hoverEffect === 'slide_right') hoverTransform = 'transform: translateX(6px);';
+        else if (hoverEffect === 'scale') hoverTransform = 'transform: scale(1.03);';
+        else if (hoverEffect === 'glow') hoverTransform = 'box-shadow: 0 0 16px ' + hoverBorder + ';';
+
+        var cyberBarCss = (itemStyle === 'cyber_bar') ? 'border-left: 3px solid ' + hoverBorder + ' !important;' : '';
+        var dividerCss = (itemStyle === 'divider') ? 'border-bottom: 1px solid ' + drawerBorderColor + '; border-radius: 0;' : '';
+
+        var posCss = 'top: 0; right: 0; bottom: 0; width: 85%; max-width: ' + drawerWidth + '; border-left: 1px solid ' + drawerBorderColor + ';';
+        if (drawerPos === 'left') {
+            posCss = 'top: 0; left: 0; bottom: 0; width: 85%; max-width: ' + drawerWidth + '; border-right: 1px solid ' + drawerBorderColor + ';';
+        } else if (drawerPos === 'top') {
+            posCss = 'top: 0; left: 0; right: 0; width: 100%; height: auto; border-bottom: 1px solid ' + drawerBorderColor + ';';
+        } else if (drawerPos === 'fullscreen') {
+            posCss = 'inset: 0; width: 100%; height: 100%;';
+        }
+
+        if (!existing) {
+            existing = document.createElement('div');
+            existing.id = 'studio_mobile_drawer_overlay';
+            viewport.style.position = 'relative';
+            viewport.appendChild(existing);
+        }
+
+        var sampleItems = [
+            { title: 'Início', sub: [] },
+            { title: 'Cursos', sub: ['Arquitetura SOLID', 'Flex Builder Pro'] },
+            { title: 'Sobre', sub: [] },
+            { title: 'Painel', sub: [] }
+        ];
+        var itemsHtml = sampleItems.map(function(itemObj, idx) {
+            var isAct = (idx === 0) ? ' active' : '';
+            if (itemObj.sub && itemObj.sub.length > 0) {
+                var subLinks = itemObj.sub.map(function(sLbl) {
+                    return '<li><a href="javascript:void(0)" class="studio-preview-mob-link" style="font-size:0.9rem;">' + escapeHtml(sLbl) + '</a></li>';
+                }).join('');
+                return '<li>' +
+                       '<div style="display:flex; gap:6px; align-items:stretch;">' +
+                           '<a href="javascript:void(0)" class="studio-preview-mob-link" style="flex:1;" onclick="var u=this.parentElement.nextElementSibling; u.style.display=(u.style.display===\'none\'?\'flex\':\'none\');">' + escapeHtml(itemObj.title) + '</a>' +
+                           '<button type="button" onclick="var u=this.parentElement.nextElementSibling; u.style.display=(u.style.display===\'none\'?\'flex\':\'none\');" style="width:40px; border-radius:' + itemRadius + '; background:' + mobileItemBg + '; border:' + defaultItemBorder + '; color:' + mobileLinkColor + '; cursor:pointer;">▾</button>' +
+                       '</div>' +
+                       '<ul style="list-style:none; margin:6px 0 4px 14px; padding:0 0 0 10px; border-left:2px solid ' + drawerBorderColor + '; display:flex; flex-direction:column; gap:6px;">' + subLinks + '</ul>' +
+                       '</li>';
+            }
+            return '<li><a href="javascript:void(0)" class="studio-preview-mob-link' + isAct + '">' + escapeHtml(itemObj.title) + '</a></li>';
+        }).join('');
+
+        existing.innerHTML =
+            '<style>' +
+            '#studio_mobile_drawer_overlay { position: absolute; inset: 34px 0 0 0; z-index: 950; display: flex; }' +
+            '#studio_mobile_drawer_overlay .studio-mob-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.62); backdrop-filter: blur(3px); }' +
+            '#studio_mobile_drawer_overlay .studio-mob-panel { position: absolute; ' + posCss + ' background: ' + drawerBg + '; backdrop-filter: blur(18px); padding: 22px; display: flex; flex-direction: column; gap: 16px; z-index: 2; box-shadow: 0 10px 35px rgba(0,0,0,0.75); overflow-y: auto; }' +
+            '#studio_mobile_drawer_overlay .studio-mob-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: ' + itemGap + '; }' +
+            '#studio_mobile_drawer_overlay .studio-preview-mob-link { display: flex; align-items: center; justify-content: ' + itemJustify + '; text-align: ' + itemAlign + '; padding: ' + itemPadding + '; border-radius: ' + itemRadius + '; color: ' + mobileLinkColor + '; background: ' + mobileItemBg + '; border: ' + defaultItemBorder + '; text-decoration: none; font-size: 0.98rem; font-family: ' + (d.font_family || 'var(--font-primary, inherit)') + '; font-weight: ' + (d.font_weight || '500') + '; transition: all 0.22s ease; ' + cyberBarCss + dividerCss + ' }' +
+            '#studio_mobile_drawer_overlay .studio-preview-mob-link:hover, #studio_mobile_drawer_overlay .studio-preview-mob-link.active { color: ' + mobileHoverTextColor + ' !important; background: ' + hoverBg + ' !important; border-color: ' + hoverBorder + ' !important; ' + hoverTransform + ' }' +
+            '</style>' +
+            '<div class="studio-mob-backdrop" onclick="closeEditorMobileDrawer()"></div>' +
+            '<aside class="studio-mob-panel">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid ' + drawerBorderColor + '; padding-bottom:12px;">' +
+                    '<span style="font-weight:800; font-size:0.88rem; letter-spacing:1px; text-transform:uppercase; color:' + drawerTitleColor + ';">' + escapeHtml(drawerTitle) + '</span>' +
+                    '<button type="button" onclick="closeEditorMobileDrawer()" style="background:rgba(255,255,255,0.08); border:1px solid ' + drawerBorderColor + '; color:' + mobileLinkColor + '; width:30px; height:30px; border-radius:8px; cursor:pointer;">✕</button>' +
+                '</div>' +
+                '<ul class="studio-mob-list">' + itemsHtml + '</ul>' +
+                '<div style="margin-top:auto; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.08); font-size:10px; color:var(--text-muted); text-align:center;">💡 Passe o mouse sobre os botões acima para testar as cores Hover em tempo real!</div>' +
+            '</aside>';
     }
 
     function selectBlock(secIdx, colIdx, blockIdx) {
@@ -2369,7 +2671,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         state.mobile_toggle_style = val;
         var hidden = document.getElementById('setting_mobile_toggle');
         if (hidden) hidden.value = val;
-        ['classic', 'pill', 'minimal', 'dots'].forEach(function(s) {
+        ['classic', 'pill', 'minimal', 'dots', 'boxed', 'grid', 'rounded_glow', 'cyber'].forEach(function(s) {
             var el = document.getElementById('toggle_card_' + s);
             if (el) el.classList.toggle('active', s === val);
         });
@@ -2559,8 +2861,21 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
+        } else if (block.type === 'user_auth') {
+            html += inspectorTextInput('Texto do Botão Login', 'login_text', block.data.login_text || 'Entrar');
+            html += inspectorTextInput('Link de Login', 'login_url', block.data.login_url || '/aluno/login');
+            html += inspectorTextInput('Texto do Botão Cadastrar', 'register_text', block.data.register_text || 'Cadastrar');
+            html += inspectorTextInput('Link de Cadastro', 'register_url', block.data.register_url || '/aluno/cadastro');
+            html += inspectorTextInput('Texto da Área do Aluno (Logado)', 'dashboard_text', block.data.dashboard_text || '🎓 Área do Aluno');
+            html += inspectorTextInput('Link do Painel do Aluno', 'dashboard_url', block.data.dashboard_url || '/aluno/painel');
+            html += inspectorTextInput('Texto de Logout', 'logout_text', block.data.logout_text || 'Sair');
+            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'right');
         } else if (block.type === 'logo') {
             html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || block.data.brand_text || 'DomainSystem');
+            html += inspectorTokenColorPicker('Cor do Texto da Marca', 'text_color', block.data.text_color || block.data.color || 'var(--color-text-main)', 'text_main');
+            html += inspectorFontSelector('Tipografia da Marca', 'font_family', block.data.font_family || 'var(--font-primary)');
+            html += inspectorDimension('Tamanho da Fonte da Marca', 'font_size', block.data.font_size || '1.4rem');
+            html += inspectorSelect('Peso da Fonte', 'font_weight', ['400', '500', '600', '700', '800', '900'], block.data.font_weight || '800');
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Arquivo de Logotipo (PNG, SVG, JPG, WEBP)</label>' +
                     '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
@@ -2595,33 +2910,146 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorShortcodeSelector('Selecione o Shortcode Pronto', 'code', block.data.code || block.data.tag || '');
         } else if (block.type === 'nav_menu') {
             html += inspectorMenuSelector('Menu do Sistema', 'menu_id', block.data.menu_id || '');
-            var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
-            html += inspectorSelect('Estilo do Hamburguer Mobile (Toggle)', 'toggle_style', [
-                { value: 'classic', label: '☰ Clássico (3 Barras)' },
-                { value: 'pill', label: 'MENU ☰ Pílula (Texto + Ícone)' },
-                { value: 'minimal', label: '═ Minimalista (2 Linhas)' },
-                { value: 'dots', label: '⋮ Pontos (3 Pontos Verticais)' }
-            ], curToggle);
-
-            var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
-            html += inspectorSelect('Posição do Botão Hamburguer (Mobile)', 'toggle_align', [
-                { value: 'right', label: '➡️ Alinhar à Direita (Padrão)' },
-                { value: 'center', label: '🎯 Centralizar no Topo' },
-                { value: 'left', label: '⬅️ Alinhar à Esquerda' }
-            ], curToggleAlign);
-
+            html += '<div style="margin:-4px 0 12px 0;">' +
+                    '<a href="<?= $baseUrl ?>/admin/themes/menus" target="_blank" style="display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--primary); text-decoration:none; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:5px 10px; border-radius:6px; font-weight:600;">' +
+                    '🗂️ Gerenciar Menus &amp; Submenus (Drag &amp; Drop) ↗' +
+                    '</a></div>';
             html += inspectorSelect('Alinhamento dos Links (Desktop)', 'align', ['left', 'center', 'right'], block.data.align || 'center');
-            html += inspectorSelect('Animação Hover dos Links', 'hover_animation', [
+            html += inspectorSelect('Animação Hover dos Links (Desktop)', 'hover_animation', [
                 { value: 'underline', label: '📏 Sublinhado Dinâmico' },
                 { value: 'pill_glow', label: '💊 Pílula Iluminada' },
                 { value: 'grow', label: '🔍 Escala Suave' },
                 { value: 'bracket', label: '🔲 Colchetes Revelados [ ]' },
                 { value: 'none', label: '⚪ Sem Animação' }
             ], block.data.hover_animation || 'underline');
-            html += inspectorTokenColorPicker('Cor dos Links', 'link_color', block.data.link_color || 'var(--color-text-main)', 'text_main');
+            html += inspectorTokenColorPicker('Cor dos Links (Desktop)', 'link_color', block.data.link_color || 'var(--color-text-main)', 'text_main');
             html += inspectorTokenColorPicker('Cor do Link Ativo / Hover', 'active_color', block.data.active_color || 'var(--color-primary)', 'primary');
             html += inspectorFontSelector('Tipografia dos Links', 'font_family', block.data.font_family || 'var(--font-primary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '0.95rem');
+
+            // ==========================================
+            // PAINEL 1: BOTÃO HAMBURGUER MOBILE (8 TIPOS + CORES)
+            // ==========================================
+            var curToggle = block.data.toggle_style || state.mobile_toggle_style || 'classic';
+            var curToggleAlign = block.data.toggle_align || block.data.align || state.mobile_toggle_align || 'right';
+            html += '<div style="margin-top:16px; padding:12px; border-radius:8px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.22);">' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">' +
+                    '<strong style="font-size:12px; color:var(--primary);">🍔 1. Botão Toggle Hamburguer (768px / 375px)</strong>' +
+                    '<button type="button" class="header-btn" onclick="testMobileDrawer(\'' + escapeAttr(curToggle) + '\')" style="font-size:10px; padding:3px 8px; background:rgba(56,189,248,0.2); border-color:var(--primary); color:#fff; font-weight:700;">👁️ Abrir / Fechar Gaveta Mobile</button>' +
+                    '</div>';
+
+            html += inspectorSelect('Tipo / Formato do Botão Hamburguer', 'toggle_style', [
+                { value: 'classic', label: '☰ Clássico (3 Barras)' },
+                { value: 'pill', label: 'MENU ☰ Pílula (Texto + Ícone)' },
+                { value: 'minimal', label: '═ Minimalista (2 Linhas Assimétricas)' },
+                { value: 'dots', label: '⋮ Pontos (3 Pontos Verticais)' },
+                { value: 'boxed', label: '▣ Botão Sólido Preenchido' },
+                { value: 'grid', label: '⠿ Bento Grid (9 Pontos Modernos)' },
+                { value: 'rounded_glow', label: '◉ Circular Neon Glow (Redondo)' },
+                { value: 'cyber', label: '[☰] Tech Cyber (Colchetes)' }
+            ], curToggle);
+
+            if (curToggle === 'pill') {
+                html += inspectorTextInput('Texto do Botão Pílula', 'toggle_label', block.data.toggle_label || 'MENU');
+            }
+
+            html += inspectorSelect('Posição do Botão Hamburguer (Mobile)', 'toggle_align', [
+                { value: 'right', label: '➡️ Alinhar à Direita (Padrão)' },
+                { value: 'center', label: '🎯 Centralizar no Topo' },
+                { value: 'left', label: '⬅️ Alinhar à Esquerda' }
+            ], curToggleAlign);
+
+            html += inspectorTokenColorPicker('Cor do Ícone / Texto do Toggle', 'toggle_color', block.data.toggle_color || 'var(--color-primary)', 'primary');
+            html += inspectorTokenColorPicker('Cor de Fundo do Toggle', 'toggle_bg_color', block.data.toggle_bg_color || '', 'transparent');
+            html += inspectorTokenColorPicker('Cor da Borda do Toggle', 'toggle_border_color', block.data.toggle_border_color || 'var(--color-border)', 'border');
+            html += inspectorTokenColorPicker('Cor do Ícone no Hover (Toggle)', 'toggle_hover_color', block.data.toggle_hover_color || 'var(--color-primary)', 'primary');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover (Toggle)', 'toggle_hover_bg_color', block.data.toggle_hover_bg_color || 'rgba(56, 189, 248, 0.18)', 'primary');
+            html += '</div>';
+
+            // ==========================================
+            // PAINEL 2: PERSONALIZAÇÃO DA JANELA LATERAL (DRAWER MOBILE)
+            // ==========================================
+            html += '<div style="margin-top:14px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);">' +
+                    '<div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:10px;">📱 2. Janela Lateral Mobile (Gaveta / Drawer)</div>';
+
+            html += inspectorTextInput('Título do Cabeçalho da Janela', 'drawer_title', block.data.drawer_title !== undefined ? block.data.drawer_title : 'Navegação');
+            html += inspectorTokenColorPicker('Cor do Título da Janela', 'drawer_title_color', block.data.drawer_title_color || 'var(--color-primary)', 'primary');
+            html += inspectorSelect('Modo de Abertura / Posição da Janela', 'drawer_position', [
+                { value: 'right', label: '⬅️ Deslizar da Direita (Slide Right)' },
+                { value: 'left', label: '➡️ Deslizar da Esquerda (Slide Left)' },
+                { value: 'top', label: '⬇️ Cortina Superior (Dropdown Top)' },
+                { value: 'fullscreen', label: '🖥️ Modal Tela Cheia (Fullscreen)' }
+            ], block.data.drawer_position || (curToggleAlign === 'left' ? 'left' : 'right'));
+            html += inspectorDimension('Largura Máxima da Janela', 'drawer_width', block.data.drawer_width || '320px');
+            html += inspectorTokenColorPicker('Cor de Fundo da Janela Mobile', 'drawer_bg', block.data.drawer_bg || 'var(--color-surface)', 'surface');
+            html += inspectorTokenColorPicker('Cor da Borda / Divisória da Janela', 'drawer_border_color', block.data.drawer_border_color || 'var(--color-border)', 'border');
+            html += '</div>';
+
+            // ==========================================
+            // PAINEL 3: BOTÕES DE MENU DENTRO DA JANELA MOBILE (FORMATOS & HOVER)
+            // ==========================================
+            html += '<div style="margin-top:14px; padding:12px; border-radius:8px; background:rgba(56,189,248,0.04); border:1px solid rgba(56,189,248,0.18);">' +
+                    '<div style="font-size:12px; font-weight:700; color:var(--primary); margin-bottom:10px;">🔘 3. Botões dos Menus Mobile (Formatos & Cores Hover)</div>';
+
+            html += inspectorSelect('Formato / Tipo dos Botões de Menu Mobile', 'mobile_item_style', [
+                { value: 'card', label: '🃏 Card Suave (Fundo + Borda Arredondada)' },
+                { value: 'pill', label: '💊 Botão Pílula (100% Arredondado)' },
+                { value: 'filled', label: '🟦 Botão Sólido Preenchido (Destaque)' },
+                { value: 'outlined', label: '🔲 Botão com Borda Definida (Outline)' },
+                { value: 'cyber_bar', label: '⚡ Barra Lateral Neon (Cyber Accent)' },
+                { value: 'divider', label: '➖ Lista com Linha Divisória Inferior' },
+                { value: 'minimal', label: '✨ Link Minimalista (Sem Caixa)' }
+            ], block.data.mobile_item_style || 'card');
+
+            html += inspectorSelect('Alinhamento do Texto nos Botões Mobile', 'mobile_item_align', [
+                { value: 'left', label: '⬅️ Alinhado à Esquerda' },
+                { value: 'center', label: '🎯 Centralizado no Botão' },
+                { value: 'right', label: '➡️ Alinhado à Direita' }
+            ], block.data.mobile_item_align || 'left');
+
+            html += inspectorSelect('Efeito ao Passar o Mouse / Toque (Hover Mobile)', 'mobile_hover_effect', [
+                { value: 'slide_right', label: '➡️ Deslocar Suavemente à Direita' },
+                { value: 'scale', label: '🔍 Crescer Escala (Scale Up)' },
+                { value: 'glow', label: '✨ Brilho Neon na Borda (Glow)' },
+                { value: 'fill', label: '🎨 Apenas Transição de Cor / Fundo' },
+                { value: 'none', label: '⚪ Sem Movimento' }
+            ], block.data.mobile_hover_effect || 'slide_right');
+
+            html += inspectorDimension('Espaçamento Entre Botões (Gap)', 'mobile_item_gap', block.data.mobile_item_gap || '8px');
+            html += inspectorTextInput('Padding Interno dos Botões Mobile', 'mobile_item_padding', block.data.mobile_item_padding || '12px 16px');
+            html += inspectorDimension('Arredondamento dos Botões (Radius)', 'mobile_item_radius', block.data.mobile_item_radius || '8px');
+
+            html += '<div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1);">' +
+                    '<div style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">🎨 Cores Normais dos Botões Mobile</div>' +
+                    inspectorTokenColorPicker('Cor do Texto (Normal)', 'mobile_link_color', block.data.mobile_link_color || block.data.link_color || 'var(--color-text-main)', 'text_main') +
+                    inspectorTokenColorPicker('Cor de Fundo do Botão (Normal)', 'mobile_item_bg', block.data.mobile_item_bg || 'rgba(255, 255, 255, 0.04)', 'surface') +
+                    inspectorTokenColorPicker('Cor da Borda do Botão (Normal)', 'mobile_item_border_color', block.data.mobile_item_border_color || 'rgba(255, 255, 255, 0.07)', 'border') +
+                    '</div>';
+
+            html += '<div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(56,189,248,0.25);">' +
+                    '<div style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:6px;">✨ Cores Hover / Ativo dos Botões Mobile</div>' +
+                    inspectorTokenColorPicker('Cor do Texto no Hover / Ativo', 'mobile_hover_text_color', block.data.mobile_hover_text_color || block.data.active_color || 'var(--color-primary)', 'primary') +
+                    inspectorTokenColorPicker('Cor de Fundo no Hover / Ativo', 'mobile_hover_bg_color', block.data.mobile_hover_bg_color || 'rgba(56, 189, 248, 0.14)', 'primary') +
+                    inspectorTokenColorPicker('Cor da Borda / Brilho no Hover', 'mobile_hover_border_color', block.data.mobile_hover_border_color || 'var(--color-primary)', 'primary') +
+                    '</div>';
+
+            html += '</div>';
+
+            // ==========================================
+            // PAINEL 4: SUBMENUS DROPDOWN (DESKTOP & MOBILE)
+            // ==========================================
+            html += '<div style="margin-top:14px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);">' +
+                    '<div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:8px;">🗂️ 4. Submenus Dropdown (Hierarquia Desktop &amp; Mobile)</div>' +
+                    '<p style="font-size:10px; color:var(--text-muted); margin:0 0 10px 0; line-height:1.4;">Personalize o card flutuante dos submenus criados no Gerenciador de Menus (arrastando itens para a direita).</p>';
+
+            html += inspectorTokenColorPicker('Cor de Fundo do Card Submenu', 'submenu_bg', block.data.submenu_bg || 'var(--color-surface)', 'surface');
+            html += inspectorTokenColorPicker('Cor da Borda do Card Submenu', 'submenu_border_color', block.data.submenu_border_color || 'var(--color-border)', 'border');
+            html += inspectorTokenColorPicker('Cor do Texto dos Submenus', 'submenu_text_color', block.data.submenu_text_color || block.data.link_color || 'var(--color-text-main)', 'text_main');
+            html += inspectorTokenColorPicker('Cor do Texto no Hover (Submenu)', 'submenu_hover_text_color', block.data.submenu_hover_text_color || block.data.active_color || 'var(--color-primary)', 'primary');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover (Submenu)', 'submenu_hover_bg_color', block.data.submenu_hover_bg_color || 'rgba(56, 189, 248, 0.12)', 'primary');
+            html += inspectorDimension('Largura Mínima do Submenu', 'submenu_min_width', block.data.submenu_min_width || '220px');
+            html += inspectorDimension('Arredondamento do Card Submenu', 'submenu_radius', block.data.submenu_radius || '12px');
+            html += '</div>';
         } else if (block.type === 'divider') {
             html += inspectorSelect('Estilo', 'style', ['solid', 'dashed', 'gradient', 'spacer', 'transparent'], block.data.style || 'solid');
             html += inspectorDimension('Altura / Espaçamento', 'height', block.data.height || '20px');
@@ -2629,6 +3057,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         } else if (block.type === 'copyright') {
             html += inspectorTextInput('Nome do Site', 'site_name', block.data.site_name || 'Domain-System');
             html += inspectorTextInput('Texto Complementar', 'text', block.data.text || '');
+            html += inspectorCheckbox('Exibir Links LGPD (Sobre, Privacidade, Termos)', 'show_lgpd_links', block.data.show_lgpd_links !== false);
+            html += inspectorTokenColorPicker('Cor do Texto do Rodapé', 'text_color', block.data.text_color || block.data.color || 'var(--color-text-muted)', 'text_muted');
+            html += inspectorTokenColorPicker('Cor dos Links LGPD', 'link_color', block.data.link_color || 'var(--color-text-muted)', 'text_muted');
+            html += inspectorFontSelector('Tipografia do Copyright', 'font_family', block.data.font_family || 'var(--font-primary)');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '0.88rem');
+            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'custom_code') {
             html += inspectorTextarea('Código HTML / CSS / JS Customizado', 'code', block.data.code || block.data.html || '');
         } else if (block.type === 'social_icons') {
@@ -2696,6 +3130,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorCheckbox("Exibir Resumo (Excerto)", "show_excerpt", block.data.show_excerpt !== false);
             html += inspectorCheckbox("Exibir Botão \"Ler Artigo\"", "show_read_more", block.data.show_read_more !== false);
             html += inspectorInput("Texto do Link", "read_more_text", block.data.read_more_text || "Ler Artigo →");
+            html += inspectorTokenColorPicker("Cor dos Títulos dos Cards", "title_color", block.data.title_color || "var(--color-primary)", "primary");
+            html += inspectorTokenColorPicker("Cor do Resumo (Texto)", "excerpt_color", block.data.excerpt_color || "var(--color-text-main)", "text_main");
+            html += inspectorTokenColorPicker("Cor da Data / Autor", "meta_color", block.data.meta_color || "var(--color-text-muted)", "text_muted");
+            html += inspectorTokenColorPicker("Cor do Link 'Ler Artigo'", "readmore_color", block.data.readmore_color || "var(--color-primary)", "primary");
+            html += inspectorTokenColorPicker("Cor de Fundo da Categoria (Badge)", "badge_bg_color", block.data.badge_bg_color || "var(--color-primary)", "primary");
+            html += inspectorTokenColorPicker("Cor do Texto da Categoria (Badge)", "badge_text_color", block.data.badge_text_color || "#0b0c10", "background");
         }
 
         // ==========================================
@@ -2790,6 +3230,48 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         ], 0, 3840, 20);
 
         html += renderAdvancedBackgroundControl('Cor de Fundo do Elemento (Background)', 'background', block.data.background || 'transparent', 'transparent', false);
+
+        // CORES DE TEXTO E FORMATAÇÃO TIPOGRÁFICA UNIVERSAL DO ELEMENTO (SOLID - StylableElementInterface)
+        html += '<div style="margin-top:12px; margin-bottom:12px; background:rgba(15,23,42,0.45); padding:10px; border-radius:8px; border:1px solid rgba(56,189,248,0.2);">' +
+                '<div style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:8px;">🔤 Formatação & Cores de Texto do Elemento</div>' +
+                inspectorTokenColorPicker('Cor do Texto Geral (Text Color)', 'text_color', block.data.text_color || block.data.color || '', 'text_main') +
+                inspectorTokenColorPicker('Cor dos Títulos Internos (Heading Color)', 'heading_color', block.data.heading_color || '', 'primary') +
+                inspectorTokenColorPicker('Cor dos Links Internos (Link Color)', 'link_color', block.data.link_color || '', 'primary') +
+                inspectorTokenColorPicker('Cor dos Links no Hover (Link Hover)', 'link_hover_color', block.data.link_hover_color || '', 'tertiary') +
+                inspectorFontSelector('Família da Fonte (Font Family)', 'font_family', block.data.font_family || 'var(--font-primary)') +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+                inspectorDimension('Tamanho (Font Size)', 'font_size', block.data.font_size || block.data.size || '') +
+                inspectorSelect('Peso (Font Weight)', 'font_weight', [
+                    { value: '', label: 'Padrão' },
+                    { value: '300', label: '300 (Light)' },
+                    { value: '400', label: '400 (Regular)' },
+                    { value: '500', label: '500 (Medium)' },
+                    { value: '600', label: '600 (SemiBold)' },
+                    { value: '700', label: '700 (Bold)' },
+                    { value: '800', label: '800 (ExtraBold)' },
+                    { value: '900', label: '900 (Black)' }
+                ], block.data.font_weight || '') +
+                '</div>' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+                inspectorTextInput('Altura de Linha (Line Height)', 'line_height', block.data.line_height || '') +
+                inspectorDimension('Espaçamento Letras', 'letter_spacing', block.data.letter_spacing || '') +
+                '</div>' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
+                inspectorSelect('Alinhamento Texto', 'text_align', [
+                    { value: '', label: 'Padrão' },
+                    { value: 'left', label: 'Esquerda' },
+                    { value: 'center', label: 'Centro' },
+                    { value: 'right', label: 'Direita' },
+                    { value: 'justify', label: 'Justificado' }
+                ], block.data.text_align || block.data.align || '') +
+                inspectorSelect('Transformação', 'text_transform', [
+                    { value: '', label: 'Nenhuma' },
+                    { value: 'uppercase', label: 'MAIÚSCULAS' },
+                    { value: 'lowercase', label: 'minúsculas' },
+                    { value: 'capitalize', label: 'Capitalizar' }
+                ], block.data.text_transform || '') +
+                '</div>' +
+                '</div>';
 
         // BORDER RADIUS COM STEPPER
         var curRadiusNum = parseFloat(block.data.border_radius || '0') || 0;
@@ -3267,6 +3749,18 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         delete block.data.width;
         delete block.data.max_width;
         delete block.data.background;
+        delete block.data.text_color;
+        delete block.data.color;
+        delete block.data.heading_color;
+        delete block.data.link_color;
+        delete block.data.link_hover_color;
+        delete block.data.font_family;
+        delete block.data.font_size;
+        delete block.data.font_weight;
+        delete block.data.line_height;
+        delete block.data.letter_spacing;
+        delete block.data.text_align;
+        delete block.data.text_transform;
         delete block.data.border;
         delete block.data.border_style;
         delete block.data.border_width;
@@ -3772,20 +4266,20 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         };
 
         var tokenList = [
-            { id: 'primary', label: 'Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
-            { id: 'secondary', label: 'Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
-            { id: 'tertiary', label: 'Terciária', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
-            { id: 'background', label: 'Fundo', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
-            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
+            { id: 'primary', label: 'Cor Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
+            { id: 'secondary', label: 'Cor Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
+            { id: 'tertiary', label: 'Cor Terciária / Destaque', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
             { id: 'text_main', label: 'Texto Principal', var: 'var(--color-text-main)', hex: palette.text_main || '#c5c6c7' },
-            { id: 'text_muted', label: 'Texto Suave', var: 'var(--color-text-muted)', hex: palette.text_muted || '#8b8c8d' },
+            { id: 'text_muted', label: 'Texto Suave (Muted)', var: 'var(--color-text-muted)', hex: palette.text_muted || '#8b8c8d' },
+            { id: 'background', label: 'Fundo Global', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
+            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
             { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' },
-            { id: 'transparent', label: 'Transparente', var: 'transparent', hex: 'transparent' }
+            { id: 'transparent', label: 'Padrão / Herdar', var: '', hex: 'transparent' }
         ];
 
         var swatchesHtml = '';
         tokenList.forEach(function(t) {
-            var isAct = (curVal === t.var || curVal === t.hex || (!curVal && defaultToken === t.id));
+            var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && defaultToken === t.id));
             var actClass = isAct ? ' active' : '';
             var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
             var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
@@ -3793,10 +4287,19 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             
             swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
                             'style="' + bgStyle + '" ' +
-                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Transparente' : t.hex) + ')') + '" ' +
+                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão / Herdar' : t.var) + ')') + '" ' +
                             'onclick="updateBlockProp(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderInspector();">' +
                             '</button>';
         });
+
+        var selectHtml = '<select class="inspector-select" style="margin-top:4px; font-size:11px; padding:4px 6px;" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' +
+                         '<option value=""' + (!curVal ? ' selected' : '') + '>🌐 Token Global (Primária, Secundária, Terciária...)</option>';
+        tokenList.forEach(function(t) {
+            if (t.id === 'transparent') return;
+            var isSel = (curVal === t.var);
+            selectHtml += '<option value="' + escapeAttr(t.var) + '"' + (isSel ? ' selected' : '') + '>🎨 ' + escapeHtml(t.label) + ' (' + escapeHtml(t.var) + ')</option>';
+        });
+        selectHtml += '</select>';
 
         var hexVal = curVal || '';
         if (hexVal.indexOf('var(') === 0) {
@@ -3817,9 +4320,10 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
                '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'Padrão') + '</span>' +
                '</div>' +
                '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
+               selectHtml +
                '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
                '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value)" placeholder="var(--color-primary) ou #hex ou rgba">' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value)" placeholder="var(--color-primary), var(--color-secondary) ou #hex">' +
                '</div>' +
                '</div>';
     }
@@ -3973,13 +4477,16 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
     }
 
     function inspectorMenuSelector(label, key, curVal) {
-        var opts = '<option value="">-- Padrão (Primeiro Menu) --</option>';
+        var headerMenu = menusList.find(function(m) { return m.location === 'header'; }) || menusList[0] || null;
+        var effectiveVal = curVal ? String(curVal) : (headerMenu ? String(headerMenu.id) : '');
+        var opts = '<option value=""' + (!effectiveVal ? ' selected' : '') + '>-- Padrão: Menu Principal (Header) --</option>';
         menusList.forEach(function(m) {
-            opts += '<option value="' + m.id + '"' + (String(m.id) === String(curVal) ? ' selected' : '') + '>' + m.name + '</option>';
+            var locLabel = m.location ? ' (' + m.location + ')' : '';
+            opts += '<option value="' + m.id + '"' + (String(m.id) === effectiveVal ? ' selected' : '') + '>' + escapeHtml(m.name + locLabel) + '</option>';
         });
         return '<div class="inspector-field">' +
                '<label class="inspector-label">' + label + '</label>' +
-               '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value)">' + opts + '</select>' +
+               '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' + opts + '</select>' +
                '</div>';
     }
 
@@ -4101,6 +4608,9 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             if (alignSetting) alignSetting.value = val;
         }
         renderCanvas();
+        if (isEditorMobileDrawerOpen) {
+            renderEditorMobileDrawerOverlay(true);
+        }
     }
 
     function applyUnitToBlockProp(key, newUnit) {
@@ -4119,6 +4629,7 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         if (type === 'heading') defaultData = { text: 'Novo Título', level: 'h2', font: 'secondary' };
         if (type === 'paragraph') defaultData = { text: 'Insira seu texto explicativo aqui.', font_size: '1rem' };
         if (type === 'cta_button') defaultData = { label: 'Saiba Mais', url: '#', variant: 'primary' };
+        if (type === 'user_auth') defaultData = { login_text: 'Entrar', login_url: '/aluno/login', register_text: 'Cadastrar', register_url: '/aluno/cadastro', dashboard_text: '🎓 Área do Aluno', dashboard_url: '/aluno/painel', logout_text: 'Sair', logout_url: '/aluno/logout', align: 'right' };
         if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px' };
         if (type === 'divider') defaultData = { style: 'solid', height: '24px' };
         if (type === 'copyright') defaultData = { site_name: 'Domain-System' };

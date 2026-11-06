@@ -37,7 +37,7 @@ class CsrfMiddleware implements MiddlewareInterface
 
         // API Routing e CSRF: O Escudo Anti-CSRF
         $uri = strtok($request->uri(), '?');
-        if (str_starts_with($uri, '/api/')) {
+        if (str_starts_with($uri, '/api/') || str_starts_with($uri, '/webhook/')) {
             // Bloqueia o bypass cego de API! 
             // Só libera sem token se for uma rota PÚBLICA (webhook, analytics)
             $authRequirements = $routeConfig['capabilities'] ?? $routeConfig['roles'] ?? [];
@@ -67,7 +67,13 @@ class CsrfMiddleware implements MiddlewareInterface
             }
             file_put_contents($logDir . '/csrf_debug.log', date('Y-m-d H:i:s') . " - CSRF Failed. route=$uri method=$method IP=$ip token_present=$tokenPresent\n", FILE_APPEND);
             
-            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || str_starts_with($uri, '/api/');
+            $accept = strtolower((string)($request->header('Accept') ?? ($_SERVER['HTTP_ACCEPT'] ?? '')));
+            $contentType = strtolower((string)($request->header('Content-Type') ?? ($_SERVER['CONTENT_TYPE'] ?? '')));
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                || str_starts_with($uri, '/api/')
+                || str_starts_with($uri, '/checkout/')
+                || str_contains($accept, 'application/json')
+                || str_contains($contentType, 'application/json');
             
             if ($isAjax) {
                 return new JsonResponse([

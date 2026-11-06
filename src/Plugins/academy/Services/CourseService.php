@@ -46,14 +46,23 @@ class CourseService
             $thumbnail = $this->storage->storeUpload($uploadedFile);
         }
 
+        $price = max(0.0, (float)($data['price'] ?? 0.0));
+        $isFree = ($price > 0.0) ? 0 : (isset($data['is_free']) ? (int)(bool)$data['is_free'] : 1);
+
         try {
             $courseId = $this->repository->create([
-                'title'       => trim((string)$data['title']),
-                'slug'        => $slug,
-                'description' => trim((string)($data['description'] ?? '')),
-                'thumbnail'   => $thumbnail,
-                'status'      => $data['status'] ?? 'draft',
-                'link'        => trim((string)($data['link'] ?? '')),
+                'title'                 => trim((string)$data['title']),
+                'slug'                  => $slug,
+                'description'           => trim((string)($data['description'] ?? '')),
+                'thumbnail'             => $thumbnail,
+                'status'                => $data['status'] ?? 'draft',
+                'link'                  => trim((string)($data['link'] ?? '')),
+                'price'                 => $price,
+                'is_free'               => $isFree,
+                'max_installments'      => isset($data['max_installments']) && (int)$data['max_installments'] > 0 ? (int)$data['max_installments'] : 12,
+                'external_platform'     => !empty($data['external_platform']) ? trim((string)$data['external_platform']) : null,
+                'external_product_id'   => !empty($data['external_product_id']) ? trim((string)$data['external_product_id']) : null,
+                'external_checkout_url' => !empty($data['external_checkout_url']) ? trim((string)$data['external_checkout_url']) : null,
             ]);
             if ($courseId <= 0 && $thumbnail !== null) {
                 $this->storage->deleteFile($thumbnail);
@@ -89,14 +98,23 @@ class CourseService
 
         $effectiveThumbnail = $newThumbnail ?? $oldThumbnail;
 
+        $price = max(0.0, (float)($data['price'] ?? 0.0));
+        $isFree = ($price > 0.0) ? 0 : (isset($data['is_free']) ? (int)(bool)$data['is_free'] : 1);
+
         try {
             $updated = $this->repository->update($id, [
-                'title'       => trim((string)$data['title']),
-                'slug'        => $slug,
-                'description' => trim((string)($data['description'] ?? '')),
-                'thumbnail'   => $effectiveThumbnail,
-                'status'      => $data['status'] ?? 'draft',
-                'link'        => trim((string)($data['link'] ?? '')),
+                'title'                 => trim((string)$data['title']),
+                'slug'                  => $slug,
+                'description'           => trim((string)($data['description'] ?? '')),
+                'thumbnail'             => $effectiveThumbnail,
+                'status'                => $data['status'] ?? 'draft',
+                'link'                  => trim((string)($data['link'] ?? '')),
+                'price'                 => $price,
+                'is_free'               => $isFree,
+                'max_installments'      => isset($data['max_installments']) && (int)$data['max_installments'] > 0 ? (int)$data['max_installments'] : 12,
+                'external_platform'     => !empty($data['external_platform']) ? trim((string)$data['external_platform']) : null,
+                'external_product_id'   => !empty($data['external_product_id']) ? trim((string)$data['external_product_id']) : null,
+                'external_checkout_url' => !empty($data['external_checkout_url']) ? trim((string)$data['external_checkout_url']) : null,
             ]);
         } catch (\Throwable $e) {
             if ($newThumbnail !== null) {

@@ -118,6 +118,7 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                     <button type="button" onclick="addBlock('callout')" class="btn-block-add">💡 Dica / Alerta</button>
                     <button type="button" onclick="addBlock('list')" class="btn-block-add">📋 Lista</button>
                     <button type="button" onclick="addBlock('image')" class="btn-block-add">🖼️ Imagem</button>
+                    <button type="button" onclick="addBlock('pdf')" class="btn-block-add" style="border-color:rgba(69,243,255,0.45); color:#45f3ff;">📄 Leitor de PDF</button>
                     <button type="button" onclick="addBlock('delimiter')" class="btn-block-add">➖ Divisor</button>
                 </div>
             </div>
@@ -628,6 +629,73 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                     }
                     break;
 
+                case 'pdf':
+                case 'pdf_viewer':
+                    var pdfUrl = String(d.url || d.source || '').trim();
+                    var pdfTitle = d.title || 'Documento PDF da Aula';
+                    var pdfCap = d.caption || '';
+                    var pdfMode = d.mode || 'pdfjs_canvas';
+                    var startPg = Math.max(1, parseInt(d.start_page || 1, 10));
+                    var endPg = Math.max(0, parseInt(d.end_page || 0, 10));
+                    var pdfHeight = isMobile ? '360px' : (d.height || '520px');
+                    var allowDl = (d.allow_download === undefined || d.allow_download === true || d.allow_download === 1 || d.allow_download === '1');
+                    var rangeText = endPg > 0 ? ('Págs. ' + startPg + '–' + endPg) : ('Pág. inicial ' + startPg);
+                    var modeLabel = pdfMode === 'card_modal' ? 'Cartão Expansível' : (pdfMode === 'native_embed' ? 'Iframe Nativo' : 'PDF.js Lazy Canvas');
+
+                    if (pdfUrl) {
+                        if (pdfUrl.toLowerCase().indexOf('<iframe') !== -1) {
+                            var srcM = pdfUrl.match(/\bsrc=["']([^"']+)["']/i);
+                            if (srcM && srcM[1]) {
+                                pdfUrl = srcM[1].replace(/&amp;/g, '&');
+                            }
+                        }
+                        var previewFrameUrl = pdfUrl;
+                        var gdMatch = pdfUrl.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i) || pdfUrl.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([a-zA-Z0-9_-]+)/i);
+                        var odMatch = pdfUrl.match(/onedrive\.live\.com\/(?:view\.aspx|redir)\?(.+)$/i);
+                        if (gdMatch && gdMatch[1]) {
+                            previewFrameUrl = 'https://drive.google.com/file/d/' + gdMatch[1] + '/preview';
+                        } else if (/onedrive\.live\.com\/embed/i.test(pdfUrl) || /1drv\.ms\//i.test(pdfUrl)) {
+                            previewFrameUrl = pdfUrl;
+                        } else if (odMatch && odMatch[1]) {
+                            previewFrameUrl = 'https://onedrive.live.com/embed?' + odMatch[1];
+                        } else if (/\.sharepoint\.com\//i.test(pdfUrl)) {
+                            previewFrameUrl = pdfUrl;
+                            if (previewFrameUrl.toLowerCase().indexOf('action=embedview') === -1 && previewFrameUrl.toLowerCase().indexOf('/embed') === -1) {
+                                previewFrameUrl += (previewFrameUrl.indexOf('?') !== -1 ? '&' : '?') + 'action=embedview';
+                            }
+                        } else if (/dropbox\.com\//i.test(pdfUrl)) {
+                            previewFrameUrl = pdfUrl.replace(/([?&])dl=0\b/i, '$1raw=1');
+                            if (previewFrameUrl.indexOf('raw=1') === -1) {
+                                previewFrameUrl += (previewFrameUrl.indexOf('?') !== -1 ? '&' : '?') + 'raw=1';
+                            }
+                        } else {
+                            previewFrameUrl = pdfUrl + (pdfUrl.indexOf('#') !== -1 ? '&' : '#') + 'page=' + startPg + '&zoom=page-width' + (!allowDl ? '&toolbar=0&navpanes=0' : '');
+                        }
+                        htmlParts.push(
+                            '<figure style="margin:1.4rem 0; border-radius:10px; overflow:hidden; background:#0b0e14; border:1px solid rgba(69,243,255,0.28); box-shadow:0 6px 22px rgba(0,0,0,0.45);">' +
+                                '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 14px; background:#141920; border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                                    '<div style="display:flex; align-items:center; gap:8px; min-width:0;">' +
+                                        '<span>📄</span>' +
+                                        '<strong style="color:#fff; font-size:0.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + escapeHtml(pdfTitle) + '</strong>' +
+                                        '<span style="background:rgba(69,243,255,0.14); color:#45f3ff; border:1px solid rgba(69,243,255,0.3); padding:1px 7px; border-radius:10px; font-size:10px; font-weight:700;">' + escapeHtml(rangeText) + '</span>' +
+                                    '</div>' +
+                                    '<div style="display:flex; align-items:center; gap:6px; font-size:10px; color:#94a3b8;">' +
+                                        '<span style="padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.06);">' + escapeHtml(modeLabel) + '</span>' +
+                                        (allowDl ? '<a href="' + escapeHtml(pdfUrl) + '" target="_blank" style="color:#45f3ff; text-decoration:none; font-weight:700;">⬇ Abrir/Baixar</a>' : '<span style="color:#f5a623;">🔒 Download Bloqueado</span>') +
+                                    '</div>' +
+                                '</div>' +
+                                (pdfMode === 'card_modal'
+                                    ? '<div style="padding:22px; text-align:center; background:#12161f; color:#94a3b8; font-size:12px;">🗂️ Modo Cartão Compacto: o aluno verá o botão <strong>"📖 Abrir Leitor Online"</strong> para expandir o PDF sob demanda.</div>'
+                                    : '<div style="width:100%; height:' + escapeHtml(pdfHeight) + '; background:#161922;"><iframe src="' + escapeHtml(previewFrameUrl) + '" style="width:100%; height:100%; border:0; display:block;" loading="lazy"></iframe></div>'
+                                ) +
+                                (pdfCap ? '<figcaption style="padding:8px 12px; font-size:0.78rem; color:#8c8f94; text-align:center; background:#0b0e14;">' + escapeHtml(pdfCap) + '</figcaption>' : '') +
+                            '</figure>'
+                        );
+                    } else {
+                        htmlParts.push('<div style="margin:1.2rem 0; padding:16px; border:1px dashed rgba(69,243,255,0.35); border-radius:8px; color:#8c8f94; font-size:12px; text-align:center;">📄 Informe a URL (Nuvem / CDN / Google Drive) ou envie um arquivo PDF local para pré-visualizar o leitor aqui.</div>');
+                    }
+                    break;
+
                 case 'delimiter':
                     htmlParts.push('<hr style="border:0; border-top:1px solid rgba(69,243,255,0.2); margin:1.6rem 0;">');
                     break;
@@ -688,6 +756,8 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
             case 'callout': return '💡 Dica / Alerta';
             case 'list': return '📋 Lista';
             case 'image': return '🖼️ Imagem';
+            case 'pdf':
+            case 'pdf_viewer': return '📄 Leitor de PDF (Nuvem / Local)';
             case 'delimiter': return '➖ Divisor';
             default: return 'Bloco';
         }
@@ -695,6 +765,61 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
 
     function escapeHtml(str) {
         return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function notifyEditor(message, type) {
+        type = type || 'info';
+        if (window.OS && typeof window.OS.notify === 'function') {
+            window.OS.notify(message, type);
+            return;
+        }
+        var container = document.getElementById('ds-editor-toast-fallback');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'ds-editor-toast-fallback';
+            container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:10px;';
+            document.body.appendChild(container);
+        }
+        var color = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : (type === 'warning' ? '#f59e0b' : '#3b82f6'));
+        var icon = type === 'success' ? '✅' : (type === 'error' ? '🚨' : (type === 'warning' ? '⚠️' : 'ℹ️'));
+        var toast = document.createElement('div');
+        toast.style.cssText = 'background:#0f172a; color:#f8fafc; padding:14px 18px; border-radius:8px; box-shadow:0 15px 35px rgba(0,0,0,0.6); font-weight:600; font-size:13.5px; display:flex; align-items:flex-start; gap:12px; border:1px solid #334155; border-left:5px solid ' + color + '; max-width:430px; line-height:1.45;';
+        toast.innerHTML = '<span>' + icon + '</span><span style="flex:1;">' + escapeHtml(message) + '</span>';
+        container.appendChild(toast);
+        setTimeout(function() { if (toast.parentElement) toast.remove(); }, type === 'error' ? 10000 : 4500);
+    }
+
+    function parseJsonResponse(res) {
+        return res.text().then(function(rawText) {
+            var trimmed = String(rawText || '').trim();
+            if (!trimmed) {
+                return { success: false, message: 'Resposta vazia do servidor (HTTP ' + res.status + ').' };
+            }
+            try {
+                return JSON.parse(trimmed);
+            } catch (e) {
+                if (/POST Content-Length of (\d+) bytes exceeds the limit of (\d+) bytes/i.test(trimmed)) {
+                    var m = trimmed.match(/POST Content-Length of (\d+) bytes exceeds the limit of (\d+) bytes/i);
+                    var sentMb = (parseInt(m[1], 10) / 1048576).toFixed(1);
+                    var limitMb = (parseInt(m[2], 10) / 1048576).toFixed(1);
+                    return {
+                        success: false,
+                        message: 'O arquivo enviado (' + sentMb + ' MB) excede o limite do servidor PHP (' + limitMb + ' MB). Use um PDF menor ou hospede na nuvem.'
+                    };
+                }
+                var jsonStart = trimmed.indexOf('{');
+                var jsonEnd = trimmed.lastIndexOf('}');
+                if (jsonStart !== -1 && jsonEnd > jsonStart) {
+                    try {
+                        return JSON.parse(trimmed.substring(jsonStart, jsonEnd + 1));
+                    } catch (innerErr) {}
+                }
+                return {
+                    success: false,
+                    message: 'O servidor retornou uma resposta inesperada (HTTP ' + res.status + ').'
+                };
+            }
+        });
     }
 
     function renderBlockInputs(b, idx) {
@@ -800,6 +925,69 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                     </div>
                 `;
 
+            case 'pdf':
+            case 'pdf_viewer':
+                var pdfUrlVal = d.url || d.source || '';
+                var pdfTitleVal = d.title || '';
+                var pdfCapVal = d.caption || '';
+                var pdfModeVal = d.mode || 'pdfjs_canvas';
+                var startPgVal = d.start_page || 1;
+                var endPgVal = d.end_page || 0;
+                var pdfHeightVal = d.height || '620px';
+                var allowDlVal = (d.allow_download === undefined || d.allow_download === true || d.allow_download === 1 || d.allow_download === '1');
+                return `
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <input type="text" id="pdf_url_input_` + idx + `" value="` + escapeHtml(pdfUrlVal) + `" placeholder="URL do PDF (Google Drive, Microsoft OneDrive/SharePoint, Dropbox ou /uploads/academy/pdfs/...)" oninput="updateBlockData(` + idx + `, 'url', this.value)" style="flex:1; min-width:220px; padding:8px 12px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-family:monospace; font-size:12.5px; box-sizing:border-box;">
+                            <label style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:4px; background:rgba(69,243,255,0.12); border:1px solid rgba(69,243,255,0.4); color:#45f3ff; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;" title="Enviar arquivo PDF para a pasta local (Hostinger / Servidor)">
+                                <span id="pdf_upload_label_` + idx + `">📤 Enviar PDF Local</span>
+                                <input type="file" accept="application/pdf,.pdf" onchange="uploadLessonPdfFile(` + idx + `, this)" style="display:none;">
+                            </label>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; font-size:11px; color:#8c8f94; margin-bottom:4px;">Título do Documento / Figura:</label>
+                                <input type="text" value="` + escapeHtml(pdfTitleVal) + `" placeholder="Ex: Apostila Cap. 3 — Gráficos e Tabelas" oninput="updateBlockData(` + idx + `, 'title', this.value)" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12.5px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:11px; color:#8c8f94; margin-bottom:4px;">Modo do Leitor Online:</label>
+                                <select onchange="updateBlockData(` + idx + `, 'mode', this.value)" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px;">
+                                    <option value="pdfjs_canvas" ` + (pdfModeVal === 'pdfjs_canvas' ? 'selected' : '') + `>⚡ Por Página Sob Demanda (PDF.js Lazy Canvas — Leve)</option>
+                                    <option value="native_embed" ` + (pdfModeVal === 'native_embed' ? 'selected' : '') + `>🖥️ Leitor Incorporado / Iframe (Nativo / Google Drive)</option>
+                                    <option value="card_modal" ` + (pdfModeVal === 'card_modal' ? 'selected' : '') + `>🗂️ Cartão Compacto (Expande ao Clicar)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; align-items:end; background:rgba(0,0,0,0.22); padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <label style="display:block; font-size:11px; color:#8c8f94; margin-bottom:4px;" title="Página em que o leitor deve abrir (útil para ir direto a um gráfico ou figura)">Página Inicial:</label>
+                                <input type="number" min="1" value="` + parseInt(startPgVal, 10) + `" oninput="updateBlockData(` + idx + `, 'start_page', Math.max(1, parseInt(this.value || '1', 10)))" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:11px; color:#8c8f94; margin-bottom:4px;" title="0 = liberar até o final; ou informe a página limite para recortar apenas um trecho">Página Final (0 = Todas):</label>
+                                <input type="number" min="0" value="` + parseInt(endPgVal, 10) + `" oninput="updateBlockData(` + idx + `, 'end_page', Math.max(0, parseInt(this.value || '0', 10)))" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:11px; color:#8c8f94; margin-bottom:4px;">Altura do Leitor:</label>
+                                <select onchange="updateBlockData(` + idx + `, 'height', this.value)" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12px;">
+                                    <option value="420px" ` + (pdfHeightVal === '420px' ? 'selected' : '') + `>Compacta (420px)</option>
+                                    <option value="540px" ` + (pdfHeightVal === '540px' ? 'selected' : '') + `>Média (540px)</option>
+                                    <option value="620px" ` + (pdfHeightVal === '620px' ? 'selected' : '') + `>Padrão (620px)</option>
+                                    <option value="780px" ` + (pdfHeightVal === '780px' ? 'selected' : '') + `>Ampla (780px)</option>
+                                </select>
+                            </div>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#cbd5e1; cursor:pointer; padding-bottom:6px;">
+                                <input type="checkbox" ` + (allowDlVal ? 'checked' : '') + ` onchange="updateBlockData(` + idx + `, 'allow_download', this.checked)" style="accent-color:#45f3ff;">
+                                <span>Permitir Download</span>
+                            </label>
+                        </div>
+
+                        <input type="text" value="` + escapeHtml(pdfCapVal) + `" placeholder="Legenda ou nota explicativa abaixo do PDF (opcional)" oninput="updateBlockData(` + idx + `, 'caption', this.value)" style="width:100%; padding:6px 12px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#8c8f94; font-size:12px; box-sizing:border-box;">
+                    </div>
+                `;
+
             case 'delimiter':
                 return `
                     <div style="padding:10px 0; text-align:center; color:#8c8f94; font-size:12px;">
@@ -825,6 +1013,7 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
             case 'callout': newBlock.data = { type: 'info', text: '' }; break;
             case 'list': newBlock.data = { style: 'unordered', items: [] }; break;
             case 'image': newBlock.data = { url: '', caption: '' }; break;
+            case 'pdf': newBlock.data = { url: '', title: 'Material Complementar (PDF)', mode: 'pdfjs_canvas', start_page: 1, end_page: 0, height: '620px', allow_download: true, caption: '' }; break;
             case 'delimiter': newBlock.data = {}; break;
         }
 
@@ -883,6 +1072,60 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
         }
     };
 
+    window.uploadLessonPdfFile = function(idx, fileInput) {
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) return;
+        var file = fileInput.files[0];
+
+        var maxBytes = 128 * 1024 * 1024;
+        if (file.size > maxBytes) {
+            var fileMb = (file.size / 1048576).toFixed(1);
+            notifyEditor('O arquivo PDF (' + fileMb + ' MB) excede o limite máximo de 128 MB para upload local. Para arquivos maiores, utilize uma URL na nuvem.', 'warning');
+            fileInput.value = '';
+            return;
+        }
+
+        var labelSpan = document.getElementById('pdf_upload_label_' + idx);
+        var originalText = labelSpan ? labelSpan.textContent : '📤 Enviar PDF Local';
+        if (labelSpan) labelSpan.textContent = '⏳ Enviando...';
+
+        var formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        formData.append('pdf', file);
+
+        fetch(baseUrl + '/admin/academy/lessons/' + lessonId + '/upload-pdf', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(parseJsonResponse)
+        .then(function(data) {
+            if (labelSpan) labelSpan.textContent = originalText;
+            fileInput.value = '';
+            if (data && data.success && data.url) {
+                if (blocks[idx]) {
+                    if (!blocks[idx].data) blocks[idx].data = {};
+                    blocks[idx].data.url = data.url;
+                    if (!blocks[idx].data.title || blocks[idx].data.title === 'Material Complementar (PDF)') {
+                        blocks[idx].data.title = file.name.replace(/\.pdf$/i, '');
+                    }
+                    renderCanvas();
+                }
+                notifyEditor(data.message || 'Arquivo PDF enviado com sucesso!', 'success');
+            } else {
+                notifyEditor((data && data.message) ? data.message : 'Erro ao enviar o arquivo PDF.', 'error');
+            }
+        })
+        .catch(function(err) {
+            if (labelSpan) labelSpan.textContent = originalText;
+            fileInput.value = '';
+            notifyEditor('Falha na comunicação durante o envio do PDF: ' + (err && err.message ? err.message : err), 'error');
+        });
+    };
+
     window.saveLessonBlocks = function() {
         var btn = document.getElementById('btn_save_lesson');
         var btnText = document.getElementById('btn_save_text');
@@ -910,28 +1153,28 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken,
+                'Accept': 'application/json'
             },
             body: JSON.stringify(payload)
         })
-        .then(function(res) { return res.json(); })
+        .then(parseJsonResponse)
         .then(function(data) {
             btn.disabled = false;
             btnText.textContent = 'Salvar Aula';
-            if (data.success) {
+            if (data && data.success) {
                 indicator.style.display = 'inline';
                 setTimeout(function() { indicator.style.display = 'none'; }, 4000);
-                if (window.OS && window.OS.notify) {
-                    window.OS.notify(data.message || 'Aula salva com sucesso!', 'success');
-                }
+                notifyEditor(data.message || 'Aula salva com sucesso!', 'success');
             } else {
-                alert(data.message || 'Erro ao salvar aula.');
+                notifyEditor((data && data.message) ? data.message : 'Erro ao salvar aula.', 'error');
             }
         })
         .catch(function(err) {
             btn.disabled = false;
             btnText.textContent = 'Salvar Aula';
-            alert('Erro na comunicação com o servidor: ' + err);
+            notifyEditor('Erro na comunicação com o servidor: ' + (err && err.message ? err.message : err), 'error');
         });
     };
 

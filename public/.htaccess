@@ -43,3 +43,10 @@
 
 # 4. Desabilitar listagem de diretórios (Segurança)
 Options -Indexes
+
+# 5. Limites de Upload para Apostilas e PDFs Pesados (Academy LMS)
+<IfModule php_module>
+    php_value upload_max_filesize 128M
+    php_value post_max_size 135M
+    php_value memory_limit 256M
+</IfModule>

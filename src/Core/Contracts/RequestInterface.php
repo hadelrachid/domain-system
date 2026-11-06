@@ -12,4 +12,5 @@ interface RequestInterface
     public function method(): string;
     public function uri(): string;
     public function file(string $key);
+    public function header(string $name, ?string $default = null): ?string;
 }

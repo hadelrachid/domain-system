@@ -22,7 +22,7 @@ return new class implements ManualModuleInterface {
 
     public function getBadge(): string
     {
-        return 'Resiliência • NoBreak v2.5.0';
+        return 'Resiliência • NoBreak v2.6.0';
     }
 
     public function getAccentColor(): string

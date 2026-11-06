@@ -119,15 +119,28 @@
 
                         <div>
                             <label style="display: block; font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px;">
-                                Fonte Secundária (Títulos & Destaques)
+                                Fonte Secundária (Código & Técnico)
                             </label>
                             <input type="text" 
                                    name="typography[secondary_font]" 
                                    id="input_font_secondary" 
-                                   value="<?= htmlspecialchars($typography['secondary_font'] ?? 'Montserrat') ?>" 
+                                   value="<?= htmlspecialchars($typography['secondary_font'] ?? 'Fira Code, monospace') ?>" 
                                    oninput="updateTypographyPreview()"
                                    style="width: 100%; box-sizing: border-box; background: var(--bg-deep, #0d1117); color: #fff; border: 1px solid var(--border, #30363d); padding: 8px 12px; border-radius: 4px; font-size: 13px;">
-                            <span style="font-size: 11px; color: var(--text-muted);">Sugestões: <code>Montserrat</code>, <code>Poppins</code>, <code>Fira Code</code>, <code>Outfit</code></span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Sugestões: <code>Fira Code</code>, <code>JetBrains Mono</code>, <code>Courier New</code></span>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px;">
+                                Fonte Terciária (Títulos & Destaques)
+                            </label>
+                            <input type="text" 
+                                   name="typography[tertiary_font]" 
+                                   id="input_font_tertiary" 
+                                   value="<?= htmlspecialchars($typography['tertiary_font'] ?? 'Montserrat, sans-serif') ?>" 
+                                   oninput="updateTypographyPreview()"
+                                   style="width: 100%; box-sizing: border-box; background: var(--bg-deep, #0d1117); color: #fff; border: 1px solid var(--border, #30363d); padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                            <span style="font-size: 11px; color: var(--text-muted);">Sugestões: <code>Montserrat</code>, <code>Poppins</code>, <code>Outfit</code>, <code>Playfair Display</code></span>
                         </div>
                     </div>
                 </div>

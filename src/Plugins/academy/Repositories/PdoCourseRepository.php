@@ -45,6 +45,14 @@ class PdoCourseRepository implements CourseRepositoryInterface
         return $row ?: null;
     }
 
+    public function findByExternalProductId(string $externalProductId): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM academy_courses WHERE external_product_id = ? LIMIT 1");
+        $stmt->execute([$externalProductId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function findPublished(array $filters = []): array
     {
         $status = $filters['status'] ?? null;
@@ -66,9 +74,10 @@ class PdoCourseRepository implements CourseRepositoryInterface
 
     public function create(array $data): int
     {
+        $this->ensureTableExists();
         $stmt = $this->pdo->prepare("
-            INSERT INTO academy_courses (title, slug, thumbnail, description, status, link)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO academy_courses (title, slug, thumbnail, description, status, link, price, is_free, max_installments, external_platform, external_product_id, external_checkout_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $data['title'],
@@ -77,6 +86,12 @@ class PdoCourseRepository implements CourseRepositoryInterface
             $data['description'] ?? null,
             $data['status'] ?? 'draft',
             $data['link'] ?? null,
+            (float)($data['price'] ?? 0.0),
+            isset($data['is_free']) ? (int)(bool)$data['is_free'] : ((float)($data['price'] ?? 0.0) > 0 ? 0 : 1),
+            isset($data['max_installments']) && (int)$data['max_installments'] > 0 ? (int)$data['max_installments'] : 12,
+            $data['external_platform'] ?? null,
+            $data['external_product_id'] ?? null,
+            $data['external_checkout_url'] ?? null,
         ]);
 
         return (int)$this->pdo->lastInsertId();
@@ -84,9 +99,10 @@ class PdoCourseRepository implements CourseRepositoryInterface
 
     public function update(int $id, array $data): bool
     {
+        $this->ensureTableExists();
         $stmt = $this->pdo->prepare("
             UPDATE academy_courses
-            SET title = ?, slug = ?, thumbnail = ?, description = ?, status = ?, link = ?
+            SET title = ?, slug = ?, thumbnail = ?, description = ?, status = ?, link = ?, price = ?, is_free = ?, max_installments = ?, external_platform = ?, external_product_id = ?, external_checkout_url = ?
             WHERE id = ?
         ");
         return $stmt->execute([
@@ -96,6 +112,12 @@ class PdoCourseRepository implements CourseRepositoryInterface
             $data['description'] ?? null,
             $data['status'] ?? 'draft',
             $data['link'] ?? null,
+            (float)($data['price'] ?? 0.0),
+            isset($data['is_free']) ? (int)(bool)$data['is_free'] : ((float)($data['price'] ?? 0.0) > 0 ? 0 : 1),
+            isset($data['max_installments']) && (int)$data['max_installments'] > 0 ? (int)$data['max_installments'] : 12,
+            $data['external_platform'] ?? null,
+            $data['external_product_id'] ?? null,
+            $data['external_checkout_url'] ?? null,
             $id
         ]);
     }
@@ -115,5 +137,29 @@ class PdoCourseRepository implements CourseRepositoryInterface
                 ($migration['up'])($this->pdo);
             }
         }
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0.00");
+        } catch (\Throwable $e) {}
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN is_free INTEGER NOT NULL DEFAULT 1");
+        } catch (\Throwable $e) {}
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN max_installments INTEGER NOT NULL DEFAULT 12");
+        } catch (\Throwable $e) {}
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN external_platform VARCHAR(50) NULL");
+        } catch (\Throwable $e) {}
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN external_product_id VARCHAR(100) NULL");
+        } catch (\Throwable $e) {}
+
+        try {
+            $this->pdo->exec("ALTER TABLE academy_courses ADD COLUMN external_checkout_url VARCHAR(255) NULL");
+        } catch (\Throwable $e) {}
     }
 }

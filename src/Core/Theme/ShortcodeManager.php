@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme;
 
-class ShortcodeManager
+use DomainSystem\Core\Contracts\ContainerInterface;
+use DomainSystem\Core\Contracts\ShortcodeManagerInterface;
+
+class ShortcodeManager implements ShortcodeManagerInterface
 {
     /**
      * @var array Registros de shortcodes no formato:
@@ -12,14 +15,15 @@ class ShortcodeManager
      *     'tag' => [
      *         'callback' => callable,
      *         'description' => 'Descrição do que faz',
-     *         'attributes' => ['attr1' => 'descrição do attr1']
+     *         'attributes' => ['attr1' => 'descrição do attr1'],
+     *         'category' => 'Geral'
      *     ]
      * ]
      */
     private array $shortcodes = [];
-    private ?\DomainSystem\Core\Container\Container $container;
+    private ?ContainerInterface $container;
 
-    public function __construct(?\DomainSystem\Core\Container\Container $container = null)
+    public function __construct(?ContainerInterface $container = null)
     {
         $this->container = $container;
     }
@@ -27,12 +31,13 @@ class ShortcodeManager
     /**
      * Registra um novo shortcode.
      */
-    public function add(string $tag, $callback, string $description = '', array $attributes = [], string $category = 'Geral'): void
+    public function add(string $tag, callable|array $callback, string $description = '', array $attributes = [], string $category = 'Geral'): void
     {
         $this->shortcodes[$tag] = [
             'callback' => $callback,
             'description' => $description,
-            'attributes' => $attributes
+            'attributes' => $attributes,
+            'category' => $category,
         ];
     }
 

@@ -22,7 +22,7 @@ interface MenuRepositoryInterface
     public function getMenuByLocation(string $location): ?array;
 
     /**
-     * @return array<int, array{id: int, menu_id: int, title: string, url: ?string, page_id: ?int, order_index: int}>
+     * @return array<int, array{id: int, menu_id: int, parent_id?: ?int, depth?: int, title: string, url: ?string, page_id: ?int, target?: string, css_classes?: ?string, order_index: int}>
      */
     public function getMenuItems(int $menuId): array;
 
@@ -33,8 +33,9 @@ interface MenuRepositoryInterface
     public function saveMenu(string $name, string $location, ?int $id = null): array;
 
     /**
-     * Substitui itens de um menu de forma estritamente transacional (com rollback em falhas).
-     * @param array<int, array{title: string, url?: ?string, page_id?: ?int}> $items
+     * Substitui itens de um menu de forma estritamente transacional (com rollback em falhas),
+     * preservando a hierarquia de submenus (parent_id e depth).
+     * @param array<int, array{id?: int|string, parent_id?: int|string|null, depth?: int, title: string, url?: ?string, page_id?: ?int, target?: string, css_classes?: ?string}> $items
      */
     public function replaceMenuItems(int $menuId, array $items): bool;
 

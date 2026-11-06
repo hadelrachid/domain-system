@@ -116,7 +116,7 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $blocks = $registry->all();
 
-        $this->assertCount(14, $blocks);
+        $this->assertCount(15, $blocks);
 
         foreach ($blocks as $type => $block) {
             $this->assertInstanceOf(BlockInterface::class, $block);
@@ -311,7 +311,12 @@ class FlexBuilderUnifiedAuditTest extends TestCase
 
         $assoc = new JsonThemePartAssociation($this->tempDir . '/assoc.json');
         $discovery = new ThemeDiscoveryService($this->tempDir);
-        $service = new ThemePartManagementService($failingRepo, $assoc, $discovery);
+        $service = new ThemePartManagementService(
+            $failingRepo,
+            $assoc,
+            $discovery,
+            new ThemePartValidator(DefaultBlockRegistryFactory::create(), new LayoutGridRenderer())
+        );
 
         $this->expectException(RuntimeException::class);
         $service->saveFromPayload([
@@ -567,6 +572,17 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $themeManager = $this->createMock(\DomainSystem\Core\Contracts\ThemeManagerInterface::class);
         $shortcodes = new ShortcodeManager();
 
+        $discovery = new ThemeDiscoveryService($this->tempDir);
+        $uploader = new MediaUploadService($this->tempDir, 'http://localhost');
+        $previewSvc = new ThemePartPreviewService($renderer);
+        $mgmtSvc = new ThemePartManagementService(
+            $repo,
+            $assoc,
+            $discovery,
+            new ThemePartValidator($registry, $grid)
+        );
+        $urlResolver = new \DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver('http://localhost');
+
         $controller = new ThemePartsAdminController(
             $repo,
             $assoc,
@@ -578,7 +594,14 @@ class FlexBuilderUnifiedAuditTest extends TestCase
             $shortcodes,
             null,
             null,
-            $this->tempDir
+            $this->tempDir,
+            $discovery,
+            $uploader,
+            null,
+            $styleRenderer,
+            $previewSvc,
+            $mgmtSvc,
+            $urlResolver
         );
 
         // 13.1 Sucesso via Request::withJsonBody (sem usar php://input)
@@ -626,11 +649,13 @@ class FlexBuilderUnifiedAuditTest extends TestCase
             null,
             null,
             $this->tempDir,
-            null,
-            null,
+            $discovery,
+            $uploader,
             null,
             $styleRenderer,
-            $explodingPreview
+            $explodingPreview,
+            $mgmtSvc,
+            $urlResolver
         );
 
         $resPreview500 = $controllerWithExplodingPreview->preview((new Request())->withJsonBody(['type' => 'section']));

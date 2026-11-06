@@ -68,7 +68,8 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $all = $registry->all();
 
-        $this->assertCount(14, $all);
+        $this->assertCount(15, $all);
+        $this->assertNotNull($registry->get('user_auth'));
         $this->assertNotNull($registry->get('heading'));
         $this->assertNotNull($registry->get('paragraph'));
         $this->assertNotNull($registry->get('image'));
@@ -298,5 +299,72 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $this->assertStringContainsString('Cursos', $htmlFallback);
         $this->assertStringContainsString('Painel', $htmlFallback);
         $this->assertStringContainsString('ds-toggle-classic', $htmlFallback);
+    }
+
+    public function testNavMenuMobileDrawerAndButtonsCustomization(): void
+    {
+        $providerMock = $this->createMock(MenuProviderInterface::class);
+        $providerMock->method('getMenuItems')->willReturn([
+            ['title' => 'Dashboard', 'url' => '/dashboard'],
+            ['title' => 'Configurações', 'url' => '/settings'],
+        ]);
+
+        $block = new NavMenuBlock($providerMock);
+
+        $html = $block->render([
+            'toggle_style'              => MobileToggleStyleInterface::STYLE_CYBER,
+            'toggle_color'              => 'var(--color-tertiary)',
+            'toggle_bg_color'           => 'rgba(96, 165, 250, 0.12)',
+            'drawer_title'              => 'Menu Principal',
+            'drawer_title_color'        => 'var(--color-secondary)',
+            'drawer_bg'                 => 'var(--color-background)',
+            'drawer_position'           => MobileToggleStyleInterface::DRAWER_POS_LEFT,
+            'drawer_width'              => '340px',
+            'mobile_item_style'         => MobileToggleStyleInterface::ITEM_STYLE_PILL,
+            'mobile_item_align'         => 'center',
+            'mobile_hover_effect'       => 'glow',
+            'mobile_link_color'         => 'var(--color-text-main)',
+            'mobile_item_bg'            => 'var(--color-surface)',
+            'mobile_hover_text_color'   => 'var(--color-primary)',
+            'mobile_hover_bg_color'     => 'var(--color-secondary)',
+            'mobile_hover_border_color' => 'var(--color-tertiary)',
+        ]);
+
+        $this->assertStringContainsString('ds-toggle-cyber', $html);
+        $this->assertStringContainsString('[&#9776;]', $html);
+        $this->assertStringContainsString('Menu Principal', $html);
+        $this->assertStringContainsString('ds-drawer-pos-left', $html);
+        $this->assertStringContainsString('max-width: 340px', $html);
+        $this->assertStringContainsString('ds-mobile-item-pill', $html);
+        $this->assertStringContainsString('border-radius: 999px', $html);
+        $this->assertStringContainsString('var(--color-secondary)', $html);
+        $this->assertStringContainsString('var(--color-tertiary)', $html);
+        $this->assertStringContainsString('box-shadow: 0 0 16px var(--color-tertiary)', $html);
+    }
+
+    public function testNavMenuBlockWithHierarchicalSubmenusAndWalkerContract(): void
+    {
+        $providerMock = $this->createMock(MenuProviderInterface::class);
+        $providerMock->method('getMenuItems')->willReturn([
+            ['id' => 10, 'parent_id' => null, 'depth' => 0, 'title' => 'Serviços', 'url' => '#'],
+            ['id' => 11, 'parent_id' => 10, 'depth' => 1, 'title' => 'Consultoria SOLID', 'url' => '/consultoria'],
+            ['id' => 12, 'parent_id' => 11, 'depth' => 2, 'title' => 'Auditoria Ring 0', 'url' => '/auditoria', 'target' => '_blank'],
+            ['id' => 13, 'parent_id' => null, 'depth' => 0, 'title' => 'Contato', 'url' => '/contato'],
+        ]);
+
+        $block = new NavMenuBlock($providerMock);
+        $html = $block->render([
+            'submenu_bg'               => 'var(--color-surface)',
+            'submenu_hover_text_color' => 'var(--color-tertiary)',
+        ]);
+
+        $this->assertStringContainsString('menu-item-has-children', $html);
+        $this->assertStringContainsString('ds-sub-menu', $html);
+        $this->assertStringContainsString('ds-submenu-link', $html);
+        $this->assertStringContainsString('ds-mobile-sub-menu', $html);
+        $this->assertStringContainsString('ds-mobile-submenu-toggle', $html);
+        $this->assertStringContainsString('Consultoria SOLID', $html);
+        $this->assertStringContainsString('Auditoria Ring 0', $html);
+        $this->assertStringContainsString('var(--color-tertiary)', $html);
     }
 }

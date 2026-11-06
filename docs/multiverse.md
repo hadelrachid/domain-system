@@ -1,22 +1,23 @@
-# 🌌 O Multiverso de Temas (Domain-System CockPit)
+# 🎨 Sistema de Múltiplos Temas e Contextos Visuais
 
-Imagine um multiverso com temas? Nos dias de hoje, o cinema (como a Marvel e Hollywood) tem explorado fascinantemente a ideia de multiversos: múltiplos mundos acontecendo simultaneamente, com regras parecidas mas roupagens completamente diferentes. 
+No **Domain System**, a arquitetura visual foi projetada para suportar múltiplos contextos simultâneos sem conflitos.
 
-No **Domain-System**, o CockPit vive exatamente nesse multiverso!
+Diferente de CMSs tradicionais onde apenas um único tema precisa controlar tanto o site público quanto áreas internas de forma engessada, nossa plataforma permite que cada área do sistema utilize o layout mais adequado para sua finalidade:
 
-Ao contrário de CMSs e sistemas legados (como o WordPress), onde apenas *UM* tema pode ditar as regras visuais de todo o site de forma engessada e global, nossa arquitetura foi construída com um motor de **Múltiplos Contextos (Multi-Theme Injection)**. 
+---
 
-Isso significa que, simultaneamente, na mesma instalação e consumindo o mesmo banco de dados e APIs, você pode rodar inúmeros mundos:
+## 🌍 Como os Contextos Visuais Funcionam
 
-- 🌍 **O Mundo Público:** Um tema de *Landing Page*, rápido e focado em SEO, rodando na raiz do site para os visitantes e usuários.
-- 🏥 **O Mundo do administrador (Cockpit Doctor):** Um tema com design veloz, focado em atalhos de teclado, anamnese e produtividade.
-- 💼 **O Mundo Administrativo (System Core):** O painel de mestre, com visão gerencial para configuração de plugins, rotas e banco de dados.
-- 🤝 **O Mundo da Recepção:** Um tema focado em Kiosk / Self-Service, com botões gigantes e fluxos simplificados para secretárias e autoatendimento.
+Na mesma instalação do sistema, compartilhando a mesma base de dados e infraestrutura, diferentes temas operam de forma isolada:
 
-Cada Rota, cada Cargo de Usuário (Role) ou cada Plugin ativo tem o poder de "abrir um portal" para o seu próprio universo visual.
+1. **Site Público (Frontend):** O tema público ativo (criado e editável pelo Flex Builder) focado em velocidade, SEO e conversão para visitantes.
+2. **Portal do Aluno (Academy):** Um layout exclusivo para a área logada do estudante (`/aluno/painel`), pensado para estudo, visualização de vídeos, leitura de PDFs e navegação entre aulas sem distrações externas.
+3. **Painel Administrativo (`/admin`):** Um tema próprio com navegação lateral, métricas, atalhos e foco em produtividade para o administrador gerenciar cursos, pedidos e configurações.
 
-Por exemplo: você pode instalar um pacote focado em "Odontologia". Esse pacote não traz apenas classes PHP; ele traz consigo o seu próprio *Tema Odonto*, com mapa de dentes interativo, injetando esse visual diretamente na rota `/odonto` sem interferir em absolutamente nada no seu *Tema Vascular* ou *Cardiológico* que rodam lado a lado.
+---
 
-Essa flexibilidade só é possível graças aos nossos robustos `WorkspaceManager` e `ThemeManager`, que atuam como os guardiões desse multiverso, direcionando cada usuário para o seu mundo correto.
+## 💡 Vantagens dessa Abordagem
 
-Bem-vindo ao multiverso. Crie quantos mundos sua imaginação permitir. 🚀
+- **Zero Conflito de CSS e JS:** O CSS do painel administrativo ou do portal do aluno nunca vaza para o site público, e as estilizações do site institucional não afetam o leitor de aulas.
+- **Liberdade de Customização:** Cada plugin pode fornecer templates dedicados para suas rotas ou herdar a estrutura padrão do tema ativo.
+- **Facilidade de Manutenção:** Alterar o layout da página inicial ou trocar o tema do site não quebra a área do aluno nem as páginas administrativas.

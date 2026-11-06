@@ -82,7 +82,7 @@ I continue to explore how best to leverage AI without sacrificing maintainabilit
 
 Domain System is built on **PHP 8.2+**. It natively supports MySQL/MariaDB and SQLite via PDO, along with concurrency-safe atomic JSON persistence.
 
-The test suite is powered by **PHPUnit**, currently featuring **438 unit tests** and over **2,320 automated assertions** covering lifecycle, security guards, routing, contracts, and visual compilation.
+The test suite is powered by **PHPUnit**, currently featuring **536 automated unit and integration tests** and almost **3,000 assertions** covering payments, student enrollments, lifecycle, security guards, routing, contracts, and visual compilation.
 
 Test metrics provide confidence, but they don't tell the whole story. Green tests are important, but writing code that is clear, well-structured, and maintainable over time is what truly matters.
 

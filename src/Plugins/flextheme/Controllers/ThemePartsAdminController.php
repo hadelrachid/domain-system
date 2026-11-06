@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\flextheme\Controllers;
 
 use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Core\Contracts\ShortcodeManagerInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Contracts\TranslatorInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
-use DomainSystem\Core\I18n\Translator;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
@@ -22,18 +22,10 @@ use DomainSystem\Core\Theme\Parts\Contracts\ThemePartAssociationInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ThemePartRepositoryInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\ThemePartValidatorInterface;
-use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
-use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
-use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
-use DomainSystem\Core\Theme\ShortcodeManager;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
+use DomainSystem\Plugins\flextheme\Contracts\ThemePartManagementServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartPreviewServiceInterface;
-use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
-use DomainSystem\Plugins\flextheme\Services\ThemeDiscoveryService;
-use DomainSystem\Plugins\flextheme\Services\ThemePartManagementService;
-use DomainSystem\Plugins\flextheme\Services\ThemePartPreviewService;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -42,7 +34,7 @@ use Throwable;
  * Controller Administrativo do Flex Builder (Motor em Blocos & Design Tokens).
  *
  * Responsável apenas pela coordenação HTTP, delegando descoberta de temas,
- * persistência/atribuição e compilação de preview para serviços dedicados (SOLID - SRP / DIP).
+ * persistência/atribuição e compilação de preview para serviços injetados via contratos (SOLID - SRP / DIP).
  */
 class ThemePartsAdminController
 {
@@ -53,16 +45,16 @@ class ThemePartsAdminController
     private LayoutGridInterface $layoutGrid;
     private ThemePartRendererInterface $renderer;
     private ThemeManagerInterface $themeManager;
-    private ShortcodeManager $shortcodeManager;
+    private ShortcodeManagerInterface $shortcodeManager;
     private ?MenuProviderInterface $menuProvider;
     private ?SessionManagerInterface $session;
     private string $basePath;
     private ThemeDiscoveryServiceInterface $themeDiscovery;
     private MediaUploadServiceInterface $mediaUpload;
-    private TranslatorInterface $translator;
-    private ElementStyleRendererInterface $styleRenderer;
+    private ?TranslatorInterface $translator;
+    private ?ElementStyleRendererInterface $styleRenderer;
     private ThemePartPreviewServiceInterface $previewService;
-    private ThemePartManagementService $managementService;
+    private ThemePartManagementServiceInterface $managementService;
     private PublicUrlResolverInterface $urlResolver;
 
     public function __construct(
@@ -73,17 +65,17 @@ class ThemePartsAdminController
         LayoutGridInterface $layoutGrid,
         ThemePartRendererInterface $renderer,
         ThemeManagerInterface $themeManager,
-        ShortcodeManager $shortcodeManager,
-        ?MenuProviderInterface $menuProvider = null,
-        ?SessionManagerInterface $session = null,
-        ?string $basePath = null,
-        ?ThemeDiscoveryServiceInterface $themeDiscovery = null,
-        ?MediaUploadServiceInterface $mediaUpload = null,
-        ?TranslatorInterface $translator = null,
-        ?ElementStyleRendererInterface $styleRenderer = null,
-        ?ThemePartPreviewServiceInterface $previewService = null,
-        ?ThemePartManagementService $managementService = null,
-        ?PublicUrlResolverInterface $urlResolver = null
+        ShortcodeManagerInterface $shortcodeManager,
+        ?MenuProviderInterface $menuProvider,
+        ?SessionManagerInterface $session,
+        string $basePath,
+        ThemeDiscoveryServiceInterface $themeDiscovery,
+        MediaUploadServiceInterface $mediaUpload,
+        ?TranslatorInterface $translator,
+        ?ElementStyleRendererInterface $styleRenderer,
+        ThemePartPreviewServiceInterface $previewService,
+        ThemePartManagementServiceInterface $managementService,
+        PublicUrlResolverInterface $urlResolver
     ) {
         $this->partRepo          = $partRepo;
         $this->partAssoc         = $partAssoc;
@@ -95,21 +87,14 @@ class ThemePartsAdminController
         $this->shortcodeManager  = $shortcodeManager;
         $this->menuProvider      = $menuProvider;
         $this->session           = $session;
-        $this->basePath          = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
-        $this->themeDiscovery    = $themeDiscovery ?? new ThemeDiscoveryService($this->basePath);
-        $this->mediaUpload       = $mediaUpload ?? new MediaUploadService($this->basePath);
-        $this->translator        = $translator ?? new Translator($this->basePath . '/resources/lang');
-        $this->styleRenderer     = $styleRenderer ?? new ElementStyleRenderer();
-        $this->previewService    = $previewService ?? new ThemePartPreviewService($this->renderer);
-        $this->managementService = $managementService ?? new ThemePartManagementService(
-            $this->partRepo,
-            $this->partAssoc,
-            $this->themeDiscovery,
-            new ThemePartValidator($this->blockRegistry, $this->layoutGrid),
-            $this->blockRegistry,
-            $this->layoutGrid
-        );
-        $this->urlResolver       = $urlResolver ?? new BaseUrlResolver();
+        $this->basePath          = $basePath;
+        $this->themeDiscovery    = $themeDiscovery;
+        $this->mediaUpload       = $mediaUpload;
+        $this->translator        = $translator;
+        $this->styleRenderer     = $styleRenderer;
+        $this->previewService    = $previewService;
+        $this->managementService = $managementService;
+        $this->urlResolver       = $urlResolver;
     }
 
     /**
@@ -415,8 +400,8 @@ class ThemePartsAdminController
                 'palette'    => $this->tokens->getColorPalette(),
                 'typography' => $this->tokens->getTypography(),
             ],
-            'locale'        => $this->translator->getLocale(),
-            'i18n'          => $this->translator->getCatalog(),
+            'locale'        => $this->translator !== null ? $this->translator->getLocale() : 'pt_BR',
+            'i18n'          => $this->translator !== null ? $this->translator->getCatalog() : [],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
     }
 
@@ -451,8 +436,8 @@ class ThemePartsAdminController
             'baseUrl'          => $this->urlResolver->getBaseUrl(),
             'session'          => $this->session,
             'csrfToken'        => $this->getCsrfToken(),
-            'locale'           => $this->translator->getLocale(),
-            'i18n'             => $this->translator->getCatalog(),
+            'locale'           => $this->translator !== null ? $this->translator->getLocale() : 'pt_BR',
+            'i18n'             => $this->translator !== null ? $this->translator->getCatalog() : [],
         ], false);
     }
 

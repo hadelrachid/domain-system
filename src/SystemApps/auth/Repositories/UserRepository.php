@@ -13,9 +13,11 @@ class UserRepository implements UserRepositoryInterface
     private const ALLOWED_COLUMNS = [
         'id',
         'name',
+        'username',
         'email',
         'password',
         'role',
+        'status',
         'avatar',
         'profile_image',
         'theme_color',
@@ -69,8 +71,86 @@ class UserRepository implements UserRepositoryInterface
 
     public function getAllUsers(): array
     {
-        $stmt = $this->db->query("SELECT * FROM users");
+        $stmt = $this->db->query("SELECT * FROM users ORDER BY id DESC");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPaginatedUsers(
+        int $page = 1,
+        int $perPage = 20,
+        ?string $role = null,
+        ?string $search = null,
+        ?string $status = null
+    ): array {
+        $perPage = max(1, min(100, $perPage));
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        [$whereSql, $params] = $this->buildFilterConditions($role, $search, $status);
+
+        $sql = "SELECT * FROM users {$whereSql} ORDER BY id DESC LIMIT {$perPage} OFFSET {$offset}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function countUsers(?string $role = null, ?string $search = null, ?string $status = null): int
+    {
+        [$whereSql, $params] = $this->buildFilterConditions($role, $search, $status);
+
+        $sql = "SELECT COUNT(*) FROM users {$whereSql}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function updateStatus(int $userId, string $status): void
+    {
+        $validStatuses = ['active', 'suspended', 'banned'];
+        if (!in_array($status, $validStatuses, true)) {
+            throw new InvalidArgumentException("Status inválido para usuário: {$status}");
+        }
+
+        $stmt = $this->db->prepare("UPDATE users SET status = :status WHERE id = :id");
+        $stmt->execute([':status' => $status, ':id' => $userId]);
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildFilterConditions(?string $role = null, ?string $search = null, ?string $status = null): array
+    {
+        $where = [];
+        $params = [];
+
+        if ($role !== null && $role !== '' && $role !== 'all') {
+            if ($role === 'students_group') {
+                $where[] = "role IN ('user', 'student', 'subscriber')";
+            } elseif ($role === 'admins_group') {
+                $where[] = "role IN ('admin', 'manager', 'emergency')";
+            } else {
+                $where[] = "role = :role";
+                $params[':role'] = $role;
+            }
+        }
+
+        if ($status !== null && $status !== '' && $status !== 'all') {
+            $where[] = "status = :status";
+            $params[':status'] = $status;
+        }
+
+        if ($search !== null && trim($search) !== '') {
+            $where[] = "(name LIKE :search OR email LIKE :search OR username LIKE :search)";
+            $params[':search'] = '%' . trim($search) . '%';
+        }
+
+        $whereSql = empty($where) ? "" : "WHERE " . implode(" AND ", $where);
+        return [$whereSql, $params];
     }
 
     public function createUser(array $data): int
@@ -86,11 +166,15 @@ class UserRepository implements UserRepositoryInterface
         $stmt->execute($params);
         $userId = (int)$this->db->lastInsertId();
         if (isset($data['role'])) {
-            $stmtRole = $this->db->prepare('SELECT id FROM roles WHERE slug = ?');
-            $stmtRole->execute([$data['role']]);
-            $roleId = $stmtRole->fetchColumn();
-            if ($roleId) {
-                $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)')->execute([$userId, $roleId]);
+            try {
+                $stmtRole = $this->db->prepare('SELECT id FROM roles WHERE slug = ?');
+                $stmtRole->execute([$data['role']]);
+                $roleId = $stmtRole->fetchColumn();
+                if ($roleId) {
+                    $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)')->execute([$userId, $roleId]);
+                }
+            } catch (\Throwable $e) {
+                // Tabela roles/user_roles pode não existir em ambientes isolados
             }
         }
         return $userId;

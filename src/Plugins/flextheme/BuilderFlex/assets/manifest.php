@@ -40,6 +40,7 @@ return [
         'widgets/ContainerWidget.js',
         'widgets/TextWidget.js',
         'widgets/ButtonWidget.js',
+        'widgets/UserAuthWidget.js',
         'widgets/ImageWidget.js',
         'widgets/LayoutWidgets.js',
         'widgets/GridWidget.js',

@@ -77,13 +77,7 @@ final class ThemePartValidator implements ThemePartValidatorInterface
         // 4. Validação do estilo e alinhamento do toggle mobile
         if (isset($payload['mobile_toggle_style']) && $payload['mobile_toggle_style'] !== '') {
             $toggleStyle = (string)$payload['mobile_toggle_style'];
-            $validToggleStyles = [
-                MobileToggleStyleInterface::STYLE_CLASSIC,
-                MobileToggleStyleInterface::STYLE_PILL,
-                MobileToggleStyleInterface::STYLE_MINIMAL,
-                MobileToggleStyleInterface::STYLE_DOTS,
-            ];
-            if (!in_array($toggleStyle, $validToggleStyles, true)) {
+            if (!in_array($toggleStyle, MobileToggleStyleInterface::ALL_TOGGLE_STYLES, true)) {
                 throw new InvalidArgumentException("Estilo de toggle mobile inválido: '{$toggleStyle}'.");
             }
         }
@@ -201,6 +195,20 @@ final class ThemePartValidator implements ThemePartValidatorInterface
                         throw new InvalidArgumentException(
                             "O bloco '{$blockType}' não é compatível com partes do tipo '{$partType}'."
                         );
+                    }
+
+                    $schema = $block->getSchema();
+                    $schemaFields = (array)($schema['fields'] ?? []);
+                    foreach ($schemaFields as $fieldKey => $fieldSpec) {
+                        if (!array_key_exists($fieldKey, $blockData) || $blockData[$fieldKey] === null) {
+                            continue;
+                        }
+                        $val = $blockData[$fieldKey];
+                        if (is_object($val) || is_resource($val)) {
+                            throw new InvalidArgumentException(
+                                "O campo '{$fieldKey}' do bloco '{$blockType}' possui um tipo de valor inválido."
+                            );
+                        }
                     }
                 }
             }

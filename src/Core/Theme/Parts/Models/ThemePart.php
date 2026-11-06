@@ -59,13 +59,22 @@ class ThemePart implements ThemePartInterface
 
         // Se seções forem fornecidas, armazena; caso contrário, sintetiza uma seção padrão retrocompatível
         if (!empty($sections)) {
-            $this->sections = $sections;
-            $first = reset($sections);
-            if (is_array($first)) {
-                $this->layoutPreset = (string)($first['layout_preset'] ?? $this->layoutPreset);
-                $this->containerSettings = (array)($first['container_settings'] ?? $this->containerSettings);
-                $this->columnsData = (array)($first['columns_data'] ?? $this->columnsData);
+            $firstKey = array_key_first($sections);
+            if ($firstKey !== null && is_array($sections[$firstKey])) {
+                if (!isset($sections[$firstKey]['layout_preset']) || $sections[$firstKey]['layout_preset'] === '') {
+                    $sections[$firstKey]['layout_preset'] = $this->layoutPreset;
+                }
+                if ($this->layoutPreset === '1_col' && !empty($sections[$firstKey]['layout_preset'])) {
+                    $this->layoutPreset = (string)$sections[$firstKey]['layout_preset'];
+                }
+                if (empty($this->containerSettings) && !empty($sections[$firstKey]['container_settings'])) {
+                    $this->containerSettings = (array)$sections[$firstKey]['container_settings'];
+                }
+                if (empty($this->columnsData) && !empty($sections[$firstKey]['columns_data'])) {
+                    $this->columnsData = (array)$sections[$firstKey]['columns_data'];
+                }
             }
+            $this->sections = $sections;
         } else {
             $this->sections = [
                 [
@@ -78,12 +87,9 @@ class ThemePart implements ThemePartInterface
             ];
         }
 
-        $this->mobileToggleStyle = in_array($mobileToggleStyle, [
-            MobileToggleStyleInterface::STYLE_CLASSIC,
-            MobileToggleStyleInterface::STYLE_PILL,
-            MobileToggleStyleInterface::STYLE_MINIMAL,
-            MobileToggleStyleInterface::STYLE_DOTS
-        ], true) ? $mobileToggleStyle : MobileToggleStyleInterface::STYLE_CLASSIC;
+        $this->mobileToggleStyle = in_array($mobileToggleStyle, MobileToggleStyleInterface::ALL_TOGGLE_STYLES, true)
+            ? $mobileToggleStyle
+            : MobileToggleStyleInterface::STYLE_CLASSIC;
         $this->mobileToggleAlign = in_array($mobileToggleAlign, ['left', 'center', 'right'], true) ? $mobileToggleAlign : 'right';
         $this->isDefault = $isDefault;
         $this->createdAt = $createdAt ?? time();

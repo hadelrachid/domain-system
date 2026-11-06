@@ -34,11 +34,16 @@
         ],
         [
             {
-                "type": "cta_button",
+                "type": "user_auth",
                 "data": {
-                    "label": "Acessar",
-                    "url": "/login",
-                    "variant": "primary",
+                    "login_text": "Entrar",
+                    "login_url": "/aluno/login",
+                    "register_text": "Cadastrar",
+                    "register_url": "/aluno/cadastro",
+                    "dashboard_text": "🎓 Área do Aluno",
+                    "dashboard_url": "/aluno/painel",
+                    "logout_text": "Sair",
+                    "logout_url": "/aluno/logout",
                     "align": "right"
                 }
             }
@@ -80,11 +85,16 @@
                 ],
                 [
                     {
-                        "type": "cta_button",
+                        "type": "user_auth",
                         "data": {
-                            "label": "Acessar",
-                            "url": "/login",
-                            "variant": "primary",
+                            "login_text": "Entrar",
+                            "login_url": "/aluno/login",
+                            "register_text": "Cadastrar",
+                            "register_url": "/aluno/cadastro",
+                            "dashboard_text": "🎓 Área do Aluno",
+                            "dashboard_url": "/aluno/painel",
+                            "logout_text": "Sair",
+                            "logout_url": "/aluno/logout",
                             "align": "right"
                         }
                     }
@@ -96,5 +106,5 @@
     "mobile_toggle_align": "right",
     "is_default": false,
     "created_at": 1793071338,
-    "updated_at": 1793071338
+    "updated_at": 1793845691
 }

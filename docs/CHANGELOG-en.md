@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
 
+## [2.6.0] - 2026-11-06
+### Added
+- **DomainCommerce & Native Gateways (Mercado Pago, PayPal, Stripe, and Affiliates):**
+  - **Official Mercado Pago (Brazil):** On-screen dynamic Pix (instant QR Code and copy-paste code) with 3.5s real-time payment confirmation and automatic course enrollment, up to 12x credit card installments (with dual-card support), and boleto.
+  - **Official PayPal (Global Sales):** Full integration with PayPal Checkout REST API v2 for international purchases via PayPal balance or global cards, with clean redirects and return callbacks.
+  - **Conditional Dependency Injection:** Gateways are now strictly displayed at checkout only when valid credentials are affirmatively configured in the system.
+  - **Affiliate Platform Webhooks:** Automatic enrollment webhooks for Hotmart, Eduzz, Monetizze, and ClickBank, auto-provisioning students upon sale confirmation.
+- **Student Dashboard and Course Platform (Academy LMS):**
+  - Dedicated student portal with login, password recovery, course progress tracking, and automatic certificate generation upon completion.
+  - Built-in PDF reader for ebooks and lesson handouts with lightweight canvas and direct embed modes.
+- **Flex Builder and Hierarchical Menus:**
+  - Visual menu builder with drag-and-drop horizontal indentation for submenus.
+  - Fully customizable mobile drawer with 8 hamburger button styles.
+  - Global text colors and typography controls linked to Design Tokens.
+- **Hierarchical Menus with Submenus (`Walker` SOLID + WordPress-Style Drag & Drop):**
+  - **Recursive Tree Builder (`MenuTreeBuilderInterface` / `MenuTreeBuilder`):** Converts flat menu items (`parent_id`) into a nested tree with cycle protection and max depth (`MAX_DEPTH = 5`), plus automatic `parent_id` schema migration in `PdoMenuRepository`.
+  - **Horizontal Drag & Drop UI (`wpNavMenu`) & Main Menu (`header`) Default Priority:** Horizontal drag indentation to nest/unnest submenus in both `/admin/themes/menus` and the Flex Builder modal, defaulting to **Main Menu (`header`)**.
+  - **Desktop & Mobile Submenu Styling (`NavMenuBlock`):** Dedicated visual controls for desktop dropdowns (background, border, radius, shadow, min-width, indicator arrow, hover colors) and mobile submenus (collapsible accordion or indented list).
+- **Customizable Mobile Drawer (`ds-mobile-drawer`), 8 Hamburger Styles & 7 Mobile Button Formats:**
+  - **8 Toggle Button Styles (`MobileToggleStyleInterface`):** `bars`, `bars_staggered`, `dots_vertical`, `dots_grid`, `plus_cross`, `chevron_down`, `pill_label`, and `minimal_two_lines`, with 4 box shapes (`rounded`, `square`, `pill`, `ghost`) and custom colors.
+  - **7 Mobile Menu Button Formats:** `flat`, `rounded`, `pill`, `outlined`, `filled_soft`, `left_accent`, and `underlined`, plus customizable drawer width and colors.
+- **Global Text Color & Typography Controls (Pro-Elements / Elementor Inspired):**
+  - Support for `text_color`, `heading_color`, `link_color`, and `link_hover_color` at Section, Column, and Block levels via `ElementStyleSchema` and `ElementStyleRenderer`, bound to Global Design Tokens (`var(--primary-color)`, `var(--secondary-color)`, `var(--text-color)`, `var(--accent-color)`).
+- **Hybrid PDF Reader in Academy LMS (`LessonPdfStorageInterface` & `pdf` Block):**
+  - Supports PDF documents hosted in the cloud (`https://...`, CDN, S3, Cloudflare R2, Google Drive `/preview`) or uploaded to a local Hostinger/server folder (`POST /admin/academy/lessons/{id}/upload-pdf` with `%PDF-` magic header verification).
+  - **3 Viewer Modes:** On-demand per-page rendering via **PDF.js Lazy Canvas** (`pdfjs_canvas` — ideal for heavy technical PDFs with charts and figures), **Native / Iframe Embed** (`native_embed`), and **Collapsible Card** (`card_modal`).
+  - **Surgical Page Slicing (`start_page` & `end_page`) & Download Guard (`allow_download`):** Allows jumping directly to a specific chart/diagram page, restricting the navigable page range, and hiding/blocking downloads and right-click context menus.
+
 ## [2.5.0] - 2026-10-27
 ### Added
 - **Flex Builder FSE (Full Site Editing, Single Compiler Path, Structural Validator & Auto-Reflow Grid):**

@@ -14,6 +14,7 @@ class Request implements RequestInterface
     public array $cookies;
     public array $files;
     private array $jsonBody;
+    private string $rawBody = '';
 
     public function __construct(
         array $query = [],
@@ -21,7 +22,8 @@ class Request implements RequestInterface
         array $server = [],
         array $cookies = [],
         array $files = [],
-        array $jsonBody = []
+        array $jsonBody = [],
+        string $rawBody = ''
     ) {
         $this->query = $query;
         $this->request = $request;
@@ -29,6 +31,7 @@ class Request implements RequestInterface
         $this->cookies = $cookies;
         $this->files = $files;
         $this->jsonBody = $jsonBody;
+        $this->rawBody = $rawBody;
     }
 
     public static function capture(): self
@@ -39,13 +42,14 @@ class Request implements RequestInterface
         // Se o corpo for JSON (enviado pelo fetch do front-end), parsear aqui
         $contentType = $_SERVER['CONTENT_TYPE'] ?? ($_SERVER['HTTP_CONTENT_TYPE'] ?? '');
         $rawBody = file_get_contents('php://input');
-        if (is_string($rawBody) && trim($rawBody) !== '') {
+        $rawString = is_string($rawBody) ? $rawBody : '';
+        if (trim($rawString) !== '') {
             if (
                 str_contains(strtolower((string)$contentType), 'application/json') ||
-                str_starts_with(ltrim($rawBody), '{') ||
-                str_starts_with(ltrim($rawBody), '[')
+                str_starts_with(ltrim($rawString), '{') ||
+                str_starts_with(ltrim($rawString), '[')
             ) {
-                $jsonData = json_decode($rawBody, true);
+                $jsonData = json_decode($rawString, true);
                 if (is_array($jsonData)) {
                     $jsonBody = $jsonData;
                     $post = array_merge($post, $jsonData);
@@ -53,7 +57,12 @@ class Request implements RequestInterface
             }
         }
 
-        return new self($_GET, $post, $_SERVER, $_COOKIE, $_FILES, $jsonBody);
+        return new self($_GET, $post, $_SERVER, $_COOKIE, $_FILES, $jsonBody, $rawString);
+    }
+
+    public function rawBody(): string
+    {
+        return $this->rawBody;
     }
 
     /**
@@ -76,6 +85,7 @@ class Request implements RequestInterface
         $clone = clone $this;
         $clone->jsonBody = $jsonBody;
         $clone->request = array_merge($clone->request, $jsonBody);
+        $clone->rawBody = (string)json_encode($jsonBody);
         return $clone;
     }
 
@@ -107,5 +117,18 @@ class Request implements RequestInterface
     public function file(string $key)
     {
         return $this->files[$key] ?? null;
+    }
+
+    public function header(string $name, ?string $default = null): ?string
+    {
+        $formatted = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+        if (isset($this->server[$formatted])) {
+            return (string)$this->server[$formatted];
+        }
+        $direct = strtoupper(str_replace('-', '_', $name));
+        if (isset($this->server[$direct])) {
+            return (string)$this->server[$direct];
+        }
+        return $default;
     }
 }

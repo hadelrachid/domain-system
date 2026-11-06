@@ -214,7 +214,12 @@ class FlexBuilderRound2AuditTest extends TestCase
             public function getThemeTemplates(string $themeFolder): array { return ['home' => 'home.php']; }
         };
 
-        $service = new ThemePartManagementService($repo, $assoc, $discovery);
+        $service = new ThemePartManagementService(
+            $repo,
+            $assoc,
+            $discovery,
+            new \DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator()
+        );
 
         $savedPart = $service->saveFromPayload([
             'id'                => 'sec_hero_home',

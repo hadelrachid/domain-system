@@ -15,5 +15,19 @@ interface UserRepositoryInterface
     public function updatePassword(int $userId, string $hash): void;
     public function updateProfile(int $userId, array $data): void;
     public function deleteUser(int $id): void;
-}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPaginatedUsers(
+        int $page = 1,
+        int $perPage = 20,
+        ?string $role = null,
+        ?string $search = null,
+        ?string $status = null
+    ): array;
+
+    public function countUsers(?string $role = null, ?string $search = null, ?string $status = null): int;
+
+    public function updateStatus(int $userId, string $status): void;
+}

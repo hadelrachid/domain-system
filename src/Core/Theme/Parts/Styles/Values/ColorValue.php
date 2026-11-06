@@ -110,8 +110,13 @@ final class ColorValue implements JsonSerializable
             return self::fromHex($clean);
         }
 
-        // Caso 3: Nome de token sem var() ex: "primary", "secondary", "background"
-        $knownTokens = ['primary', 'secondary', 'tertiary', 'background', 'surface', 'text_main', 'text_muted', 'border', 'accent'];
+        // Caso 3: Nome de token sem var() ex: "primary", "secondary", "tertiary", "color-primary", "text_main"
+        $knownTokens = [
+            'primary', 'secondary', 'tertiary', 'background', 'surface', 'text_main', 'text_muted', 'border', 'accent',
+            'color-primary', 'color-secondary', 'color-tertiary', 'color-background', 'color-surface',
+            'color-text-main', 'color-text-muted', 'color-border', 'color-accent',
+            'text-main', 'text-muted', 'bg-color',
+        ];
         if (in_array(strtolower($clean), $knownTokens, true)) {
             return self::fromToken($clean);
         }

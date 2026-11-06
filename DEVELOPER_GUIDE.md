@@ -1,4 +1,4 @@
-# Guia do Desenvolvedor: Domain System (v2.5)
+# Guia do Desenvolvedor: Domain System (v2.6)
 
 Este guia apresenta a estrutura do sistema, como desenvolver novos plugins e como estender as funcionalidades do núcleo utilizando interfaces e injeção de dependências em PHP 8.2+.
 
@@ -17,11 +17,11 @@ Para criar um plugin básico, crie uma pasta em `src/Plugins/{nome_do_plugin}/` 
 ```json
 {
     "name": "meu_app",
-    "version": "2.5.0",
+    "version": "2.6.0",
     "description": "Exemplo de plugin para o Domain System",
     "author": "Seu Nome ou Empresa",
     "core": false,
-    "os_version": "2.5"
+    "os_version": "2.6"
 }
 ```
 
@@ -237,18 +237,16 @@ if (trim($customHeader) !== '') {
 
 ---
 
-## 🤖 Desenvolvimento Assistido por IA e Auditoria: `project.txt`
+## 🔍 Documentação Consolidada do Código: `project.txt`
 
-O repositório foi estruturado para suportar o desenvolvimento e manutenção utilizando modelos de inteligência artificial ou análise estática de código:
+Para facilitar revisões técnicas de código, análise estática e auditorias arquiteturais completas, o arquivo `project.txt` na raiz reúne a árvore de diretórios e contratos do sistema de forma organizada:
 
-1. **Estrutura Agregada (`project.txt`):**
-   - O arquivo `project.txt` na raiz compila a totalidade do projeto, facilitando auditorias globais sem perda de contexto em ferramentas como Claude, ChatGPT, Gemini, etc.
-2. **Guia de Contratos (`AI_CONTRACT_GUIDE.md`):**
-   - Especificação técnica com diretrizes de arquitetura para agentes e ferramentas de IA gerarem código aderente aos contratos do sistema.
-3. **Gerador de Plugins via Terminal:**
+1. **Visão Global:** Permite inspecionar rapidamente as interfaces, controllers e serviços sem precisar navegar por dezenas de pastas.
+2. **Gerador de Plugins via Terminal:**
    ```bash
    php os-cli.php make:plugin nome_do_plugin
    ```
+   Cria automaticamente a estrutura básica de um novo plugin com seu `plugin.json` e classe `Plugin.php`.
 
 ---
 
