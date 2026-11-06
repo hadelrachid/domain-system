@@ -52,7 +52,7 @@ Outro desafio constante é lidar com erros sem deixar o sistema em um estado ins
 
 O *Domain System* inclui persistência atômica em JSON (`AtomicJsonStore`), técnicas de bloqueio de arquivos (*file-locking* com `LOCK_EX`), ferramentas de verificação de esquema de banco de dados (`SchemaDoctorInterface`), além de isolamento de falhas em plugins (Circuit Breaker) e rotinas de *snapshot* e *rollback* automático antes de atualizações.
 
-Essas medidas visam facilitar a identificação de problemas e a recuperação após a ocorrência deles. Sei que imprevistos ainda podem acontecer, mas prefiro criar mecanismos para lidar com falhas do que simplesmente presumir que elas nunca ocorrerão.
+Alguns desenvolvedores questionam o uso de um Circuit Breaker em plugins PHP, defendendo que erros devem estourar imediatamente. Em ambiente de desenvolvimento, concordo plenamente: os erros devem aparecer na tela com detalhes para serem corrigidos. Mas em produção, o foco é a disponibilidade do serviço: se um plugin secundário quebrar, não faz sentido derrubar o site inteiro ou impedir que um aluno assista às suas aulas. O sistema desarma apenas o plugin com falha, registra tudo nos logs e na tela de supervisão para o administrador corrigir, e mantém a aplicação funcionando.
 
 ### Criando meu próprio editor visual de páginas
 

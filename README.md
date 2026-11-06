@@ -38,8 +38,13 @@ O projeto já vem pronto para colocar sites, lojas e escolas de cursos no ar:
 - Atualização direta pelo painel administrativo conectando aos pacotes de versão do GitHub Releases.
 - Verificação de integridade com SHA-256 e backup automático do banco e arquivos antes de aplicar qualquer atualização.
 
-### 🛡️ 5. Resiliência e Estabilidade
-- **Isolamento de Falhas (Circuit Breaker):** Se um plugin de terceiros apresentar algum erro inesperado, o sistema isola o problema para não derrubar o restante do site.
+### 🛡️ 5. Resiliência e o Circuit Breaker (Por que ele existe?)
+- **Sobre as críticas ao Circuit Breaker em PHP:** Alguns desenvolvedores com razão perguntam: *"Por que usar um Circuit Breaker em plugins PHP monolíticos se a boa prática comum é deixar a exceção estourar?"*. Essa é uma dúvida muito justa.
+- **O motivo prático:** Em um ambiente de produção real (como uma escola online com alunos assistindo aulas ou clientes comprando no checkout), se um plugin secundário — como um contador de visitas ou um widget acessório — quebrar por qualquer motivo inesperado, **o site inteiro não pode sair do ar com um erro fatal 500**.
+- **O equilíbrio que adotamos:**
+  - O Circuit Breaker **não esconde erros**: ele apenas desarma temporariamente o plugin defeituoso e grava o relatório completo da falha em log e na tela de **Supervisão do Sistema** (`/admin/supervision`) para o administrador corrigir.
+  - Em modo de **Desenvolvimento (`dev`)**, os erros continuam estourando na tela com stack trace completo para facilitar o debug.
+  - Em modo de **Produção**, a prioridade é a experiência do aluno e a disponibilidade das vendas.
 - **Segurança Nativa:** Proteção automática contra ataques de CSRF, injeção SQL via PDO com prepared statements e sanitização estrita de HTML contra XSS.
 
 ---

@@ -52,7 +52,7 @@ Another constant challenge is handling runtime errors without leaving the system
 
 *Domain System* incorporates atomic JSON persistence (`AtomicJsonStore`), exclusive file-locking (`LOCK_EX`), database schema diagnostics (`SchemaDoctorInterface`), extension-level fault isolation (Circuit Breaker), and automated pre-update backups with rollback capability.
 
-The objective is simple: make issues easier to diagnose and recover from. Unforeseen problems will always happen in production, but building recovery paths into the architecture is better than assuming nothing will ever fail.
+Some developers question using a Circuit Breaker pattern in PHP plugins, arguing that unhandled errors should always crash immediately. In local development, I completely agree: errors should bubble up with full stack traces so we can fix them. But in production, the priority shifts to business availability: if a secondary widget fails, it makes little sense to take down the entire school or prevent students from watching their lessons. The system isolates the failing plugin, logs full details for the admin to review, and keeps the platform running smoothly.
 
 ### Building a Custom Visual Page Builder (Flex Builder)
 

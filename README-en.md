@@ -38,8 +38,13 @@ Domain System comes ready to launch websites, blogs, e-commerce checkouts, and o
 - Update the system directly from the admin panel, pulling verified releases from GitHub Releases.
 - Integrity verification using SHA-256 checksums and automated database and code backups before applying any updates.
 
-### 🛡️ 5. Stability & Resilience
-- **Fault Isolation (Circuit Breaker):** If an extension throws an unexpected error, the system isolates the failure so the rest of the website stays online.
+### 🛡️ 5. Resilience & The Circuit Breaker (Why Does It Exist?)
+- **Addressing Developer Feedback on Circuit Breakers in PHP:** Some developers reasonably ask: *"Why implement a Circuit Breaker pattern for PHP plugins when standard practice is simply letting exceptions bubble up?"*. That is a completely fair critique.
+- **The Practical Rationale:** In a production environment (such as an online course platform where students are actively watching lessons or buyers are at checkout), if an auxiliary plugin — such as an analytics tracker or a sidebar widget — throws an unhandled error, **the entire site shouldn't crash with a fatal 500 white screen**.
+- **The Balance We Struck:**
+  - The Circuit Breaker **never hides errors**: it temporarily disables only the faulty plugin and records full stack traces in the error logs and inside the **System Supervision** dashboard (`/admin/supervision`) for prompt investigation.
+  - In **Development Mode (`dev`)**, exceptions bubble up immediately with full stack traces on screen for smooth debugging.
+  - In **Production**, the priority is business availability and keeping students learning without disruption.
 - **Built-in Security:** Automatic CSRF token validation, SQL injection prevention via PDO prepared statements, and strict HTML sanitization against XSS.
 
 ---
