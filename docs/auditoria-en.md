@@ -1,4 +1,4 @@
-# 🛡️ Architecture & Security Guide (Domain System v2.6)
+# 🛡️ Architecture & Security Guide (Domain System v2.6.0)
 
 This document outlines the architectural decisions, coding patterns, and security practices used throughout **Domain System**.
 

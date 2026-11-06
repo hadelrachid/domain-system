@@ -37,11 +37,37 @@
 
         <h3>Explicação dos Métodos:</h3>
         <ul>
-            <li><strong>register():</strong> O lugar certo para registrar Rotas, Listeners de Eventos, e Menus no painel. Executado a cada requisição.</li>
-            <li><strong>boot():</strong> Executado após todos os plugins terminarem de se registrar. O osBoot é a versão 2.0 para acesso ao Kernel.</li>
+            <li><strong>register() / osRegister():</strong> O lugar certo para negociar capacidades com o Gatekeeper e registrar Rotas, Listeners de Eventos e Menus no painel.</li>
+            <li><strong>boot() / osBoot():</strong> Executado após todos os plugins terminarem de se registrar. O <code>osBoot(OsRuntimeInterface $runtime)</code> é o padrão 2.5 para acesso seguro ao Kernel.</li>
             <li><strong>activate():</strong> Rodado <strong>apenas uma vez</strong> quando você liga o Plugin no Painel (Ideal para Migrations e criação de tabelas).</li>
             <li><strong>deactivate() / uninstall():</strong> Usados para limpar os rastros que o plugin deixou quando for desativado ou deletado.</li>
         </ul>
+
+        <h2>ManualModuleInterface (Auto-Descoberta de Manuais v2.5.0)</h2>
+        <p>Qualquer plugin que possua um arquivo <code>manual/module.php</code> retornando uma instância de <code>ManualModuleInterface</code> é descoberto automaticamente pelo <code>PluginManualScanner</code> e injetado no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit:</p>
+        <pre><code>interface ManualModuleInterface
+{
+    public function getId(): string;
+    public function getTitle(): string;
+    public function getSubtitle(): string;
+    public function getBadge(): string;
+    public function getAccentColor(): string;
+    public function getAdminUrl(): ?string;
+    public function getChecklistItems(): array;
+    public function renderContent(string $baseUrl = ''): string;
+}</code></pre>
+        <p>Isso permite que plugins (como <strong>Academy LMS</strong>, <strong>FlexTheme</strong>, <strong>Pages</strong> e <strong>SEO</strong>) entreguem seus próprios tutoriais interativos e checklists de Homologação (QA) sem nenhum acoplamento com o código-fonte do Kernel!</p>
+
+        <h2>SchemaDoctorInterface &amp; JsonStoreInterface (Núcleo Agnóstico a Banco e SO)</h2>
+        <p>No Domain-System v2.5.0, o núcleo do sistema opera de forma agnóstica em relação a banco de dados e ambiente:</p>
+        <ul>
+            <li><strong><code>SchemaDoctorInterface</code>:</strong> Injetado no <code>MonitorController</code> e no <code>StateSnapshotManager</code> para diagnosticar e auto-reparar (<code>healAll()</code>) migrações de plugins com SQL ANSI puro.</li>
+            <li><strong><code>JsonStoreInterface</code> (<code>AtomicJsonStore</code>):</strong> Persistência atômica com <code>flock(LOCK_EX)</code> + arquivo temporário + <code>rename()</code> atômico para proteger <code>config/*.json</code> e <code>temp/*.json</code> contra <em>Race Conditions</em>.</li>
+            <li><strong><code>LessonFileScaffolderInterface</code>:</strong> Contrato da Fábrica Automática do Academy LMS que cria subpastas de módulos (<code>createFolder</code>) e fabrica automaticamente arquivos físicos <code>.php</code> no tema ativo (ex: <code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>).</li>
+        </ul>
+
+        <h2>🤖 Guia de Contratos para Modelos de IA</h2>
+        <p>Consulte o arquivo <a href="../AI_CONTRACT_GUIDE.md"><code>AI_CONTRACT_GUIDE.md</code></a> na raiz do projeto (e as diretrizes em <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code> e <code>.clinerules</code>) para orientar ferramentas de IA a gerarem extensões aderentes a estes contratos.</p>
 
     </div>
 </body>

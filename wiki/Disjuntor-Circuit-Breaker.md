@@ -43,7 +43,7 @@ Essa ordenação topológica previne inconsistências de estado e assegura que n
 
 ## ⚙️ Isolamento por Rota e Modo Desenvolvedor
 
-A partir da versão **v2.5.0**, o mecanismo de contenção opera com maior flexibilidade operacional:
+A partir da versão **v2.6.0**, o mecanismo de contenção opera com maior flexibilidade operacional:
 
 - **Isolamento por Rota com Limite de Falhas (`recordRouteFailure`):**
   Uma falha pontual em uma ação específica (por exemplo, um endpoint com dados inconsistentes) **não desativa o plugin inteiro de imediato**. O sistema contabiliza as ocorrências sucessivas; a extensão só é desativada globalmente se atingir o limiar de tolerância configurado (padrão: 3 falhas consecutivas) ou se falhar durante a fase de inicialização (boot).
@@ -97,7 +97,7 @@ Topological dependency checking guarantees that inactive or missing components d
 
 ## ⚙️ Route-Level Isolation & Developer Debugging Mode
 
-Starting with **v2.5.0**, failure containment provides granular operational controls:
+Starting with **v2.6.0**, failure containment provides granular operational controls:
 
 - **Route-Level Thresholds (`recordRouteFailure`):**
   An isolated exception in a specific route does not immediately bring down the entire plugin. The system tracks consecutive route failures, only disarming the whole extension if the error threshold is reached (default: 3 consecutive failures) or if a failure occurs during system boot.

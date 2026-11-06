@@ -1,20 +1,17 @@
-# 📚 Documentação Oficial: Domain System
+# 📚 Documentação do Domain System (v2.6.0)
 
-Bem-vindo à documentação oficial do **Domain System**.
+Bem-vindo à documentação do **Domain System**. Aqui você encontra explicações práticas sobre a arquitetura do sistema, guias de criação de plugins e temas, histórico de versões e funcionamento dos módulos principais (como o Academy e o DomainCommerce).
 
-Aqui você encontrará a auditoria da nossa arquitetura, os princípios de design do nosso Kernel e, futuramente, guias práticos para desenvolvedores.
+---
 
-## 🗂️ Índice
+## 🗂️ Índice de Documentos
 
-### 1. Guias Arquiteturais
-- [🛡️ Auditoria do Sistema](auditoria.md) - Uma visão profunda da injeção de dependências, eventos e roteamento.
-- [📈 Changelog de Atualizações](CHANGELOG.md) - Histórico de versões e melhorias implementadas.
-- [🌌 O Multiverso de Plugins](multiverse.md) - Como a plataforma lida com módulos.
+### 1. Arquitetura e Estrutura
+- [🛡️ Auditoria Arquitetural e Segurança](auditoria.md) — Explicação de como o núcleo funciona: injeção de dependências, eventos, isolamento de plugins e proteção contra falhas.
+- [📈 Histórico de Versões (Changelog)](CHANGELOG.md) — Mudanças e melhorias implementadas em cada versão.
+- [🎓 Plataforma de Cursos e Pagamentos](MANUAL_PLATAFORMA_DO_ALUNO_E_PAGAMENTOS.md) — Manual prático da área do aluno, gestão de aulas e checkout com Mercado Pago e PayPal.
 
-### 2. Tutoriais (Em Breve! 🚧)
-Nós estamos preparando um material rico para ensinar a você como expandir o Domain System:
-- **Como criar um Plugin do zero:** Entenda a classe `AbstractPlugin`, injeção de rotas e eventos.
-- **Como desenvolver o seu próprio Tema (CockPit):** Aprenda a usar o `ThemeManager` para criar painéis isolados sem tocar no código back-end.
-- **Usando os Shortcodes:** Componentização front-end.
-
-Fique de olho na aba Wiki do GitHub ou nos arquivos da subpasta `tutoriais/` para novidades!
+### 2. Desenvolvimento de Extensões
+- [🧩 Criação de Plugins](THEME_DEVELOPMENT.md) — Como criar seus próprios plugins usando contratos limpos e organizados.
+- [🎨 Desenvolvimento de Temas](THEME_DEVELOPMENT.md) — Estrutura de pastas de temas, arquivos de visualização e integração com o Flex Builder.
+- [📜 Guia de Contratos e Interfaces](../DEVELOPER_GUIDE.md) — Guia rápido para desenvolvedores sobre as interfaces e serviços essenciais do sistema.

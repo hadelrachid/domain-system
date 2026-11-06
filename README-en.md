@@ -1,4 +1,4 @@
-# Domain System (v2.6)
+# Domain System (v2.6.0)
 
 **Domain System** is a lightweight CMS and online learning platform (LMS) built with **PHP 8.2+**. It was designed with a simple goal in mind: fast, lightweight, and easy to maintain, without the bloat, slowness, and endless plugin maintenance of traditional CMS platforms like WordPress.
 

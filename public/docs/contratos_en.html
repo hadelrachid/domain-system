@@ -36,11 +36,37 @@
 
         <h3>Explanation of Methods:</h3>
         <ul>
-            <li><strong>register():</strong> The right place to register Routes, Event Listeners, and Dashboard Menus. Executed on every request.</li>
-            <li><strong>boot():</strong> Executed after all plugins finish registering.</li>
+            <li><strong>register() / osRegister():</strong> The right place to negotiate capabilities with the Gatekeeper and register Routes, Event Listeners, and Dashboard Menus.</li>
+            <li><strong>boot() / osBoot():</strong> Executed after all plugins finish registering. <code>osBoot(OsRuntimeInterface $runtime)</code> is the 2.5 standard for safe Kernel access.</li>
             <li><strong>activate():</strong> Run <strong>only once</strong> when you turn on the Plugin in the Dashboard (Ideal for Migrations and table creation).</li>
             <li><strong>deactivate() / uninstall():</strong> Used to clean up the traces the plugin left when deactivated or deleted.</li>
         </ul>
+
+        <h2>ManualModuleInterface (Manual Auto-Discovery v2.5.0)</h2>
+        <p>Any plugin providing a <code>manual/module.php</code> file returning an instance of <code>ManualModuleInterface</code> is automatically discovered by <code>PluginManualScanner</code> and rendered inside the Cockpit's <strong>Instruction Manual (<code>/admin/manual</code>)</strong>:</p>
+        <pre><code>interface ManualModuleInterface
+{
+    public function getId(): string;
+    public function getTitle(): string;
+    public function getSubtitle(): string;
+    public function getBadge(): string;
+    public function getAccentColor(): string;
+    public function getAdminUrl(): ?string;
+    public function getChecklistItems(): array;
+    public function renderContent(string $baseUrl = ''): string;
+}</code></pre>
+        <p>This enables plugins (such as <strong>Academy LMS</strong>, <strong>FlexTheme</strong>, <strong>Pages</strong>, and <strong>SEO</strong>) to ship their own interactive documentation and QA homologation checklists with zero coupling to the Kernel source code!</p>
+
+        <h2>SchemaDoctorInterface &amp; JsonStoreInterface (Database- and Environment-Agnostic Core)</h2>
+        <p>In Domain-System v2.5.0, the core runtime operates in a database- and platform-agnostic manner:</p>
+        <ul>
+            <li><strong><code>SchemaDoctorInterface</code>:</strong> Injected into <code>MonitorController</code> and <code>StateSnapshotManager</code> to diagnose and self-heal (<code>healAll()</code>) plugin migrations using pure ANSI SQL.</li>
+            <li><strong><code>JsonStoreInterface</code> (<code>AtomicJsonStore</code>):</strong> Concurrency-safe atomic persistence using <code>flock(LOCK_EX)</code> + temporary file + atomic <code>rename()</code> across <code>config/*.json</code> and <code>temp/*.json</code>.</li>
+            <li><strong><code>LessonFileScaffolderInterface</code>:</strong> Contract powering the Academy LMS Automatic Factory that creates module folders (<code>createFolder</code>) and fabricates physical <code>.php</code> lesson files inside the active theme (e.g., <code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>).</li>
+        </ul>
+
+        <h2>🤖 AI Contract Guide</h2>
+        <p>Refer to <a href="../AI_CONTRACT_GUIDE.md"><code>AI_CONTRACT_GUIDE.md</code></a> in the repository root (along with <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code>, and <code>.clinerules</code>) to guide AI assistants in creating extensions compliant with these contracts.</p>
 
     </div>
 </body>

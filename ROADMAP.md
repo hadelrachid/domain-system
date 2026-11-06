@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.6)
+# Roteiro de Desenvolvimento — Domain System (v2.6.0)
 
 Este documento descreve as etapas de evolução do **Domain System**. O objetivo é manter uma base de código modular, previsível e com testes automatizados em PHP 8.2+.
 
@@ -15,7 +15,7 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 
 ---
 
-## 🟢 Etapa 2: Módulos de Aplicação, Flex Builder e Atualizador (Concluída na v2.5)
+## 🟢 Etapa 2: Módulos de Aplicação, Flex Builder e Atualizador (Concluída)
 
 ### 2.1. Flex Builder (Full Site Editing)
 - [x] **Estrutura por Contratos (`src/Core/Theme/Parts`):** Composição de cabeçalhos, rodapés e seções centrais em 14 blocos semânticos nativos, com suporte a extensões via `BlockProviderInterface`.
@@ -32,45 +32,27 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 - [x] **Atualizações via GitHub Releases:** Verificação de versões, validação de integridade por hash SHA-256 e aplicação atômica de arquivos preservando configurações locais.
 - [x] **Rotinas de Backup e Rollback:** Backup preventivo de código e banco de dados antes da aplicação de atualizações.
 
-### 2.4. Contexto Aberto para Auditoria
-- [x] **Arquivos de Contexto Consolidado (`domain-system.txt` e `project.txt`):** Estrutura completa do repositório em um único arquivo para permitir análises estáticas e auditorias técnicas por ferramentas e modelos de IA.
-- [x] **Descoberta Dinâmica de Manuais (`ManualModuleInterface`):** Módulos de documentação carregados automaticamente no painel administrativo.
+---
+
+## 🟢 Etapa 3: Portal do Aluno & DomainCommerce (Concluída na v2.6.0)
+
+### 3.1. Portal do Aluno (Academy LMS)
+- [x] **Área do Aluno Completa:** Login seguro, recuperação de acesso, painel do estudante e cálculo de progresso em tempo real.
+- [x] **Leitor de PDF Embutido:** Suporte a visualização de apostilas em canvas leve (*PDF.js*) ou leitor nativo, com controle de intervalo de páginas e proteção de download.
+- [x] **Certificados Automáticos:** Emissão automática de certificados de conclusão em PDF quando o aluno atinge 100% das aulas.
+
+### 3.2. Motor de Pagamentos (DomainCommerce)
+- [x] **Mercado Pago Oficial:** Pix instantâneo nativo na tela (com QR Code dinâmico e Copia-e-Cola), verificação a cada 3,5s com matrícula imediata, cartão em até 12x (e opção de 2 cartões) e boleto bancário.
+- [x] **PayPal Oficial:** Integração completa com a API REST v2 de Checkout para vendas internacionais com saldo PayPal e cartões globais.
+- [x] **Webhooks de Plataformas de Afiliados:** Auto-provisionamento de alunos via webhooks de venda aprovada da Hotmart, Eduzz, Monetizze e ClickBank.
+- [x] **Injeção de Dependências Condicional:** Apenas gateways com credenciais cadastradas e válidas aparecem no checkout.
+- [x] **536 Testes Automatizados:** Suíte completa no PHPUnit com 2.999 asserções cobrindo segurança, checkout, gateways e matrículas.
 
 ---
 
-## 🟢 Etapa 3: Auditoria Cirúrgica SOLID & Evoluções do Flex Builder (Concluída na v2.6)
+## 🔵 Etapa 4: Expansão do Hub Academy (Planejamento v2.7.0)
 
-### 3.0. 🛡️ Auditoria Cirúrgica SOLID (ChatGPT + DeepSeek) & Release v2.6.0
-*Documento de especificação detalhada:* [`docs/PLANO_AUDITORIA_SOLID_E_RELEASE_V2_6.md`](docs/PLANO_AUDITORIA_SOLID_E_RELEASE_V2_6.md)
-- [x] **Novos Contratos Formais (ISP/DIP):** `ShortcodeManagerInterface`, `ThemePathResolverInterface`, `ThemePartManagementServiceInterface`, `PageContentRepositoryInterface`, `DtoRendererInterface` e `MenuTreeBuilderInterface`.
-- [x] **Desacoplamento Total de Serviços e Controllers:** Remoção de todos os fallbacks concretos (`?? new ...`) em `ThemePartPreviewService`, `ThemePartManagementService`, `ThemePartsAdminController` e `ThemeController`.
-- [x] **Refinamentos de Core:** Estado de instância em `ThemePartRenderer`, precedência de `layoutPreset` em `ThemePart` e validação de schema em `ThemePartValidator`.
-- [x] **Menus Hierárquicos com Submenus & Mobile Drawer Customizável:** Árvore recursiva (`MenuTreeBuilder`), Drag & Drop estilo WordPress, 8 estilos de botão Hambúrguer e 7 formatos de botões de menu mobile.
-- [x] **Leitor de PDF Híbrido no Academy LMS (`LessonPdfStorageInterface` & Bloco `pdf`):** Suporte a PDFs na nuvem (HTTP/HTTPS, CDN, Google Drive) ou pasta local na Hostinger, renderização por página sob demanda (*PDF.js Lazy Canvas*), recorte de páginas (`start_page` / `end_page`) e controle de download.
-- [x] **Release v2.6.0 & Sincronização de Documentação:** Atualização da versão (`v2.5.0` → `v2.6.0`) em todo o código, `README`, `CHANGELOG`, `AI_CONTRACT_GUIDE`, `wiki/` e manual interativo.
-
----
-
-## 🔵 Etapa 4: Planejamento Futuro (v2.7)
-
-### 3.1. 🎓 [PRIORIDADE ALTA] Portal do Aluno (Cockpit EAD) & Pagamentos (Mercado Pago / PayPal)
-*Documento de especificação detalhada:* [`docs/PLANO_PORTAL_DO_ALUNO_E_PAGAMENTOS_MERCADOPAGO_PAYPAL.md`](docs/PLANO_PORTAL_DO_ALUNO_E_PAGAMENTOS_MERCADOPAGO_PAYPAL.md)  
-*Documento complementar do motor de comércio:* [`docs/PLANO_PLUGIN_COMMERCE.md`](docs/PLANO_PLUGIN_COMMERCE.md)
-- [ ] **Cockpit do Aluno (Student Workspace):** Perfil de usuário `student`, painel do aluno com barra de progresso, pasta pessoal isolada de anotações e preferências individuais (estilo usuário do SO).
-- [ ] **Motor de Matrículas do Academy LMS (`CourseEnrollmentInterface`):** Controle automático de acesso a aulas pagas vs. aulas de degustação públicas.
-- [ ] **Gateway Mercado Pago (Mercado Livre):** Liquidação instantânea via Pix (QR Code + Copia-e-Cola), Cartão de Crédito em até 12x e Boleto Bancário com confirmação automática via Webhook.
-- [ ] **Gateway PayPal (Internacional):** Pagamentos em moedas estrangeiras (USD, EUR, BRL) para vendas globais.
-- [ ] **Modelos de Venda Flexíveis:** Compra avulsa de cursos, pacotes promocionais (*bundles*) e assinaturas mensais recorrentes (Clube de Membros).
-- [ ] **Blocos de Venda no Flex Builder FSE:** Blocos nativos `buy_button`, `course_pricing_card` e checkout incorporado.
-
-### 3.2. Otimização de Performance e Cache
-- [ ] **Headers de Cache HTTP:** Suporte padronizado a cabeçalhos `ETag` e `Cache-Control` nas respostas de páginas estáticas e temas.
-- [ ] **Minificação Opcional de Assets:** Otimização de entrega de folhas de estilo e scripts públicos.
-
-### 3.3. Endpoints e Integrações
-- [ ] **Endpoints REST Básicos:** Padronização de endpoints para consulta externa de páginas e conteúdo publicado.
-- [ ] **Autenticação via Tokens:** Suporte a chaves de API para leitura programática de dados.
-
-### 3.4. Interface e Usabilidade
-- [ ] **Personalização do Painel:** Reorganização personalizável dos cards informativos no dashboard administrativo.
-- [ ] **Expansão da Biblioteca de Blocos:** Adição de novos blocos semânticos para o Flex Builder conforme demandas práticas de uso.
+- [ ] **Fórum de Alunos & Comunidade:** Espaço de discussão pública por curso ou geral com tópicos, respostas formatadas e marcação de respostas resolvidas.
+- [ ] **Bloco de Notas Pessoal do Aluno:** Caderno digital com auto-save em tempo real para anotações durante as aulas e exportação de estudos.
+- [ ] **Central de Ajuda & Gestão de Devoluções:** Sistema de tickets de suporte com canal de atendimento e botão de estorno rápido acionando o hook `payment.refunded`.
+- [ ] **Tutor com Inteligência Artificial (Google Gemini API):** Assistente virtual para tirar dúvidas pedagógicas dos alunos 24h com base no conteúdo das aulas.

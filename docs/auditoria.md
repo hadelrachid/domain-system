@@ -1,4 +1,4 @@
-# 🛡️ Arquitetura e Segurança do Domain System (v2.6)
+# 🛡️ Arquitetura e Segurança do Domain System (v2.6.0)
 
 Este documento descreve as decisões de arquitetura, padrões de código e práticas de segurança adotadas no **Domain System**.
 

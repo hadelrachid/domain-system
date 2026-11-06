@@ -1,57 +1,59 @@
-> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
-> 
-> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
-> 
-> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
-> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+# 🛡️ Arquitetura e Segurança do Domain System (v2.6.0)
 
-# 🛡️ Auditoria Arquitetural e de Segurança (Domain System OS v2.0)
-
-**Última Atualização:** 01 de Outubro de 2026
-
-Este documento reflete a transição arquitetural histórica do Domain System, evoluindo de uma plataforma procedimental de caso único para um **Micro-Kernel de Sistema Operacional Web estruturado em SOLID**.
+Este documento descreve as decisões de arquitetura, padrões de código e práticas de segurança adotadas no **Domain System**.
 
 ---
 
-## 🏛️ Evolução Arquitetural (Da v1.0 à v2.0)
+## 🏛️ Princípios de Arquitetura
 
-O núcleo do sistema sofreu uma reformulação profunda em todos os seus pilares estruturais para garantir compatibilidade com padrões de mercado (SOLID, PSRs, Design Patterns avançados).
+O sistema foi estruturado para ser modular, direto e de fácil manutenção, seguindo boas práticas de desenvolvimento em PHP moderno:
 
-### 1. Desacoplamento Absoluto (Zero Lógica de Negócio no Core)
-- **Antes (v1.0):** O Kernel e a autenticação conheciam conceitos de negócio (Tabelas de médicos, clínicas, pacientes, e roles hardcoded).
-- **Agora (v2.0):** O Kernel é 100% agnóstico. Roles genéricas (`admin`, `manager`, `subscriber`, `user`) controlam o RBAC universal. Toda a lógica de negócio foi extraída e transferida para a camada de plugins.
+### 1. Separação Clara de Responsabilidades
+- **Núcleo (`src/Core`)**: Contém apenas o que é estritamente essencial para o sistema funcionar (roteador, container de injeção de dependências, despachante de eventos e gerenciador de sessão). Ele não guarda regras de negócio específicas nem lógica de banco de dados engessada.
+- **Módulos Base (`src/SystemApps`)**: Funcionalidades estruturais da plataforma (conexão com banco de dados, sistema de autenticação e permissões, painel administrativo e atualizador).
+- **Plugins (`src/Plugins`)**: Módulos que adicionam recursos ao site (como o **Academy** para cursos online, o **DomainCommerce** para pagamentos e o **Flex Builder** para temas).
 
-### 2. Inversão de Controle e Injeção de Dependências (DIP)
-- **Antes:** Amplo uso de `new Classe()` e Service Locators como `$this->db()` espalhados pelos controllers.
-- **Agora:** O sistema conta com um Container de Injeção de Dependência (DI Container) de alto nível. Controllers e Repositórios declaram contratos (Interfaces) no construtor e o Micro-Kernel injeta a instância concreta automaticamente.
+### 2. Injeção de Dependências e Contratos
+- Em vez de instanciar classes concretas diretamente dentro dos controllers (`new Servico()`), os componentes declaram suas dependências por meio de **interfaces (contratos)** em seus construtores.
+- O container do núcleo resolve e injeta automaticamente as dependências necessárias, facilitando a troca de implementações e a criação de testes automatizados.
 
 ### 3. Eliminação de Superglobais
-- **Antes:** Amplo acesso bruto à `$_SESSION`, `$_POST`, `$_GET`.
-- **Agora:** Todas as comunicações fluem de maneira imutável e higienizada através da classe `Request` e do gerenciador `SessionManager`, facilitando a criação de testes de unidade e o processamento middleware.
+- Os controllers não acessam variáveis superglobais diretamente (`$_POST`, `$_GET`, `$_SESSION`).
+- Toda requisição HTTP é tratada como um objeto `Request` imutável, e o gerenciamento de sessões passa pelo `SessionManagerInterface`, garantindo validação de tipos e dados sanitizados.
 
 ---
 
-## 🔒 Auditoria de Segurança e Resiliência (Patch 2.0)
+## 🧩 Principais Recursos e Módulos
 
-Baseado em auditorias externas (incluindo varreduras rigorosas focadas em OWASP), as seguintes medidas de proteção foram integradas definitivamente ao SO:
+### 🎓 Academy (Plataforma de Cursos)
+- Área do aluno com autenticação segura e painel do estudante.
+- Aulas organizadas por módulos com suporte a vídeos, textos em blocos e **leitor de apostilas/PDF embutido**.
+- Acompanhamento de progresso em tempo real e emissão de certificados automáticos.
 
-### 1. No-Break Shield (Circuit Breaker Inteligente)
-Implementado em nível de Kernel, esse design pattern previne o "Efeito Dominó" e a "Tela Branca da Morte" (WSOD). Se um plugin apresentar um Fatal Error ou vazamento de memória, o disjuntor intercepta a chamada, isola o componente em milissegundos e renderiza um dashboard imutável para o Super Admin sem afetar os processos dos outras instâncias ou aplicativos virtuais no servidor.
+### 💳 DomainCommerce (Pagamentos e Cobranças)
+- **Mercado Pago Nativo:** Pix dinâmico gerado na hora na tela (com QR Code e Copia-e-Cola), verificação a cada 3,5 segundos com liberação instantânea de matrícula, além de cartão em até 12x e boleto bancário.
+- **PayPal Oficial:** Checkout internacional via API REST v2 do PayPal com saldo e cartões internacionais.
+- **Webhooks de Afiliados:** Integração com Hotmart, Eduzz, Monetizze e ClickBank para criação automática de alunos e matrículas na confirmação de venda.
+- **Injeção Segura:** Apenas gateways configurados com credenciais válidas são exibidos no checkout.
 
-### 2. Blindagem contra "Zip Slip"
-- **Falha Anterior:** Instalação de plugins via `.zip` sem validação de caminho, permitindo sobrescrita do núcleo.
-- **Correção:** A classe `ZipArchiveExtractor` agora implementa uma dupla camada: extração em zona de quarentena (diretório `temp/`) e normalização rigorosa de `realpath()` para impedir ataques de *Directory Traversal*.
-
-### 3. Proteção Global CSRF Automática
-Tokens Anti-CSRF (`Cross-Site Request Forgery`) agora são emitidos e injetados de forma imperceptível via middlewares e pelo próprio motor de templates PHP em todas as sessões, blindando formulários do Painel Admin sem necessidade de ação direta por parte do desenvolvedor de terceiros.
-
-### 4. Dicionário de Códigos de Erros (Telemetria)
-Criação do artefato de Troubleshooting (`ERROR_DICTIONARY.md`), empacotando exceções puras do PHP em códigos categorizados legíveis para máquinas (como `ERR_SYS_01`, `ERR_PLG_03`), pavimentando a rodovia para a intervenção automatizada por Inteligências Artificiais no SO.
+### 🎨 Flex Builder (Temas e Layouts)
+- Construtor visual de cabeçalhos, rodapés e seções em grid de 12 colunas.
+- Controle de visibilidade independente por resolução (Desktop, Laptop, Tablet e Celular) com reajuste automático das colunas (*Auto-Reflow*).
+- Menus com submenus em múltiplos níveis (arraste horizontal estilo WordPress) e gaveta mobile personalizável.
 
 ---
 
-## 📈 Conclusão
+## 🔒 Segurança e Resiliência
 
-O **Domain System OS** atinge na versão 2.0 a categoria "Enterprise-Ready". Seu Micro-Kernel agnóstico está limpo, coeso e blindado contra quedas em cascata, pronto para se firmar como uma alternativa leve, rápida e moderna aos frameworks tradicionais do mercado.
+1. **Prevenção de SQL Injection:** Todas as operações com banco de dados utilizam PDO com *prepared statements*.
+2. **Proteção contra CSRF:** Verificação obrigatória de tokens anti-CSRF em todas as rotas de mutação (`POST`).
+3. **Sanitização de HTML:** O sistema sanitiza conteúdos ricos e vetores SVG para prevenir ataques de Cross-Site Scripting (XSS).
+4. **Isolamento de Falhas (Circuit Breaker):** Se um plugin externo apresentar erro fatal, o sistema captura a exceção e isola o plugin, mantendo o restante da aplicação funcionando sem derrubar o servidor.
+5. **Atualizador Seguro:** Atualizações via GitHub Releases contam com verificação de integridade por hash SHA-256 e criação prévia de ponto de restauração (código e banco de dados).
 
+---
 
+## 🧪 Cobertura de Testes Automatizados
+
+A estabilidade da plataforma é garantida por uma suíte completa de testes no **PHPUnit**:
+- **536 testes automatizados** e **2.999 asserções** cobrindo segurança, checkout, gateways, matrículas, autenticação e contratos.

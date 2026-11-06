@@ -2,7 +2,7 @@
 
 ---
 
-# 🇧🇷 Visão Geral do Domain System
+# 🇧🇷 Visão Geral do Domain System (v2.6.0)
 
 O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas, projetada sob os princípios de **Clean Architecture**, **SOLID** e **Inversão de Dependência (DIP)**.
 
@@ -59,7 +59,7 @@ O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)
 
 <br>
 
-# 🇺🇸 Domain System Overview
+# 🇺🇸 Domain System Overview (v2.6.0)
 
 **Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, online courses, and content, built with clean, decoupled architecture.
 

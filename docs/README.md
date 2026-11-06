@@ -1,4 +1,4 @@
-# 📚 Documentação do Domain System (v2.6)
+# 📚 Documentação do Domain System (v2.6.0)
 
 Bem-vindo à documentação do **Domain System**. Aqui você encontra explicações práticas sobre a arquitetura do sistema, guias de criação de plugins e temas, histórico de versões e funcionamento dos módulos principais (como o Academy e o DomainCommerce).
 

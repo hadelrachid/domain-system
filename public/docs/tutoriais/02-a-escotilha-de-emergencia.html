@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain-System OS | Sistema de Prioridades e Firewalls</title>
+    <title>Domain System | Sistema de Prioridades e Resiliência em Hooks</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -213,8 +213,8 @@
             <button onclick="setLanguage('en')" id="btn-en" class="active">English</button>
             <button onclick="setLanguage('pt')" id="btn-pt">Português</button>
         </div>
-        <h1 data-i18n="title">Priority System & Firewalls</h1>
-        <p style="color: var(--accent-red); font-size: 1.1rem;" data-i18n="subtitle">Advanced Security and Priority Hooks in Domain-System OS</p>
+        <h1 data-i18n="title">Priority System &amp; Hook Resilience</h1>
+        <p style="color: var(--accent-red); font-size: 1.1rem;" data-i18n="subtitle">Event Orchestration and Contingency Patterns in Domain System</p>
     </header>
 
     <div class="container">
@@ -222,21 +222,21 @@
         <div class="alert-warning">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
             <div>
-                <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">The "Emergency Hatch" Concept</h3>
-                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">Sometimes, your plugin needs to act as a definitive Firewall, guaranteeing it will run <strong>after</strong> everyone else or <strong>before</strong> everyone else. This is where the Hook Priority System comes in.</p>
+                <h3 style="margin: 0 0 5px; color: var(--accent-red);" data-i18n="alert_title">The Administrative Recovery Pattern</h3>
+                <p style="color: #fca5a5; margin: 0;" data-i18n="alert_desc">In modular applications, critical middleware often needs guaranteed execution order (running strictly after or before other listeners). This is governed by the Hook Priority System.</p>
             </div>
         </div>
 
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab('tab1')" data-i18n="tab1_btn">1. Priorities in Hooks</button>
-            <button class="tab-btn" onclick="openTab('tab2')" data-i18n="tab2_btn">2. The Firewall Pattern</button>
+            <button class="tab-btn" onclick="openTab('tab2')" data-i18n="tab2_btn">2. The Recovery Pattern</button>
             <button class="tab-btn" onclick="openTab('tab3')" data-i18n="tab3_btn">3. Execution Flow</button>
         </div>
 
         <div id="tab1" class="tab-content active">
             <h2 data-i18n="tab1_h2">How to Use Priorities</h2>
-            <p data-i18n="tab1_p1">In the new OS 2.0 contract, when calling <code class="highlight">$runtime->onHook()</code>, you can pass a third parameter indicating the priority.</p>
-            <p data-i18n="tab1_p2">If no priority is passed, the OS defaults to <code>0</code>. Negative priorities run earlier, positive priorities run later. The higher the number, the later it runs.</p>
+            <p data-i18n="tab1_p1">When attaching listeners via <code class="highlight">$runtime->onHook()</code>, an optional third integer parameter specifies execution priority.</p>
+            <p data-i18n="tab1_p2">If omitted, the priority defaults to <code>0</code>. Negative priorities execute earlier; positive priorities execute later in the cycle.</p>
             
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -255,34 +255,34 @@
         </div>
 
         <div id="tab2" class="tab-content">
-            <h2 data-i18n="tab2_h2">The "Emergency Hatch" Pattern (Firewall)</h2>
-            <p data-i18n="tab2_p1">Look at how the <strong>SystemAdmin</strong> plugin acts as the ultimate security net of the Kernel. It listens to the <code>router.before_dispatch</code> event with priority <code>999</code>.</p>
-            <p data-i18n="tab2_p2">Why? Because the Auth Plugin might handle authentication at priority 0. If Auth crashes, gets disabled, or fails, the SystemAdmin will trigger its Emergency Hatch and block unauthenticated users from accessing the <code>/admin</code> panel, forwarding them to the emergency login.</p>
+            <h2 data-i18n="tab2_h2">The Administrative Contingency Pattern</h2>
+            <p data-i18n="tab2_p1">In <strong>SystemAdmin</strong>, the system listens to <code>router.before_dispatch</code> with priority <code>999</code> to act as a fallback guard for administrative routes.</p>
+            <p data-i18n="tab2_p2">If the standard authentication module is disabled or fails to initialize, this final check ensures unauthenticated requests to <code>/admin</code> are redirected to <code>/admin/emergency</code> for recovery access using the server's <code>APP_KEY</code>.</p>
             
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><span class="c">// The Emergency Hatch (Safety Net)</span>
+<pre><span class="c">// Administrative Fallback Guard</span>
 <span class="v">$runtime</span>-><span class="f">onHook</span>(<span class="s">'router.before_dispatch'</span>, <span class="k">function</span>(<span class="v">$uri</span>) <span class="k">use</span> (<span class="v">$sessionManager</span>) {
     <span class="k">if</span> (<span class="f">str_starts_with</span>(<span class="v">$uri</span>, <span class="s">'/admin'</span>) && !<span class="f">str_starts_with</span>(<span class="v">$uri</span>, <span class="s">'/admin/emergency'</span>)) {
         
-        <span class="c">// If no session exists at this exact moment (even after other plugins tried)</span>
+        <span class="c">// If no session exists at this final evaluation point</span>
         <span class="k">if</span> (!<span class="v">$sessionManager</span>-><span class="f">has</span>(<span class="s">'user_id'</span>)) {
             <span class="f">header</span>(<span class="s">"Location: "</span> . BASE_URL . <span class="s">"/admin/emergency"</span>);
-            <span class="k">exit</span>; <span class="c">// Terminates the OS securely</span>
+            <span class="k">exit</span>;
         }
     }
-}, <span class="n">999</span>); <span class="c">// Guaranteed to be the last one checking!</span></pre>
+}, <span class="n">999</span>); <span class="c">// Evaluates after standard authentication handlers</span></pre>
             </div>
         </div>
 
         <div id="tab3" class="tab-content">
-            <h2 data-i18n="tab3_h2">Execution Flow Security</h2>
-            <p data-i18n="tab3_p1">The priority mechanism in the <code>OsRuntime</code> prevents "race conditions" where two plugins compete for the same action. It acts as an orchestrator.</p>
+            <h2 data-i18n="tab3_h2">Execution Flow Organization</h2>
+            <p data-i18n="tab3_p1">Hook priorities establish a predictable execution pipeline across independent modules:</p>
             
             <ul>
-                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-red)">Phase 1 (Priority < 0):</strong> Preparation plugins, logging setups, modifying request data.</li>
-                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-blue)">Phase 2 (Priority 0):</strong> Standard logic execution. Almost 90% of your Hooks will sit here.</li>
-                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-purple)">Phase 3 (Priority > 0):</strong> Firewalls, overrides, emergency hatch exits.</li>
+                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-red)">Phase 1 (Priority &lt; 0):</strong> Preparation, request pre-filtering, and diagnostics logging.</li>
+                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-blue)">Phase 2 (Priority 0):</strong> Standard business logic and default extension handlers.</li>
+                <li style="margin-bottom: 10px;"><strong style="color:var(--accent-purple)">Phase 3 (Priority &gt; 0):</strong> Fallback guards, response transforms, and administrative contingencies.</li>
             </ul>
         </div>
 
@@ -291,38 +291,38 @@
     <script>
         const translations = {
             en: {
-                title: "Priority System & Firewalls",
-                subtitle: "Advanced Security and Priority Hooks in Domain-System OS",
-                alert_title: "The 'Emergency Hatch' Concept",
-                alert_desc: "Sometimes, your plugin needs to act as a definitive Firewall, guaranteeing it will run <strong>after</strong> everyone else or <strong>before</strong> everyone else. This is where the Hook Priority System comes in.",
+                title: "Priority System & Hook Resilience",
+                subtitle: "Event Orchestration and Contingency Patterns in Domain System",
+                alert_title: "The Administrative Recovery Pattern",
+                alert_desc: "In modular applications, critical middleware often needs guaranteed execution order (running strictly after or before other listeners). This is governed by the Hook Priority System.",
                 tab1_btn: "1. Priorities in Hooks",
-                tab2_btn: "2. The Firewall Pattern",
+                tab2_btn: "2. The Recovery Pattern",
                 tab3_btn: "3. Execution Flow",
                 tab1_h2: "How to Use Priorities",
-                tab1_p1: "In the new OS 2.0 contract, when calling <code class='highlight'>$runtime->onHook()</code>, you can pass a third parameter indicating the priority.",
-                tab1_p2: "If no priority is passed, the OS defaults to <code>0</code>. Negative priorities run earlier, positive priorities run later. The higher the number, the later it runs.",
-                tab2_h2: "The 'Emergency Hatch' Pattern (Firewall)",
-                tab2_p1: "Look at how the <strong>SystemAdmin</strong> plugin acts as the ultimate security net of the Kernel. It listens to the <code>router.before_dispatch</code> event with priority <code>999</code>.",
-                tab2_p2: "Why? Because the Auth Plugin might handle authentication at priority 0. If Auth crashes, gets disabled, or fails, the SystemAdmin will trigger its Emergency Hatch and block unauthenticated users from accessing the <code>/admin</code> panel, forwarding them to the emergency login.",
-                tab3_h2: "Execution Flow Security",
-                tab3_p1: "The priority mechanism in the <code>OsRuntime</code> prevents 'race conditions' where two plugins compete for the same action. It acts as an orchestrator."
+                tab1_p1: "When attaching listeners via <code class='highlight'>$runtime->onHook()</code>, an optional third integer parameter specifies execution priority.",
+                tab1_p2: "If omitted, the priority defaults to <code>0</code>. Negative priorities execute earlier; positive priorities execute later in the cycle.",
+                tab2_h2: "The Administrative Contingency Pattern",
+                tab2_p1: "In <strong>SystemAdmin</strong>, the system listens to <code>router.before_dispatch</code> with priority <code>999</code> to act as a fallback guard for administrative routes.",
+                tab2_p2: "If the standard authentication module is disabled or fails to initialize, this final check ensures unauthenticated requests to <code>/admin</code> are redirected to <code>/admin/emergency</code> for recovery access using the server's <code>APP_KEY</code>.",
+                tab3_h2: "Execution Flow Organization",
+                tab3_p1: "Hook priorities establish a predictable execution pipeline across independent modules:"
             },
             pt: {
-                title: "Sistema de Prioridades e Firewalls",
-                subtitle: "Segurança Avançada e Hooks de Prioridade no Domain-System OS",
-                alert_title: "O Conceito da 'Escotilha de Emergência'",
-                alert_desc: "Às vezes, seu plugin precisa agir como um Firewall definitivo, garantindo que ele vai rodar <strong>depois</strong> de todo mundo ou <strong>antes</strong> de todo mundo. É aí que entra o Sistema de Prioridades nos Hooks.",
+                title: "Sistema de Prioridades e Resiliência em Hooks",
+                subtitle: "Orquestração de Eventos e Padrões de Contingência no Domain System",
+                alert_title: "O Padrão de Recuperação Administrativa",
+                alert_desc: "Em aplicações modulares, middlewares críticos frequentemente necessitam de ordem garantida de execução (executando estritamente antes ou depois de outros listeners). Isso é gerenciado pelo Sistema de Prioridades nos Hooks.",
                 tab1_btn: "1. Prioridades nos Hooks",
-                tab2_btn: "2. Padrão Firewall",
+                tab2_btn: "2. Padrão de Recuperação",
                 tab3_btn: "3. Fluxo de Execução",
                 tab1_h2: "Como Usar as Prioridades",
-                tab1_p1: "No novo contrato OS 2.0, ao chamar <code class='highlight'>$runtime->onHook()</code>, você pode passar um terceiro parâmetro indicando a prioridade.",
-                tab1_p2: "Se nenhuma prioridade for passada, o SO adota <code>0</code>. Prioridades negativas rodam mais cedo, prioridades positivas rodam mais tarde. Quanto maior o número, mais tarde ele roda.",
-                tab2_h2: "O Padrão 'Escotilha de Emergência' (Firewall)",
-                tab2_p1: "Olhe como o plugin <strong>SystemAdmin</strong> atua como a rede de segurança definitiva do Kernel. Ele escuta o evento <code>router.before_dispatch</code> com prioridade <code>999</code>.",
-                tab2_p2: "Por que? Porque o Plugin de Autenticação pode lidar com o login na prioridade 0. Se a Autenticação quebrar, for desativada ou falhar, o SystemAdmin acionará sua Escotilha de Emergência e bloqueará usuários sem sessão de acessar o <code>/admin</code>, mandando-os para o login de emergência.",
-                tab3_h2: "Segurança no Fluxo de Execução",
-                tab3_p1: "O mecanismo de prioridade no <code>OsRuntime</code> evita 'condições de corrida' (race conditions) onde dois plugins competem pela mesma ação. Ele atua como um maestro da orquestra."
+                tab1_p1: "Ao registrar listeners via <code class='highlight'>$runtime->onHook()</code>, um terceiro parâmetro inteiro opcional define a prioridade de execução.",
+                tab1_p2: "Se omitido, a prioridade padrão é <code>0</code>. Valores negativos executam antes; valores positivos executam depois no ciclo.",
+                tab2_h2: "O Padrão de Contingência Administrativa",
+                tab2_p1: "No <strong>SystemAdmin</strong>, o sistema escuta o evento <code>router.before_dispatch</code> com prioridade <code>999</code> para servir como guarda de fallback para rotas administrativas.",
+                tab2_p2: "Caso o módulo de autenticação padrão falhe ou seja desativado, essa checagem final garante que acessos não autenticados a <code>/admin</code> sejam direcionados para <code>/admin/emergency</code>, permitindo a recuperação via <code>APP_KEY</code> do servidor.",
+                tab3_h2: "Organização do Fluxo de Execução",
+                tab3_p1: "O escalonamento por prioridades assegura previsibilidade e desacoplamento entre módulos independentes:"
             }
         };
 

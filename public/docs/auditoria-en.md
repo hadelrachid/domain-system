@@ -1,57 +1,59 @@
-> **ATENÇÃO ARQUITETURAL / PARADIGM SHIFT (2026-10-04)**
-> 
-> O Domain System **NÃO** é mais um sistema Sistema Operacional Web. Ele evoluiu para se tornar um **Sistema Operacional Web (Web OS) independente**.
-> 
-> No passado, o núcleo foi desenhado focado em separar ambientes de SaaS, mas esse acoplamento limitava o projeto. Hoje, o Domain System funciona como um Sistema Operacional puro (como Linux/Windows), que pode ser instalado em uma máquina ou container.
-> Se for desejado que ele preste serviços Multi-Tenant, isso deverá ser feito virtualmente ou através de um aplicativo (Plugin Ring 3) construído especificamente para isso, **sem afetar o Micro-Kernel (Ring 0)**.
+# 🛡️ Architecture & Security Guide (Domain System v2.6.0)
 
-# 🛡️ Architectural and Security Audit (Domain System OS v2.0)
-
-**Last Updated:** October 1, 2026
-
-This document reflects the historic architectural transition of the Domain System, evolving from a single-case procedural platform to a **SOLID-structured Web Operating System Micro-Kernel**.
+This document outlines the architectural decisions, coding patterns, and security practices used throughout **Domain System**.
 
 ---
 
-## 🏛️ Architectural Evolution (From v1.0 to v2.0)
+## 🏛️ Architectural Foundations
 
-The system's core underwent a deep overhaul across all its structural pillars to ensure compatibility with market standards (SOLID, PSRs, advanced Design Patterns).
+The system is designed to be modular, fast, and maintainable, following modern PHP best practices:
 
-### 1. Absolute Decoupling (Zero Business Logic in the Core)
-- **Before (v1.0):** The Kernel and authentication knew business concepts (Doctor, clinic, patient tables, and hardcoded roles).
-- **Now (v2.0):** The Kernel is 100% agnostic. Generic roles (`admin`, `manager`, `subscriber`, `user`) control universal RBAC. All business logic was extracted and transferred to the plugin layer.
+### 1. Clear Separation of Concerns
+- **Core (`src/Core`)**: Contains only what is strictly required to bootstrap and run the runtime (environment-agnostic router, dependency injection container, event dispatcher, and session manager). It contains zero domain-specific business rules.
+- **System Apps (`src/SystemApps`)**: Essential platform infrastructure modules (database layer, authentication/RBAC, admin cockpit, and updater).
+- **Plugins (`src/Plugins`)**: Feature extensions (such as **Academy** for courses, **DomainCommerce** for payments, and **Flex Builder** for themes).
 
-### 2. Inversion of Control and Dependency Injection (DIP)
-- **Before:** Widespread use of `new Class()` and Service Locators like `$this->db()` scattered throughout controllers.
-- **Now:** The system relies on a high-level Dependency Injection (DI) Container. Controllers and Repositories declare contracts (Interfaces) in the constructor, and the Micro-Kernel automatically injects the concrete instance.
+### 2. Dependency Injection and Contracts
+- Instead of instantiating concrete classes inside controllers (`new Service()`), components declare their dependencies as **interfaces (contracts)** in their constructors.
+- The DI container resolves and injects the proper concrete instances automatically, simplifying refactoring and unit testing.
 
-### 3. Elimination of Superglobals
-- **Before:** Broad raw access to `$_SESSION`, `$_POST`, `$_GET`.
-- **Now:** All communications flow immutably and sanitized through the `Request` class and the `SessionManager`, facilitating the creation of unit tests and middleware processing.
-
----
-
-## 🔒 Security and Resilience Audit (Patch 2.0)
-
-Based on external audits (including rigorous OWASP-focused scans), the following protection measures have been definitively integrated into the OS:
-
-### 1. No-Break Shield (Smart Circuit Breaker)
-Implemented at the Kernel level, this design pattern prevents the "Domino Effect" and the "White Screen of Death" (WSOD). If a plugin causes a Fatal Error or a memory leak, the breaker intercepts the call, isolates the component in milliseconds, and renders an immutable dashboard for the Super Admin without affecting the processes of other virtual applications or instances on the server.
-
-### 2. "Zip Slip" Protection
-- **Previous Flaw:** Plugin installation via `.zip` without path validation, allowing core overwriting.
-- **Fix:** The `ZipArchiveExtractor` class now implements a dual layer: extraction in a quarantine zone (`temp/` directory) and rigorous `realpath()` normalization to prevent *Directory Traversal* attacks.
-
-### 3. Automatic Global CSRF Shielding
-Anti-CSRF (`Cross-Site Request Forgery`) tokens are now seamlessly issued and injected via middlewares and by the PHP template engine itself in all sessions, shielding Admin Panel forms without the need for direct action by third-party developers.
-
-### 4. Error Codes Dictionary (Telemetry)
-Creation of the Troubleshooting artifact (`ERROR_DICTIONARY.md`), packaging raw PHP exceptions into categorized, machine-readable codes (like `ERR_SYS_01`, `ERR_PLG_03`), paving the highway for automated intervention by Artificial Intelligences in the OS.
+### 3. Clean Request Handling (No Raw Superglobals)
+- Controllers never touch superglobals (`$_POST`, `$_GET`, `$_SESSION`) directly.
+- Every HTTP request is encapsulated in an immutable `Request` object, and session interactions go through `SessionManagerInterface`, ensuring strict typing and sanitized input.
 
 ---
 
-## 📈 Conclusion
+## 🧩 Core Features & Modules
 
-The **Domain System OS** reaches the "Enterprise-Ready" category in version 2.0. Its agnostic Micro-Kernel is clean, cohesive, and shielded against cascading crashes, ready to establish itself as a lightweight, fast, and modern alternative to traditional market frameworks.
+### 🎓 Academy LMS
+- Student portal with secure authentication, profile management, and progress tracking.
+- Courses structured into modules and lessons with support for video embeds, block-based text, and a **built-in PDF handout reader**.
+- Real-time progress calculation and automated certificate issuance upon 100% completion.
 
+### 💳 DomainCommerce (Payments & Checkout)
+- **Official Mercado Pago (Brazil):** On-screen dynamic Pix (instant QR Code and copy-paste code) with 3.5s real-time payment confirmation and automatic course enrollment, up to 12x credit card installments, and boleto.
+- **Official PayPal (Global Sales):** Full integration with PayPal Checkout REST API v2 for international purchases via PayPal balance or global cards.
+- **Affiliate Webhooks:** Automatic processing of sales notifications from Hotmart, Eduzz, Monetizze, and ClickBank, creating students and enrolling them on the spot.
+- **Strict Gateway Injection:** Only gateways with valid active credentials are made available at checkout.
 
+### 🎨 Flex Builder (Themes & Layouts)
+- Visual drag-and-drop layout builder for headers, footers, and page sections using a 12-column CSS Grid.
+- Per-breakpoint visibility controls (Desktop, Laptop, Tablet, Mobile) with automatic column recalculation (*Auto-Reflow*).
+- Multi-level navigation menus with horizontal drag indentation and a customizable mobile drawer with 8 hamburger styles.
+
+---
+
+## 🔒 Security and Resilience
+
+1. **SQL Injection Protection:** All database queries utilize PDO with parameterized prepared statements.
+2. **CSRF Defense:** Mandatory anti-CSRF token verification on all state-mutating HTTP methods (`POST`).
+3. **HTML Sanitization:** Content sanitization across rich text and SVG inputs to prevent Cross-Site Scripting (XSS).
+4. **Fault Isolation (Circuit Breaker):** Runtime exception traps isolate crashing extensions, keeping the core site available.
+5. **Safe Updates:** GitHub Releases verification with SHA-256 integrity checksums and automated pre-update backups.
+
+---
+
+## 🧪 Automated Test Coverage
+
+Platform stability is continuously verified with **PHPUnit**:
+- **536 automated unit and integration tests** with **2,999 assertions** covering checkout flows, payment gateways, enrollments, authentication, and architectural contracts.

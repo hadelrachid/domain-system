@@ -1,24 +1,19 @@
-# 🎓 Tutoriais para Desenvolvedores
+# 🎓 Tutoriais para Desenvolvedores (Domain-System v2.6.0)
 
-> **Aviso:** Esta seção está em fase de construção! 🚧
-
-Em breve, publicaremos aqui os guias passo-a-passo (em formato Wiki/Markdown) ensinando como utilizar o poderoso ecossistema do **Domain System**.
+Aqui estão reunidos os guias passo a passo ensinando como utilizar e expandir o ecossistema do **Domain System** (~30 MB em disco e ~5 MB de RAM).
 
 ## O que você vai aprender?
 
-1. **Desenvolvimento de Plugins:**
-   - Criando sua estrutura base em `src/Plugins/meu_plugin`
-   - Herdando a `AbstractPlugin`
-   - Registrando Rotas com Filtros (ACL)
-   - Utilizando Injeção de Dependência (Container)
+1. **[Desenvolvimento de Plugins & CLI Scaffolding (v2.6.0)](criando-plugins.md):**
+   - Gerando a árvore completa de contratos com `php os-cli.php make:plugin <slug>` em `src/Plugins/<slug>`
+   - Implementando `OsExtensionInterface` e `AbstractPlugin`
+   - Registrando Rotas com Filtros (ACL) e utilizando Injeção de Dependência (`Container`) sem tocar em `$_SESSION` ou `PDO` no Controller
+   - **Auto-Descoberta de Manuais (`ManualModuleInterface`):** Como criar `manual/module.php` para que seu plugin apareça automaticamente no menu **Manual de Instruções (`/admin/manual`)** do Cockpit.
+   - **Contratos e Boas Práticas (`AI_CONTRACT_GUIDE.md`):** Como estruturar o código respeitando os contratos e interfaces do sistema.
 
-2. **Criação de Temas (CockPits):**
-   - Entendendo a hierarquia de arquivos (`header.php`, `index.php`, `footer.php`)
-   - Como carregar CSS e JS dinamicamente
-   - Separando visão de lógica
+2. **[Sistema de Prioridades e Escotilha de Emergência](02-a-escotilha-de-emergencia.html):**
+   - Como o `EventDispatcher` e as prioridades de Hooks funcionam
+   - O padrão *Emergency Hatch* para recuperação de missão crítica.
 
-3. **Arquitetura de Eventos:**
-   - Como o `EventDispatcher` funciona
-   - Injetando botões e links em menus de outros plugins sem alterar o código-fonte deles!
-
-Aguarde atualizações!
+3. **[Pacotes de Plugins (Hubs) & Academy LMS](03-pacotes-de-plugins.html):**
+   - Como estruturar pacotes modulares e conhecer a arquitetura do **Academy LMS** (Aulas em vídeo e blocos, leitor de PDF embutido, acompanhamento de progresso e certificados).

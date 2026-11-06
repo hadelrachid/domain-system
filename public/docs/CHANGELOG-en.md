@@ -7,6 +7,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
+
+## [2.6.0] - 2026-11-06
+### Added
+- **DomainCommerce & Native Gateways (Mercado Pago, PayPal, Stripe, and Affiliates):**
+  - **Official Mercado Pago (Brazil):** On-screen dynamic Pix (instant QR Code and copy-paste code) with 3.5s real-time payment confirmation and automatic course enrollment, up to 12x credit card installments (with dual-card support), and boleto.
+  - **Official PayPal (Global Sales):** Full integration with PayPal Checkout REST API v2 for international purchases via PayPal balance or global cards, with clean redirects and return callbacks.
+  - **Conditional Dependency Injection:** Gateways are now strictly displayed at checkout only when valid credentials are affirmatively configured in the system.
+  - **Affiliate Platform Webhooks:** Automatic enrollment webhooks for Hotmart, Eduzz, Monetizze, and ClickBank, auto-provisioning students upon sale confirmation.
+- **Student Dashboard and Course Platform (Academy LMS):**
+  - Dedicated student portal with login, password recovery, course progress tracking, and automatic certificate generation upon completion.
+  - Built-in PDF reader for ebooks and lesson handouts with lightweight canvas and direct embed modes.
+- **Flex Builder and Hierarchical Menus:**
+  - Visual menu builder with drag-and-drop horizontal indentation for submenus.
+  - Fully customizable mobile drawer with 8 hamburger button styles.
+  - Global text colors and typography controls linked to Design Tokens.
+- **Hierarchical Menus with Submenus (`Walker` SOLID + WordPress-Style Drag & Drop):**
+  - **Recursive Tree Builder (`MenuTreeBuilderInterface` / `MenuTreeBuilder`):** Converts flat menu items (`parent_id`) into a nested tree with cycle protection and max depth (`MAX_DEPTH = 5`), plus automatic `parent_id` schema migration in `PdoMenuRepository`.
+  - **Horizontal Drag & Drop UI (`wpNavMenu`) & Main Menu (`header`) Default Priority:** Horizontal drag indentation to nest/unnest submenus in both `/admin/themes/menus` and the Flex Builder modal, defaulting to **Main Menu (`header`)**.
+  - **Desktop & Mobile Submenu Styling (`NavMenuBlock`):** Dedicated visual controls for desktop dropdowns (background, border, radius, shadow, min-width, indicator arrow, hover colors) and mobile submenus (collapsible accordion or indented list).
+- **Customizable Mobile Drawer (`ds-mobile-drawer`), 8 Hamburger Styles & 7 Mobile Button Formats:**
+  - **8 Toggle Button Styles (`MobileToggleStyleInterface`):** `bars`, `bars_staggered`, `dots_vertical`, `dots_grid`, `plus_cross`, `chevron_down`, `pill_label`, and `minimal_two_lines`, with 4 box shapes (`rounded`, `square`, `pill`, `ghost`) and custom colors.
+  - **7 Mobile Menu Button Formats:** `flat`, `rounded`, `pill`, `outlined`, `filled_soft`, `left_accent`, and `underlined`, plus customizable drawer width and colors.
+- **Global Text Color & Typography Controls (Pro-Elements / Elementor Inspired):**
+  - Support for `text_color`, `heading_color`, `link_color`, and `link_hover_color` at Section, Column, and Block levels via `ElementStyleSchema` and `ElementStyleRenderer`, bound to Global Design Tokens (`var(--primary-color)`, `var(--secondary-color)`, `var(--text-color)`, `var(--accent-color)`).
+- **Hybrid PDF Reader in Academy LMS (`LessonPdfStorageInterface` & `pdf` Block):**
+  - Supports PDF documents hosted in the cloud (`https://...`, CDN, S3, Cloudflare R2, Google Drive `/preview`) or uploaded to a local Hostinger/server folder (`POST /admin/academy/lessons/{id}/upload-pdf` with `%PDF-` magic header verification).
+  - **3 Viewer Modes:** On-demand per-page rendering via **PDF.js Lazy Canvas** (`pdfjs_canvas` — ideal for heavy technical PDFs with charts and figures), **Native / Iframe Embed** (`native_embed`), and **Collapsible Card** (`card_modal`).
+  - **Surgical Page Slicing (`start_page` & `end_page`) & Download Guard (`allow_download`):** Allows jumping directly to a specific chart/diagram page, restricting the navigable page range, and hiding/blocking downloads and right-click context menus.
+
+## [2.5.0] - 2026-10-27
+### Added
+- **Flex Builder FSE (Full Site Editing, Single Compiler Path, Structural Validator & Auto-Reflow Grid):**
+  - **Unified Compilation Path (`ThemePartCompilerInterface` & `ThemePartRenderer`):** `ThemePartPreviewService` delegates 100% of section, column, block, style, and responsive visibility compilation to `ThemePartCompilerInterface`, guaranteeing total parity between Studio Live Preview and Frontend output.
+  - **Pre-Save Structural Validation (`ThemePartValidatorInterface` / `ThemePartValidator`):** Strict validation of part types (`header`, `footer`, `section`), layout presets (`LayoutGridInterface`), block registration and part-type compatibility (`getAllowedPartTypes()`), ID/title bounds, and nesting depth before any write occurs.
+  - **Transactional Association Compensation (`ThemePartManagementService`):** Verifies boolean results of `setGlobalDefault()`, `assignPart()`, and `assignTemplateToSection()`, automatically rolling back part and association state on partial failure.
+  - **Per-Element Responsive Visibility across 4 Resolutions (`Desktop 100%`, `1024px`, `768px`, `375px`):** Visibility toggles apply exclusively to the individual element wrapper (`.ds-element-wrapper` with `.ds-hide-desktop`, `.ds-hide-laptop`, `.ds-hide-tablet`, `.ds-hide-mobile`), never hiding the entire section container (`.ds-section-wrapper`).
+  - **Automatic CSS Grid Dimension Readjustment (Auto-Reflow):** When all elements in a column are hidden at a breakpoint, the empty column receives `.ds-hide-{resolution}` and `LayoutGridRenderer` automatically recalculates `grid-template-columns` for the remaining visible columns (e.g., `1fr 2fr 1fr` -> `2fr 1fr` or `1fr`).
+  - **Enhanced Security (`SafeHtmlSanitizer`, `MediaUploadService` & `Request::json()`):** Positive URL scheme whitelist (`http`, `https`, `mailto`, `tel`), `DOMDocument` XML validation for SVG uploads (`LIBXML_NONET`) against XXE/XSS, native `Request::json()` / `Request::withJsonBody()` isolation from `php://input`, and controlled HTTP error responses (`422` for validation, `500` without leaking internal exception details).
+
+### Fixed
+- **Release Packaging (`release/exclude.txt`):** Excluded workspace/documentation artifacts (`.env*`, `project.txt`, `content/`, `manual/`, `resources/`) and local runtime state (`config/theme_parts/`, `config/theme_parts_associations.json`, `config/active_theme.json`, `config/active_skin.json`, `config/*.lock`) to ensure 100% compliance with `CoreProtectedPaths` and `Sha256PackageVerifier` when updating via the Hostinger Admin Updater button.
+- **Academy LMS Migrations:** Removed redundant global-namespace `use PDO;` statements from Academy migrations to prevent `ErrorHandler` warnings.
+
+## [2.4.0] - 2026-10-19
+### Added
+- **Contract-Driven GitHub Releases Self-Updater (`SystemUpdater` / `CoreUpdater` — Model A):**
+  - **25 Contracts in `src/Core/Contracts/Update/` & `UpdateArchitectureTest` Guardrail:** 14-step resumable state machine (`Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Done`) with zero direct `PDO`, `curl_*`, `ZipArchive`, or superglobal usage in services or controllers.
+  - **Cryptographic Verification & Anti-Zip-Slip (`Sha256PackageVerifier`, `ZipPackageExtractor`, `HostAllowlist`):** Dual SHA-256 verification (archive + per-file `manifest.json`), isolated quarantine extraction, zip-bomb/symlink defense, and strict HTTPS GitHub host allowlist.
+  - **Full Code/Database Backup, Contract Schema Verification & Auto-Rollback (`ZipDirectoryBackup`, `SqliteDatabaseBackup`, `MysqlDatabaseBackup`, `SchemaPlanner`, `SchemaVerifier`):** Automatic pre-apply backups, strict protection for `.env`, `config/`, and `storage/`, two-phase HTTP health check (`CoreHealthCheck`), and automatic rollback on failure.
+  - **Global Settings Integration (`/admin/settings/updates`), Dashboard Widget & CLI (`os-cli.php`):** Integrated Updates tab in Global Settings, `System Version` dashboard widget, once-per-version notification, and CLI commands (`system:check`, `system:status`, `system:update`, `system:rollback`, `system:health`).
+  - **Multiplatform Resilience (XAMPP/Windows & Linux):** Intelligent fallback to `\PharData` when native `ext-zip` is not loaded in the active PHP SAPI (`ZipPackageExtractor`, `ZipDirectoryBackup`, `ExtensionsCheck`) and execution time limit extension (`@set_time_limit(300)`) during package download and extraction stages.
+  - **Deterministic Release Builder (`ReleaseBuilder` & `tools/build-release.php`):** Automated generation of `dist/domain-system-X.Y.Z.zip` and `.sha256` integrated into `.github/workflows/release.yml`, plus standardization of all 18 official `plugin.json` manifests to `2.4.0` (`os_version: 2.4`).
+
+## [2.3.0] - 2026-10-19
+### Added
+- **Master AI Contract Guide ("Vibe Coding on Rails" - `AI_CONTRACT_GUIDE.md`):** Official root guide for LLMs + automatic IDE rule files (`.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`), a 1-click **"📋 Copy Master Prompt for AI"** button in the System Manual, and an upgraded CLI generator (`php os-cli.php make:plugin <slug>`) that scaffolds the complete Ring 3 contract directory tree.
+- **Contract-Driven Manual Auto-Discovery (`ManualModuleInterface` & `PluginManualScanner`):** Any plugin providing `src/Plugins/<slug>/manual/module.php` (`academy`, `flextheme`, `pages`, `seo`) implementing `ManualModuleInterface` is now automatically discovered and rendered inside both the Cockpit's **Instruction Manual (`/admin/manual`)** and the fullscreen viewer (`/manual/index.php`), including its QA homologation checklist items.
+- **Hybrid Academy LMS (v2.3.0), Automatic `.php` Lesson Factory & 3 Mobile Profiles:**
+  - **Automatic Folder & `.php` Lesson Factory (`LessonFileScaffolderInterface` / `LessonFileScaffolderService`):** Module folder creation (`createFolder`) and automatic fabrication of physical `.php` files inside the active theme (`themes/<theme>/pages/estrutura-de-dados.php` $\rightarrow$ routed at `/cursos/estrutura-de-dados`), with overwrite and path-traversal protection.
+  - **4 Lesson Modes & 8 Block Types:** Hybrid support for **Raw HTML/Markdown** (`raw`), **Structured Block Editor** (`blocks` supporting `heading`, `paragraph`, `code`, `callout`, `video`, `divider`, `image`, `button_cta`), **Auto-Fabricated `.php` Lessons** (code or blocks), and **Existing Theme Pages** (`ThemePageResolverInterface`).
+  - **3 Mobile Layout Profiles (`drawer`, `bottom_bar`, `cinema`) & Multi-Device Simulator:** Switch between `🖥️ Desktop` and `📱 Mobile` across 5 standard viewports (`320×568`, `375×667`, `430×932`, `768×1024`, `1024×768`) and 3 per-lesson mobile layout profiles.
+  - **Safe Sanitization (`HtmlSanitizerService`) & Folder Import (`CourseFolderImporterService`):** Strips XSS vectors (`<script>`, `on*`, `javascript:`) while preserving trusted video iframes and smart disk synchronization.
+- **Advanced Kernel Resilience (100% DB- and OS-Agnostic Ring 0):**
+  - **Atomic Persistence (`JsonStoreInterface` / `AtomicJsonStore`):** Concurrency-safe JSON read/write with `flock(LOCK_EX)` + temporary file + atomic `rename()` across `config/*.json` and `temp/*.json`.
+  - **Route-Level Circuit Breaker with Threshold (`recordRouteFailure`):** Isolates failing routes individually before tripping the entire plugin (default threshold: 3 consecutive failures).
+  - **Schema Doctor (`SchemaDoctorInterface` / `PluginMigrationScanner`):** Automatic discovery and self-healing of plugin migrations using 100% database- and OS-agnostic ANSI SQL.
+  - **1-Click Snapshot & Rollback (`StateSnapshotManager`):** Instant creation and restoration of system state restore points inside `/admin/supervision`.
+
+### Changed
+- **Ultra-Light Disk Footprint (~30MB on Linux):** The entire unpacked platform folder on Linux servers occupies approximately **30MB**.
+- **Default New Course Status:** Changed from `soon` to `published` in the Academy creation modal to prevent accidental 404s when viewing newly created lessons.
+- **100% Environment-Agnostic Routing (`public/index.php`):** Removed hardcoded subfolder prefixes so the platform runs seamlessly in any subdirectory or root domain.
+
+## [2.2.0] - 2026-10-12
+### Added
+- **Decoupled Default "Coming Soon" Landing Page:** Fresh installations now start with `active_theme = ''`, displaying the default Coming Soon screen until the administrator explicitly activates a theme in the Cockpit.
+- **Architecture & Security Test Suite (`tests/`):** Automated PHPUnit tests enforcing zero superglobals in Controllers (`NoSuperglobalsInControllersTest`), Ring 0 route protection, and plugin coverage.
+
+## [2.1.0] - 2026-10-05
+### Added
+- **AES-256-GCM Authenticated Encryption:** Migrated from `AES-256-CBC` to `AES-256-GCM` in `src/Core/helpers.php`.
+- **Ring 0 Route Collision Protection:** Prevented Ring 3 plugins from hijacking core Kernel routes (`RouteAlreadyRegisteredException`).
+- **HTTP Session Hardening & Circuit Breaker Developer Mode:** `HttpOnly`, `SameSite=Strict` cookies and session-scoped safe bypass for debugging tripped plugins.
+
 ## [1.2.0] - 2026-08-30
 ### Added
 - **AI Hub:** New dedicated plugin for API keys management (Gemini, ChatGPT, DeepSeek, Claude).

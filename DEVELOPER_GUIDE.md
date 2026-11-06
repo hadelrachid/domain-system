@@ -1,4 +1,4 @@
-# Guia do Desenvolvedor: Domain System (v2.6)
+# Guia do Desenvolvedor: Domain System (v2.6.0)
 
 Este guia apresenta a estrutura do sistema, como desenvolver novos plugins e como estender as funcionalidades do núcleo utilizando interfaces e injeção de dependências em PHP 8.2+.
 
@@ -149,7 +149,7 @@ class MeuAppManualModule implements ManualModuleInterface
     public function getId(): string { return 'meu_app'; }
     public function getTitle(): string { return 'Meu App — Manual'; }
     public function getSubtitle(): string { return 'Guia de operação e checklist de testes.'; }
-    public function getBadge(): string { return 'Plugin v2.5'; }
+    public function getBadge(): string { return 'Plugin v2.6.0'; }
     public function getAccentColor(): string { return '#38bdf8'; }
     public function getAdminUrl(): ?string { return '/admin/meu-app'; }
 
