@@ -296,6 +296,9 @@ class ThemePartRenderer implements ThemePartRendererInterface
 .ds-element-wrapper[style*="--ds-local-text-color"] .ds-block-copyright { color: var(--ds-local-text-color); }
 .ds-element-wrapper[style*="--ds-local-link-color"] a:not(.ds-block-btn):not(.ds-block-cta) { color: var(--ds-local-link-color); }
 .ds-element-wrapper[style*="--ds-local-link-hover-color"] a:not(.ds-block-btn):not(.ds-block-cta):hover { color: var(--ds-local-link-hover-color) !important; }
+.ds-block-btn, .ds-block-cta { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+.ds-block-btn[style*="--btn-hover-bg"]:hover, .ds-block-cta[style*="--btn-hover-bg"]:hover { background: var(--btn-hover-bg) !important; background-color: var(--btn-hover-bg) !important; }
+.ds-block-btn[style*="--btn-hover-color"]:hover, .ds-block-cta[style*="--btn-hover-color"]:hover { color: var(--btn-hover-color) !important; }
 .ds-btn-grow { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
 .ds-btn-grow:hover { transform: scale(1.05) !important; }
 .ds-btn-lift { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }

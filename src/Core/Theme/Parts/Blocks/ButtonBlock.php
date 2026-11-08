@@ -105,6 +105,20 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
         $fontSize = $this->styleRenderer->sanitizeCssValue((string)($data['font_size'] ?? '1rem'));
         $boxShadow = $this->styleRenderer->sanitizeCssValue((string)($data['box_shadow'] ?? '0 4px 12px rgba(0,0,0,0.15)'));
         $width = $this->styleRenderer->sanitizeCssValue((string)($data['width'] ?? 'auto'));
+        $hoverBgColor = !empty($data['hover_bg_color'])
+            ? $this->styleRenderer->sanitizeCssValue(ColorValue::fromString((string)$data['hover_bg_color'])->getCssValue())
+            : '';
+        $hoverTextColor = !empty($data['hover_text_color'])
+            ? $this->styleRenderer->sanitizeCssValue(ColorValue::fromString((string)$data['hover_text_color'])->getCssValue())
+            : '';
+
+        $hoverCssVars = '';
+        if ($hoverBgColor !== '') {
+            $hoverCssVars .= " --btn-hover-bg: {$hoverBgColor};";
+        }
+        if ($hoverTextColor !== '') {
+            $hoverCssVars .= " --btn-hover-color: {$hoverTextColor};";
+        }
 
         // Classe de animação de micro-interação
         $animClass = match ($hoverAnim) {
@@ -127,7 +141,7 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
         $wrapperWidth = ($align === 'justify' || $width === '100%') ? 'width: 100%;' : '';
         $btnWidth = ($align === 'justify' || $width === '100%') ? 'width: 100%;' : 'width: auto;';
 
-        $btnStyle = "display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); border: none; outline: none; background: {$bgColor}; color: {$textColor}; border-radius: {$borderRadius}; padding: {$padding}; font-family: {$fontFamily}; font-weight: {$fontWeight}; font-size: {$fontSize}; box-shadow: {$boxShadow}; {$btnWidth}";
+        $btnStyle = "display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); border: none; outline: none; background: {$bgColor}; color: {$textColor}; border-radius: {$borderRadius}; padding: {$padding}; font-family: {$fontFamily}; font-weight: {$fontWeight}; font-size: {$fontSize}; box-shadow: {$boxShadow}; {$btnWidth}{$hoverCssVars}";
 
         // Montagem do conteúdo interno do botão (Ícone + Label + Subtexto)
         $iconHtml = '';
@@ -277,6 +291,8 @@ HTML;
                 ], 'default' => 'lift'],
                 'bg_color'         => ['type' => 'color', 'label' => 'Cor de Fundo', 'default' => 'var(--color-primary, #38bdf8)'],
                 'text_color'       => ['type' => 'color', 'label' => 'Cor do Texto', 'default' => '#0f172a'],
+                'hover_bg_color'   => ['type' => 'color', 'label' => 'Cor de Fundo no Hover', 'default' => ''],
+                'hover_text_color' => ['type' => 'color', 'label' => 'Cor do Texto no Hover', 'default' => ''],
                 'font_family'      => ['type' => 'font', 'label' => 'Família da Fonte', 'default' => 'var(--font-primary)'],
                 'font_size'        => ['type' => 'dimension', 'label' => 'Tamanho da Fonte', 'default' => '1rem'],
                 'font_weight'      => ['type' => 'select', 'label' => 'Peso da Fonte', 'options' => ['400', '500', '600', '700', '800'], 'default' => '700'],

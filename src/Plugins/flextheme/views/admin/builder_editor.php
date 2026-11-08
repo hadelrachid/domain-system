@@ -33,6 +33,90 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     <title>Flex Builder Studio - <?= htmlspecialchars($part->getTitle()) ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= htmlspecialchars($baseUrl) ?>/assets/css/builder-studio.css?v=<?= file_exists(dirname(__DIR__, 5) . '/public/assets/css/builder-studio.css') ? filemtime(dirname(__DIR__, 5) . '/public/assets/css/builder-studio.css') : '1.0' ?>">
+<style>
+
+/* ==========================================================================
+   PALETAS DE CORES CIRCULARES DO INSPECTOR (SWATCHES)
+   ========================================================================== */
+.token-swatches-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+    margin: 8px 0 !important;
+    padding: 8px 10px !important;
+    background: rgba(0, 0, 0, 0.28) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+}
+
+.token-swatch-item {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255, 255, 255, 0.22) !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease, box-shadow 0.18s ease !important;
+    position: relative !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.token-swatch-item:hover {
+    transform: scale(1.22) !important;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.65) !important;
+    z-index: 5 !important;
+}
+
+.token-swatch-item.active {
+    transform: scale(1.25) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+    z-index: 6 !important;
+}
+
+.token-swatch-item.is-transparent {
+    background: repeating-conic-gradient(#334155 0% 25%, #1e293b 0% 50%) 50% / 8px 8px !important;
+}
+
+.token-swatch-item.is-transparent::after {
+    content: "✕" !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #ef4444 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    line-height: 1 !important;
+}
+
+/* Transições e Hover de Botões no Canvas e Preview */
+.ds-block-btn, .ds-block-cta {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.ds-block-btn[style*="--btn-hover-bg"]:hover,
+.ds-block-cta[style*="--btn-hover-bg"]:hover {
+    background: var(--btn-hover-bg) !important;
+    background-color: var(--btn-hover-bg) !important;
+}
+.ds-block-btn[style*="--btn-hover-color"]:hover,
+.ds-block-cta[style*="--btn-hover-color"]:hover {
+    color: var(--btn-hover-color) !important;
+}
+
+</style>
 </head>
 <body>
 
@@ -2859,6 +2943,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorFontSelector('Tipografia do Botão', 'font_family', block.data.font_family || 'var(--font-primary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
             html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
+            html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorDimension('Arredondamento de Borda', 'border_radius', block.data.border_radius || '8px');
             html += inspectorSelect('Alinhamento', 'align', [
@@ -2879,6 +2965,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTextInput('Link / URL de Destino', 'url', block.data.url || '#');
             html += inspectorSelect('Variante Estilizada', 'variant', ['primary', 'secondary', 'outline', 'glow'], block.data.variant || 'primary');
             html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
+            html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
             html += inspectorTokenColorPicker('Cor de Fundo do Botão', 'bg_color', block.data.bg_color || 'var(--color-primary)', 'primary');
             html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
@@ -3108,6 +3196,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             }
 
             html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
+            html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
 
             html += inspectorSelect('Alinhamento', 'align', [
                 { value: 'left', label: '⬅️ Esquerda' },

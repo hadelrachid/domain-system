@@ -205,6 +205,46 @@ class AcademyManualModule implements ManualModuleInterface
                 <div style="margin-top: 4px;"><strong>• Shortcode para Páginas do Tema:</strong> Insira <code>[hub_de_cursos]</code> em qualquer página gerenciada pelo módulo Pages.</div>
             </div>
 
+
+            <!-- SEÇÃO 7: COMO MONTAR MÓDULOS E AULAS EM PHP PURO -->
+            <h3 style="color: #00d284; font-size: 15px; margin: 22px 0 10px;">7. Como Montar Módulos e Aulas em PHP Puro (Importação Instantânea)</h3>
+            <div style="background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(0, 210, 132, 0.3); border-radius: 8px; padding: 18px 20px; margin-bottom: 22px;">
+                <p style="margin: 0 0 12px 0;">
+                    Você pode criar seus próprios módulos e aulas em <strong>PHP puro</strong> diretamente no tema ativo para importação automática com 1 clique:
+                </p>
+                <div style="font-size: 13px; line-height: 1.8;">
+                    <strong>1. Crie a pasta do módulo dentro de <code>pages/</code> do seu tema:</strong><br>
+                    <code style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px;">themes/rachidd/pages/modulo-01-fundamentos/</code>
+                </div>
+                <div style="font-size: 13px; line-height: 1.8; margin-top: 10px;">
+                    <strong>2. Crie os arquivos de aula (ex: <code>01-introducao.php</code>) usando o Modelo Padrão:</strong>
+                </div>
+                <pre style="background: #0b0f19; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 14px; font-size: 12px; color: #38bdf8; overflow-x: auto; margin: 10px 0;">&lt;?php
+/**
+ * Título: Introdução à Programação Orientada a Objetos
+ * Perfil Mobile: drawer
+ */
+?&gt;
+&lt;div class="minha-aula"&gt;
+    &lt;h1&gt;Introdução à Programação Orientada a Objetos&lt;/h1&gt;
+    &lt;p&gt;Bem-vindo à primeira aula do módulo!&lt;/p&gt;
+    &lt;p&gt;Curso: &lt;strong&gt;&lt;?= htmlspecialchars($course['title']) ?&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;/div&gt;</pre>
+                <div style="font-size: 13px; line-height: 1.8; margin-top: 10px;">
+                    <strong>3. Variáveis injetadas automaticamente no escopo do arquivo PHP:</strong>
+                    <ul style="margin: 4px 0 0 18px; padding: 0;">
+                        <li><code>$course</code>: Array com dados do curso (<code>id</code>, <code>title</code>, <code>slug</code>, <code>price</code>, etc.).</li>
+                        <li><code>$lesson</code>: Array com metadados da aula ativa (<code>id</code>, <code>title</code>, <code>slug</code>, etc.).</li>
+                        <li><code>$adjacent</code>: Array de navegação com aula anterior (<code>$adjacent['prev']</code>) e próxima (<code>$adjacent['next']</code>).</li>
+                        <li><code>$navHtml</code>: Menu lateral completo com os módulos e aulas do curso.</li>
+                    </ul>
+                </div>
+                <div style="font-size: 13px; line-height: 1.8; margin-top: 10px;">
+                    <strong>4. Como importar no painel:</strong><br>
+                    Vá em <em>Academy &rarr; Cursos &rarr; Editar Curso</em>, clique no botão <strong>"📂 Importar Pasta Inteira"</strong> de qualquer módulo, selecione a pasta criada e clique em Confirmar. O importador inteligente extrai o Título real do cabeçalho docblock (ou da tag <code>&lt;h1&gt;</code>) e cadastra todas as aulas automaticamente!
+                </div>
+            </div>
+
             <!-- DESTAQUE ARQUITETURAL SOLID -->
             <div style="background: rgba(168, 85, 247, 0.08); border-left: 4px solid #a855f7; padding: 12px 16px; margin: 16px 0 0; border-radius: 0 6px 6px 0; font-size: 13px;">
                 <strong>Blindagem SOLID &amp; Contratos (Ring 3):</strong>

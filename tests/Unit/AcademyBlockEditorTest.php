@@ -414,6 +414,22 @@ class AcademyBlockEditorTest extends TestCase
             $this->assertNotNull($extractedJson);
             $this->assertStringContainsString('Árvores Binárias e Grafos', $extractedJson);
 
+            // Inspeciona metadados inteligentes do arquivo fabricado
+            $meta = $scaffolder->inspectLessonFile('pages/estrutura-de-dados.php');
+            $this->assertSame('Estrutura de Dados', $meta['title']);
+            $this->assertSame('estrutura-de-dados', $meta['slug']);
+            $this->assertSame('cinema', $meta['mobile_profile']);
+            $this->assertTrue($meta['has_blocks']);
+            $this->assertNotNull($meta['blocks_json']);
+
+            // Inspeciona arquivo em PHP puro com docblock e <h1>
+            file_put_contents($tempThemeDir . '/pages/aula-pura.php', "<?php\n/**\n * Título: Minha Aula Pura PHP\n * Perfil Mobile: bottom_bar\n */\n?>\n<h1>Minha Aula Pura PHP</h1>");
+            $metaPura = $scaffolder->inspectLessonFile('pages/aula-pura.php');
+            $this->assertSame('Minha Aula Pura PHP', $metaPura['title']);
+            $this->assertSame('minha-aula-pura-php', $metaPura['slug']);
+            $this->assertSame('bottom_bar', $metaPura['mobile_profile']);
+            $this->assertFalse($metaPura['has_blocks']);
+
             // 2. Cria curso e aula vinculada ao arquivo fabricado e testa a rota direta /cursos/estrutura-de-dados
             $courseId = $this->courseRepo->create([
                 'title'          => 'Ciência da Computação',

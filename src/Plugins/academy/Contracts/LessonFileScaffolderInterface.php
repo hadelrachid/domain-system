@@ -49,4 +49,22 @@ interface LessonFileScaffolderInterface
         ?string $blocksJson = null,
         string $mobileProfile = 'drawer'
     ): array;
+
+    /**
+     * Inspeciona um arquivo PHP existente de aula para extrair metadados inteligentes:
+     * - Título real (via docblock "* Título: ..." ou tag <h1>)
+     * - Slug normalizado
+     * - Perfil mobile ("* Perfil Mobile: ...")
+     * - Se contém blocos DS_BLOCKS_B64 e seu JSON decodificado
+     *
+     * @param string $relativePath Caminho relativo ao tema (ex: 'pages/curso/aula.php')
+     * @return array{
+     *   title: string,
+     *   slug: string,
+     *   mobile_profile: string,
+     *   has_blocks: bool,
+     *   blocks_json: string|null
+     * }
+     */
+    public function inspectLessonFile(string $relativePath): array;
 }

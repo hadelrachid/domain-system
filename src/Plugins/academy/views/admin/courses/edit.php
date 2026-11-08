@@ -407,6 +407,7 @@
         var courseSlug = <?= json_encode((string)$course['slug']) ?>;
         var structure = <?= json_encode($initialStructure, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> || [];
         var availablePages = <?= json_encode($availablePages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> || [];
+        var availablePagesMeta = <?= json_encode($availablePagesMeta ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> || {};
 
         var foldersMap = {};
         availablePages.forEach(function(pagePath) {
@@ -606,7 +607,15 @@
                 return;
             }
             preview.innerHTML = files.map(function(f) {
-                return '<div style="padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.04);">📄 ' + escapeHtml(f) + ' &rarr; <strong style="color:#45f3ff;">' + escapeHtml(formatFilenameToTitle(f)) + '</strong></div>';
+                var meta = availablePagesMeta[f] || {};
+                var title = meta.title || formatFilenameToTitle(f);
+                var badge = meta.has_blocks 
+                    ? '<span style="font-size:10px; background:rgba(69,243,255,0.15); color:#45f3ff; padding:2px 6px; border-radius:4px; font-weight:600;">⚡ Blocos</span>' 
+                    : '<span style="font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; padding:2px 6px; border-radius:4px; font-weight:600;">🐘 PHP Puro</span>';
+                return '<div style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">' +
+                       '<span>📄 ' + escapeHtml(f) + ' &rarr; <strong style="color:#45f3ff;">' + escapeHtml(title) + '</strong></span>' +
+                       badge +
+                       '</div>';
             }).join('');
         }
 
@@ -635,13 +644,19 @@
 
             files.forEach(function(filePath) {
                 if (!existingSources[filePath]) {
+                    var meta = availablePagesMeta[filePath] || {};
+                    var lessonTitle = meta.title || formatFilenameToTitle(filePath);
+                    var lessonSlug = meta.slug || formatFilenameToSlug(filePath);
+                    var mobileProfile = meta.mobile_profile || 'drawer';
+                    var content = meta.blocks_json || '';
+
                     structure[modIdx].lessons.push({
-                        title: formatFilenameToTitle(filePath),
-                        slug: formatFilenameToSlug(filePath),
+                        title: lessonTitle,
+                        slug: lessonSlug,
                         source_type: 'theme_file',
                         source: filePath,
-                        content: '',
-                        mobile_profile: 'drawer',
+                        content: content,
+                        mobile_profile: mobileProfile,
                         status: 'published'
                     });
                 }

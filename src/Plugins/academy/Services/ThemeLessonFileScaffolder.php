@@ -317,5 +317,84 @@ PHP;
 
         return null;
     }
-}
 
+    public function inspectLessonFile(string $relativePath): array
+    {
+        $cleanRel = ltrim(str_replace('\\', '/', $relativePath), '/');
+        if (str_starts_with($cleanRel, 'pages/')) {
+            $cleanRel = substr($cleanRel, 6);
+        }
+
+        $pagesRoot = $this->resolvePagesDirectory();
+        $fullPath = $pagesRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanRel);
+
+        $fileName = basename($cleanRel);
+        $fallbackTitle = ucwords(str_replace(['-', '_'], ' ', preg_replace('/\.(php|html)$/i', '', $fileName)));
+
+        if (!is_file($fullPath)) {
+            return [
+                'title'          => $fallbackTitle,
+                'slug'           => $this->slugify($fallbackTitle),
+                'mobile_profile' => 'drawer',
+                'has_blocks'     => false,
+                'blocks_json'    => null,
+            ];
+        }
+
+        // Lê até 8KB iniciais para extração rápida de cabeçalho e <h1>
+        $handle = @fopen($fullPath, 'r');
+        $content = $handle ? (string)@fread($handle, 8192) : (string)@file_get_contents($fullPath);
+        if ($handle) {
+            @fclose($handle);
+        }
+
+        $title = null;
+        // 1. Tenta extrair do cabeçalho docblock: * Título: ... ou * Title: ...
+        if (preg_match('/(?:\*|\/\/)\s*(?:T[íi]tulo|Title)\s*:\s*([^\r\n*]+)/iu', $content, $m)) {
+            $candidate = trim($m[1]);
+            if ($candidate !== '') {
+                $title = $candidate;
+            }
+        }
+
+        // 2. Se não encontrou, tenta extrair da primeira tag <h1>...</h1>
+        if ($title === null && preg_match('/<h1[^>]*>(.*?)<\/h1>/is', $content, $m)) {
+            $candidate = trim(strip_tags($m[1]));
+            if ($candidate !== '') {
+                $title = $candidate;
+            }
+        }
+
+        if ($title === null || $title === '') {
+            $title = $fallbackTitle;
+        }
+
+        // 3. Perfil Mobile
+        $mobileProfile = 'drawer';
+        if (preg_match('/(?:\*|\/\/)\s*(?:Perfil\s*Mobile|Mobile\s*Profile)\s*:\s*([a-z_]+)/iu', $content, $m)) {
+            $p = strtolower(trim($m[1]));
+            if (in_array($p, ['drawer', 'bottom_bar', 'cinema'], true)) {
+                $mobileProfile = $p;
+            }
+        }
+
+        // 4. Blocos em Base64
+        $blocksJson = null;
+        $hasBlocks = false;
+        if (preg_match('/DS_BLOCKS_B64:\s*([A-Za-z0-9+\/=]+)/', $content, $m)) {
+            $decoded = base64_decode($m[1], true);
+            if ($decoded !== false && trim($decoded) !== '') {
+                $blocksJson = $decoded;
+                $hasBlocks = true;
+            }
+        }
+
+        return [
+            'title'          => $title,
+            'slug'           => $this->slugify($title),
+            'mobile_profile' => $mobileProfile,
+            'has_blocks'     => $hasBlocks,
+            'blocks_json'    => $blocksJson,
+        ];
+    }
+}

@@ -92,6 +92,12 @@ class CourseAdminController
             $modules = $this->structureRepo->getModules((int)$course['id']);
             $allLessons = $this->structureRepo->getLessons((int)$course['id']);
             $availablePages = $this->resolvePublicThemePages();
+            $availablePagesMeta = [];
+            if ($this->scaffolder !== null) {
+                foreach ($availablePages as $p) {
+                    $availablePagesMeta[$p] = $this->scaffolder->inspectLessonFile($p);
+                }
+            }
 
             $lessonsByMod = [];
             $standaloneLessons = [];
@@ -156,7 +162,8 @@ class CourseAdminController
             'storage'          => $this->storage,
             'hasStructureRepo' => $this->structureRepo !== null,
             'initialStructure' => $initialStructure,
-            'availablePages'   => $availablePages,
+            'availablePages'       => $availablePages,
+            'availablePagesMeta'   => $availablePagesMeta ?? [],
             'commerceSettings' => $this->getCommerceSettings(),
         ]);
 

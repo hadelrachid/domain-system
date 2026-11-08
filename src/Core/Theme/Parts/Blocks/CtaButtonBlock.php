@@ -9,6 +9,7 @@ use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
+use DomainSystem\Core\Theme\Parts\Styles\Values\ColorValue;
 use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
 /**
@@ -64,6 +65,20 @@ class CtaButtonBlock implements BlockInterface
         $customPadding = $this->styleRenderer->sanitizeCssValue((string)($data['padding'] ?? ''));
         $customBg = $this->styleRenderer->sanitizeCssValue((string)($data['bg_color'] ?? $data['background'] ?? ''));
         $customText = $this->styleRenderer->sanitizeCssValue((string)($data['text_color'] ?? $data['color'] ?? ''));
+        $hoverBgColor = !empty($data['hover_bg_color'])
+            ? $this->styleRenderer->sanitizeCssValue(ColorValue::fromString((string)$data['hover_bg_color'])->getCssValue())
+            : '';
+        $hoverTextColor = !empty($data['hover_text_color'])
+            ? $this->styleRenderer->sanitizeCssValue(ColorValue::fromString((string)$data['hover_text_color'])->getCssValue())
+            : '';
+
+        $hoverCssVars = '';
+        if ($hoverBgColor !== '') {
+            $hoverCssVars .= " --btn-hover-bg: {$hoverBgColor};";
+        }
+        if ($hoverTextColor !== '') {
+            $hoverCssVars .= " --btn-hover-color: {$hoverTextColor};";
+        }
         $fontFamily = $this->styleRenderer->sanitizeCssValue((string)($data['font_family'] ?? ''));
         $fontSize = $this->styleRenderer->sanitizeCssValue((string)($data['font_size'] ?? ''));
         $fontWeight = $this->styleRenderer->sanitizeCssValue((string)($data['font_weight'] ?? '700'));
@@ -125,7 +140,7 @@ class CtaButtonBlock implements BlockInterface
 
         return <<<HTML
 <div class="ds-block-cta-wrapper" style="{$wrapperStyle}">
-    <a href="{$url}" target="{$target}" class="ds-block-cta ds-btn-{$safeVariant}{$animClass}" style="{$baseStyles} {$variantStyles}">
+    <a href="{$url}" target="{$target}" class="ds-block-cta ds-btn-{$safeVariant}{$animClass}" style="{$baseStyles} {$variantStyles}{$hoverCssVars}">
         <span>{$label}</span>
     </a>
 </div>
@@ -140,8 +155,10 @@ HTML;
                 'label'       => ['type' => 'text', 'label' => 'Texto do Botão', 'default' => 'Começar Agora'],
                 'url'         => ['type' => 'text', 'label' => 'Link de Destino', 'default' => '#'],
                 'variant'     => ['type' => 'select', 'label' => 'Estilo Visual', 'options' => ['primary', 'secondary', 'outline', 'glow'], 'default' => 'primary'],
-                'bg_color'    => ['type' => 'color', 'label' => 'Cor de Fundo', 'default' => 'var(--color-primary)'],
-                'text_color'  => ['type' => 'color', 'label' => 'Cor do Texto', 'default' => '#0b0c10'],
+                'bg_color'         => ['type' => 'color', 'label' => 'Cor de Fundo', 'default' => 'var(--color-primary)'],
+                'text_color'       => ['type' => 'color', 'label' => 'Cor do Texto', 'default' => '#0b0c10'],
+                'hover_bg_color'   => ['type' => 'color', 'label' => 'Cor de Fundo no Hover', 'default' => ''],
+                'hover_text_color' => ['type' => 'color', 'label' => 'Cor do Texto no Hover', 'default' => ''],
                 'font_family' => ['type' => 'font', 'label' => 'Família da Fonte', 'default' => 'var(--font-primary)'],
                 'font_size'   => ['type' => 'dimension', 'label' => 'Tamanho da Fonte', 'default' => '0.95rem'],
                 'font_weight' => ['type' => 'select', 'label' => 'Peso da Fonte', 'options' => ['400', '500', '600', '700', '800'], 'default' => '700'],
