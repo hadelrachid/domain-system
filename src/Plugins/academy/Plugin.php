@@ -17,6 +17,7 @@ use DomainSystem\Plugins\academy\Contracts\CourseEnrollmentInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseEnrollmentRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseImageStorageInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseNavigationInterface;
+use DomainSystem\Plugins\academy\Contracts\CoursePackageServiceInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonBlockRendererInterface;
@@ -45,6 +46,7 @@ use DomainSystem\Plugins\academy\Services\AcademyCourseFulfillment;
 use DomainSystem\Plugins\academy\Services\CourseCatalogRenderer;
 use DomainSystem\Plugins\academy\Services\CourseEnrollmentService;
 use DomainSystem\Plugins\academy\Services\CourseNavigationService;
+use DomainSystem\Plugins\academy\Services\CoursePackageService;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use DomainSystem\Plugins\academy\Services\LessonBlockRenderer;
 use DomainSystem\Plugins\academy\Services\LocalCourseImageStorage;
@@ -208,6 +210,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(CoursePackageServiceInterface::class, function () use ($runtime) {
+            return new CoursePackageService(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseStructureRepositoryInterface::class),
+                $runtime->make(ThemePageResolverInterface::class),
+                $runtime->make(CourseService::class),
+                $runtime->make(LessonFileScaffolderInterface::class)
+            );
+        });
+
         // 2. Menu Administrativo
         $runtime->onHook('admin.menu', function ($menus, $role = 'guest') {
             if ($role === 'admin') {
@@ -242,6 +254,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/academy/structure/{id}', [CourseAdminController::class, 'updateStructure'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/scaffold/folder/{id}', [CourseAdminController::class, 'createThemeFolder'], 'academy', ['admin']);
             $router->addRoute('POST', '/admin/academy/delete/{id}', [CourseAdminController::class, 'delete'], 'academy', ['admin']);
+            $router->addRoute('GET', '/admin/academy/export/{id}', [CourseAdminController::class, 'exportZip'], 'academy', ['admin']);
+            $router->addRoute('POST', '/admin/academy/import-zip', [CourseAdminController::class, 'importZip'], 'academy', ['admin']);
 
             // Administrativas - Gestão de Alunos & Matrículas
             $router->addRoute('GET', '/admin/academy/students', [StudentAdminController::class, 'index'], 'academy', ['admin']);

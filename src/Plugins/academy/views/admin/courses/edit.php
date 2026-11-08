@@ -318,6 +318,9 @@
                 </p>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <a href="<?= $baseUrl ?>/admin/academy/export/<?= (int)$course['id'] ?>" class="btn" style="padding:8px 14px; border:1px solid rgba(0,210,132,0.45); background:rgba(0,210,132,0.12); color:#00d284; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Exportar curso completo com todas as aulas e manifesto em arquivo .zip">
+                    📦 Exportar (.zip)
+                </a>
                 <button type="button" onclick="openCreateFolderModal()" class="btn btn-outline" style="padding:8px 14px; border:1px solid rgba(0,210,132,0.45); background:rgba(0,210,132,0.08); color:#00d284; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" title="Criar pasta física em pages/ e módulo vinculado">
                     📁 Criar Pasta (ou Módulo)
                 </button>
@@ -385,9 +388,13 @@
             <h3 style="margin-top:0; color:#fff; display:flex; align-items:center; gap:10px;">
                 📂 Importar Pasta de Aulas do Tema
             </h3>
-            <p style="font-size:13px; color:#8c8f94; line-height:1.5; margin-bottom:18px;">
+            <p style="font-size:13px; color:#8c8f94; line-height:1.5; margin-bottom:14px;">
                 Selecione uma pasta do tema ativo. Todos os arquivos <code>.php</code> dentro dela serão adicionados automaticamente como aulas ordenadas no módulo selecionado.
             </p>
+            <div style="background:rgba(69,243,255,0.06); border:1px solid rgba(69,243,255,0.2); border-radius:6px; padding:10px 12px; margin-bottom:16px; font-size:12px; line-height:1.4;">
+                🎯 <strong>Pasta Padrão deste Curso:</strong> <code style="color:#45f3ff;">pages/<?= htmlspecialchars((string)($course['slug'] ?? '')) ?>/</code><br>
+                <span style="font-size:11px; color:#8c8f94;">Para manter as aulas organizadas e portáveis, salve seus arquivos <code>.php</code> ou submódulos nesta pasta.</span>
+            </div>
             <input type="hidden" id="import_target_mod_idx" value="0">
             <div style="margin-bottom:18px;">
                 <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Pasta de Origem:</label>
@@ -580,15 +587,24 @@
             var select = document.getElementById('import_folder_select');
             select.innerHTML = '';
 
+            var courseSlug = '<?= htmlspecialchars((string)($course['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>';
+            var defaultCourseFolder = 'pages/' + courseSlug;
+
             var folderKeys = Object.keys(foldersMap);
             if (folderKeys.length === 0) {
                 select.innerHTML = '<option value="">Nenhuma pasta encontrada em pages/</option>';
                 document.getElementById('import_folder_preview').innerHTML = 'Nenhum arquivo .php encontrado na pasta pages/ do tema.';
             } else {
-                folderKeys.forEach(function(folder) {
+                var selectedIdx = -1;
+                folderKeys.forEach(function(folder, idx) {
                     var opt = document.createElement('option');
                     opt.value = folder;
-                    opt.textContent = folder + '/ (' + foldersMap[folder].length + ' arquivos)';
+                    var isCourseFolder = (folder === defaultCourseFolder || folder.indexOf(defaultCourseFolder + '/') === 0);
+                    opt.textContent = (isCourseFolder ? '🎯 ' : '') + folder + '/ (' + foldersMap[folder].length + ' arquivos)' + (isCourseFolder ? ' [Pasta deste Curso]' : '');
+                    if (isCourseFolder && selectedIdx === -1) {
+                        opt.selected = true;
+                        selectedIdx = idx;
+                    }
                     select.appendChild(opt);
                 });
                 updateImportFolderPreview();

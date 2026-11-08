@@ -245,10 +245,30 @@ class AcademyManualModule implements ManualModuleInterface
                 </div>
             </div>
 
+            <!-- SEÇÃO 8: EXPORTAÇÃO E IMPORTAÇÃO DE CURSOS EM .ZIP -->
+            <h3 style="color: #00d284; font-size: 15px; margin: 22px 0 10px;">8. Exportação &amp; Importação de Cursos Portáveis (.zip)</h3>
+            <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 16px;">
+                <p style="font-size: 13px; color: #cbd5e1; margin-top: 0; line-height: 1.6;">
+                    O Academy conta com um <strong>Compactador e Descompactador de Cursos</strong> integrado para permitir que você transfira cursos completos entre diferentes instâncias do Domain-System em 1 clique:
+                </p>
+                <div style="font-size: 13px; line-height: 1.8;">
+                    <strong>📁 Pasta Padrão por Curso:</strong><br>
+                    Para manter as aulas organizadas e isoladas, o padrão do sistema é armazenar os arquivos dentro de <code>themes/{tema-ativo}/pages/{slug-do-curso}/</code> (ex: <code>pages/solid/</code>, <code>pages/python/</code>).
+                </div>
+                <div style="font-size: 13px; line-height: 1.8; margin-top: 10px;">
+                    <strong>📦 Como Exportar um Curso:</strong><br>
+                    Na listagem ou na edição do curso, clique no botão <strong>"📦 Exportar (.zip)"</strong>. O sistema empacota o manifesto <code>course.json</code> (com todos os módulos, metadados e ordem) juntamente com todos os arquivos <code>.php</code> das aulas e gera o download do arquivo ZIP.
+                </div>
+                <div style="font-size: 13px; line-height: 1.8; margin-top: 10px;">
+                    <strong>📥 Como Importar em Outro Sistema:</strong><br>
+                    No sistema de destino, vá em <em>Academy &rarr; Cursos</em> e clique em <strong>"📥 Importar Curso (.zip)"</strong>. Envie o arquivo ZIP: o sistema descompacta com segurança os arquivos <code>.php</code> no tema ativo e recria todo o curso e suas aulas automaticamente!
+                </div>
+            </div>
+
             <!-- DESTAQUE ARQUITETURAL SOLID -->
             <div style="background: rgba(168, 85, 247, 0.08); border-left: 4px solid #a855f7; padding: 12px 16px; margin: 16px 0 0; border-radius: 0 6px 6px 0; font-size: 13px;">
                 <strong>Blindagem SOLID &amp; Contratos (Ring 3):</strong>
-                O Academy opera 100% desacoplado através dos contratos <code>CourseRepositoryInterface</code>, <code>CourseStructureRepositoryInterface</code>, <code>CourseEnrollmentInterface</code>, <code>StudentProgressInterface</code>, <code>StudentStorageInterface</code>, <code>LessonBlockRendererInterface</code>, <code>ThemePageResolverInterface</code>, <code>LessonFileScaffolderInterface</code> e <code>ManualModuleInterface</code>.
+                O Academy opera 100% desacoplado através dos contratos <code>CourseRepositoryInterface</code>, <code>CourseStructureRepositoryInterface</code>, <code>CoursePackageServiceInterface</code>, <code>CourseEnrollmentInterface</code>, <code>StudentProgressInterface</code>, <code>StudentStorageInterface</code>, <code>LessonBlockRendererInterface</code>, <code>ThemePageResolverInterface</code>, <code>LessonFileScaffolderInterface</code> e <code>ManualModuleInterface</code>.
             </div>
         </div>
         <?php

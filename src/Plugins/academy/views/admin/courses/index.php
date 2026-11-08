@@ -14,7 +14,10 @@
     <h1 style="margin: 0; display:flex; align-items:center; gap:10px;">
         <i class="fas fa-graduation-cap" style="color:var(--accent-blue, #45f3ff);"></i> Academy (Cursos)
     </h1>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="document.getElementById('modalImportZipCourse').style.display='flex'" class="btn" style="padding: 10px 16px; font-weight:600; cursor:pointer; background:rgba(69,243,255,0.1); border:1px solid rgba(69,243,255,0.3); color:#45f3ff; border-radius:6px; display:inline-flex; align-items:center; gap:6px;" title="Importar curso completo (.zip) com todas as aulas e manifesto">
+            <i class="fas fa-file-import"></i> 📥 Importar Curso (.zip)
+        </button>
         <a href="<?= $baseUrl ?>/admin/academy/students" class="btn" style="padding: 10px 18px; font-weight:600; text-decoration:none; background: rgba(69, 243, 255, 0.12); border: 1px solid var(--accent-blue, #45f3ff); color: var(--accent-blue, #45f3ff); border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
             <i class="fas fa-user-graduate"></i> Gestão de Alunos
         </a>
@@ -99,6 +102,9 @@
                                 <a href="<?= $baseUrl ?>/admin/academy/edit/<?= (int)$c['id'] ?>" class="btn" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px; height: 32px !important; padding: 0 14px !important; box-sizing: border-box !important; line-height: 1 !important; font-size: 11px !important; font-weight: 600; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 !important; vertical-align: middle !important;" title="Editar Curso">
                                     <i class="fas fa-edit" style="font-size: 11px;"></i>
                                     <span>Editar</span>
+                                </a>
+                                <a href="<?= $baseUrl ?>/admin/academy/export/<?= (int)$c['id'] ?>" class="btn" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 5px; height: 32px !important; padding: 0 12px !important; box-sizing: border-box !important; line-height: 1 !important; font-size: 11px !important; font-weight: 600; text-decoration: none; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(0, 210, 132, 0.12); border: 1px solid rgba(0, 210, 132, 0.4); color: #00d284; margin: 0 !important; vertical-align: middle !important;" title="Exportar curso completo em arquivo .zip">
+                                    <span>📦 .ZIP</span>
                                 </a>
                                 <form method="POST" action="<?= $baseUrl ?>/admin/academy/delete/<?= (int)$c['id'] ?>" class="ds-confirm-delete-form" data-confirm-title="<?= htmlspecialchars((string)$c['title'], ENT_QUOTES, 'UTF-8') ?>" style="display: inline-flex; margin: 0; padding: 0; vertical-align: middle; align-items: center;">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -396,6 +402,29 @@ document.querySelectorAll('.ds-confirm-delete-form').forEach(function(form) {
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
                 <button type="button" onclick="document.getElementById('modalNewCourse').style.display='none'" class="btn btn-outline" style="padding:10px 18px; border:1px solid #4a545a; background:transparent; color:#8c8f94; border-radius:6px; cursor:pointer;">Cancelar</button>
                 <button type="submit" class="btn btn-activate" style="padding:10px 20px; font-weight:600; cursor:pointer;">Salvar Curso</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL IMPORTAR CURSO VIA ZIP -->
+<div id="modalImportZipCourse" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#1d2327; border:1px solid rgba(69,243,255,0.3); border-radius:10px; padding:26px; width:480px; max-width:92%; box-shadow:0 15px 40px rgba(0,0,0,0.6); color:#fff;">
+        <h2 style="margin:0 0 10px 0; font-size:18px; color:#fff; display:flex; align-items:center; gap:8px;">
+            <span>📥</span> Importar Curso Completo (.zip)
+        </h2>
+        <p style="font-size:12px; color:#8c8f94; margin-bottom:16px; line-height:1.45;">
+            Envie o arquivo <code>.zip</code> gerado pelo exportador do Academy. O sistema descompactará os arquivos <code>.php</code> diretamente no tema ativo e restaurará todos os módulos e aulas instantaneamente.
+        </p>
+        <form method="POST" action="<?= $baseUrl ?>/admin/academy/import-zip" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+            <div style="margin-bottom:18px;">
+                <label style="display:block; font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:6px;">Arquivo do Curso (.zip):</label>
+                <input type="file" name="course_zip" accept=".zip" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-size:12px;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="document.getElementById('modalImportZipCourse').style.display='none'" class="btn btn-outline" style="padding:9px 16px; border:1px solid #4a545a; background:transparent; color:#8c8f94; border-radius:6px; cursor:pointer;">Cancelar</button>
+                <button type="submit" class="btn btn-activate" style="padding:9px 18px; font-weight:600; cursor:pointer;">📦 Descompactar & Importar</button>
             </div>
         </form>
     </div>

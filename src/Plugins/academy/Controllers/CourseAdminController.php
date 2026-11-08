@@ -11,10 +11,12 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Plugins\academy\Contracts\CoursePackageServiceInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\CourseStructureRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonFileScaffolderInterface;
 use DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface;
+use DomainSystem\Plugins\academy\Services\CoursePackageService;
 use DomainSystem\Plugins\academy\Services\CourseService;
 use InvalidArgumentException;
 use Throwable;
@@ -28,6 +30,7 @@ class CourseAdminController
     private ThemePageResolverInterface|ThemeManagerInterface|null $pageResolver;
     private ?PublicStorageInterface $storage;
     private ?LessonFileScaffolderInterface $scaffolder;
+    private ?CoursePackageServiceInterface $packageService;
 
     public function __construct(
         CourseRepositoryInterface $repository,
@@ -36,7 +39,8 @@ class CourseAdminController
         ?CourseStructureRepositoryInterface $structureRepo = null,
         ThemePageResolverInterface|ThemeManagerInterface|null $pageResolver = null,
         ?PublicStorageInterface $storage = null,
-        ?LessonFileScaffolderInterface $scaffolder = null
+        ?LessonFileScaffolderInterface $scaffolder = null,
+        ?CoursePackageServiceInterface $packageService = null
     ) {
         $this->repository = $repository;
         $this->service = $service;
@@ -45,6 +49,17 @@ class CourseAdminController
         $this->pageResolver = $pageResolver;
         $this->storage = $storage;
         $this->scaffolder = $scaffolder;
+        $this->packageService = $packageService;
+
+        if ($this->packageService === null && $this->structureRepo !== null && $this->pageResolver instanceof ThemePageResolverInterface) {
+            $this->packageService = new CoursePackageService(
+                $this->repository,
+                $this->structureRepo,
+                $this->pageResolver,
+                $this->service,
+                $this->scaffolder
+            );
+        }
     }
 
     public function index(Request $request): ResponseInterface
@@ -455,6 +470,88 @@ class CourseAdminController
                 throw new InvalidArgumentException("O arquivo de imagem enviado excedeu o tamanho máximo permitido pelo servidor.");
             }
             throw new InvalidArgumentException("Erro no envio do arquivo de imagem (Código: " . ($file['error'] ?? 'desconhecido') . ").");
+        }
+        return $file;
+    }
+
+    public function exportZip(Request $request, $id = null): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $courseId = (int)($id ?? $request->query('id') ?? $request->input('id'));
+        $course = $this->repository->findById($courseId);
+
+        if (!$course) {
+            $this->session->setFlash('error', "Curso ID {$courseId} não encontrado para exportação.");
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+
+        if ($this->packageService === null) {
+            $this->session->setFlash('error', "O serviço de empacotamento de cursos não está configurado.");
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+
+        try {
+            $zipPath = $this->packageService->exportCourseZip($courseId);
+            $slug = preg_replace('/[^a-z0-9_-]/i', '_', (string)$course['slug']) ?: 'curso';
+            $fileName = 'curso-' . $slug . '.zip';
+            $zipContent = (string)file_get_contents($zipPath);
+            @unlink($zipPath);
+
+            return new Response($zipContent, 200, [
+                'Content-Type'        => 'application/zip',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Content-Length'      => (string)strlen($zipContent),
+                'Pragma'              => 'no-cache',
+                'Expires'             => '0',
+            ]);
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Erro ao exportar curso: " . $e->getMessage());
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+    }
+
+    public function importZip(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrfToken($request)) {
+            $this->session->setFlash('error', "Token de segurança CSRF inválido.");
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+
+        if ($this->packageService === null) {
+            $this->session->setFlash('error', "O serviço de importação de cursos não está configurado.");
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+
+        try {
+            $zipUpload = $this->extractUploadedZipFile($request);
+            if (!$zipUpload || empty($zipUpload['tmp_name'])) {
+                $this->session->setFlash('error', "Por favor, selecione um arquivo .zip de curso para importar.");
+                return Response::redirect($baseUrl . '/admin/academy');
+            }
+
+            $res = $this->packageService->importCourseZip($zipUpload['tmp_name']);
+            $this->session->setFlash('success', "Curso '{$res['title']}' importado com sucesso! ({$res['modules_count']} módulo(s) e {$res['lessons_count']} aula(s) restauradas).");
+            return Response::redirect($baseUrl . '/admin/academy/edit/' . $res['course_id']);
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha na importação do curso: " . $e->getMessage());
+            return Response::redirect($baseUrl . '/admin/academy');
+        }
+    }
+
+    private function extractUploadedZipFile(Request $request): ?array
+    {
+        $files = $request->files ?? [];
+        $file = $files['course_zip'] ?? null;
+        if (!$file && isset($_FILES['course_zip'])) {
+            $file = $_FILES['course_zip'];
+        }
+        if ($file && (empty($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_OK) === UPLOAD_ERR_NO_FILE)) {
+            return null;
+        }
+        if ($file && ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            throw new InvalidArgumentException("Erro no envio do arquivo ZIP (Código: " . ($file['error'] ?? 'desconhecido') . ").");
         }
         return $file;
     }
