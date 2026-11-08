@@ -568,23 +568,45 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     var showStructurePicker = false;
     var currentUploadTargetKey = null;
 
-    var blocksCatalog = [
-        { type: 'heading', name: 'Título', icon: '🔤', desc: 'Títulos H1 até H6 com suporte a fontes e cores.' },
-        { type: 'paragraph', name: 'Parágrafo', icon: '📄', desc: 'Texto corrido rico e tipografia escalável.' },
-        { type: 'button', name: 'Botão Genérico', icon: '🔘', desc: 'Botão com múltiplas ações (link, whatsapp, modal, scroll), cores dos tokens e hover.' },
-        { type: 'image', name: 'Imagem', icon: '🖼️', desc: 'Imagem com dimensões dinâmicas, upload e link.' },
-        { type: 'video', name: 'Vídeo', icon: '🎥', desc: 'YouTube, Vimeo ou MP4 direto responsivo.' },
-        { type: 'nav_menu', name: 'Menu de Navegação', icon: '🧭', desc: 'Menu dinâmico com 4 tipos de toggle hamburguer.' },
-        { type: 'user_auth', name: 'Área de Login / Aluno', icon: '👤', desc: 'Botões de Login e Cadastro (quando deslogado) ou Painel do Aluno e Logout (quando logado).' },
-        { type: 'logo', name: 'Logotipo', icon: '🛡️', desc: 'Logo com upload de imagem ou texto estilizado.' },
-        { type: 'cta_button', name: 'Botão CTA', icon: '🚀', desc: 'Botão de ação com variantes primária e outline.' },
-        { type: 'shortcode', name: 'Shortcode Pronto', icon: '⚡', desc: 'Insere qualquer shortcode ativo do sistema.' },
-        { type: 'divider', name: 'Divisória / Espaçador', icon: '➖', desc: 'Linha sólida, tracejada ou espaçador transparente.' },
-        { type: 'social_icons', name: 'Redes Sociais', icon: '🌐', desc: 'Ícones de redes com links dinâmicos.' },
-        { type: 'post_cards_grid', name: 'Grid de Artigos (Blog)', icon: '📰', desc: 'Cards de posts responsivos em CSS Grid, SEO Schema.org e filtros.' , allowed_types: ['section'] },
-        { type: 'copyright', name: 'Copyright & LGPD', icon: '©', desc: 'Ano automático {year} e links de termos.' , allowed_types: ['footer'] },
-        { type: 'custom_code', name: 'Código Customizado', icon: '💻', desc: 'Editor HTML, CSS e JavaScript livre.' }
+    <?php
+    $catalogItems = [];
+    $staticBlockDescriptions = [
+        'heading'         => 'Títulos H1 até H6 com suporte a fontes e cores.',
+        'paragraph'       => 'Texto corrido rico e tipografia escalável.',
+        'button'          => 'Botão com múltiplas ações (link, whatsapp, modal, scroll), cores dos tokens e hover.',
+        'image'           => 'Imagem com dimensões dinâmicas, upload e link.',
+        'video'           => 'YouTube, Vimeo ou MP4 direto responsivo.',
+        'nav_menu'        => 'Menu de Navegação com 4 tipos de toggle hamburguer.',
+        'user_auth'       => 'Botões de Login e Cadastro (quando deslogado) ou Painel do Aluno e Logout (quando logado).',
+        'logo'            => 'Logo com upload de imagem ou texto estilizado.',
+        'cta_button'      => 'Botão de ação com variantes primária e outline.',
+        'shortcode'       => 'Insere qualquer shortcode ativo do sistema.',
+        'divider'         => 'Linha sólida, tracejada ou espaçador transparente.',
+        'social_icons'    => 'Redes Sociais com links dinâmicos.',
+        'post_cards_grid' => 'Cards de posts responsivos em CSS Grid, SEO Schema.org e filtros.',
+        'copyright'       => 'Ano automático {year} e links de termos.',
+        'custom_code'     => 'Editor HTML, CSS e JavaScript livre.',
     ];
+    if (isset($blocks) && is_array($blocks)) {
+        foreach ($blocks as $bType => $bObj) {
+            $allowed = method_exists($bObj, 'getAllowedPartTypes') ? $bObj->getAllowedPartTypes() : [];
+            $name = method_exists($bObj, 'getName') ? $bObj->getName() : ucfirst($bType);
+            $icon = method_exists($bObj, 'getIcon') ? $bObj->getIcon() : '📦';
+            $desc = $staticBlockDescriptions[$bType] ?? $name;
+            $entry = [
+                'type' => $bType,
+                'name' => $name,
+                'icon' => $icon,
+                'desc' => $desc,
+            ];
+            if (!empty($allowed)) {
+                $entry['allowed_types'] = $allowed;
+            }
+            $catalogItems[] = $entry;
+        }
+    }
+    ?>
+    var blocksCatalog = <?= json_encode($catalogItems, JSON_UNESCAPED_UNICODE) ?>;
 
     function getMaxSectionsForType(type) {
         if (type === 'header') return 3; // Topbar, Principal, Sub-header

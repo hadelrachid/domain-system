@@ -116,7 +116,14 @@ class FlexBuilderUnifiedAuditTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $blocks = $registry->all();
 
-        $this->assertCount(15, $blocks);
+        $this->assertCount(14, $blocks);
+
+        // Testa também o bloco do Academy injetado via contrato
+        $academyProvider = new \DomainSystem\Plugins\academy\Blocks\AcademyBlockProvider();
+        $extRegistry = DefaultBlockRegistryFactory::create(null, null, null, [$academyProvider]);
+        $this->assertCount(15, $extRegistry->all());
+        $userAuthBlock = $extRegistry->get('user_auth');
+        $this->assertInstanceOf(BlockInterface::class, $userAuthBlock);
 
         foreach ($blocks as $type => $block) {
             $this->assertInstanceOf(BlockInterface::class, $block);

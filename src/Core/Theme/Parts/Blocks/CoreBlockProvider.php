@@ -53,6 +53,5 @@ class CoreBlockProvider implements BlockProviderInterface
         $registry->register(new CopyrightBlock($this->urlResolver));
         $registry->register(new NavMenuBlock($this->menuProvider));
         $registry->register(new PostCardsGridBlock($this->postProvider));
-        $registry->register(new UserAuthBlock($this->htmlSanitizer, $this->urlResolver));
     }
 }

@@ -20,6 +20,11 @@ interface BlockRegistryInterface
     public function get(string $type): ?BlockInterface;
 
     /**
+     * Verifica se um tipo de bloco já está registrado.
+     */
+    public function has(string $type): bool;
+
+    /**
      * Retorna todos os blocos registrados.
      * @return array<string, BlockInterface>
      */

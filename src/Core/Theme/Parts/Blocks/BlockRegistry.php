@@ -25,6 +25,11 @@ class BlockRegistry implements BlockRegistryInterface
         return $this->blocks[$type] ?? null;
     }
 
+    public function has(string $type): bool
+    {
+        return isset($this->blocks[$type]);
+    }
+
     public function all(): array
     {
         return $this->blocks;

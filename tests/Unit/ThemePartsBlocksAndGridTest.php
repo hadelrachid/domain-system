@@ -68,8 +68,8 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $registry = DefaultBlockRegistryFactory::create();
         $all = $registry->all();
 
-        $this->assertCount(15, $all);
-        $this->assertNotNull($registry->get('user_auth'));
+        $this->assertCount(14, $all);
+        $this->assertNull($registry->get('user_auth')); // user_auth pertence ao plugin Academy via DI
         $this->assertNotNull($registry->get('heading'));
         $this->assertNotNull($registry->get('paragraph'));
         $this->assertNotNull($registry->get('image'));
@@ -93,6 +93,13 @@ class ThemePartsBlocksAndGridTest extends TestCase
         $this->assertArrayHasKey('system', $grouped);
         $this->assertArrayHasKey('layout', $grouped);
         $this->assertArrayHasKey('footer', $grouped);
+
+        // Teste de Extensibilidade: Injeção de dependência via BlockProviderInterface
+        $academyProvider = new \DomainSystem\Plugins\academy\Blocks\AcademyBlockProvider();
+        $extRegistry = DefaultBlockRegistryFactory::create(null, null, null, [$academyProvider]);
+        $this->assertCount(15, $extRegistry->all());
+        $this->assertNotNull($extRegistry->get('user_auth'));
+        $this->assertSame('Área de Login / Aluno', $extRegistry->get('user_auth')->getName());
     }
 
     public function testHeadingBlockRendering(): void

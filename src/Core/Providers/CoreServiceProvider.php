@@ -253,7 +253,15 @@ class CoreServiceProvider
             $postProvider = $c->has(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class)
                 ? $c->make(\DomainSystem\Core\Theme\Parts\Contracts\PostProviderInterface::class)
                 : null;
-            return \DomainSystem\Core\Theme\Parts\Blocks\DefaultBlockRegistryFactory::create($menuProvider, $sm, $postProvider);
+            $registry = \DomainSystem\Core\Theme\Parts\Blocks\DefaultBlockRegistryFactory::create($menuProvider, $sm, $postProvider);
+
+            if ($c->has(\DomainSystem\Core\Contracts\EventDispatcherInterface::class)) {
+                $dispatcher = $c->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+                $dispatcher->dispatch('theme.blocks.register', $registry);
+                $dispatcher->dispatch('flexbuilder.register_blocks', $registry);
+            }
+
+            return $registry;
         });
 
         $container->singleton(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class, function($c) use ($basePath) {

@@ -378,8 +378,8 @@ class ThemePartsAdminControllerTest extends TestCase
         $data = json_decode($response->getContent(), true);
 
         $this->assertArrayHasKey('blocks', $data);
-        $this->assertCount(15, $data['blocks']);
-        $this->assertArrayHasKey('user_auth', $data['blocks']);
+        $this->assertCount(14, $data['blocks']);
+        $this->assertArrayNotHasKey('user_auth', $data['blocks']);
         $this->assertArrayHasKey('heading', $data['blocks']);
         $this->assertArrayHasKey('button', $data['blocks']);
         $this->assertArrayHasKey('cta_button', $data['blocks']);
