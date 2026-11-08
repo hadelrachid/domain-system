@@ -84,18 +84,36 @@ class StudentDashboardController
 
         // Sincroniza dados atualizados do banco (nome oficial, username e role)
         if ($studentId > 0 && $this->pdo !== null) {
-            $stmt = $this->pdo->prepare("SELECT name, username, role FROM users WHERE id = ? LIMIT 1");
-            $stmt->execute([$studentId]);
-            if ($u = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-                $studentName = (string)$u['name'];
-                $this->session->set('academy_student_name', $studentName);
-                if (!empty($u['username'])) {
-                    $studentUsername = (string)$u['username'];
-                    $this->session->set('academy_student_username', $studentUsername);
+            try {
+                $stmt = $this->pdo->prepare("SELECT name, username, role FROM users WHERE id = ? LIMIT 1");
+                $stmt->execute([$studentId]);
+                if ($u = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                    $studentName = (string)$u['name'];
+                    $this->session->set('academy_student_name', $studentName);
+                    if (!empty($u['username'])) {
+                        $studentUsername = (string)$u['username'];
+                        $this->session->set('academy_student_username', $studentUsername);
+                    }
+                    if (!empty($u['role'])) {
+                        $this->session->set('academy_student_role', (string)$u['role']);
+                        $this->session->set('user_role', (string)$u['role']);
+                    }
                 }
-                if (!empty($u['role'])) {
-                    $this->session->set('academy_student_role', (string)$u['role']);
-                    $this->session->set('user_role', (string)$u['role']);
+            } catch (\Throwable $e) {
+                // Fallback defensivo caso a coluna username não exista na tabela users
+                try {
+                    $stmt = $this->pdo->prepare("SELECT name, role FROM users WHERE id = ? LIMIT 1");
+                    $stmt->execute([$studentId]);
+                    if ($u = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                        $studentName = (string)$u['name'];
+                        $this->session->set('academy_student_name', $studentName);
+                        if (!empty($u['role'])) {
+                            $this->session->set('academy_student_role', (string)$u['role']);
+                            $this->session->set('user_role', (string)$u['role']);
+                        }
+                    }
+                } catch (\Throwable $e2) {
+                    // Silencioso se não conseguir ler
                 }
             }
         }

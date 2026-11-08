@@ -307,4 +307,36 @@ class StudentManagementAndModerationTest extends TestCase
         $this->assertSame('Alunos & Matrículas', $menu[0]['submenu'][1]['title']);
         $this->assertSame('/admin/academy/students', $menu[0]['submenu'][1]['url']);
     }
+
+    public function testStudentAdminRepositoryResilienceWithLegacyTableWithoutUsernameOrStatus(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // Cria tabela legada de users SEM username e SEM status
+        $pdo->exec("
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'student',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+
+        $pdo->exec("INSERT INTO users (name, email, password, role) VALUES ('Legacy Student', 'legacy@test.com', 'hash', 'student')");
+
+        $repo = new PdoStudentAdminRepository($pdo);
+        $students = $repo->getPaginatedStudents(1, 20);
+
+        $this->assertCount(1, $students);
+        $this->assertSame('Legacy Student', $students[0]['name']);
+        $this->assertArrayHasKey('username', $students[0]);
+        $this->assertArrayHasKey('status', $students[0]);
+        $this->assertSame(1, $repo->countStudents());
+
+        // Testar busca
+        $searchResult = $repo->getPaginatedStudents(1, 20, 'Legacy');
+        $this->assertCount(1, $searchResult);
+    }
 }
