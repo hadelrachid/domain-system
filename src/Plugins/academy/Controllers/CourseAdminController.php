@@ -215,14 +215,7 @@ class CourseAdminController
             $relDir = '';
             if ($this->scaffolder !== null) {
                 $courseSlug = trim((string)($course['slug'] ?? ''));
-                // Assegura isolamento no workspace do curso: pages/{course_slug}/{modulo}
-                $cleanFolder = trim(str_replace('\\', '/', $folderName), '/');
-                if (str_starts_with($cleanFolder, 'pages/')) {
-                    $cleanFolder = substr($cleanFolder, 6);
-                }
-                $targetPath = ($courseSlug !== '' && !str_starts_with($cleanFolder, $courseSlug . '/') && $cleanFolder !== $courseSlug)
-                    ? $courseSlug . '/' . $cleanFolder
-                    : $cleanFolder;
+                $targetPath = $this->resolveCourseWorkspacePath($courseSlug, $folderName);
 
                 $folderInfo = $this->scaffolder->createFolder($targetPath);
                 $relDir = (string)($folderInfo['relative_path'] ?? '');
@@ -300,15 +293,7 @@ class CourseAdminController
                     if ($rawFolder === '') {
                         $folderSlug = $courseSlug !== '' ? $courseSlug : null;
                     } else {
-                        $clean = trim(str_replace('\\', '/', $rawFolder), '/');
-                        if (str_starts_with($clean, 'pages/')) {
-                            $clean = substr($clean, 6);
-                        }
-                        if ($courseSlug !== '' && !str_starts_with($clean, $courseSlug . '/') && $clean !== $courseSlug) {
-                            $folderSlug = $courseSlug . '/' . $clean;
-                        } else {
-                            $folderSlug = $clean;
-                        }
+                        $folderSlug = $this->resolveCourseWorkspacePath($courseSlug, $rawFolder);
                     }
 
                     if ($folderSlug !== null && $autoFabricate) {
@@ -681,9 +666,20 @@ class CourseAdminController
         if (!empty($toSave)) {
             $commSettings->save($toSave);
         }
+    }
 
-        if (!empty($toSave)) {
-            $commSettings->save($toSave);
+    /**
+     * Garante que subpastas ou módulos fiquem isolados sob o workspace do curso: pages/{course_slug}/{modulo}
+     */
+    private function resolveCourseWorkspacePath(string $courseSlug, string $rawFolder): string
+    {
+        $clean = trim(str_replace('\\', '/', $rawFolder), '/');
+        if (str_starts_with($clean, 'pages/')) {
+            $clean = substr($clean, 6);
         }
+        if ($courseSlug !== '' && !str_starts_with($clean, $courseSlug . '/') && $clean !== $courseSlug) {
+            return $courseSlug . '/' . $clean;
+        }
+        return $clean;
     }
 }
