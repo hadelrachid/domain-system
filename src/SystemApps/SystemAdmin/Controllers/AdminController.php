@@ -21,6 +21,7 @@ class AdminController
     private \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher;
     private \DomainSystem\Core\Contracts\SessionManagerInterface $session;
     private ThemeActivatorInterface $themeActivator;
+    private ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor;
 
     public function __construct(
         PluginManager $manager,
@@ -28,7 +29,8 @@ class AdminController
         \DomainSystem\Core\Theme\ShortcodeManager $shortcodes,
         \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher,
         \DomainSystem\Core\Contracts\SessionManagerInterface $session,
-        ?ThemeActivatorInterface $themeActivator = null
+        ?ThemeActivatorInterface $themeActivator = null,
+        ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor = null
     ) {
         $this->manager = $manager;
         $this->theme = $theme;
@@ -37,10 +39,18 @@ class AdminController
         $this->session = $session;
         $basePath = dirname(__DIR__, 4);
         $this->themeActivator = $themeActivator ?? new ThemeActivator($basePath, null, $dispatcher);
+        $this->schemaDoctor = $schemaDoctor;
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
     {
+        // Auto-Heal preventivo via DI: sincroniza schemas pendentes silenciosamente
+        if ($this->schemaDoctor !== null) {
+            try {
+                $this->schemaDoctor->healAll();
+            } catch (\Throwable $e) {}
+        }
+
         // Define paths
         $basePath = dirname(__DIR__, 4); // DomainSystem root
         $pluginsPath = $basePath . '/src/Plugins';
@@ -163,6 +173,12 @@ class AdminController
                     }
                 }
 
+                if ($this->schemaDoctor !== null) {
+                    try {
+                        $this->schemaDoctor->healAll();
+                    } catch (\Throwable $e) {}
+                }
+
                 $this->session->setFlash('success', '✅ Plugin ativado com sucesso!');
             } elseif ($action === 'disable') {
                 $this->manager->disable($pluginName);
@@ -181,6 +197,11 @@ class AdminController
         if ($file && $file['error'] === UPLOAD_ERR_OK) {
             try {
                 $this->manager->installFromZip($file['tmp_name']);
+                if ($this->schemaDoctor !== null) {
+                    try {
+                        $this->schemaDoctor->healAll();
+                    } catch (\Throwable $e) {}
+                }
                 $this->session->setFlash('success', '✔️ Plugin instalado com sucesso! A descompactação e ligação foram concluídas.');
             } catch (\Exception $e) {
                 $this->session->setFlash('error', '❌ Erro na instalação: ' . $e->getMessage());
