@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Services;
 
+use DomainSystem\Core\Utils\SlugHelper;
 use DomainSystem\Plugins\academy\Contracts\LessonBlockRendererInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonFileScaffolderInterface;
 use DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface;
@@ -25,21 +26,6 @@ use RuntimeException;
  */
 class ThemeLessonFileScaffolder implements LessonFileScaffolderInterface
 {
-    private static array $accentMap = [
-        'á'=>'a','à'=>'a','ã'=>'a','â'=>'a','ä'=>'a',
-        'é'=>'e','è'=>'e','ê'=>'e','ë'=>'e',
-        'í'=>'i','ì'=>'i','î'=>'i','ï'=>'i',
-        'ó'=>'o','ò'=>'o','õ'=>'o','ô'=>'o','ö'=>'o',
-        'ú'=>'u','ù'=>'u','û'=>'u','ü'=>'u',
-        'ç'=>'c','ñ'=>'n',
-        'Á'=>'a','À'=>'a','Ã'=>'a','Â'=>'a','Ä'=>'a',
-        'É'=>'e','È'=>'e','Ê'=>'e','Ë'=>'e',
-        'Í'=>'i','Ì'=>'i','Î'=>'i','Ï'=>'i',
-        'Ó'=>'o','Ò'=>'o','Õ'=>'o','Ô'=>'o','Ö'=>'o',
-        'Ú'=>'u','Ù'=>'u','Û'=>'u','Ü'=>'u',
-        'Ç'=>'c','Ñ'=>'n'
-    ];
-
     private ThemePageResolverInterface $themeResolver;
     private LessonBlockRendererInterface $blockRenderer;
     private ?string $overridePagesRoot;
@@ -56,9 +42,7 @@ class ThemeLessonFileScaffolder implements LessonFileScaffolderInterface
 
     public function slugify(string $title): string
     {
-        $clean = strtr(trim($title), self::$accentMap);
-        $slug = strtolower(trim((string)preg_replace('/[^a-zA-Z0-9]+/', '-', $clean), '-'));
-        return $slug !== '' ? $slug : 'aula-sem-titulo';
+        return SlugHelper::slugify($title, 'aula-sem-titulo');
     }
 
     public function createFolder(string $folderTitle): array

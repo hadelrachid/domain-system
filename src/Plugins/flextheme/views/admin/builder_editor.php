@@ -1666,7 +1666,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         { name: 'Amarelo Vivo', hex: '#eab308' }
     ];
 
-    function renderSectionTokenColorPicker(label, key, curVal, defaultToken) {
+    /* ==========================================================================
+       FÁBRICA UNIVERSAL DE PALETAS E SELETOR DE CORES (DESIGN TOKENS)
+       ========================================================================== */
+    function buildUniversalTokenColorPicker(label, key, curVal, defaultToken, targetType) {
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
             primary: '#38bdf8',
@@ -1688,21 +1691,26 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             { id: 'background', label: 'Fundo Global', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
             { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
             { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' },
-            { id: 'transparent', label: 'Herdar / Transparente', var: '', hex: 'transparent' }
+            { id: 'transparent', label: 'Herdar / Padrão', var: '', hex: 'transparent' }
         ];
+
+        var isSec = (targetType === 'section');
 
         var tokenSwatchesHtml = '';
         tokenList.forEach(function(t) {
-            var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && t.id === 'transparent'));
+            var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && (defaultToken === t.id || t.id === 'transparent')));
             var actClass = isAct ? ' active' : '';
             var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
             var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
             var escapedVar = escapeAttr(t.var);
+            var clickCall = isSec
+                ? 'updateActiveSecSetting(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderSidebarLayoutTab();'
+                : 'updateBlockProp(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderInspector();';
             
             tokenSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
                             'style="' + bgStyle + '" ' +
                             'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão' : t.var) + ')') + '" ' +
-                            'onclick="updateActiveSecSetting(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
+                            'onclick="' + clickCall + '">' +
                             '</button>';
         });
 
@@ -1710,10 +1718,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         DS_POPULAR_COLORS.forEach(function(c) {
             var isAct = (curVal && curVal.toLowerCase() === c.hex.toLowerCase());
             var actClass = isAct ? ' active' : '';
+            var clickCall = isSec
+                ? 'updateActiveSecSetting(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderSidebarLayoutTab();'
+                : 'updateBlockProp(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderInspector();';
+
             popularSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + '" ' +
                             'style="background-color:' + c.hex + ';" ' +
                             'title="' + escapeAttr(c.name + ' (' + c.hex + ')') + '" ' +
-                            'onclick="updateActiveSecSetting(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
+                            'onclick="' + clickCall + '">' +
                             '</button>';
         });
 
@@ -1732,7 +1744,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var valueBadge = '';
         if (!curVal) {
-            valueBadge = '<span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px; font-weight:600;">⚪ Herdado / Transparente</span>';
+            valueBadge = '<span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px; font-weight:600;">⚪ Herdado / Padrão</span>';
         } else if (curVal.indexOf('var(') === 0) {
             var tMatch = tokenList.find(function(t) { return t.var === curVal; });
             var tName = tMatch ? tMatch.label : curVal;
@@ -1740,6 +1752,16 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         } else {
             valueBadge = '<span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#fff; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:2px 7px; border-radius:4px; font-family:monospace;"><span style="width:9px; height:9px; border-radius:50%; background:' + escapeAttr(curVal) + '; border:1px solid #fff; display:inline-block;"></span> ' + escapeHtml(curVal) + '</span>';
         }
+
+        var liveInputCall = isSec
+            ? 'updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();'
+            : 'updateBlockProp(\'' + key + '\', this.value); renderCanvas();';
+        var changeCall = isSec
+            ? 'updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();'
+            : 'updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();';
+        var clearCall = isSec
+            ? 'updateActiveSecSetting(\'' + key + '\', \'\'); renderCanvas(); renderSidebarLayoutTab();'
+            : 'updateBlockProp(\'' + key + '\', \'\'); renderCanvas(); renderInspector();';
 
         return '<div class="inspector-field" style="margin-bottom:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px;">' +
                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
@@ -1750,19 +1772,27 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">🌐 Tokens Globais do Tema:</div>' +
                '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + tokenSwatchesHtml + '</div>' +
 
-               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares & Contrastes:</div>' +
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares &amp; Contrastes:</div>' +
                '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + popularSwatchesHtml + '</div>' +
 
                '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">🎨 Seletor Livre ou Código Hex / CSS:</div>' +
                '<div style="display:flex; gap:8px; align-items:center;">' +
                '<div style="position:relative; width:28px; height:28px; min-width:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); overflow:hidden; cursor:pointer; background:' + escapeAttr(hexVal) + '; box-shadow:0 1px 4px rgba(0,0,0,0.5);" title="Clique para abrir o espectro livre de cores">' +
-               '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
+               '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="' + liveInputCall + '" onchange="' + changeCall + '" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
                '</div>' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
-               '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="updateActiveSecSetting(\'' + key + '\', \'\'); renderCanvas(); renderSidebarLayoutTab();" title="Limpar / Restaurar Padrão">✕</button>' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="' + liveInputCall + '" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
+               '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="' + clearCall + '" title="Limpar / Restaurar Padrão">✕</button>' +
                '</div>' +
 
                '</div>';
+    }
+
+    function renderSectionTokenColorPicker(label, key, curVal, defaultToken) {
+        return buildUniversalTokenColorPicker(label, key, curVal, defaultToken, 'section');
+    }
+
+    function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
+        return buildUniversalTokenColorPicker(label, key, curVal, defaultToken, 'block');
     }
 
     function renderSectionFontSelector(label, key, curVal) {
@@ -4577,104 +4607,6 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (!skipFullRefresh) {
             refreshActiveContextUI(isSection);
         }
-    }
-    function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
-        var dt = window.DS_DESIGN_TOKENS || {};
-        var palette = dt.palette || {
-            primary: '#38bdf8',
-            secondary: '#1f2833',
-            tertiary: '#60a5fa',
-            background: '#0b0c10',
-            surface: 'rgba(31, 40, 51, 0.7)',
-            text_main: '#c5c6c7',
-            text_muted: '#8b8c8d',
-            border: 'rgba(255, 255, 255, 0.1)'
-        };
-
-        var tokenList = [
-            { id: 'primary', label: 'Cor Primária', var: 'var(--color-primary)', hex: palette.primary || '#38bdf8' },
-            { id: 'secondary', label: 'Cor Secundária', var: 'var(--color-secondary)', hex: palette.secondary || '#1f2833' },
-            { id: 'tertiary', label: 'Cor Terciária / Destaque', var: 'var(--color-tertiary)', hex: palette.tertiary || '#60a5fa' },
-            { id: 'text_main', label: 'Texto Principal', var: 'var(--color-text-main)', hex: palette.text_main || '#c5c6c7' },
-            { id: 'text_muted', label: 'Texto Suave (Muted)', var: 'var(--color-text-muted)', hex: palette.text_muted || '#8b8c8d' },
-            { id: 'background', label: 'Fundo Global', var: 'var(--color-background)', hex: palette.background || '#0b0c10' },
-            { id: 'surface', label: 'Superfície', var: 'var(--color-surface)', hex: palette.surface || '#1f2833' },
-            { id: 'border', label: 'Borda', var: 'var(--color-border)', hex: palette.border || '#334155' },
-            { id: 'transparent', label: 'Padrão / Herdar', var: '', hex: 'transparent' }
-        ];
-
-        var tokenSwatchesHtml = '';
-        tokenList.forEach(function(t) {
-            var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && defaultToken === t.id));
-            var actClass = isAct ? ' active' : '';
-            var transClass = (t.id === 'transparent') ? ' is-transparent' : '';
-            var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
-            var escapedVar = escapeAttr(t.var);
-            
-            tokenSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
-                            'style="' + bgStyle + '" ' +
-                            'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão / Herdar' : t.var) + ')') + '" ' +
-                            'onclick="updateBlockProp(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderInspector();">' +
-                            '</button>';
-        });
-
-        var popularSwatchesHtml = '';
-        DS_POPULAR_COLORS.forEach(function(c) {
-            var isAct = (curVal && curVal.toLowerCase() === c.hex.toLowerCase());
-            var actClass = isAct ? ' active' : '';
-            popularSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + '" ' +
-                            'style="background-color:' + c.hex + ';" ' +
-                            'title="' + escapeAttr(c.name + ' (' + c.hex + ')') + '" ' +
-                            'onclick="updateBlockProp(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderInspector();">' +
-                            '</button>';
-        });
-
-        var hexVal = curVal || '';
-        if (hexVal.indexOf('var(') === 0) {
-            var matched = tokenList.find(function(t) { return t.var === hexVal; });
-            if (matched && matched.hex && matched.hex !== 'transparent' && matched.hex.indexOf('#') === 0) {
-                hexVal = matched.hex;
-            } else {
-                hexVal = '#38bdf8';
-            }
-        }
-        if (!hexVal.startsWith('#') || hexVal.length !== 7) {
-            hexVal = '#38bdf8';
-        }
-
-        var valueBadge = '';
-        if (!curVal) {
-            valueBadge = '<span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px; font-weight:600;">⚪ Padrão / Herdar</span>';
-        } else if (curVal.indexOf('var(') === 0) {
-            var tMatch = tokenList.find(function(t) { return t.var === curVal; });
-            var tName = tMatch ? tMatch.label : curVal;
-            valueBadge = '<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.14); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:4px; font-weight:700;">🌐 ' + escapeHtml(tName) + '</span>';
-        } else {
-            valueBadge = '<span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#fff; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:2px 7px; border-radius:4px; font-family:monospace;"><span style="width:9px; height:9px; border-radius:50%; background:' + escapeAttr(curVal) + '; border:1px solid #fff; display:inline-block;"></span> ' + escapeHtml(curVal) + '</span>';
-        }
-
-        return '<div class="inspector-field" style="margin-bottom:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px;">' +
-               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
-               '<label class="inspector-label" style="margin-bottom:0; font-weight:700;">' + label + '</label>' +
-               valueBadge +
-               '</div>' +
-
-               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">🌐 Tokens Globais do Tema:</div>' +
-               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + tokenSwatchesHtml + '</div>' +
-
-               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares & Contrastes:</div>' +
-               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + popularSwatchesHtml + '</div>' +
-
-               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">🎨 Seletor Livre ou Código Hex / CSS:</div>' +
-               '<div style="display:flex; gap:8px; align-items:center;">' +
-               '<div style="position:relative; width:28px; height:28px; min-width:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); overflow:hidden; cursor:pointer; background:' + escapeAttr(hexVal) + '; box-shadow:0 1px 4px rgba(0,0,0,0.5);" title="Clique para abrir o espectro livre de cores">' +
-               '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="updateBlockProp(\'' + key + '\', this.value); renderCanvas();" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
-               '</div>' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value); renderCanvas();" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
-               '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="updateBlockProp(\'' + key + '\', \'\'); renderCanvas(); renderInspector();" title="Limpar / Restaurar Padrão">✕</button>' +
-               '</div>' +
-
-               '</div>';
     }
 
     // FONTS / TYPOGRAPHY SELECTOR COM DESIGN TOKENS E FONTES WEB
