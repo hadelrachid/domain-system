@@ -68,6 +68,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->requireLink('core.storage');
+        $os->requireLink('core.session');
         $os->listenHook('admin.menu');
         $os->listenHook('router.register');
         $os->listenHook('shortcodes.register');
@@ -349,20 +350,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         // 7. Registro de Blocos Semânticos no Flex Builder via Contrato (SOLID - OCP / DIP)
         $registerAcademyBlocks = function ($registry) use ($runtime) {
-            if ($registry instanceof \DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface && !$registry->has('user_auth')) {
+            if (is_object($registry) && method_exists($registry, 'has') && !$registry->has('user_auth')) {
+                $session = null;
+                try {
+                    $session = $runtime->getLink('core.session');
+                } catch (\Throwable $e) {}
+
                 $provider = new \DomainSystem\Plugins\academy\Blocks\AcademyBlockProvider(
-                    $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface::class)
-                        : null,
-                    $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        : null,
-                    $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
-                        : null,
-                    $runtime->has(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
-                        : null
+                    null,
+                    null,
+                    null,
+                    $session
                 );
                 $provider->registerBlocks($registry);
             }
@@ -370,13 +368,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         $runtime->onHook('theme.blocks.register', $registerAcademyBlocks);
         $runtime->onHook('flexbuilder.register_blocks', $registerAcademyBlocks);
-
-        if ($runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class)) {
-            try {
-                $existingRegistry = $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface::class);
-                $registerAcademyBlocks($existingRegistry);
-            } catch (\Throwable $e) {}
-        }
     }
 
     public function activate(OsRuntimeInterface $runtime): void
