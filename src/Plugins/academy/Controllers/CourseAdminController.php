@@ -214,9 +214,19 @@ class CourseAdminController
             $folderSlug = null;
             $relDir = '';
             if ($this->scaffolder !== null) {
-                $folderInfo = $this->scaffolder->createFolder($folderName);
+                $courseSlug = trim((string)($course['slug'] ?? ''));
+                // Assegura isolamento no workspace do curso: pages/{course_slug}/{modulo}
+                $cleanFolder = trim(str_replace('\\', '/', $folderName), '/');
+                if (str_starts_with($cleanFolder, 'pages/')) {
+                    $cleanFolder = substr($cleanFolder, 6);
+                }
+                $targetPath = ($courseSlug !== '' && !str_starts_with($cleanFolder, $courseSlug . '/') && $cleanFolder !== $courseSlug)
+                    ? $courseSlug . '/' . $cleanFolder
+                    : $cleanFolder;
+
+                $folderInfo = $this->scaffolder->createFolder($targetPath);
                 $relDir = (string)($folderInfo['relative_path'] ?? '');
-                $folderSlug = (string)($folderInfo['slug'] ?? $this->scaffolder->slugify($folderName));
+                $folderSlug = (string)($folderInfo['slug'] ?? $this->scaffolder->slugify($targetPath));
             }
 
             if ($this->structureRepo !== null) {
@@ -277,16 +287,34 @@ class CourseAdminController
 
         try {
             $fabricatedFilesCount = 0;
+            $courseSlug = trim((string)($course['slug'] ?? ''));
 
             if ($this->scaffolder !== null) {
                 foreach ($structure as &$modData) {
-                    $folderSlug = isset($modData['folder_slug']) && trim((string)$modData['folder_slug']) !== ''
+                    $rawFolder = isset($modData['folder_slug']) && trim((string)$modData['folder_slug']) !== ''
                         ? trim((string)$modData['folder_slug'])
-                        : null;
+                        : '';
+
+                    // Assegura isolamento no workspace do curso: se folder_slug estiver vazio, usa a pasta do curso.
+                    // Se especificado, aninha dentro de pages/{course_slug}/{modulo}
+                    if ($rawFolder === '') {
+                        $folderSlug = $courseSlug !== '' ? $courseSlug : null;
+                    } else {
+                        $clean = trim(str_replace('\\', '/', $rawFolder), '/');
+                        if (str_starts_with($clean, 'pages/')) {
+                            $clean = substr($clean, 6);
+                        }
+                        if ($courseSlug !== '' && !str_starts_with($clean, $courseSlug . '/') && $clean !== $courseSlug) {
+                            $folderSlug = $courseSlug . '/' . $clean;
+                        } else {
+                            $folderSlug = $clean;
+                        }
+                    }
 
                     if ($folderSlug !== null && $autoFabricate) {
                         $this->scaffolder->createFolder($folderSlug);
                     }
+                    $modData['folder_slug'] = $folderSlug ?? '';
 
                     if (!isset($modData['lessons']) || !is_array($modData['lessons'])) {
                         continue;

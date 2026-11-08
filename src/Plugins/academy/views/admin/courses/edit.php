@@ -372,7 +372,7 @@
                     <input type="text" name="folder_name" id="new_folder_name_input" required placeholder="Ex: Módulo 01 - Estrutura de Dados" oninput="updateNewFolderSlugPreview(this.value)" style="width:100%; padding:10px; border-radius:6px; border:1px solid #4a545a; background:#0b0c10; color:#fff; box-sizing:border-box;">
                 </div>
                 <div style="margin-bottom:18px; padding:10px 12px; border-radius:6px; background:#0b0c10; border:1px solid rgba(0,210,132,0.25); font-family:monospace; font-size:12px; color:#00d284;">
-                    📂 Caminho físico que será criado: <strong id="new_folder_slug_preview">pages/modulo-01-estrutura-de-dados</strong>
+                    📂 Caminho físico que será criado: <strong id="new_folder_slug_preview">pages/<?= htmlspecialchars((string)($course['slug'] ?? '')) ?>/modulo-01</strong>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px;">
                     <button type="button" onclick="closeCreateFolderModal()" class="btn btn-outline" style="padding:8px 16px; border:1px solid #4a545a; background:transparent; color:#8c8f94; border-radius:6px; cursor:pointer;">Cancelar</button>
@@ -433,6 +433,12 @@
         }
 
         window.openCreateFolderModal = function() {
+            var prefix = courseSlug ? ('pages/' + courseSlug + '/') : 'pages/';
+            var input = document.getElementById('new_folder_name_input');
+            if (input) {
+                var s = input.value ? slugifyText(input.value) : 'modulo-01';
+                document.getElementById('new_folder_slug_preview').textContent = prefix + s;
+            }
             document.getElementById('modalCreateFolder').style.display = 'flex';
         };
         window.closeCreateFolderModal = function() {
@@ -440,7 +446,8 @@
         };
         window.updateNewFolderSlugPreview = function(val) {
             var s = slugifyText(val);
-            document.getElementById('new_folder_slug_preview').textContent = 'pages/' + s;
+            var prefix = courseSlug ? ('pages/' + courseSlug + '/') : 'pages/';
+            document.getElementById('new_folder_slug_preview').textContent = prefix + (s || 'modulo-01');
         };
 
         function renderModules() {
@@ -591,22 +598,70 @@
             var defaultCourseFolder = 'pages/' + courseSlug;
 
             var folderKeys = Object.keys(foldersMap);
-            if (folderKeys.length === 0) {
-                select.innerHTML = '<option value="">Nenhuma pasta encontrada em pages/</option>';
+            var courseFolders = [];
+            var otherFolders = [];
+            var hasRootPages = false;
+
+            folderKeys.forEach(function(folder) {
+                if (folder === 'pages') {
+                    hasRootPages = true;
+                } else if (folder === defaultCourseFolder || folder.indexOf(defaultCourseFolder + '/') === 0) {
+                    courseFolders.push(folder);
+                } else {
+                    otherFolders.push(folder);
+                }
+            });
+
+            var hasAny = (courseFolders.length > 0 || otherFolders.length > 0 || hasRootPages);
+            if (!hasAny) {
+                select.innerHTML = '<option value="">Nenhuma pasta de aulas encontrada em pages/</option>';
                 document.getElementById('import_folder_preview').innerHTML = 'Nenhum arquivo .php encontrado na pasta pages/ do tema.';
             } else {
-                var selectedIdx = -1;
-                folderKeys.forEach(function(folder, idx) {
-                    var opt = document.createElement('option');
-                    opt.value = folder;
-                    var isCourseFolder = (folder === defaultCourseFolder || folder.indexOf(defaultCourseFolder + '/') === 0);
-                    opt.textContent = (isCourseFolder ? '🎯 ' : '') + folder + '/ (' + foldersMap[folder].length + ' arquivos)' + (isCourseFolder ? ' [Pasta deste Curso]' : '');
-                    if (isCourseFolder && selectedIdx === -1) {
-                        opt.selected = true;
-                        selectedIdx = idx;
-                    }
-                    select.appendChild(opt);
-                });
+                var firstSelectable = null;
+
+                // 1. Grupo prioritário: Workspace do Curso
+                if (courseFolders.length > 0) {
+                    var grpCourse = document.createElement('optgroup');
+                    grpCourse.label = '🎯 Workspace deste Curso (' + defaultCourseFolder + '/)';
+                    courseFolders.forEach(function(folder) {
+                        var opt = document.createElement('option');
+                        opt.value = folder;
+                        opt.textContent = folder + '/ (' + foldersMap[folder].length + ' aulas)';
+                        grpCourse.appendChild(opt);
+                        if (!firstSelectable) firstSelectable = folder;
+                    });
+                    select.appendChild(grpCourse);
+                }
+
+                // 2. Grupo: Outras Pastas de Módulos/Cursos
+                if (otherFolders.length > 0) {
+                    var grpOther = document.createElement('optgroup');
+                    grpOther.label = '📁 Outras Pastas de Aulas no Tema';
+                    otherFolders.forEach(function(folder) {
+                        var opt = document.createElement('option');
+                        opt.value = folder;
+                        opt.textContent = folder + '/ (' + foldersMap[folder].length + ' arquivos)';
+                        grpOther.appendChild(opt);
+                        if (!firstSelectable) firstSelectable = folder;
+                    });
+                    select.appendChild(grpOther);
+                }
+
+                // 3. Grupo: Raiz pages/ (Arquivos Globais)
+                if (hasRootPages && foldersMap['pages'] && foldersMap['pages'].length > 0) {
+                    var grpRoot = document.createElement('optgroup');
+                    grpRoot.label = '⚠️ Raiz pages/ (Páginas Globais do Tema - Não Recomendado)';
+                    var optRoot = document.createElement('option');
+                    optRoot.value = 'pages';
+                    optRoot.textContent = 'pages/ (' + foldersMap['pages'].length + ' páginas do site)';
+                    grpRoot.appendChild(optRoot);
+                    select.appendChild(grpRoot);
+                    if (!firstSelectable) firstSelectable = 'pages';
+                }
+
+                if (firstSelectable) {
+                    select.value = firstSelectable;
+                }
                 updateImportFolderPreview();
             }
 
@@ -622,7 +677,15 @@
                 preview.innerHTML = 'Nenhum arquivo nesta pasta.';
                 return;
             }
-            preview.innerHTML = files.map(function(f) {
+
+            var html = '';
+            if (folder === 'pages') {
+                html += '<div style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:8px 10px; margin-bottom:10px; color:#fca5a5; font-size:11.5px; line-height:1.4;">' +
+                        '⚠️ <strong>Atenção:</strong> Estes arquivos estão soltos na raiz de <code>pages/</code> e incluem páginas do site (ex: index, contato). Recomenda-se criar e importar a partir da pasta dedicada do curso: <code>pages/<?= htmlspecialchars((string)($course['slug'] ?? '')) ?>/</code>.' +
+                        '</div>';
+            }
+
+            html += files.map(function(f) {
                 var meta = availablePagesMeta[f] || {};
                 var title = meta.title || formatFilenameToTitle(f);
                 var badge = meta.has_blocks 
@@ -633,6 +696,8 @@
                        badge +
                        '</div>';
             }).join('');
+
+            preview.innerHTML = html;
         }
 
         window.closeImportFolderModal = function() {
