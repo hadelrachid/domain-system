@@ -116,6 +116,32 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     color: var(--btn-hover-color) !important;
 }
 
+/* Micro-animações de Hover no Canvas e Preview */
+.ds-btn-grow { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important; }
+.ds-btn-grow:hover { transform: scale(1.06) !important; }
+
+.ds-btn-lift { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important; }
+.ds-btn-lift:hover { transform: translateY(-3px) !important; box-shadow: 0 10px 22px rgba(0,0,0,0.35) !important; }
+
+.ds-btn-glow { transition: box-shadow 0.25s ease, transform 0.2s ease !important; }
+.ds-btn-glow:hover { box-shadow: 0 0 25px var(--color-primary, #38bdf8) !important; }
+
+.ds-btn-bounce:hover { animation: ds-bounce 0.6s ease infinite alternate !important; }
+
+.ds-btn-shimmer { position: relative; background-size: 200% auto !important; transition: background 0.3s ease !important; }
+.ds-btn-shimmer:hover { animation: ds-shimmer 1.5s linear infinite !important; }
+
+@keyframes ds-bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-6px); }
+}
+
+@keyframes ds-shimmer {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.3) contrast(1.1); }
+    100% { filter: brightness(1); }
+}
+
 </style>
 </head>
 <body>
@@ -1532,6 +1558,27 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             : ('👁️ "' + bName + '" visível novamente em ' + resLabel));
     }
 
+    var DS_POPULAR_COLORS = [
+        { name: 'Branco Puro', hex: '#ffffff' },
+        { name: 'Preto Profundo', hex: '#000000' },
+        { name: 'Slate / Chumbo', hex: '#0f172a' },
+        { name: 'Cinza Neutro', hex: '#64748b' },
+        { name: 'Verde Esmeralda (Sucesso)', hex: '#10b981' },
+        { name: 'Verde Floresta', hex: '#059669' },
+        { name: 'Ciano Neon', hex: '#06b6d4' },
+        { name: 'Azul Céu', hex: '#38bdf8' },
+        { name: 'Azul Elétrico', hex: '#3b82f6' },
+        { name: 'Azul Escuro Real', hex: '#1d4ed8' },
+        { name: 'Índigo Moderno', hex: '#6366f1' },
+        { name: 'Púrpura / Roxo', hex: '#8b5cf6' },
+        { name: 'Rosa Vibrante', hex: '#ec4899' },
+        { name: 'Cereja / Coral', hex: '#f43f5e' },
+        { name: 'Vermelho Intenso', hex: '#ef4444' },
+        { name: 'Laranja Elétrico', hex: '#f97316' },
+        { name: 'Dourado / Âmbar', hex: '#f59e0b' },
+        { name: 'Amarelo Vivo', hex: '#eab308' }
+    ];
+
     function renderSectionTokenColorPicker(label, key, curVal, defaultToken) {
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
@@ -1557,7 +1604,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             { id: 'transparent', label: 'Herdar / Transparente', var: '', hex: 'transparent' }
         ];
 
-        var swatchesHtml = '';
+        var tokenSwatchesHtml = '';
         tokenList.forEach(function(t) {
             var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && t.id === 'transparent'));
             var actClass = isAct ? ' active' : '';
@@ -1565,21 +1612,23 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
             var escapedVar = escapeAttr(t.var);
             
-            swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
+            tokenSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
                             'style="' + bgStyle + '" ' +
                             'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão' : t.var) + ')') + '" ' +
                             'onclick="updateActiveSecSetting(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
                             '</button>';
         });
 
-        var selectHtml = '<select class="inspector-select" style="margin-top:4px; font-size:11px; padding:4px 6px;" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();">' +
-                         '<option value=""' + (!curVal ? ' selected' : '') + '>🌐 Token Global (Selecione Primária, Secundária, Terciária...)</option>';
-        tokenList.forEach(function(t) {
-            if (t.id === 'transparent') return;
-            var isSel = (curVal === t.var);
-            selectHtml += '<option value="' + escapeAttr(t.var) + '"' + (isSel ? ' selected' : '') + '>🎨 ' + escapeHtml(t.label) + ' (' + escapeHtml(t.var) + ')</option>';
+        var popularSwatchesHtml = '';
+        DS_POPULAR_COLORS.forEach(function(c) {
+            var isAct = (curVal && curVal.toLowerCase() === c.hex.toLowerCase());
+            var actClass = isAct ? ' active' : '';
+            popularSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + '" ' +
+                            'style="background-color:' + c.hex + ';" ' +
+                            'title="' + escapeAttr(c.name + ' (' + c.hex + ')') + '" ' +
+                            'onclick="updateActiveSecSetting(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderSidebarLayoutTab();">' +
+                            '</button>';
         });
-        selectHtml += '</select>';
 
         var hexVal = curVal || '';
         if (hexVal.indexOf('var(') === 0) {
@@ -1594,17 +1643,38 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             hexVal = '#38bdf8';
         }
 
-        return '<div class="inspector-field">' +
-               '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-               '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
-               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'Herdado') + '</span>' +
+        var valueBadge = '';
+        if (!curVal) {
+            valueBadge = '<span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px; font-weight:600;">⚪ Herdado / Transparente</span>';
+        } else if (curVal.indexOf('var(') === 0) {
+            var tMatch = tokenList.find(function(t) { return t.var === curVal; });
+            var tName = tMatch ? tMatch.label : curVal;
+            valueBadge = '<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.14); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:4px; font-weight:700;">🌐 ' + escapeHtml(tName) + '</span>';
+        } else {
+            valueBadge = '<span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#fff; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:2px 7px; border-radius:4px; font-family:monospace;"><span style="width:9px; height:9px; border-radius:50%; background:' + escapeAttr(curVal) + '; border:1px solid #fff; display:inline-block;"></span> ' + escapeHtml(curVal) + '</span>';
+        }
+
+        return '<div class="inspector-field" style="margin-bottom:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px;">' +
+               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+               '<label class="inspector-label" style="margin-bottom:0; font-weight:700;">' + label + '</label>' +
+               valueBadge +
                '</div>' +
-               '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
-               selectHtml +
-               '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
-               '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value)" placeholder="var(--color-primary), var(--color-secondary) ou #hex">' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">🌐 Tokens Globais do Tema:</div>' +
+               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + tokenSwatchesHtml + '</div>' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares & Contrastes:</div>' +
+               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + popularSwatchesHtml + '</div>' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">🎨 Seletor Livre ou Código Hex / CSS:</div>' +
+               '<div style="display:flex; gap:8px; align-items:center;">' +
+               '<div style="position:relative; width:28px; height:28px; min-width:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); overflow:hidden; cursor:pointer; background:' + escapeAttr(hexVal) + '; box-shadow:0 1px 4px rgba(0,0,0,0.5);" title="Clique para abrir o espectro livre de cores">' +
+               '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();" onchange="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas(); renderSidebarLayoutTab();" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
                '</div>' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
+               '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="updateActiveSecSetting(\'' + key + '\', \'\'); renderCanvas(); renderSidebarLayoutTab();" title="Limpar / Restaurar Padrão">✕</button>' +
+               '</div>' +
+
                '</div>';
     }
 
@@ -2270,12 +2340,37 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (block.type === 'button') {
             var bg = d.bg_color || 'var(--color-primary)';
             var col = d.text_color || '#000';
-            return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';">🔘 ' + 
-                   escapeHtml(d.label || 'Botão') + '</span> <span style="font-size:10px; opacity:0.6;">[' + (d.action_type || 'link') + ']</span>';
+            var hBg = d.hover_bg_color || '';
+            var hCol = d.hover_text_color || '';
+            var anim = d.hover_animation || 'lift';
+            var animClass = (anim && anim !== 'none') ? ' ds-btn-' + anim : ' ds-btn-static';
+            var hoverStyle = '';
+            if (hBg) hoverStyle += ' --btn-hover-bg:' + hBg + ';';
+            if (hCol) hoverStyle += ' --btn-hover-color:' + hCol + ';';
+            var bRadius = d.border_radius || '8px';
+            return '<div style="display:inline-flex; align-items:center; gap:8px; margin:2px 0;">' +
+                   '<span class="ds-block-btn ' + animClass + '" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:' + escapeAttr(bRadius) + '; font-size:12px; font-weight:700; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';' + hoverStyle + ' cursor:pointer; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,0.2);">' + 
+                   (d.icon ? escapeHtml(d.icon) + ' ' : '🔘 ') +
+                   escapeHtml(d.label || 'Botão') + '</span>' +
+                   '<span style="font-size:10px; opacity:0.6;">[' + (d.action_type || 'link') + ']</span>' +
+                   (hBg ? '<span style="font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8;" title="Hover: ' + escapeAttr(hBg) + '">🎨 Hover ativo</span>' : '') +
+                   '</div>';
         }
         if (block.type === 'cta_button') {
-            return '<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:var(--primary); color:#000;">' + 
-                   escapeHtml(d.label || 'Botão CTA') + '</span>';
+            var bg = d.bg_color || 'var(--primary)';
+            var col = d.text_color || '#000';
+            var hBg = d.hover_bg_color || '';
+            var hCol = d.hover_text_color || '';
+            var anim = d.hover_animation || 'pulse';
+            var animClass = (anim && anim !== 'none') ? ' ds-btn-' + anim : ' ds-btn-static';
+            var hoverStyle = '';
+            if (hBg) hoverStyle += ' --btn-hover-bg:' + hBg + ';';
+            if (hCol) hoverStyle += ' --btn-hover-color:' + hCol + ';';
+            return '<div style="display:inline-flex; align-items:center; gap:8px; margin:2px 0;">' +
+                   '<span class="ds-block-cta ' + animClass + '" style="display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border-radius:6px; font-size:12px; font-weight:800; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';' + hoverStyle + ' cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.3);">' + 
+                   '🚀 ' + escapeHtml(d.label || 'Botão CTA') + '</span>' +
+                   (hBg ? '<span style="font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8;" title="Hover: ' + escapeAttr(hBg) + '">🎨 Hover ativo</span>' : '') +
+                   '</div>';
         }
         if (block.type === 'user_auth') {
             return '<span style="display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:rgba(69,243,255,0.15); border:1px solid rgba(69,243,255,0.3); color:#45f3ff;">👤 ' + 
@@ -2938,13 +3033,18 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 ], block.data.target || '_self');
             }
 
+            html += '<div style="margin: 12px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">🎨 Cores Normais (Estado Inicial)</div>';
             html += inspectorTokenColorPicker('Cor de Fundo do Botão', 'bg_color', block.data.bg_color || 'var(--color-primary)', 'primary');
             html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
-            html += inspectorFontSelector('Tipografia do Botão', 'font_family', block.data.font_family || 'var(--font-primary)');
-            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
-            html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
+
+            html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">✨ Efeito & Cores ao Passar o Mouse (Hover)</div>';
+            html += inspectorHoverAnimation('Animação no Hover (Micro-interação)', 'hover_animation', block.data.hover_animation || 'lift');
             html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
             html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
+
+            html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">📐 Tipografia & Dimensões</div>';
+            html += inspectorFontSelector('Tipografia do Botão', 'font_family', block.data.font_family || 'var(--font-primary)');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorDimension('Arredondamento de Borda', 'border_radius', block.data.border_radius || '8px');
             html += inspectorSelect('Alinhamento', 'align', [
@@ -2964,11 +3064,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTextInput('Texto do Botão', 'label', block.data.label || 'Clique Aqui');
             html += inspectorTextInput('Link / URL de Destino', 'url', block.data.url || '#');
             html += inspectorSelect('Variante Estilizada', 'variant', ['primary', 'secondary', 'outline', 'glow'], block.data.variant || 'primary');
-            html += inspectorHoverAnimation('Efeito ao Passar o Mouse (Hover)', 'hover_animation', block.data.hover_animation || 'lift');
-            html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
-            html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
+
+            html += '<div style="margin: 12px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">🎨 Cores Normais (Estado Inicial)</div>';
             html += inspectorTokenColorPicker('Cor de Fundo do Botão', 'bg_color', block.data.bg_color || 'var(--color-primary)', 'primary');
             html += inspectorTokenColorPicker('Cor do Texto do Botão', 'text_color', block.data.text_color || '#0f172a', 'background');
+
+            html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">✨ Efeito & Cores ao Passar o Mouse (Hover)</div>';
+            html += inspectorHoverAnimation('Animação no Hover (Micro-interação)', 'hover_animation', block.data.hover_animation || 'lift');
+            html += inspectorTokenColorPicker('Cor de Fundo no Hover', 'hover_bg_color', block.data.hover_bg_color || '', '');
+            html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
+
+            html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">📐 Dimensões & Alinhamento</div>';
             html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
         } else if (block.type === 'user_auth') {
@@ -4126,6 +4232,16 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" style="' + bgStyle + '" title="' + escapeAttr(t.label) + '" onclick="' + clickFn + '"></button>';
             });
 
+            var popularSwatchesHtml = '';
+            DS_POPULAR_COLORS.forEach(function(c) {
+                var isAct = (curVal && curVal.toLowerCase() === c.hex.toLowerCase());
+                var actClass = isAct ? ' active' : '';
+                var clickPopFn = isSection
+                    ? 'updateActiveSecSetting(\'' + key + '\', \'' + c.hex + '\'); refreshActiveContextUI(true);'
+                    : 'updateBlockProp(\'' + key + '\', \'' + c.hex + '\'); refreshActiveContextUI(false);';
+                popularSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + '" style="background-color:' + c.hex + ';" title="' + escapeAttr(c.name + ' (' + c.hex + ')') + '" onclick="' + clickPopFn + '"></button>';
+            });
+
             var hexVal = curVal || '#0b0c10';
             if (hexVal.indexOf('var(') === 0) {
                 var matched = tokenList.find(function(t) { return t.var === hexVal; });
@@ -4137,13 +4253,23 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 ? 'updateActiveSecSetting(\'' + key + '\', this.value); refreshActiveContextUI(true);'
                 : 'updateBlockProp(\'' + key + '\', this.value); refreshActiveContextUI(false);';
             var inputColorFn = isSection
-                ? 'updateActiveSecSetting(\'' + key + '\', this.value);'
-                : 'updateBlockProp(\'' + key + '\', this.value);';
+                ? 'updateActiveSecSetting(\'' + key + '\', this.value); renderCanvas();'
+                : 'updateBlockProp(\'' + key + '\', this.value); renderCanvas();';
+            var resetFn = isSection
+                ? 'updateActiveSecSetting(\'' + key + '\', \'\'); refreshActiveContextUI(true);'
+                : 'updateBlockProp(\'' + key + '\', \'\'); refreshActiveContextUI(false);';
 
-            html += '<div class="token-swatches-grid" style="margin-bottom:8px;">' + swatchesHtml + '</div>' +
-                    '<div style="display:flex; gap:6px; align-items:center;">' +
-                    '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="' + changeColorFn + '" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="' + inputColorFn + '" placeholder="var(--color-primary), #hex ou rgba">' +
+            html += '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">🌐 Tokens Globais do Tema:</div>' +
+                    '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + swatchesHtml + '</div>' +
+                    '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares & Contrastes:</div>' +
+                    '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + popularSwatchesHtml + '</div>' +
+                    '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">🎨 Seletor Livre ou Código Hex / CSS:</div>' +
+                    '<div style="display:flex; gap:8px; align-items:center;">' +
+                    '<div style="position:relative; width:28px; height:28px; min-width:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); overflow:hidden; cursor:pointer; background:' + escapeAttr(hexVal) + '; box-shadow:0 1px 4px rgba(0,0,0,0.5);" title="Clique para abrir o espectro livre de cores">' +
+                    '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="' + inputColorFn + '" onchange="' + changeColorFn + '" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
+                    '</div>' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="' + inputColorFn + '" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
+                    '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="' + resetFn + '" title="Limpar / Restaurar Padrão">✕</button>' +
                     '</div>';
         } else {
             // MODO DEGRADÊ / GRADIENTE
@@ -4364,7 +4490,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             refreshActiveContextUI(isSection);
         }
     }
-function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
+    function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
         var dt = window.DS_DESIGN_TOKENS || {};
         var palette = dt.palette || {
             primary: '#38bdf8',
@@ -4389,7 +4515,7 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             { id: 'transparent', label: 'Padrão / Herdar', var: '', hex: 'transparent' }
         ];
 
-        var swatchesHtml = '';
+        var tokenSwatchesHtml = '';
         tokenList.forEach(function(t) {
             var isAct = (curVal === t.var || (t.hex !== 'transparent' && curVal === t.hex) || (!curVal && defaultToken === t.id));
             var actClass = isAct ? ' active' : '';
@@ -4397,21 +4523,23 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             var bgStyle = (t.id === 'transparent') ? '' : 'background-color:' + t.hex + ';';
             var escapedVar = escapeAttr(t.var);
             
-            swatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
+            tokenSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + transClass + '" ' +
                             'style="' + bgStyle + '" ' +
                             'title="' + escapeAttr(t.label + ' (' + (t.id === 'transparent' ? 'Padrão / Herdar' : t.var) + ')') + '" ' +
                             'onclick="updateBlockProp(\'' + key + '\', \'' + escapedVar + '\'); renderCanvas(); renderInspector();">' +
                             '</button>';
         });
 
-        var selectHtml = '<select class="inspector-select" style="margin-top:4px; font-size:11px; padding:4px 6px;" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' +
-                         '<option value=""' + (!curVal ? ' selected' : '') + '>🌐 Token Global (Primária, Secundária, Terciária...)</option>';
-        tokenList.forEach(function(t) {
-            if (t.id === 'transparent') return;
-            var isSel = (curVal === t.var);
-            selectHtml += '<option value="' + escapeAttr(t.var) + '"' + (isSel ? ' selected' : '') + '>🎨 ' + escapeHtml(t.label) + ' (' + escapeHtml(t.var) + ')</option>';
+        var popularSwatchesHtml = '';
+        DS_POPULAR_COLORS.forEach(function(c) {
+            var isAct = (curVal && curVal.toLowerCase() === c.hex.toLowerCase());
+            var actClass = isAct ? ' active' : '';
+            popularSwatchesHtml += '<button type="button" class="token-swatch-item' + actClass + '" ' +
+                            'style="background-color:' + c.hex + ';" ' +
+                            'title="' + escapeAttr(c.name + ' (' + c.hex + ')') + '" ' +
+                            'onclick="updateBlockProp(\'' + key + '\', \'' + c.hex + '\'); renderCanvas(); renderInspector();">' +
+                            '</button>';
         });
-        selectHtml += '</select>';
 
         var hexVal = curVal || '';
         if (hexVal.indexOf('var(') === 0) {
@@ -4426,17 +4554,38 @@ function inspectorTokenColorPicker(label, key, curVal, defaultToken) {
             hexVal = '#38bdf8';
         }
 
-        return '<div class="inspector-field">' +
-               '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-               '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
-               '<span style="font-size:10px; color:var(--text-muted); font-family:monospace;">' + escapeHtml(curVal || 'Padrão') + '</span>' +
+        var valueBadge = '';
+        if (!curVal) {
+            valueBadge = '<span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px; font-weight:600;">⚪ Padrão / Herdar</span>';
+        } else if (curVal.indexOf('var(') === 0) {
+            var tMatch = tokenList.find(function(t) { return t.var === curVal; });
+            var tName = tMatch ? tMatch.label : curVal;
+            valueBadge = '<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.14); border:1px solid rgba(56,189,248,0.3); padding:2px 7px; border-radius:4px; font-weight:700;">🌐 ' + escapeHtml(tName) + '</span>';
+        } else {
+            valueBadge = '<span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#fff; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:2px 7px; border-radius:4px; font-family:monospace;"><span style="width:9px; height:9px; border-radius:50%; background:' + escapeAttr(curVal) + '; border:1px solid #fff; display:inline-block;"></span> ' + escapeHtml(curVal) + '</span>';
+        }
+
+        return '<div class="inspector-field" style="margin-bottom:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px;">' +
+               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+               '<label class="inspector-label" style="margin-bottom:0; font-weight:700;">' + label + '</label>' +
+               valueBadge +
                '</div>' +
-               '<div class="token-swatches-grid">' + swatchesHtml + '</div>' +
-               selectHtml +
-               '<div style="display:flex; gap:6px; align-items:center; margin-top:4px;">' +
-               '<input type="color" value="' + escapeAttr(hexVal) + '" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();" style="width:34px; height:30px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value)" placeholder="var(--color-primary), var(--color-secondary) ou #hex">' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">🌐 Tokens Globais do Tema:</div>' +
+               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + tokenSwatchesHtml + '</div>' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.4px;">✨ Cores Populares & Contrastes:</div>' +
+               '<div class="token-swatches-grid" style="margin-top:2px; margin-bottom:8px;">' + popularSwatchesHtml + '</div>' +
+
+               '<div style="font-size:10px; color:var(--text-muted); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">🎨 Seletor Livre ou Código Hex / CSS:</div>' +
+               '<div style="display:flex; gap:8px; align-items:center;">' +
+               '<div style="position:relative; width:28px; height:28px; min-width:28px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); overflow:hidden; cursor:pointer; background:' + escapeAttr(hexVal) + '; box-shadow:0 1px 4px rgba(0,0,0,0.5);" title="Clique para abrir o espectro livre de cores">' +
+               '<input type="color" value="' + escapeAttr(hexVal) + '" oninput="updateBlockProp(\'' + key + '\', this.value); renderCanvas();" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">' +
                '</div>' +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(curVal || '') + '" oninput="updateBlockProp(\'' + key + '\', this.value); renderCanvas();" placeholder="var(--color-primary), #hex ou rgba" style="margin:0; font-size:11px; font-family:monospace; flex:1;">' +
+               '<button type="button" class="header-btn" style="padding:4px 8px; font-size:11px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="updateBlockProp(\'' + key + '\', \'\'); renderCanvas(); renderInspector();" title="Limpar / Restaurar Padrão">✕</button>' +
+               '</div>' +
+
                '</div>';
     }
 
