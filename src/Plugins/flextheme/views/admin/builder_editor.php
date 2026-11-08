@@ -142,6 +142,93 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     100% { filter: brightness(1); }
 }
 
+/* ==========================================================================
+   MODAL DE SELEÇÃO RÁPIDA DE BLOCOS (+ BLOCO / DROPZONE)
+   ========================================================================== */
+.quick-cat-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted, #94a3b8);
+    font-size: 11.5px;
+    padding: 5px 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+}
+.quick-cat-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: #fff;
+    border-color: rgba(56, 189, 248, 0.4);
+}
+.quick-cat-btn.active {
+    background: var(--primary, #38bdf8);
+    color: #0b0c10;
+    font-weight: 700;
+    border-color: var(--primary, #38bdf8);
+}
+.quick-block-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    text-align: left;
+}
+.quick-block-card:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: var(--primary, #38bdf8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.quick-block-icon {
+    font-size: 24px;
+    margin-bottom: 2px;
+}
+.quick-block-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+.quick-block-desc {
+    font-size: 11px;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.4;
+}
+.column-dropzone {
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-weight: 600 !important;
+    user-select: none !important;
+    border: 1px dashed rgba(56, 189, 248, 0.45) !important;
+    border-radius: 6px !important;
+    padding: 9px 12px !important;
+    margin-top: 10px !important;
+    background: rgba(56, 189, 248, 0.04) !important;
+    color: #38bdf8 !important;
+    font-size: 11.5px !important;
+}
+.column-dropzone:hover {
+    background: rgba(56, 189, 248, 0.18) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.3) !important;
+}
+.column-dropzone.drag-target-over {
+    background: rgba(56, 189, 248, 0.3) !important;
+    border-color: #fff !important;
+    transform: scale(1.02) !important;
+}
+
 </style>
 </head>
 <body>
@@ -2068,7 +2155,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                                       '<span>' + colTitle + '</span>' +
                                       (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 6px; border-radius:10px; font-weight:800;">ATIVA</span>' : '') +
                                       '</div>' +
-                                      '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + secIdx + ',' + colIdx + ')" title="Adicionar Bloco">+ Bloco</button>';
+                                      '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + secIdx + ',' + colIdx + ')" title="Clique para escolher um bloco">+ Bloco</button>';
                 colEl.appendChild(colHeader);
 
                 // Blocos dentro da célula
@@ -2081,7 +2168,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 // Dropzone no rodapé da célula
                 var dropzone = document.createElement('div');
                 dropzone.className = 'column-dropzone';
-                dropzone.innerHTML = '+ Adicionar Bloco nesta Divisão';
+                dropzone.title = 'Clique para escolher um bloco nesta divisão ou arraste da barra lateral';
+                dropzone.innerHTML = '➕ Adicionar Bloco nesta Divisão';
                 dropzone.onclick = (function(s, c) {
                     return function(e) {
                         e.stopPropagation();
@@ -5004,12 +5092,126 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         showToast('Bloco reposicionado!');
     }
 
+    /* ==========================================================================
+       MODAL DE SELEÇÃO RÁPIDA DE BLOCOS (QUICK ADD BLOCK)
+       ========================================================================== */
+    var currentQuickCategory = 'all';
+
     function openAddBlockForCell(secIdx, colIdx) {
         activeSecIdx = secIdx;
         activeColIdx = colIdx;
         renderBlocksCatalog();
-        renderCanvas();
-        switchSidebarTab('blocks');
+        openQuickBlockModal(secIdx, colIdx);
+    }
+
+    function openQuickBlockModal(secIdx, colIdx) {
+        activeSecIdx = secIdx;
+        activeColIdx = colIdx;
+
+        var sec = state.sections[secIdx] || {};
+        var presetInfo = presets[sec.layout_preset] || presets['1_col'];
+        var colTitle = getColumnTitle(sec.layout_preset, colIdx, presetInfo.columns, sec);
+        var secTitle = sec.title || ('Seção ' + (secIdx + 1));
+
+        var titleEl = document.getElementById('quick_add_block_title');
+        if (titleEl) {
+            titleEl.innerHTML = 'Adicionar Bloco na <strong style="color:var(--primary);">' + escapeHtml(colTitle) + '</strong> (' + escapeHtml(secTitle) + ')';
+        }
+
+        currentQuickCategory = 'all';
+        var searchInput = document.getElementById('quick_block_search_input');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+
+        var pills = document.querySelectorAll('#quick_block_category_pills .quick-cat-btn');
+        pills.forEach(function(p, i) { p.classList.toggle('active', i === 0); });
+
+        renderQuickBlocksGrid('');
+
+        var modal = document.getElementById('modalQuickAddBlock');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(function() {
+                if (searchInput) searchInput.focus();
+            }, 80);
+        }
+    }
+
+    function closeQuickBlockModal() {
+        var modal = document.getElementById('modalQuickAddBlock');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function setQuickBlockCategory(cat, btn) {
+        currentQuickCategory = cat;
+        var pills = document.querySelectorAll('#quick_block_category_pills .quick-cat-btn');
+        pills.forEach(function(p) { p.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+
+        var searchInput = document.getElementById('quick_block_search_input');
+        renderQuickBlocksGrid(searchInput ? searchInput.value : '');
+    }
+
+    function filterQuickBlocks(query) {
+        renderQuickBlocksGrid(query);
+    }
+
+    function categorizeBlockType(type) {
+        if (type === 'heading' || type === 'text' || type === 'paragraph' || type === 'callout') return 'text';
+        if (type === 'image' || type === 'video' || type === 'logo' || type === 'pdf') return 'media';
+        if (type === 'button' || type === 'cta' || type === 'auth') return 'action';
+        if (type === 'card' || type === 'accordion' || type === 'social' || type === 'shortcode' || type === 'menu' || type === 'blog_posts') return 'interactive';
+        return 'other';
+    }
+
+    function renderQuickBlocksGrid(query) {
+        var grid = document.getElementById('quick_blocks_grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        var q = (query || '').toLowerCase().trim();
+        var curPartType = '<?= $part->getType() ?>';
+
+        var filtered = blocksCatalog.filter(function(b) {
+            if (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1) return false;
+
+            if (currentQuickCategory !== 'all') {
+                var blockCat = categorizeBlockType(b.type);
+                if (blockCat !== currentQuickCategory) return false;
+            }
+
+            if (q !== '') {
+                var nameMatch = (b.name || '').toLowerCase().indexOf(q) !== -1;
+                var descMatch = (b.desc || '').toLowerCase().indexOf(q) !== -1;
+                var typeMatch = (b.type || '').toLowerCase().indexOf(q) !== -1;
+                if (!nameMatch && !descMatch && !typeMatch) return false;
+            }
+
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px;">' +
+                             'Nenhum bloco encontrado para os filtros selecionados.' +
+                             '</div>';
+            return;
+        }
+
+        filtered.forEach(function(b) {
+            var item = document.createElement('div');
+            item.className = 'quick-block-card';
+            item.onclick = function() {
+                addBlockToCell(activeSecIdx, activeColIdx, b.type);
+                closeQuickBlockModal();
+            };
+            item.innerHTML = '<div class="quick-block-icon">' + b.icon + '</div>' +
+                             '<div class="quick-block-name">' + escapeHtml(b.name) + '</div>' +
+                             '<div class="quick-block-desc">' + escapeHtml(b.desc) + '</div>';
+            grid.appendChild(item);
+        });
     }
 
     function savePart() {
@@ -5172,6 +5374,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     }
 
     document.addEventListener('DOMContentLoaded', initStudio);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeQuickBlockModal();
+        }
+    });
     </script>
     <!-- MODAL DE CONFIRMAÇÃO DE SALVAMENTO COM SHORTCODE E ATRIBUIÇÃO -->
     <div id="saveSuccessModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 10000; align-items: center; justify-content: center;">
@@ -5202,6 +5409,45 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 <a href="<?= $baseUrl ?>/admin/builder" class="btn btn-primary" style="text-decoration: none; padding: 8px 18px; font-size: 13px; font-weight: 700;">
                     Ir para o Painel do Builder
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO RÁPIDA DE BLOCOS (QUICK ADD BLOCK) -->
+    <div id="modalQuickAddBlock" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 10005; align-items: center; justify-content: center; padding: 20px;" onclick="if(event.target===this) closeQuickBlockModal();">
+        <div style="background: var(--bg-panel, #1d2327); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.7); overflow: hidden;">
+            <div style="padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25);">
+                <div>
+                    <h3 style="margin: 0 0 4px; font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>⚡</span>
+                        <span id="quick_add_block_title">Adicionar Bloco na Célula</span>
+                    </h3>
+                    <p style="margin: 0; font-size: 12px; color: var(--text-muted, #8c8f94);">Clique em qualquer bloco abaixo para inserir instantaneamente nesta divisão.</p>
+                </div>
+                <button type="button" onclick="closeQuickBlockModal()" style="background: transparent; border: none; color: #8c8f94; font-size: 22px; cursor: pointer; padding: 4px 8px; line-height: 1; border-radius: 4px;" title="Fechar (Esc)">&times;</button>
+            </div>
+
+            <!-- BUSCA E CATEGORIAS -->
+            <div style="padding: 14px 22px 10px; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div style="position: relative; margin-bottom: 10px;">
+                    <input type="text" id="quick_block_search_input" placeholder="🔍 Digite para filtrar blocos (ex: botão, imagem, texto, vídeo...)" oninput="filterQuickBlocks(this.value)" style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid #4a545a; background: #0b0c10; color: #fff; font-size: 13px; box-sizing: border-box; outline: none;">
+                </div>
+                <div id="quick_block_category_pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="quick-cat-btn active" onclick="setQuickBlockCategory('all', this)">Todos</button>
+                    <button type="button" class="quick-cat-btn" onclick="setQuickBlockCategory('text', this)">📝 Texto &amp; Títulos</button>
+                    <button type="button" class="quick-cat-btn" onclick="setQuickBlockCategory('media', this)">🖼️ Mídia &amp; Imagens</button>
+                    <button type="button" class="quick-cat-btn" onclick="setQuickBlockCategory('action', this)">⚡ Ações &amp; Botões</button>
+                    <button type="button" class="quick-cat-btn" onclick="setQuickBlockCategory('interactive', this)">🎯 Interativo &amp; Cards</button>
+                </div>
+            </div>
+
+            <!-- GRADE DE BLOCOS -->
+            <div id="quick_blocks_grid" style="padding: 16px 22px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: calc(85vh - 200px);">
+            </div>
+
+            <div style="padding: 12px 22px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted, #8c8f94);">
+                <span>💡 <em>Dica: Você também pode arrastar blocos da barra lateral diretamente para as divisórias.</em></span>
+                <button type="button" onclick="closeQuickBlockModal()" class="btn btn-secondary" style="padding: 6px 14px; font-size: 12px;">Fechar</button>
             </div>
         </div>
     </div>
