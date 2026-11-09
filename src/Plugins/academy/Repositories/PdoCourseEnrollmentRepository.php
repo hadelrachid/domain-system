@@ -34,6 +34,7 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
         if ($this->tableEnsured) {
             return;
         }
+        $this->tableEnsured = true;
 
         $sql = "
             CREATE TABLE IF NOT EXISTS academy_enrollments (

@@ -160,9 +160,6 @@ class StudentAuthController
 
         $role = (string)($user['role'] ?? 'student');
         $this->session->set('academy_student_role', $role);
-        $this->session->set('user_role', $role);
-        $this->session->set('user_id', (int)$user['id']);
-        $this->session->set('user_name', (string)$user['name']);
 
         // Define mensagem no escopo exclusivo do aluno e elimina resquícios de flashes administrativos
         $this->studentAuth->setFlash('success', 'Bem-vindo de volta, ' . htmlspecialchars((string)$user['name']) . '!');

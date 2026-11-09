@@ -398,6 +398,7 @@ class PdoCourseStructureRepository implements CourseStructureRepositoryInterface
         if ($this->tablesEnsured) {
             return;
         }
+        $this->tablesEnsured = true;
 
         $migrationFile = dirname(__DIR__) . '/migrations/2026_10_15_000002_create_academy_structure.php';
         if (is_file($migrationFile)) {

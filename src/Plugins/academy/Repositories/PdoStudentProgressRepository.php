@@ -33,6 +33,7 @@ class PdoStudentProgressRepository implements StudentProgressRepositoryInterface
         if ($this->tableEnsured) {
             return;
         }
+        $this->tableEnsured = true;
 
         $sql = "
             CREATE TABLE IF NOT EXISTS academy_lesson_progress (

@@ -557,9 +557,6 @@ class CourseAdminController
     {
         $files = $request->files ?? [];
         $file = $files['course_zip'] ?? null;
-        if (!$file && isset($_FILES['course_zip'])) {
-            $file = $_FILES['course_zip'];
-        }
         if ($file && (empty($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_OK) === UPLOAD_ERR_NO_FILE)) {
             return null;
         }

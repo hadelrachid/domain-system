@@ -11,6 +11,7 @@ use PDO;
 class PdoCourseRepository implements CourseRepositoryInterface
 {
     private PDO $pdo;
+    private bool $tableEnsured = false;
 
     public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = true)
     {
@@ -130,6 +131,11 @@ class PdoCourseRepository implements CourseRepositoryInterface
 
     public function ensureTableExists(): void
     {
+        if ($this->tableEnsured) {
+            return;
+        }
+        $this->tableEnsured = true;
+
         $migrationFile = dirname(__DIR__) . '/migrations/2026_10_15_000001_create_academy_courses.php';
         if (is_file($migrationFile)) {
             $migration = require $migrationFile;

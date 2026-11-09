@@ -9,9 +9,6 @@ use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Routing\Router;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\ContainerWidget;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\WidgetManager;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\TextWidget;
 use DomainSystem\Plugins\pages\Repositories\PageRepository;
 use DomainSystem\SystemApps\auth\Repositories\UserRepository;
 use DomainSystem\SystemApps\Database\Connection;
@@ -35,60 +32,6 @@ class TrackBArchitectureAuditTest extends TestCase
         // Retrocompatibilidade com Core\Http\SessionManager
         $httpSession = new \DomainSystem\Core\Http\SessionManager();
         $this->assertInstanceOf(\DomainSystem\Core\Security\SessionManager::class, $httpSession);
-    }
-
-    /**
-     * DeepSeek PR #1: Widgets retornam DTO (array estruturado) e DtoRenderer produz HTML
-     */
-    public function testWidgetReturnsDtoAndDtoRendererProducesHtml(): void
-    {
-        $widget = new ContainerWidget();
-        $dto = $widget->toDto(['width' => '100%', 'direction' => 'row', 'align' => 'center']);
-
-        $this->assertIsArray($dto);
-        $this->assertArrayHasKey('styles', $dto);
-        $this->assertSame('flex', $dto['styles']['display']);
-        $this->assertSame('row', $dto['styles']['flex-direction']);
-        $this->assertSame('center', $dto['styles']['align-items']);
-        $this->assertArrayNotHasKey('html', $dto);
-
-        $renderer = new \DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer();
-        $html = $renderer->render([
-            'tag' => 'div',
-            'attrs' => ['id' => 'test-box', 'class' => ['flex-widget', 'custom-box']],
-            'styles' => ['display' => 'flex', 'width' => '100%'],
-            'content' => 'Conteúdo Seguro',
-            'children' => [],
-        ]);
-
-        $this->assertStringContainsString('<div', $html);
-        $this->assertStringContainsString('id="test-box"', $html);
-        $this->assertStringContainsString('display: flex', $html);
-        $this->assertStringContainsString('Conteúdo Seguro', $html);
-
-        $wm = new WidgetManager();
-        $wm->registerWidget(new ContainerWidget());
-        $wm->registerWidget(new TextWidget());
-
-        $jsonRenderer = new \DomainSystem\Plugins\flextheme\BuilderFlex\Core\JsonRenderer($wm, $renderer);
-        $treeHtml = $jsonRenderer->renderTree([
-            [
-                'id' => 'node1',
-                'type' => 'flex_container',
-                'props' => ['direction' => 'column', 'width' => 600],
-                'children' => [
-                    [
-                        'id' => 'node2',
-                        'type' => 'flex_text',
-                        'props' => ['tag' => 'h2', 'content' => 'Título via DTO'],
-                        'children' => [],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertStringContainsString('<h2', $treeHtml);
-        $this->assertStringContainsString('Título via DTO', $treeHtml);
     }
 
     /**
@@ -350,14 +293,14 @@ PHP);
     {
         $container = new Container();
         $container->singleton(
-            \DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer::class,
-            \DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer::class
+            \DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock::class,
+            \DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock::class
         );
 
-        $first = $container->make(\DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer::class);
-        $second = $container->make(\DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer::class);
+        $first = $container->make(\DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock::class);
+        $second = $container->make(\DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock::class);
 
-        $this->assertInstanceOf(\DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer::class, $first);
+        $this->assertInstanceOf(\DomainSystem\Core\Theme\Parts\Blocks\HeadingBlock::class, $first);
         $this->assertSame($first, $second);
     }
 }

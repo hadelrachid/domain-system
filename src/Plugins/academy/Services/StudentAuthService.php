@@ -116,7 +116,8 @@ class StudentAuthService implements StudentAuthServiceInterface
             'academy_student_role',
         ];
 
-        // Se o usuário logado NÃO for administrador do OS, purga também as credenciais comuns
+        // Se o usuário logado NÃO for administrador do OS (ou seja, for apenas student ou user comum),
+        // purga também as credenciais comuns para evitar reaproveitamento de sessão
         $role = strtolower((string)$this->session->get('user_role', ''));
         $isAdmin = in_array($role, ['admin', 'manager', 'emergency'], true);
         if (!$isAdmin) {

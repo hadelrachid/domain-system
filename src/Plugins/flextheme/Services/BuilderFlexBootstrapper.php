@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\flextheme\Services;
 
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
-use DomainSystem\Core\Contracts\PageTreeRendererInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Contracts\ShortcodeManagerInterface;
 use DomainSystem\Core\Contracts\SiteStateInterface;
@@ -16,7 +15,6 @@ use DomainSystem\Core\Theme\EnvSiteState;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\DesignTokensInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
-use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\LayoutGridInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\MenuProviderInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface;
@@ -29,15 +27,6 @@ use DomainSystem\Core\Theme\Parts\Support\BaseUrlResolver;
 use DomainSystem\Core\Theme\Parts\Validation\ThemePartValidator;
 use DomainSystem\Core\Theme\SafeThemeResolver;
 use DomainSystem\Core\Theme\ShortcodeManager;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\DtoRendererInterface;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Contracts\WidgetManagerInterface;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\ContainerWidget;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\JsonRenderer;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\WidgetManager;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\LogoWidget;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\TextWidget;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Widgets\UserAuthWidget;
 use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 use DomainSystem\Plugins\flextheme\Contracts\ThemePartManagementServiceInterface;
@@ -46,10 +35,10 @@ use DomainSystem\Plugins\flextheme\Controllers\ThemeController;
 use DomainSystem\Plugins\flextheme\Controllers\ThemePartsAdminController;
 
 /**
- * Bootstrapper dedicado do subsistema Builder Flex (SOLID - SRP / DIP).
+ * Bootstrapper dedicado do subsistema Flex Builder (SOLID - SRP / DIP).
  *
- * Isola o registro de singletons, provedores, widgets e menus administrativos
- * do arquivo principal Plugin.php.
+ * Isola o registro de singletons, provedores e menus administrativos do motor
+ * Full Site Editing (FSE) baseado em Theme/Parts do arquivo principal Plugin.php.
  */
 class BuilderFlexBootstrapper
 {
@@ -91,30 +80,7 @@ class BuilderFlexBootstrapper
         });
         $runtime->singleton(ThemePartManagementService::class, fn($c) => $c->make(ThemePartManagementServiceInterface::class));
 
-        // 2. Motor de Widgets do BuilderFlex (Subplugin)
-        $runtime->singleton(DtoRendererInterface::class, function ($c) {
-            return new DtoRenderer(
-                $c->has(HtmlSanitizerInterface::class) ? $c->make(HtmlSanitizerInterface::class) : null,
-                $c->has(ElementStyleRendererInterface::class) ? $c->make(ElementStyleRendererInterface::class) : null
-            );
-        });
-        $runtime->singleton(DtoRenderer::class, fn($c) => $c->make(DtoRendererInterface::class));
-
-        $runtime->singleton(WidgetManagerInterface::class, function ($c) {
-            return new WidgetManager($c->make(DtoRendererInterface::class));
-        });
-
-        $runtime->singleton(JsonRenderer::class, function ($c) {
-            return new JsonRenderer(
-                $c->make(WidgetManagerInterface::class),
-                $c->make(DtoRendererInterface::class)
-            );
-        });
-        $runtime->singleton(PageTreeRendererInterface::class, function ($c) {
-            return $c->make(JsonRenderer::class);
-        });
-
-        // 3. Controllers do FlexTheme / Flex Builder com todas as dependências injetadas via Container
+        // 2. Controllers do FlexTheme / Flex Builder com todas as dependências injetadas via Container
         $runtime->singleton(ThemeController::class, function ($c) use ($basePath) {
             $siteState = $c->has(SiteStateInterface::class) ? $c->make(SiteStateInterface::class) : new EnvSiteState();
             $partRenderer = $c->has(ThemePartRendererInterface::class) ? $c->make(ThemePartRendererInterface::class) : null;
@@ -164,20 +130,7 @@ class BuilderFlexBootstrapper
             );
         });
 
-        // 4. Registra os widgets nativos
-        /** @var WidgetManagerInterface $manager */
-        $manager = $runtime->make(WidgetManagerInterface::class);
-        $manager->registerWidget(new ContainerWidget());
-        $manager->registerWidget(new TextWidget());
-        $manager->registerWidget(new LogoWidget());
-        $manager->registerWidget(new UserAuthWidget());
-
-        // 5. Integra com o motor de Shortcodes
-        $runtime->onHook('shortcodes.register', function (ShortcodeManager $sm) use ($manager) {
-            $manager->bootShortcodes($sm);
-        });
-
-        // 6. Adiciona o submenu do Flex Builder e Design Tokens dentro do menu "Temas"
+        // 3. Adiciona o submenu do Flex Builder e Design Tokens dentro do menu "Temas"
         $runtime->onHook('admin.menu', function ($menus, $role) {
             if (in_array($role, ['admin', 'manager'])) {
                 $inserted = false;

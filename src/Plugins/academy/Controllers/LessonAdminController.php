@@ -150,8 +150,16 @@ class LessonAdminController
         $lessonId = (int)$id;
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
-        $rawBody = (string)file_get_contents('php://input');
-        $jsonData = json_decode($rawBody, true);
+        $jsonData = $request->json();
+        if (empty($jsonData)) {
+            $rawBody = $request->rawBody();
+            if ($rawBody !== '') {
+                $decoded = json_decode($rawBody, true);
+                if (is_array($decoded)) {
+                    $jsonData = $decoded;
+                }
+            }
+        }
 
         $token = '';
         $title = null;
@@ -160,7 +168,7 @@ class LessonAdminController
         $fabricatePhp = false;
         $blocks = null;
 
-        if (is_array($jsonData)) {
+        if (!empty($jsonData) && is_array($jsonData)) {
             $token = (string)($jsonData['csrf_token'] ?? '');
             $title = isset($jsonData['title']) ? (string)$jsonData['title'] : null;
             $status = isset($jsonData['status']) ? (string)$jsonData['status'] : null;

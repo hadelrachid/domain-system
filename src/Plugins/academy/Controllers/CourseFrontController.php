@@ -43,7 +43,7 @@ class CourseFrontController
         CourseCatalogRendererInterface $catalogRenderer,
         ?SeoManagerInterface $seo = null,
         ?ThemeManagerInterface $themeManager = null,
-        LessonBlockRendererInterface $blockRenderer = new LessonBlockRenderer(),
+        ?LessonBlockRendererInterface $blockRenderer = null,
         ?ThemePageResolverInterface $pageResolver = null,
         ?CourseEnrollmentInterface $enrollment = null,
         ?SessionManagerInterface $session = null,
@@ -56,7 +56,7 @@ class CourseFrontController
         $this->catalogRenderer = $catalogRenderer;
         $this->seo = $seo;
         $this->themeManager = $themeManager;
-        $this->blockRenderer = $blockRenderer;
+        $this->blockRenderer = $blockRenderer ?? new LessonBlockRenderer();
         $this->pageResolver = $pageResolver;
         $this->enrollment = $enrollment;
         $this->session = $session;

@@ -27,7 +27,6 @@ use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartAssociation;
 use DomainSystem\Core\Theme\Parts\Repositories\JsonThemePartRepository;
 use DomainSystem\Core\Theme\Parts\Services\ThemePartRenderer;
 use DomainSystem\Core\Theme\ShortcodeManager;
-use DomainSystem\Plugins\flextheme\BuilderFlex\Core\DtoRenderer;
 use DomainSystem\Plugins\flextheme\Contracts\ThemeDiscoveryServiceInterface;
 use DomainSystem\Plugins\flextheme\Services\MediaUploadService;
 use DomainSystem\Plugins\flextheme\Services\ThemePartManagementService;
@@ -344,24 +343,6 @@ SVG;
             ],
         ]);
         $this->assertStringNotContainsString('javascript:', $postsHtml);
-
-        $dtoRenderer = new DtoRenderer();
-        $dtoHtml = $dtoRenderer->render([
-            'tag'     => 'div',
-            'attrs'   => [
-                'class'   => 'box',
-                'onclick' => 'alert(1)',
-                'href'    => 'javascript:alert(1)',
-            ],
-            'styles'  => [
-                'color' => '#fff; background: url(javascript:alert(1))',
-            ],
-            'content' => '<strong> Seguro </strong><script>alert(1)</script><a href="javascript:evil()">Link</a>',
-        ]);
-        $this->assertStringContainsString('<strong> Seguro </strong>', $dtoHtml);
-        $this->assertStringNotContainsString('<script>', $dtoHtml);
-        $this->assertStringNotContainsString('onclick=', $dtoHtml);
-        $this->assertStringNotContainsString('javascript:', $dtoHtml);
     }
 
     public function testZeroServiceLocatorGlobalsInBlocksAndThemeController(): void

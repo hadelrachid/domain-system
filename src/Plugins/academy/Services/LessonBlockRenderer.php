@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\academy\Services;
 
+use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 use DomainSystem\Plugins\academy\Contracts\LessonBlockRendererInterface;
 use DomainSystem\Plugins\academy\Contracts\LessonPdfStorageInterface;
 
@@ -19,11 +21,15 @@ class LessonBlockRenderer implements LessonBlockRendererInterface
     private const ALLOWED_INLINE_TAGS = '<strong><b><em><i><code><a><mark><kbd><br><small><u><del>';
 
     private ?LessonPdfStorageInterface $pdfStorage;
+    private HtmlSanitizerInterface $sanitizer;
     private bool $pdfRuntimeInjected = false;
 
-    public function __construct(?LessonPdfStorageInterface $pdfStorage = null)
-    {
+    public function __construct(
+        ?LessonPdfStorageInterface $pdfStorage = null,
+        ?HtmlSanitizerInterface $sanitizer = null
+    ) {
         $this->pdfStorage = $pdfStorage;
+        $this->sanitizer = $sanitizer ?? new SafeHtmlSanitizer();
     }
 
     /**
@@ -817,11 +823,6 @@ HTML;
 
     private function sanitizeInlineHtml(string $html): string
     {
-        // Remove scripts e tags perigosas preservando tags de formatação segura
-        $stripped = strip_tags($html, self::ALLOWED_INLINE_TAGS);
-        // Remove manipuladores de eventos maliciosos tipo onclick, onerror
-        $cleaned = (string)preg_replace('/\s*on\w+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $stripped);
-        // Bloqueia protocolos perigosos (javascript:, data:, vbscript:) em atributos href
-        return (string)preg_replace('/\s*href\s*=\s*(["\']?)\s*(?:javascript|vbscript|data):[^"\'>\s]*\1/i', ' href="#"', $cleaned);
+        return $this->sanitizer->sanitizeInlineHtml($html);
     }
 }

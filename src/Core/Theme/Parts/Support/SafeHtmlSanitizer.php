@@ -68,7 +68,7 @@ class SafeHtmlSanitizer implements HtmlSanitizerInterface
                 if ($tag === 'a' && in_array($name, ['href', 'target', 'rel', 'title', 'class'], true)) {
                     if ($name === 'href') {
                         if (!$this->isSafeUrl($value)) {
-                            continue;
+                            $value = '#';
                         }
                     }
                     $escaped = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');

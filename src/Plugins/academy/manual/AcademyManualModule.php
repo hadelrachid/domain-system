@@ -232,7 +232,7 @@ class AcademyManualModule implements ManualModuleInterface
 
             <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border, #30363d); border-radius: 8px; padding: 18px 22px; margin-bottom: 24px;">
                 <p style="margin-top: 0;">
-                    Ao editar qualquer aula, você pode definir como o conteúdo será apresentado em smartphones e tablets, garantindo a melhor ergonomia de acordo com o tipo de aula:
+                    No <strong>Simulador Mobile/Tablet</strong>, ao editar qualquer aula, você pode alternar entre Desktop e os 5 dispositivos móveis (320px a 1024px) e definir como o conteúdo será apresentado em smartphones e tablets, garantindo a melhor ergonomia de acordo com o tipo de aula:
                 </p>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px;">
