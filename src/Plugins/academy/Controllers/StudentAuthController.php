@@ -13,7 +13,9 @@ use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Security\SafeRedirectValidator;
 use DomainSystem\Plugins\academy\Contracts\StudentAuthServiceInterface;
+use DomainSystem\Plugins\academy\Contracts\StudentCredentialRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\StudentViewRendererInterface;
+use DomainSystem\Plugins\academy\Repositories\PdoStudentCredentialRepository;
 use DomainSystem\Plugins\academy\Services\StudentAuthService;
 use DomainSystem\Plugins\academy\Services\StudentViewRenderer;
 use DomainSystem\SystemApps\auth\Contracts\LoginThrottleInterface;
@@ -23,7 +25,7 @@ use Throwable;
 /**
  * Controlador de Autenticação e Cadastro da Sala de Aula / Alunos (SRP / DIP / Sem Superglobais).
  * Totalmente desacoplado do Painel Administrativo através dos contratos
- * StudentAuthServiceInterface e StudentViewRendererInterface.
+ * StudentAuthServiceInterface, StudentCredentialRepositoryInterface e StudentViewRendererInterface.
  */
 class StudentAuthController
 {
@@ -34,6 +36,7 @@ class StudentAuthController
     private SafeRedirectValidatorInterface $redirectValidator;
     private ?PasswordPolicyInterface $passwordPolicy;
     private ?LoginThrottleInterface $throttle;
+    private ?StudentCredentialRepositoryInterface $credentialRepo;
 
     public function __construct(
         SessionManagerInterface $session,
@@ -42,7 +45,8 @@ class StudentAuthController
         ?StudentViewRendererInterface $viewRenderer = null,
         ?SafeRedirectValidatorInterface $redirectValidator = null,
         ?PasswordPolicyInterface $passwordPolicy = null,
-        ?LoginThrottleInterface $throttle = null
+        ?LoginThrottleInterface $throttle = null,
+        ?StudentCredentialRepositoryInterface $credentialRepo = null
     ) {
         $this->session = $session;
         $this->pdo = $db instanceof DatabaseConnectionInterface ? $db->getPdo() : $db;
@@ -51,6 +55,7 @@ class StudentAuthController
         $this->redirectValidator = $redirectValidator ?? new SafeRedirectValidator();
         $this->passwordPolicy = $passwordPolicy;
         $this->throttle = $throttle;
+        $this->credentialRepo = $credentialRepo ?? ($this->pdo !== null ? new PdoStudentCredentialRepository($this->pdo) : null);
     }
 
     /**
@@ -119,18 +124,16 @@ class StudentAuthController
             return Response::redirect($baseUrl . '/aluno/login' . ($redirect !== '' ? '?redirect=' . urlencode($redirect) : ''));
         }
 
-        if ($this->pdo === null) {
+        if ($this->credentialRepo === null) {
             $this->studentAuth->setFlash('error', 'Serviço de autenticação temporariamente indisponível.');
             return Response::redirect($baseUrl . '/aluno/login');
         }
 
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE LOWER(email) = ? LIMIT 1");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = $this->credentialRepo->findByEmail($email);
 
         // T21: Mitigação de timing attack via dummy hash (CWE-208)
         $dummyHash = '$2y$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
-        $hashToVerify = ($user && !empty($user['password'])) ? (string)$user['password'] : $dummyHash;
+        $hashToVerify = ($user && !empty($user->passwordHash)) ? $user->passwordHash : $dummyHash;
         $passwordValid = password_verify($password, $hashToVerify);
 
         if (!$user || !$passwordValid) {
@@ -141,12 +144,11 @@ class StudentAuthController
 
         $this->throttle?->clear($throttleKey);
 
-        $userStatus = (string)($user['status'] ?? 'active');
-        if ($userStatus === 'banned') {
+        if ($user->status === 'banned') {
             $this->studentAuth->setFlash('error', 'Sua conta de aluno foi banida por violação das diretrizes da plataforma.');
             return Response::redirect($baseUrl . '/aluno/login' . ($redirect !== '' ? '?redirect=' . urlencode($redirect) : ''));
         }
-        if ($userStatus === 'suspended') {
+        if ($user->status === 'suspended') {
             $this->studentAuth->setFlash('error', 'Sua conta de aluno está temporariamente suspensa. Entre em contato com o suporte.');
             return Response::redirect($baseUrl . '/aluno/login' . ($redirect !== '' ? '?redirect=' . urlencode($redirect) : ''));
         }
@@ -155,14 +157,11 @@ class StudentAuthController
         $this->session->regenerate();
 
         // Login bem sucedido no escopo isolado do Aluno
-        $username = isset($user['username']) && !empty($user['username']) ? (string)$user['username'] : null;
-        $this->studentAuth->login((int)$user['id'], (string)$user['name'], (string)$user['email'], $username);
-
-        $role = (string)($user['role'] ?? 'student');
-        $this->session->set('academy_student_role', $role);
+        $this->studentAuth->login($user->id, $user->name, $user->email, $user->username);
+        $this->session->set('academy_student_role', $user->role);
 
         // Define mensagem no escopo exclusivo do aluno e elimina resquícios de flashes administrativos
-        $this->studentAuth->setFlash('success', 'Bem-vindo de volta, ' . htmlspecialchars((string)$user['name']) . '!');
+        $this->studentAuth->setFlash('success', 'Bem-vindo de volta, ' . htmlspecialchars($user->name) . '!');
         $this->session->remove('flash_message');
         return Response::redirect($targetUrl);
     }
@@ -254,54 +253,26 @@ class StudentAuthController
             return Response::redirect($baseUrl . '/aluno/cadastro');
         }
 
-        if ($this->pdo === null) {
+        if ($this->credentialRepo === null) {
             $this->studentAuth->setFlash('error', 'Serviço de cadastro temporariamente indisponível.');
             return Response::redirect($baseUrl . '/aluno/cadastro');
         }
 
         // Verifica duplicidade de e-mail
-        $stmtCheck = $this->pdo->prepare("SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1");
-        $stmtCheck->execute([$email]);
-        if ($stmtCheck->fetchColumn()) {
+        if ($this->credentialRepo->findByEmail($email) !== null) {
             $this->studentAuth->setFlash('error', 'Este e-mail já possui cadastro. Faça login para continuar.');
             return Response::redirect($baseUrl . '/aluno/login');
         }
 
         // Verifica duplicidade de nome de usuário
-        try {
-            $stmtUserCheck = $this->pdo->prepare("SELECT id FROM users WHERE LOWER(username) = ? LIMIT 1");
-            $stmtUserCheck->execute([$username]);
-            if ($stmtUserCheck->fetchColumn()) {
-                $this->studentAuth->setFlash('error', "O nome de usuário '@{$username}' já está em uso. Por favor, escolha outro.");
-                return Response::redirect($baseUrl . '/aluno/cadastro');
-            }
-        } catch (Throwable $e) {
-            // Caso a tabela ainda não contenha o campo username no ambiente
+        if ($this->credentialRepo->findByUsername($username) !== null) {
+            $this->studentAuth->setFlash('error', "O nome de usuário '@{$username}' já está em uso. Por favor, escolha outro.");
+            return Response::redirect($baseUrl . '/aluno/cadastro');
         }
 
         try {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            try {
-                $stmt = $this->pdo->prepare("
-                    INSERT INTO users (name, username, email, password, role, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, 'user', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ");
-                $stmt->execute([$name, $username, $email, $hash]);
-            } catch (\PDOException $e) {
-                // Se o erro for de coluna ausente (ex: username), tenta fallback sem a coluna
-                if (str_contains(strtolower($e->getMessage()), 'no such column') || str_contains(strtolower($e->getMessage()), 'unknown column')) {
-                    $stmt = $this->pdo->prepare("
-                        INSERT INTO users (name, email, password, role, created_at, updated_at)
-                        VALUES (?, ?, ?, 'user', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ");
-                    $stmt->execute([$name, $email, $hash]);
-                } else {
-                    // Propaga para tratamento específico de constraint ou erro geral
-                    throw $e;
-                }
-            }
-
-            $newId = (int)$this->pdo->lastInsertId();
+            $newId = $this->credentialRepo->createStudent($name, $username, $email, $hash);
 
             // Regenera ID de sessão para mitigar Session Fixation
             $this->session->regenerate();

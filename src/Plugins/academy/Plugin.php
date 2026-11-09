@@ -30,6 +30,7 @@ use DomainSystem\Plugins\academy\Contracts\StudentStorageInterface;
 use DomainSystem\Plugins\academy\Contracts\StudentViewRendererInterface;
 use DomainSystem\Plugins\academy\Contracts\StudentAdminRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\StudentAdminServiceInterface;
+use DomainSystem\Plugins\academy\Contracts\StudentCredentialRepositoryInterface;
 use DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface;
 use DomainSystem\Plugins\academy\Controllers\CourseAdminController;
 use DomainSystem\Plugins\academy\Controllers\CourseFrontController;
@@ -38,6 +39,7 @@ use DomainSystem\Plugins\academy\Controllers\StudentAdminController;
 use DomainSystem\Plugins\academy\Controllers\StudentAuthController;
 use DomainSystem\Plugins\academy\Controllers\StudentDashboardController;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseEnrollmentRepository;
+use DomainSystem\Plugins\academy\Repositories\PdoStudentCredentialRepository;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseRepository;
 use DomainSystem\Plugins\academy\Repositories\PdoCourseStructureRepository;
 use DomainSystem\Plugins\academy\Repositories\PdoStudentAdminRepository;
@@ -113,6 +115,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
         $runtime->singleton(StudentViewRendererInterface::class, function () {
             return new StudentViewRenderer();
+        });
+
+        $runtime->singleton(StudentCredentialRepositoryInterface::class, function () use ($runtime) {
+            return new PdoStudentCredentialRepository($runtime->getLink('core.db'));
         });
 
         $runtime->singleton(StudentProgressRepositoryInterface::class, function () use ($runtime) {
@@ -217,6 +223,33 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $runtime->make(ThemePageResolverInterface::class),
                 $runtime->make(CourseService::class),
                 $runtime->make(LessonFileScaffolderInterface::class)
+            );
+        });
+
+        $runtime->singleton(CourseFrontController::class, function () use ($runtime) {
+            $seo = $runtime->has(\DomainSystem\Core\Contracts\SeoManagerInterface::class)
+                ? $runtime->make(\DomainSystem\Core\Contracts\SeoManagerInterface::class)
+                : null;
+            $themeManager = $runtime->has(ThemeManagerInterface::class)
+                ? $runtime->make(ThemeManagerInterface::class)
+                : null;
+            $accountStatus = $runtime->has(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class)
+                ? $runtime->make(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class)
+                : null;
+
+            return new CourseFrontController(
+                $runtime->make(CourseRepositoryInterface::class),
+                $runtime->make(CourseStructureRepositoryInterface::class),
+                $runtime->make(CourseNavigationInterface::class),
+                $runtime->make(CourseCatalogRendererInterface::class),
+                $seo,
+                $themeManager,
+                $runtime->make(LessonBlockRendererInterface::class),
+                $runtime->make(ThemePageResolverInterface::class),
+                $runtime->make(CourseEnrollmentInterface::class),
+                $runtime->make(SessionManagerInterface::class),
+                $runtime->make(StudentProgressInterface::class),
+                $accountStatus
             );
         });
 

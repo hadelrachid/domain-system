@@ -473,27 +473,25 @@ class ThemePartsAdminController
     }
 
     /**
-     * Extrai dados enviados via objeto Request (JSON ou form POST) sem depender de leitura direta de php://input quando Request já foi populado.
+     * Extrai dados enviados via objeto Request (JSON ou form POST) exclusivamente através dos contratos do Request.
      */
     private function extractInput(Request $request): array
     {
-        if (method_exists($request, 'json')) {
-            $jsonBody = $request->json();
-            if (!empty($jsonBody)) {
-                return $jsonBody;
-            }
+        $jsonBody = $request->json();
+        if (!empty($jsonBody) && is_array($jsonBody)) {
+            return $jsonBody;
         }
 
         $all = $request->all();
-        if (!empty($all)) {
+        if (!empty($all) && is_array($all)) {
             return $all;
         }
 
-        $raw = file_get_contents('php://input');
-        if (!empty($raw)) {
-            $json = json_decode($raw, true);
-            if (is_array($json)) {
-                return $json;
+        $rawBody = $request->rawBody();
+        if (!empty($rawBody)) {
+            $decoded = json_decode($rawBody, true);
+            if (is_array($decoded)) {
+                return $decoded;
             }
         }
 
@@ -502,9 +500,9 @@ class ThemePartsAdminController
 
     private function isAjax(Request $request): bool
     {
-        $accept = (string)($request->server['HTTP_ACCEPT'] ?? '');
-        $xrw = (string)($request->server['HTTP_X_REQUESTED_WITH'] ?? '');
-        $ct = (string)($request->server['CONTENT_TYPE'] ?? '');
+        $accept = (string)($request->header('Accept') ?? ($request->server['HTTP_ACCEPT'] ?? ''));
+        $xrw = (string)($request->header('X-Requested-With') ?? ($request->server['HTTP_X_REQUESTED_WITH'] ?? ''));
+        $ct = (string)($request->header('Content-Type') ?? ($request->server['CONTENT_TYPE'] ?? ''));
 
         return str_contains($accept, 'application/json')
             || strtolower($xrw) === 'xmlhttprequest'

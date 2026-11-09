@@ -167,19 +167,22 @@ HTML;
         $resolver = $this->themeResolver;
         $themeDir = $resolver->resolveThemePath($themeName);
         
-        // Evitar directory traversal hacker
-        if (strpos($slug, '..') !== false) {
-            return new Response("Acesso negado", 403);
+        $pagesDir = realpath($themeDir . '/pages');
+        if ($pagesDir === false) {
+            return new Response("Diretório de documentação não encontrado", 404);
         }
-        
-        $docPath = $themeDir . '/pages/' . $slug . '.php';
 
-        if (!file_exists($docPath)) {
+        // Blindagem estrita contra Directory Traversal via caminho canônico resolvido
+        $cleanSlug = basename($slug);
+        $candidate = $pagesDir . DIRECTORY_SEPARATOR . $cleanSlug . '.php';
+        $realDocPath = realpath($candidate);
+
+        if ($realDocPath === false || !str_starts_with($realDocPath, $pagesDir . DIRECTORY_SEPARATOR) || !file_exists($realDocPath)) {
             return new Response("Documentação não encontrada: " . htmlspecialchars($slug), 404);
         }
 
         ob_start();
-        require $docPath;
+        require $realDocPath;
         $innerHtml = ob_get_clean();
 
         // Envelopa o conteúdo para isolar o CSS e consertar o visual anos 90

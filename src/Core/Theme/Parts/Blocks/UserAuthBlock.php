@@ -66,8 +66,7 @@ class UserAuthBlock extends AbstractBlock
         $isLoggedIn = false;
         $userName = 'Aluno';
 
-        $isExplicitlyLoggedOut = ($this->session !== null && $this->session->has('academy_logged_out'))
-            || (isset($_SESSION['academy_logged_out']) && $_SESSION['academy_logged_out']);
+        $isExplicitlyLoggedOut = $this->session !== null && (bool)$this->session->get('academy_logged_out', false);
 
         if (!$isExplicitlyLoggedOut) {
             if (isset($context['is_logged_in'])) {
@@ -76,21 +75,6 @@ class UserAuthBlock extends AbstractBlock
             } elseif ($this->session !== null && $this->session->has('academy_student_id')) {
                 $isLoggedIn = true;
                 $userName = (string)($this->session->get('academy_student_name', 'Aluno'));
-            } elseif (isset($_SESSION['academy_student_id'])) {
-                $isLoggedIn = true;
-                $userName = (string)($_SESSION['academy_student_name'] ?? 'Aluno');
-            } elseif ($this->session !== null && $this->session->has('user_id')) {
-                $role = (string)$this->session->get('user_role', '');
-                if ($role !== 'admin' && $role !== 'manager' && $role !== 'emergency') {
-                    $isLoggedIn = true;
-                    $userName = (string)($this->session->get('user_name', 'Aluno'));
-                }
-            } elseif (isset($_SESSION['user_id'])) {
-                $role = (string)($_SESSION['user_role'] ?? '');
-                if ($role !== 'admin' && $role !== 'manager' && $role !== 'emergency') {
-                    $isLoggedIn = true;
-                    $userName = (string)($_SESSION['user_name'] ?? 'Aluno');
-                }
             }
         }
 

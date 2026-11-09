@@ -306,12 +306,12 @@ final class AcademyStudentWorkspaceTest extends TestCase
         // Executa Logout
         $authService->logout();
 
-        // Pós-condição: Todas as credenciais foram aniquiladas e flag academy_logged_out foi cravada
+        // Pós-condição: Credenciais de aluno foram isoladas e purgadas, preservando a identidade global
         $this->assertFalse($authService->isLoggedIn());
         $this->assertNull($authService->getStudentId());
         $this->assertArrayNotHasKey('academy_student_id', $sessionData);
-        $this->assertArrayNotHasKey('user_id', $sessionData);
-        $this->assertArrayNotHasKey('user_role', $sessionData);
+        $this->assertSame(3, $sessionData['user_id']);
+        $this->assertSame('user', $sessionData['user_role']);
         $this->assertTrue($sessionData['academy_logged_out'] ?? false);
 
         // Teste do Controller: ao chamar logout(), redireciona com sucesso e confirma saída

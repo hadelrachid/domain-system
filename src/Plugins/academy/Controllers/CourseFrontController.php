@@ -29,7 +29,7 @@ class CourseFrontController
     private CourseCatalogRendererInterface $catalogRenderer;
     private ?SeoManagerInterface $seo;
     private ?ThemeManagerInterface $themeManager;
-    private LessonBlockRendererInterface $blockRenderer;
+    private ?LessonBlockRendererInterface $blockRenderer;
     private ?ThemePageResolverInterface $pageResolver;
     private ?CourseEnrollmentInterface $enrollment;
     private ?SessionManagerInterface $session;
@@ -222,7 +222,9 @@ class CourseFrontController
         $courseTitle = htmlspecialchars((string)$course['title'], ENT_QUOTES, 'UTF-8');
 
         if ($this->seo !== null) {
-            $plainDesc = $this->blockRenderer->extractPlainText((string)($lesson['content'] ?? ''));
+            $plainDesc = $this->blockRenderer !== null
+                ? $this->blockRenderer->extractPlainText((string)($lesson['content'] ?? ''))
+                : strip_tags((string)($lesson['content'] ?? ''));
             if ($plainDesc === '') {
                 $plainDesc = strip_tags((string)($course['description'] ?? ''));
             }
@@ -313,7 +315,9 @@ class CourseFrontController
                     'navHtml'  => $navHtml,
                 ]);
             } elseif (!empty($lesson['content'])) {
-                $bodyContent = $this->blockRenderer->render((string)$lesson['content']);
+                $bodyContent = $this->blockRenderer !== null
+                    ? $this->blockRenderer->render((string)$lesson['content'])
+                    : (string)$lesson['content'];
             } elseif (!empty($themeFile)) {
                 $bodyContent = $this->renderThemeFile((string)$themeFile, [
                     'course'   => $course,

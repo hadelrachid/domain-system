@@ -18,7 +18,7 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
     private PDO $pdo;
     private bool $tableEnsured = false;
 
-    public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = true)
+    public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = false)
     {
         $this->pdo = $connection instanceof DatabaseConnectionInterface
             ? $connection->getPdo()
@@ -34,7 +34,6 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
         if ($this->tableEnsured) {
             return;
         }
-        $this->tableEnsured = true;
 
         $sql = "
             CREATE TABLE IF NOT EXISTS academy_enrollments (
@@ -76,7 +75,8 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
             }
             $this->tableEnsured = true;
         } catch (Throwable $e) {
-            // Silencia falha se já existir
+            // Registra erro sem silenciar cegamente
+            error_log("[Academy] Falha ao verificar/criar tabela academy_enrollments: " . $e->getMessage());
         }
     }
 
@@ -116,6 +116,10 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
         ?DateTimeImmutable $expiresAt = null,
         ?string $orderRef = null
     ): bool {
+        if ($studentId <= 0 || $courseId <= 0) {
+            throw new \InvalidArgumentException('Aluno ou curso inválido.');
+        }
+
         $this->ensureTable();
         $existing = $this->findByStudentAndCourse($studentId, $courseId);
         $expiresStr = $expiresAt ? $expiresAt->format('Y-m-d H:i:s') : null;
@@ -138,9 +142,53 @@ class PdoCourseEnrollmentRepository implements CourseEnrollmentRepositoryInterfa
         try {
             return $stmt->execute([$studentId, $courseId, $status, $expiresStr, $orderRef, $now, $now]);
         } catch (\PDOException $e) {
-            // Em caso de colisão concorrente de chave única, atualiza o registro existente
-            return $this->updateStatus($studentId, $courseId, $status);
+            // Trata exclusivamente violação comprovada de unicidade (concorrência)
+            if ($this->isUniqueConstraintViolation($e)) {
+                return $this->updateExistingEnrollment($studentId, $courseId, $status, $expiresStr, $orderRef, $now);
+            }
+
+            // Propaga qualquer outro erro real de banco (conexão, sintaxe, colunas)
+            throw $e;
         }
+    }
+
+    public function isUniqueConstraintViolation(\PDOException $e): bool
+    {
+        $sqlState = (string)($e->errorInfo[0] ?? $e->getCode());
+        $driverCode = (int)($e->errorInfo[1] ?? 0);
+        $message = strtolower($e->getMessage());
+
+        // MySQL / MariaDB: SQLSTATE 23000 + driver code 1062
+        if ($sqlState === '23000' && $driverCode === 1062) {
+            return true;
+        }
+
+        // SQLite: constraint violation unique
+        if (str_contains($message, 'unique constraint') || str_contains($message, 'unique key') || str_contains($message, 'duplicate entry')) {
+            return true;
+        }
+
+        if ($sqlState === '23000' && ($driverCode === 19 || $driverCode === 2067)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function updateExistingEnrollment(
+        int $studentId,
+        int $courseId,
+        string $status,
+        ?string $expiresAt,
+        ?string $orderRef,
+        string $now
+    ): bool {
+        $stmt = $this->pdo->prepare("
+            UPDATE academy_enrollments 
+            SET status = ?, expires_at = ?, order_ref = ?, updated_at = ?
+            WHERE user_id = ? AND course_id = ?
+        ");
+        return $stmt->execute([$status, $expiresAt, $orderRef, $now, $studentId, $courseId]);
     }
 
     public function updateStatus(int $studentId, int $courseId, string $status): bool

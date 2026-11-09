@@ -20,7 +20,7 @@ class CourseEnrollmentValidationTest extends TestCase
         parent::setUp();
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->repo = new PdoCourseEnrollmentRepository($this->pdo);
+        $this->repo = new PdoCourseEnrollmentRepository($this->pdo, true);
     }
 
     public function testNonPositiveIdsNeverGrantAccessEvenIfCourseIsFree(): void
@@ -80,5 +80,39 @@ class CourseEnrollmentValidationTest extends TestCase
 
         $enrollment = $this->repo->findByStudentAndCourse(8, 50);
         $this->assertSame('cancelled', $enrollment['status']);
+    }
+
+    public function testSaveEnrollmentThrowsOnInvalidIds(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->repo->saveEnrollment(0, 10);
+    }
+
+    public function testSaveEnrollmentUpdatesAllFieldsOnExistingRecord(): void
+    {
+        $expires = new \DateTimeImmutable('2026-12-31 23:59:59');
+        $this->repo->saveEnrollment(15, 30, 'pending', null, 'ORD_001');
+
+        $this->repo->saveEnrollment(15, 30, 'active', $expires, 'ORD_002_PAID');
+
+        $record = $this->repo->findByStudentAndCourse(15, 30);
+        $this->assertNotNull($record);
+        $this->assertSame('active', $record['status']);
+        $this->assertSame('2026-12-31 23:59:59', $record['expires_at']);
+        $this->assertSame('ORD_002_PAID', $record['order_ref']);
+    }
+
+    public function testSaveEnrollmentPropagatesNonUniquePdoExceptions(): void
+    {
+        // Cria conexão simulando erro crítico (ex: tabela corrompida / query inválida)
+        $pdoMock = $this->createMock(PDO::class);
+        $pdoMock->method('getAttribute')->willReturn('sqlite');
+        $pdoMock->method('prepare')->willThrowException(new \PDOException('Disk I/O error or broken connection', 500));
+
+        $repo = new PdoCourseEnrollmentRepository($pdoMock, false);
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('Disk I/O error');
+        $repo->saveEnrollment(1, 1, 'active');
     }
 }

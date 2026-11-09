@@ -35,73 +35,59 @@ class StudentAuthService implements StudentAuthServiceInterface
 
     public function getStudentId(): ?int
     {
-        // 1. Chave explícita e isolada de aluno
-        $id = (int)$this->session->get(self::SESSION_STUDENT_ID, 0);
-        if ($id > 0) {
-            return $id;
-        }
-
-        // Se marcou logout explícito de aluno, não faz fallback
         if ((bool)$this->session->get('academy_logged_out', false)) {
             return null;
         }
 
-        // 2. Proteção de isolamento de privilégios:
-        // Apenas usuários comuns (user/student) podem fazer fallback de contexto para o aluno
-        $role = strtolower((string)$this->session->get('user_role', ''));
-        if (in_array($role, ['user', 'student'], true)) {
-            $fallbackId = (int)$this->session->get('user_id', 0);
-            return $fallbackId > 0 ? $fallbackId : null;
-        }
-
-        return null;
+        $id = filter_var($this->session->get(self::SESSION_STUDENT_ID), FILTER_VALIDATE_INT);
+        return ($id !== false && $id > 0) ? $id : null;
     }
 
     public function getStudentName(): ?string
     {
-        $name = (string)$this->session->get(self::SESSION_STUDENT_NAME, '');
-        if ($name !== '') {
-            return $name;
+        if ((bool)$this->session->get('academy_logged_out', false)) {
+            return null;
         }
 
-        $role = strtolower((string)$this->session->get('user_role', ''));
-        if (in_array($role, ['user', 'student'], true)) {
-            return (string)$this->session->get('user_name', 'Aluno');
-        }
-
-        return null;
+        $name = trim((string)$this->session->get(self::SESSION_STUDENT_NAME, ''));
+        return $name !== '' ? $name : null;
     }
 
     public function getStudentUsername(): ?string
     {
-        $user = (string)$this->session->get(self::SESSION_STUDENT_USERNAME, '');
+        if ((bool)$this->session->get('academy_logged_out', false)) {
+            return null;
+        }
+
+        $user = trim((string)$this->session->get(self::SESSION_STUDENT_USERNAME, ''));
         return $user !== '' ? $user : null;
     }
 
     public function getStudentEmail(): ?string
     {
-        $email = (string)$this->session->get(self::SESSION_STUDENT_EMAIL, '');
-        if ($email !== '') {
-            return $email;
+        if ((bool)$this->session->get('academy_logged_out', false)) {
+            return null;
         }
 
-        $role = strtolower((string)$this->session->get('user_role', ''));
-        if (in_array($role, ['user', 'student'], true)) {
-            return (string)$this->session->get('user_email', '');
-        }
-
-        return null;
+        $email = trim((string)$this->session->get(self::SESSION_STUDENT_EMAIL, ''));
+        return $email !== '' ? $email : null;
     }
 
     public function login(int $studentId, string $name, string $email, ?string $username = null): void
     {
+        if ($studentId <= 0) {
+            throw new \InvalidArgumentException('ID de aluno inválido.');
+        }
+
         $this->session->remove('academy_logged_out');
         $this->session->set(self::SESSION_STUDENT_ID, $studentId);
-        $this->session->set(self::SESSION_STUDENT_NAME, $name);
-        $this->session->set(self::SESSION_STUDENT_EMAIL, $email);
+        $this->session->set(self::SESSION_STUDENT_NAME, trim($name));
+        $this->session->set(self::SESSION_STUDENT_EMAIL, strtolower(trim($email)));
 
-        if ($username !== null && $username !== '') {
-            $this->session->set(self::SESSION_STUDENT_USERNAME, $username);
+        if ($username !== null && trim($username) !== '') {
+            $this->session->set(self::SESSION_STUDENT_USERNAME, trim($username));
+        } else {
+            $this->session->remove(self::SESSION_STUDENT_USERNAME);
         }
     }
 
@@ -116,18 +102,7 @@ class StudentAuthService implements StudentAuthServiceInterface
             'academy_student_role',
         ];
 
-        // Se o usuário logado NÃO for administrador do OS (ou seja, for apenas student ou user comum),
-        // purga também as credenciais comuns para evitar reaproveitamento de sessão
-        $role = strtolower((string)$this->session->get('user_role', ''));
-        $isAdmin = in_array($role, ['admin', 'manager', 'emergency'], true);
-        if (!$isAdmin) {
-            $keys[] = 'user_id';
-            $keys[] = 'user_name';
-            $keys[] = 'user_email';
-            $keys[] = 'user_role';
-            $keys[] = 'is_authenticated';
-        }
-
+        // Isola completamente: remove EXCLUSIVAMENTE chaves de aluno
         foreach ($keys as $k) {
             $this->session->remove($k);
         }

@@ -53,4 +53,71 @@ class StudentAuthIsolationTest extends TestCase
         $this->assertSame('admin', $sessionData['user_role']);
         $this->assertSame('admin@master.com', $sessionData['user_email']);
     }
+
+    public function testGlobalUserSessionDoesNotAuthenticateAcademyStudent(): void
+    {
+        $sessionData = [
+            'user_id'    => 10,
+            'user_role'  => 'user',
+            'user_name'  => 'Usuário comum do OS',
+            'user_email' => 'comum@dominio.com',
+        ];
+
+        $session = $this->createMock(SessionManagerInterface::class);
+        $session->method('get')->willReturnCallback(function (string $key, mixed $default = null) use (&$sessionData) {
+            return $sessionData[$key] ?? $default;
+        });
+
+        $auth = new StudentAuthService($session);
+
+        $this->assertNull($auth->getStudentId());
+        $this->assertNull($auth->getStudentName());
+        $this->assertNull($auth->getStudentEmail());
+        $this->assertFalse($auth->isLoggedIn());
+    }
+
+    public function testStudentLogoutPreservesGlobalUserSession(): void
+    {
+        $sessionData = [
+            'academy_student_id'   => 45,
+            'academy_student_name' => 'Aluno Ativo',
+            'user_id'              => 88,
+            'user_role'            => 'user',
+            'user_name'            => 'Usuário Site',
+            'is_authenticated'     => true,
+        ];
+
+        $session = $this->createMock(SessionManagerInterface::class);
+        $session->method('get')->willReturnCallback(function (string $key, mixed $default = null) use (&$sessionData) {
+            return $sessionData[$key] ?? $default;
+        });
+        $session->method('remove')->willReturnCallback(function (string $key) use (&$sessionData) {
+            unset($sessionData[$key]);
+        });
+        $session->method('set')->willReturnCallback(function (string $key, mixed $val) use (&$sessionData) {
+            $sessionData[$key] = $val;
+        });
+
+        $auth = new StudentAuthService($session);
+        $auth->logout();
+
+        // Aluno deslogado
+        $this->assertArrayNotHasKey('academy_student_id', $sessionData);
+        $this->assertArrayNotHasKey('academy_student_name', $sessionData);
+        $this->assertTrue($sessionData['academy_logged_out']);
+
+        // Sessão do usuário comum preservada
+        $this->assertSame(88, $sessionData['user_id']);
+        $this->assertSame('user', $sessionData['user_role']);
+        $this->assertSame('Usuário Site', $sessionData['user_name']);
+        $this->assertTrue($sessionData['is_authenticated']);
+    }
+
+    public function testInvalidStudentIdThrowsExceptionOnLogin(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $session = $this->createMock(SessionManagerInterface::class);
+        $auth = new StudentAuthService($session);
+        $auth->login(0, 'Aluno', 'aluno@teste.com');
+    }
 }

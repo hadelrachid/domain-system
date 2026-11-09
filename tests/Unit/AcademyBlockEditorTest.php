@@ -536,7 +536,7 @@ class AcademyBlockEditorTest extends TestCase
 
         $discovered = $scanner->discover();
         $this->assertArrayHasKey('academy', $discovered);
-        $this->assertCount(3, $discovered['academy']['files']);
+        $this->assertCount(4, $discovered['academy']['files']);
 
         $runner = new \DomainSystem\Core\Database\MigrationRunner($this->pdo);
         $healResult = $scanner->healAll($runner);
@@ -545,7 +545,7 @@ class AcademyBlockEditorTest extends TestCase
         $statusReport = $scanner->inspectStatus($runner);
         $this->assertNotEmpty($statusReport);
         $this->assertSame('ok', $statusReport['academy']['status']);
-        $this->assertCount(3, $statusReport['academy']['executed']);
+        $this->assertCount(4, $statusReport['academy']['executed']);
 
         // Testa StateSnapshotManager
         $tempRoot = sys_get_temp_dir() . '/ds_snap_test_' . uniqid();
