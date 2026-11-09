@@ -190,4 +190,94 @@ class ButtonBlockAndInspectorTokensTest extends TestCase
             @unlink($tmpFile);
         }
     }
+
+    public function testButtonAndCtaMobileDrawerAbsorbAttributes(): void
+    {
+        $buttonBlock = new ButtonBlock();
+        $defaultHtml = $buttonBlock->render(['label' => 'Clique Aqui']);
+        $this->assertStringContainsString('data-mobile-absorb="true"', $defaultHtml);
+
+        $notAbsorbedHtml = $buttonBlock->render(['label' => 'Fixo na Barra', 'absorb_in_mobile' => false]);
+        $this->assertStringContainsString('data-mobile-absorb="false"', $notAbsorbedHtml);
+
+        $ctaBlock = new \DomainSystem\Core\Theme\Parts\Blocks\CtaButtonBlock();
+        $ctaDefaultHtml = $ctaBlock->render(['label' => 'Começar']);
+        $this->assertStringContainsString('data-mobile-absorb="true"', $ctaDefaultHtml);
+
+        $ctaNotAbsorbedHtml = $ctaBlock->render(['label' => 'Começar', 'absorb_in_mobile' => false]);
+        $this->assertStringContainsString('data-mobile-absorb="false"', $ctaNotAbsorbedHtml);
+
+        $userAuthBlock = new \DomainSystem\Core\Theme\Parts\Blocks\UserAuthBlock();
+        $userAuthDefault = $userAuthBlock->render([]);
+        $this->assertStringContainsString('data-mobile-absorb="true"', $userAuthDefault);
+
+        $userAuthNotAbsorbed = $userAuthBlock->render(['absorb_in_mobile' => false]);
+        $this->assertStringContainsString('data-mobile-absorb="false"', $userAuthNotAbsorbed);
+    }
+
+    public function testLogoBlockResponsiveDesktopAndMobileStyles(): void
+    {
+        $logo = new \DomainSystem\Core\Theme\Parts\Blocks\LogoBlock();
+        $this->assertSame('logo', $logo->getType());
+
+        // Render padrão Desktop
+        $defaultHtml = $logo->render([
+            '_id'        => 'test_logo_1',
+            'brand_text' => 'DomainSystem',
+            'align'      => 'center',
+            'height'     => '40px',
+        ]);
+
+        $this->assertStringContainsString('id="test_logo_1"', $defaultHtml);
+        $this->assertStringContainsString('DomainSystem', $defaultHtml);
+        $this->assertStringContainsString('justify-content: center !important;', $defaultHtml);
+        $this->assertStringContainsString('text-align: center !important;', $defaultHtml);
+        $this->assertStringContainsString('height: 40px', $defaultHtml);
+        $this->assertStringContainsString('@media (max-width: 768px)', $defaultHtml);
+
+        // Render com customizações responsivas para Mobile (centralizado, coluna, menor altura, texto mobile)
+        $responsiveHtml = $logo->render([
+            '_id'                   => 'test_logo_resp',
+            'brand_text'            => 'DomainSystem Desktop',
+            'text_mobile'           => 'DS Mobile',
+            'align'                 => 'left',
+            'align_mobile'          => 'center',
+            'flex_direction'        => 'row',
+            'flex_direction_mobile' => 'column',
+            'height'                => '44px',
+            'height_mobile'         => '26px',
+            'font_size'             => '1.5rem',
+            'font_size_mobile'      => '1.0rem',
+            'font_weight'           => '800',
+            'font_weight_mobile'    => '500',
+        ]);
+
+        // Verifica regras do Desktop
+        $this->assertStringContainsString('justify-content: flex-start', $responsiveHtml);
+        $this->assertStringContainsString('flex-direction: row', $responsiveHtml);
+        $this->assertStringContainsString('height: 44px', $responsiveHtml);
+        $this->assertStringContainsString('font-weight: 800', $responsiveHtml);
+
+        // Verifica regras de Mobile dentro da Media Query 768px
+        $this->assertStringContainsString('@media (max-width: 768px)', $responsiveHtml);
+        $this->assertStringContainsString('justify-content: center !important;', $responsiveHtml);
+        $this->assertStringContainsString('flex-direction: column !important;', $responsiveHtml);
+        $this->assertStringContainsString('height: 26px !important;', $responsiveHtml);
+        $this->assertStringContainsString('font-size: 1.0rem !important;', $responsiveHtml);
+        $this->assertStringContainsString('font-weight: 500 !important;', $responsiveHtml);
+
+        // Verifica classes de alternância de texto
+        $this->assertStringContainsString('ds-logo-text-desktop', $responsiveHtml);
+        $this->assertStringContainsString('ds-logo-text-mobile', $responsiveHtml);
+        $this->assertStringContainsString('DomainSystem Desktop', $responsiveHtml);
+        $this->assertStringContainsString('DS Mobile', $responsiveHtml);
+
+        // Verifica Schema com campos responsivos
+        $schema = $logo->getSchema();
+        $this->assertArrayHasKey('align_mobile', $schema['fields']);
+        $this->assertArrayHasKey('flex_direction_mobile', $schema['fields']);
+        $this->assertArrayHasKey('height_mobile', $schema['fields']);
+        $this->assertArrayHasKey('text_mobile', $schema['fields']);
+        $this->assertArrayHasKey('font_weight_mobile', $schema['fields']);
+    }
 }

@@ -14,7 +14,7 @@ use DomainSystem\Plugins\flextheme\Contracts\MediaUploadServiceInterface;
  */
 class MediaUploadService implements MediaUploadServiceInterface
 {
-    public const DEFAULT_MAX_SIZE = 5242880; // 5MB em bytes
+    public const DEFAULT_MAX_SIZE = 52428800; // 50MB em bytes
 
     public const ALLOWED_EXTENSIONS = [
         'png',
@@ -23,6 +23,10 @@ class MediaUploadService implements MediaUploadServiceInterface
         'webp',
         'svg',
         'gif',
+        'mp4',
+        'webm',
+        'ogg',
+        'mov',
     ];
 
     public const ALLOWED_MIME_TYPES = [
@@ -31,6 +35,10 @@ class MediaUploadService implements MediaUploadServiceInterface
         'image/webp',
         'image/svg+xml',
         'image/gif',
+        'video/mp4',
+        'video/webm',
+        'video/ogg',
+        'video/quicktime',
     ];
 
     private string $uploadDir;
@@ -85,7 +93,7 @@ class MediaUploadService implements MediaUploadServiceInterface
         if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
             return [
                 'success' => false,
-                'message' => 'Extensão não permitida. Envie PNG, SVG, JPG, WEBP ou GIF.',
+                'message' => 'Extensão não permitida. Envie PNG, SVG, JPG, WEBP, GIF ou vídeos MP4, WEBM, OGG, MOV.',
             ];
         }
 

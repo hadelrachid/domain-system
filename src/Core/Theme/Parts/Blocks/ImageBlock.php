@@ -51,7 +51,7 @@ class ImageBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $rawUrl = trim((string)($data['url'] ?? ''));
+        $rawUrl = trim((string)($data['url'] ?? $data['url_mobile'] ?? ''));
         if ($rawUrl === '') {
             return '';
         }

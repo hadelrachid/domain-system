@@ -14,16 +14,11 @@ use DomainSystem\Core\Theme\Parts\Styles\Traits\StylableElementTrait;
 /**
  * Bloco de Título / Cabeçalho (H1 - H6).
  */
-class HeadingBlock implements BlockInterface, StylableElementInterface
+class HeadingBlock extends AbstractBlock
 {
-    use AllowedPartTypesTrait;
-    use StylableElementTrait;
-
-    private ElementStyleRendererInterface $styleRenderer;
-
     public function __construct(?ElementStyleRendererInterface $styleRenderer = null)
     {
-        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        parent::__construct(null, null, $styleRenderer);
     }
 
     public function getType(): string

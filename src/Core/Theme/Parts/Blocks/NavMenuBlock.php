@@ -537,9 +537,13 @@ class NavMenuBlock implements BlockInterface
             flex-direction: column;
             gap: 18px;
             overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            max-width: 100vw;
             transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
         }
         #{$navId} .ds-mobile-drawer.is-open {
+            display: flex !important;
             {$drawerOpenCss}
         }
         #{$navId} .ds-mobile-backdrop {
@@ -628,17 +632,12 @@ class NavMenuBlock implements BlockInterface
             display: flex;
         }
         @media (max-width: 768px) {
-            body:not(.ds-live-preview) #{$navId} .ds-desktop-menu { display: none !important; }
-            body:not(.ds-live-preview) #{$navId} .ds-mobile-toggle-wrapper { display: flex !important; }
-            body:not(.ds-live-preview) #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
-            body:not(.ds-live-preview) #{$navId} .ds-mobile-drawer { display: flex !important; }
-            body:not(.ds-live-preview) .ds-swallowed-in-mobile { display: none !important; }
-            body:not(.ds-live-preview) header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-            body:not(.ds-live-preview) header .ds-block-user-auth:not(.ds-mobile-drawer *),
-            body:not(.ds-live-preview) .ds-theme-header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-            body:not(.ds-live-preview) .ds-theme-header .ds-block-user-auth:not(.ds-mobile-drawer *),
-            body:not(.ds-live-preview) header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
-            body:not(.ds-live-preview) .ds-theme-header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *) {
+            #{$navId} .ds-desktop-menu { display: none !important; }
+            #{$navId} .ds-mobile-toggle-wrapper { display: flex !important; }
+            #{$navId} .ds-mobile-toggle-btn { display: inline-flex !important; }
+            .ds-swallowed-in-mobile { display: none !important; }
+            header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+            .ds-theme-header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *) {
                 display: none !important;
             }
         }
@@ -660,34 +659,23 @@ class NavMenuBlock implements BlockInterface
         .ds-device-768 #{$navId} .ds-mobile-toggle-btn {
             display: inline-flex !important;
         }
-        .ds-mobile-mode #{$navId} .ds-mobile-drawer,
-        .ds-is-mobile #{$navId} .ds-mobile-drawer,
-        .ds-device-375 #{$navId} .ds-mobile-drawer,
-        .ds-device-768 #{$navId} .ds-mobile-drawer {
-            display: flex !important;
-        }
 
         .ds-mobile-mode .ds-swallowed-in-mobile,
         .ds-is-mobile .ds-swallowed-in-mobile,
         .ds-device-375 .ds-swallowed-in-mobile,
         .ds-device-768 .ds-swallowed-in-mobile,
-        .ds-mobile-mode header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-mobile-mode .ds-theme-header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-mobile-mode header .ds-block-user-auth:not(.ds-mobile-drawer *),
-        .ds-mobile-mode .ds-theme-header .ds-block-user-auth:not(.ds-mobile-drawer *),
-        .ds-device-375 header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-device-375 .ds-theme-header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-device-375 header .ds-block-user-auth:not(.ds-mobile-drawer *),
-        .ds-device-375 .ds-theme-header .ds-block-user-auth:not(.ds-mobile-drawer *),
-        .ds-device-768 header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-device-768 .ds-theme-header .ds-block-button-wrapper:not(.ds-mobile-drawer *),
-        .ds-device-768 header .ds-block-user-auth:not(.ds-mobile-drawer *),
-        .ds-device-768 .ds-theme-header .ds-block-user-auth:not(.ds-mobile-drawer *) {
+        .ds-mobile-mode header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+        .ds-mobile-mode .ds-theme-header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+        .ds-device-375 header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+        .ds-device-375 .ds-theme-header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+        .ds-device-768 header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *),
+        .ds-device-768 .ds-theme-header [data-mobile-absorb="true"]:not(.ds-mobile-drawer *) {
             display: none !important;
         }
 
         /* Container de botões engolidos para dentro da gaveta mobile */
-        #{$navId} .ds-mobile-drawer-actions {
+        #{$navId} .ds-mobile-drawer-actions,
+        .ds-mobile-drawer-actions {
             margin-top: auto;
             padding-top: 16px;
             border-top: 1px solid {$drawerBorderColor};
@@ -695,23 +683,37 @@ class NavMenuBlock implements BlockInterface
             flex-direction: column;
             gap: 10px;
             width: 100%;
+            box-sizing: border-box;
         }
         #{$navId} .ds-mobile-drawer-actions .ds-block-button-wrapper,
-        #{$navId} .ds-mobile-drawer-actions .ds-block-user-auth {
+        #{$navId} .ds-mobile-drawer-actions .ds-block-cta-wrapper,
+        #{$navId} .ds-mobile-drawer-actions .ds-block-user-auth,
+        .ds-mobile-drawer-actions .ds-block-button-wrapper,
+        .ds-mobile-drawer-actions .ds-block-cta-wrapper,
+        .ds-mobile-drawer-actions .ds-block-user-auth {
             display: flex !important;
+            flex-direction: column !important;
             width: 100% !important;
+            gap: 8px !important;
             justify-content: stretch !important;
             margin: 0 !important;
+            box-sizing: border-box !important;
         }
         #{$navId} .ds-mobile-drawer-actions .ds-block-btn,
-        #{$navId} .ds-mobile-drawer-actions .ds-auth-btn {
+        #{$navId} .ds-mobile-drawer-actions .ds-block-cta,
+        #{$navId} .ds-mobile-drawer-actions .ds-auth-btn,
+        .ds-mobile-drawer-actions .ds-block-btn,
+        .ds-mobile-drawer-actions .ds-block-cta,
+        .ds-mobile-drawer-actions .ds-auth-btn {
             display: flex !important;
             width: 100% !important;
+            max-width: 100% !important;
             justify-content: center !important;
             text-align: center !important;
             padding: 10px 14px !important;
             font-size: 0.95rem !important;
             box-sizing: border-box !important;
+            margin: 0 !important;
         }
     </style>
 
@@ -784,12 +786,12 @@ class NavMenuBlock implements BlockInterface
                 const actionsContainer = document.getElementById(navId + '_actions');
                 if (!drawer || !actionsContainer) return;
 
-                const header = nav ? (nav.closest('header') || nav.closest('.ds-theme-header') || nav.closest('.ds-theme-part') || nav.closest('.container') || document.querySelector('header, .ds-theme-header')) : document.querySelector('header');
-                if (!header) return;
-
-                const candidates = header.querySelectorAll('.ds-block-button-wrapper, .ds-block-user-auth, [data-mobile-absorb="true"]');
+                const header = nav ? (nav.closest('header') || nav.closest('.ds-theme-header') || nav.closest('.ds-theme-part') || nav.closest('.container') || document.querySelector('header, .ds-theme-header, .ds-theme-part')) : document.querySelector('header, .ds-theme-header, .ds-theme-part');
+                const rootEl = header || document.body;
+                const candidates = rootEl.querySelectorAll('[data-mobile-absorb="true"], .ds-block-button-wrapper[data-mobile-absorb="true"], .ds-block-cta-wrapper[data-mobile-absorb="true"], .ds-block-user-auth[data-mobile-absorb="true"]');
                 candidates.forEach(function(el) {
                     if (drawer.contains(el)) return;
+                    if (el.getAttribute('data-mobile-absorb') === 'false') return;
 
                     el.classList.add('ds-swallowed-in-mobile');
                     const wrapper = el.closest('.ds-element-wrapper');
@@ -801,16 +803,22 @@ class NavMenuBlock implements BlockInterface
 
                     const clone = el.cloneNode(true);
                     clone.setAttribute('data-absorbed-from', origId);
+                    clone.removeAttribute('data-mobile-absorb');
                     clone.classList.remove('ds-swallowed-in-mobile');
                     clone.style.display = 'flex';
+                    clone.style.flexDirection = 'column';
                     clone.style.width = '100%';
                     clone.style.margin = '0';
+                    clone.style.gap = '8px';
+                    clone.style.boxSizing = 'border-box';
                     clone.style.justifyContent = 'stretch';
-                    clone.querySelectorAll('.ds-block-btn, .ds-auth-btn').forEach(function(btn) {
+                    clone.querySelectorAll('.ds-block-btn, .ds-block-cta, .ds-auth-btn').forEach(function(btn) {
                         btn.style.width = '100%';
+                        btn.style.maxWidth = '100%';
                         btn.style.justifyContent = 'center';
                         btn.style.textAlign = 'center';
                         btn.style.boxSizing = 'border-box';
+                        btn.style.margin = '0';
                     });
                     actionsContainer.appendChild(clone);
                 });

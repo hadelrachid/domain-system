@@ -59,11 +59,12 @@
         /* STUDIO MAIN WORKSPACE */
         #studio-workspace {
             flex-grow: 1;
-            display: grid;
-            grid-template-columns: 360px 1fr;
+            display: flex;
+            flex-direction: row;
             height: calc(100vh - 56px);
             overflow: hidden;
             background: #06090e;
+            position: relative;
         }
 
         /* LEFT SIDEBAR */
@@ -74,6 +75,37 @@
             flex-direction: column;
             height: 100%;
             overflow: hidden;
+            width: var(--studio-sidebar-width, 360px);
+            min-width: 260px;
+            max-width: 750px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        /* DRAGGABLE RESIZER SPLITTER */
+        .studio-sidebar-resizer {
+            width: 6px;
+            cursor: col-resize;
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 1px solid rgba(0, 0, 0, 0.35);
+            flex-shrink: 0;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+            user-select: none;
+            z-index: 50;
+            position: relative;
+        }
+        .studio-sidebar-resizer:hover,
+        .studio-sidebar-resizer.is-dragging {
+            background: var(--primary, #38bdf8) !important;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
+        }
+        body.is-resizing-sidebar {
+            cursor: col-resize !important;
+            user-select: none !important;
+        }
+        body.is-resizing-sidebar iframe {
+            pointer-events: none !important;
         }
 
         .sidebar-tabs {
@@ -227,7 +259,7 @@
         }
 
         .column-dropzone {
-            margin-top: auto;
+            margin-top: 8px;
             border: 1px dashed rgba(56, 189, 248, 0.35);
             border-radius: 6px;
             padding: 8px;
@@ -506,7 +538,7 @@
             margin-top: 1px;
         }
 
-        /* MOBILE OVERFLOW PREVENTION (375px) */
+        /* VIEWPORT MOBILE COMPACTO (375px) PARA MODO ESTRUTURA */
         #device-viewport.ds-device-375,
         #device-viewport.ds-mobile-mode {
             max-width: 375px !important;
@@ -515,32 +547,166 @@
         }
         #device-viewport.ds-device-375 .canvas-grid-row,
         #device-viewport.ds-mobile-mode .canvas-grid-row {
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
+            gap: 8px !important;
             width: 100% !important;
             box-sizing: border-box !important;
         }
         #device-viewport.ds-device-375 .canvas-column,
         #device-viewport.ds-mobile-mode .canvas-column {
+            padding: 8px 6px !important;
+            gap: 6px !important;
+            min-height: 70px !important;
             min-width: 0 !important;
-            width: 100% !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
+        }
+        #device-viewport.ds-device-375 .canvas-column-header,
+        #device-viewport.ds-mobile-mode .canvas-column-header {
+            padding-bottom: 4px !important;
+            margin-bottom: 4px !important;
+            font-size: 10px !important;
         }
         #device-viewport.ds-device-375 .canvas-block-card,
         #device-viewport.ds-mobile-mode .canvas-block-card {
+            padding: 6px 8px !important;
+            margin-bottom: 4px !important;
             min-width: 0 !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
-            word-break: break-word !important;
+        }
+        #device-viewport.ds-device-375 .canvas-block-header,
+        #device-viewport.ds-mobile-mode .canvas-block-header {
+            margin-bottom: 3px !important;
+            gap: 4px !important;
+        }
+        #device-viewport.ds-device-375 .canvas-block-title,
+        #device-viewport.ds-mobile-mode .canvas-block-title {
+            font-size: 11px !important;
+            max-width: 65% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        #device-viewport.ds-device-375 .block-act-btn,
+        #device-viewport.ds-mobile-mode .block-act-btn {
+            padding: 1px 3px !important;
+            font-size: 9px !important;
+            line-height: 1 !important;
+            min-width: 16px !important;
+            height: 18px !important;
+        }
+        #device-viewport.ds-device-375 .block-layer-badges,
+        #device-viewport.ds-mobile-mode .block-layer-badges {
+            margin-top: 2px !important;
+            gap: 2px !important;
+        }
+        #device-viewport.ds-device-375 .ds-struct-badge,
+        #device-viewport.ds-mobile-mode .ds-struct-badge {
+            font-size: 9px !important;
+            padding: 1px 5px !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        #device-viewport.ds-device-375 .column-dropzone,
+        #device-viewport.ds-mobile-mode .column-dropzone {
+            padding: 3px 6px !important;
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+            margin-top: 4px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }
         #device-viewport.ds-device-375 .elementor-section-card,
         #device-viewport.ds-mobile-mode .elementor-section-card {
             min-width: 0 !important;
             max-width: 100% !important;
+            width: 100% !important;
             box-sizing: border-box !important;
+            padding: 8px 6px !important;
+        }
+        #device-viewport.ds-device-375 .elementor-section-bar,
+        #device-viewport.ds-mobile-mode .elementor-section-bar {
+            padding: 5px 8px !important;
+            gap: 4px !important;
+            flex-wrap: nowrap !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+        #device-viewport.ds-device-375 .elementor-sec-title,
+        #device-viewport.ds-mobile-mode .elementor-sec-title {
+            font-size: 11px !important;
+            gap: 4px !important;
+            min-width: 0 !important;
+            flex: 1 1 auto !important;
             overflow: hidden !important;
+            white-space: nowrap !important;
+        }
+        #device-viewport.ds-device-375 .elementor-sec-title strong,
+        #device-viewport.ds-mobile-mode .elementor-sec-title strong {
+            max-width: 65px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+        }
+        #device-viewport.ds-device-375 .elementor-sec-badge,
+        #device-viewport.ds-mobile-mode .elementor-sec-badge {
+            font-size: 9px !important;
+            padding: 1px 4px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        #device-viewport.ds-device-375 .elementor-sec-actions,
+        #device-viewport.ds-mobile-mode .elementor-sec-actions {
+            gap: 2px !important;
+            flex-shrink: 0 !important;
+        }
+        #device-viewport.ds-device-375 .sec-act-btn,
+        #device-viewport.ds-mobile-mode .sec-act-btn {
+            padding: 2px 4px !important;
+            font-size: 10px !important;
+            height: 20px !important;
+            line-height: 1 !important;
+            min-width: 18px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* BADGES ARQUITETURAIS MODO ESTRUTURA */
+        .block-layer-badges {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 5px;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        .ds-struct-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+        .ds-struct-badge-type {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            font-weight: 700;
+        }
+        .ds-struct-badge-mob {
+            background: rgba(16, 185, 129, 0.14);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            font-weight: 700;
         }
 
         /* FLOATING NAVIGATOR (POPUP FLUTUANTE ESTILO ELEMENTOR) */

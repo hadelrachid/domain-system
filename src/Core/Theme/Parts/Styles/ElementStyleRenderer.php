@@ -180,4 +180,141 @@ class ElementStyleRenderer implements ElementStyleRendererInterface
         $sanitized = preg_replace('/[;<>{}\\\\]/', '', $trimmed) ?? '';
         return htmlspecialchars($sanitized, ENT_QUOTES, 'UTF-8');
     }
+
+    public function renderResponsiveStyles(string $elementSelector, array $data): string
+    {
+        $devices = [
+            'laptop' => [
+                'media' => '@media (min-width: 769px) and (max-width: 1024px)',
+                'class' => ".ds-laptop-mode {$elementSelector}, .ds-device-1024 {$elementSelector}",
+            ],
+            'tablet' => [
+                'media' => '@media (min-width: 481px) and (max-width: 768px)',
+                'class' => ".ds-tablet-mode {$elementSelector}, .ds-device-768 {$elementSelector}",
+            ],
+            'mobile' => [
+                'media' => '@media (max-width: 480px)',
+                'class' => ".ds-mobile-mode {$elementSelector}, .ds-device-375 {$elementSelector}",
+            ],
+        ];
+
+        $output = '';
+
+        foreach ($devices as $dev => $config) {
+            $rules = $this->buildDeviceRules($data, $dev);
+            if (empty($rules)) {
+                continue;
+            }
+
+            $rulesStr = implode("; ", $rules) . ";";
+            
+            // Regras adicionais em cascata para elementos de texto internos (headings e parágrafos)
+            $textRules = [];
+            foreach ($rules as $r) {
+                if (
+                    str_starts_with($r, 'font-size:') ||
+                    str_starts_with($r, 'font-weight:') ||
+                    str_starts_with($r, 'font-family:') ||
+                    str_starts_with($r, 'text-align:') ||
+                    str_starts_with($r, 'line-height:') ||
+                    str_starts_with($r, 'letter-spacing:') ||
+                    str_starts_with($r, 'color:')
+                ) {
+                    $textRules[] = $r;
+                }
+            }
+            $textCascadeStr = '';
+            if (!empty($textRules)) {
+                $textInnerRules = implode("; ", $textRules) . ";";
+                $textSelector = "{$elementSelector} h1, {$elementSelector} h2, {$elementSelector} h3, {$elementSelector} h4, {$elementSelector} h5, {$elementSelector} h6, {$elementSelector} p, {$elementSelector} .ds-block-heading, {$elementSelector} .ds-block-paragraph";
+                $textCascadeStr = " {$textSelector} { {$textInnerRules} }";
+            }
+
+            $mediaQuery = $config['media'];
+            $classSelector = $config['class'];
+
+            $output .= "{$mediaQuery} { {$elementSelector} { {$rulesStr} }{$textCascadeStr} } ";
+            $output .= "{$classSelector} { {$rulesStr} } ";
+        }
+
+        return trim($output);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<int, string>
+     */
+    private function buildDeviceRules(array $data, string $device): array
+    {
+        $rules = [];
+        $suffix = "_{$device}";
+
+        // Margem e Padding
+        if (!empty($data['margin' . $suffix])) {
+            $rules[] = 'margin: ' . $this->sanitizeCssValue((string)$data['margin' . $suffix]);
+        }
+        if (!empty($data['padding' . $suffix])) {
+            $rules[] = 'padding: ' . $this->sanitizeCssValue((string)$data['padding' . $suffix]);
+        }
+
+        // Flex & Flexbox
+        if (!empty($data['display' . $suffix])) {
+            $rules[] = 'display: ' . $this->sanitizeCssValue((string)$data['display' . $suffix]);
+        }
+        if (!empty($data['flex_direction' . $suffix])) {
+            $rules[] = 'flex-direction: ' . $this->sanitizeCssValue((string)$data['flex_direction' . $suffix]);
+        }
+        if (!empty($data['justify_content' . $suffix])) {
+            $rules[] = 'justify-content: ' . $this->sanitizeCssValue((string)$data['justify_content' . $suffix]);
+        }
+        if (!empty($data['align_items' . $suffix])) {
+            $rules[] = 'align-items: ' . $this->sanitizeCssValue((string)$data['align_items' . $suffix]);
+        }
+        if (!empty($data['gap' . $suffix])) {
+            $rules[] = 'gap: ' . $this->sanitizeCssValue((string)$data['gap' . $suffix]);
+        }
+
+        // Dimensões
+        if (!empty($data['width' . $suffix])) {
+            $rules[] = 'width: ' . $this->sanitizeCssValue((string)$data['width' . $suffix]);
+        }
+        if (!empty($data['max_width' . $suffix])) {
+            $rules[] = 'max-width: ' . $this->sanitizeCssValue((string)$data['max_width' . $suffix]);
+        }
+
+        // Tipografia, Cores & Alinhamento
+        if (!empty($data['font_size' . $suffix])) {
+            $rules[] = 'font-size: ' . $this->sanitizeCssValue((string)$data['font_size' . $suffix]);
+        }
+        if (!empty($data['font_weight' . $suffix])) {
+            $rules[] = 'font-weight: ' . $this->sanitizeCssValue((string)$data['font_weight' . $suffix]);
+        }
+        if (!empty($data['font_family' . $suffix])) {
+            $ff = $this->sanitizeCssValue((string)$data['font_family' . $suffix]);
+            $resolved = match ($ff) {
+                'secondary' => 'var(--font-secondary, monospace)',
+                'tertiary'  => 'var(--font-tertiary, sans-serif)',
+                'primary'   => 'var(--font-primary, sans-serif)',
+                default     => $ff,
+            };
+            $rules[] = 'font-family: ' . $resolved;
+        }
+        if (!empty($data['color' . $suffix])) {
+            $rules[] = 'color: ' . $this->sanitizeCssValue((string)$data['color' . $suffix]);
+        } elseif (!empty($data['text_color' . $suffix])) {
+            $rules[] = 'color: ' . $this->sanitizeCssValue((string)$data['text_color' . $suffix]);
+        }
+        $textAlign = !empty($data['text_align' . $suffix]) ? (string)$data['text_align' . $suffix] : (!empty($data['align' . $suffix]) ? (string)$data['align' . $suffix] : '');
+        if ($textAlign !== '') {
+            $rules[] = 'text-align: ' . $this->sanitizeCssValue($textAlign);
+        }
+        if (!empty($data['line_height' . $suffix])) {
+            $rules[] = 'line-height: ' . $this->sanitizeCssValue((string)$data['line_height' . $suffix]);
+        }
+        if (!empty($data['letter_spacing' . $suffix])) {
+            $rules[] = 'letter-spacing: ' . $this->sanitizeCssValue((string)$data['letter_spacing' . $suffix]);
+        }
+
+        return $rules;
+    }
 }

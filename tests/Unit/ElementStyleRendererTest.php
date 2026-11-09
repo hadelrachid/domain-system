@@ -118,4 +118,35 @@ class ElementStyleRendererTest extends TestCase
         $cssRadial = $this->renderer->renderStyleString($radial);
         $this->assertStringContainsString('background: radial-gradient(circle at center, #38bdf8 0%, #0b0c10 100%);', $cssRadial);
     }
+
+    public function testRenderResponsiveStylesWithMobileAndTabletOverrides(): void
+    {
+        $data = [
+            'font_size'        => '32px',
+            'align'            => 'left',
+            'font_size_tablet' => '24px',
+            'font_size_mobile' => '18px',
+            'align_mobile'     => 'center',
+            'padding_mobile'   => '10px 15px',
+            'width_mobile'     => '100%',
+        ];
+
+        $css = $this->renderer->renderResponsiveStyles('#ds-elem-test', $data);
+
+        // Regras para Tablet (768px)
+        $this->assertStringContainsString('@media (min-width: 481px) and (max-width: 768px)', $css);
+        $this->assertStringContainsString('#ds-elem-test { font-size: 24px; }', $css);
+        $this->assertStringContainsString('.ds-tablet-mode #ds-elem-test', $css);
+
+        // Regras para Mobile (480px / 375px)
+        $this->assertStringContainsString('@media (max-width: 480px)', $css);
+        $this->assertStringContainsString('font-size: 18px;', $css);
+        $this->assertStringContainsString('text-align: center;', $css);
+        $this->assertStringContainsString('padding: 10px 15px;', $css);
+        $this->assertStringContainsString('width: 100%;', $css);
+        $this->assertStringContainsString('.ds-mobile-mode #ds-elem-test', $css);
+
+        // Cascata interna para elementos tipográficos filhos
+        $this->assertStringContainsString('#ds-elem-test h1, #ds-elem-test h2', $css);
+    }
 }

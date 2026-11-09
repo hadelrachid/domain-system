@@ -10,7 +10,10 @@
         "padding": "20px 24px",
         "align_items": "center",
         "background": "linear-gradient(180deg, #0b0c10 73%, #60a5fa 100%)",
-        "box_shadow": ""
+        "box_shadow": "",
+        "margin": "0px 0px 8px 0px",
+        "text_align": "",
+        "justify_content": "center"
     },
     "columns_data": [
         [
@@ -18,7 +21,11 @@
                 "type": "logo",
                 "data": {
                     "text": "Domain<span style=\"color:var(--color-primary);\">System</span>",
-                    "height": "32px"
+                    "height": "32px",
+                    "align_mobile": "center",
+                    "height_mobile": "28px",
+                    "font_weight_mobile": "500",
+                    "flex_direction_mobile": "row"
                 }
             }
         ],
@@ -44,7 +51,11 @@
                     "dashboard_url": "/aluno/painel",
                     "logout_text": "Sair",
                     "logout_url": "/aluno/logout",
-                    "align": "right"
+                    "align": "right",
+                    "hide_tablet": true,
+                    "hide_mobile": false,
+                    "absorb_in_mobile": true,
+                    "hide_375": false
                 }
             }
         ]
@@ -61,7 +72,10 @@
                 "padding": "20px 24px",
                 "align_items": "center",
                 "background": "linear-gradient(180deg, #0b0c10 73%, #60a5fa 100%)",
-                "box_shadow": ""
+                "box_shadow": "",
+                "margin": "0px 0px 8px 0px",
+                "text_align": "",
+                "justify_content": "center"
             },
             "columns_data": [
                 [
@@ -69,7 +83,11 @@
                         "type": "logo",
                         "data": {
                             "text": "Domain<span style=\"color:var(--color-primary);\">System</span>",
-                            "height": "32px"
+                            "height": "32px",
+                            "align_mobile": "center",
+                            "height_mobile": "28px",
+                            "font_weight_mobile": "500",
+                            "flex_direction_mobile": "row"
                         }
                     }
                 ],
@@ -95,7 +113,72 @@
                             "dashboard_url": "/aluno/painel",
                             "logout_text": "Sair",
                             "logout_url": "/aluno/logout",
-                            "align": "right"
+                            "align": "right",
+                            "hide_tablet": true,
+                            "hide_mobile": false,
+                            "absorb_in_mobile": true,
+                            "hide_375": false
+                        }
+                    }
+                ]
+            ]
+        },
+        {
+            "id": "sec_4itcgqbh",
+            "title": "Seção 2",
+            "layout_preset": "2_cols_equal",
+            "container_settings": {
+                "max_width": "1280px",
+                "gap": "24px",
+                "padding": "16px 24px",
+                "margin": "0px 0px 16px 0px",
+                "align_items": "center",
+                "background": "transparent"
+            },
+            "columns_data": [
+                [
+                    {
+                        "type": "heading",
+                        "data": {
+                            "text": "Novo Título",
+                            "level": "h2",
+                            "font": "secondary"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "type": "image",
+                        "data": []
+                    }
+                ]
+            ]
+        },
+        {
+            "id": "sec_d0f630vq",
+            "title": "Seção 3",
+            "layout_preset": "1_col",
+            "container_settings": {
+                "max_width": "1280px",
+                "gap": "24px",
+                "padding": "16px 24px",
+                "margin": "0px 0px 16px 0px",
+                "align_items": "center",
+                "background": "transparent"
+            },
+            "columns_data": [
+                [
+                    {
+                        "type": "divider",
+                        "data": {
+                            "style": "solid",
+                            "height": "20px",
+                            "text_color": "var(--color-text-main)",
+                            "link_color": "#64748b",
+                            "heading_color": "#64748b",
+                            "link_hover_color": "#522cc2",
+                            "box_shadow": "",
+                            "color": "#64748b"
                         }
                     }
                 ]
@@ -106,5 +189,5 @@
     "mobile_toggle_align": "right",
     "is_default": false,
     "created_at": 1793071338,
-    "updated_at": 1794167534
+    "updated_at": 1794198562
 }

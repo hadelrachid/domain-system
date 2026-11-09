@@ -15,19 +15,13 @@ use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 /**
  * Bloco de Botão de Ação / CTA (Call to Action).
  */
-class CtaButtonBlock implements BlockInterface
+class CtaButtonBlock extends AbstractBlock
 {
-    use AllowedPartTypesTrait;
-
-    private ElementStyleRendererInterface $styleRenderer;
-    private HtmlSanitizerInterface $htmlSanitizer;
-
     public function __construct(
         ?ElementStyleRendererInterface $styleRenderer = null,
         ?HtmlSanitizerInterface $htmlSanitizer = null
     ) {
-        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
-        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+        parent::__construct($htmlSanitizer, null, $styleRenderer);
     }
 
     public function getType(): string
@@ -137,9 +131,10 @@ class CtaButtonBlock implements BlockInterface
         $safeAlign = in_array($align, ['left', 'center', 'right'], true) ? $align : 'left';
         $safeVariant = preg_replace('/[^a-z0-9_-]/i', '', $variant) ?: 'primary';
         $wrapperStyle = "display: flex; justify-content: {$justifyBtn}; width: 100%; text-align: {$safeAlign};";
+        $absorbAttr = (($data['absorb_in_mobile'] ?? true) !== false) ? ' data-mobile-absorb="true"' : ' data-mobile-absorb="false"';
 
         return <<<HTML
-<div class="ds-block-cta-wrapper" style="{$wrapperStyle}">
+<div class="ds-block-cta-wrapper ds-block-button-wrapper"{$absorbAttr} style="{$wrapperStyle}">
     <a href="{$url}" target="{$target}" class="ds-block-cta ds-btn-{$safeVariant}{$animClass}" style="{$baseStyles} {$variantStyles}{$hoverCssVars}">
         <span>{$label}</span>
     </a>
@@ -165,6 +160,7 @@ HTML;
                 'size'        => ['type' => 'select', 'label' => 'Tamanho', 'options' => ['small', 'medium', 'large'], 'default' => 'medium'],
                 'align'       => ['type' => 'select', 'label' => 'Alinhamento', 'options' => ['left', 'center', 'right'], 'default' => 'left'],
                 'target'      => ['type' => 'select', 'label' => 'Abrir em', 'options' => ['_self', '_blank'], 'default' => '_self'],
+                'absorb_in_mobile' => ['type' => 'boolean', 'label' => 'Incluir no Menu Hambúrguer (Mobile)', 'default' => true],
             ],
         ];
     }

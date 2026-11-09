@@ -34,6 +34,51 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= htmlspecialchars($baseUrl) ?>/assets/css/builder-studio.css?v=<?= file_exists(dirname(__DIR__, 5) . '/public/assets/css/builder-studio.css') ? filemtime(dirname(__DIR__, 5) . '/public/assets/css/builder-studio.css') : '1.0' ?>">
 <style>
+/* ==========================================================================
+   REDIMENSIONAMENTO DO MENU LATERAL VIA MOUSE (DRAGGABLE RESIZER SPLITTER)
+   ========================================================================== */
+#studio-workspace {
+    display: flex !important;
+    flex-direction: row !important;
+    position: relative !important;
+    height: calc(100vh - 56px) !important;
+    overflow: hidden !important;
+}
+#studio-sidebar {
+    width: var(--studio-sidebar-width, 360px) !important;
+    min-width: 260px !important;
+    max-width: 750px !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+}
+.studio-sidebar-resizer {
+    width: 6px !important;
+    cursor: col-resize !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.4) !important;
+    flex-shrink: 0 !important;
+    transition: background 0.15s ease, box-shadow 0.15s ease !important;
+    user-select: none !important;
+    z-index: 50 !important;
+    position: relative !important;
+}
+.studio-sidebar-resizer:hover,
+.studio-sidebar-resizer.is-dragging {
+    background: var(--primary, #38bdf8) !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
+}
+body.is-resizing-sidebar {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+body.is-resizing-sidebar iframe {
+    pointer-events: none !important;
+}
+#simulator-container {
+    flex-grow: 1 !important;
+    min-width: 0 !important;
+}
 
 /* ==========================================================================
    PALETAS DE CORES CIRCULARES DO INSPECTOR (SWATCHES)
@@ -227,6 +272,65 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     background: rgba(56, 189, 248, 0.3) !important;
     border-color: #fff !important;
     transform: scale(1.02) !important;
+}
+
+/* ==========================================================================
+   HARMONIZAÇÃO E SIMETRIA DO INSPECTOR E CONTROLES DE TIPOGRAFIA
+   ========================================================================== */
+.inspector-label {
+    display: flex !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    color: var(--text-muted, #94a3b8) !important;
+    margin-bottom: 5px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.inspector-input,
+.inspector-select {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    line-height: 1.2 !important;
+    box-sizing: border-box !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+}
+
+.dimension-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.dimension-row .inspector-input,
+.dimension-row input {
+    flex: 3 !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    box-sizing: border-box !important;
+}
+
+.dimension-row .inspector-select,
+.dimension-row select {
+    flex: 2 !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    box-sizing: border-box !important;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
 }
 
 </style>
@@ -626,6 +730,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             </div>
         </aside>
 
+        <!-- SPLITTER / REDIMENSIONADOR DO MENU LATERAL VIA MOUSE -->
+        <div id="studio-sidebar-resizer" class="studio-sidebar-resizer" title="Arraste para redimensionar o menu lateral (Duplo clique para redefinir)"></div>
+
         <!-- CANVAS & SIMULADOR -->
         <section id="simulator-container">
             <div id="device-viewport">
@@ -639,6 +746,13 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                             <button type="button" class="header-btn" id="bar_dev_mobile" onclick="setDevice('375px')" title="Mobile (375px)" style="padding: 2px 6px; font-size: 10px;">📱 375px</button>
                         </div>
                         <span id="cur_device_px" style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px; color: var(--primary); font-weight: 700;">100%</span>
+                        <!-- CONTROLE DE ZOOM DA ESTRUTURA -->
+                        <div id="canvas_zoom_controls" style="display: flex; gap: 2px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 4px; padding: 1px; margin-left: 4px;">
+                            <span style="font-size: 10px; color: var(--text-muted); padding: 0 4px; display: flex; align-items: center;" title="Escala de visualização da estrutura">🔍</span>
+                            <button type="button" class="header-btn active" id="btn_zoom_100" onclick="setCanvasZoom(1)" title="Zoom 100% (Padrão)" style="padding: 2px 5px; font-size: 10px;">100%</button>
+                            <button type="button" class="header-btn" id="btn_zoom_85" onclick="setCanvasZoom(0.85)" title="Visão Compacta (85%)" style="padding: 2px 5px; font-size: 10px;">85%</button>
+                            <button type="button" class="header-btn" id="btn_zoom_75" onclick="setCanvasZoom(0.75)" title="Visão Panorâmica (75%)" style="padding: 2px 5px; font-size: 10px;">75%</button>
+                        </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <!-- SELETOR DE ALTURA VERTICAL / CONTEÚDO CENTRAL -->
@@ -711,6 +825,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
     <!-- INPUT GLOBAL PARA UPLOAD DE IMAGENS E LOGOS -->
     <input type="file" id="global_image_uploader" accept=".png,.svg,.jpg,.jpeg,.webp,.gif" style="display: none;" onchange="handleFileUpload(this)">
+    <!-- INPUT GLOBAL PARA UPLOAD DE VÍDEOS -->
+    <input type="file" id="global_video_uploader" accept=".mp4,.webm,.ogg,.mov" style="display: none;" onchange="handleVideoUpload(this)">
 
     <div id="toast"></div>
 
@@ -760,10 +876,134 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     var activeColIdx = 0; // Coluna/Célula ativa na seção atual
     var selectedBlockCoord = null; // { sec: 0, col: 0, blockIdx: 0 }
     var currentDevice = '100%';
+    var currentDeviceKey = 'desktop'; // 'desktop' | 'laptop' | 'tablet' | 'mobile'
     var currentSidebarTab = 'layout';
     var studioMode = 'structure'; // 'structure' ou 'live'
     var showStructurePicker = false;
     var currentUploadTargetKey = null;
+
+    function getSelectedBlock() {
+        if (!selectedBlockCoord) return null;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data || !sec.columns_data[selectedBlockCoord.col]) return null;
+        return sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx] || null;
+    }
+
+    function getResponsivePropKey(key, dev) {
+        dev = dev || currentDeviceKey;
+        return (dev === 'desktop') ? key : (key + '_' + dev);
+    }
+
+    function getBlockResponsiveValue(block, key, dev) {
+        if (!block || !block.data) return '';
+        dev = dev || currentDeviceKey;
+        var d = block.data;
+        if (dev === 'mobile') {
+            if (d[key + '_mobile'] !== undefined && d[key + '_mobile'] !== '') return d[key + '_mobile'];
+            if (d[key + '_tablet'] !== undefined && d[key + '_tablet'] !== '') return d[key + '_tablet'];
+            if (d[key + '_laptop'] !== undefined && d[key + '_laptop'] !== '') return d[key + '_laptop'];
+            return d[key] !== undefined ? d[key] : '';
+        }
+        if (dev === 'tablet') {
+            if (d[key + '_tablet'] !== undefined && d[key + '_tablet'] !== '') return d[key + '_tablet'];
+            if (d[key + '_laptop'] !== undefined && d[key + '_laptop'] !== '') return d[key + '_laptop'];
+            return d[key] !== undefined ? d[key] : '';
+        }
+        if (dev === 'laptop') {
+            if (d[key + '_laptop'] !== undefined && d[key + '_laptop'] !== '') return d[key + '_laptop'];
+            return d[key] !== undefined ? d[key] : '';
+        }
+        return d[key] !== undefined ? d[key] : '';
+    }
+
+    function isPropOverriddenInDevice(block, key, dev) {
+        if (!block || !block.data) return false;
+        dev = dev || currentDeviceKey;
+        if (dev === 'desktop') return (block.data[key] !== undefined && block.data[key] !== '');
+        return (block.data[key + '_' + dev] !== undefined && block.data[key + '_' + dev] !== '');
+    }
+
+    function updateBlockPropResponsive(key, val) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        if (!block.data) block.data = {};
+
+        var targetKey = getResponsivePropKey(key, currentDeviceKey);
+        if (val === '' || val === null || val === undefined) {
+            if (currentDeviceKey !== 'desktop') {
+                delete block.data[targetKey];
+            } else {
+                block.data[key] = '';
+            }
+        } else {
+            block.data[targetKey] = val;
+        }
+
+        renderCanvas();
+    }
+
+    function renderResponsiveControlHeader(label, baseKey, block) {
+        var dev = currentDeviceKey;
+        var isOverridden = isPropOverriddenInDevice(block, baseKey, dev);
+        var devIcon = dev === 'mobile' ? '📱 Mobile' : (dev === 'tablet' ? '📱 Tablet' : (dev === 'laptop' ? '💻 Laptop' : '💻 Desktop'));
+        var badgeColor = (isOverridden && dev !== 'desktop') ? '#10b981' : 'var(--primary)';
+        var badgeBg = (isOverridden && dev !== 'desktop') ? 'rgba(16,185,129,0.15)' : 'rgba(56,189,248,0.1)';
+        var badgeText = (isOverridden && dev !== 'desktop') ? (devIcon + ' (Custom)') : devIcon;
+        var clearBtn = (isOverridden && dev !== 'desktop') 
+            ? '<button type="button" onclick="updateBlockPropResponsive(\'' + baseKey + '\', \'\'); renderInspector(); renderCanvas();" style="background:transparent; border:none; color:#ef4444; font-size:10px; cursor:pointer; padding:0 2px;" title="Redefinir para herdar da resolução superior">✕ Limpar</button>'
+            : '';
+
+        return '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+               '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
+               '<div style="display:flex; align-items:center; gap:6px;">' +
+               '<span style="font-size:10px; font-weight:700; color:' + badgeColor + '; background:' + badgeBg + '; padding:1px 6px; border-radius:4px; display:inline-flex; align-items:center; gap:3px;" title="Editando na resolução: ' + dev + '">' + badgeText + '</span>' +
+               clearBtn +
+               '</div>' +
+               '</div>';
+    }
+
+    function getSecResponsiveValue(sec, key, dev) {
+        if (!sec || !sec.container_settings) return '';
+        dev = dev || currentDeviceKey;
+        var s = sec.container_settings;
+        if (dev === 'mobile') {
+            if (s[key + '_mobile'] !== undefined && s[key + '_mobile'] !== '') return s[key + '_mobile'];
+            if (s[key + '_tablet'] !== undefined && s[key + '_tablet'] !== '') return s[key + '_tablet'];
+            if (s[key + '_laptop'] !== undefined && s[key + '_laptop'] !== '') return s[key + '_laptop'];
+            return s[key] !== undefined ? s[key] : '';
+        }
+        if (dev === 'tablet') {
+            if (s[key + '_tablet'] !== undefined && s[key + '_tablet'] !== '') return s[key + '_tablet'];
+            if (s[key + '_laptop'] !== undefined && s[key + '_laptop'] !== '') return s[key + '_laptop'];
+            return s[key] !== undefined ? s[key] : '';
+        }
+        if (dev === 'laptop') {
+            if (s[key + '_laptop'] !== undefined && s[key + '_laptop'] !== '') return s[key + '_laptop'];
+            return s[key] !== undefined ? s[key] : '';
+        }
+        return s[key] !== undefined ? s[key] : '';
+    }
+
+    function updateActiveSecSettingResponsive(key, val) {
+        var sec = getSelectedSection();
+        if (!sec) return;
+        if (!sec.container_settings) sec.container_settings = {};
+
+        var targetKey = getResponsivePropKey(key, currentDeviceKey);
+        if (val === '' || val === null || val === undefined) {
+            if (currentDeviceKey !== 'desktop') {
+                delete sec.container_settings[targetKey];
+            } else {
+                sec.container_settings[key] = '';
+            }
+        } else {
+            sec.container_settings[targetKey] = val;
+        }
+
+        renderCanvas();
+    }
 
     <?php
     $catalogItems = [];
@@ -816,6 +1056,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
     function initStudio() {
         initDraggableNavigator();
+        initSidebarResizer();
         if (state.container_settings) {
             delete state.container_settings.hide_desktop;
             delete state.container_settings.hide_laptop;
@@ -922,6 +1163,65 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             if (isDragging) {
                 isDragging = false;
                 document.body.style.userSelect = '';
+            }
+        });
+    }
+
+    function initSidebarResizer() {
+        var sidebar = document.getElementById('studio-sidebar');
+        var resizer = document.getElementById('studio-sidebar-resizer');
+        if (!sidebar || !resizer) return;
+
+        // Restaura largura salva no localStorage (entre 260px e 750px)
+        var savedWidth = localStorage.getItem('studio_sidebar_width');
+        if (savedWidth) {
+            var parsed = parseInt(savedWidth, 10);
+            if (!isNaN(parsed) && parsed >= 260 && parsed <= 750) {
+                sidebar.style.width = parsed + 'px';
+                document.documentElement.style.setProperty('--studio-sidebar-width', parsed + 'px');
+            }
+        }
+
+        var isDragging = false;
+        var startX = 0;
+        var startWidth = 0;
+
+        resizer.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX;
+            startWidth = sidebar.getBoundingClientRect().width;
+
+            resizer.classList.add('is-dragging');
+            document.body.classList.add('is-resizing-sidebar');
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            var delta = e.clientX - startX;
+            var newWidth = Math.max(260, Math.min(startWidth + delta, 750));
+            sidebar.style.width = newWidth + 'px';
+            document.documentElement.style.setProperty('--studio-sidebar-width', newWidth + 'px');
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (!isDragging) return;
+            isDragging = false;
+            resizer.classList.remove('is-dragging');
+            document.body.classList.remove('is-resizing-sidebar');
+            var curWidth = parseInt(sidebar.style.width, 10);
+            if (!isNaN(curWidth)) {
+                localStorage.setItem('studio_sidebar_width', curWidth + 'px');
+            }
+        });
+
+        // Duplo-clique restaura a largura padrão de 360px
+        resizer.addEventListener('dblclick', function() {
+            sidebar.style.width = '360px';
+            document.documentElement.style.setProperty('--studio-sidebar-width', '360px');
+            localStorage.removeItem('studio_sidebar_width');
+            if (typeof showToast === 'function') {
+                showToast('Largura do menu redefinida para o padrão (360px)');
             }
         });
     }
@@ -1147,6 +1447,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             viewport.classList.add('ds-mobile-mode', 'ds-device-375');
         }
 
+        currentDeviceKey = activeKey;
+
         var b1 = document.getElementById('btn_dev_' + activeKey);
         if (b1) b1.classList.add('active');
         var b2 = document.getElementById('bar_dev_' + activeKey);
@@ -1175,6 +1477,28 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         iframe.style.maxWidth = w;
         var badge = document.getElementById('preview_device_badge');
         if (badge) badge.textContent = w + (w === '375px' ? ' Mobile' : (w === '768px' ? ' Tablet' : ' Desktop'));
+    }
+
+    var currentCanvasZoom = 1;
+    function setCanvasZoom(scale) {
+        currentCanvasZoom = scale;
+        var stage = document.getElementById('canvas-content');
+        if (stage) {
+            if (scale === 1) {
+                stage.style.transform = '';
+                stage.style.transformOrigin = '';
+                stage.style.width = '';
+            } else {
+                stage.style.transform = 'scale(' + scale + ')';
+                stage.style.transformOrigin = 'top center';
+                stage.style.width = (100 / scale) + '%';
+            }
+        }
+        [1, 0.85, 0.75].forEach(function(s) {
+            var key = Math.round(s * 100);
+            var b = document.getElementById('btn_zoom_' + key);
+            if (b) b.classList.toggle('active', s === scale);
+        });
     }
 
     function updateSectionsCountBadge() {
@@ -1364,6 +1688,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (!curSec.container_settings) curSec.container_settings = {};
         curSec.container_settings[key] = val;
         renderCanvas();
+        if (typeof studioMode !== 'undefined' && studioMode === 'live') {
+            loadLiveStageContent();
+        }
     }
 
     function renderSidebarLayoutTab() {
@@ -1569,80 +1896,18 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 '<input type="number" step="0.1" min="0.1" max="1.0" class="inspector-input" value="' + (cs.opacity !== undefined ? cs.opacity : '') + '" oninput="updateActiveSecSetting(\'opacity\', this.value)" placeholder="1.0">' +
                 '</div>';
 
-        // 6. Visibilidade Responsiva por Elemento da Seção (4 Resoluções: Desktop, 1024px, 768px, 375px)
-        var secIdxForVis = state.sections.indexOf(curSec);
-        if (secIdxForVis === -1) secIdxForVis = activeSecIdx || 0;
-        var elemRowsHtml = '';
-        var colsData = curSec.columns_data || {};
-        var presetInfoVis = presets[curSec.layout_preset] || presets['1_col'];
-        var numColsVis = presetInfoVis ? presetInfoVis.columns : 3;
-
-        for (var cIdx = 0; cIdx < numColsVis; cIdx++) {
-            var bList = colsData[cIdx] || [];
-            bList.forEach(function(blk, bIdx) {
-                if (!blk) return;
-                var bMeta = blocksCatalog.find(function(x) { return x.type === blk.type; }) || { name: blk.type, icon: '📦' };
-                var bName = blk.custom_name || bMeta.name;
-                var d = blk.data || {};
-                var isSelBlk = (selectedBlockCoord && selectedBlockCoord.sec === secIdxForVis && selectedBlockCoord.col === cIdx && selectedBlockCoord.blockIdx === bIdx);
-                var rowBorder = isSelBlk ? 'border:1px solid var(--primary); background:rgba(56,189,248,0.1);' : 'border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.25);';
-
-                var resButtons = [
-                    { key: 'hide_desktop', label: '🖥️ Desktop', active: !!d.hide_desktop },
-                    { key: 'hide_laptop',  label: '💻 1024px',  active: !!(d.hide_laptop || d.hide_1024) },
-                    { key: 'hide_tablet',  label: '📱 768px',   active: !!(d.hide_tablet || d.hide_768) },
-                    { key: 'hide_mobile',  label: '📲 375px',   active: !!(d.hide_mobile || d.hide_375) }
-                ].map(function(r) {
-                    var btnStyle = r.active
-                        ? 'background:rgba(239,68,68,0.22); border:1px solid #ef4444; color:#fca5a5; font-weight:700; text-decoration:line-through;'
-                        : 'background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7;';
-                    var titleTip = r.active
-                        ? 'Oculto em ' + r.label + ' (Clique para exibir)'
-                        : 'Visível em ' + r.label + ' (Clique para ocultar apenas este elemento)';
-                    return '<button type="button" onclick="toggleElementResolutionVisibility(' + secIdxForVis + ',' + cIdx + ',' + bIdx + ',\'' + r.key + '\',\'' + escapeAttr(r.label) + '\')" title="' + escapeAttr(titleTip) + '" style="font-size:10px; padding:3px 6px; border-radius:4px; cursor:pointer; ' + btnStyle + '">' +
-                           (r.active ? '🚫 ' : '👁️ ') + r.label.replace(/^[^\s]+\s/, '') +
-                           '</button>';
-                }).join('');
-
-                elemRowsHtml += '<div style="padding:7px 8px; border-radius:6px; margin-bottom:6px; ' + rowBorder + '">' +
-                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">' +
-                    '<span style="font-size:11px; font-weight:700; color:#fff; cursor:pointer;" onclick="selectBlock(' + secIdxForVis + ',' + cIdx + ',' + bIdx + ')">' + bMeta.icon + ' ' + escapeHtml(bName) + ' <span style="font-size:9px; color:var(--text-muted); font-weight:400;">(Célula ' + (cIdx + 1) + ')</span></span>' +
-                    (isSelBlk ? '<span style="font-size:9px; color:var(--primary); font-weight:800;">SELECIONADO</span>' : '') +
-                    '</div>' +
-                    '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;">' + resButtons + '</div>' +
-                    '</div>';
-            });
-        }
-
-        if (!elemRowsHtml) {
-            elemRowsHtml = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:8px;">Nenhum elemento nesta seção ainda. Adicione blocos para configurar sua visibilidade por resolução.</div>';
-        }
-
-        html += '<div class="inspector-field" style="margin-top:12px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
-                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">📱 Visibilidade Responsiva por Elemento (4 Resoluções)</label>' +
-                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Clique na resolução para <strong>ocultar apenas o elemento desejado</strong> (ex: Logo, Título ou Botão), mantendo os demais elementos da seção visíveis:</div>' +
-                elemRowsHtml +
-                '</div>';
+        // 6. Visibilidade da Seção Inteira (Container Completo - Padrão Elementor)
+        html += '<div class="inspector-field" style="margin-top:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px;">' +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">👁️ Visibilidade da Seção Inteira (Container)</label>' +
+                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Oculte a seção inteira em resoluções específicas (Padrão Elementor):</div>' +
+                '<div style="display:flex; flex-direction:column; gap:6px;">' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:11px; color:#cbd5e1; cursor:pointer;"><input type="checkbox" ' + (cs.hide_desktop ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_desktop\', this.checked); renderCanvas();"> 🖥️ Ocultar Seção no Desktop</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:11px; color:#cbd5e1; cursor:pointer;"><input type="checkbox" ' + (cs.hide_laptop ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_laptop\', this.checked); renderCanvas();"> 💻 Ocultar Seção em 1024px (Laptop)</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:11px; color:#cbd5e1; cursor:pointer;"><input type="checkbox" ' + (cs.hide_tablet ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_tablet\', this.checked); renderCanvas();"> 📱 Ocultar Seção em 768px (Tablet)</label>' +
+                '<label style="display:flex; align-items:center; gap:8px; font-size:11px; color:#cbd5e1; cursor:pointer;"><input type="checkbox" ' + (cs.hide_mobile ? 'checked' : '') + ' onchange="updateActiveSecSetting(\'hide_mobile\', this.checked); renderCanvas();"> 📲 Ocultar Seção em 375px (Mobile)</label>' +
+                '</div></div>';
 
         container.innerHTML = html;
-    }
-
-    function toggleElementResolutionVisibility(secIdx, colIdx, blockIdx, resKey, resLabel) {
-        var sec = state.sections[secIdx];
-        if (!sec || !sec.columns_data || !sec.columns_data[colIdx] || !sec.columns_data[colIdx][blockIdx]) return;
-        var blk = sec.columns_data[colIdx][blockIdx];
-        if (!blk.data) blk.data = {};
-        blk.data[resKey] = !blk.data[resKey];
-        var bMeta = blocksCatalog.find(function(x) { return x.type === blk.type; }) || { name: blk.type };
-        var bName = blk.custom_name || bMeta.name;
-        renderCanvas();
-        renderSectionStyleControls(sec);
-        if (selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx) {
-            renderInspector();
-        }
-        showToast(blk.data[resKey]
-            ? ('🚫 "' + bName + '" ocultado em ' + resLabel + ' (apenas este elemento)')
-            : ('👁️ "' + bName + '" visível novamente em ' + resLabel));
     }
 
     var DS_POPULAR_COLORS = [
@@ -2041,17 +2306,30 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var curPartType = '<?= $part->getType() ?>';
         blocksCatalog.forEach(function(b) {
-            if (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1) return;
+            var isDisallowed = (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1);
             var item = document.createElement('div');
-            item.className = 'block-palette-item';
-            item.setAttribute('draggable', 'true');
-            item.ondragstart = function(e) {
-                e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'catalog', type: b.type }));
-                e.dataTransfer.effectAllowed = 'copy';
+            item.className = 'block-palette-item' + (isDisallowed ? ' disallowed-in-part' : '');
+            if (isDisallowed) {
+                item.style.opacity = '0.5';
+                item.style.border = '1px dashed rgba(239, 68, 68, 0.4)';
+                item.title = 'Bloqueado no ' + (curPartType === 'header' ? 'Header' : 'Footer') + ': permitido apenas em Seções / Hero.';
+            } else {
+                item.setAttribute('draggable', 'true');
+                item.ondragstart = function(e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'catalog', type: b.type }));
+                    e.dataTransfer.effectAllowed = 'copy';
+                };
+            }
+            item.onclick = function() {
+                if (isDisallowed) {
+                    checkBlockAllowedInPart(b.type);
+                    return;
+                }
+                addBlockToCell(activeSecIdx, activeColIdx, b.type);
             };
-            item.onclick = function() { addBlockToCell(activeSecIdx, activeColIdx, b.type); };
+            var badgeLock = isDisallowed ? ' <span style="font-size:10px; color:#ef4444; font-weight:700;">🔒 Restrito</span>' : '';
             item.innerHTML = '<span class="block-palette-icon">' + b.icon + '</span>' +
-                             '<div><strong style="display:block; font-size:13px; color:#fff;">' + b.name + '</strong>' +
+                             '<div><strong style="display:block; font-size:13px; color:#fff;">' + b.name + badgeLock + '</strong>' +
                              '<span style="font-size:11px; color:var(--text-muted);">' + b.desc + '</span></div>';
             container.appendChild(item);
         });
@@ -2105,7 +2383,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             
             // Aplica margem e fundo da seção
             if (sec.container_settings) {
-                if (sec.container_settings.margin) secCard.style.margin = sec.container_settings.margin;
+                var sM = getSecResponsiveValue(sec, 'margin');
+                secCard.style.margin = sM || '';
+                var sP = getSecResponsiveValue(sec, 'padding');
+                secCard.style.padding = sP || '';
                 if (sec.container_settings.background) secCard.style.background = sec.container_settings.background;
                 if (sec.container_settings.text_color || sec.container_settings.color) secCard.style.color = sec.container_settings.text_color || sec.container_settings.color;
                 if (sec.container_settings.border) secCard.style.border = sec.container_settings.border;
@@ -2120,17 +2401,25 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             
             var presetInfo = presets[sec.layout_preset] || presets['1_col'];
             var secTitleText = sec.title || ('Seção ' + (secIdx + 1));
-            var secSelectedBadge = isSecSelected ? '<span style="background:var(--primary); color:#000; font-size:9px; padding:2px 8px; border-radius:10px; font-weight:800;">SEÇÃO SELECIONADA</span>' : '';
+            var isMob = (currentDevice === '375px');
+            var presetFullName = presetInfo.columns + ' Células (' + presetInfo.name + ')';
+            var badgeHtml = isMob
+                ? '<span class="elementor-sec-badge" title="' + escapeAttr(presetFullName) + '">' + presetInfo.columns + ' col</span>' +
+                  '<button type="button" class="sec-act-btn eye-btn" onclick="showToast(\'ℹ️ \' + ' + JSON.stringify(secTitleText + ': ' + presetFullName) + '); event.stopPropagation();" title="Ver detalhes do layout desta seção (' + escapeAttr(presetFullName) + ')" style="padding:1px 4px; font-size:10px; background:rgba(56,189,248,0.12); border-color:rgba(56,189,248,0.3); color:var(--primary); line-height:1; height:18px;">👁️</button>'
+                : '<span class="elementor-sec-badge">' + escapeHtml(presetFullName) + '</span>';
+
+            var secSettingsBtnText = isMob ? '⚙️' : '⚙️ Divisórias & Espaçamento';
+            var secSelectedBadge = isSecSelected ? (isMob ? '<span style="background:var(--primary); color:#000; font-size:8px; padding:1px 4px; border-radius:6px; font-weight:800;" title="Seção Selecionada">★</span>' : '<span style="background:var(--primary); color:#000; font-size:9px; padding:2px 8px; border-radius:10px; font-weight:800;">SEÇÃO SELECIONADA</span>') : '';
 
             secHeader.innerHTML = 
                 '<div class="elementor-sec-title" onclick="selectSectionForConfig(' + secIdx + ', event)">' +
-                    '<span style="font-size: 13px;">🔲</span>' +
+                    '<span style="font-size: 12px;">🔲</span>' +
                     '<strong>' + escapeHtml(secTitleText) + '</strong>' +
-                    '<span class="elementor-sec-badge">' + presetInfo.columns + ' Células (' + presetInfo.name + ')</span>' +
+                    badgeHtml +
                     secSelectedBadge +
                 '</div>' +
                 '<div class="elementor-sec-actions">' +
-                    '<button type="button" class="sec-act-btn" onclick="selectSectionForConfig(' + secIdx + ', event)" title="Configurar Divisórias & Espaçamento">⚙️ Divisórias & Espaçamento</button>' +
+                    '<button type="button" class="sec-act-btn" onclick="selectSectionForConfig(' + secIdx + ', event)" title="Configurar Divisórias & Espaçamento">' + secSettingsBtnText + '</button>' +
                     '<button type="button" class="sec-act-btn" onclick="moveSection(' + secIdx + ', -1, event)" title="Subir Seção">▲</button>' +
                     '<button type="button" class="sec-act-btn" onclick="moveSection(' + secIdx + ', 1, event)" title="Descer Seção">▼</button>' +
                     '<button type="button" class="sec-act-btn" onclick="duplicateSection(' + secIdx + ', event)" title="Duplicar Seção">⎘</button>' +
@@ -2165,6 +2454,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 colEl.className = 'canvas-column' + (isColActive ? ' active-col' : '');
                 colEl.dataset.sec = secIdx;
                 colEl.dataset.col = colIdx;
+                var secAlign = (sec.container_settings && sec.container_settings.align_items) ? sec.container_settings.align_items : 'center';
+                colEl.style.justifyContent = (secAlign === 'stretch') ? 'flex-start' : secAlign;
 
                 colEl.onclick = (function(s, c) {
                     return function(e) {
@@ -2181,11 +2472,13 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 var colHeader = document.createElement('div');
                 colHeader.className = 'canvas-column-header';
                 var colTitle = getColumnTitle(sec.layout_preset, colIdx, presetInfo.columns);
-                colHeader.innerHTML = '<div style="display:flex; align-items:center; gap:6px;">' +
-                                      '<span>' + colTitle + '</span>' +
-                                      (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 6px; border-radius:10px; font-weight:800;">ATIVA</span>' : '') +
+                var displayColTitle = isMobileStage ? ('Célula ' + (colIdx + 1)) : colTitle;
+                var addBtnText = isMobileStage ? '➕' : '+ Bloco';
+                colHeader.innerHTML = '<div style="display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden;">' +
+                                      '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + escapeAttr(colTitle) + '">' + displayColTitle + '</span>' +
+                                      (isColActive ? '<span style="background:rgba(56,189,248,0.2); color:var(--primary); font-size:9px; padding:1px 5px; border-radius:10px; font-weight:800; flex-shrink:0;">ATIVA</span>' : '') +
                                       '</div>' +
-                                      '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + secIdx + ',' + colIdx + ')" title="Clique para escolher um bloco">+ Bloco</button>';
+                                      '<button type="button" class="block-act-btn" onclick="event.stopPropagation(); openAddBlockForCell(' + secIdx + ',' + colIdx + ')" title="Clique para escolher um bloco">' + addBtnText + '</button>';
                 colEl.appendChild(colHeader);
 
                 // Blocos dentro da célula
@@ -2199,7 +2492,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 var dropzone = document.createElement('div');
                 dropzone.className = 'column-dropzone';
                 dropzone.title = 'Clique para escolher um bloco nesta divisão ou arraste da barra lateral';
-                dropzone.innerHTML = '➕ Adicionar Bloco nesta Divisão';
+                dropzone.innerHTML = isMobileStage ? '➕ Bloco' : '➕ Adicionar Bloco nesta Divisão';
                 dropzone.onclick = (function(s, c) {
                     return function(e) {
                         e.stopPropagation();
@@ -2305,16 +2598,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var isSelected = (selectionType === 'block' && selectedBlockCoord && selectedBlockCoord.sec === secIdx && selectedBlockCoord.col === colIdx && selectedBlockCoord.blockIdx === blockIdx);
         card.className = 'canvas-block-card' + (isSelected ? ' selected' : '');
         
-        // Aplica estilos visuais configurados no elemento diretamente no card para preview instantâneo
+        // Estilos visuais cosméticos da moldura no card
         if (block.data) {
-            if (block.data.margin) card.style.margin = block.data.margin;
-            if (block.data.padding) card.style.padding = block.data.padding;
             if (block.data.background) card.style.background = block.data.background;
-            if (block.data.text_color || block.data.color) card.style.color = block.data.text_color || block.data.color;
             if (block.data.border_radius) card.style.borderRadius = block.data.border_radius;
             if (block.data.border) card.style.border = block.data.border;
             if (block.data.box_shadow) card.style.boxShadow = block.data.box_shadow;
-            if (block.data.opacity !== undefined && block.data.opacity !== '' && block.data.opacity !== '1') card.style.opacity = block.data.opacity;
         }
 
         // Drag-and-drop do bloco entre células e seções
@@ -2382,15 +2671,41 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             card.style.border = '1px dashed #ef4444';
         }
 
+        var isMob = (currentDevice === '375px');
         var visBadgeHtml = '';
         if (hiddenBadges.length > 0) {
-            visBadgeHtml = '<span style="font-size:9px; padding:1px 5px; border-radius:4px; background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-weight:700; margin-left:4px;" title="Elemento oculto em: ' + escapeAttr(hiddenBadges.join(', ')) + '">🚫 ' + escapeHtml(hiddenBadges.join(' · ')) + '</span>';
+            visBadgeHtml = isMob
+                ? '<span style="font-size:9px; padding:1px 3px; border-radius:3px; background:rgba(239,68,68,0.2); color:#fca5a5; margin-left:2px;" title="Oculto em: ' + escapeAttr(hiddenBadges.join(', ')) + '">🚫</span>'
+                : '<span style="font-size:9px; padding:1px 5px; border-radius:4px; background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-weight:700; margin-left:4px;" title="Elemento oculto em: ' + escapeAttr(hiddenBadges.join(', ')) + '">🚫 ' + escapeHtml(hiddenBadges.join(' · ')) + '</span>';
+        }
+
+        var isAbsorbedInMobile = (block.type === 'user_auth' || block.type === 'button' || block.type === 'cta_button') && (bData.absorb_in_mobile !== false);
+        var absorbBadgeHtml = '';
+        if (isAbsorbedInMobile && (currentDeviceKey === 'mobile' || currentDevice === '375px')) {
+            absorbBadgeHtml = '<span style="font-size:9px; padding:1px 3px; border-radius:3px; background:rgba(56,189,248,0.2); color:#38bdf8; margin-left:2px;" title="Injetado como ação na Gaveta Mobile (Toggle Hambúrguer)">📱</span>';
+        }
+
+        var curPartType = '<?= $part->getType() ?>';
+        var isDisallowedInCurrentPart = (bMeta.allowed_types && bMeta.allowed_types.length > 0 && bMeta.allowed_types.indexOf(curPartType) === -1);
+        if (isDisallowedInCurrentPart) {
+            card.style.opacity = '0.7';
+            card.style.border = '1px dashed #ef4444';
+            card.style.background = 'rgba(239, 68, 68, 0.08)';
+        }
+
+        var disallowedBadgeHtml = '';
+        if (isDisallowedInCurrentPart) {
+            var partLabelShort = (curPartType === 'header') ? 'Header' : ((curPartType === 'footer') ? 'Footer' : 'Parte');
+            disallowedBadgeHtml = isMob
+                ? '<span style="font-size:9px; padding:1px 3px; border-radius:3px; background:#ef4444; color:#fff; margin-left:2px;" title="Bloqueado: ' + escapeAttr(blockDisplayName) + ' não é permitido no ' + partLabelShort + '">🔒</span>'
+                : '<span style="font-size:9px; padding:1px 5px; border-radius:4px; background:#ef4444; color:#fff; font-weight:700; margin-left:4px;" title="Bloqueado: não será renderizado no ' + partLabelShort + ' por diretrizes de performance">🔒 Não permitido no ' + partLabelShort + '</span>';
         }
 
         var bHeader = document.createElement('div');
         bHeader.className = 'canvas-block-header';
-        bHeader.innerHTML = '<span ondblclick="startInlineRenameBlock(' + secIdx + ',' + colIdx + ',' + blockIdx + ', this, event)" title="Duplo clique para renomear" style="cursor:pointer; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
-            '<span>' + bMeta.icon + '</span> <strong>' + escapeHtml(blockDisplayName) + '</strong>' + visBadgeHtml +
+        var nameSpanStyle = isMob ? 'display:inline-block; max-width:65px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle;' : '';
+        bHeader.innerHTML = '<span ondblclick="startInlineRenameBlock(' + secIdx + ',' + colIdx + ',' + blockIdx + ', this, event)" title="Duplo clique para renomear" style="cursor:pointer; display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden;">' +
+            '<span>' + bMeta.icon + '</span> <strong style="' + nameSpanStyle + '">' + escapeHtml(blockDisplayName) + '</strong>' + visBadgeHtml + absorbBadgeHtml + disallowedBadgeHtml +
             '</span>' +
             '<div class="canvas-block-actions">' +
             '<button type="button" class="block-act-btn" onclick="moveBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',-1,event)" title="Subir">▲</button>' +
@@ -2399,14 +2714,18 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             '<button type="button" class="block-act-btn del" onclick="deleteBlockInCell(' + secIdx + ',' + colIdx + ',' + blockIdx + ',event)" title="Excluir">✕</button>' +
             '</div>';
 
-        var bPreview = document.createElement('div');
-        bPreview.style.fontSize = '12px';
-        bPreview.style.color = 'var(--text-muted)';
-        bPreview.style.marginTop = '4px';
-        bPreview.innerHTML = getBlockSummary(block);
-
         card.appendChild(bHeader);
-        card.appendChild(bPreview);
+
+        var summaryHtml = getBlockSummary(block, isMob);
+        if (summaryHtml && summaryHtml.trim() !== '') {
+            var bPreview = document.createElement('div');
+            bPreview.className = 'canvas-block-preview';
+            bPreview.style.fontSize = '11px';
+            bPreview.style.color = 'var(--text-muted)';
+            bPreview.style.marginTop = '4px';
+            bPreview.innerHTML = summaryHtml;
+            card.appendChild(bPreview);
+        }
         return card;
     }
 
@@ -2437,115 +2756,81 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         };
     }
 
-    function getBlockSummary(block) {
+    function getBlockSummary(block, isMob) {
+        if (isMob) return ''; // Em 375px (Mobile), os cards ficam estritamente em linha única ultra limpa
         var d = block.data || {};
+
+        // Se o usuário renomeou o bloco com um nome personalizado (ex: "Logo Principal"),
+        // exibe sutilmente o tipo nativo do elemento para referência estrutural
+        var customTypeHint = '';
+        if (block.custom_name && block.custom_name.trim() !== '') {
+            var bMeta = blocksCatalog.find(function(x) { return x.type === block.type; });
+            if (bMeta) {
+                customTypeHint = '<span style="font-size:10px; color:var(--text-muted); opacity:0.75;">' + escapeHtml(bMeta.name) + '</span>';
+            }
+        }
+
+        // Título (Heading): mostra o texto digitado e o nível H1-H6
         if (block.type === 'heading') {
-            return '<span style="font-weight:700; color:#fff;">' + escapeHtml(d.text || 'Título') + '</span> <span style="font-size:10px; opacity:0.6;">(' + (d.level || 'h2').toUpperCase() + ')</span>';
+            var hText = (d.text || '').replace(/<[^>]*>?/gm, '').trim();
+            if (hText) {
+                var hLvl = (d.level || 'h2').toUpperCase();
+                return '<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; opacity:0.85;">' +
+                       '<span style="font-size:9px; padding:1px 4px; border-radius:3px; background:rgba(255,255,255,0.08); font-weight:700; margin-right:4px;">' + hLvl + '</span>' +
+                       '&ldquo;' + escapeHtml(hText) + '&rdquo;</div>';
+            }
+            return customTypeHint;
         }
+
+        // Parágrafo (Paragraph): mostra o início do texto real
         if (block.type === 'paragraph') {
-            return escapeHtml(d.text ? d.text.replace(/<[^>]+>/g, '').substr(0, 45) + '...' : 'Parágrafo de texto');
+            var pText = (d.text || '').replace(/<[^>]*>?/gm, '').trim();
+            if (pText) {
+                return '<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; font-style:italic; opacity:0.8;">&ldquo;' + escapeHtml(pText) + '&rdquo;</div>';
+            }
+            return customTypeHint;
         }
+
+        // Botão / CTA: mostra o rótulo real configurado
+        if (block.type === 'button' || block.type === 'cta_button') {
+            var btnText = (d.text || '').trim();
+            if (btnText) {
+                return '<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;"><span style="font-size:9px; padding:1px 5px; border-radius:3px; background:rgba(56,189,248,0.12); color:var(--primary); font-weight:600;">[' + escapeHtml(btnText) + ']</span></div>';
+            }
+            return customTypeHint;
+        }
+
+        // Shortcode: mostra a tag real
+        if (block.type === 'shortcode') {
+            var scCode = (d.code || d.tag || '').trim();
+            if (scCode) {
+                return '<code style="font-size:10px; color:#38bdf8; background:rgba(0,0,0,0.3); padding:1px 4px; border-radius:3px;">[' + escapeHtml(scCode) + ']</code>';
+            }
+            return customTypeHint;
+        }
+
+        // Imagem: se houver arquivo/URL, mostra o nome do arquivo ou alt
         if (block.type === 'image') {
-            if (d.url) {
-                return '<div style="display:flex; align-items:center; gap:8px;">' +
-                       '<img src="' + escapeAttr(d.url) + '" style="height:22px; max-width:40px; object-fit:cover; border-radius:3px;">' +
-                       '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">' + escapeHtml(d.url) + '</span>' +
-                       '</div>';
+            var imgUrl = (d.url || d.url_mobile || '').trim();
+            if (imgUrl) {
+                var fileName = imgUrl.split('/').pop().split('?')[0];
+                return '<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">📎 ' + escapeHtml(d.alt || fileName) + '</div>';
             }
-            return '🖼️ Imagem (nenhum arquivo selecionado)';
+            return customTypeHint;
         }
-        if (block.type === 'video') return '🎥 ' + (d.url || 'Vídeo');
-        if (block.type === 'button') {
-            var bg = d.bg_color || 'var(--color-primary)';
-            var col = d.text_color || '#000';
-            var hBg = d.hover_bg_color || '';
-            var hCol = d.hover_text_color || '';
-            var anim = d.hover_animation || 'lift';
-            var animClass = (anim && anim !== 'none') ? ' ds-btn-' + anim : ' ds-btn-static';
-            var hoverStyle = '';
-            if (hBg) hoverStyle += ' --btn-hover-bg:' + hBg + ';';
-            if (hCol) hoverStyle += ' --btn-hover-color:' + hCol + ';';
-            var bRadius = d.border_radius || '8px';
-            return '<div style="display:inline-flex; align-items:center; gap:8px; margin:2px 0;">' +
-                   '<span class="ds-block-btn ' + animClass + '" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:' + escapeAttr(bRadius) + '; font-size:12px; font-weight:700; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';' + hoverStyle + ' cursor:pointer; text-decoration:none; box-shadow:0 2px 8px rgba(0,0,0,0.2);">' + 
-                   (d.icon ? escapeHtml(d.icon) + ' ' : '🔘 ') +
-                   escapeHtml(d.label || 'Botão') + '</span>' +
-                   '<span style="font-size:10px; opacity:0.6;">[' + (d.action_type || 'link') + ']</span>' +
-                   (hBg ? '<span style="font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8;" title="Hover: ' + escapeAttr(hBg) + '">🎨 Hover ativo</span>' : '') +
-                   '</div>';
-        }
-        if (block.type === 'cta_button') {
-            var bg = d.bg_color || 'var(--primary)';
-            var col = d.text_color || '#000';
-            var hBg = d.hover_bg_color || '';
-            var hCol = d.hover_text_color || '';
-            var anim = d.hover_animation || 'pulse';
-            var animClass = (anim && anim !== 'none') ? ' ds-btn-' + anim : ' ds-btn-static';
-            var hoverStyle = '';
-            if (hBg) hoverStyle += ' --btn-hover-bg:' + hBg + ';';
-            if (hCol) hoverStyle += ' --btn-hover-color:' + hCol + ';';
-            return '<div style="display:inline-flex; align-items:center; gap:8px; margin:2px 0;">' +
-                   '<span class="ds-block-cta ' + animClass + '" style="display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border-radius:6px; font-size:12px; font-weight:800; background:' + escapeAttr(bg) + '; color:' + escapeAttr(col) + ';' + hoverStyle + ' cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.3);">' + 
-                   '🚀 ' + escapeHtml(d.label || 'Botão CTA') + '</span>' +
-                   (hBg ? '<span style="font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.12); color:#38bdf8;" title="Hover: ' + escapeAttr(hBg) + '">🎨 Hover ativo</span>' : '') +
-                   '</div>';
-        }
-        if (block.type === 'user_auth') {
-            return '<span style="display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:rgba(69,243,255,0.15); border:1px solid rgba(69,243,255,0.3); color:#45f3ff;">👤 ' + 
-                   escapeHtml(d.login_text || 'Entrar') + ' / ' + escapeHtml(d.register_text || 'Cadastrar') + '</span>';
-        }
-        if (block.type === 'shortcode') return '<code style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">' + escapeHtml(d.code || d.tag || '[shortcode]') + '</code>';
-        if (block.type === 'logo') {
-            var logoTxt = d.text || d.brand_text || 'DomainSystem';
-            if (d.image_url) {
-                return '<div style="display:flex; align-items:center; gap:8px;">' +
-                       '<img src="' + escapeAttr(d.image_url) + '" style="height:22px; max-width:80px; object-fit:contain; border-radius:2px; background:rgba(255,255,255,0.05);">' +
-                       '<span style="color:#fff; font-weight:600;">' + escapeHtml(logoTxt) + '</span>' +
-                       '</div>';
-            }
-            return '<strong style="color:#fff;">' + escapeHtml(logoTxt) + '</strong>';
-        }
-        if (block.type === 'nav_menu') {
-            var curStyle = d.toggle_style || state.mobile_toggle_style || 'classic';
-            var curAlign = d.toggle_align || d.align || state.mobile_toggle_align || 'right';
-            var isMobile = (currentDevice === '375px' || currentDevice === '768px');
-            var toggleLabel = '☰';
-            if (curStyle === 'pill') toggleLabel = (d.toggle_label || 'MENU') + ' ☰';
-            if (curStyle === 'minimal') toggleLabel = '═';
-            if (curStyle === 'dots') toggleLabel = '⋮';
-            if (curStyle === 'boxed') toggleLabel = '▣ ☰';
-            if (curStyle === 'grid') toggleLabel = '⠿';
-            if (curStyle === 'rounded_glow') toggleLabel = '◉ ☰';
-            if (curStyle === 'cyber') toggleLabel = '[☰]';
 
-            var justifyVal = (curAlign === 'left') ? 'flex-start' : ((curAlign === 'center') ? 'center' : 'flex-end');
-            var itemStyleLabel = d.mobile_item_style || 'card';
-
-            if (isMobile) {
-                return '<div style="display:flex; justify-content:' + justifyVal + '; width:100%; align-items:center; gap:8px;">' +
-                       '<button type="button" class="header-btn" style="padding:3px 10px; font-size:12px; background:' + escapeAttr(d.toggle_bg_color || 'rgba(56,189,248,0.2)') + '; border-color:' + escapeAttr(d.toggle_border_color || 'var(--primary)') + '; color:' + escapeAttr(d.toggle_color || 'var(--primary)') + ';" onclick="event.stopPropagation(); testMobileDrawer(\'' + escapeAttr(curStyle) + '\')">' + escapeHtml(toggleLabel) + '</button>' +
-                       '<span style="font-size:11px; color:#38bdf8;">📱 ' + (curAlign === 'left' ? '⬅️ Esq' : (curAlign === 'center' ? '🎯 Centro' : '➡️ Dir')) + ' (' + escapeHtml(curStyle) + ' · ' + escapeHtml(itemStyleLabel) + ')</span>' +
-                       '</div>';
-            } else {
-                var alignText = (curAlign === 'left') ? '⬅️ Esquerda' : ((curAlign === 'center') ? '🎯 Centro' : '➡️ Direita');
-                return '🧭 Menu: <strong>' + escapeHtml(d.menu_id || 'Principal') + '</strong> <span style="font-size:10px; color:#38bdf8; margin-left:8px; padding:2px 6px; background:rgba(56,189,248,0.1); border-radius:4px;">📱 Toggle: ' + alignText + ' (' + escapeHtml(curStyle) + ' · Botões: ' + escapeHtml(itemStyleLabel) + ')</span>';
+        // Vídeo: mostra a URL discreta
+        if (block.type === 'video') {
+            var vidUrl = (d.url || d.url_mobile || '').trim();
+            if (vidUrl) {
+                return '<div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">🎥 ' + escapeHtml(vidUrl) + '</div>';
             }
+            return customTypeHint;
         }
-        if (block.type === 'divider') return 'Estilo: ' + (d.style || 'solid') + ' (' + (d.height || '20px') + ')';
-        if (block.type === 'copyright') return '© ' + new Date().getFullYear() + ' ' + escapeHtml(d.site_name || 'Domain-System');
-        if (block.type === 'social_icons') {
-            var nets = d.networks || [];
-            var count = Array.isArray(nets) ? nets.length : (typeof nets === 'object' && nets !== null ? Object.keys(nets).length : 0);
-            var shapeLabel = (d.shape === 'circle' ? 'Círculo' : (d.shape === 'rounded' ? 'Arredondado' : (d.shape === 'square' ? 'Quadrado' : 'Minimal')));
-            return '🌐 Redes Sociais: <strong>' + count + ' ícones</strong> <span style="font-size:10px; opacity:0.75; padding:2px 6px; background:rgba(56,189,248,0.12); color:var(--primary); border-radius:4px; margin-left:6px;">' + shapeLabel + ' • ' + (d.color_mode || 'official') + '</span>';
-        }
-        if (block.type === 'post_cards_grid') {
-            var cols = d.columns || 3;
-            var limit = d.limit || 6;
-            var styleLabel = d.card_style || 'cyber_glass';
-            return '📰 Grid de Artigos: <strong>' + cols + ' colunas</strong> (até ' + limit + ' posts) <span style="font-size:10px; opacity:0.75; padding:2px 6px; background:rgba(56,189,248,0.12); color:var(--primary); border-radius:4px; margin-left:6px;">' + styleLabel + '</span>';
-        }
-        return block.type;
+
+        // Blocos puramente funcionais (logo, user_auth, divider, copyright, nav_menu):
+        // NÃO repetem etiquetas redundantes. Se não foram renomeados, não exibem nada embaixo!
+        return customTypeHint;
     }
 
     var isEditorMobileDrawerOpen = false;
@@ -2572,6 +2857,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     }
 
     function testMobileDrawer(style) {
+        if (currentDevice !== '375px' && currentDevice !== '768px') {
+            setDevice('375px');
+        }
         isEditorMobileDrawerOpen = !isEditorMobileDrawerOpen;
         renderEditorMobileDrawerOverlay(isEditorMobileDrawerOpen);
     }
@@ -2681,11 +2969,51 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             return '<li><a href="javascript:void(0)" class="studio-preview-mob-link' + isAct + '">' + escapeHtml(itemObj.title) + '</a></li>';
         }).join('');
 
+        var actionButtonsHtml = '';
+        if (state.sections) {
+            state.sections.forEach(function(s) {
+                if (s.columns_data) {
+                    var cols = Array.isArray(s.columns_data) ? s.columns_data : Object.values(s.columns_data);
+                    cols.forEach(function(col) {
+                        if (Array.isArray(col)) {
+                            col.forEach(function(b) {
+                                var bData = b.data || {};
+                                if (bData.absorb_in_mobile === false || bData.hide_mobile || bData.hide_375) return;
+                                if (b.type === 'button') {
+                                    var bLabel = bData.label || 'Botão';
+                                    var bBg = bData.bg_color || 'var(--color-primary, #38bdf8)';
+                                    var bColor = bData.text_color || '#000';
+                                    actionButtonsHtml += '<div style="width:100%;"><button type="button" class="ds-block-btn" style="width:100%; padding:10px 14px; border-radius:8px; font-weight:700; font-size:13px; background:' + escapeAttr(bBg) + '; color:' + escapeAttr(bColor) + '; border:none; cursor:pointer; text-align:center;">' + (bData.icon ? escapeHtml(bData.icon) + ' ' : '') + escapeHtml(bLabel) + '</button></div>';
+                                } else if (b.type === 'cta_button') {
+                                    var bLabel = bData.label || 'Botão CTA';
+                                    var bBg = bData.bg_color || 'var(--primary, #38bdf8)';
+                                    var bColor = bData.text_color || '#000';
+                                    actionButtonsHtml += '<div style="width:100%;"><button type="button" class="ds-block-cta" style="width:100%; padding:11px 16px; border-radius:8px; font-weight:800; font-size:13px; background:' + escapeAttr(bBg) + '; color:' + escapeAttr(bColor) + '; border:none; cursor:pointer; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.3);">' + escapeHtml(bLabel) + '</button></div>';
+                                } else if (b.type === 'user_auth') {
+                                    actionButtonsHtml += '<div style="display:flex; flex-direction:column; gap:8px; width:100%;">' +
+                                        '<a href="' + escapeAttr(bData.login_url || '/aluno/login') + '" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px 14px; border-radius:8px; font-weight:700; font-size:13px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); color:#fff; text-decoration:none; text-align:center; box-sizing:border-box;">🔑 ' + escapeHtml(bData.login_text || 'Entrar') + '</a>' +
+                                        '<a href="' + escapeAttr(bData.register_url || '/aluno/cadastro') + '" style="display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:11px 14px; border-radius:8px; font-weight:800; font-size:13px; background:#00d284; border:1px solid #00d284; color:#0b0c10; text-decoration:none; text-align:center; box-shadow:0 2px 10px rgba(0,210,132,0.25); box-sizing:border-box;">✨ ' + escapeHtml(bData.register_text || 'Cadastrar') + '</a>' +
+                                        '</div>';
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        var actionsFooterHtml = actionButtonsHtml !== ''
+            ? '<div style="margin-top:20px; padding-top:14px; border-top:1px solid ' + drawerBorderColor + '; display:flex; flex-direction:column; gap:8px;">' +
+              '<div style="font-size:10px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">⚡ Ações do Cabeçalho Absorvidas no Mobile:</div>' +
+              actionButtonsHtml +
+              '</div>'
+            : '<div style="margin-top:16px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.08); font-size:10px; color:var(--text-muted); text-align:center;">💡 Botões CTA ou Login no cabeçalho aparecem aqui no mobile!</div>';
+
         existing.innerHTML =
             '<style>' +
-            '#studio_mobile_drawer_overlay { position: absolute; inset: 34px 0 0 0; z-index: 950; display: flex; }' +
+            '#studio_mobile_drawer_overlay { position: absolute; inset: 34px 0 0 0; z-index: 950; display: flex; max-height: calc(100vh - 160px); }' +
             '#studio_mobile_drawer_overlay .studio-mob-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.62); backdrop-filter: blur(3px); }' +
-            '#studio_mobile_drawer_overlay .studio-mob-panel { position: absolute; ' + posCss + ' background: ' + drawerBg + '; backdrop-filter: blur(18px); padding: 22px; display: flex; flex-direction: column; gap: 16px; z-index: 2; box-shadow: 0 10px 35px rgba(0,0,0,0.75); overflow-y: auto; }' +
+            '#studio_mobile_drawer_overlay .studio-mob-panel { position: absolute; ' + posCss + ' background: ' + drawerBg + '; backdrop-filter: blur(18px); padding: 22px; display: flex; flex-direction: column; gap: 16px; z-index: 2; box-shadow: 0 10px 35px rgba(0,0,0,0.75); overflow-y: auto; max-height: 100%; box-sizing: border-box; }' +
             '#studio_mobile_drawer_overlay .studio-mob-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: ' + itemGap + '; }' +
             '#studio_mobile_drawer_overlay .studio-preview-mob-link { display: flex; align-items: center; justify-content: ' + itemJustify + '; text-align: ' + itemAlign + '; padding: ' + itemPadding + '; border-radius: ' + itemRadius + '; color: ' + mobileLinkColor + '; background: ' + mobileItemBg + '; border: ' + defaultItemBorder + '; text-decoration: none; font-size: 0.98rem; font-family: ' + (d.font_family || 'var(--font-primary, inherit)') + '; font-weight: ' + (d.font_weight || '500') + '; transition: all 0.22s ease; ' + cyberBarCss + dividerCss + ' }' +
             '#studio_mobile_drawer_overlay .studio-preview-mob-link:hover, #studio_mobile_drawer_overlay .studio-preview-mob-link.active { color: ' + mobileHoverTextColor + ' !important; background: ' + hoverBg + ' !important; border-color: ' + hoverBorder + ' !important; ' + hoverTransform + ' }' +
@@ -2697,7 +3025,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     '<button type="button" onclick="closeEditorMobileDrawer()" style="background:rgba(255,255,255,0.08); border:1px solid ' + drawerBorderColor + '; color:' + mobileLinkColor + '; width:30px; height:30px; border-radius:8px; cursor:pointer;">✕</button>' +
                 '</div>' +
                 '<ul class="studio-mob-list">' + itemsHtml + '</ul>' +
-                '<div style="margin-top:auto; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.08); font-size:10px; color:var(--text-muted); text-align:center;">💡 Passe o mouse sobre os botões acima para testar as cores Hover em tempo real!</div>' +
+                actionsFooterHtml +
             '</aside>';
     }
 
@@ -3076,6 +3404,31 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                    '<span style="font-size:10px; background:rgba(56,189,248,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">' + (sec.title || 'Seção') + ' / Célula ' + (selectedBlockCoord.col + 1) + '</span>' +
                    '</div>';
 
+        var curPartType = '<?= $part->getType() ?>';
+        if (bMeta.allowed_types && bMeta.allowed_types.length > 0 && bMeta.allowed_types.indexOf(curPartType) === -1) {
+            var partLabelFull = (curPartType === 'header') ? 'Header (Cabeçalho)' : ((curPartType === 'footer') ? 'Footer (Rodapé)' : 'esta área');
+            html += '<div style="margin-bottom:14px; padding:10px 12px; border-radius:8px; background:rgba(239,68,68,0.14); border:1px solid #ef4444; color:#fca5a5; font-size:12px; line-height:1.45;">' +
+                    '🔒 <strong>Bloco não permitido no ' + partLabelFull + ':</strong><br>' +
+                    'O bloco <strong>' + escapeHtml(bMeta.name) + '</strong> foi restringido e não é renderizado no site por diretrizes de desempenho e boas práticas de cabeçalhos/rodapés. Recomendamos excluir este bloco daqui e utilizá-lo em Seções Centrais / Hero.' +
+                    '</div>';
+        }
+
+        var isMobileActive = (currentDeviceKey === 'mobile' || currentDeviceKey === 'tablet');
+        var devLabel = isMobileActive ? '📱 Mobile / Tablet (≤ 768px)' : '💻 Desktop (> 768px)';
+        html += '<div style="background:rgba(0,0,0,0.35); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:8px 10px; margin-bottom:14px;">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+                '<span style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Resolução de Edição:</span>' +
+                '<span style="font-size:10px; font-weight:700; color:' + (isMobileActive ? '#10b981' : 'var(--primary)') + ';">' + devLabel + '</span>' +
+                '</div>' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">' +
+                '<button type="button" class="header-btn' + (!isMobileActive ? ' active' : '') + '" onclick="setDevice(\'100%\')" style="font-size:11px; padding:6px; text-align:center; justify-content:center; font-weight:700;">💻 Desktop (>768px)</button>' +
+                '<button type="button" class="header-btn' + (isMobileActive ? ' active' : '') + '" onclick="setDevice(\'375px\')" style="font-size:11px; padding:6px; text-align:center; justify-content:center; font-weight:700; ' + (isMobileActive ? 'background:rgba(16,185,129,0.2); border-color:#10b981; color:#fff;' : '') + '">📱 Mobile (≤768px)</button>' +
+                '</div>' +
+                (isMobileActive 
+                    ? '<div style="margin-top:6px; font-size:10px; color:#34d399; line-height:1.35; padding:4px 6px; background:rgba(16,185,129,0.1); border-radius:4px;">📱 <strong>Modo Mobile Ativo:</strong> Alinhamentos, direções flex e dimensões editados aqui salvam exclusivamente para o celular, sem alterar o desktop!</div>' 
+                    : '') +
+                '</div>';
+
         html += '<div class="inspector-field" style="background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); margin-bottom:14px;">' +
                 '<label class="inspector-label" style="color:var(--primary);">🏷️ Rótulo Personalizado na Layer (Camadas)</label>' +
                 '<input type="text" class="inspector-input" value="' + escapeAttr(block.custom_name || '') + '" oninput="updateBlockCustomName(this.value)" placeholder="ex: ' + escapeAttr(bMeta.name) + ' Principal">' +
@@ -3087,14 +3440,14 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTextInput('Texto do Título', 'text', block.data.text || '');
             html += inspectorSelect('Nível Hierárquico', 'level', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], normalizedLevel);
             html += inspectorFontSelector('Tipografia / Fonte do Título', 'font_family', block.data.font_family || 'var(--font-secondary)');
-            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || block.data.size || '2rem');
-            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', getBlockResponsiveValue(block, 'font_size') || '2rem', true);
+            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], getBlockResponsiveValue(block, 'align') || 'left', true);
             html += inspectorTokenColorPicker('Cor do Título', 'color', block.data.color || 'var(--color-primary)', 'primary');
         } else if (block.type === 'paragraph') {
             html += inspectorTextarea('Conteúdo do Texto', 'text', block.data.text || '');
             html += inspectorFontSelector('Tipografia / Fonte do Texto', 'font_family', block.data.font_family || 'var(--font-primary)');
-            html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || block.data.size || '1rem');
-            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right', 'justify'], block.data.align || 'left');
+            html += inspectorDimension('Tamanho da Fonte', 'font_size', getBlockResponsiveValue(block, 'font_size') || '1rem', true);
+            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right', 'justify'], getBlockResponsiveValue(block, 'align') || 'left', true);
             html += inspectorTokenColorPicker('Cor do Texto', 'color', block.data.color || 'var(--color-text-main)', 'text_main');
         } else if (block.type === 'button') {
             html += inspectorTextInput('Texto do Botão', 'label', block.data.label || 'Clique Aqui');
@@ -3163,7 +3516,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">📐 Tipografia & Dimensões</div>';
             html += inspectorFontSelector('Tipografia do Botão', 'font_family', block.data.font_family || 'var(--font-primary)');
             html += inspectorDimension('Tamanho da Fonte', 'font_size', block.data.font_size || '1rem');
-            html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
+            html += inspectorTextInput('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorDimension('Arredondamento de Borda', 'border_radius', block.data.border_radius || '8px');
             html += inspectorSelect('Alinhamento', 'align', [
                 { value: 'left', label: 'Esquerda' },
@@ -3178,6 +3531,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     { value: 'right', label: 'Depois do Texto (Direita)' }
                 ], block.data.icon_position || 'left');
             }
+            html += inspectorMobileDrawerControl(block);
         } else if (block.type === 'cta_button') {
             html += inspectorTextInput('Texto do Botão', 'label', block.data.label || 'Clique Aqui');
             html += inspectorTextInput('Link / URL de Destino', 'url', block.data.url || '#');
@@ -3193,8 +3547,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTokenColorPicker('Cor do Texto no Hover', 'hover_text_color', block.data.hover_text_color || '', '');
 
             html += '<div style="margin: 14px 0 6px 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">📐 Dimensões & Alinhamento</div>';
-            html += inspectorDimension('Padding Interno', 'padding', block.data.padding || '12px 24px');
+            html += inspectorTextInput('Padding Interno', 'padding', block.data.padding || '12px 24px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
+            html += inspectorMobileDrawerControl(block);
         } else if (block.type === 'user_auth') {
             html += inspectorTextInput('Texto do Botão Login', 'login_text', block.data.login_text || 'Entrar');
             html += inspectorTextInput('Link de Login', 'login_url', block.data.login_url || '/aluno/login');
@@ -3204,12 +3559,27 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             html += inspectorTextInput('Link do Painel do Aluno', 'dashboard_url', block.data.dashboard_url || '/aluno/painel');
             html += inspectorTextInput('Texto de Logout', 'logout_text', block.data.logout_text || 'Sair');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'right');
+            html += inspectorMobileDrawerControl(block);
         } else if (block.type === 'logo') {
-            html += inspectorTextInput('Texto do Logotipo', 'text', block.data.text || block.data.brand_text || 'DomainSystem');
+            var curAlign = getBlockResponsiveValue(block, 'align') || 'left';
+            var curFlexDir = getBlockResponsiveValue(block, 'flex_direction') || 'row';
+            var curHeight = getBlockResponsiveValue(block, 'height') || '36px';
+            var curFontSize = getBlockResponsiveValue(block, 'font_size') || '1.4rem';
+            var curFontWeight = getBlockResponsiveValue(block, 'font_weight') || '800';
+            var isMobileDev = (currentDeviceKey === 'mobile' || currentDeviceKey === 'tablet');
+
+            html += inspectorTextInput('Texto do Logotipo', 'text', getBlockResponsiveValue(block, 'text') || block.data.brand_text || 'DomainSystem', true);
             html += inspectorTokenColorPicker('Cor do Texto da Marca', 'text_color', block.data.text_color || block.data.color || 'var(--color-text-main)', 'text_main');
             html += inspectorFontSelector('Tipografia da Marca', 'font_family', block.data.font_family || 'var(--font-primary)');
-            html += inspectorDimension('Tamanho da Fonte da Marca', 'font_size', block.data.font_size || '1.4rem');
-            html += inspectorSelect('Peso da Fonte', 'font_weight', ['400', '500', '600', '700', '800', '900'], block.data.font_weight || '800');
+            html += inspectorDimension('Tamanho da Fonte da Marca', 'font_size', curFontSize, true);
+            html += inspectorSelect('Peso da Fonte', 'font_weight', [
+                { value: '400', label: '400 (Normal)' },
+                { value: '500', label: '500 (Médio)' },
+                { value: '600', label: '600 (Seminegrito)' },
+                { value: '700', label: '700 (Negrito)' },
+                { value: '800', label: '800 (Extranegrito)' },
+                { value: '900', label: '900 (Preto / Black)' }
+            ], curFontWeight, true);
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Arquivo de Logotipo (PNG, SVG, JPG, WEBP)</label>' +
                     '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
@@ -3219,25 +3589,59 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     '</div>' +
                     (block.data.image_url ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(block.data.image_url) + '" style="max-height:44px; max-width:100%; object-fit:contain;"></div>' : '') +
                     '</div>';
-            html += inspectorDimension('Altura da Logo', 'height', block.data.height || '36px');
+            html += inspectorDimension('Altura da Logo', 'height', curHeight, true);
             html += inspectorTextInput('Link de Destino', 'link', block.data.link || block.data.url || '/');
-            html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'left');
+
+            // ALINHAMENTO E DISPOSIÇÃO FLEX RESPONSIVOS
+            html += inspectorSelect('Alinhamento', 'align', [
+                { value: 'left', label: '⬅️ Alinhar à Esquerda' },
+                { value: 'center', label: '🎯 Centralizado' },
+                { value: 'right', label: '➡️ Alinhar à Direita' }
+            ], curAlign, true);
+
+            html += inspectorSelect('Disposição do Ícone e Texto', 'flex_direction', [
+                { value: 'row', label: '↔️ Em Linha (Lado a Lado)' },
+                { value: 'column', label: '↕️ Em Coluna (Ícone em cima, Texto embaixo)' }
+            ], curFlexDir, true);
+
+            if (isMobileDev) {
+                html += '<div class="inspector-field" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px; margin-top:10px;">' +
+                        '<label class="inspector-label" style="color:var(--primary); font-size:11px; font-weight:700;">📱 Exibição Específica no Celular</label>' +
+                        '<div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">' +
+                        inspectorCheckbox('Exibir Ícone da Logo no Celular', 'show_image_mobile', block.data.show_image_mobile !== false) +
+                        inspectorCheckbox('Exibir Texto da Marca no Celular', 'show_text_mobile', block.data.show_text_mobile !== false) +
+                        '</div>' +
+                        '</div>';
+            }
         } else if (block.type === 'image') {
+            var curImgUrl = block.data.url || block.data.url_mobile || '';
             html += '<div class="inspector-field">' +
                     '<label class="inspector-label">Arquivo de Imagem (PNG, SVG, JPG, WEBP)</label>' +
                     '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
-                    '<input type="text" class="inspector-input" value="' + escapeAttr(block.data.url || '') + '" oninput="updateBlockProp(\'url\', this.value)" placeholder="https://... ou faça upload">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(curImgUrl) + '" oninput="updateBlockProp(\'url\', this.value)" placeholder="https://... ou faça upload">' +
                     '<button type="button" class="header-btn" onclick="triggerImageUpload(\'url\')" style="white-space:nowrap; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);">' +
                     '📁 Upload</button>' +
                     '</div>' +
-                    (block.data.url ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(block.data.url) + '" style="max-height:90px; max-width:100%; object-fit:contain; border-radius:4px;"></div>' : '') +
+                    (curImgUrl ? '<div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; text-align:center;"><img src="' + escapeAttr(curImgUrl) + '" style="max-height:90px; max-width:100%; object-fit:contain; border-radius:4px;"></div>' : '') +
                     '</div>';
             html += inspectorTextInput('Texto Alternativo (Alt)', 'alt', block.data.alt || '');
             html += inspectorDimension('Largura', 'width', block.data.width || '100%');
             html += inspectorDimension('Borda Arredondada', 'border_radius', block.data.border_radius || '8px');
             html += inspectorSelect('Alinhamento', 'align', ['left', 'center', 'right'], block.data.align || 'center');
         } else if (block.type === 'video') {
-            html += inspectorTextInput('URL (YouTube, Vimeo ou MP4)', 'url', block.data.url || '');
+            var curVidUrl = block.data.url || '';
+            html += '<div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; background:rgba(56,189,248,0.06); padding:8px; border-radius:6px; border:1px solid rgba(56,189,248,0.2);">' +
+                    '💡 <strong>Vídeo Embed ou MP4</strong>: Cole o link do YouTube (comum, shorts ou live), Vimeo ou faça upload de um arquivo MP4/WebM. Ideal para seções de conteúdo e hero.' +
+                    '</div>';
+            html += '<div class="inspector-field">' +
+                    '<label class="inspector-label">URL do Vídeo ou Arquivo</label>' +
+                    '<div style="display:flex; gap:6px; margin-bottom:8px;">' +
+                    '<input type="text" class="inspector-input" value="' + escapeAttr(curVidUrl) + '" oninput="updateBlockProp(\'url\', this.value)" placeholder="YouTube, Vimeo ou faça upload de MP4">' +
+                    '<button type="button" class="header-btn" onclick="triggerVideoUpload(\'url\')" style="white-space:nowrap; background:rgba(56,189,248,0.2); border-color:var(--primary); color:var(--primary);">' +
+                    '📁 Upload MP4</button>' +
+                    '</div>' +
+                    renderVideoPreviewInspector(curVidUrl) +
+                    '</div>';
             html += inspectorSelect('Aspect Ratio', 'aspect_ratio', ['16/9', '4/3', '1/1'], block.data.aspect_ratio || '16/9');
             html += inspectorDimension('Borda Arredondada', 'border_radius', block.data.border_radius || '8px');
         } else if (block.type === 'shortcode') {
@@ -3477,8 +3881,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         // ==========================================
         // ESTILOS CSS AVANÇADOS DO ELEMENTO (MARGIN, PADDING, FLEX, FLEXBOX, ETC.)
         // ==========================================
-        var elemMarginVals = parse4Values(block.data.margin || '0px');
-        var elemPaddingVals = parse4Values(block.data.padding || '0px');
+        var elemMarginVals = parse4Values(getBlockResponsiveValue(block, 'margin') || '0px');
+        var elemPaddingVals = parse4Values(getBlockResponsiveValue(block, 'padding') || '0px');
         var isMarginLinked = (elemSpacingLinkState.margin !== undefined) ? elemSpacingLinkState.margin : true;
         var isPaddingLinked = (elemSpacingLinkState.padding !== undefined) ? elemSpacingLinkState.padding : true;
 
@@ -3490,8 +3894,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         // MARGEM EXTERNA (4 LADOS COM STEPPERS)
         html += '<div class="spacing-box-control">' +
-                '<div class="spacing-box-header">' +
-                '<span class="spacing-box-title">Margem Externa (Margin)</span>' +
+                renderResponsiveControlHeader('Margem Externa (Margin)', 'margin', block) +
+                '<div class="spacing-box-header" style="justify-content:flex-end; margin-bottom:4px;">' +
                 '<button type="button" class="spacing-link-btn ' + (isMarginLinked ? '' : 'unlinked') + '" onclick="toggleElemSpacingLink(\'margin\')">' + (isMarginLinked ? '🔗 Vinculado' : '🔓 Separado') + '</button>' +
                 '</div>' +
                 '<div class="spacing-quad-grid">' +
@@ -3503,8 +3907,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         // PREENCHIMENTO INTERNO (4 LADOS COM STEPPERS)
         html += '<div class="spacing-box-control">' +
-                '<div class="spacing-box-header">' +
-                '<span class="spacing-box-title">Preenchimento Interno (Padding)</span>' +
+                renderResponsiveControlHeader('Preenchimento Interno (Padding)', 'padding', block) +
+                '<div class="spacing-box-header" style="justify-content:flex-end; margin-bottom:4px;">' +
                 '<button type="button" class="spacing-link-btn ' + (isPaddingLinked ? '' : 'unlinked') + '" onclick="toggleElemSpacingLink(\'padding\')">' + (isPaddingLinked ? '🔗 Vinculado' : '🔓 Separado') + '</button>' +
                 '</div>' +
                 '<div class="spacing-quad-grid">' +
@@ -3529,18 +3933,15 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (block.data.display === 'flex' || block.data.display === 'inline-flex') {
             html += '<div style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px; margin-bottom:12px;">' +
                     '<div style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:8px;">Propriedades Flexbox</div>' +
-                    inspectorSelect('Direção dos Itens (Flex Direction)', 'flex_direction', ['row', 'column', 'row-reverse', 'column-reverse'], block.data.flex_direction || 'row') +
-                    inspectorSelect('Alinhamento Principal (Justify Content)', 'justify_content', ['flex-start', 'center', 'flex-end', 'space-between', 'space-around'], block.data.justify_content || 'flex-start') +
-                    inspectorSelect('Alinhamento Transversal (Align Items)', 'align_items', ['stretch', 'center', 'flex-start', 'flex-end'], block.data.align_items || 'stretch') +
+                    inspectorSelect('Direção dos Itens (Flex Direction)', 'flex_direction', ['row', 'column', 'row-reverse', 'column-reverse'], getBlockResponsiveValue(block, 'flex_direction') || 'row', true) +
+                    inspectorSelect('Alinhamento Principal (Justify Content)', 'justify_content', ['flex-start', 'center', 'flex-end', 'space-between', 'space-around'], getBlockResponsiveValue(block, 'justify_content') || 'flex-start', true) +
+                    inspectorSelect('Alinhamento Transversal (Align Items)', 'align_items', ['stretch', 'center', 'flex-start', 'flex-end'], getBlockResponsiveValue(block, 'align_items') || 'stretch', true) +
                     inspectorSelect('Quebra de Linha (Flex Wrap)', 'flex_wrap', ['nowrap', 'wrap'], block.data.flex_wrap || 'nowrap') +
                     '<div class="inspector-field">' +
-                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                    '<label class="inspector-label" style="margin-bottom:0;">Espaçamento Entre Itens (Gap)</label>' +
-                    '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + (block.data.gap || '0px') + '</span>' +
-                    '</div>' +
+                    renderResponsiveControlHeader('Espaçamento Entre Itens (Gap)', 'gap', block) +
                     '<div class="stepper-single-wrap">' +
                     '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'gap\', -2, 0, 100)">-</button>' +
-                    '<input type="number" id="elem_gap_num" class="step-input-single" value="' + (parseFloat(block.data.gap || '0') || 0) + '" min="0" max="100" oninput="onElemSingleNumChange(\'gap\', this.value)">' +
+                    '<input type="number" id="elem_gap_num" class="step-input-single" value="' + (parseFloat(getBlockResponsiveValue(block, 'gap') || '0') || 0) + '" min="0" max="100" oninput="onElemSingleNumChange(\'gap\', this.value)">' +
                     '<button type="button" class="step-btn" onclick="stepElemSingleValue(\'gap\', 2, 0, 100)">+</button>' +
                     '</div>' +
                     '</div>' +
@@ -3554,7 +3955,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             { label: '50%', value: '50%' },
             { label: '75%', value: '75%' },
             { label: '100%', value: '100%' }
-        ], 0, 2560, 10);
+        ], 0, 2560, 10, true);
 
         html += renderElemDimensionWithSteppers('Largura Máxima (Max-Width)', 'max_width', block.data.max_width || '', 'px', [
             { label: 'Nenhum', value: 'none' },
@@ -3563,7 +3964,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
             { label: '1024px', value: '1024px' },
             { label: '1200px', value: '1200px' },
             { label: '100%', value: '100%' }
-        ], 0, 3840, 20);
+        ], 0, 3840, 20, true);
 
         html += renderAdvancedBackgroundControl('Cor de Fundo do Elemento (Background)', 'background', block.data.background || 'transparent', 'transparent', false);
 
@@ -3575,9 +3976,9 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                 inspectorTokenColorPicker('Cor dos Links Internos (Link Color)', 'link_color', block.data.link_color || '', 'primary') +
                 inspectorTokenColorPicker('Cor dos Links no Hover (Link Hover)', 'link_hover_color', block.data.link_hover_color || '', 'tertiary') +
                 inspectorFontSelector('Família da Fonte (Font Family)', 'font_family', block.data.font_family || 'var(--font-primary)') +
-                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
-                inspectorDimension('Tamanho (Font Size)', 'font_size', block.data.font_size || block.data.size || '') +
-                inspectorSelect('Peso (Font Weight)', 'font_weight', [
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
+                inspectorDimension('Tamanho da Fonte', 'font_size', getBlockResponsiveValue(block, 'font_size') || block.data.size || '', true) +
+                inspectorSelect('Peso da Fonte', 'font_weight', [
                     { value: '', label: 'Padrão' },
                     { value: '300', label: '300 (Light)' },
                     { value: '400', label: '400 (Regular)' },
@@ -3586,11 +3987,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     { value: '700', label: '700 (Bold)' },
                     { value: '800', label: '800 (ExtraBold)' },
                     { value: '900', label: '900 (Black)' }
-                ], block.data.font_weight || '') +
+                ], getBlockResponsiveValue(block, 'font_weight') || '', true) +
                 '</div>' +
-                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
-                inspectorTextInput('Altura de Linha (Line Height)', 'line_height', block.data.line_height || '') +
-                inspectorDimension('Espaçamento Letras', 'letter_spacing', block.data.letter_spacing || '') +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">' +
+                inspectorDimension('Altura da Linha', 'line_height', getBlockResponsiveValue(block, 'line_height') || '', true) +
+                inspectorDimension('Espaçamento Letras', 'letter_spacing', getBlockResponsiveValue(block, 'letter_spacing') || '', true) +
                 '</div>' +
                 '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">' +
                 inspectorSelect('Alinhamento Texto', 'text_align', [
@@ -3599,13 +4000,13 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                     { value: 'center', label: 'Centro' },
                     { value: 'right', label: 'Direita' },
                     { value: 'justify', label: 'Justificado' }
-                ], block.data.text_align || block.data.align || '') +
+                ], getBlockResponsiveValue(block, 'text_align') || getBlockResponsiveValue(block, 'align') || '', true) +
                 inspectorSelect('Transformação', 'text_transform', [
                     { value: '', label: 'Nenhuma' },
                     { value: 'uppercase', label: 'MAIÚSCULAS' },
                     { value: 'lowercase', label: 'minúsculas' },
                     { value: 'capitalize', label: 'Capitalizar' }
-                ], block.data.text_transform || '') +
+                ], getBlockResponsiveValue(block, 'text_transform') || '', true) +
                 '</div>' +
                 '</div>';
 
@@ -3632,15 +4033,23 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         // OPACIDADE COM SLIDER E STEPPERS
         html += renderElemOpacityControl(block);
 
-        // VISIBILIDADE RESPONSIVA DO ELEMENTO (4 RESOLUÇÕES: DESKTOP, 1024px, 768px, 375px)
+        // VISIBILIDADE RESPONSIVA DO ELEMENTO (DESKTOP, 1024px, 768px, 375px)
+        var isActionBlock = (block.type === 'user_auth' || block.type === 'button' || block.type === 'cta_button');
         html += '<div class="inspector-field" style="margin-top:14px; background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:10px;">' +
-                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">📱 Visibilidade Responsiva do Elemento (4 Resoluções)</label>' +
-                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Oculta <strong>apenas este elemento (' + escapeHtml(block.custom_name || bMeta.name) + ')</strong> nas resoluções marcadas, mantendo os demais elementos da seção visíveis:</div>' +
+                '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin-bottom:4px;">📱 Visibilidade Responsiva do Elemento</label>' +
+                '<div style="font-size:10px; color:var(--text-muted); margin-bottom:8px; line-height:1.35;">Oculta <strong>apenas este elemento (' + escapeHtml(block.custom_name || bMeta.name) + ')</strong> nas resoluções marcadas:</div>' +
                 inspectorCheckbox('🖥️ Ocultar no Desktop (100%)', 'hide_desktop', !!block.data.hide_desktop) +
                 inspectorCheckbox('💻 Ocultar em 1024px (Laptop)', 'hide_laptop', !!(block.data.hide_laptop || block.data.hide_1024)) +
-                inspectorCheckbox('📱 Ocultar em 768px (Tablet)', 'hide_tablet', !!(block.data.hide_tablet || block.data.hide_768)) +
-                inspectorCheckbox('📲 Ocultar em 375px (Mobile)', 'hide_mobile', !!(block.data.hide_mobile || block.data.hide_375)) +
-                '</div>';
+                inspectorCheckbox('📱 Ocultar em 768px (Tablet)', 'hide_tablet', !!(block.data.hide_tablet || block.data.hide_768));
+
+        if (!isActionBlock) {
+            html += inspectorCheckbox('📲 Ocultar em 375px (Mobile)', 'hide_mobile', !!(block.data.hide_mobile || block.data.hide_375));
+        } else {
+            html += '<div style="font-size:10px; color:var(--primary); margin-top:6px; padding-top:6px; border-top:1px dashed rgba(56,189,248,0.2); line-height:1.35;">' +
+                    'ℹ️ No celular (375px), a exibição deste botão é controlada pelo campo <strong>📱 Comportamento em Telas Mobile</strong> (acima).' +
+                    '</div>';
+        }
+        html += '</div>';
 
         html += '</div>';
 
@@ -3654,7 +4063,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         border: true
     };
 
-    function renderElemDimensionWithSteppers(label, key, curVal, defaultUnit, presets, minVal, maxVal, stepDelta) {
+    function renderElemDimensionWithSteppers(label, key, curVal, defaultUnit, presets, minVal, maxVal, stepDelta, isResponsive) {
+        var block = getSelectedBlock();
+        if (isResponsive && block) {
+            curVal = getBlockResponsiveValue(block, key);
+        }
         var valStr = String(curVal || '').trim();
         var num = parseFloat(valStr.replace(/[^0-9.-]/g, ''));
         var isAutoOrNone = (valStr === 'auto' || valStr === 'none' || valStr === '');
@@ -3666,11 +4079,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var displayVal = valStr !== '' ? valStr : (isAutoOrNone ? 'auto' : 'padrão');
 
+        var headerHtml = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                         '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
+                         '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + escapeHtml(displayVal) + '</span>' +
+                         '</div>';
+
+        if (isResponsive && block) {
+            headerHtml = renderResponsiveControlHeader(label, key, block);
+        }
+
         var out = '<div class="inspector-field" style="margin-bottom:12px;">' +
-                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                  '<label class="inspector-label" style="margin-bottom:0;">' + label + '</label>' +
-                  '<span style="font-size:11px; color:var(--primary); font-weight:700;">' + escapeHtml(displayVal) + '</span>' +
-                  '</div>' +
+                  headerHtml +
                   '<div style="display:flex; gap:6px; align-items:center;">' +
                   '<div class="stepper-single-wrap" style="flex:1;">' +
                   '<button type="button" class="step-btn" onclick="stepElemDimValue(\'' + key + '\', -' + stepDelta + ', ' + minVal + ', ' + maxVal + ', \'' + unit + '\')">-</button>' +
@@ -3706,12 +4125,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
 
-        var valStr = String(block.data[key] || '').trim();
+        var valStr = String(getBlockResponsiveValue(block, key) || '').trim();
         var curNum = parseFloat(valStr.replace(/[^0-9.-]/g, ''));
         if (isNaN(curNum)) curNum = (delta > 0 ? minVal : maxVal);
         var next = Math.max(minVal, Math.min(maxVal, curNum + delta));
-        block.data[key] = next + unit;
-        renderCanvas();
+        updateBlockPropResponsive(key, next + unit);
         renderInspector();
     }
 
@@ -3724,14 +4142,13 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var trimmed = String(rawVal || '').trim();
         if (trimmed === '' || trimmed === 'auto') {
-            block.data[key] = trimmed;
+            updateBlockPropResponsive(key, trimmed);
         } else {
             var num = parseFloat(trimmed);
             if (!isNaN(num)) {
-                block.data[key] = num + unit;
+                updateBlockPropResponsive(key, num + unit);
             }
         }
-        renderCanvas();
     }
 
     function changeElemDimUnit(key, newUnit) {
@@ -3742,12 +4159,11 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (!block.data) block.data = {};
 
         if (newUnit === 'auto' || newUnit === 'none') {
-            block.data[key] = newUnit;
+            updateBlockPropResponsive(key, newUnit);
         } else {
-            var curNum = parseFloat(String(block.data[key] || '').replace(/[^0-9.-]/g, '')) || (newUnit === '%' ? 100 : 320);
-            block.data[key] = curNum + newUnit;
+            var curNum = parseFloat(String(getBlockResponsiveValue(block, key) || '').replace(/[^0-9.-]/g, '')) || (newUnit === '%' ? 100 : 320);
+            updateBlockPropResponsive(key, curNum + newUnit);
         }
-        renderCanvas();
         renderInspector();
     }
 
@@ -3757,8 +4173,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
-        block.data[key] = val;
-        renderCanvas();
+        updateBlockPropResponsive(key, val);
         renderInspector();
     }
 
@@ -4003,7 +4418,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
 
-        var curVals = parse4Values(block.data[type] || '0px');
+        var curVals = parse4Values(getBlockResponsiveValue(block, type) || '0px');
         if (elemSpacingLinkState[type]) {
             var newVal = Math.max(0, curVals[sideIdx] + delta);
             curVals = [newVal, newVal, newVal, newVal];
@@ -4012,8 +4427,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
 
         var cssVal = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
-        block.data[type] = cssVal;
-        renderCanvas();
+        updateBlockPropResponsive(type, cssVal);
         renderInspector();
     }
 
@@ -4026,7 +4440,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var num = parseFloat(rawVal);
         if (isNaN(num) || num < 0) num = 0;
-        var curVals = parse4Values(block.data[type] || '0px');
+        var curVals = parse4Values(getBlockResponsiveValue(block, type) || '0px');
 
         if (elemSpacingLinkState[type]) {
             curVals = [num, num, num, num];
@@ -4035,8 +4449,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
 
         var cssVal = curVals[0] + 'px ' + curVals[1] + 'px ' + curVals[2] + 'px ' + curVals[3] + 'px';
-        block.data[type] = cssVal;
-        renderCanvas();
+        updateBlockPropResponsive(type, cssVal);
     }
 
     function stepElemSingleValue(key, delta, minVal, maxVal) {
@@ -4046,11 +4459,10 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
 
-        var cur = parseFloat(block.data[key] || '0');
+        var cur = parseFloat(getBlockResponsiveValue(block, key) || '0');
         if (isNaN(cur)) cur = minVal;
         var next = Math.max(minVal, Math.min(maxVal, cur + delta));
-        block.data[key] = next + 'px';
-        renderCanvas();
+        updateBlockPropResponsive(key, next + 'px');
         renderInspector();
     }
 
@@ -4063,8 +4475,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
 
         var num = parseFloat(rawVal);
         if (isNaN(num)) return;
-        block.data[key] = num + 'px';
-        renderCanvas();
+        updateBlockPropResponsive(key, num + 'px');
     }
 
     function resetElementStyles() {
@@ -4074,43 +4485,21 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) return;
 
-        delete block.data.margin;
-        delete block.data.padding;
-        delete block.data.display;
-        delete block.data.flex_direction;
-        delete block.data.justify_content;
-        delete block.data.align_items;
-        delete block.data.flex_wrap;
-        delete block.data.gap;
-        delete block.data.width;
-        delete block.data.max_width;
-        delete block.data.background;
-        delete block.data.text_color;
-        delete block.data.color;
-        delete block.data.heading_color;
-        delete block.data.link_color;
-        delete block.data.link_hover_color;
-        delete block.data.font_family;
-        delete block.data.font_size;
-        delete block.data.font_weight;
-        delete block.data.line_height;
-        delete block.data.letter_spacing;
-        delete block.data.text_align;
-        delete block.data.text_transform;
-        delete block.data.border;
-        delete block.data.border_style;
-        delete block.data.border_width;
-        delete block.data.border_color;
-        delete block.data.border_radius;
-        delete block.data.box_shadow;
-        delete block.data.opacity;
-        delete block.data.hide_desktop;
-        delete block.data.hide_laptop;
-        delete block.data.hide_1024;
-        delete block.data.hide_tablet;
-        delete block.data.hide_768;
-        delete block.data.hide_mobile;
-        delete block.data.hide_375;
+        var keysToClear = [
+            'margin', 'padding', 'display', 'flex_direction', 'justify_content', 'align_items',
+            'flex_wrap', 'gap', 'width', 'max_width', 'background', 'text_color', 'color',
+            'heading_color', 'link_color', 'link_hover_color', 'font_family', 'font_size',
+            'font_weight', 'line_height', 'letter_spacing', 'text_align', 'text_transform',
+            'border', 'border_style', 'border_width', 'border_color', 'border_radius',
+            'box_shadow', 'opacity', 'align', 'hide_desktop', 'hide_laptop', 'hide_1024',
+            'hide_tablet', 'hide_768', 'hide_mobile', 'hide_375'
+        ];
+        var devSuffixes = ['', '_laptop', '_tablet', '_mobile'];
+        keysToClear.forEach(function(k) {
+            devSuffixes.forEach(function(s) {
+                delete block.data[k + s];
+            });
+        });
 
         renderCanvas();
         renderInspector();
@@ -4164,6 +4553,100 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         .catch(function(err) {
             alert('Erro de conexão ao enviar imagem: ' + err);
         });
+    }
+
+    function triggerVideoUpload(targetPropKey) {
+        currentUploadTargetKey = targetPropKey;
+        var fileInput = document.getElementById('global_video_uploader');
+        if (fileInput) {
+            fileInput.value = '';
+            fileInput.click();
+        }
+    }
+
+    function handleVideoUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+
+        // Limite de segurança preliminar client-side de 50MB
+        if (file.size > 52428800) {
+            alert('O vídeo selecionado excede o limite máximo permitido de 50MB.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrf_token', csrfToken);
+
+        showToast('⏳ Enviando vídeo...');
+
+        fetch('<?= $baseUrl ?>/admin/builder/upload-image', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
+            body: formData
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success && data.url) {
+                updateBlockProp(currentUploadTargetKey, data.url);
+                renderInspector();
+                renderCanvas();
+                showToast('✓ Vídeo enviado com sucesso!');
+            } else {
+                alert('Erro no upload: ' + (data.message || 'Falha ao salvar vídeo.'));
+            }
+        })
+        .catch(function(err) {
+            alert('Erro de conexão ao enviar vídeo: ' + err);
+        });
+    }
+
+    function resolveVideoEmbedUrl(url) {
+        if (!url || typeof url !== 'string') return null;
+        var u = url.trim();
+        // iframe tag colada?
+        var iframeMatch = u.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        if (iframeMatch) u = iframeMatch[1].trim();
+
+        // YouTube shorts, live, embed, v/ ou youtu.be
+        var ytMatch = u.match(/(?:youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,15})/i);
+        if (ytMatch) {
+            return 'https://www.youtube.com/embed/' + ytMatch[1];
+        }
+
+        // YouTube watch?v=...
+        if (u.indexOf('youtube') !== -1 && u.indexOf('watch') !== -1) {
+            try {
+                var urlObj = new URL(u.indexOf('://') === -1 ? ('https://' + u) : u);
+                var v = urlObj.searchParams.get('v');
+                if (v) return 'https://www.youtube.com/embed/' + v.replace(/[^a-zA-Z0-9_-]/g, '');
+            } catch (e) {}
+        }
+
+        // Vimeo
+        var vimeoMatch = u.match(/vimeo(?:\.com\/video\/|\.com\/channels\/(?:\w+\/)?|\.com\/groups\/[^\/]+\/videos\/|\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/i);
+        if (vimeoMatch) {
+            return 'https://player.vimeo.com/video/' + vimeoMatch[1];
+        }
+
+        return null;
+    }
+
+    function renderVideoPreviewInspector(url) {
+        if (!url || !url.trim()) return '';
+        var embedUrl = resolveVideoEmbedUrl(url);
+        if (embedUrl) {
+            return '<div style="padding:8px; background:rgba(0,0,0,0.4); border-radius:6px; text-align:center;">' +
+                   '<iframe src="' + escapeAttr(embedUrl) + '" style="width:100%; height:130px; border:none; border-radius:4px;" allowfullscreen></iframe>' +
+                   '</div>';
+        }
+        var safeUrl = escapeAttr(url);
+        return '<div style="padding:8px; background:rgba(0,0,0,0.4); border-radius:6px; text-align:center;">' +
+               '<video src="' + safeUrl + '" controls style="max-height:130px; width:100%; border-radius:4px; background:#000;" preload="metadata"></video>' +
+               '</div>';
     }
 
         // DESIGN TOKENS COLOR PICKER
@@ -4685,10 +5168,24 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         return inspectorSelect(label, key, options, curVal || 'lift');
     }
 
-    function inspectorTextInput(label, key, val) {
+    function inspectorTextInput(label, key, val, isResponsive) {
+        var headerHtml = '<label class="inspector-label">' + label + '</label>';
+        var oninputAttr = 'updateBlockProp(\'' + key + '\', this.value)';
+        var inputVal = val;
+
+        if (isResponsive) {
+            var block = getSelectedBlock();
+            headerHtml = renderResponsiveControlHeader(label, key, block);
+            oninputAttr = 'updateBlockPropResponsive(\'' + key + '\', this.value); renderCanvas();';
+            inputVal = getBlockResponsiveValue(block, key);
+            if (inputVal === '' && key === 'text' && block && block.data) {
+                inputVal = block.data.brand_text || block.data.text || '';
+            }
+        }
+
         return '<div class="inspector-field">' +
-               '<label class="inspector-label">' + label + '</label>' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(val) + '" oninput="updateBlockProp(\'' + key + '\', this.value)">' +
+               headerHtml +
+               '<input type="text" class="inspector-input" value="' + escapeAttr(inputVal) + '" oninput="' + oninputAttr + '">' +
                '</div>';
     }
 
@@ -4700,9 +5197,64 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                '</div>';
     }
 
+    function updateMobileBehavior(val) {
+        if (!selectedBlockCoord) return;
+        var block = getSelectedBlock();
+        if (!block) return;
+        if (!block.data) block.data = {};
+        if (val === 'absorb') {
+            block.data.absorb_in_mobile = true;
+            block.data.hide_mobile = false;
+            block.data.hide_375 = false;
+        } else if (val === 'keep') {
+            block.data.absorb_in_mobile = false;
+            block.data.hide_mobile = false;
+            block.data.hide_375 = false;
+        } else if (val === 'hide') {
+            block.data.absorb_in_mobile = false;
+            block.data.hide_mobile = true;
+            block.data.hide_375 = true;
+        }
+        renderCanvas();
+        renderInspector();
+    }
+
+    function inspectorMobileDrawerControl(block) {
+        if (!block || (block.type !== 'user_auth' && block.type !== 'button' && block.type !== 'cta_button')) {
+            return '';
+        }
+        var curBehavior = 'absorb';
+        if (block.data.hide_mobile || block.data.hide_375) {
+            curBehavior = 'hide';
+        } else if (block.data.absorb_in_mobile === false) {
+            curBehavior = 'keep';
+        }
+
+        return '<div class="inspector-field" style="background:linear-gradient(135deg, rgba(56,189,248,0.08), rgba(2,132,199,0.04)); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:12px; margin:14px 0;">' +
+               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+               '<label class="inspector-label" style="color:var(--primary); font-weight:700; margin:0; font-size:12px; display:flex; align-items:center; gap:6px;">📱 Encaixe no Menu Mobile (Hambúrguer)</label>' +
+               '<span style="font-size:9.5px; padding:2px 6px; border-radius:4px; background:rgba(56,189,248,0.2); color:#38bdf8; font-weight:700;">Pronto</span>' +
+               '</div>' +
+               '<div style="font-size:11px; color:#cbd5e1; margin-bottom:8px; line-height:1.4;">Ao abrir o menu hambúrguer ☰ em celulares e tablets, este bloco pode se encaixar automaticamente no popup da gaveta:</div>' +
+               '<select class="inspector-select" onchange="updateMobileBehavior(this.value)" style="margin-bottom:8px; font-weight:600;">' +
+               '<option value="absorb"' + (curBehavior === 'absorb' ? ' selected' : '') + '>📱 Encaixar dentro da Gaveta Mobile (Padrão Recomendado)</option>' +
+               '<option value="keep"' + (curBehavior === 'keep' ? ' selected' : '') + '>👁️ Manter Fixo na Barra Superior (Cabeçalho)</option>' +
+               '<option value="hide"' + (curBehavior === 'hide' ? ' selected' : '') + '>🚫 Ocultar Totalmente no Celular</option>' +
+               '</select>' +
+               '<div style="font-size:10.5px; color:var(--text-muted); line-height:1.4; padding:6px 8px; background:rgba(0,0,0,0.25); border-radius:6px; border-left:3px solid var(--primary); margin-bottom:10px;">' +
+               (curBehavior === 'absorb'
+                   ? '⚡ <strong>Encaixado na Gaveta:</strong> O botão sai do topo e aparece com largura total dentro do popup ao tocar no hambúrguer ☰.'
+                   : (curBehavior === 'keep'
+                       ? '👁️ <strong>Fixo no Topo:</strong> Permanece visível na barra de topo ao lado do logotipo e do botão hambúrguer.'
+                       : '🚫 <strong>Oculto:</strong> O botão não será renderizado em telas de celular ou tablet.')) +
+               '</div>' +
+               '<button type="button" class="header-btn" onclick="testMobileDrawer()" style="width:100%; justify-content:center; padding:7px 12px; background:rgba(56,189,248,0.18); border:1px solid var(--primary); color:#fff; font-weight:700; font-size:11px; border-radius:6px; cursor:pointer;">👁️ Visualizar / Testar no Menu Hambúrguer</button>' +
+               '</div>';
+    }
+
     function inspectorCheckbox(label, key, isChecked) {
         return '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; margin-bottom:6px; cursor:pointer; user-select:none;">' +
-               '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' onchange="updateBlockProp(\'' + key + '\', this.checked); renderInspector(); var s = getSelectedSection(); if (s) renderSectionStyleControls(s);"> ' +
+               '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' onchange="updateBlockProp(\'' + key + '\', this.checked); renderInspector();"> ' +
                label +
                '</label>';
     }
@@ -4714,26 +5266,79 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                '</div>';
     }
 
-    function inspectorSelect(label, key, options, curVal) {
+    function inspectorSelect(label, key, options, curVal, isResponsive) {
         var opts = options.map(function(o) {
             var val = (typeof o === 'object') ? o.value : o;
             var text = (typeof o === 'object') ? o.label : o;
             return '<option value="' + escapeAttr(val) + '"' + (String(val) === String(curVal) ? ' selected' : '') + '>' + escapeHtml(text) + '</option>';
         }).join('');
+        
+        var headerHtml = '<label class="inspector-label">' + label + '</label>';
+        var onchangeAttr = 'updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();';
+
+        if (isResponsive) {
+            var block = getSelectedBlock();
+            headerHtml = renderResponsiveControlHeader(label, key, block);
+            onchangeAttr = 'updateBlockPropResponsive(\'' + key + '\', this.value); renderCanvas(); renderInspector();';
+        }
+
         return '<div class="inspector-field">' +
-               '<label class="inspector-label">' + label + '</label>' +
-               '<select class="inspector-select" onchange="updateBlockProp(\'' + key + '\', this.value); renderCanvas(); renderInspector();">' + opts + '</select>' +
+               headerHtml +
+               '<select class="inspector-select" onchange="' + onchangeAttr + '">' + opts + '</select>' +
                '</div>';
     }
 
-    function inspectorDimension(label, key, val) {
-        var num = val.replace(/[^0-9.]/g, '');
-        var unit = val.replace(/[0-9.]/g, '') || 'px';
+    function updateBlockDimensionValue(key, numStr, unitStr, isResp) {
+        if (!selectedBlockCoord) return;
+        var block = getSelectedBlock();
+        if (!block) return;
+        var cleanNum = String(numStr !== undefined && numStr !== null ? numStr : '').trim().replace(/[^0-9.-]/g, '');
+        var fullVal = '';
+        if (cleanNum !== '') {
+            var unit = unitStr || 'px';
+            fullVal = cleanNum + unit;
+        }
+
+        if (isResp && currentDeviceKey !== 'desktop') {
+            updateBlockPropResponsive(key, fullVal);
+        } else {
+            updateBlockProp(key, fullVal);
+        }
+        renderCanvas();
+    }
+
+    function inspectorDimension(label, key, val, isResponsive) {
+        var rawVal = String(val || '').trim();
+        var num = rawVal.replace(/[^0-9.-]/g, '');
+        var unit = rawVal.replace(/[0-9.-]/g, '').trim() || 'px';
+        if (['px', '%', 'rem', 'em', 'vw', 'vh'].indexOf(unit) === -1) {
+            unit = 'px';
+        }
+
+        var headerHtml = '<label class="inspector-label">' + label + '</label>';
+        var respParam = isResponsive ? 'true' : 'false';
+
+        if (isResponsive) {
+            var block = getSelectedBlock();
+            headerHtml = renderResponsiveControlHeader(label, key, block);
+            var respVal = getBlockResponsiveValue(block, key);
+            if (respVal !== undefined && respVal !== '') {
+                rawVal = String(respVal).trim();
+                num = rawVal.replace(/[^0-9.-]/g, '');
+                unit = rawVal.replace(/[0-9.-]/g, '').trim() || 'px';
+                if (['px', '%', 'rem', 'em', 'vw', 'vh'].indexOf(unit) === -1) {
+                    unit = 'px';
+                }
+            }
+        }
+
         return '<div class="inspector-field">' +
-               '<label class="inspector-label">' + label + '</label>' +
+               headerHtml +
                '<div class="dimension-row">' +
-               '<input type="text" class="inspector-input" value="' + escapeAttr(val) + '" oninput="updateBlockProp(\'' + key + '\', this.value)">' +
-               '<select class="inspector-select" onchange="applyUnitToBlockProp(\'' + key + '\', this.value)">' +
+               '<input type="number" step="any" class="inspector-input" value="' + escapeAttr(num) + '" placeholder="0" ' +
+               'oninput="updateBlockDimensionValue(\'' + key + '\', this.value, this.nextElementSibling.value, ' + respParam + ')">' +
+               '<select class="inspector-select" ' +
+               'onchange="updateBlockDimensionValue(\'' + key + '\', this.previousElementSibling.value, this.value, ' + respParam + ')">' +
                '<option value="px"' + (unit === 'px' ? ' selected' : '') + '>px</option>' +
                '<option value="%"' + (unit === '%' ? ' selected' : '') + '>%</option>' +
                '<option value="rem"' + (unit === 'rem' ? ' selected' : '') + '>rem</option>' +
@@ -4743,6 +5348,17 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
                '</select>' +
                '</div>' +
                '</div>';
+    }
+
+    function applyUnitToBlockPropResponsive(key, newUnit) {
+        if (!selectedBlockCoord) return;
+        var sec = state.sections[selectedBlockCoord.sec];
+        if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
+        var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
+        var curVal = getBlockResponsiveValue(block, key) || '16';
+        var num = String(curVal).replace(/[^0-9.]/g, '') || '16';
+        updateBlockPropResponsive(key, num + newUnit);
+        renderInspector();
     }
 
     function inspectorShortcodeSelector(label, key, curVal) {
@@ -4874,7 +5490,25 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
         if (!block.data) block.data = {};
-        block.data[key] = val;
+
+        var nonResponsiveKeys = ['_id', 'type', 'menu_id', 'code', 'tag', 'action_type', 'toggle_style', 'toggle_align', 'absorb_in_mobile', 'url', 'image_url'];
+        var isResp = (currentDeviceKey !== 'desktop') && (nonResponsiveKeys.indexOf(key) === -1);
+
+        if (isResp) {
+            var targetKey = getResponsivePropKey(key, currentDeviceKey);
+            if (val === '' || val === null || val === undefined) {
+                delete block.data[targetKey];
+            } else {
+                block.data[targetKey] = val;
+            }
+        } else {
+            block.data[key] = val;
+        }
+
+        if ((key === 'url' || key === 'image_url') && val) {
+            block.data[key] = val;
+        }
+
         if (key === 'border_color') {
             compileElemBorder(block);
         }
@@ -4899,8 +5533,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var sec = state.sections[selectedBlockCoord.sec];
         if (!sec || !sec.columns_data[selectedBlockCoord.col]) return;
         var block = sec.columns_data[selectedBlockCoord.col][selectedBlockCoord.blockIdx];
-        var curVal = (block.data && block.data[key]) ? String(block.data[key]) : '16';
-        var num = curVal.replace(/[^0-9.]/g, '') || '16';
+        var curVal = getBlockResponsiveValue(block, key) || (block.data && block.data[key]) || '16';
+        var num = String(curVal).replace(/[^0-9.]/g, '') || '16';
         updateBlockProp(key, num + newUnit);
         renderInspector();
     }
@@ -4909,12 +5543,12 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var defaultData = {};
         if (type === 'heading') defaultData = { text: 'Novo Título', level: 'h2', font: 'secondary' };
         if (type === 'paragraph') defaultData = { text: 'Insira seu texto explicativo aqui.', font_size: '1rem' };
-        if (type === 'cta_button') defaultData = { label: 'Saiba Mais', url: '#', variant: 'primary' };
-        if (type === 'user_auth') defaultData = { login_text: 'Entrar', login_url: '/aluno/login', register_text: 'Cadastrar', register_url: '/aluno/cadastro', dashboard_text: '🎓 Área do Aluno', dashboard_url: '/aluno/painel', logout_text: 'Sair', logout_url: '/aluno/logout', align: 'right' };
-        if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px' };
+        if (type === 'cta_button') defaultData = { label: 'Saiba Mais', url: '#', variant: 'primary', absorb_in_mobile: true };
+        if (type === 'user_auth') defaultData = { login_text: 'Entrar', login_url: '/aluno/login', register_text: 'Cadastrar', register_url: '/aluno/cadastro', dashboard_text: '🎓 Área do Aluno', dashboard_url: '/aluno/painel', logout_text: 'Sair', logout_url: '/aluno/logout', align: 'right', absorb_in_mobile: true };
+        if (type === 'logo') defaultData = { text: 'DomainSystem', height: '36px', flex_direction: 'row', flex_direction_mobile: 'row' };
         if (type === 'divider') defaultData = { style: 'solid', height: '24px' };
         if (type === 'copyright') defaultData = { site_name: 'Domain-System' };
-        if (type === 'button') defaultData = { label: 'Clique Aqui', action_type: 'link', url: '#', bg_color: 'var(--color-primary)', text_color: '#0f172a', hover_animation: 'lift', border_radius: '8px', align: 'left' };
+        if (type === 'button') defaultData = { label: 'Clique Aqui', action_type: 'link', url: '#', bg_color: 'var(--color-primary)', text_color: '#0f172a', hover_animation: 'lift', border_radius: '8px', align: 'left', absorb_in_mobile: true };
         if (type === 'social_icons') defaultData = {
             networks: [
                 { network: 'instagram', url: 'https://instagram.com' },
@@ -4933,7 +5567,23 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         return defaultData;
     }
 
+    function checkBlockAllowedInPart(type) {
+        var curPartType = '<?= $part->getType() ?>';
+        var bMeta = blocksCatalog.find(function(x) { return x.type === type; });
+        if (!bMeta) return true;
+        if (bMeta.allowed_types && bMeta.allowed_types.length > 0) {
+            if (bMeta.allowed_types.indexOf(curPartType) === -1) {
+                var blockName = bMeta.name || type;
+                var partLabel = (curPartType === 'header') ? 'Header (Cabeçalho)' : ((curPartType === 'footer') ? 'Footer (Rodapé)' : 'esta área');
+                showToast('🔒 O bloco "' + blockName + '" não é permitido no ' + partLabel + '. Use seções de página/Hero para vídeos.', 'error');
+                return false;
+            }
+        }
+        return true;
+    }
+
     function addBlockToCell(secIdx, colIdx, type) {
+        if (!checkBlockAllowedInPart(type)) return;
         var sec = state.sections[secIdx];
         if (!sec) return;
         if (!sec.columns_data[colIdx]) sec.columns_data[colIdx] = [];
@@ -4948,6 +5598,7 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     }
 
     function insertBlockAtCell(secIdx, colIdx, blockIdx, type) {
+        if (!checkBlockAllowedInPart(type)) return;
         var sec = state.sections[secIdx];
         if (!sec) return;
         if (!sec.columns_data[colIdx]) sec.columns_data[colIdx] = [];
@@ -5032,6 +5683,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     function openAddBlockForCell(secIdx, colIdx) {
         activeSecIdx = secIdx;
         activeColIdx = colIdx;
+        selectionType = 'column';
+        renderCanvas();
         renderBlocksCatalog();
         openQuickBlockModal(secIdx, colIdx);
     }
@@ -5094,8 +5747,8 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
     function categorizeBlockType(type) {
         if (type === 'heading' || type === 'text' || type === 'paragraph' || type === 'callout') return 'text';
         if (type === 'image' || type === 'video' || type === 'logo' || type === 'pdf') return 'media';
-        if (type === 'button' || type === 'cta' || type === 'auth') return 'action';
-        if (type === 'card' || type === 'accordion' || type === 'social' || type === 'shortcode' || type === 'menu' || type === 'blog_posts') return 'interactive';
+        if (type === 'button' || type === 'cta_button' || type === 'cta' || type === 'user_auth' || type === 'auth') return 'action';
+        if (type === 'card' || type === 'accordion' || type === 'social' || type === 'social_icons' || type === 'shortcode' || type === 'nav_menu' || type === 'menu' || type === 'blog_posts') return 'interactive';
         return 'other';
     }
 
@@ -5108,8 +5761,6 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         var curPartType = '<?= $part->getType() ?>';
 
         var filtered = blocksCatalog.filter(function(b) {
-            if (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1) return false;
-
             if (currentQuickCategory !== 'all') {
                 var blockCat = categorizeBlockType(b.type);
                 if (blockCat !== currentQuickCategory) return false;
@@ -5133,14 +5784,24 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
 
         filtered.forEach(function(b) {
+            var isDisallowed = (b.allowed_types && b.allowed_types.indexOf(curPartType) === -1);
             var item = document.createElement('div');
-            item.className = 'quick-block-card';
+            item.className = 'quick-block-card' + (isDisallowed ? ' disallowed-in-part' : '');
+            if (isDisallowed) {
+                item.style.opacity = '0.5';
+                item.style.border = '1px dashed rgba(239, 68, 68, 0.4)';
+            }
             item.onclick = function() {
+                if (isDisallowed) {
+                    checkBlockAllowedInPart(b.type);
+                    return;
+                }
                 addBlockToCell(activeSecIdx, activeColIdx, b.type);
                 closeQuickBlockModal();
             };
+            var badgeLock = isDisallowed ? ' <span style="font-size:10px; color:#ef4444; font-weight:700;">🔒 Restrito</span>' : '';
             item.innerHTML = '<div class="quick-block-icon">' + b.icon + '</div>' +
-                             '<div class="quick-block-name">' + escapeHtml(b.name) + '</div>' +
+                             '<div class="quick-block-name">' + escapeHtml(b.name) + badgeLock + '</div>' +
                              '<div class="quick-block-desc">' + escapeHtml(b.desc) + '</div>';
             grid.appendChild(item);
         });
@@ -5240,11 +5901,23 @@ $tokensJson = json_encode($tokens ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX
         }
     }
 
-    function showToast(msg) {
+    var _dsToastTimer = null;
+    function showToast(msg, type) {
         var toast = document.getElementById('toast');
+        if (!toast) return;
         toast.textContent = msg;
+        if (type === 'error' || type === 'warning') {
+            toast.style.background = '#dc2626';
+            toast.style.color = '#ffffff';
+            toast.style.border = '1px solid rgba(255,255,255,0.25)';
+        } else {
+            toast.style.background = '#10b981';
+            toast.style.color = '#000000';
+            toast.style.border = 'none';
+        }
         toast.style.display = 'block';
-        setTimeout(function() { toast.style.display = 'none'; }, 3000);
+        if (_dsToastTimer) clearTimeout(_dsToastTimer);
+        _dsToastTimer = setTimeout(function() { toast.style.display = 'none'; }, 3800);
     }
 
     function escapeHtml(str) {

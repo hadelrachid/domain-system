@@ -145,7 +145,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
             $sections = $part->getSections();
             $sectionsOutput = [];
 
-            foreach ($sections as $section) {
+            foreach ($sections as $secIdx => $section) {
                 $preset = (string)($section['layout_preset'] ?? ($part->getLayoutPreset() !== '' ? $part->getLayoutPreset() : '1_col'));
                 $settings = (array)($section['container_settings'] ?? []);
                 $columnsData = (array)($section['columns_data'] ?? []);
@@ -163,7 +163,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
                     ];
 
                     if (is_array($blocksList)) {
-                        foreach ($blocksList as $blockDef) {
+                        foreach ($blocksList as $bIdx => $blockDef) {
                             if (!is_array($blockDef)) {
                                 continue;
                             }
@@ -192,7 +192,9 @@ class ThemePartRenderer implements ThemePartRendererInterface
                                 }
 
                                 $renderedHtml = $block->render($blockData, $context);
+                                $elementId = !empty($blockData['_id']) ? (string)$blockData['_id'] : ('ds-elem-' . substr(md5($part->getId() . '-' . $secIdx . '-' . $colIndex . '-' . $bIdx), 0, 10));
                                 $elementStyles = $this->styleRenderer->renderStyleString($blockData);
+                                $responsiveCss = $this->styleRenderer->renderResponsiveStyles("#{$elementId}", $blockData);
                                 $visibilityClasses = $this->styleRenderer->getResponsiveVisibilityClasses($blockData);
 
                                 $validBlocksCount++;
@@ -209,10 +211,11 @@ class ThemePartRenderer implements ThemePartRendererInterface
                                     $hiddenCounts['mobile']++;
                                 }
 
-                                if ($elementStyles !== '' || $visibilityClasses !== '') {
+                                if ($elementStyles !== '' || $visibilityClasses !== '' || $responsiveCss !== '') {
                                     $wrapperClass = trim("ds-element-wrapper {$visibilityClasses}");
                                     $styleAttr = $elementStyles !== '' ? " style=\"{$elementStyles}\"" : '';
-                                    $renderedHtml = "<div class=\"{$wrapperClass}\"{$styleAttr}>{$renderedHtml}</div>";
+                                    $styleTag = $responsiveCss !== '' ? "<style>{$responsiveCss}</style>" : '';
+                                    $renderedHtml = "{$styleTag}<div id=\"{$elementId}\" class=\"{$wrapperClass}\"{$styleAttr}>{$renderedHtml}</div>";
                                 }
                                 $colBlocksOutput[] = $renderedHtml;
                             }
@@ -282,6 +285,7 @@ class ThemePartRenderer implements ThemePartRendererInterface
 @keyframes ds-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .ds-part-wrapper { position: relative; width: 100%; box-sizing: border-box; }
 .ds-part-wrapper * { box-sizing: border-box; }
+.ds-element-wrapper { width: 100%; box-sizing: border-box; }
 .ds-element-wrapper[style*="--ds-local-heading-color"] h1,
 .ds-element-wrapper[style*="--ds-local-heading-color"] h2,
 .ds-element-wrapper[style*="--ds-local-heading-color"] h3,

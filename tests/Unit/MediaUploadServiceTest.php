@@ -84,6 +84,30 @@ class MediaUploadServiceTest extends TestCase
         $this->assertFileExists($this->tempDir . '/public/uploads/builder/' . $result['filename']);
     }
 
+    public function testUploadSucceedsForValidMp4Video(): void
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'test_mp4_');
+        // Cabeçalho binário mínimo ftypisom de container MP4
+        $mp4Dummy = hex2bin('000000186674797069736f6d000002006d70343169736f6d');
+        file_put_contents($tmp, $mp4Dummy);
+
+        $service = new MediaUploadService($this->tempDir, '/domain-system/public');
+        $result = $service->upload([
+            'name'     => 'demo.mp4',
+            'type'     => 'video/mp4',
+            'tmp_name' => $tmp,
+            'error'    => UPLOAD_ERR_OK,
+            'size'     => strlen($mp4Dummy),
+        ]);
+
+        @unlink($tmp);
+        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('url', $result);
+        $this->assertStringStartsWith('/domain-system/public/uploads/builder/', $result['url']);
+        $this->assertStringEndsWith('.mp4', $result['url']);
+        $this->assertFileExists($this->tempDir . '/public/uploads/builder/' . $result['filename']);
+    }
+
     public function testUploadRejectsFileExceedingMaxSize(): void
     {
         $tmp = tempnam(sys_get_temp_dir(), 'test_big_');

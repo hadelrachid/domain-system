@@ -394,4 +394,35 @@ class ThemePartsRendererTest extends TestCase
         $customPos = strpos($output, 'Seção Abaixo do Conteúdo');
         $this->assertGreaterThan($nativePos, $customPos);
     }
+
+    public function testHeaderDisallowsVideoBlockByContract(): void
+    {
+        $repo = new JsonThemePartRepository($this->tempDir . '/theme_parts');
+        $assoc = new JsonThemePartAssociation($this->tempDir . '/associations.json');
+        $grid = new LayoutGridRenderer();
+        $registry = DefaultBlockRegistryFactory::create();
+        $tokens = new DesignTokens();
+
+        $part = new ThemePart(
+            'hdr_with_video',
+            'header',
+            'Header com Vídeo',
+            '1_col',
+            [],
+            [
+                0 => [
+                    ['type' => 'video', 'data' => ['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ']],
+                ],
+            ]
+        );
+        $repo->save($part);
+        $assoc->assignPart('test_theme', 'header', 'hdr_with_video');
+
+        $renderer = new ThemePartRenderer($repo, $assoc, $grid, $registry, $tokens, $this->tempDir);
+        $html = $renderer->renderHeader('test_theme');
+
+        // Por contrato estrito, o bloco de vídeo é descartado em headers
+        $this->assertStringNotContainsString('ds-block-video', $html);
+        $this->assertStringNotContainsString('youtube.com/embed', $html);
+    }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace DomainSystem\Core\Theme\Parts\Blocks;
 
-use DomainSystem\Core\Theme\Parts\Blocks\Traits\AllowedPartTypesTrait;
 use DomainSystem\Core\Theme\Parts\Contracts\BlockInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface;
 use DomainSystem\Core\Theme\Parts\Contracts\HtmlSanitizerInterface;
+use DomainSystem\Core\Theme\Parts\Contracts\ThemePartInterface;
 use DomainSystem\Core\Theme\Parts\Styles\ElementStyleRenderer;
 use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 
@@ -16,8 +16,6 @@ use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
  */
 class VideoBlock implements BlockInterface
 {
-    use AllowedPartTypesTrait;
-
     private ElementStyleRendererInterface $styleRenderer;
     private HtmlSanitizerInterface $htmlSanitizer;
 
@@ -27,6 +25,13 @@ class VideoBlock implements BlockInterface
     ) {
         $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
         $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+    }
+
+    public function getAllowedPartTypes(): array
+    {
+        return [
+            ThemePartInterface::TYPE_SECTION,
+        ];
     }
 
     public function getType(): string
@@ -51,9 +56,14 @@ class VideoBlock implements BlockInterface
 
     public function render(array $data = [], array $context = []): string
     {
-        $rawUrl = trim((string)($data['url'] ?? ''));
+        $rawUrl = trim((string)($data['url'] ?? $data['url_tablet'] ?? $data['url_mobile'] ?? ''));
         if ($rawUrl === '') {
             return '';
+        }
+
+        // Se o usuário colou um iframe completo <iframe ... src="..." ...>, extrai o atributo src
+        if (preg_match('#<iframe[^>]+src=["\']([^"\']+)["\']#i', $rawUrl, $matches)) {
+            $rawUrl = trim($matches[1]);
         }
 
         $url = $this->htmlSanitizer->sanitizeUrl($rawUrl, '');
@@ -67,32 +77,49 @@ class VideoBlock implements BlockInterface
         $embedUrl = $this->resolveEmbedUrl($url);
 
         if ($embedUrl !== null) {
+            $safeEmbed = htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8');
             return <<<HTML
 <div class="ds-block-video" style="width: 100%; max-width: 100%; margin: 0 auto; border-radius: {$borderRadius}; overflow: hidden; aspect-ratio: {$aspectRatio}; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-    <iframe src="{$embedUrl}" style="width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    <iframe src="{$safeEmbed}" style="width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
 </div>
 HTML;
         }
 
-        // Caso seja MP4 direto
+        // Caso seja MP4, WebM ou arquivo de vídeo direto
         $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
         return <<<HTML
 <div class="ds-block-video" style="width: 100%; max-width: 100%; margin: 0 auto; border-radius: {$borderRadius}; overflow: hidden; aspect-ratio: {$aspectRatio}; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-    <video src="{$safeUrl}" controls style="width: 100%; height: 100%; object-fit: cover;"></video>
+    <video src="{$safeUrl}" controls preload="metadata" style="width: 100%; height: 100%; object-fit: cover;"></video>
 </div>
 HTML;
     }
 
     private function resolveEmbedUrl(string $url): ?string
     {
-        // YouTube
-        if (preg_match('#(?:youtube\.com/(?:watch\?v=|embed/)|youtu\.be/)([a-zA-Z0-9_-]+)#', $url, $m)) {
+        // 1. YouTube Shorts, Live, Embed ou v/
+        if (preg_match('#(?:youtube(?:-nocookie)?\.com/(?:embed/|v/|shorts/|live/)|youtu\.be/)([a-zA-Z0-9_-]{6,15})#i', $url, $m)) {
             return 'https://www.youtube.com/embed/' . $m[1];
         }
-        // Vimeo
-        if (preg_match('#vimeo\.com/(?:video/)?([0-9]+)#', $url, $m)) {
+
+        // 2. YouTube watch?v=... (com query parameters arbitrários, ex: watch?feature=share&v=...)
+        if (preg_match('#youtube(?:-nocookie)?\.com/watch#i', $url)) {
+            $queryString = parse_url($url, PHP_URL_QUERY);
+            if ($queryString) {
+                parse_str($queryString, $queryParams);
+                if (!empty($queryParams['v']) && is_string($queryParams['v'])) {
+                    $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '', $queryParams['v']);
+                    if ($cleanId !== '') {
+                        return 'https://www.youtube.com/embed/' . $cleanId;
+                    }
+                }
+            }
+        }
+
+        // 3. Vimeo: vimeo.com/123456789, player.vimeo.com/video/123456789, canais, grupos
+        if (preg_match('#vimeo(?:\.com/video/|\.com/channels/(?:\w+/)?|\.com/groups/[^/]+/videos/|\.com/|player\.vimeo\.com/video/)([0-9]+)#i', $url, $m)) {
             return 'https://player.vimeo.com/video/' . $m[1];
         }
+
         return null;
     }
 

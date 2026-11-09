@@ -31,11 +31,8 @@ use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
  * Micro-interações e Animações de Hover:
  * - grow, lift, glow, shimmer, bounce, none
  */
-class ButtonBlock implements BlockInterface, StylableElementInterface
+class ButtonBlock extends AbstractBlock
 {
-    use StylableElementTrait;
-    use AllowedPartTypesTrait;
-
     public const ACTION_LINK = 'link';
     public const ACTION_SCROLL = 'scroll_to';
     public const ACTION_WHATSAPP = 'whatsapp';
@@ -45,15 +42,11 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
     public const ACTION_JAVASCRIPT = 'javascript';
     public const ACTION_SUBMIT = 'submit';
 
-    private ElementStyleRendererInterface $styleRenderer;
-    private HtmlSanitizerInterface $htmlSanitizer;
-
     public function __construct(
         ?ElementStyleRendererInterface $styleRenderer = null,
         ?HtmlSanitizerInterface $htmlSanitizer = null
     ) {
-        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
-        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
+        parent::__construct($htmlSanitizer, null, $styleRenderer);
     }
 
     public function getType(): string
@@ -166,21 +159,22 @@ class ButtonBlock implements BlockInterface, StylableElementInterface
         }
 
         $innerContent = $mainTextRow . $subtextHtml;
+        $absorbAttr = (($data['absorb_in_mobile'] ?? true) !== false) ? ' data-mobile-absorb="true"' : ' data-mobile-absorb="false"';
 
         // Resolução do Markup de acordo com action_type
         return match ($actionType) {
             self::ACTION_SUBMIT => <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <button type="submit" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </button>
 </div>
 HTML,
 
-            self::ACTION_JAVASCRIPT => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent) {
+            self::ACTION_JAVASCRIPT => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent, $absorbAttr) {
                 $jsCode = htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8');
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <button type="button" onclick="{$jsCode}" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </button>
@@ -188,10 +182,10 @@ HTML,
 HTML;
             })(),
 
-            self::ACTION_MODAL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent) {
+            self::ACTION_MODAL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent, $absorbAttr) {
                 $modalId = htmlspecialchars(ltrim($rawUrl, '#'), ENT_QUOTES, 'UTF-8');
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <button type="button" data-ds-modal="{$modalId}" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </button>
@@ -199,10 +193,10 @@ HTML;
 HTML;
             })(),
 
-            self::ACTION_SCROLL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent) {
+            self::ACTION_SCROLL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent, $absorbAttr) {
                 $anchor = '#' . ltrim(htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8'), '#');
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <a href="{$anchor}" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </a>
@@ -210,12 +204,12 @@ HTML;
 HTML;
             })(),
 
-            self::ACTION_WHATSAPP => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $data, $innerContent) {
+            self::ACTION_WHATSAPP => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $data, $innerContent, $absorbAttr) {
                 $cleanedPhone = preg_replace('/[^0-9]/', '', $rawUrl);
                 $msg = !empty($data['whatsapp_message']) ? urlencode((string)$data['whatsapp_message']) : '';
                 $waUrl = "https://wa.me/{$cleanedPhone}" . ($msg !== '' ? "?text={$msg}" : '');
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <a href="{$waUrl}" target="_blank" rel="noopener noreferrer" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </a>
@@ -223,10 +217,10 @@ HTML;
 HTML;
             })(),
 
-            self::ACTION_TEL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent) {
+            self::ACTION_TEL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent, $absorbAttr) {
                 $cleanedTel = preg_replace('/[^0-9+]/', '', $rawUrl);
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <a href="tel:{$cleanedTel}" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </a>
@@ -234,10 +228,10 @@ HTML;
 HTML;
             })(),
 
-            self::ACTION_EMAIL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent) {
+            self::ACTION_EMAIL => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $innerContent, $absorbAttr) {
                 $emailEscaped = htmlspecialchars($rawUrl, ENT_QUOTES, 'UTF-8');
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <a href="mailto:{$emailEscaped}" class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </a>
@@ -245,13 +239,13 @@ HTML;
 HTML;
             })(),
 
-            default => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $target, $innerContent) {
+            default => (function() use ($justifyBtn, $wrapperWidth, $animClass, $btnStyle, $rawUrl, $target, $innerContent, $absorbAttr) {
                 $safeLink = $this->htmlSanitizer->sanitizeUrl($rawUrl, '#');
                 $urlEscaped = htmlspecialchars($safeLink, ENT_QUOTES, 'UTF-8');
                 $targetEscaped = htmlspecialchars($target, ENT_QUOTES, 'UTF-8');
                 $relAttr = ($target === '_blank') ? ' rel="noopener noreferrer"' : '';
                 return <<<HTML
-<div class="ds-block-button-wrapper" style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
+<div class="ds-block-button-wrapper"{$absorbAttr} style="display: flex; justify-content: {$justifyBtn}; {$wrapperWidth}">
     <a href="{$urlEscaped}" target="{$targetEscaped}"{$relAttr} class="ds-block-btn {$animClass}" style="{$btnStyle}">
         {$innerContent}
     </a>
@@ -301,6 +295,7 @@ HTML;
                 'align'            => ['type' => 'select', 'label' => 'Alinhamento', 'options' => ['left', 'center', 'right', 'justify'], 'default' => 'left'],
                 'icon'             => ['type' => 'text', 'label' => 'Ícone (Emoji ou Símbolo)', 'default' => ''],
                 'icon_position'    => ['type' => 'select', 'label' => 'Posição do Ícone', 'options' => ['left' => 'Esquerda', 'right' => 'Direita'], 'default' => 'left'],
+                'absorb_in_mobile' => ['type' => 'boolean', 'label' => 'Incluir no Menu Hambúrguer (Mobile)', 'default' => true],
             ],
         ];
     }

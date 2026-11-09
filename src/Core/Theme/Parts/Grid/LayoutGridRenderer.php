@@ -236,6 +236,10 @@ class LayoutGridRenderer implements LayoutGridInterface
         #{$sectionId} .ds-grid-col {
             min-width: 0;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: {$alignItems};
+            height: 100%;
         }{$secCascadingCss}
         @media (min-width: 769px) and (max-width: 1024px) {
             body:not(.ds-live-preview) #{$sectionId} .ds-section-grid {

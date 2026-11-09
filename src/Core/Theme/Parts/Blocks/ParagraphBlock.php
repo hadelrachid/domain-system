@@ -16,20 +16,13 @@ use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
 /**
  * Bloco de Parágrafo / Texto Corrido.
  */
-class ParagraphBlock implements BlockInterface, StylableElementInterface
+class ParagraphBlock extends AbstractBlock
 {
-    use AllowedPartTypesTrait;
-    use StylableElementTrait;
-
-    private HtmlSanitizerInterface $htmlSanitizer;
-    private ElementStyleRendererInterface $styleRenderer;
-
     public function __construct(
         ?HtmlSanitizerInterface $htmlSanitizer = null,
         ?ElementStyleRendererInterface $styleRenderer = null
     ) {
-        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
-        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        parent::__construct($htmlSanitizer, null, $styleRenderer);
     }
 
     public function getType(): string

@@ -23,14 +23,8 @@ use DomainSystem\Core\Theme\Parts\Support\SafeHtmlSanitizer;
  * - Deslogado: Botão Login ("Entrar") e Botão Cadastrar ("Criar Conta") vinculados ao Academy.
  * - Logado: Atalho para a Área do Aluno ("🎓 Meu Painel") e Botão Sair ("Logout").
  */
-class UserAuthBlock implements BlockInterface, StylableElementInterface
+class UserAuthBlock extends AbstractBlock
 {
-    use AllowedPartTypesTrait;
-    use StylableElementTrait;
-
-    private HtmlSanitizerInterface $htmlSanitizer;
-    private PublicUrlResolverInterface $urlResolver;
-    private ElementStyleRendererInterface $styleRenderer;
     private ?SessionManagerInterface $session;
 
     public function __construct(
@@ -39,9 +33,7 @@ class UserAuthBlock implements BlockInterface, StylableElementInterface
         ?ElementStyleRendererInterface $styleRenderer = null,
         ?SessionManagerInterface $session = null
     ) {
-        $this->htmlSanitizer = $htmlSanitizer ?? new SafeHtmlSanitizer();
-        $this->urlResolver = $urlResolver ?? new BaseUrlResolver();
-        $this->styleRenderer = $styleRenderer ?? new ElementStyleRenderer();
+        parent::__construct($htmlSanitizer, $urlResolver, $styleRenderer);
         $this->session = $session;
     }
 
@@ -141,10 +133,12 @@ class UserAuthBlock implements BlockInterface, StylableElementInterface
         $safeDashboardText = htmlspecialchars($dashboardText, ENT_QUOTES, 'UTF-8');
         $safeLogoutText = htmlspecialchars($logoutText, ENT_QUOTES, 'UTF-8');
 
+        $absorbAttr = (($data['absorb_in_mobile'] ?? true) !== false) ? ' data-mobile-absorb="true"' : ' data-mobile-absorb="false"';
+
         // 4. Renderização do Estado Autenticado (Limpo, sem expor o nome do usuário/admin como sufixo)
         if ($isLoggedIn) {
             return <<<HTML
-<div class="ds-block-user-auth" style="display: flex; justify-content: {$justify}; align-items: center; gap: 10px; width: 100%;">
+<div class="ds-block-user-auth"{$absorbAttr} style="display: flex; justify-content: {$justify}; align-items: center; gap: 10px; width: 100%;">
     <a href="{$safeDashboardUrl}" class="ds-auth-btn ds-auth-dashboard" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; background: rgba(69, 243, 255, 0.12); border: 1px solid rgba(69, 243, 255, 0.35); color: #45f3ff; font-weight: 700; font-size: 0.85rem; text-decoration: none; transition: all 0.2s ease;">
         <span>{$safeDashboardText}</span>
     </a>
@@ -157,7 +151,7 @@ HTML;
 
         // 5. Renderização do Estado Visitante / Deslogado
         return <<<HTML
-<div class="ds-block-user-auth" style="display: flex; justify-content: {$justify}; align-items: center; gap: 10px; width: 100%;">
+<div class="ds-block-user-auth"{$absorbAttr} style="display: flex; justify-content: {$justify}; align-items: center; gap: 10px; width: 100%;">
     <a href="{$safeLoginUrl}" class="ds-auth-btn ds-auth-login" style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 6px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #f8fafc; font-weight: 600; font-size: 0.86rem; text-decoration: none; transition: all 0.2s ease;">
         <span>🔑</span>
         <span>{$safeLoginText}</span>
@@ -184,6 +178,7 @@ HTML;
                 'logout_text'    => ['type' => 'text', 'label' => 'Texto de Logout', 'default' => 'Sair'],
                 'logout_url'     => ['type' => 'text', 'label' => 'URL de Logout', 'default' => '/aluno/logout'],
                 'align'          => ['type' => 'select', 'label' => 'Alinhamento', 'options' => ['left', 'center', 'right'], 'default' => 'right'],
+                'absorb_in_mobile' => ['type' => 'boolean', 'label' => 'Incluir no Menu Hambúrguer (Mobile)', 'default' => true],
             ],
         ];
     }

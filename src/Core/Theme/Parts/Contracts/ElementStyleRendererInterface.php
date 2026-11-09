@@ -35,4 +35,13 @@ interface ElementStyleRendererInterface
      * @return array{top: string, right: string, bottom: string, left: string}
      */
     public function parse4Sides(string $spacing): array;
+
+    /**
+     * Gera regras CSS em bloco com Media Queries responsivas por resolução (tablet, mobile, laptop)
+     * para overrides específicos de elementos (font-size, text-align, padding, margin, width, etc.).
+     *
+     * @param string $elementSelector Seletor CSS do elemento (ex: "#ds-elem-123")
+     * @param array<string, mixed> $data Dados do elemento contendo eventuais chaves responsivas (*_tablet, *_mobile, etc.)
+     */
+    public function renderResponsiveStyles(string $elementSelector, array $data): string;
 }

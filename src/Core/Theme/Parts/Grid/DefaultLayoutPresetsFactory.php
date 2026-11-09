@@ -55,7 +55,7 @@ class DefaultLayoutPresetsFactory
             3,
             '1fr 2fr 1fr',
             '1fr 1fr',
-            '1fr',
+            '1fr auto',
             'header',
             '🧭'
         ));
