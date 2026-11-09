@@ -307,7 +307,7 @@
 </div>
 
 <?php if (!empty($hasStructureRepo)): ?>
-    <div style="margin-top:35px; background:var(--bg-panel, #1d2327); padding:30px; border-radius:8px; border: 1px solid var(--border, rgba(255,255,255,0.1)); max-width: 980px; color:var(--text-main, #fff);">
+    <div style="margin-top:35px; background:var(--bg-panel, #1d2327); padding:30px; border-radius:8px; border: 1px solid var(--border, rgba(255,255,255,0.1)); width:100%; max-width: 1100px; box-sizing:border-box; color:var(--text-main, #fff);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:15px; flex-wrap:wrap; gap:12px;">
             <div>
                 <h2 style="margin:0; font-size:1.3rem; display:flex; align-items:center; gap:8px;">
@@ -343,7 +343,7 @@
                 </label>
             </div>
 
-            <div id="modulesContainer" style="display:flex; flex-direction:column; gap:20px;"></div>
+            <div id="modulesContainer" style="display:flex; flex-direction:column; gap:20px; width:100%; max-width:100%; box-sizing:border-box;"></div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:15px;">
                 <button type="button" onclick="addModule()" class="btn btn-outline" style="padding:9px 16px; border:1px dashed var(--accent-blue, #45f3ff); color:var(--accent-blue, #45f3ff); border-radius:6px; cursor:pointer; background:transparent;">
@@ -461,19 +461,19 @@
 
             structure.forEach(function(mod, modIdx) {
                 var modCard = document.createElement('div');
-                modCard.style.cssText = 'background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:18px;';
+                modCard.style.cssText = 'background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:18px; width:100%; max-width:100%; box-sizing:border-box; overflow:hidden;';
 
                 var modFolderSlug = mod.folder_slug || '';
                 var modHeader = document.createElement('div');
-                modHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;';
+                modHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap; width:100%; max-width:100%; box-sizing:border-box;';
                 modHeader.innerHTML = `
-                    <div style="flex:1; min-width:260px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                        <span style="font-size:12px; font-weight:bold; color:var(--accent-blue, #45f3ff); text-transform:uppercase;">Módulo ` + (modIdx + 1) + `</span>
-                        <input type="text" value="` + escapeHtml(mod.title || '') + `" placeholder="Título do Módulo" onchange="updateModTitle(` + modIdx + `, this.value)" style="flex:2; min-width:180px; padding:8px 12px; border-radius:4px; border:1px solid #4a545a; background:#14191c; color:#fff; font-weight:600;">
-                        <input type="text" value="` + escapeHtml(modFolderSlug) + `" placeholder="Pasta opcional (ex: modulo-1)" onchange="updateModFolderSlug(` + modIdx + `, this.value)" style="flex:1; min-width:140px; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#00d284; font-family:monospace; font-size:12px;" title="Subpasta dentro de pages/ onde novos arquivos .php deste módulo serão fabricados">
+                    <div style="flex:1; min-width:260px; max-width:100%; display:flex; align-items:center; gap:10px; flex-wrap:wrap; box-sizing:border-box;">
+                        <span style="font-size:12px; font-weight:bold; color:var(--accent-blue, #45f3ff); text-transform:uppercase; flex-shrink:0;">Módulo ` + (modIdx + 1) + `</span>
+                        <input type="text" value="` + escapeHtml(mod.title || '') + `" placeholder="Título do Módulo" onchange="updateModTitle(` + modIdx + `, this.value)" style="flex:2; min-width:160px; max-width:100%; padding:8px 12px; border-radius:4px; border:1px solid #4a545a; background:#14191c; color:#fff; font-weight:600; box-sizing:border-box;">
+                        <input type="text" value="` + escapeHtml(modFolderSlug) + `" placeholder="Pasta opcional (ex: modulo-1)" onchange="updateModFolderSlug(` + modIdx + `, this.value)" style="flex:1; min-width:130px; max-width:100%; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#00d284; font-family:monospace; font-size:12px; box-sizing:border-box;" title="Subpasta dentro de pages/ onde novos arquivos .php deste módulo serão fabricados">
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <button type="button" onclick="openImportFolderModal(` + modIdx + `)" style="padding:6px 12px; border:1px solid rgba(69,243,255,0.35); background:rgba(69,243,255,0.08); color:#45f3ff; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;" title="Importar todas as aulas de uma pasta do tema">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <button type="button" onclick="openImportFolderModal(` + modIdx + `)" style="padding:6px 12px; border:1px solid rgba(69,243,255,0.35); background:rgba(69,243,255,0.08); color:#45f3ff; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:6px; box-sizing:border-box;" title="Importar todas as aulas de uma pasta do tema">
                             📂 Importar Pasta do Tema
                         </button>
                         <button type="button" onclick="removeModule(` + modIdx + `)" style="background:transparent; border:none; color:#e06c75; cursor:pointer; font-size:14px; padding:4px 8px;" title="Excluir Módulo">
@@ -484,11 +484,11 @@
                 modCard.appendChild(modHeader);
 
                 var lessonsList = document.createElement('div');
-                lessonsList.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-left:15px; border-left:2px solid rgba(69,243,255,0.2); padding-left:15px;';
+                lessonsList.style.cssText = 'display:flex; flex-direction:column; gap:12px; margin-left:15px; border-left:2px solid rgba(69,243,255,0.2); padding-left:15px; width:calc(100% - 15px); max-width:calc(100% - 15px); box-sizing:border-box; min-width:0;';
 
                 (mod.lessons || []).forEach(function(lesson, lesIdx) {
                     var lesRow = document.createElement('div');
-                    lesRow.style.cssText = 'background:#14191c; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:10px;';
+                    lesRow.style.cssText = 'background:#14191c; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; width:100%; max-width:100%; box-sizing:border-box; overflow:hidden;';
 
                     var srcType = lesson.source_type || (lesson.source ? 'theme_file' : 'content');
                     var statusVal = lesson.status || 'published';
@@ -509,24 +509,24 @@
                     if (lesson.id && parseInt(lesson.id) > 0) {
                         editorActionHtml = `<a href="` + baseUrl + `/admin/academy/lessons/` + parseInt(lesson.id) + `/editor" style="padding:6px 12px; border-radius:4px; background:rgba(0,210,132,0.12); border:1px solid rgba(0,210,132,0.4); color:#00d284; font-size:12px; font-weight:600; text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center; gap:5px;" title="Abrir Editor Visual em Blocos desta aula">⚡ Editor de Blocos</a>`;
                     } else {
-                        editorActionHtml = `<span style="font-size:11px; color:#8c8f94; padding:4px 8px; background:rgba(255,255,255,0.04); border-radius:4px;" title="Salve a estrutura abaixo para habilitar o Editor de Blocos desta nova aula">💾 Salve p/ Editar Blocos</span>`;
+                        editorActionHtml = `<span style="font-size:11px; color:#8c8f94; padding:4px 8px; background:rgba(255,255,255,0.04); border-radius:4px; white-space:nowrap;" title="Salve a estrutura abaixo para habilitar o Editor de Blocos desta nova aula">💾 Salve p/ Editar Blocos</span>`;
                     }
 
                     var themeSelectDisplay = (srcType === 'theme_file') ? 'flex' : 'none';
 
                     lesRow.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <div style="flex:1; min-width:260px; display:flex; gap:8px;">
-                                <input type="text" value="` + escapeHtml(lesson.title || '') + `" placeholder="Título da Aula (ex: Estrutura de Dados)" onchange="updateLessonTitleAndAutoSlug(` + modIdx + `, ` + lesIdx + `, this.value)" style="flex:2; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:13px;">
-                                <input type="text" value="` + escapeHtml(lesson.slug || '') + `" placeholder="slug-da-aula" onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'slug', this.value)" style="flex:1; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#8c8f94; font-family:monospace; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; width:100%; max-width:100%; box-sizing:border-box;">
+                            <div style="flex:1; min-width:240px; max-width:100%; display:flex; gap:8px; flex-wrap:wrap; box-sizing:border-box;">
+                                <input type="text" value="` + escapeHtml(lesson.title || '') + `" placeholder="Título da Aula (ex: Estrutura de Dados)" onchange="updateLessonTitleAndAutoSlug(` + modIdx + `, ` + lesIdx + `, this.value)" style="flex:2; min-width:140px; max-width:100%; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:13px; box-sizing:border-box;">
+                                <input type="text" value="` + escapeHtml(lesson.slug || '') + `" placeholder="slug-da-aula" onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'slug', this.value)" style="flex:1; min-width:110px; max-width:100%; padding:7px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#8c8f94; font-family:monospace; font-size:12px; box-sizing:border-box;">
                             </div>
                             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'mobile_profile', this.value)" style="padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px;" title="Perfil de Layout Mobile desta aula">
+                                <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'mobile_profile', this.value)" style="padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px; box-sizing:border-box;" title="Perfil de Layout Mobile desta aula">
                                     <option value="drawer" ` + (mobProfile === 'drawer' ? 'selected' : '') + `>📱 Mobile: Gaveta</option>
                                     <option value="bottom_bar" ` + (mobProfile === 'bottom_bar' ? 'selected' : '') + `>📲 Mobile: Barra Fixa</option>
                                     <option value="cinema" ` + (mobProfile === 'cinema' ? 'selected' : '') + `>🎬 Mobile: Cinema 16:9</option>
                                 </select>
-                                <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'status', this.value)" style="padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#c5c6c7; font-size:12px;">
+                                <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'status', this.value)" style="padding:6px 8px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#c5c6c7; font-size:12px; box-sizing:border-box;">
                                     <option value="published" ` + (statusVal === 'published' ? 'selected' : '') + `>🟢 Publicada</option>
                                     <option value="draft" ` + (statusVal === 'draft' ? 'selected' : '') + `>⚪ Rascunho</option>
                                 </select>
@@ -536,21 +536,30 @@
                                 </button>
                             </div>
                         </div>
-                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                            <span style="font-size:12px; color:#8c8f94;">Modo:</span>
-                            <select onchange="updateLessonSourceType(` + modIdx + `, ` + lesIdx + `, this.value)" style="padding:6px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12px;">
-                                <option value="content" ` + (srcType === 'content' ? 'selected' : '') + `>⚡ Editor em Blocos (Conteúdo + PHP)</option>
-                                <option value="theme_file" ` + (srcType === 'theme_file' ? 'selected' : '') + `>📄 Arquivo do Tema (.php)</option>
-                            </select>
-                            <div style="flex:1; min-width:220px; display:` + themeSelectDisplay + `; align-items:center; gap:8px;">
-                                <span style="font-size:12px; color:#8c8f94;">Arquivo:</span>
-                                <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'source', this.value)" style="flex:1; padding:6px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px; font-family:monospace;">
-                                    ` + optionsHtml + `
-                                </select>
+
+                        <div style="display:flex; flex-direction:column; gap:6px; width:100%; max-width:100%; box-sizing:border-box; background:rgba(0,0,0,0.18); padding:8px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.04);">
+                            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; width:100%; max-width:100%; box-sizing:border-box;">
+                                <div style="display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+                                    <span style="font-size:12px; color:#8c8f94; font-weight:600;">Modo:</span>
+                                    <select onchange="updateLessonSourceType(` + modIdx + `, ` + lesIdx + `, this.value)" style="padding:6px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#fff; font-size:12px; box-sizing:border-box;">
+                                        <option value="content" ` + (srcType === 'content' ? 'selected' : '') + `>⚡ Editor em Blocos (Conteúdo + PHP)</option>
+                                        <option value="theme_file" ` + (srcType === 'theme_file' ? 'selected' : '') + `>📄 Arquivo do Tema (.php)</option>
+                                    </select>
+                                </div>
+
+                                <div style="flex:1; min-width:240px; max-width:100%; display:` + themeSelectDisplay + `; align-items:center; gap:8px; box-sizing:border-box; overflow:hidden;">
+                                    <span style="font-size:12px; color:#8c8f94; font-weight:600; flex-shrink:0;">Arquivo:</span>
+                                    <select onchange="updateLessonField(` + modIdx + `, ` + lesIdx + `, 'source', this.value)" style="flex:1; min-width:0; width:100%; max-width:100%; padding:6px 10px; border-radius:4px; border:1px solid #3a444a; background:#0b0c10; color:#45f3ff; font-size:12px; font-family:monospace; box-sizing:border-box; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="Selecione o arquivo físico do tema para esta aula">
+                                        ` + optionsHtml + `
+                                    </select>
+                                </div>
                             </div>
-                            <span style="font-size:11px; color:#64748b; font-family:monospace;">
-                                🔗 /cursos/` + escapeHtml(computedSlug) + ` &bull; 📄 ` + escapeHtml(targetFile) + `
-                            </span>
+
+                            <div style="display:flex; align-items:center; gap:8px; width:100%; max-width:100%; box-sizing:border-box; overflow:hidden; font-size:11px; color:#64748b; font-family:monospace;">
+                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;" title="Rota: /cursos/` + escapeHtml(computedSlug) + ` | Arquivo: ` + escapeHtml(targetFile) + `">
+                                    🔗 <strong>/cursos/` + escapeHtml(computedSlug) + `</strong> &bull; 📄 ` + escapeHtml(targetFile) + `
+                                </span>
+                            </div>
                         </div>
                     `;
                     lessonsList.appendChild(lesRow);
