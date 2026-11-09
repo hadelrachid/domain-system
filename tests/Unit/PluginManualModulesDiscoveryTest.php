@@ -53,5 +53,22 @@ final class PluginManualModulesDiscoveryTest extends TestCase
         $this->assertStringContainsString('PayPal', $renderedCommerce);
         $this->assertStringContainsString('Stripe', $renderedCommerce);
         $this->assertStringContainsString('payment.approved', $renderedCommerce);
+
+        // 3. Verifica Módulo Flex Builder (flextheme)
+        $this->assertArrayHasKey('flextheme', $modules, 'O módulo manual do Flex Builder deve ser auto-descoberto.');
+        $flextheme = $modules['flextheme'];
+        $this->assertInstanceOf(ManualModuleInterface::class, $flextheme);
+        $this->assertStringContainsString('Flex Builder', $flextheme->getTitle());
+        $this->assertStringContainsString('/admin/builder', (string)$flextheme->getAdminUrl());
+        $this->assertSame('#38bdf8', $flextheme->getAccentColor());
+
+        $flexChecklist = $flextheme->getChecklistItems();
+        $this->assertGreaterThanOrEqual(12, count($flexChecklist));
+
+        $renderedFlex = $flextheme->renderContent('http://localhost');
+        $this->assertStringContainsString('Auto-Reflow', $renderedFlex);
+        $this->assertStringContainsString('375px', $renderedFlex);
+        $this->assertStringContainsString('Design Tokens', $renderedFlex);
+        $this->assertStringContainsString('Vídeo', $renderedFlex);
     }
 }
