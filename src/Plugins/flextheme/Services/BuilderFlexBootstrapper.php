@@ -47,6 +47,13 @@ class BuilderFlexBootstrapper
         $basePath = defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4);
 
         // 1. Serviços de infraestrutura e aplicação do FlexTheme / Flex Builder
+        if (!$runtime->has(PublicUrlResolverInterface::class)) {
+            $runtime->singleton(PublicUrlResolverInterface::class, fn() => new BaseUrlResolver());
+        }
+        if (!$runtime->has(SiteStateInterface::class)) {
+            $runtime->singleton(SiteStateInterface::class, fn() => new EnvSiteState());
+        }
+
         $runtime->singleton(ThemeDiscoveryServiceInterface::class, fn() => new ThemeDiscoveryService($basePath));
         $runtime->singleton(MediaUploadServiceInterface::class, fn() => new MediaUploadService($basePath));
 
@@ -82,12 +89,12 @@ class BuilderFlexBootstrapper
 
         // 2. Controllers do FlexTheme / Flex Builder com todas as dependências injetadas via Container
         $runtime->singleton(ThemeController::class, function ($c) use ($basePath) {
-            $siteState = $c->has(SiteStateInterface::class) ? $c->make(SiteStateInterface::class) : new EnvSiteState();
+            $siteState = $c->make(SiteStateInterface::class);
             $partRenderer = $c->has(ThemePartRendererInterface::class) ? $c->make(ThemePartRendererInterface::class) : null;
             $shortcodes = $c->has(ShortcodeManagerInterface::class)
                 ? $c->make(ShortcodeManagerInterface::class)
                 : ($c->has(ShortcodeManager::class) ? $c->make(ShortcodeManager::class) : null);
-            $urlResolver = $c->has(PublicUrlResolverInterface::class) ? $c->make(PublicUrlResolverInterface::class) : new BaseUrlResolver();
+            $urlResolver = $c->make(PublicUrlResolverInterface::class);
             $themeResolver = $c->make(ThemePathResolverInterface::class);
 
             return new ThemeController(
@@ -104,9 +111,7 @@ class BuilderFlexBootstrapper
             $shortcodes = $c->has(ShortcodeManagerInterface::class)
                 ? $c->make(ShortcodeManagerInterface::class)
                 : $c->make(ShortcodeManager::class);
-            $urlResolver = $c->has(PublicUrlResolverInterface::class)
-                ? $c->make(PublicUrlResolverInterface::class)
-                : new BaseUrlResolver();
+            $urlResolver = $c->make(PublicUrlResolverInterface::class);
 
             return new ThemePartsAdminController(
                 $c->make(ThemePartRepositoryInterface::class),
