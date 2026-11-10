@@ -117,7 +117,7 @@
             <form action="<?= $baseUrl ?>/admin/dropship/mine" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                 
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 10px;">
                     <div>
                         <label style="display: block; font-size: 12px; color: var(--text-muted, #94a3b8); margin-bottom: 4px;">Nicho / Categoria</label>
                         <select name="category" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px;">
@@ -135,6 +135,14 @@
                             <option value="5">5 itens</option>
                             <option value="10" selected>10 itens</option>
                             <option value="20">20 itens</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted, #94a3b8); margin-bottom: 4px;">Termômetro &amp; Reputação</label>
+                        <select name="sort" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px;">
+                            <option value="volume_desc" selected>🏆 Mais Vendidos (Best Sellers)</option>
+                            <option value="evaluate_rate_desc">⭐ Melhor Avaliados (4.8★ - 5.0★)</option>
+                            <option value="choice_desc">⚡ Lojas Oficiais &amp; Choice</option>
                         </select>
                     </div>
                 </div>
@@ -228,6 +236,12 @@
                             <?= htmlspecialchars($prod->category ?: 'Dropship') ?>
                         </div>
 
+                        <?php if (!empty($prod->images) && count($prod->images) > 1): ?>
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #45f3ff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-images"></i> <?= count($prod->images) ?> fotos
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($prod->rating > 0): ?>
                             <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fbbf24; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
                                 <i class="fas fa-star"></i> <?= number_format($prod->rating, 1) ?>
@@ -260,15 +274,20 @@
                         </div>
 
                         <!-- Card Actions -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
-                            <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-external-link-alt"></i> AliExpress (<?= htmlspecialchars($prod->aliexpressId) ?>)
-                            </a>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="font-size: 12px; color: #45f3ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                                    <i class="fas fa-eye"></i> Ver Loja
+                                </a>
+                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-external-link-alt"></i> AliExpress
+                                </a>
+                            </div>
 
                             <?php if ($prod->id !== null): ?>
                                 <form action="<?= $baseUrl ?>/admin/dropship/delete/<?= (int)$prod->id ?>" method="POST" onsubmit="return confirm('Deseja realmente remover este produto do catálogo?');" style="margin: 0;">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                    <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 4px;" title="Excluir do catálogo">
+                                    <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 4px;" title="Excluir do catálogo">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>

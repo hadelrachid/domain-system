@@ -123,6 +123,11 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             $params[] = (string)$criteria['category'];
         }
 
+        if (!empty($criteria['slug'])) {
+            $where[] = "slug = ?";
+            $params[] = (string)$criteria['slug'];
+        }
+
         if (!empty($criteria['status'])) {
             $where[] = "status = ?";
             $params[] = (string)$criteria['status'];
@@ -156,6 +161,11 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         if (!empty($criteria['category'])) {
             $where[] = "category = ?";
             $params[] = (string)$criteria['category'];
+        }
+
+        if (!empty($criteria['slug'])) {
+            $where[] = "slug = ?";
+            $params[] = (string)$criteria['slug'];
         }
 
         if (!empty($criteria['status'])) {

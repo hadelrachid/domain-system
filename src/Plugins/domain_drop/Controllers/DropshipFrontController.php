@@ -70,13 +70,12 @@ class DropshipFrontController
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
-        // Tenta buscar por slug ou por ID numérico
+        // Tenta buscar por ID numérico ou pelo slug amigável do produto
         $product = null;
         if (is_numeric($slug)) {
             $product = $this->catalogRepo->findById((int)$slug);
         } else {
-            $list = $this->catalogRepo->list(['slug' => $slug, 'status' => 'published'], 1, 0);
-            $product = $list[0] ?? null;
+            $product = $this->catalogRepo->findBySlug($slug);
         }
 
         if (!$product) {

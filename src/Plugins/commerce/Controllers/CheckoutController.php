@@ -90,12 +90,17 @@ class CheckoutController
             return new Response("<h1>404 - Item não encontrado</h1>", 404);
         }
 
+        $isPhysicalOrDropship = (($course['type'] ?? '') === 'dropship_product')
+            || (($course['type'] ?? '') === 'product')
+            || (str_contains($request->server['REQUEST_URI'] ?? '', '/checkout/produto/'));
+
         $userId = (int)$this->session->get('academy_student_id', 0);
         if ($userId <= 0) {
             $userId = (int)$this->session->get('user_id', 0);
         }
 
-        if ($userId <= 0) {
+        // Cursos digitais exigem login prévio; produtos de loja/dropshipping permitem Guest Checkout
+        if ($userId <= 0 && !$isPhysicalOrDropship) {
             $checkoutUri = $baseUrl . '/checkout/curso/' . $courseId;
             return Response::redirect($baseUrl . '/aluno/login?redirect=' . urlencode($checkoutUri));
         }
@@ -139,9 +144,9 @@ class CheckoutController
             }
         }
         $csrfToken = (string)$this->session->getCsrfToken();
-        $userEmail = (string)$this->session->get('academy_student_email', (string)$this->session->get('user_email', ''));
-        $userName = (string)$this->session->get('academy_student_name', (string)$this->session->get('user_name', 'Aluno'));
-        $userCpf = (string)$this->session->get('user_cpf', (string)$this->session->get('academy_student_cpf', ''));
+        $userEmail = (string)$this->session->get('academy_student_email', (string)$this->session->get('user_email', (string)$this->session->get('customer_email', '')));
+        $userName = (string)$this->session->get('academy_student_name', (string)$this->session->get('user_name', (string)$this->session->get('customer_name', $isPhysicalOrDropship ? '' : 'Aluno')));
+        $userCpf = (string)$this->session->get('user_cpf', (string)$this->session->get('academy_student_cpf', (string)$this->session->get('customer_cpf', '')));
 
         $courseImage = '';
         if (!empty($course['image'])) {
@@ -156,16 +161,17 @@ class CheckoutController
         }
 
         $html = $this->renderView('front/checkout', [
-            'baseUrl'        => $baseUrl,
-            'course'         => $course,
-            'courseImage'    => $courseImage,
-            'gateways'       => $gateways,
-            'coursePlatform' => $coursePlatform,
-            'csrfToken'      => $csrfToken,
-            'userEmail'      => $userEmail,
-            'userName'       => $userName,
-            'userCpf'        => $userCpf,
-            'total'          => (float)($course['price'] ?? 0.0),
+            'baseUrl'              => $baseUrl,
+            'course'               => $course,
+            'courseImage'          => $courseImage,
+            'gateways'             => $gateways,
+            'coursePlatform'       => $coursePlatform,
+            'csrfToken'            => $csrfToken,
+            'userEmail'            => $userEmail,
+            'userName'             => $userName,
+            'userCpf'              => $userCpf,
+            'total'                => (float)($course['price'] ?? 0.0),
+            'isPhysicalOrDropship' => $isPhysicalOrDropship,
         ]);
 
         return new ViewResponse($html);

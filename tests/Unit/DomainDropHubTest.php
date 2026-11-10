@@ -209,6 +209,52 @@ class DomainDropHubTest extends TestCase
         @unlink($tmpCache);
     }
 
+    public function testProductMiningServiceParsesOfficialIopMultimediaGalleryAndSkus(): void
+    {
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $mockApi->method('getProductDetails')->willReturn([
+            'result' => [
+                'ae_item_base_info_dto' => [
+                    'product_id' => '1005013345247302',
+                    'subject' => 'Pulseira Homem de Ferro para Apple Watch 49mm 45mm Silicone Ultra',
+                    'detail' => '<p>Descrição rica com detalhes do produto</p>',
+                    'avg_evaluation_rating' => '4.9',
+                ],
+                'ae_multimedia_info_dto' => [
+                    'image_urls' => 'https://ae-pic-a1.aliexpress-media.com/kf/S034dd953aa8d4e5c9744115de0efc991x.jpg;https://ae-pic-a1.aliexpress-media.com/kf/Sf1fdef1c56604b1bbd4ba590e1f0bd72g.jpg;https://ae-pic-a1.aliexpress-media.com/kf/Sdffac8fe8ce64e7594b0017a48d2dcf6C.jpg',
+                ],
+                'ae_item_sku_info_dtos' => [
+                    'ae_item_sku_info_d_t_o' => [
+                        [
+                            'sku_price' => '5.50',
+                            'sku_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S6d426a8dcf3b480bb7d1e83ab6666db10/208x824.png',
+                        ]
+                    ]
+                ],
+                'target_sale_price' => '5.50',
+            ]
+        ]);
+
+        $tmpCache = sys_get_temp_dir() . '/test_exchange_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.25]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+        $dto = $miningService->importSingleProduct('1005013345247302');
+
+        $this->assertSame('1005013345247302', $dto->aliexpressId);
+        $this->assertStringContainsString('Pulseira Homem De Ferro', $dto->title);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/S034dd953aa8d4e5c9744115de0efc991x.jpg', $dto->mainImageUrl);
+        // Galeria deve conter as 3 imagens do multimedia + 1 do SKU
+        $this->assertCount(4, $dto->images);
+        $this->assertContains('https://ae-pic-a1.aliexpress-media.com/kf/Sf1fdef1c56604b1bbd4ba590e1f0bd72g.jpg', $dto->images);
+        $this->assertContains('https://ae-pic-a1.aliexpress-media.com/kf/S6d426a8dcf3b480bb7d1e83ab6666db10/208x824.png', $dto->images);
+
+        @unlink($tmpCache);
+    }
+
     public function testDropshipProductPurchasableAdapterIntegratesWithCommerce(): void
     {
         $product = new DropshipProductDto(

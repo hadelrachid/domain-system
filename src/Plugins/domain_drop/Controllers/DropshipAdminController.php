@@ -76,11 +76,12 @@ class DropshipAdminController
 
         $category = (string)$request->input('category', 'Eletrônicos');
         $limit = max(1, min(30, (int)$request->input('limit', 10)));
+        $sort = (string)$request->input('sort', 'volume_desc');
 
         try {
-            $mined = $this->miningService->mineTrendingProducts($category, $limit, true);
+            $mined = $this->miningService->mineTrendingProducts($category, $limit, true, $sort);
             $count = count($mined);
-            $this->session->setFlash('success', "🚀 Mineração concluída com sucesso! {$count} produtos em alta minerados e adicionados ao catálogo.");
+            $this->session->setFlash('success', "🚀 Mineração concluída com sucesso! {$count} produtos com alta reputação minerados e adicionados ao catálogo.");
         } catch (Throwable $e) {
             $this->session->setFlash('error', "Falha ao minerar produtos: " . $e->getMessage());
         }

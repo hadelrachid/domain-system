@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-if ($seo->getTitle() === 'Domain System OS') {
+if (!empty($title)) {
+    $seo->setTitle($title);
+} elseif ($seo->getTitle() === 'Domain System OS') {
     $seo->setTitle('RachidD.com | O Gênio das Ofertas Internacionais & Dropship')
         ->setDescription('Descubra as melhores ofertas mundiais do AliExpress no RachidD.com. Preços de fábrica, frete com rastreamento internacional e pagamento protegido com Pix, Mercado Pago e PayPal.');
 }
