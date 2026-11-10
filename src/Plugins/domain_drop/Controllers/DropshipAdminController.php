@@ -8,6 +8,7 @@ use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
@@ -61,7 +62,7 @@ class DropshipAdminController
         include dirname(__DIR__) . '/views/admin/index.php';
         $content = ob_get_clean();
 
-        return new Response($content ?: '');
+        return new ViewResponse($content ?: '');
     }
 
     public function mine(Request $request): ResponseInterface
@@ -127,7 +128,7 @@ class DropshipAdminController
         include dirname(__DIR__) . '/views/admin/settings.php';
         $content = ob_get_clean();
 
-        return new Response($content ?: '');
+        return new ViewResponse($content ?: '');
     }
 
     public function saveSettings(Request $request): ResponseInterface
@@ -179,7 +180,7 @@ class DropshipAdminController
         include dirname(__DIR__) . '/views/admin/orders.php';
         $content = ob_get_clean();
 
-        return new Response($content ?: '');
+        return new ViewResponse($content ?: '');
     }
 
     public function updateFulfillment(Request $request, string $id): ResponseInterface
