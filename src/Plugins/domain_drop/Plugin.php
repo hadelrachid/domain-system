@@ -62,9 +62,21 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $configFile = $root . '/config/plugins/domain_drop.json';
 
         // 1. Injeção de Dependências no Container via Contratos (SOLID / DIP)
-        $runtime->singleton(CurrencyConverterInterface::class, function () use ($root) {
+        $runtime->singleton(CurrencyConverterInterface::class, function () use ($root, $configFile) {
+            $markup = 100.0;
+            $minMargin = 30.0;
+            if (file_exists($configFile)) {
+                $data = @json_decode((string)file_get_contents($configFile), true);
+                if (is_array($data)) {
+                    $markup = (float)($data['default_markup_percent'] ?? $markup);
+                    $minMargin = (float)($data['min_profit_margin_brl'] ?? $minMargin);
+                }
+            }
+
             return new CurrencyConverterService(
-                cacheDirOrFile: $root . '/storage/cache/exchange_rates.json'
+                cacheDirOrFile: $root . '/storage/cache/exchange_rates.json',
+                defaultMarkupPercent: $markup,
+                minProfitBrl: $minMargin
             );
         });
 
@@ -99,25 +111,12 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoDropshipOrderRepository($runtime->getLink('core.db'));
         });
 
-        $runtime->singleton(ProductMiningServiceInterface::class, function () use ($runtime, $configFile) {
-            $markup = 100.0;
-            $minMargin = 30.0;
-
-            if (file_exists($configFile)) {
-                $data = @json_decode((string)file_get_contents($configFile), true);
-                if (is_array($data)) {
-                    $markup = (float)($data['default_markup_percent'] ?? $markup);
-                    $minMargin = (float)($data['min_profit_margin_brl'] ?? $minMargin);
-                }
-            }
-
+        $runtime->singleton(ProductMiningServiceInterface::class, function () use ($runtime) {
             return new ProductMiningService(
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 currencyConverter: $runtime->make(CurrencyConverterInterface::class),
-                enricher: $runtime->make(AiProductEnricherInterface::class),
-                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
-                defaultMarkupPercent: $markup,
-                minProfitMarginBrl: $minMargin
+                aiEnricher: $runtime->make(AiProductEnricherInterface::class),
+                repository: $runtime->make(DropshipCatalogRepositoryInterface::class)
             );
         });
 
