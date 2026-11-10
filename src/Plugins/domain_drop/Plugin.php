@@ -51,6 +51,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->listenHook('router.register');
         $os->listenHook('commerce.register_item_resolvers');
         $os->listenHook('payment.approved');
+        $os->listenHook('theme.blocks.register');
+        $os->listenHook('flexbuilder.register_blocks');
+        $os->listenHook('shortcodes.register');
     }
 
     public function osBoot(OsRuntimeInterface $runtime): void
@@ -221,6 +224,59 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     // Isolamento de falha
                 }
             }
+        });
+
+        // 6. Registro de Blocos Semânticos no Flex Builder via Contrato (SOLID - OCP / DIP)
+        $registerDropshipBlocks = function ($registry) use ($runtime) {
+            if (is_object($registry) && method_exists($registry, 'has') && !$registry->has('dropship_showcase')) {
+                try {
+                    $urlResolver = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
+                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
+                        : null;
+                    $styleRenderer = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
+                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
+                        : null;
+
+                    $provider = new \DomainSystem\Plugins\domain_drop\Blocks\DropshipBlockProvider(
+                        $runtime->make(DropshipCatalogRepositoryInterface::class),
+                        $styleRenderer,
+                        null,
+                        $urlResolver
+                    );
+                    $provider->registerBlocks($registry);
+                } catch (Throwable $e) {
+                    // Isolamento gracioso
+                }
+            }
+        };
+
+        $runtime->onHook('theme.blocks.register', $registerDropshipBlocks);
+        $runtime->onHook('flexbuilder.register_blocks', $registerDropshipBlocks);
+
+        // 7. Shortcode para Vitrine de Dropshipping: [dropship_vitrine limit="8" cols="4" category=""]
+        $runtime->onHook('shortcodes.register', function (\DomainSystem\Core\Theme\ShortcodeManager $manager) use ($runtime) {
+            $manager->add('dropship_vitrine', function ($attrs = []) use ($runtime) {
+                try {
+                    $urlResolver = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
+                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
+                        : null;
+                    $block = new \DomainSystem\Plugins\domain_drop\Blocks\DropshipShowcaseBlock(
+                        $runtime->make(DropshipCatalogRepositoryInterface::class),
+                        null,
+                        null,
+                        $urlResolver
+                    );
+                    $attributes = [
+                        'limit'    => isset($attrs['limit']) ? (int)$attrs['limit'] : 8,
+                        'columns'  => isset($attrs['cols']) ? (int)$attrs['cols'] : (isset($attrs['columns']) ? (int)$attrs['columns'] : 4),
+                        'category' => isset($attrs['category']) ? (string)$attrs['category'] : '',
+                        'title'    => isset($attrs['title']) ? (string)$attrs['title'] : 'Tendências em Alta & Mais Vendidos',
+                    ];
+                    return $block->render($attributes);
+                } catch (Throwable $e) {
+                    return "<div style='text-align:center; padding:30px; background:rgba(255,255,255,0.03); border-radius:8px; color:#8c8f94;'>Vitrine Dropshipping em configuração.</div>";
+                }
+            });
         });
     }
 }

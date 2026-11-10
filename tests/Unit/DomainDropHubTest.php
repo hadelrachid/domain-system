@@ -278,4 +278,51 @@ class DomainDropHubTest extends TestCase
         $this->assertCount(1, $list);
         $this->assertSame('ORD_DROP_TEST_2026', $list[0]['order_ref']);
     }
+
+    public function testDropshipShowcaseBlockAndProviderForFlexTheme(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        // Salva um produto para a vitrine
+        $product = new DropshipProductDto(
+            aliexpressId: '100500777111',
+            title: 'Caixa de Som Portátil Bluetooth Pro',
+            slug: 'caixa-som-bluetooth-pro',
+            costPriceUsd: 8.00,
+            salePriceBrl: 89.90,
+            mainImageUrl: 'https://ae01.alicdn.com/caixa.jpg',
+            images: [],
+            category: 'Eletrônicos',
+            description: 'Som estéreo potente e à prova d água.',
+            rating: 4.9,
+            ordersCount: 4200,
+            attributes: [],
+            status: 'published'
+        );
+        $savedId = $repo->save($product);
+
+        $registry = new \DomainSystem\Core\Theme\Parts\Blocks\BlockRegistry();
+        $provider = new \DomainSystem\Plugins\domain_drop\Blocks\DropshipBlockProvider($repo);
+        $provider->registerBlocks($registry);
+
+        $this->assertTrue($registry->has('dropship_showcase'));
+        $block = $registry->get('dropship_showcase');
+        $this->assertNotNull($block);
+        $this->assertSame('dropship_showcase', $block->getType());
+        $this->assertSame('ecommerce', $block->getCategory());
+
+        // Renderização com produtos
+        $html = $block->render([
+            'title'       => 'Ofertas Relâmpago Dropship',
+            'columns'     => 4,
+            'limit'       => 8,
+            'button_text' => 'Quero Comprar',
+        ]);
+
+        $this->assertStringContainsString('Ofertas Relâmpago Dropship', $html);
+        $this->assertStringContainsString('Caixa de Som Portátil Bluetooth Pro', $html);
+        $this->assertStringContainsString('R$ 89,90', $html);
+        $this->assertStringContainsString('checkout/produto/' . $savedId, $html);
+        $this->assertStringContainsString('Quero Comprar', $html);
+    }
 }
