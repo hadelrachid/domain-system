@@ -282,21 +282,21 @@
                         </div>
 
                         <!-- Card Actions -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); gap: 6px;">
                             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="font-size: 11px; color: #45f3ff; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-weight: 600;">
+                                <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #45f3ff; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; box-sizing: border-box; line-height: 1;" title="Visualizar na loja">
                                     <i class="fas fa-eye"></i> Loja
                                 </a>
-                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #ff6b6b; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; box-sizing: border-box; line-height: 1;" title="Abrir link original no AliExpress">
                                     <i class="fas fa-external-link-alt"></i> Link
                                 </a>
                                 <?php if ($prod->id !== null): ?>
-                                    <button type="button" onclick="openPriceModal(<?= (int)$prod->id ?>, <?= htmlspecialchars(json_encode($prod->title)) ?>, <?= (float)$prod->costPriceUsd ?>, <?= (float)round($prod->costPriceUsd * $rate, 2) ?>, <?= (float)$prod->salePriceBrl ?>)" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; cursor: pointer; font-size: 11px; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; font-weight: 600;" title="Editar Custo e Preço de Venda">
+                                    <button type="button" onclick="openPriceModal(<?= (int)$prod->id ?>, <?= htmlspecialchars(json_encode($prod->title)) ?>, <?= (float)$prod->costPriceUsd ?>, <?= (float)round($prod->costPriceUsd * $rate, 2) ?>, <?= (float)$prod->salePriceBrl ?>)" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #fbbf24; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Editar Custo e Preço de Venda">
                                         <i class="fas fa-tags"></i> Preço
                                     </button>
-                                    <form action="<?= $baseUrl ?>/admin/dropship/product/<?= (int)$prod->id ?>/sync-images" method="POST" style="margin: 0;">
+                                    <form action="<?= $baseUrl ?>/admin/dropship/product/<?= (int)$prod->id ?>/sync-images" method="POST" style="margin: 0; display: inline-flex; vertical-align: middle;">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                        <button type="submit" style="background: rgba(69,243,255,0.08); border: 1px solid rgba(69,243,255,0.25); color: #45f3ff; cursor: pointer; font-size: 11px; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;" title="Sincronizar imagens reais direto do link">
+                                        <button type="submit" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #45f3ff; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Sincronizar imagens reais direto do link">
                                             <i class="fas fa-sync-alt"></i> Imagens
                                         </button>
                                     </form>
@@ -304,9 +304,9 @@
                             </div>
 
                             <?php if ($prod->id !== null): ?>
-                                <form action="<?= $baseUrl ?>/admin/dropship/delete/<?= (int)$prod->id ?>" method="POST" onsubmit="return confirm('Deseja realmente remover este produto do catálogo?');" style="margin: 0;">
+                                <form action="<?= $baseUrl ?>/admin/dropship/delete/<?= (int)$prod->id ?>" method="POST" onsubmit="return confirm('Deseja realmente remover este produto do catálogo?');" style="margin: 0; display: inline-flex; vertical-align: middle;">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                    <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 4px;" title="Excluir do catálogo">
+                                    <button type="submit" style="height: 26px; width: 26px; padding: 0; font-size: 12px; color: #ef4444; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Excluir do catálogo">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>
@@ -350,12 +350,14 @@
                     <label style="display: block; font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px;">
                         Custo do Fornecedor (R$ na Loja do AliExpress):
                     </label>
-                    <div style="position: relative;">
-                        <span style="position: absolute; left: 12px; top: 10px; color: #94a3b8; font-weight: 700; font-size: 14px;">R$</span>
-                        <input type="number" step="0.01" min="0" id="modalCostBrl" name="cost_price_brl" oninput="recalcMargin()" required style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 12px 10px 40px; color: #fff; font-size: 15px; font-weight: 600; box-sizing: border-box;">
+                    <div style="display: flex; align-items: stretch; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.35); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; background: rgba(255,255,255,0.08); color: #94a3b8; font-weight: 700; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.12); user-select: none;">
+                            R$
+                        </span>
+                        <input type="number" step="0.01" min="0" id="modalCostBrl" name="cost_price_brl" oninput="recalcMargin()" required style="flex: 1; border: none; background: transparent; padding: 12px 14px; color: #fff; font-size: 16px; font-weight: 700; outline: none; box-sizing: border-box; font-family: monospace;">
                     </div>
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; display: flex; justify-content: space-between;">
-                        <span>Equivalente em Dólar: <strong id="modalCostUsdHint" style="color: #fff;">$0.00</strong></span>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 5px; display: flex; justify-content: space-between;">
+                        <span>Equivalente em Dólar: <strong id="modalCostUsdHint" style="color: #fff; font-family: monospace;">$0.00</strong></span>
                         <span style="color: #f59e0b;">Atualize caso o produto esteja em promoção no AliExpress</span>
                     </div>
                 </div>
@@ -379,9 +381,11 @@
                     <label style="display: block; font-size: 13px; font-weight: 600; color: #5cd67d; margin-bottom: 6px;">
                         Preço de Venda na Loja RachidD.com (R$):
                     </label>
-                    <div style="position: relative;">
-                        <span style="position: absolute; left: 12px; top: 10px; color: #5cd67d; font-weight: 700; font-size: 14px;">R$</span>
-                        <input type="number" step="0.01" min="0.01" id="modalSaleBrl" name="sale_price_brl" oninput="recalcMargin()" required style="width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(92, 214, 125, 0.4); border-radius: 6px; padding: 10px 12px 10px 40px; color: #5cd67d; font-size: 18px; font-weight: 700; box-sizing: border-box;">
+                    <div style="display: flex; align-items: stretch; border: 2px solid rgba(92, 214, 125, 0.45); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.35); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; background: rgba(92, 214, 125, 0.12); color: #5cd67d; font-weight: 800; font-size: 15px; border-right: 1px solid rgba(92, 214, 125, 0.3); user-select: none;">
+                            R$
+                        </span>
+                        <input type="number" step="0.01" min="0.01" id="modalSaleBrl" name="sale_price_brl" oninput="recalcMargin()" required style="flex: 1; border: none; background: transparent; padding: 12px 14px; color: #5cd67d; font-size: 18px; font-weight: 800; outline: none; box-sizing: border-box; font-family: monospace;">
                     </div>
                 </div>
 
