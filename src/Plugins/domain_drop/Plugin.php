@@ -278,16 +278,5 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 }
             });
         });
-                        'limit'    => isset($attrs['limit']) ? (int)$attrs['limit'] : 8,
-                        'columns'  => isset($attrs['cols']) ? (int)$attrs['cols'] : (isset($attrs['columns']) ? (int)$attrs['columns'] : 4),
-                        'category' => isset($attrs['category']) ? (string)$attrs['category'] : '',
-                        'title'    => isset($attrs['title']) ? (string)$attrs['title'] : 'Tendências em Alta & Mais Vendidos',
-                    ];
-                    return $block->render($attributes);
-                } catch (Throwable $e) {
-                    return "<div style='text-align:center; padding:30px; background:rgba(255,255,255,0.03); border-radius:8px; color:#8c8f94;'>Vitrine Dropshipping em configuração.</div>";
-                }
-            });
-        });
     }
 }
