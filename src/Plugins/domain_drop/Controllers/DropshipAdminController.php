@@ -25,6 +25,7 @@ class DropshipAdminController
         private readonly ProductMiningServiceInterface $miningService,
         private readonly CurrencyConverterInterface $currencyConverter,
         private readonly SessionManagerInterface $session,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface $orderRepo = null,
         ?string $basePath = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
@@ -151,6 +152,61 @@ class DropshipAdminController
         $this->session->setFlash('success', 'Configurações do DomainDrop salvas com sucesso!');
 
         return Response::redirect($baseUrl . '/admin/dropship/settings');
+    }
+
+    public function orders(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $csrfToken = (string)$this->session->getCsrfToken();
+        $status = (string)$request->input('status', '');
+        $search = (string)$request->input('q', '');
+
+        $filters = [];
+        if ($status !== '') {
+            $filters['status'] = $status;
+        }
+        if ($search !== '') {
+            $filters['search'] = $search;
+        }
+
+        $orders = $this->orderRepo !== null ? $this->orderRepo->list($filters, 50, 0) : [];
+
+        $flash = $this->session->getFlash();
+        $flashMsg = $flash['msg'] ?? null;
+        $flashType = $flash['type'] ?? null;
+
+        ob_start();
+        include dirname(__DIR__) . '/views/admin/orders.php';
+        $content = ob_get_clean();
+
+        return new Response($content ?: '');
+    }
+
+    public function updateFulfillment(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $orderRef = (string)$request->input('order_ref', '');
+        $status = (string)$request->input('status', 'paid');
+        $aeOrderId = trim((string)$request->input('aliexpress_order_id', ''));
+        $tracking = trim((string)$request->input('tracking_code', ''));
+
+        if ($this->orderRepo !== null && $orderRef !== '') {
+            $this->orderRepo->updateFulfillment(
+                $orderRef,
+                $status,
+                $aeOrderId !== '' ? $aeOrderId : null,
+                $tracking !== '' ? $tracking : null
+            );
+            $this->session->setFlash('success', 'Status de envio do pedido atualizado com sucesso!');
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship/orders');
     }
 
     public function delete(Request $request, string $id): ResponseInterface

@@ -208,4 +208,74 @@ class DomainDropHubTest extends TestCase
 
         @unlink($tmpCache);
     }
+
+    public function testDropshipProductPurchasableAdapterIntegratesWithCommerce(): void
+    {
+        $product = new DropshipProductDto(
+            aliexpressId: '100500123987',
+            title: 'Lâmpada Inteligente RGB Wi-Fi',
+            slug: 'lampada-inteligente-rgb-wifi',
+            costPriceUsd: 5.00,
+            salePriceBrl: 49.90,
+            mainImageUrl: 'https://ae01.alicdn.com/lampada.jpg',
+            images: [],
+            category: 'Casa Inteligente',
+            description: 'Controle de iluminação por voz e app.',
+            rating: 4.9,
+            ordersCount: 850,
+            attributes: [],
+            status: 'published',
+            id: 42
+        );
+
+        $adapter = new \DomainSystem\Plugins\domain_drop\Adapters\DropshipProductPurchasableAdapter($product);
+
+        $this->assertInstanceOf(\DomainSystem\Plugins\commerce\Contracts\PurchasableItemInterface::class, $adapter);
+        $this->assertSame(42, $adapter->getId());
+        $this->assertSame('dropship_product', $adapter->getItemType());
+        $this->assertSame('Lâmpada Inteligente RGB Wi-Fi', $adapter->getTitle());
+        $this->assertEqualsWithDelta(49.90, $adapter->getPrice(), 0.01);
+        $this->assertTrue($adapter->isAvailable());
+        $this->assertSame('https://ae01.alicdn.com/lampada.jpg', $adapter->getThumbnailUrl());
+    }
+
+    public function testPdoDropshipOrderRepositoryLifecycleAndFulfillment(): void
+    {
+        $repo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($this->pdo);
+
+        $orderData = [
+            'order_ref'          => 'ORD_DROP_TEST_2026',
+            'customer_name'      => 'João da Silva',
+            'customer_email'     => 'joao@exemplo.com',
+            'customer_document'  => '12345678901',
+            'shipping_address'    => ['cidade' => 'São Paulo', 'uf' => 'SP', 'cep' => '01001-000'],
+            'status'             => 'paid',
+            'total_paid_brl'     => 149.90,
+        ];
+
+        $orderId = $repo->create($orderData);
+        $this->assertGreaterThan(0, $orderId);
+
+        // Busca por referência
+        $found = $repo->findByOrderRef('ORD_DROP_TEST_2026');
+        $this->assertNotNull($found);
+        $this->assertSame('João da Silva', $found['customer_name']);
+        $this->assertSame('paid', $found['status']);
+        $this->assertEqualsWithDelta(149.90, (float)$found['total_paid_brl'], 0.01);
+
+        // Atualização de Fulfillment (AliExpress Order ID e Código de Rastreamento)
+        $updated = $repo->updateFulfillment('ORD_DROP_TEST_2026', 'shipped', 'AE_ORDER_88776655', 'NL123456789BR');
+        $this->assertTrue($updated);
+
+        $shipped = $repo->findByOrderRef('ORD_DROP_TEST_2026');
+        $this->assertNotNull($shipped);
+        $this->assertSame('shipped', $shipped['status']);
+        $this->assertSame('AE_ORDER_88776655', $shipped['aliexpress_order_id']);
+        $this->assertSame('NL123456789BR', $shipped['tracking_code']);
+
+        // Listagem com filtro
+        $list = $repo->list(['status' => 'shipped']);
+        $this->assertCount(1, $list);
+        $this->assertSame('ORD_DROP_TEST_2026', $list[0]['order_ref']);
+    }
 }

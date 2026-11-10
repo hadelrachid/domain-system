@@ -70,7 +70,9 @@ class CheckoutController
         }
 
         if ($course === null && $this->itemResolver !== null) {
-            $item = $this->itemResolver->resolve('course', $courseId);
+            $item = $this->itemResolver->resolve('course', $courseId)
+                 ?? $this->itemResolver->resolve('dropship_product', $courseId)
+                 ?? $this->itemResolver->resolve('product', $courseId);
             if ($item && $item->isAvailable()) {
                 $course = [
                     'id'          => $item->getId(),
@@ -79,12 +81,13 @@ class CheckoutController
                     'status'      => 'published',
                     'description' => $item->getDescription(),
                     'image'       => $item->getThumbnailUrl(),
+                    'type'        => $item->getItemType(),
                 ];
             }
         }
 
         if (!$course) {
-            return new Response("<h1>404 - Curso não encontrado</h1>", 404);
+            return new Response("<h1>404 - Item não encontrado</h1>", 404);
         }
 
         $userId = (int)$this->session->get('academy_student_id', 0);
@@ -169,6 +172,14 @@ class CheckoutController
     }
 
     /**
+     * Tela de Checkout de Produtos Físicos / Dropshipping: GET /checkout/produto/{id}
+     */
+    public function showProductCheckout(Request $request, $id): ResponseInterface
+    {
+        return $this->showCheckout($request, $id);
+    }
+
+    /**
      * Processamento de Cobrança: POST /checkout/process
      */
     public function process(Request $request): ResponseInterface
@@ -188,17 +199,23 @@ class CheckoutController
             return new JsonResponse(['success' => false, 'message' => 'Token CSRF inválido.'], 403);
         }
 
-        $courseId = (int)$request->input('course_id');
+        $courseId = (int)($request->input('item_id') ?? $request->input('course_id'));
+        $itemType = (string)($request->input('item_type') ?? '');
         $course = null;
 
         if ($this->itemResolver !== null) {
-            $item = $this->itemResolver->resolve('course', $courseId);
+            $resolvedType = $itemType !== '' ? $itemType : 'course';
+            $item = $this->itemResolver->resolve($resolvedType, $courseId)
+                 ?? $this->itemResolver->resolve('dropship_product', $courseId)
+                 ?? $this->itemResolver->resolve('course', $courseId);
             if ($item && $item->isAvailable()) {
                 $course = [
                     'id'    => $item->getId(),
                     'title' => $item->getTitle(),
                     'price' => $item->getPrice(),
+                    'type'  => $item->getItemType(),
                 ];
+                $itemType = $item->getItemType();
             }
         }
 
@@ -206,11 +223,16 @@ class CheckoutController
             $c = $this->courseRepo->findById($courseId);
             if ($c) {
                 $course = $c;
+                $itemType = 'course';
             }
         }
 
         if (!$course) {
-            return new JsonResponse(['success' => false, 'message' => 'Curso não encontrado.'], 404);
+            return new JsonResponse(['success' => false, 'message' => 'Item não encontrado.'], 404);
+        }
+
+        if ($itemType === '') {
+            $itemType = 'course';
         }
 
         $total = (float)($course['price'] ?? 0.0);
@@ -246,7 +268,7 @@ class CheckoutController
         $orderRef = 'ORD_' . date('YmdHis') . '_' . bin2hex(random_bytes(3));
         $orderId = $this->orderRepo->createOrder([
             'user_id'        => $userId,
-            'item_type'      => 'course',
+            'item_type'      => $itemType,
             'item_id'        => $courseId,
             'total'          => $total,
             'status'         => 'pending',
@@ -283,6 +305,8 @@ class CheckoutController
                 $this->dispatcher->dispatch('payment.approved', [
                     'user_id'   => $userId,
                     'course_id' => $courseId,
+                    'item_id'   => $courseId,
+                    'item_type' => $itemType,
                     'order_ref' => $orderRef,
                 ]);
             }
@@ -364,6 +388,8 @@ class CheckoutController
                     $this->dispatcher->dispatch('payment.approved', [
                         'user_id'   => (int)$order['user_id'],
                         'course_id' => (int)$order['item_id'],
+                        'item_id'   => (int)$order['item_id'],
+                        'item_type' => (string)($order['item_type'] ?? 'course'),
                         'order_ref' => $orderRef,
                     ]);
                 }
@@ -378,6 +404,8 @@ class CheckoutController
                 $this->dispatcher->dispatch('payment.approved', [
                     'user_id'   => (int)$order['user_id'],
                     'course_id' => (int)$order['item_id'],
+                    'item_id'   => (int)$order['item_id'],
+                    'item_type' => (string)($order['item_type'] ?? 'course'),
                     'order_ref' => $orderRef,
                 ]);
             }
@@ -411,6 +439,8 @@ class CheckoutController
                     $this->dispatcher->dispatch('payment.approved', [
                         'user_id'   => (int)$order['user_id'],
                         'course_id' => (int)$order['item_id'],
+                        'item_id'   => (int)$order['item_id'],
+                        'item_type' => (string)($order['item_type'] ?? 'course'),
                         'order_ref' => $orderRef,
                     ]);
                 }
@@ -425,6 +455,8 @@ class CheckoutController
                 $this->dispatcher->dispatch('payment.approved', [
                     'user_id'   => (int)$order['user_id'],
                     'course_id' => (int)$order['item_id'],
+                    'item_id'   => (int)$order['item_id'],
+                    'item_type' => (string)($order['item_type'] ?? 'course'),
                     'order_ref' => $orderRef,
                 ]);
             }

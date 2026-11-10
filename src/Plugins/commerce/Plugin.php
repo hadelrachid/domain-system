@@ -111,6 +111,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->onHook('router.register', function (Router $router) {
             // Front / Checkout & Webhooks
             $router->addRoute('GET', '/checkout/curso/{id}', [CheckoutController::class, 'showCheckout'], 'commerce');
+            $router->addRoute('GET', '/checkout/produto/{id}', [CheckoutController::class, 'showProductCheckout'], 'commerce');
             $router->addRoute('POST', '/checkout/process', [CheckoutController::class, 'process'], 'commerce');
             $router->addRoute('GET', '/checkout/status/{orderRef}', [CheckoutController::class, 'checkStatus'], 'commerce');
             $router->addRoute('GET', '/checkout/stripe/success', [CheckoutController::class, 'stripeSuccess'], 'commerce');
