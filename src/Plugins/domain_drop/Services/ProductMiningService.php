@@ -8,8 +8,10 @@ use DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
+use DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto;
 use RuntimeException;
 use Throwable;
 
@@ -18,12 +20,16 @@ use Throwable;
  */
 class ProductMiningService implements ProductMiningServiceInterface
 {
+    private ProductLinkScraperInterface $linkScraper;
+
     public function __construct(
         private readonly AliExpressApiClientInterface $apiClient,
         private readonly CurrencyConverterInterface $currencyConverter,
         private readonly AiProductEnricherInterface $aiEnricher,
-        private readonly DropshipCatalogRepositoryInterface $repository
+        private readonly DropshipCatalogRepositoryInterface $repository,
+        ?ProductLinkScraperInterface $linkScraper = null
     ) {
+        $this->linkScraper = $linkScraper ?? new AliExpressLinkScraperService();
     }
 
     public function mineTrendingProducts(string $category = 'Eletrônicos', int $limit = 10, bool $autoPersist = true, string $sort = 'volume_desc'): array
@@ -63,13 +69,25 @@ class ProductMiningService implements ProductMiningServiceInterface
 
     public function importSingleProduct(string|int $productIdOrUrl): DropshipProductDto
     {
-        $numericId = (string)$productIdOrUrl;
+        $inputStr = trim((string)$productIdOrUrl);
+
+        // 1. Se for uma URL completa informada pelo usuário, executa o scraping direto da URL
+        if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
+            $scraped = $this->linkScraper->scrape($inputStr);
+            if ($scraped !== null) {
+                return $this->createAndSaveDtoFromScraped($scraped);
+            }
+        }
+
+        // 2. Extrai ID numérico
+        $numericId = $inputStr;
         if (preg_match('/\/item\/(\d+)\.html/', $numericId, $matches)) {
             $numericId = $matches[1];
         } elseif (preg_match('/(\d{10,20})/', $numericId, $matches)) {
             $numericId = $matches[1];
         }
 
+        // 3. Tenta via API Oficial (IOP SDK)
         $productData = null;
         try {
             $raw = $this->apiClient->getProductDetails($numericId);
@@ -79,11 +97,51 @@ class ProductMiningService implements ProductMiningServiceInterface
             $productData = null;
         }
 
+        // 4. Se a API não retornou dados, executa scraping em tempo real pelo link canônico do produto
+        if (empty($productData)) {
+            $scraped = $this->linkScraper->scrape($numericId);
+            if ($scraped !== null) {
+                return $this->createAndSaveDtoFromScraped($scraped);
+            }
+        }
+
+        // 5. Fallback estruturado caso ambos estejam offline
         if (empty($productData)) {
             $productData = $this->createFallbackItemFromIdOrUrl($numericId, (string)$productIdOrUrl);
         }
 
         $dto = $this->transformRawItemToDto($productData);
+        $savedId = $this->repository->save($dto);
+
+        return $this->repository->findById($savedId) ?? $dto;
+    }
+
+    private function createAndSaveDtoFromScraped(ScrapedProductDto $scraped): DropshipProductDto
+    {
+        $polishedTitle = $this->aiEnricher->polishTitle($scraped->rawTitle, $scraped->category);
+        $slug = $this->slugify($polishedTitle . '-' . substr($scraped->sourceId, -4));
+        $salePriceBrl = $this->currencyConverter->calculateSalePrice($scraped->costPriceUsd);
+        $salesCopy = $this->aiEnricher->generateSalesCopy(
+            "Produto importado oficial de alta durabilidade com compatibilidade e acabamento premium.",
+            $scraped->attributes
+        );
+
+        $dto = new DropshipProductDto(
+            aliexpressId: $scraped->sourceId,
+            title: $polishedTitle,
+            slug: $slug,
+            costPriceUsd: $scraped->costPriceUsd,
+            salePriceBrl: $salePriceBrl,
+            mainImageUrl: $scraped->mainImageUrl,
+            images: $scraped->getAllImages(),
+            category: $scraped->category,
+            description: $salesCopy,
+            rating: $scraped->rating,
+            ordersCount: $scraped->ordersCount,
+            attributes: $scraped->attributes,
+            status: 'published'
+        );
+
         $savedId = $this->repository->save($dto);
 
         return $this->repository->findById($savedId) ?? $dto;

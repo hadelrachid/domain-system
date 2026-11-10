@@ -204,8 +204,16 @@
             <?php endif; ?>
         </form>
 
-        <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">
-            Mostrando <strong style="color: #fff;"><?= count($products) ?></strong> de <?= $totalCount ?> produtos
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <form action="<?= $baseUrl ?>/admin/dropship/sync-all-images" method="POST" style="margin: 0;" onsubmit="return confirm('Deseja sincronizar em tempo real as imagens oficiais de todos os produtos com seus links do AliExpress?');">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <button type="submit" style="background: rgba(69, 243, 255, 0.12); border: 1px solid rgba(69, 243, 255, 0.35); color: #45f3ff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Todas as Imagens pelo Link
+                </button>
+            </form>
+            <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">
+                Mostrando <strong style="color: #fff;"><?= count($products) ?></strong> de <?= $totalCount ?> produtos
+            </div>
         </div>
     </div>
 
@@ -275,13 +283,21 @@
 
                         <!-- Card Actions -->
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="font-size: 12px; color: #45f3ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
-                                    <i class="fas fa-eye"></i> Ver Loja
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="font-size: 11px; color: #45f3ff; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-weight: 600;">
+                                    <i class="fas fa-eye"></i> Loja
                                 </a>
-                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-external-link-alt"></i> AliExpress
+                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                                    <i class="fas fa-external-link-alt"></i> Link
                                 </a>
+                                <?php if ($prod->id !== null): ?>
+                                    <form action="<?= $baseUrl ?>/admin/dropship/product/<?= (int)$prod->id ?>/sync-images" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                                        <button type="submit" style="background: rgba(69,243,255,0.08); border: 1px solid rgba(69,243,255,0.25); color: #45f3ff; cursor: pointer; font-size: 11px; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;" title="Sincronizar imagens reais direto do link">
+                                            <i class="fas fa-sync-alt"></i> Imagens
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
 
                             <?php if ($prod->id !== null): ?>

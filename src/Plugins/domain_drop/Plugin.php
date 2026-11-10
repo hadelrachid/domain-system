@@ -17,13 +17,17 @@ use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\ProductMediaSyncInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController;
 use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipCatalogRepository;
 use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository;
 use DomainSystem\Plugins\domain_drop\Services\AiProductEnricherService;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient;
+use DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService;
 use DomainSystem\Plugins\domain_drop\Services\CurrencyConverterService;
+use DomainSystem\Plugins\domain_drop\Services\ProductMediaSyncService;
 use DomainSystem\Plugins\domain_drop\Services\ProductMiningService;
 use Throwable;
 
@@ -115,12 +119,26 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoDropshipOrderRepository($runtime->getLink('core.db'));
         });
 
+        $runtime->singleton(ProductLinkScraperInterface::class, function () {
+            return new AliExpressLinkScraperService();
+        });
+
+        $runtime->singleton(ProductMediaSyncInterface::class, function () use ($runtime) {
+            return new ProductMediaSyncService(
+                repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
+                scraper: $runtime->make(ProductLinkScraperInterface::class),
+                aiEnricher: $runtime->make(AiProductEnricherInterface::class),
+                currencyConverter: $runtime->make(CurrencyConverterInterface::class)
+            );
+        });
+
         $runtime->singleton(ProductMiningServiceInterface::class, function () use ($runtime) {
             return new ProductMiningService(
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 currencyConverter: $runtime->make(CurrencyConverterInterface::class),
                 aiEnricher: $runtime->make(AiProductEnricherInterface::class),
-                repository: $runtime->make(DropshipCatalogRepositoryInterface::class)
+                repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
+                linkScraper: $runtime->make(ProductLinkScraperInterface::class)
             );
         });
 
@@ -131,6 +149,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 currencyConverter: $runtime->make(CurrencyConverterInterface::class),
                 session: $runtime->getLink('core.session'),
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
+                mediaSync: $runtime->make(ProductMediaSyncInterface::class),
                 basePath: $root
             );
         });
@@ -186,6 +205,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/orders/{id}/fulfillment', [DropshipAdminController::class, 'updateFulfillment'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/product/{id}/sync-images', [DropshipAdminController::class, 'syncImages'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
 
             // 4. Rotas Públicas da Loja Virtual & Vitrine de Produtos

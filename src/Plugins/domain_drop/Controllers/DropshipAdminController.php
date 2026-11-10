@@ -11,6 +11,7 @@ use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\ProductMediaSyncInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use Throwable;
 
@@ -27,6 +28,7 @@ class DropshipAdminController
         private readonly CurrencyConverterInterface $currencyConverter,
         private readonly SessionManagerInterface $session,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface $orderRepo = null,
+        private readonly ?ProductMediaSyncInterface $mediaSync = null,
         ?string $basePath = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
@@ -213,6 +215,55 @@ class DropshipAdminController
         }
 
         return Response::redirect($baseUrl . '/admin/dropship/orders');
+    }
+
+    public function syncImages(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        if ($this->mediaSync === null) {
+            $this->session->setFlash('error', 'Serviço de sincronização de mídia indisponível.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        try {
+            $updated = $this->mediaSync->syncProductMedia((int)$id);
+            $imgCount = count($updated->images);
+            $this->session->setFlash('success', "🔄 Produto '{$updated->title}' sincronizado com sucesso direto do link oficial! {$imgCount} fotos em alta resolução carregadas.");
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha ao sincronizar imagens: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    public function syncAllImages(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        if ($this->mediaSync === null) {
+            $this->session->setFlash('error', 'Serviço de sincronização de mídia indisponível.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        try {
+            $res = $this->mediaSync->syncAllCatalogMedia();
+            $this->session->setFlash('success', "🔄 Varredura concluída: {$res['synced']} produtos sincronizados com as imagens oficiais dos seus links.");
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha na sincronização em lote: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
     }
 
     public function delete(Request $request, string $id): ResponseInterface
