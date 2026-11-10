@@ -27,4 +27,9 @@ interface ProductLinkScraperInterface
      * @return ScrapedProductDto|null Retorna null se a página estiver indisponível ou inacessível
      */
     public function scrape(string $urlOrId): ?ScrapedProductDto;
+
+    /**
+     * Verifica rapidamente se o link do produto existe e está ativo (filtra páginas 404/indisponíveis).
+     */
+    public function isProductAlive(string $urlOrId): bool;
 }

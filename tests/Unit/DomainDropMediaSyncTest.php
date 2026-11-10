@@ -88,6 +88,9 @@ class DomainDropMediaSyncTest extends TestCase
         $this->assertTrue($scraper->canHandle('1005013345247302'));
         $this->assertFalse($scraper->canHandle('https://mercadolivre.com.br/item/123'));
         $this->assertFalse($scraper->canHandle('texto-invalido'));
+
+        // Valida que URLs malformadas retornam false no filtro de link vivo
+        $this->assertFalse($scraper->isProductAlive('link-inexistente-invalido'));
     }
 
     public function testProductMediaSyncServiceUpdatesCatalogFromScraperContract(): void

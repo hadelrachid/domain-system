@@ -84,7 +84,7 @@ class ProductMiningService implements ProductMiningServiceInterface
     private function mineLiveFromAliExpressSearch(string $category, int $limit, bool $autoPersist): array
     {
         $searchTerms = [
-            'Eletrônicos'     => ['smartwatch', 'fone sem fio', 'projetor portatil', 'mini drone'],
+            'Eletrônicos'     => ['smartwatch brasil', 'fone sem fio brasil', 'projetor portatil', 'mini drone'],
             'Casa Inteligente' => ['lampada led inteligente wifi', 'tomada inteligente wifi', 'sensor presenca'],
             'Beleza & Estilo' => ['modelador cabelo profissional', 'escova secadora', 'maquiagem'],
             'Ferramentas'     => ['ferramenta multifuncao precisao', 'trena laser digital'],
@@ -92,9 +92,10 @@ class ProductMiningService implements ProductMiningServiceInterface
             'Acessórios Auto' => ['suporte veicular celular', 'aspirador portatil carro'],
         ];
 
-        $termList = $searchTerms[$category] ?? ['smartwatch', 'fone bluetooth'];
+        $termList = $searchTerms[$category] ?? ['smartwatch brasil', 'fone bluetooth'];
         $searchTerm = $termList[array_rand($termList)];
-        $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html";
+        // Empurra para a vitrine e estoques do Brasil (Remessa Conforme e Envio Local)
+        $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html?country=BR&locale=pt_BR&currency=BRL&isrefine=y";
 
         $ch = curl_init($searchUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -102,6 +103,11 @@ class ProductMiningService implements ProductMiningServiceInterface
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cookie: aep_usuc_f=region=BR&site=bra&b_locale=pt_BR&c_tp=BRL; xman_us_f=x_locale=pt_BR; intl_locale=pt_BR;',
+        ]);
         $html = curl_exec($ch);
         curl_close($ch);
 
@@ -125,6 +131,7 @@ class ProductMiningService implements ProductMiningServiceInterface
             }
 
             try {
+                // Filtro de Link Vivo: se for 404, indisponível ou sem imagem, descarta e busca o próximo
                 $scraped = $this->linkScraper->scrape($realId);
                 if ($scraped !== null && !empty($scraped->mainImageUrl)) {
                     $dto = $this->createAndSaveDtoFromScraped($scraped);
@@ -132,7 +139,7 @@ class ProductMiningService implements ProductMiningServiceInterface
                     $collected++;
                 }
             } catch (Throwable $e) {
-                // Continua para o próximo item
+                // Descarta silenciosamente e tenta o próximo item da lista de busca
             }
         }
 
@@ -143,7 +150,7 @@ class ProductMiningService implements ProductMiningServiceInterface
     {
         $inputStr = trim((string)$productIdOrUrl);
 
-        // 1. Se for uma URL completa informada pelo usuário, executa o scraping direto da URL
+        // 1. Se for uma URL completa, tenta extrair em tempo real diretamente da página web oficial
         if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
             $scraped = $this->linkScraper->scrape($inputStr);
             if ($scraped !== null) {
@@ -169,19 +176,25 @@ class ProductMiningService implements ProductMiningServiceInterface
             $productData = null;
         }
 
-        // 4. Se a API não retornou dados, executa scraping em tempo real pelo link canônico do produto
-        if (empty($productData)) {
-            $scraped = $this->linkScraper->scrape($numericId);
-            if ($scraped !== null) {
-                return $this->createAndSaveDtoFromScraped($scraped);
-            }
+        if (!empty($productData)) {
+            $dto = $this->transformRawItemToDto($productData);
+            $savedId = $this->repository->save($dto);
+            return $this->repository->findById($savedId) ?? $dto;
         }
 
-        // 5. Fallback estruturado caso ambos estejam offline
-        if (empty($productData)) {
-            $productData = $this->createFallbackItemFromIdOrUrl($numericId, (string)$productIdOrUrl);
+        // 4. Se a API não retornou dados, tenta scraper pelo ID numérico
+        $scrapedById = $this->linkScraper->scrape($numericId);
+        if ($scrapedById !== null) {
+            return $this->createAndSaveDtoFromScraped($scrapedById);
         }
 
+        // 5. Se for uma URL pública e nem o scraper nem a API encontraram o produto, o anúncio não existe (404)
+        if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
+            throw new RuntimeException("O link informado não foi encontrado ou está desativado no AliExpress (Erro 404). Por favor, forneça o link de um anúncio ativo.");
+        }
+
+        // 6. Fallback estruturado para testes com IDs sintéticos
+        $productData = $this->createFallbackItemFromIdOrUrl($numericId, (string)$productIdOrUrl);
         $dto = $this->transformRawItemToDto($productData);
         $savedId = $this->repository->save($dto);
 

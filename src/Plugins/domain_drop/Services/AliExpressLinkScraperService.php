@@ -37,7 +37,7 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
             return null;
         }
 
-        $canonicalUrl = "https://pt.aliexpress.com/item/{$productId}.html";
+        $canonicalUrl = "https://pt.aliexpress.com/item/{$productId}.html?country=BR&locale=pt_BR&currency=BRL";
         $targetUrl = str_starts_with($urlOrId, 'http') ? $urlOrId : $canonicalUrl;
 
         try {
@@ -46,13 +46,29 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
                 return null;
             }
 
-            // 1. Extração do Título
+            // 1. Filtro de Link Morto / 404 / Página Desativada
+            if (stripos($html, 'Página não encontrada') !== false 
+                || stripos($html, 'Page Not Found') !== false 
+                || stripos($html, 'Item no longer available') !== false
+                || stripos($html, 'Não conseguimos encontrar esta página') !== false
+            ) {
+                return null;
+            }
+
+            // 2. Extração do Título
             $title = '';
             if (preg_match('/<meta property="og:title" content="([^"]+)"/i', $html, $m)) {
                 $title = html_entity_decode(preg_replace('/\s*-\s*AliExpress.*$/i', '', $m[1]));
             }
 
-            // 2. Extração da Imagem Principal
+            if (empty($title) 
+                || stripos($title, 'Página não encontrada') !== false 
+                || stripos($title, 'Page Not Found') !== false
+            ) {
+                return null;
+            }
+
+            // 3. Extração da Imagem Principal
             $mainImage = '';
             if (preg_match('/<meta property="og:image" content="([^"]+)"/i', $html, $m)) {
                 $mainImage = $this->cleanImageUrl($m[1]);
@@ -135,22 +151,39 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
         return '';
     }
 
+    public function isProductAlive(string $urlOrId): bool
+    {
+        return $this->scrape($urlOrId) !== null;
+    }
+
     private function fetchHtml(string $url): ?string
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
             'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cookie: aep_usuc_f=region=BR&site=bra&b_locale=pt_BR&c_tp=BRL; xman_us_f=x_locale=pt_BR; intl_locale=pt_BR;',
             'Cache-Control: no-cache',
             'Pragma: no-cache',
         ]);
         $html = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $effectiveUrl = (string)curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
         curl_close($ch);
+
+        // Se o servidor retornar 404, 410 ou redirecionar para página de erro, descarta imediatamente
+        if ($httpCode !== 200) {
+            return null;
+        }
+
+        if (str_contains($effectiveUrl, 'notfound') || str_contains($effectiveUrl, 'page-not-found') || str_contains($effectiveUrl, 'item-not-found')) {
+            return null;
+        }
 
         return is_string($html) ? $html : null;
     }
