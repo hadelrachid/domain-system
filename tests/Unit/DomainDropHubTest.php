@@ -590,4 +590,90 @@ class DomainDropHubTest extends TestCase
         @rmdir($tmpDir . '/config');
         @rmdir($tmpDir);
     }
+
+    public function testDropshipAdminControllerUpdatePriceAndRepositoryPriceUpdate(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $product = new DropshipProductDto(
+            aliexpressId: '100500888999111',
+            title: 'Alicate Desencapador de Fios Automático',
+            slug: 'alicate-desencapador-de-fios-automatico',
+            costPriceUsd: 12.00,
+            salePriceBrl: 134.15,
+            mainImageUrl: 'https://ae01.alicdn.com/kf/desencapador.jpg',
+            images: ['https://ae01.alicdn.com/kf/desencapador.jpg'],
+            category: 'Ferramentas',
+            description: 'Alicate multifuncional para desencapar fios',
+            rating: 4.9,
+            ordersCount: 850,
+            attributes: [],
+            status: 'published'
+        );
+        $savedId = $repo->save($product);
+
+        // 1. Testa método do repositório diretamente
+        $this->assertTrue($repo->updatePrice($savedId, 79.90, 8.50));
+        $updated = $repo->findById($savedId);
+        $this->assertNotNull($updated);
+        $this->assertEqualsWithDelta(79.90, $updated->salePriceBrl, 0.01);
+        $this->assertEqualsWithDelta(8.50, $updated->costPriceUsd, 0.01);
+
+        // 2. Testa endpoint do Controller via requisição AJAX/JSON
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $tmpCache = sys_get_temp_dir() . '/test_admin_price_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.50]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('csrf_token_valid');
+
+        $tmpDir = sys_get_temp_dir() . '/ds_test_price_' . uniqid();
+        mkdir($tmpDir . '/config/plugins', 0777, true);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $session,
+            orderRepo: new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($this->pdo),
+            basePath: $tmpDir
+        );
+
+        // Teste com Custo informado em BRL (R$ 46,78) e Venda em BRL (R$ 79,90)
+        $req = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token'      => 'csrf_token_valid',
+                'cost_price_brl'  => '46.78',
+                'sale_price_brl'  => '79.90',
+                'ajax'            => '1',
+            ],
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+            ]
+        );
+
+        $resp = $controller->updatePrice($req, (string)$savedId);
+        $this->assertSame(200, $resp->getStatusCode());
+
+        $payload = json_decode((string)$resp->getContent(), true);
+        $this->assertTrue($payload['success']);
+        $this->assertEqualsWithDelta(79.90, (float)$payload['sale_price_brl'], 0.01);
+        $this->assertEqualsWithDelta(46.78, (float)$payload['cost_price_brl'], 0.1);
+        $this->assertGreaterThan(0, (float)$payload['profit_brl']);
+        $this->assertGreaterThan(0, (float)$payload['margin_percent']);
+
+        // Verifica no banco
+        $reloaded = $repo->findById($savedId);
+        $this->assertEqualsWithDelta(79.90, $reloaded->salePriceBrl, 0.01);
+
+        @unlink($tmpCache);
+        @unlink($tmpDir . '/config/plugins/domain_drop.json');
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
 }

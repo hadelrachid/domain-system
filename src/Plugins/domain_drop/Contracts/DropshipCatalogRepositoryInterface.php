@@ -51,6 +51,11 @@ interface DropshipCatalogRepositoryInterface
     public function delete(int $id): bool;
 
     /**
+     * Atualiza o preço de venda (BRL) e opcionalmente o custo (USD) de um produto.
+     */
+    public function updatePrice(int $id, float $salePriceBrl, ?float $costPriceUsd = null): bool;
+
+    /**
      * Retorna lista de categorias únicas disponíveis no catálogo.
      * @return array<int, string>
      */

@@ -8,6 +8,7 @@ use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\SessionManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\ViewResponse;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
@@ -279,6 +280,99 @@ class DropshipAdminController
         $this->session->setFlash('success', 'Produto removido do catálogo.');
 
         return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    public function updatePrice(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse(['success' => false, 'message' => 'Token de segurança expirado.'], 403);
+            }
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $productId = (int)$id;
+        $product = $this->catalogRepo->findById($productId);
+        if ($product === null) {
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse(['success' => false, 'message' => 'Produto não encontrado.'], 404);
+            }
+            $this->session->setFlash('error', 'Produto não encontrado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
+        if ($rate <= 0) {
+            $rate = 5.50;
+        }
+
+        // Preço de venda em BRL
+        $salePriceBrl = max(0.01, $this->parseCurrency($request->input('sale_price_brl')));
+
+        // Custo pode ser informado em BRL ou USD
+        $costPriceUsd = null;
+        if ($request->input('cost_price_brl') !== null && $request->input('cost_price_brl') !== '') {
+            $costBrl = max(0.0, $this->parseCurrency($request->input('cost_price_brl')));
+            $costPriceUsd = round($costBrl / $rate, 2);
+        } elseif ($request->input('cost_price_usd') !== null && $request->input('cost_price_usd') !== '') {
+            $costPriceUsd = max(0.0, $this->parseCurrency($request->input('cost_price_usd')));
+        }
+
+        $this->catalogRepo->updatePrice($productId, $salePriceBrl, $costPriceUsd);
+
+        $finalCostUsd = $costPriceUsd ?? $product->costPriceUsd;
+        $finalCostBrl = $finalCostUsd * $rate;
+        $profitBrl = $salePriceBrl - $finalCostBrl;
+        $marginPercent = ($salePriceBrl > 0) ? round(($profitBrl / $salePriceBrl) * 100, 1) : 0;
+
+        $msg = "💰 Preço de '{$product->title}' atualizado com sucesso! Venda: R$ " . number_format($salePriceBrl, 2, ',', '.') . " (Margem: {$marginPercent}% / R$ " . number_format($profitBrl, 2, ',', '.') . ")";
+
+        if ($this->isAjaxOrJson($request)) {
+            return new JsonResponse([
+                'success'        => true,
+                'message'        => $msg,
+                'sale_price_brl' => $salePriceBrl,
+                'sale_formatted' => 'R$ ' . number_format($salePriceBrl, 2, ',', '.'),
+                'cost_price_usd' => $finalCostUsd,
+                'cost_price_brl' => round($finalCostBrl, 2),
+                'cost_formatted' => 'R$ ' . number_format($finalCostBrl, 2, ',', '.'),
+                'profit_brl'     => round($profitBrl, 2),
+                'margin_percent' => $marginPercent,
+            ]);
+        }
+
+        $this->session->setFlash('success', $msg);
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    private function isAjaxOrJson(Request $request): bool
+    {
+        return str_contains((string)$request->header('Accept', ''), 'application/json')
+            || (bool)$request->input('ajax', false)
+            || ($request->header('X-Requested-With') === 'XMLHttpRequest');
+    }
+
+    private function parseCurrency(string|float|int|null $value): float
+    {
+        if ($value === null) {
+            return 0.0;
+        }
+        if (is_numeric($value)) {
+            return (float)$value;
+        }
+        $str = trim((string)$value);
+        $str = str_replace(['R$', '$', ' '], '', $str);
+
+        if (str_contains($str, ',')) {
+            // Formato brasileiro: 1.234,56 -> remove pontos, substitui vírgula por ponto
+            $str = str_replace('.', '', $str);
+            $str = str_replace(',', '.', $str);
+        }
+
+        return (float)$str;
     }
 
     private function verifyCsrf(Request $request): bool

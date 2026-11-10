@@ -190,6 +190,26 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         return $stmt->execute([$id]);
     }
 
+    public function updatePrice(int $id, float $salePriceBrl, ?float $costPriceUsd = null): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        if ($costPriceUsd !== null && $costPriceUsd >= 0) {
+            $stmt = $this->pdo->prepare("
+                UPDATE domain_drop_catalog
+                SET sale_price_brl = ?, cost_price_usd = ?, updated_at = ?
+                WHERE id = ?
+            ");
+            return $stmt->execute([$salePriceBrl, $costPriceUsd, $now, $id]);
+        }
+
+        $stmt = $this->pdo->prepare("
+            UPDATE domain_drop_catalog
+            SET sale_price_brl = ?, updated_at = ?
+            WHERE id = ?
+        ");
+        return $stmt->execute([$salePriceBrl, $now, $id]);
+    }
+
     public function getCategories(): array
     {
         $stmt = $this->pdo->query("SELECT DISTINCT category FROM domain_drop_catalog WHERE category != '' ORDER BY category ASC");

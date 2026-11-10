@@ -268,22 +268,22 @@
                             <div style="background: rgba(0,0,0,0.25); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
                                     <span style="font-size: 11px; color: var(--text-muted, #94a3b8);">Custo (USD):</span>
-                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">$<?= number_format($prod->costPriceUsd, 2) ?></span>
+                                    <span id="prod-cost-usd-<?= (int)$prod->id ?>" style="font-size: 12px; color: #94a3b8; font-family: monospace;">$<?= number_format($prod->costPriceUsd, 2) ?></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
                                     <span style="font-size: 11px; color: var(--text-muted, #94a3b8);">Custo Convertido:</span>
-                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">R$ <?= number_format($prod->costPriceUsd * $rate, 2, ',', '.') ?></span>
+                                    <span id="prod-cost-brl-<?= (int)$prod->id ?>" style="font-size: 12px; color: #94a3b8; font-family: monospace;">R$ <?= number_format($prod->costPriceUsd * $rate, 2, ',', '.') ?></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px; margin-top: 4px;">
                                     <span style="font-size: 12px; font-weight: 600; color: #5cd67d;">Venda Sugerida:</span>
-                                    <span style="font-size: 16px; font-weight: 700; color: #5cd67d; font-family: monospace;">R$ <?= number_format($prod->salePriceBrl, 2, ',', '.') ?></span>
+                                    <span id="prod-sale-brl-<?= (int)$prod->id ?>" style="font-size: 16px; font-weight: 700; color: #5cd67d; font-family: monospace;">R$ <?= number_format($prod->salePriceBrl, 2, ',', '.') ?></span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Card Actions -->
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="font-size: 11px; color: #45f3ff; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-weight: 600;">
                                     <i class="fas fa-eye"></i> Loja
                                 </a>
@@ -291,6 +291,9 @@
                                     <i class="fas fa-external-link-alt"></i> Link
                                 </a>
                                 <?php if ($prod->id !== null): ?>
+                                    <button type="button" onclick="openPriceModal(<?= (int)$prod->id ?>, <?= htmlspecialchars(json_encode($prod->title)) ?>, <?= (float)$prod->costPriceUsd ?>, <?= (float)round($prod->costPriceUsd * $rate, 2) ?>, <?= (float)$prod->salePriceBrl ?>)" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; cursor: pointer; font-size: 11px; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; font-weight: 600;" title="Editar Custo e Preço de Venda">
+                                        <i class="fas fa-tags"></i> Preço
+                                    </button>
                                     <form action="<?= $baseUrl ?>/admin/dropship/product/<?= (int)$prod->id ?>/sync-images" method="POST" style="margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                                         <button type="submit" style="background: rgba(69,243,255,0.08); border: 1px solid rgba(69,243,255,0.25); color: #45f3ff; cursor: pointer; font-size: 11px; padding: 3px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;" title="Sincronizar imagens reais direto do link">
@@ -315,4 +318,225 @@
         </div>
     <?php endif; ?>
 
+    <!-- Modal de Edição de Preço (Clean / Responsivo / Tempo Real) -->
+    <div id="priceEditModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: #111722; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; max-width: 520px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.8); overflow: hidden; animation: dsModalIn 0.2s ease;">
+            
+            <div style="background: rgba(245, 158, 11, 0.08); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: #f59e0b; color: #000; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #fff;">Ajuste de Preço e Margem</h3>
+                        <div id="modalProductTitle" style="font-size: 12px; color: var(--text-muted, #94a3b8); max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                    </div>
+                </div>
+                <button type="button" onclick="closePriceModal()" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 4px;">&times;</button>
+            </div>
+
+            <form id="priceEditForm" method="POST" action="" onsubmit="handlePriceSubmit(event)" style="padding: 24px;">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <input type="hidden" id="modalProductId" name="product_id" value="">
+
+                <!-- Câmbio de Referência -->
+                <div style="background: rgba(69, 243, 255, 0.06); border: 1px solid rgba(69, 243, 255, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <span style="color: #94a3b8;"><i class="fas fa-exchange-alt"></i> Câmbio Atual do Sistema:</span>
+                    <strong style="color: #45f3ff;">USD 1,00 = R$ <?= number_format($rate, 2, ',', '.') ?></strong>
+                </div>
+
+                <!-- Input Custo Fornecedor (BRL) -->
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px;">
+                        Custo do Fornecedor (R$ na Loja do AliExpress):
+                    </label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 12px; top: 10px; color: #94a3b8; font-weight: 700; font-size: 14px;">R$</span>
+                        <input type="number" step="0.01" min="0" id="modalCostBrl" name="cost_price_brl" oninput="recalcMargin()" required style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 12px 10px 40px; color: #fff; font-size: 15px; font-weight: 600; box-sizing: border-box;">
+                    </div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; display: flex; justify-content: space-between;">
+                        <span>Equivalente em Dólar: <strong id="modalCostUsdHint" style="color: #fff;">$0.00</strong></span>
+                        <span style="color: #f59e0b;">Atualize caso o produto esteja em promoção no AliExpress</span>
+                    </div>
+                </div>
+
+                <!-- Atalhos de Markup Rápido -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">
+                        Atalhos de Margem Automática sobre o Custo:
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button type="button" onclick="applyMarkup(30)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">+30%</button>
+                        <button type="button" onclick="applyMarkup(50)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">+50%</button>
+                        <button type="button" onclick="applyMarkup(75)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">+75%</button>
+                        <button type="button" onclick="applyMarkup(100)" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 700;">+100% (2x Custo)</button>
+                        <button type="button" onclick="roundTo90()" style="background: rgba(69, 243, 255, 0.1); border: 1px solid rgba(69, 243, 255, 0.3); color: #45f3ff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">Terminar em ,90</button>
+                    </div>
+                </div>
+
+                <!-- Input Preço de Venda Final (BRL) -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #5cd67d; margin-bottom: 6px;">
+                        Preço de Venda na Loja RachidD.com (R$):
+                    </label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 12px; top: 10px; color: #5cd67d; font-weight: 700; font-size: 14px;">R$</span>
+                        <input type="number" step="0.01" min="0.01" id="modalSaleBrl" name="sale_price_brl" oninput="recalcMargin()" required style="width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(92, 214, 125, 0.4); border-radius: 6px; padding: 10px 12px 10px 40px; color: #5cd67d; font-size: 18px; font-weight: 700; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <!-- Painel de Lucratividade em Tempo Real -->
+                <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; margin-bottom: 22px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center;">
+                        <div style="border-right: 1px solid rgba(255,255,255,0.08); padding-right: 12px;">
+                            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Lucro Bruto por Venda</div>
+                            <div id="modalProfitBrl" style="font-size: 18px; font-weight: 800; color: #5cd67d; margin-top: 2px;">R$ 0,00</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Margem Real</div>
+                            <div id="modalMarginPercent" style="font-size: 18px; font-weight: 800; color: #45f3ff; margin-top: 2px;">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closePriceModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSavePrice" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: #000; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-check"></i> Salvar Preço
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        @keyframes dsModalIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+
+    <script>
+        const systemExchangeRate = <?= (float)$rate ?>;
+        const baseAdminUrl = '<?= $baseUrl ?>/admin/dropship';
+
+        function openPriceModal(id, title, costUsd, costBrl, saleBrl) {
+            document.getElementById('modalProductId').value = id;
+            document.getElementById('modalProductTitle').innerText = title;
+            document.getElementById('modalProductTitle').title = title;
+            document.getElementById('priceEditForm').action = baseAdminUrl + '/product/' + id + '/price';
+
+            document.getElementById('modalCostBrl').value = parseFloat(costBrl).toFixed(2);
+            document.getElementById('modalSaleBrl').value = parseFloat(saleBrl).toFixed(2);
+
+            recalcMargin();
+            var modal = document.getElementById('priceEditModal');
+            modal.style.display = 'flex';
+        }
+
+        function closePriceModal() {
+            var modal = document.getElementById('priceEditModal');
+            modal.style.display = 'none';
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePriceModal();
+        });
+
+        document.getElementById('priceEditModal').addEventListener('click', function(e) {
+            if (e.target === this) closePriceModal();
+        });
+
+        function recalcMargin() {
+            const costBrl = parseFloat(document.getElementById('modalCostBrl').value) || 0;
+            const saleBrl = parseFloat(document.getElementById('modalSaleBrl').value) || 0;
+
+            const costUsd = (systemExchangeRate > 0) ? (costBrl / systemExchangeRate) : 0;
+            document.getElementById('modalCostUsdHint').innerText = '$' + costUsd.toFixed(2);
+
+            const profit = saleBrl - costBrl;
+            const margin = saleBrl > 0 ? ((profit / saleBrl) * 100).toFixed(1) : 0;
+
+            const profitEl = document.getElementById('modalProfitBrl');
+            const marginEl = document.getElementById('modalMarginPercent');
+
+            profitEl.innerText = (profit >= 0 ? '+R$ ' : '-R$ ') + Math.abs(profit).toFixed(2).replace('.', ',');
+            profitEl.style.color = profit >= 0 ? '#5cd67d' : '#ef4444';
+
+            marginEl.innerText = margin + '%';
+            marginEl.style.color = margin >= 0 ? '#45f3ff' : '#ef4444';
+        }
+
+        function applyMarkup(percent) {
+            const costBrl = parseFloat(document.getElementById('modalCostBrl').value) || 0;
+            if (costBrl > 0) {
+                const newSale = costBrl * (1 + (percent / 100));
+                document.getElementById('modalSaleBrl').value = newSale.toFixed(2);
+                recalcMargin();
+            }
+        }
+
+        function roundTo90() {
+            let sale = parseFloat(document.getElementById('modalSaleBrl').value) || 0;
+            if (sale > 0) {
+                let rounded = Math.floor(sale) + 0.90;
+                if (rounded < sale && (sale - rounded) > 0.4) {
+                    rounded += 1;
+                }
+                document.getElementById('modalSaleBrl').value = rounded.toFixed(2);
+                recalcMargin();
+            }
+        }
+
+        function handlePriceSubmit(e) {
+            e.preventDefault();
+            const form = document.getElementById('priceEditForm');
+            const id = document.getElementById('modalProductId').value;
+            const btn = document.getElementById('btnSavePrice');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+            const formData = new FormData(form);
+            formData.append('ajax', '1');
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (data && data.success) {
+                    // Atualiza os valores visuais no card na hora
+                    const saleEl = document.getElementById('prod-sale-brl-' + id);
+                    if (saleEl) saleEl.innerText = data.sale_formatted;
+
+                    const costBrlEl = document.getElementById('prod-cost-brl-' + id);
+                    if (costBrlEl) costBrlEl.innerText = data.cost_formatted;
+
+                    const costUsdEl = document.getElementById('prod-cost-usd-' + id);
+                    if (costUsdEl) costUsdEl.innerText = '$' + parseFloat(data.cost_price_usd).toFixed(2);
+
+                    closePriceModal();
+                    alert(data.message);
+                } else {
+                    alert((data && data.message) ? data.message : 'Falha ao salvar preço.');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                // Fallback para envio padrão se fetch falhar
+                form.submit();
+            });
+        }
+    </script>
 </div>
