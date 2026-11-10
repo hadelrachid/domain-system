@@ -325,4 +325,50 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('checkout/produto/' . $savedId, $html);
         $this->assertStringContainsString('Quero Comprar', $html);
     }
+
+    public function testDropshipFrontControllerStorefrontAndSingleProduct(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $product = new DropshipProductDto(
+            aliexpressId: '100500888333',
+            title: 'Mochila Impermeável Antifurto USB',
+            slug: 'mochila-impermeavel-antifurto-usb',
+            costPriceUsd: 14.00,
+            salePriceBrl: 149.90,
+            mainImageUrl: 'https://ae01.alicdn.com/mochila.jpg',
+            images: ['https://ae01.alicdn.com/mochila.jpg', 'https://ae01.alicdn.com/mochila_side.jpg'],
+            category: 'Acessórios',
+            description: '<p>Mochila reforçada com entrada USB externa.</p>',
+            rating: 4.8,
+            ordersCount: 2300,
+            attributes: [],
+            status: 'published'
+        );
+        $savedId = $repo->save($product);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController($repo);
+
+        // 1. Vitrine da Loja (/loja)
+        $requestStore = new \DomainSystem\Core\Http\Request(['cat' => 'Acessórios']);
+        $responseStore = $controller->storefront($requestStore);
+
+        $this->assertSame(200, $responseStore->getStatusCode());
+        $bodyStore = $responseStore->getContent();
+        $this->assertStringContainsString('Loja Oficial', $bodyStore);
+        $this->assertStringContainsString('Mochila Impermeável Antifurto USB', $bodyStore);
+        $this->assertStringContainsString('Acessórios', $bodyStore);
+        $this->assertStringContainsString('R$ 149,90', $bodyStore);
+
+        // 2. Página Dedicada do Produto (/produto/mochila-impermeavel-antifurto-usb)
+        $requestProd = new \DomainSystem\Core\Http\Request();
+        $responseProd = $controller->singleProduct($requestProd, 'mochila-impermeavel-antifurto-usb');
+
+        $this->assertSame(200, $responseProd->getStatusCode());
+        $bodyProd = $responseProd->getContent();
+        $this->assertStringContainsString('Mochila Impermeável Antifurto USB', $bodyProd);
+        $this->assertStringContainsString('Comprar Agora', $bodyProd);
+        $this->assertStringContainsString('checkout/produto/' . $savedId, $bodyProd);
+        $this->assertStringContainsString('Envio Internacional com Rastreio', $bodyProd);
+    }
 }

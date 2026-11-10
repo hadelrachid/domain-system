@@ -18,5 +18,7 @@
     "clock_widget": true,
     "radio_online": true,
     "commerce": false,
-    "DomainCommerce": true
+    "DomainCommerce": true,
+    "domain_drop": true,
+    "DomainDrop": true
 }

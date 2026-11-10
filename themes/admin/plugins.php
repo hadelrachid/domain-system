@@ -159,6 +159,12 @@
                             <i class="fas fa-puzzle-piece"></i> Shortcodes
                         </a>
                     <?php endif; ?>
+
+                    <?php if (($plugin['folder'] === 'domain_drop' || ($plugin['name'] ?? '') === 'domain_drop' || ($plugin['name'] ?? '') === 'DomainDrop') && $plugin['is_active']): ?>
+                        <a href="<?= \BASE_URL ?>/admin/dropship" class="btn btn-activate" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #ff4747 0%, #e02424 100%); border-color: #ff4747;">
+                            <i class="fas fa-satellite-dish"></i> Painel Dropship
+                        </a>
+                    <?php endif; ?>
                 </div>
             </td>
         </tr>
@@ -264,6 +270,12 @@
                     <?php if ($plugin['folder'] === 'clinic_pack' && $plugin['is_active']): ?>
                         <a href="<?= \BASE_URL ?>/admin/clinic/shortcodes" class="btn btn-activate" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
                             <i class="fas fa-puzzle-piece"></i> Shortcodes
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if (($plugin['folder'] === 'domain_drop' || ($plugin['name'] ?? '') === 'domain_drop' || ($plugin['name'] ?? '') === 'DomainDrop') && $plugin['is_active']): ?>
+                        <a href="<?= \BASE_URL ?>/admin/dropship" class="btn btn-activate" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #ff4747 0%, #e02424 100%); border-color: #ff4747;">
+                            <i class="fas fa-satellite-dish"></i> Painel Dropship
                         </a>
                     <?php endif; ?>
                 </div>

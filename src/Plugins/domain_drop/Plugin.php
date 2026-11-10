@@ -132,6 +132,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, function () use ($runtime) {
+            $themeManager = $runtime->has(\DomainSystem\Core\Contracts\ThemeManagerInterface::class)
+                ? $runtime->make(\DomainSystem\Core\Contracts\ThemeManagerInterface::class)
+                : null;
+
+            return new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
+                themeManager: $themeManager
+            );
+        });
+
         // 2. Menu Administrativo
         $runtime->onHook('admin.menu', function ($menus, $role = 'guest') {
             if ($role === 'admin') {
@@ -171,6 +182,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
+
+            // 4. Rotas Públicas da Loja Virtual & Vitrine de Produtos
+            $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
+            $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
         });
 
         // 4. Integração com DomainCommerce (Resolução de Itens Vendáveis no Checkout)
