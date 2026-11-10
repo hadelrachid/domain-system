@@ -31,7 +31,7 @@ class EnvSiteState implements SiteStateInterface
             $rawStatus = $status ?? ($envStatus ?: ($configData['status'] ?? self::STATUS_LIVE));
 
             $envTheme = getenv('ACTIVE_THEME') ?: ($_ENV['ACTIVE_THEME'] ?? null);
-            $this->activeTheme = $theme ?? ($envTheme ?: ($configData['active_theme'] ?? 'default'));
+            $this->activeTheme = $theme ?? ($configData['active_theme'] ?? ($envTheme ?: 'default'));
         }
 
         $validStatuses = [self::STATUS_COMING_SOON, self::STATUS_MAINTENANCE, self::STATUS_LIVE];
