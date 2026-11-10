@@ -85,7 +85,7 @@ $refPrice = $product->salePriceBrl * 1.35;
                 </div>
 
                 <!-- CTA Button -->
-                <a href="<?= htmlspecialchars($checkoutUrl) ?>" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; background: linear-gradient(135deg, #ff4747 0%, #e02424 100%); color: #fff; text-decoration: none; padding: 16px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(255, 71, 71, 0.4); margin-bottom: 24px; transition: transform 0.2s ease;">
+                <a href="<?= htmlspecialchars($checkoutUrl) ?>" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 16px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); margin-bottom: 24px; transition: transform 0.2s ease;">
                     <span>Comprar Agora</span>
                     <span>➔</span>
                 </a>
