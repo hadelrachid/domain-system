@@ -371,4 +371,177 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('checkout/produto/' . $savedId, $bodyProd);
         $this->assertStringContainsString('Envio Internacional com Rastreio', $bodyProd);
     }
+
+    public function testDropshipAdminControllerIndexRendersCatalogAndProductsCleanly(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        // Adiciona um produto no repositório
+        $product = new DropshipProductDto(
+            aliexpressId: '10050011223344',
+            title: 'Smartwatch Pro 2026 Amoled',
+            slug: 'smartwatch-pro-2026-amoled',
+            costPriceUsd: 20.00,
+            salePriceBrl: 199.90,
+            mainImageUrl: 'https://ae01.alicdn.com/watch.jpg',
+            images: [],
+            category: 'Eletrônicos',
+            description: 'Relógio topo de linha.',
+            rating: 4.9,
+            ordersCount: 3000,
+            attributes: [],
+            status: 'published'
+        );
+        $repo->save($product);
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $tmpCache = sys_get_temp_dir() . '/test_admin_cache_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.50]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('csrf_token_test');
+        $session->method('getFlash')->willReturn(['type' => 'success', 'msg' => 'Bem-vindo ao DomainDrop!']);
+
+        $tmpDir = sys_get_temp_dir() . '/ds_test_admin_' . uniqid();
+        mkdir($tmpDir . '/config/plugins', 0777, true);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $session,
+            orderRepo: new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($this->pdo),
+            basePath: $tmpDir
+        );
+
+        $request = new \DomainSystem\Core\Http\Request();
+        $response = $controller->index($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $html = $response->getContent();
+        $this->assertStringContainsString('DomainDrop Hub', $html);
+        $this->assertStringContainsString('Smartwatch Pro 2026 Amoled', $html);
+        $this->assertStringContainsString('R$ 199,90', $html);
+        $this->assertStringContainsString('10050011223344', $html);
+
+        // Limpeza
+        @unlink($tmpCache);
+        @unlink($tmpDir . '/config/plugins/domain_drop.json');
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
+
+    public function testDropshipAdminControllerMiningActionPopulatesCatalog(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+        $this->assertSame(0, $repo->count());
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $mockApi->method('searchProducts')->willReturn([]); // Força uso do fallback curado
+
+        $tmpCache = sys_get_temp_dir() . '/test_admin_mine_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.50]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('valid_csrf');
+
+        $tmpDir = sys_get_temp_dir() . '/ds_test_mine_' . uniqid();
+        mkdir($tmpDir . '/config/plugins', 0777, true);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $session,
+            orderRepo: null,
+            basePath: $tmpDir
+        );
+
+        $request = new \DomainSystem\Core\Http\Request([], [
+            'csrf_token' => 'valid_csrf',
+            'category'   => 'Eletrônicos',
+            'limit'      => '5',
+        ]);
+
+        $response = $controller->mine($request);
+        $this->assertSame(302, $response->getStatusCode());
+
+        // Verifica que os produtos foram minerados e persistidos no banco
+        $this->assertGreaterThan(0, $repo->count());
+
+        @unlink($tmpCache);
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
+
+    public function testDropshipAdminControllerSettingsAndOrders(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+        $orderRepo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($this->pdo);
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $tmpCache = sys_get_temp_dir() . '/test_admin_settings_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.50]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('valid_csrf');
+
+        $tmpDir = sys_get_temp_dir() . '/ds_test_settings_' . uniqid();
+        mkdir($tmpDir . '/config/plugins', 0777, true);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $session,
+            orderRepo: $orderRepo,
+            basePath: $tmpDir
+        );
+
+        // 1. Settings view
+        $settingsResp = $controller->settings(new \DomainSystem\Core\Http\Request());
+        $this->assertSame(200, $settingsResp->getStatusCode());
+        $this->assertStringContainsString('Configurações da API', $settingsResp->getContent());
+
+        // 2. Save settings
+        $saveReq = new \DomainSystem\Core\Http\Request([], [
+            'csrf_token'             => 'valid_csrf',
+            'app_key'                => '558628_test',
+            'app_secret'             => 'secret_12345',
+            'access_token'           => 'token_oauth_xyz',
+            'default_markup_percent' => '120.0',
+            'min_profit_margin_brl'  => '45.0',
+        ]);
+        $saveResp = $controller->saveSettings($saveReq);
+        $this->assertSame(302, $saveResp->getStatusCode());
+
+        $savedConfig = json_decode((string)file_get_contents($tmpDir . '/config/plugins/domain_drop.json'), true);
+        $this->assertSame('558628_test', $savedConfig['app_key']);
+        $this->assertSame('secret_12345', $savedConfig['app_secret']);
+        $this->assertSame('token_oauth_xyz', $savedConfig['access_token']);
+        $this->assertEqualsWithDelta(120.0, (float)$savedConfig['default_markup_percent'], 0.01);
+        $this->assertEqualsWithDelta(45.0, (float)$savedConfig['min_profit_margin_brl'], 0.01);
+
+        // 3. Orders view
+        $ordersResp = $controller->orders(new \DomainSystem\Core\Http\Request());
+        $this->assertSame(200, $ordersResp->getStatusCode());
+        $this->assertStringContainsString('Pedidos Dropshipping', $ordersResp->getContent());
+
+        @unlink($tmpCache);
+        @unlink($tmpDir . '/config/plugins/domain_drop.json');
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
 }

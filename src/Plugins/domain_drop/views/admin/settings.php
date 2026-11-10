@@ -93,6 +93,16 @@
             </span>
         </div>
 
+        <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
+                Access Token OAuth2 (Sessão do Dropshipper)
+            </label>
+            <input type="password" name="access_token" placeholder="<?= !empty($config['access_token']) ? '•••••••••••••••••••••••••••••••• (Token Ativo)' : 'Cole o Access Token de autorização OAuth (opcional)' ?>" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+            <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
+                Token de sessão concedido pelo AliExpress para chamadas autenticadas de produtos e pedidos dropshipping. Caso não possua, o motor utilizará a base inteligente curada.
+            </span>
+        </div>
+
         <div style="margin-bottom: 24px;">
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
                 Callback URL Cadastrada

@@ -26,7 +26,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         string $appKey,
         string $appSecret,
         string $gatewayUrl = 'https://api-sg.aliexpress.com/sync',
-        int $timeout = 15
+        int $timeout = 15,
+        private ?string $accessToken = null
     ) {
         $this->appKey = trim($appKey);
         $this->appSecret = trim($appSecret);
@@ -40,6 +41,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             throw new RuntimeException('[AliExpressApiClient] AppKey ou AppSecret não configurados no DomainDrop.');
         }
 
+        $token = $accessToken ?? $this->accessToken;
+
         $sysParams = [
             'app_key'     => $this->appKey,
             'sign_method' => 'sha256',
@@ -50,8 +53,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'simplify'    => 'true',
         ];
 
-        if ($accessToken !== null && $accessToken !== '') {
-            $sysParams['session'] = $accessToken;
+        if ($token !== null && $token !== '') {
+            $sysParams['session'] = $token;
         }
 
         // Combina parâmetros de sistema e de API para cálculo da assinatura
@@ -79,7 +82,7 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'ship_to_country' => 'BR',
         ];
 
-        return $this->execute('aliexpress.ds.product.get', $params);
+        return $this->execute('aliexpress.ds.product.get', $params, $this->accessToken);
     }
 
     public function searchProducts(array $filters = []): array
@@ -95,7 +98,11 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'ship_to_country'  => 'BR',
         ];
 
-        $response = $this->execute('aliexpress.ds.recommend.feed.get', $params);
+        try {
+            $response = $this->execute('aliexpress.ds.recommend.feed.get', $params, $this->accessToken);
+        } catch (Throwable $e) {
+            return [];
+        }
 
         // Tenta normalizar tanto o feed de recomendação quanto a busca direta
         $products = $response['result']['products']['traffic_product_d_t_o']

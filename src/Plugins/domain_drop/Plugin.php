@@ -83,19 +83,23 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(AliExpressApiClientInterface::class, function () use ($configFile) {
             $appKey = '558628';
             $appSecret = '';
+            $accessToken = null;
 
             if (file_exists($configFile)) {
                 $data = @json_decode((string)file_get_contents($configFile), true);
                 if (is_array($data)) {
                     $appKey = (string)($data['app_key'] ?? $appKey);
                     $appSecret = (string)($data['app_secret'] ?? '');
+                    $accessToken = !empty($data['access_token']) ? (string)$data['access_token'] : null;
                 }
             }
 
             return new AliExpressApiClient(
                 appKey: $appKey,
                 appSecret: $appSecret,
-                gatewayUrl: 'https://api-sg.aliexpress.com/sync'
+                gatewayUrl: 'https://api-sg.aliexpress.com/sync',
+                timeout: 15,
+                accessToken: $accessToken
             );
         });
 

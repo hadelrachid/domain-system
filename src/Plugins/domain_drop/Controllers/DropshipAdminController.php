@@ -146,6 +146,10 @@ class DropshipAdminController
         if ($newSecret !== '' && !str_starts_with($newSecret, '***')) {
             $config['app_secret'] = $newSecret;
         }
+        $newAccessToken = trim((string)$request->input('access_token', ''));
+        if ($newAccessToken !== '' && !str_starts_with($newAccessToken, '***')) {
+            $config['access_token'] = $newAccessToken;
+        }
         $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
         $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
 

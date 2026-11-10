@@ -216,8 +216,8 @@
                 <div style="background: var(--bg-panel, #1d2327); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Image with badges -->
                     <div style="position: relative; width: 100%; height: 200px; background: #0b0e11; overflow: hidden;">
-                        <?php if (!empty($prod->imageUrl)): ?>
-                            <img src="<?= htmlspecialchars($prod->imageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php if (!empty($prod->mainImageUrl)): ?>
+                            <img src="<?= htmlspecialchars($prod->mainImageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
                             <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #94a3b8);">
                                 <i class="fas fa-image" style="font-size: 32px;"></i>
@@ -246,28 +246,24 @@
                             <div style="background: rgba(0,0,0,0.25); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
                                     <span style="font-size: 11px; color: var(--text-muted, #94a3b8);">Custo (USD):</span>
-                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">$<?= number_format($prod->priceUsd, 2) ?></span>
+                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">$<?= number_format($prod->costPriceUsd, 2) ?></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
                                     <span style="font-size: 11px; color: var(--text-muted, #94a3b8);">Custo Convertido:</span>
-                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">R$ <?= number_format($prod->costBrl, 2, ',', '.') ?></span>
+                                    <span style="font-size: 12px; color: #94a3b8; font-family: monospace;">R$ <?= number_format($prod->costPriceUsd * $rate, 2, ',', '.') ?></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px; margin-top: 4px;">
                                     <span style="font-size: 12px; font-weight: 600; color: #5cd67d;">Venda Sugerida:</span>
-                                    <span style="font-size: 16px; font-weight: 700; color: #5cd67d; font-family: monospace;">R$ <?= number_format($prod->priceBrl, 2, ',', '.') ?></span>
+                                    <span style="font-size: 16px; font-weight: 700; color: #5cd67d; font-family: monospace;">R$ <?= number_format($prod->salePriceBrl, 2, ',', '.') ?></span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Card Actions -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; pt: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
-                            <?php if (!empty($prod->aliexpressUrl)): ?>
-                                <a href="<?= htmlspecialchars($prod->aliexpressUrl) ?>" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-external-link-alt"></i> AliExpress
-                                </a>
-                            <?php else: ?>
-                                <span style="font-size: 11px; color: var(--text-muted, #94a3b8);">ID: <?= htmlspecialchars($prod->aliexpressProductId) ?></span>
-                            <?php endif; ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+                            <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #ff6b6b; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-external-link-alt"></i> AliExpress (<?= htmlspecialchars($prod->aliexpressId) ?>)
+                            </a>
 
                             <?php if ($prod->id !== null): ?>
                                 <form action="<?= $baseUrl ?>/admin/dropship/delete/<?= (int)$prod->id ?>" method="POST" onsubmit="return confirm('Deseja realmente remover este produto do catálogo?');" style="margin: 0;">
