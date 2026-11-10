@@ -129,7 +129,7 @@
                     <div style="position: relative; width: 100%; height: 240px; background: #0c0f12; overflow: hidden;">
                         <a href="<?= htmlspecialchars($productUrl) ?>">
                             <?php if (!empty($p->mainImageUrl)): ?>
-                                <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                             <?php else: ?>
                                 <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 36px;">📦</div>
                             <?php endif; ?>

@@ -217,7 +217,7 @@
                     <!-- Image with badges -->
                     <div style="position: relative; width: 100%; height: 200px; background: #0b0e11; overflow: hidden;">
                         <?php if (!empty($prod->mainImageUrl)): ?>
-                            <img src="<?= htmlspecialchars($prod->mainImageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="<?= htmlspecialchars($prod->mainImageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
                             <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #94a3b8);">
                                 <i class="fas fa-image" style="font-size: 32px;"></i>

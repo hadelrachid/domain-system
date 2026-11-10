@@ -11,7 +11,7 @@ try {
         $container = $GLOBALS['app']->getContainer();
         if ($container->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class)) {
             $repo = $container->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
-            $catalogProducts = $repo->findAllActive(12);
+            $catalogProducts = $repo->list(['status' => 'published'], 12);
         }
     }
 } catch (\Throwable $e) {

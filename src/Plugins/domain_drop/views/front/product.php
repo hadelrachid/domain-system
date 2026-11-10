@@ -32,7 +32,7 @@ $refPrice = $product->salePriceBrl * 1.35;
         <div>
             <div style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
                 <?php if (!empty($product->mainImageUrl)): ?>
-                    <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                 <?php else: ?>
                     <div style="font-size: 50px;">📦</div>
                 <?php endif; ?>
