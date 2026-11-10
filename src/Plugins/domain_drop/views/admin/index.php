@@ -306,8 +306,8 @@
                             <?php if ($prod->id !== null): ?>
                                 <form action="<?= $baseUrl ?>/admin/dropship/delete/<?= (int)$prod->id ?>" method="POST" onsubmit="return confirm('Deseja realmente remover este produto do catálogo?');" style="margin: 0; display: inline-flex; vertical-align: middle;">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                    <button type="submit" style="height: 26px; width: 26px; padding: 0; font-size: 12px; color: #ef4444; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Excluir do catálogo">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <button type="submit" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #ef4444; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Excluir produto do catálogo">
+                                        <i class="fas fa-trash-alt"></i> Excluir
                                     </button>
                                 </form>
                             <?php endif; ?>
