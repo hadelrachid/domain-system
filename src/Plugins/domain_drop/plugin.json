@@ -1,0 +1,8 @@
+{
+    "name": "domain_drop",
+    "version": "2.6.0",
+    "author": "Rachid",
+    "description": "Motor autônomo de dropshipping e mineração de produtos virais integrado ao AliExpress Open Platform (App ISV 558628), precificação dinâmica e enriquecimento por IA.",
+    "core": false,
+    "os_version": "2.6"
+}

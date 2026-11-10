@@ -37,3 +37,4 @@ bundle.*
 token/
 public/migrate_pages.php
 .kilo/
+config/plugins/
