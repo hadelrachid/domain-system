@@ -90,7 +90,10 @@ class WebhookController
                 $this->dispatcher->dispatch('payment.approved', [
                     'user_id'   => (int)$order['user_id'],
                     'course_id' => (int)$order['item_id'],
+                    'item_id'   => (int)$order['item_id'],
+                    'item_type' => (string)($order['item_type'] ?? 'course'),
                     'order_ref' => $orderRef,
+                    'total'     => (float)($order['total'] ?? 0.0),
                 ]);
             }
 

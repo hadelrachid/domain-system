@@ -38,6 +38,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->requireLink('core.events');
+        $os->requireLink('core.session');
+        $os->provideHook('commerce.register_item_resolvers');
+        $os->provideHook('commerce.register_gateways');
+        $os->provideHook('payment.approved');
         $os->listenHook('router.register');
         $os->listenHook('admin.menu');
     }
@@ -85,7 +89,13 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(PurchasableItemResolverInterface::class, function () use ($runtime) {
             $resolver = new PurchasableItemResolver();
             try {
-                $dispatcher = $runtime->getLink('core.events');
+                $dispatcher = null;
+                try {
+                    $dispatcher = $runtime->getLink('core.events');
+                } catch (\Throwable $e) {
+                    $dispatcher = $runtime->make(EventDispatcherInterface::class);
+                }
+
                 if ($dispatcher instanceof EventDispatcherInterface) {
                     $dispatcher->dispatch('commerce.register_item_resolvers', $resolver);
                 }
@@ -93,6 +103,35 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 // Silencia se não houver listeners externos
             }
             return $resolver;
+        });
+
+        // 5. Fábrica Controladora do Checkout
+        $runtime->singleton(CheckoutController::class, function () use ($runtime) {
+            $courseRepo = null;
+            try {
+                $courseRepo = $runtime->make(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+            } catch (\Throwable $e) {
+            }
+
+            $dispatcher = null;
+            try {
+                $dispatcher = $runtime->getLink('core.events');
+            } catch (\Throwable $e) {
+                try {
+                    $dispatcher = $runtime->make(EventDispatcherInterface::class);
+                } catch (\Throwable $e2) {
+                }
+            }
+
+            return new CheckoutController(
+                session: $runtime->getLink('core.session'),
+                orderRepo: $runtime->make(OrderRepositoryInterface::class),
+                gatewayRegistry: $runtime->make(PaymentGatewayRegistryInterface::class),
+                courseRepo: $courseRepo,
+                dispatcher: $dispatcher,
+                itemResolver: $runtime->make(PurchasableItemResolverInterface::class),
+                settings: $runtime->make(CommerceSettingsInterface::class)
+            );
         });
 
         // 5. Menu Administrativo do DomainCommerce

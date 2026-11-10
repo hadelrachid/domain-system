@@ -71,6 +71,9 @@ class LinkRegistry
         if ($linkName === 'core.theme_parts') {
             return $this->container->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class);
         }
+        if ($linkName === 'core.events') {
+            return $this->container->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        }
 
         throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
     }
@@ -92,6 +95,7 @@ class LinkRegistry
             'core.theme',
             'core.storage',
             'core.theme_parts',
+            'core.events',
         ], true);
     }
 

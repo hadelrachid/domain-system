@@ -190,15 +190,6 @@ class CheckoutController
      */
     public function process(Request $request): ResponseInterface
     {
-        $userId = (int)$this->session->get('academy_student_id', 0);
-        if ($userId <= 0) {
-            $userId = (int)$this->session->get('user_id', 0);
-        }
-
-        if ($userId <= 0) {
-            return new JsonResponse(['success' => false, 'message' => 'Faça login para concluir o pagamento.'], 401);
-        }
-
         $token = (string)($request->input('csrf_token') ?? ($request->server['HTTP_X_CSRF_TOKEN'] ?? ''));
         $expectedToken = (string)$this->session->getCsrfToken();
         if ($token === '' || !hash_equals($expectedToken, $token)) {
@@ -239,6 +230,17 @@ class CheckoutController
 
         if ($itemType === '') {
             $itemType = 'course';
+        }
+
+        $isPhysicalOrDropship = in_array($itemType, ['dropship_product', 'dropship', 'product'], true);
+
+        $userId = (int)$this->session->get('academy_student_id', 0);
+        if ($userId <= 0) {
+            $userId = (int)$this->session->get('user_id', 0);
+        }
+
+        if ($userId <= 0 && !$isPhysicalOrDropship) {
+            return new JsonResponse(['success' => false, 'message' => 'Faça login para concluir o pagamento.'], 401);
         }
 
         $total = (float)($course['price'] ?? 0.0);
@@ -283,13 +285,13 @@ class CheckoutController
             'order_ref'      => $orderRef,
         ]);
 
-        $studentName = (string)$this->session->get('academy_student_name', (string)$this->session->get('user_name', 'Aluno'));
-        $studentEmail = (string)$this->session->get('academy_student_email', (string)$this->session->get('user_email', 'aluno@exemplo.com'));
+        $studentName = (string)($request->input('customer_name') ?? $this->session->get('academy_student_name', (string)$this->session->get('user_name', $isPhysicalOrDropship ? 'Cliente' : 'Aluno')));
+        $studentEmail = (string)($request->input('customer_email') ?? $this->session->get('academy_student_email', (string)$this->session->get('user_email', 'cliente@exemplo.com')));
 
         $orderData = [
             'order_ref'     => $orderRef,
             'total'         => $total,
-            'description'   => "Matrícula no Curso: " . $course['title'],
+            'description'   => $isPhysicalOrDropship ? ("Compra: " . $course['title']) : ("Matrícula no Curso: " . $course['title']),
             'student_name'  => $studentName,
             'student_email' => $studentEmail,
             'payer_cpf'     => $payerCpf,
@@ -306,14 +308,27 @@ class CheckoutController
         if ($paymentResult->status === 'approved') {
             $this->orderRepo->updateStatus($orderId, 'paid', $paymentResult->transactionId);
 
-            // Dispara evento reativo do Kernel para liberar a matrícula no Academy imediatamente
+            // Dispara evento reativo do Kernel para liberar a matrícula no Academy ou registrar pedido no DomainDrop
             if ($this->dispatcher !== null) {
                 $this->dispatcher->dispatch('payment.approved', [
-                    'user_id'   => $userId,
-                    'course_id' => $courseId,
-                    'item_id'   => $courseId,
-                    'item_type' => $itemType,
-                    'order_ref' => $orderRef,
+                    'user_id'           => $userId,
+                    'course_id'         => $courseId,
+                    'item_id'           => $courseId,
+                    'item_type'         => $itemType,
+                    'order_ref'         => $orderRef,
+                    'total'             => $total,
+                    'customer_name'     => $studentName,
+                    'customer_email'    => $studentEmail,
+                    'customer_document' => $payerCpf,
+                    'shipping_address'  => [
+                        'zip'          => $request->input('shipping_zip'),
+                        'street'       => $request->input('shipping_street'),
+                        'number'       => $request->input('shipping_number'),
+                        'complement'   => $request->input('shipping_complement'),
+                        'neighborhood' => $request->input('shipping_neighborhood'),
+                        'city'         => $request->input('shipping_city'),
+                        'state'        => $request->input('shipping_state'),
+                    ],
                 ]);
             }
 

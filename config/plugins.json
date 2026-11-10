@@ -17,7 +17,7 @@
     "Crash Test (Simulador)": false,
     "clock_widget": true,
     "radio_online": true,
-    "commerce": false,
+    "commerce": true,
     "DomainCommerce": true,
     "domain_drop": true,
     "DomainDrop": true
