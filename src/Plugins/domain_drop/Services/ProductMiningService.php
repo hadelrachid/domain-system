@@ -45,7 +45,15 @@ class ProductMiningService implements ProductMiningServiceInterface
             $rawProducts = [];
         }
 
-        // Se a API remota não retornar itens (ex: sem token OAuth configurado), utiliza catálogo de tendência curado
+        // 1. Se a API remota oficial não estiver conectada, executa mineração em tempo real direto da busca pública do AliExpress
+        if (empty($rawProducts)) {
+            $liveMined = $this->mineLiveFromAliExpressSearch($category, $limit, $autoPersist);
+            if (!empty($liveMined)) {
+                return $liveMined;
+            }
+        }
+
+        // 2. Se a busca ao vivo não responder, utiliza catálogo curado seguro
         if (empty($rawProducts)) {
             $rawProducts = $this->getCuratedTrendingFallback($category, $limit, $sort);
         }
@@ -61,6 +69,70 @@ class ProductMiningService implements ProductMiningServiceInterface
                 $mined[] = $dto;
             } catch (Throwable $e) {
                 // Isolamento de falha individual de produto malformado
+            }
+        }
+
+        return $mined;
+    }
+
+    /**
+     * Minera produtos reais e ativos em tempo real através da página pública de tendências do AliExpress.
+     * Garante que 100% dos produtos minerados possuam links reais, títulos oficiais e fotos autênticas.
+     *
+     * @return array<int, DropshipProductDto>
+     */
+    private function mineLiveFromAliExpressSearch(string $category, int $limit, bool $autoPersist): array
+    {
+        $searchTerms = [
+            'Eletrônicos'     => ['smartwatch', 'fone sem fio', 'projetor portatil', 'mini drone'],
+            'Casa Inteligente' => ['lampada led inteligente wifi', 'tomada inteligente wifi', 'sensor presenca'],
+            'Beleza & Estilo' => ['modelador cabelo profissional', 'escova secadora', 'maquiagem'],
+            'Ferramentas'     => ['ferramenta multifuncao precisao', 'trena laser digital'],
+            'Pet Shop'        => ['coleira led cachorro', 'brinquedo interativo gato'],
+            'Acessórios Auto' => ['suporte veicular celular', 'aspirador portatil carro'],
+        ];
+
+        $termList = $searchTerms[$category] ?? ['smartwatch', 'fone bluetooth'];
+        $searchTerm = $termList[array_rand($termList)];
+        $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html";
+
+        $ch = curl_init($searchUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $html = curl_exec($ch);
+        curl_close($ch);
+
+        if (!$html || !is_string($html)) {
+            return [];
+        }
+
+        preg_match_all('/(?:pt|www)\.aliexpress\.com\/item\/(\d{10,20})\.html/i', $html, $matches);
+        $ids = array_values(array_unique($matches[1] ?? []));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $mined = [];
+        $collected = 0;
+
+        foreach ($ids as $realId) {
+            if ($collected >= $limit) {
+                break;
+            }
+
+            try {
+                $scraped = $this->linkScraper->scrape($realId);
+                if ($scraped !== null && !empty($scraped->mainImageUrl)) {
+                    $dto = $this->createAndSaveDtoFromScraped($scraped);
+                    $mined[] = $dto;
+                    $collected++;
+                }
+            } catch (Throwable $e) {
+                // Continua para o próximo item
             }
         }
 
