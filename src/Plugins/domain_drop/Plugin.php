@@ -125,16 +125,18 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 miningService: $runtime->make(ProductMiningServiceInterface::class),
                 currencyConverter: $runtime->make(CurrencyConverterInterface::class),
-                session: $runtime->make(SessionManagerInterface::class),
+                session: $runtime->getLink('core.session'),
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
                 basePath: $root
             );
         });
 
         $runtime->singleton(\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, function () use ($runtime) {
-            $themeManager = $runtime->has(\DomainSystem\Core\Contracts\ThemeManagerInterface::class)
-                ? $runtime->make(\DomainSystem\Core\Contracts\ThemeManagerInterface::class)
-                : null;
+            $themeManager = null;
+            try {
+                $themeManager = $runtime->getLink('core.theme');
+            } catch (Throwable $e) {
+            }
 
             return new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
@@ -244,18 +246,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $registerDropshipBlocks = function ($registry) use ($runtime) {
             if (is_object($registry) && method_exists($registry, 'has') && !$registry->has('dropship_showcase')) {
                 try {
-                    $urlResolver = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        : null;
-                    $styleRenderer = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\ElementStyleRendererInterface::class)
-                        : null;
-
                     $provider = new \DomainSystem\Plugins\domain_drop\Blocks\DropshipBlockProvider(
-                        $runtime->make(DropshipCatalogRepositoryInterface::class),
-                        $styleRenderer,
-                        null,
-                        $urlResolver
+                        $runtime->make(DropshipCatalogRepositoryInterface::class)
                     );
                     $provider->registerBlocks($registry);
                 } catch (Throwable $e) {
@@ -271,16 +263,21 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->onHook('shortcodes.register', function (\DomainSystem\Core\Theme\ShortcodeManager $manager) use ($runtime) {
             $manager->add('dropship_vitrine', function ($attrs = []) use ($runtime) {
                 try {
-                    $urlResolver = $runtime->has(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        ? $runtime->make(\DomainSystem\Core\Theme\Parts\Contracts\PublicUrlResolverInterface::class)
-                        : null;
                     $block = new \DomainSystem\Plugins\domain_drop\Blocks\DropshipShowcaseBlock(
-                        $runtime->make(DropshipCatalogRepositoryInterface::class),
-                        null,
-                        null,
-                        $urlResolver
+                        $runtime->make(DropshipCatalogRepositoryInterface::class)
                     );
                     $attributes = [
+                        'limit'    => isset($attrs['limit']) ? (int)$attrs['limit'] : 8,
+                        'columns'  => isset($attrs['cols']) ? (int)$attrs['cols'] : (isset($attrs['columns']) ? (int)$attrs['columns'] : 4),
+                        'category' => isset($attrs['category']) ? (string)$attrs['category'] : '',
+                        'title'    => isset($attrs['title']) ? (string)$attrs['title'] : 'Tendências em Alta & Mais Vendidos',
+                    ];
+                    return $block->render($attributes);
+                } catch (Throwable $e) {
+                    return "<div style='text-align:center; padding:30px; background:rgba(255,255,255,0.03); border-radius:8px; color:#8c8f94;'>Vitrine Dropshipping em configuração.</div>";
+                }
+            });
+        });
                         'limit'    => isset($attrs['limit']) ? (int)$attrs['limit'] : 8,
                         'columns'  => isset($attrs['cols']) ? (int)$attrs['cols'] : (isset($attrs['columns']) ? (int)$attrs['columns'] : 4),
                         'category' => isset($attrs['category']) ? (string)$attrs['category'] : '',
