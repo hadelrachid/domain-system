@@ -66,6 +66,19 @@ class DropshipFrontController
 
         $products = $this->catalogRepo->list($criteria, 48, 0);
         $totalCount = $this->catalogRepo->count($criteria);
+
+        // Se uma busca com categoria restrita não encontrou nada, expande para busca global na loja
+        if ($totalCount === 0 && $selectedCategory !== '' && $search !== '') {
+            $fallbackCriteria = $criteria;
+            unset($fallbackCriteria['category']);
+            $fallbackProducts = $this->catalogRepo->list($fallbackCriteria, 48, 0);
+            if (!empty($fallbackProducts)) {
+                $products = $fallbackProducts;
+                $totalCount = $this->catalogRepo->count($fallbackCriteria);
+                $selectedCategory = ''; // Expande visualmente para exibir o resultado global
+            }
+        }
+
         $categories = $this->catalogRepo->getCategories();
 
         // Resposta ultra-rápida de AJAX para o Palco Dinâmico (Sem recarregar página nem pular para cima!)

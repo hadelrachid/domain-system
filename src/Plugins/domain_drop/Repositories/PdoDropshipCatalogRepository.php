@@ -133,9 +133,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         }
 
         if (!empty($criteria['search'])) {
-            $where[] = "(title LIKE ? OR description LIKE ?)";
-            $params[] = '%' . $criteria['search'] . '%';
-            $params[] = '%' . $criteria['search'] . '%';
+            $where[] = $this->buildSearchClause((string)$criteria['search'], $params);
         }
 
         $sql = "SELECT * FROM domain_drop_catalog";
@@ -185,6 +183,10 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             $params[] = (string)$criteria['status'];
         }
 
+        if (!empty($criteria['search'])) {
+            $where[] = $this->buildSearchClause((string)$criteria['search'], $params);
+        }
+
         $sql = "SELECT COUNT(*) FROM domain_drop_catalog";
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -194,6 +196,108 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $stmt->execute($params);
 
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Constrói cláusula SQL inteligente para busca textual tolerante a tokens, plural/singular,
+     * remoção de preposições (stop words) e sinônimos frequentes de mercado.
+     *
+     * @param array<int, mixed> $params
+     */
+    public function buildSearchClause(string $search, array &$params): string
+    {
+        $search = trim($search);
+        if ($search === '') {
+            return '1=1';
+        }
+
+        $stopWords = ['de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'com', 'por', 'para', 'pra', 'um', 'uma', 'uns', 'umas', 'e', 'ou', 'a', 'o', 'as', 'os', 'ao', 'aos', 'que', 'se'];
+
+        // Separa em palavras/tokens limpos
+        $rawTokens = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($search, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        // Filtra stop words se sobrarem outros termos significativos
+        $filtered = array_values(array_filter($rawTokens, fn($t) => !in_array($t, $stopWords, true)));
+        $tokens = !empty($filtered) ? $filtered : $rawTokens;
+
+        if (empty($tokens)) {
+            $params[] = '%' . $search . '%';
+            $params[] = '%' . $search . '%';
+            $params[] = '%' . $search . '%';
+            return "(title LIKE ? OR description LIKE ? OR category LIKE ?)";
+        }
+
+        $tokenClauses = [];
+        foreach ($tokens as $token) {
+            $variants = [$token];
+
+            // 1. Versão sem acentos
+            $unaccented = preg_replace(
+                ['/[áàãâä]/u', '/[éèêë]/u', '/[íìîï]/u', '/[óòõôö]/u', '/[úùûü]/u', '/[ç]/u'],
+                ['a', 'e', 'i', 'o', 'u', 'c'],
+                $token
+            );
+            if ($unaccented !== $token) {
+                $variants[] = $unaccented;
+            }
+
+            // 2. Singular / Plural inteligente em português
+            if (mb_strlen($token, 'UTF-8') > 3 && str_ends_with($token, 's')) {
+                $variants[] = mb_substr($token, 0, -1, 'UTF-8');
+                if (str_ends_with($token, 'es')) {
+                    $variants[] = mb_substr($token, 0, -2, 'UTF-8');
+                }
+            } elseif (mb_strlen($token, 'UTF-8') >= 3) {
+                $variants[] = $token . 's';
+            }
+
+            // 3. Normalização das variantes geradas
+            foreach ($variants as $v) {
+                $unacc = preg_replace(
+                    ['/[áàãâä]/u', '/[éèêë]/u', '/[íìîï]/u', '/[óòõôö]/u', '/[úùûü]/u', '/[ç]/u'],
+                    ['a', 'e', 'i', 'o', 'u', 'c'],
+                    $v
+                );
+                if ($unacc !== $v) {
+                    $variants[] = $unacc;
+                }
+            }
+
+            // 4. Sinônimos de mercado comuns
+            if (in_array($unaccented, ['relogio', 'relogios', 'smartwatch', 'smartwatches', 'watch'], true)) {
+                $variants[] = 'relogio';
+                $variants[] = 'relógio';
+                $variants[] = 'smartwatch';
+                $variants[] = 'watch';
+            } elseif (in_array($unaccented, ['fone', 'fones', 'ouvido', 'tws', 'headset'], true)) {
+                $variants[] = 'fone';
+                $variants[] = 'tws';
+                $variants[] = 'ouvido';
+            } elseif (in_array($unaccented, ['lampada', 'lampadas', 'luminaria', 'luminarias'], true)) {
+                $variants[] = 'lampada';
+                $variants[] = 'lâmpada';
+                $variants[] = 'luminaria';
+                $variants[] = 'luminária';
+            } elseif (in_array($unaccented, ['secador', 'secadora', 'secadores', 'escova', 'escovas'], true)) {
+                $variants[] = 'secador';
+                $variants[] = 'secadora';
+                $variants[] = 'escova';
+            }
+
+            $variants = array_unique(array_filter($variants, fn($v) => mb_strlen($v, 'UTF-8') >= 2));
+
+            $subClauses = [];
+            foreach ($variants as $v) {
+                $subClauses[] = "(title LIKE ? OR description LIKE ? OR category LIKE ?)";
+                $params[] = '%' . $v . '%';
+                $params[] = '%' . $v . '%';
+                $params[] = '%' . $v . '%';
+            }
+
+            $tokenClauses[] = '(' . implode(' OR ', $subClauses) . ')';
+        }
+
+        return '(' . implode(' AND ', $tokenClauses) . ')';
     }
 
     /**

@@ -405,9 +405,6 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         <!-- Row 2: Barra de Busca Oficial Ampla e Responsiva (Sem encurtamento!) -->
         <div class="header-search-row">
             <form action="<?= $baseUrl ?>/loja" method="GET" class="header-search-form">
-                <?php if (!empty($currentCat)): ?>
-                    <input type="hidden" name="cat" value="<?= htmlspecialchars($currentCat) ?>">
-                <?php endif; ?>
                 <input type="text" name="q" value="<?= htmlspecialchars($currentQ) ?>" placeholder="O que o Gênio pode encontrar para você hoje? Digite o produto..." class="header-search-input">
                 <button type="submit" class="header-search-btn">
                     <span>🔍</span>
@@ -610,6 +607,22 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
     window.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeDrawer();
     });
+
+    // Busca dinâmica instantânea no Palco quando já estiver na /loja
+    var searchForm = document.querySelector('.header-search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            var stage = document.getElementById('storeDynamicStage');
+            if (stage && window.filterCatalogDynamically) {
+                e.preventDefault();
+                var input = searchForm.querySelector('input[name="q"]');
+                var qVal = input ? input.value.trim() : '';
+                var targetUrl = searchForm.action + (qVal !== '' ? '?q=' + encodeURIComponent(qVal) : '');
+                window.filterCatalogDynamically(targetUrl, true, true);
+                setTimeout(smoothScrollToProducts, 100);
+            }
+        });
+    }
 
     // Filtragem dinâmica instantânea no Palco + Rolagem suave até os produtos com efeito parallax
     document.addEventListener('click', function(e) {
