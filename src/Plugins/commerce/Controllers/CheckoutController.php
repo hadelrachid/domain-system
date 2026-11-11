@@ -62,6 +62,7 @@ class CheckoutController
         $courseId = (int)$id;
 
         $course = null;
+        $sellerInfo = null;
         if ($this->courseRepo !== null) {
             $c = $this->courseRepo->findById($courseId);
             if ($c && ($c['status'] ?? '') === 'published') {
@@ -83,6 +84,12 @@ class CheckoutController
                     'image'       => $item->getThumbnailUrl(),
                     'type'        => $item->getItemType(),
                 ];
+                if (method_exists($item, 'getProduct')) {
+                    $innerProduct = $item->getProduct();
+                    if (is_object($innerProduct) && method_exists($innerProduct, 'getSellerInfo')) {
+                        $sellerInfo = $innerProduct->getSellerInfo();
+                    }
+                }
             }
         }
 
@@ -160,6 +167,10 @@ class CheckoutController
             }
         }
 
+        $unitPrice = (float)($course['price'] ?? 0.0);
+        $quantity = $isPhysicalOrDropship ? max(1, min(99, (int)$request->input('qty', 1))) : 1;
+        $total = round($unitPrice * $quantity, 2);
+
         $html = $this->renderView('front/checkout', [
             'baseUrl'              => $baseUrl,
             'course'               => $course,
@@ -170,7 +181,10 @@ class CheckoutController
             'userEmail'            => $userEmail,
             'userName'             => $userName,
             'userCpf'              => $userCpf,
-            'total'                => (float)($course['price'] ?? 0.0),
+            'unitPrice'            => $unitPrice,
+            'quantity'             => $quantity,
+            'total'                => $total,
+            'sellerInfo'           => $sellerInfo,
             'isPhysicalOrDropship' => $isPhysicalOrDropship,
         ]);
 
@@ -199,6 +213,7 @@ class CheckoutController
         $courseId = (int)($request->input('item_id') ?? $request->input('course_id'));
         $itemType = (string)($request->input('item_type') ?? '');
         $course = null;
+        $sellerInfo = null;
 
         if ($this->itemResolver !== null) {
             $resolvedType = $itemType !== '' ? $itemType : 'course';
@@ -213,6 +228,12 @@ class CheckoutController
                     'type'  => $item->getItemType(),
                 ];
                 $itemType = $item->getItemType();
+                if (method_exists($item, 'getProduct')) {
+                    $innerProduct = $item->getProduct();
+                    if (is_object($innerProduct) && method_exists($innerProduct, 'getSellerInfo')) {
+                        $sellerInfo = $innerProduct->getSellerInfo();
+                    }
+                }
             }
         }
 
@@ -243,7 +264,9 @@ class CheckoutController
             return new JsonResponse(['success' => false, 'message' => 'Faça login para concluir o pagamento.'], 401);
         }
 
-        $total = (float)($course['price'] ?? 0.0);
+        $unitPrice = (float)($course['price'] ?? 0.0);
+        $quantity = $isPhysicalOrDropship ? max(1, min(99, (int)$request->input('quantity', 1))) : 1;
+        $total = round($unitPrice * $quantity, 2);
         $gatewayId = (string)($request->input('gateway') ?? 'mercadopago');
         $paymentMethod = (string)($request->input('payment_method') ?? 'pix');
         $payerCpf = preg_replace('/\D/', '', (string)($request->input('payer_cpf') ?? $this->session->get('user_cpf', '')));
@@ -285,13 +308,14 @@ class CheckoutController
             'order_ref'      => $orderRef,
         ]);
 
-        $studentName = (string)($request->input('customer_name') ?? $this->session->get('academy_student_name', (string)$this->session->get('user_name', $isPhysicalOrDropship ? 'Cliente' : 'Aluno')));
-        $studentEmail = (string)($request->input('customer_email') ?? $this->session->get('academy_student_email', (string)$this->session->get('user_email', 'cliente@exemplo.com')));
+        $studentName = trim((string)($request->input('customer_name') ?? $request->input('payer_name') ?? $this->session->get('academy_student_name', (string)$this->session->get('user_name', $isPhysicalOrDropship ? 'Cliente' : 'Aluno'))));
+        $studentEmail = trim((string)($request->input('customer_email') ?? $request->input('payer_email') ?? $this->session->get('academy_student_email', (string)$this->session->get('user_email', 'cliente@exemplo.com'))));
 
+        $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
         $orderData = [
             'order_ref'     => $orderRef,
             'total'         => $total,
-            'description'   => $isPhysicalOrDropship ? ("Compra: " . $course['title']) : ("Matrícula no Curso: " . $course['title']),
+            'description'   => $isPhysicalOrDropship ? ("Compra{$qtySuffix}: " . $course['title']) : ("Matrícula no Curso: " . $course['title']),
             'student_name'  => $studentName,
             'student_email' => $studentEmail,
             'payer_cpf'     => $payerCpf,
@@ -305,6 +329,8 @@ class CheckoutController
             'payer_cpf'         => $payerCpf,
         ]);
 
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
         if ($paymentResult->status === 'approved') {
             $this->orderRepo->updateStatus($orderId, 'paid', $paymentResult->transactionId);
 
@@ -316,13 +342,16 @@ class CheckoutController
                     'item_id'           => $courseId,
                     'item_type'         => $itemType,
                     'order_ref'         => $orderRef,
+                    'quantity'          => $quantity,
+                    'unit_price'        => $unitPrice,
                     'total'             => $total,
+                    'seller_info'       => $sellerInfo,
                     'customer_name'     => $studentName,
                     'customer_email'    => $studentEmail,
                     'customer_document' => $payerCpf,
                     'shipping_address'  => [
                         'zip'          => $request->input('shipping_zip'),
-                        'street'       => $request->input('shipping_street'),
+                        'street'       => $request->input('shipping_street') ?? $request->input('shipping_address'),
                         'number'       => $request->input('shipping_number'),
                         'complement'   => $request->input('shipping_complement'),
                         'neighborhood' => $request->input('shipping_neighborhood'),
@@ -336,8 +365,12 @@ class CheckoutController
                 'success'      => true,
                 'status'       => 'approved',
                 'order_ref'    => $orderRef,
-                'redirect_url' => (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '') . '/aluno/painel',
-                'message'      => 'Pagamento aprovado com sucesso! Sua matrícula foi liberada.',
+                'redirect_url' => $isPhysicalOrDropship
+                    ? ($baseUrl . '/checkout/sucesso/' . urlencode($orderRef))
+                    : ($baseUrl . '/aluno/painel'),
+                'message'      => $isPhysicalOrDropship
+                    ? 'Pagamento aprovado com sucesso! Pedido enviado ao fornecedor.'
+                    : 'Pagamento aprovado com sucesso! Sua matrícula foi liberada.',
             ]);
         }
 
@@ -375,13 +408,16 @@ class CheckoutController
         $status = (string)($order['status'] ?? 'pending');
         $isPaid = $status === 'paid';
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $isPhysicalOrder = in_array((string)($order['item_type'] ?? ''), ['dropship_product', 'dropship', 'product'], true);
 
         return new JsonResponse([
             'success'      => true,
             'status'       => $status,
             'paid'         => $isPaid,
             'order_ref'    => $orderRef,
-            'redirect_url' => $baseUrl . '/aluno/painel',
+            'redirect_url' => $isPhysicalOrder
+                ? ($baseUrl . '/checkout/sucesso/' . urlencode($orderRef))
+                : ($baseUrl . '/aluno/painel'),
         ]);
     }
 

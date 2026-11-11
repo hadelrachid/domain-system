@@ -7,6 +7,7 @@
  * @var string $baseUrl
  */
 $refPrice = $product->salePriceBrl * 1.35;
+$sellerInfo = $product->getSellerInfo();
 $allImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
 if (empty($allImages) && !empty($product->mainImageUrl)) {
     $allImages = [$product->mainImageUrl];
@@ -90,23 +91,47 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                 <?php endif; ?>
 
                 <!-- Price Card -->
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 22px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
                     <div style="font-size: 13px; color: #94a3b8; text-decoration: line-through; margin-bottom: 4px;">
                         De: R$ <?= number_format($refPrice, 2, ',', '.') ?>
                     </div>
-                    <div style="font-size: 32px; font-weight: 800; color: #5cd67d; font-family: monospace;">
-                        R$ <?= number_format($product->salePriceBrl, 2, ',', '.') ?>
+                    <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 32px; font-weight: 800; color: #5cd67d; font-family: monospace;">
+                            R$ <?= number_format($product->salePriceBrl, 2, ',', '.') ?>
+                        </div>
+                        <div id="product-qty-subtotal" style="display: none; font-size: 13px; color: #F0D060; font-weight: 700; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3); padding: 4px 10px; border-radius: 6px;"></div>
                     </div>
                     <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">
                         em até <strong>12x sem juros</strong> no cartão ou Pix à vista
                     </div>
                 </div>
 
-                <!-- CTA Button -->
-                <a href="<?= htmlspecialchars($checkoutUrl) ?>" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 16px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); margin-bottom: 24px; transition: transform 0.2s ease;">
-                    <span>Comprar Agora</span>
-                    <span>➔</span>
-                </a>
+                <!-- Identificação do Vendedor / Fornecedor Exclusivo -->
+                <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 13px;">
+                        <span style="color: #fff; font-weight: 700;">🏪 <?= htmlspecialchars($sellerInfo['store_name']) ?></span>
+                        <span style="font-family: monospace; font-size: 11px; background: rgba(255,255,255,0.08); color: #93c5fd; padding: 2px 8px; border-radius: 5px;">
+                            ID: <?= htmlspecialchars($sellerInfo['seller_id']) ?>
+                        </span>
+                    </div>
+                    <span style="font-size: 11.5px; color: #94a3b8;">
+                        <?= htmlspecialchars($sellerInfo['warehouse']) ?> • Vendido e enviado diretamente por este fornecedor (produtos de outros vendedores têm entrega separada).
+                    </span>
+                </div>
+
+                <!-- Seletor de Quantidade + CTA Comprar Agora -->
+                <div style="display: flex; gap: 12px; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">
+                    <div style="display: inline-flex; align-items: center; background: #0c0f12; border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; overflow: hidden; height: 54px;">
+                        <button type="button" onclick="changeProductQuantity(-1)" aria-label="Diminuir quantidade" style="width: 42px; height: 100%; background: rgba(255,255,255,0.04); border: none; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;">−</button>
+                        <input type="number" id="product-qty-input" value="1" min="1" max="50" onchange="syncProductQuantity()" oninput="syncProductQuantity()" aria-label="Quantidade" style="width: 48px; height: 100%; background: transparent; border: none; color: #F0D060; text-align: center; font-size: 16px; font-weight: 800; font-family: monospace; outline: none;">
+                        <button type="button" onclick="changeProductQuantity(1)" aria-label="Aumentar quantidade" style="width: 42px; height: 100%; background: rgba(255,255,255,0.04); border: none; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;">+</button>
+                    </div>
+
+                    <a id="btn-buy-now" href="<?= htmlspecialchars($checkoutUrl) ?>?qty=1" style="flex: 1; min-width: 210px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); transition: transform 0.2s ease;">
+                        <span>Comprar Agora</span>
+                        <span>➔</span>
+                    </a>
+                </div>
 
                 <!-- Trust Badges -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; color: #94a3b8;">
@@ -388,6 +413,43 @@ function updateLightbox() {
     if (counterEl) {
         counterEl.textContent = 'Foto ' + (currentActiveImageIndex + 1) + ' de ' + productGalleryImages.length;
     }
+}
+
+// Controle de Quantidade na página de detalhes do produto
+var productUnitPriceBrl = <?= json_encode((float)$product->salePriceBrl) ?>;
+var productCheckoutBaseUrl = <?= json_encode($checkoutUrl, JSON_UNESCAPED_SLASHES) ?>;
+
+function syncProductQuantity() {
+    var input = document.getElementById('product-qty-input');
+    var buyBtn = document.getElementById('btn-buy-now');
+    var subtotalEl = document.getElementById('product-qty-subtotal');
+    if (!input) return;
+
+    var qty = parseInt(input.value, 10);
+    if (isNaN(qty) || qty < 1) qty = 1;
+    if (qty > 50) qty = 50;
+    input.value = qty;
+
+    if (buyBtn) {
+        buyBtn.href = productCheckoutBaseUrl + '?qty=' + qty;
+    }
+    if (subtotalEl) {
+        if (qty > 1) {
+            var total = (productUnitPriceBrl * qty).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            subtotalEl.textContent = qty + ' unid. • Total: R$ ' + total;
+            subtotalEl.style.display = 'inline-block';
+        } else {
+            subtotalEl.style.display = 'none';
+        }
+    }
+}
+
+function changeProductQuantity(delta) {
+    var input = document.getElementById('product-qty-input');
+    if (!input) return;
+    var current = parseInt(input.value, 10) || 1;
+    input.value = Math.max(1, Math.min(50, current + delta));
+    syncProductQuantity();
 }
 
 // Atalhos de teclado no Lightbox (ESC fecha, Setas navegam)

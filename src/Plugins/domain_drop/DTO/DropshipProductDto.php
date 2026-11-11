@@ -32,6 +32,39 @@ final class DropshipProductDto
     }
 
     /**
+     * Retorna identificação estruturada do vendedor / entreposto responsável por este produto.
+     *
+     * @return array{seller_id: string, store_name: string, warehouse: string, aliexpress_id: string}
+     */
+    public function getSellerInfo(): array
+    {
+        $cleanAe = preg_replace('/\W+/', '', $this->aliexpressId) ?: '';
+        $codeSeed = $cleanAe !== '' ? substr($cleanAe, -6) : str_pad((string)($this->id ?? 0), 6, '0', STR_PAD_LEFT);
+        $shortSeed = substr($codeSeed, -4);
+        $isNational = !empty($this->attributes['origem_brasil'])
+            || (($this->attributes['ship_from'] ?? '') === 'BR');
+
+        $sellerId = trim((string)($this->attributes['seller_id'] ?? ($this->attributes['shop_id'] ?? '')));
+        if ($sellerId === '') {
+            $sellerId = 'VND-' . strtoupper($codeSeed);
+        }
+
+        $storeName = trim((string)($this->attributes['seller_name'] ?? ($this->attributes['store_name'] ?? '')));
+        if ($storeName === '') {
+            $storeName = $isNational
+                ? 'Distribuidor Oficial BR #' . $shortSeed
+                : 'Fornecedor Oficial Global #' . $shortSeed;
+        }
+
+        return [
+            'seller_id'     => $sellerId,
+            'store_name'    => $storeName,
+            'warehouse'     => $isNational ? 'Entreposto Nacional (Brasil)' : 'Centro Internacional',
+            'aliexpress_id' => $this->aliexpressId,
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array

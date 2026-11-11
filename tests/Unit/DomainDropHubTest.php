@@ -855,4 +855,85 @@ class DomainDropHubTest extends TestCase
         $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg', $product->mainImageUrl);
         $this->assertGreaterThan(0.0, $product->salePriceBrl);
     }
+
+    public function testSellerIdentificationAndCheckoutQuantityControls(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        // 1. Produto nacional com identificação automática de vendedor
+        $brProduct = new DropshipProductDto(
+            aliexpressId: '1005013345247302',
+            title: 'Carregador Turbo GaN 65W',
+            slug: 'carregador-turbo-gan-65w',
+            costPriceUsd: 12.00,
+            salePriceBrl: 50.00,
+            mainImageUrl: 'https://ae01.alicdn.com/gan.jpg',
+            attributes: ['ship_from' => 'BR', 'origem_brasil' => true],
+            status: 'published'
+        );
+        $savedId = $repo->save($brProduct);
+        $savedProduct = $repo->findById($savedId);
+        $this->assertNotNull($savedProduct);
+
+        $sellerInfo = $savedProduct->getSellerInfo();
+        $this->assertSame('VND-247302', $sellerInfo['seller_id']);
+        $this->assertSame('Distribuidor Oficial BR #7302', $sellerInfo['store_name']);
+        $this->assertSame('Entreposto Nacional (Brasil)', $sellerInfo['warehouse']);
+
+        // 2. Produto com atributos explícitos de vendedor
+        $customSeller = new DropshipProductDto(
+            aliexpressId: '100500999888',
+            title: 'Suporte Articulado',
+            slug: 'suporte-articulado',
+            costPriceUsd: 10.00,
+            salePriceBrl: 89.90,
+            mainImageUrl: 'https://ae01.alicdn.com/suporte.jpg',
+            attributes: ['seller_id' => 'LOJA-SP-42', 'seller_name' => 'TechBR Distribuidora'],
+            status: 'published'
+        );
+        $customInfo = $customSeller->getSellerInfo();
+        $this->assertSame('LOJA-SP-42', $customInfo['seller_id']);
+        $this->assertSame('TechBR Distribuidora', $customInfo['store_name']);
+
+        // 3. SingleProduct exibe vendedor + seletor de quantidade
+        $frontController = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController($repo);
+        $prodRes = $frontController->singleProduct(new \DomainSystem\Core\Http\Request(), 'carregador-turbo-gan-65w');
+        $prodHtml = $prodRes->getContent();
+        $this->assertStringContainsString('Distribuidor Oficial BR #7302', $prodHtml);
+        $this->assertStringContainsString('VND-247302', $prodHtml);
+        $this->assertStringContainsString('product-qty-input', $prodHtml);
+        $this->assertStringContainsString('?qty=1', $prodHtml);
+
+        // 4. Checkout exibe quantidade multiplicada, vendedor, reduzir e apagar
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('get')->willReturnArgument(1);
+        $session->method('getCsrfToken')->willReturn('csrf_test_token');
+
+        $orderRepo = $this->createMock(\DomainSystem\Plugins\commerce\Contracts\OrderRepositoryInterface::class);
+        $registry = new \DomainSystem\Plugins\commerce\Services\PaymentGatewayRegistry();
+        $resolver = new \DomainSystem\Plugins\commerce\Services\PurchasableItemResolver();
+        $resolver->registerResolver('dropship_product', function (int $id) use ($repo) {
+            $p = $repo->findById($id);
+            return $p ? new \DomainSystem\Plugins\domain_drop\Adapters\DropshipProductPurchasableAdapter($p) : null;
+        });
+
+        $checkoutController = new \DomainSystem\Plugins\commerce\Controllers\CheckoutController(
+            session: $session,
+            orderRepo: $orderRepo,
+            gatewayRegistry: $registry,
+            itemResolver: $resolver
+        );
+
+        $chkReq = new \DomainSystem\Core\Http\Request(['qty' => '3'], [], ['REQUEST_URI' => '/checkout/produto/' . $savedId]);
+        $chkRes = $checkoutController->showCheckout($chkReq, $savedId);
+        $chkHtml = $chkRes->getContent();
+
+        $this->assertSame(200, $chkRes->getStatusCode());
+        $this->assertStringContainsString('VND-247302', $chkHtml);
+        $this->assertStringContainsString('Distribuidor Oficial BR #7302', $chkHtml);
+        $this->assertStringContainsString('R$ 150,00', $chkHtml);
+        $this->assertStringContainsString('adjustCheckoutQty(-1)', $chkHtml);
+        $this->assertStringContainsString('removeCheckoutItem()', $chkHtml);
+        $this->assertStringContainsString('restoreCheckoutItem()', $chkHtml);
+    }
 }

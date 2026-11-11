@@ -8,8 +8,12 @@ declare(strict_types=1);
 $baseUrl = $baseUrl ?? '';
 $course = $course ?? [];
 $isPhysicalOrDropship = !empty($isPhysicalOrDropship);
-$total = (float)($total ?? 0.0);
+$unitPrice = (float)($unitPrice ?? ($course['price'] ?? 0.0));
+$quantity = $isPhysicalOrDropship ? max(1, (int)($quantity ?? 1)) : 1;
+$total = (float)($total ?? round($unitPrice * $quantity, 2));
+$formattedUnit = number_format($unitPrice, 2, ',', '.');
 $formattedTotal = number_format($total, 2, ',', '.');
+$sellerInfo = is_array($sellerInfo ?? null) ? $sellerInfo : null;
 $csrfToken = htmlspecialchars((string)($csrfToken ?? ''), ENT_QUOTES, 'UTF-8');
 $userName = htmlspecialchars((string)($userName ?? 'Aluno'), ENT_QUOTES, 'UTF-8');
 $userEmail = htmlspecialchars((string)($userEmail ?? ''), ENT_QUOTES, 'UTF-8');
@@ -83,44 +87,101 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             <!-- Resumo do Pedido -->
             <div class="ds-card">
                 <h2 class="ds-card-title">📋 Resumo da Compra</h2>
-                
-                <!-- Imagem Ilustrativa do Produto / Curso -->
-                <img src="<?= htmlspecialchars($effectiveThumb, ENT_QUOTES, 'UTF-8') ?>" alt="<?= $courseTitle ?>" class="ds-checkout-course-thumb">
 
-                <div class="ds-order-item">
-                    <span style="color: #fff; font-weight: 700; font-size: 1.05rem;"><?= $courseTitle ?></span>
-                    <span style="color: var(--accent-green); font-weight: 800; font-size: 1.05rem;">R$ <?= $formattedTotal ?></span>
+                <div id="checkout_item_summary">
+                    <!-- Imagem Ilustrativa do Produto / Curso -->
+                    <img src="<?= htmlspecialchars($effectiveThumb, ENT_QUOTES, 'UTF-8') ?>" alt="<?= $courseTitle ?>" class="ds-checkout-course-thumb">
+
+                    <div class="ds-order-item" style="align-items: flex-start; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div style="color: #fff; font-weight: 700; font-size: 1.02rem; line-height: 1.35;"><?= $courseTitle ?></div>
+                            <?php if ($isPhysicalOrDropship): ?>
+                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                                    Valor unitário: <strong style="color: #cbd5e1;">R$ <?= $formattedUnit ?></strong>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <span id="checkout_subtotal_val" style="color: var(--accent-green); font-weight: 800; font-size: 1.05rem; white-space: nowrap;">R$ <?= $formattedTotal ?></span>
+                    </div>
+
+                    <?php if ($isPhysicalOrDropship && $sellerInfo !== null): ?>
+                        <!-- Identificação do Vendedor / Fornecedor Exclusivo -->
+                        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.28); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.8rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                                <span style="color: #fff; font-weight: 700;">🏪 <?= htmlspecialchars((string)$sellerInfo['store_name'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span style="font-family: monospace; font-size: 0.74rem; color: #93c5fd; background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 4px;">
+                                    ID: <?= htmlspecialchars((string)$sellerInfo['seller_id'], ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.74rem; line-height: 1.4;">
+                                <?= htmlspecialchars((string)$sellerInfo['warehouse'], ENT_QUOTES, 'UTF-8') ?> • Enviado diretamente por este fornecedor (itens de outros vendedores seguem em pacotes independentes).
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($isPhysicalOrDropship): ?>
+                        <!-- Controles de Quantidade (+ / - / Apagar) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Quantidade:</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="display: inline-flex; align-items: center; background: #06090e; border: 1px solid rgba(69,243,255,0.3); border-radius: 6px; overflow: hidden;">
+                                    <button type="button" id="btn_qty_minus" onclick="adjustCheckoutQty(-1)" aria-label="Diminuir quantidade" style="width: 32px; height: 32px; background: rgba(255,255,255,0.05); border: none; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;">−</button>
+                                    <span id="checkout_qty_display" style="min-width: 34px; text-align: center; color: var(--accent-cyan); font-family: monospace; font-weight: 800; font-size: 0.95rem;"><?= (int)$quantity ?></span>
+                                    <button type="button" id="btn_qty_plus" onclick="adjustCheckoutQty(1)" aria-label="Aumentar quantidade" style="width: 32px; height: 32px; background: rgba(255,255,255,0.05); border: none; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;">+</button>
+                                </div>
+                                <button type="button" onclick="removeCheckoutItem()" title="Apagar item deste pedido" style="background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; padding: 6px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span>🗑️</span><span>Apagar</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Frete Internacional com Rastreio</span>
+                            <span style="color: var(--accent-green); font-weight: 700;">GRÁTIS (Promoção)</span>
+                        </div>
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Seguro de Envio &amp; Proteção de Carga</span>
+                            <span>Incluso</span>
+                        </div>
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Garantia de 7 Dias para Troca/Devolução</span>
+                            <span>Incluso</span>
+                        </div>
+                    <?php else: ?>
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Acesso Imediato e Vitalício</span>
+                            <span>Incluso</span>
+                        </div>
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Apostilas e Códigos para Download</span>
+                            <span>Incluso</span>
+                        </div>
+                        <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
+                            <span>Certificado de Conclusão</span>
+                            <span>Incluso</span>
+                        </div>
+                    <?php endif; ?>
+                    <div class="ds-order-total">
+                        <span>Total a Pagar:</span>
+                        <span id="checkout_total_val">R$ <?= $formattedTotal ?></span>
+                    </div>
                 </div>
-                <?php if ($isPhysicalOrDropship): ?>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Frete Internacional com Rastreio</span>
-                        <span style="color: var(--accent-green); font-weight: 700;">GRÁTIS (Promoção)</span>
+
+                <!-- Estado Vazio quando o cliente clica em Apagar -->
+                <div id="checkout_empty_state" style="display: none; text-align: center; padding: 26px 14px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.16); border-radius: 10px;">
+                    <div style="font-size: 2.2rem; margin-bottom: 10px;">🗑️</div>
+                    <h3 style="color: #fff; font-size: 1rem; margin-bottom: 6px;">Item removido do resumo do pedido</h3>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 16px; line-height: 1.4;">
+                        Deseja restabelecer este produto ou escolher outro item na loja?
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="button" onclick="restoreCheckoutItem()" style="width: 100%; padding: 10px 14px; background: rgba(0,210,132,0.15); border: 1px solid var(--accent-green); color: var(--accent-green); border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                            ↩️ Restabelecer Produto
+                        </button>
+                        <a href="<?= $baseUrl ?>/loja" style="display: block; width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 8px; font-weight: 700; font-size: 0.85rem; text-decoration: none;">
+                            🛍️ Voltar para a Loja
+                        </a>
                     </div>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Seguro de Envio &amp; Proteção de Carga</span>
-                        <span>Incluso</span>
-                    </div>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Garantia de 7 Dias para Troca/Devolução</span>
-                        <span>Incluso</span>
-                    </div>
-                <?php else: ?>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Acesso Imediato e Vitalício</span>
-                        <span>Incluso</span>
-                    </div>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Apostilas e Códigos para Download</span>
-                        <span>Incluso</span>
-                    </div>
-                    <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                        <span>Certificado de Conclusão</span>
-                        <span>Incluso</span>
-                    </div>
-                <?php endif; ?>
-                <div class="ds-order-total">
-                    <span>Total a Pagar:</span>
-                    <span>R$ <?= $formattedTotal ?></span>
                 </div>
 
                 <?php if (!$isPhysicalOrDropship): ?>
@@ -288,7 +349,66 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
         var baseUrl = <?= json_encode($baseUrl) ?>;
         var csrfToken = <?= json_encode($csrfToken) ?>;
         var courseId = <?= (int)$courseId ?>;
+        var unitPrice = <?= json_encode((float)$unitPrice) ?>;
+        var currentQty = <?= (int)$quantity ?>;
+        var isItemRemoved = false;
+        var hasAvailableGateway = <?= ($hasMercadoPago || $hasStripe || $hasPayPal) ? 'true' : 'false' ?>;
         var selectedMethod = 'pix';
+
+        function formatBrlAmount(val) {
+            return Number(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function getCurrentFormattedTotal() {
+            return formatBrlAmount(unitPrice * currentQty);
+        }
+
+        function updateOrderTotalsUI() {
+            var formatted = getCurrentFormattedTotal();
+            var qtyEl = document.getElementById('checkout_qty_display');
+            var subEl = document.getElementById('checkout_subtotal_val');
+            var totEl = document.getElementById('checkout_total_val');
+            if (qtyEl) qtyEl.textContent = String(currentQty);
+            if (subEl) subEl.textContent = 'R$ ' + formatted;
+            if (totEl) totEl.textContent = 'R$ ' + formatted;
+            selectPaymentMethod(selectedMethod, selectedGateway);
+        }
+
+        function adjustCheckoutQty(delta) {
+            if (isItemRemoved) return;
+            var nextQty = currentQty + delta;
+            if (nextQty < 1) {
+                removeCheckoutItem();
+                return;
+            }
+            if (nextQty > 99) nextQty = 99;
+            currentQty = nextQty;
+            updateOrderTotalsUI();
+        }
+
+        function removeCheckoutItem() {
+            isItemRemoved = true;
+            var summaryEl = document.getElementById('checkout_item_summary');
+            var emptyEl = document.getElementById('checkout_empty_state');
+            var btn = document.getElementById('btn_submit_payment');
+            if (summaryEl) summaryEl.style.display = 'none';
+            if (emptyEl) emptyEl.style.display = 'block';
+            if (btn) btn.disabled = true;
+            showNotify('Produto removido do resumo de compra.', 'info');
+        }
+
+        function restoreCheckoutItem() {
+            isItemRemoved = false;
+            if (currentQty < 1) currentQty = 1;
+            var summaryEl = document.getElementById('checkout_item_summary');
+            var emptyEl = document.getElementById('checkout_empty_state');
+            var btn = document.getElementById('btn_submit_payment');
+            if (summaryEl) summaryEl.style.display = 'block';
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (btn) btn.disabled = !hasAvailableGateway;
+            updateOrderTotalsUI();
+            showNotify('Produto restabelecido no pedido!', 'success');
+        }
 
         function showNotify(msg, type) {
             type = type || 'info';
@@ -361,18 +481,19 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 
             var cpfGroup = document.getElementById('cpf_field_group');
             var btnText = document.getElementById('btn_submit_payment_text');
+            var formattedTotalNow = getCurrentFormattedTotal();
             if (m === 'pix') {
                 if (cpfGroup) cpfGroup.style.display = 'block';
-                if (btnText) btnText.textContent = '⚡ Gerar QR Code Pix (R$ <?= $formattedTotal ?>)';
+                if (btnText) btnText.textContent = '⚡ Gerar QR Code Pix (R$ ' + formattedTotalNow + ')';
             } else if (m === 'checkout_pro') {
                 if (cpfGroup) cpfGroup.style.display = 'none';
-                if (btnText) btnText.textContent = '💳 Pagar com Mercado Pago (R$ <?= $formattedTotal ?>)';
+                if (btnText) btnText.textContent = '💳 Pagar com Mercado Pago (R$ ' + formattedTotalNow + ')';
             } else if (m === 'stripe') {
                 if (cpfGroup) cpfGroup.style.display = 'none';
-                if (btnText) btnText.textContent = '🌐 Pagar com Cartão / Stripe (R$ <?= $formattedTotal ?>)';
+                if (btnText) btnText.textContent = '🌐 Pagar com Cartão / Stripe (R$ ' + formattedTotalNow + ')';
             } else if (m === 'paypal') {
                 if (cpfGroup) cpfGroup.style.display = 'none';
-                if (btnText) btnText.textContent = '🅿️ Pagar com PayPal (R$ <?= $formattedTotal ?>)';
+                if (btnText) btnText.textContent = '🅿️ Pagar com PayPal (R$ ' + formattedTotalNow + ')';
             }
         }
 
@@ -425,6 +546,10 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 
         function handlePaymentSubmit(e) {
             e.preventDefault();
+            if (isItemRemoved || currentQty < 1) {
+                showNotify('O item foi removido do pedido. Restabeleça o produto antes de finalizar.', 'warning');
+                return;
+            }
             var btn = document.getElementById('btn_submit_payment');
             var btnText = document.getElementById('btn_submit_payment_text');
             var cpfInput = document.getElementById('payer_cpf');
@@ -489,6 +614,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             var payload = {
                 csrf_token: csrfToken,
                 course_id: courseId,
+                quantity: currentQty,
                 gateway: gateway,
                 payment_method: selectedMethod,
                 payer_cpf: rawCpf,
