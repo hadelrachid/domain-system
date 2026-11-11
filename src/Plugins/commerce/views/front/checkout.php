@@ -75,6 +75,38 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
         .ds-btn-pay:disabled { opacity: 0.6; cursor: not-allowed; }
         .ds-pix-box { text-align: center; padding: 20px; background: rgba(0,0,0,0.35); border-radius: 10px; border: 1px solid rgba(69,243,255,0.3); margin-top: 16px; display: none; }
         .ds-pix-code-area { width: 100%; background: #06090e; color: var(--accent-cyan); font-family: monospace; font-size: 12px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin: 10px 0; word-break: break-all; resize: none; }
+        .ds-field-group { margin-bottom: 12px; }
+        .ds-field-group:last-child { margin-bottom: 0; }
+        .ds-field-row { display: grid; gap: 10px; align-items: end; margin-bottom: 12px; }
+        .ds-field-row:last-child { margin-bottom: 0; }
+        .ds-field-row-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .ds-field-row-num { grid-template-columns: 120px minmax(0, 1fr); }
+        .ds-field-row-city { grid-template-columns: minmax(0, 1fr) 92px; }
+        @media (max-width: 540px) {
+            .ds-field-row-2, .ds-field-row-num, .ds-field-row-city { grid-template-columns: 1fr; }
+        }
+        .ds-field-label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 5px; line-height: 1.3; font-weight: 600; }
+        .ds-field-input {
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            background: #06090e;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .ds-field-input:focus { border-color: var(--accent-cyan); }
+        .ds-field-input-cep {
+            border-color: rgba(69,243,255,0.35);
+            color: #45f3ff;
+            font-weight: 700;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0.5px;
+        }
     </style>
     <div class="ds-checkout-container">
         <div class="ds-checkout-breadcrumb">
@@ -205,62 +237,60 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                     <?php if ($isPhysicalOrDropship): ?>
                     <!-- Dados do Comprador -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
                             <span>👤</span> 1. Dados do Comprador
                         </h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Nome Completo</label>
-                                <input type="text" id="payer_name" name="payer_name" value="<?= $userName !== 'Aluno' ? $userName : '' ?>" placeholder="Seu nome" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">E-mail (para rastreio)</label>
-                                <input type="email" id="payer_email" name="payer_email" value="<?= $userEmail ?>" placeholder="seu@email.com" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
-                            </div>
+                        <div class="ds-field-group">
+                            <label for="payer_name" class="ds-field-label">Nome Completo</label>
+                            <input type="text" id="payer_name" name="payer_name" value="<?= $userName !== 'Aluno' ? $userName : '' ?>" placeholder="Seu nome completo" class="ds-field-input" required>
                         </div>
-                        <div>
-                            <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">WhatsApp / Telefone</label>
-                            <input type="tel" id="payer_phone" name="payer_phone" placeholder="(11) 99999-9999" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;">
+                        <div class="ds-field-row ds-field-row-2">
+                            <div>
+                                <label for="payer_email" class="ds-field-label">E-mail (para rastreio)</label>
+                                <input type="email" id="payer_email" name="payer_email" value="<?= $userEmail ?>" placeholder="seu@email.com" class="ds-field-input" required>
+                            </div>
+                            <div>
+                                <label for="payer_phone" class="ds-field-label">WhatsApp / Telefone</label>
+                                <input type="tel" id="payer_phone" name="payer_phone" placeholder="(11) 99999-9999" class="ds-field-input">
+                            </div>
                         </div>
                     </div>
 
                     <!-- Endereço de Entrega com ViaCEP -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
                             <span>🚚</span> 2. Endereço de Entrega
                         </h3>
-                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 10px;">
+                        <div class="ds-field-group">
+                            <label for="shipping_zip" class="ds-field-label">CEP (Busca automática)</label>
+                            <input type="text" id="shipping_zip" name="shipping_zip" placeholder="00000-000" maxlength="9" oninput="formatCepAndSearch(this)" class="ds-field-input ds-field-input-cep" required>
+                        </div>
+                        <div class="ds-field-group">
+                            <label for="shipping_address" class="ds-field-label">Rua / Logradouro</label>
+                            <input type="text" id="shipping_address" name="shipping_address" placeholder="Av. / Rua..." class="ds-field-input" required>
+                        </div>
+                        <div class="ds-field-row ds-field-row-num">
                             <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">CEP (Busca automática)</label>
-                                <input type="text" id="shipping_zip" name="shipping_zip" placeholder="00000-000" maxlength="9" oninput="formatCepAndSearch(this)" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(69,243,255,0.3); border-radius: 6px; color: #45f3ff; font-weight: 600; font-family: monospace; font-size: 0.9rem;" required>
+                                <label for="shipping_number" class="ds-field-label">Número</label>
+                                <input type="text" id="shipping_number" name="shipping_number" placeholder="123" class="ds-field-input" required>
                             </div>
                             <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Rua / Logradouro</label>
-                                <input type="text" id="shipping_address" name="shipping_address" placeholder="Av. / Rua..." style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
+                                <label for="shipping_complement" class="ds-field-label">Complemento</label>
+                                <input type="text" id="shipping_complement" name="shipping_complement" placeholder="Apto, Bloco..." class="ds-field-input">
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Número</label>
-                                <input type="text" id="shipping_number" name="shipping_number" placeholder="123" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Complemento</label>
-                                <input type="text" id="shipping_complement" name="shipping_complement" placeholder="Apto, Bloco..." style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;">
-                            </div>
+                        <div class="ds-field-group">
+                            <label for="shipping_neighborhood" class="ds-field-label">Bairro</label>
+                            <input type="text" id="shipping_neighborhood" name="shipping_neighborhood" placeholder="Bairro" class="ds-field-input" required>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 0.6fr; gap: 10px;">
+                        <div class="ds-field-row ds-field-row-city">
                             <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Bairro</label>
-                                <input type="text" id="shipping_neighborhood" name="shipping_neighborhood" placeholder="Bairro" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
+                                <label for="shipping_city" class="ds-field-label">Cidade</label>
+                                <input type="text" id="shipping_city" name="shipping_city" placeholder="Cidade" class="ds-field-input" required>
                             </div>
                             <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">Cidade</label>
-                                <input type="text" id="shipping_city" name="shipping_city" placeholder="Cidade" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" required>
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">UF</label>
-                                <input type="text" id="shipping_state" name="shipping_state" placeholder="SP" maxlength="2" style="width: 100%; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem; text-transform: uppercase;" required>
+                                <label for="shipping_state" class="ds-field-label">UF</label>
+                                <input type="text" id="shipping_state" name="shipping_state" placeholder="SP" maxlength="2" class="ds-field-input" style="text-transform: uppercase; text-align: center;" required>
                             </div>
                         </div>
                     </div>
