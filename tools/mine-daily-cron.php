@@ -54,7 +54,7 @@ try {
         exit(0);
     }
 
-    echo "[+] Iniciando mineração inteligente em todas as 6 categorias oficiais...\n\n";
+    echo "[+] Iniciando mineração inteligente em todas as 9 categorias oficiais...\n\n";
     $start = microtime(true);
 
     $result = $miningService->runDailyAutomatedRotation($items);

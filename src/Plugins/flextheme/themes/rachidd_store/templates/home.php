@@ -220,9 +220,15 @@ if (empty($catalogProducts)) {
                                     </div>
                                 </div>
                             </div>
-                            <a href="<?= htmlspecialchars($checkoutUrl) ?>" class="gold-button" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 11px 0;">
-                                Comprar Agora ➔
-                            </a>
+                            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                <a href="<?= htmlspecialchars($productUrl) ?>" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 11px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
+                                    <span>🔍</span>
+                                    <span>Ver Detalhes</span>
+                                </a>
+                                <a href="<?= htmlspecialchars($checkoutUrl) ?>" class="gold-button" style="flex: 1.15; box-sizing: border-box; font-size: 13px; padding: 11px 8px; border-radius: 8px; text-align: center; text-transform: uppercase;">
+                                    Comprar ➔
+                                </a>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -260,9 +266,15 @@ if (empty($catalogProducts)) {
                                     </div>
                                 </div>
                             </div>
-                            <a href="<?= $baseUrl ?>/loja" class="gold-button" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 11px 0;">
-                                Ver Oferta na Loja ➔
-                            </a>
+                            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                <a href="<?= $baseUrl ?>/loja" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 11px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;">
+                                    <span>🔍</span>
+                                    <span>Ver Detalhes</span>
+                                </a>
+                                <a href="<?= $baseUrl ?>/loja" class="gold-button" style="flex: 1.15; box-sizing: border-box; font-size: 13px; padding: 11px 8px; border-radius: 8px; text-align: center;">
+                                    Ver Oferta ➔
+                                </a>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>

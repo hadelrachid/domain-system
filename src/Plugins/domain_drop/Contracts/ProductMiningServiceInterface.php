@@ -43,13 +43,16 @@ interface ProductMiningServiceInterface
 
     /**
      * Executa o ciclo de rotação diária automatizada de 24 horas.
-     * Minera produtos virais aleatórios para todas as 6 categorias oficiais:
+     * Minera produtos virais aleatórios para todas as 9 categorias oficiais:
      * - Eletrônicos & Gadget
      * - Casa Inteligente & Organização
      * - Beleza, Cuidados & Estilo
      * - Ferramentas & Utilidades
      * - Pet Shop & Pets Virais
      * - Acessórios para Veículos
+     * - Moda, Roupas & Vestuário
+     * - Moda Íntima, Lingeries & Pijamas
+     * - Sex Shop & Produtos Adultos (+18)
      * 
      * Atualiza o catálogo, registra a data/hora de conclusão e retorna o resumo estatístico.
      * 

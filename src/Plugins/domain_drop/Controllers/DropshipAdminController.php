@@ -527,7 +527,7 @@ class DropshipAdminController
                 ]), 200, ['Content-Type' => 'application/json']);
             }
 
-            $this->session->setFlash("Ciclo diário 24h concluído com sucesso! {$result['total_mined']} novos produtos minerados nas 6 categorias.", 'success');
+            $this->session->setFlash("Ciclo diário 24h concluído com sucesso! {$result['total_mined']} novos produtos minerados nas 9 categorias oficiais.", 'success');
         } catch (Throwable $e) {
             if ($this->isAjaxOrJson($request)) {
                 return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);

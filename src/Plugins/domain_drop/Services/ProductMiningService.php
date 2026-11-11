@@ -1544,7 +1544,7 @@ class ProductMiningService implements ProductMiningServiceInterface
 
     /**
      * Executa o ciclo de rotação diária automatizada de 24 horas.
-     * Minera produtos virais aleatórios para todas as 6 categorias oficiais,
+     * Minera produtos virais aleatórios para todas as 9 categorias oficiais,
      * atualiza o catálogo, registra a data/hora de conclusão e retorna o resumo estatístico.
      *
      * @param int $itemsPerCategory Quantidade de novos produtos minerados por categoria
