@@ -51,6 +51,8 @@ class DropshipFrontController
             }
         }
 
+        $sort = trim((string)$request->input('sort', ''));
+
         $criteria = ['status' => 'published'];
         if ($selectedCategory !== '') {
             $criteria['category'] = $selectedCategory;
@@ -58,10 +60,30 @@ class DropshipFrontController
         if ($search !== '') {
             $criteria['search'] = $search;
         }
+        if ($sort !== '') {
+            $criteria['sort'] = $sort;
+        }
 
         $products = $this->catalogRepo->list($criteria, 48, 0);
         $totalCount = $this->catalogRepo->count($criteria);
         $categories = $this->catalogRepo->getCategories();
+
+        // Resposta ultra-rápida de AJAX para o Palco Dinâmico (Sem recarregar página nem pular para cima!)
+        if ($request->input('ajax') === '1' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            ob_start();
+            include dirname(__DIR__) . '/views/front/stage.php';
+            $stageHtml = ob_get_clean();
+
+            return new Response(json_encode([
+                'success'          => true,
+                'totalCount'       => $totalCount,
+                'count'            => count($products),
+                'selectedCategory' => $selectedCategory,
+                'search'           => $search,
+                'sort'             => $sort,
+                'html'             => $stageHtml ?: '',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 200, ['Content-Type' => 'application/json']);
+        }
 
         ob_start();
         include dirname(__DIR__) . '/views/front/storefront.php';

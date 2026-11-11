@@ -112,15 +112,7 @@ class ProductMiningService implements ProductMiningServiceInterface
             $rawProducts = [];
         }
 
-        // 1. Se a API remota oficial não estiver conectada, executa mineração em tempo real direto da busca pública do AliExpress
-        if (empty($rawProducts)) {
-            $liveMined = $this->mineLiveFromAliExpressSearch($category, $limit, $autoPersist);
-            if (!empty($liveMined)) {
-                return $liveMined;
-            }
-        }
-
-        // 2. Se a busca ao vivo não responder, utiliza catálogo curado seguro
+        // Se a API remota oficial não estiver conectada (ou em modo Test), utiliza catálogo curado e verificado
         if (empty($rawProducts)) {
             $rawProducts = $this->getCuratedTrendingFallback($category, $limit, $sort);
         }

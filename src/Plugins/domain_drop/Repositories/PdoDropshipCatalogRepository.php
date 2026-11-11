@@ -119,8 +119,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $params = [];
 
         if (!empty($criteria['category'])) {
-            $where[] = "category = ?";
-            $params[] = (string)$criteria['category'];
+            $where[] = $this->buildCategoryClause((string)$criteria['category'], $params);
         }
 
         if (!empty($criteria['slug'])) {
@@ -144,7 +143,21 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             $sql .= " WHERE " . implode(" AND ", $where);
         }
 
-        $sql .= " ORDER BY id DESC LIMIT {$limit} OFFSET {$offset}";
+        $orderBy = "id DESC";
+        if (!empty($criteria['sort'])) {
+            $sortVal = (string)$criteria['sort'];
+            if ($sortVal === 'sales' || $sortVal === 'best_sellers' || $sortVal === 'volume_desc') {
+                $orderBy = "orders_count DESC, id DESC";
+            } elseif ($sortVal === 'price_asc') {
+                $orderBy = "sale_price_brl ASC, id DESC";
+            } elseif ($sortVal === 'price_desc') {
+                $orderBy = "sale_price_brl DESC, id DESC";
+            } elseif ($sortVal === 'rating') {
+                $orderBy = "rating DESC, id DESC";
+            }
+        }
+
+        $sql .= " ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -159,8 +172,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $params = [];
 
         if (!empty($criteria['category'])) {
-            $where[] = "category = ?";
-            $params[] = (string)$criteria['category'];
+            $where[] = $this->buildCategoryClause((string)$criteria['category'], $params);
         }
 
         if (!empty($criteria['slug'])) {
@@ -182,6 +194,55 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $stmt->execute($params);
 
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Constrói cláusula SQL inteligente para categoria com tolerância a apelidos e termos semânticos.
+     *
+     * @param array<int, mixed> $params
+     */
+    private function buildCategoryClause(string $category, array &$params): string
+    {
+        $raw = trim($category);
+        $lower = mb_strtolower($raw, 'UTF-8');
+
+        return match ($lower) {
+            'tecnologia', 'tecnologia & gadgets', 'gadgets', 'eletrônicos', 'eletrônicos & gadget', 'eletronicos', 'eletronicos & gadget' =>
+                "(category IN ('Tecnologia & Gadgets', 'Eletrônicos & Gadget', 'Eletrônicos') OR category LIKE '%Tecnologia%' OR category LIKE '%Eletrônicos%' OR category LIKE '%Eletronicos%' OR category LIKE '%Gadget%')",
+
+            'smartwatches', 'smartwatch', 'smartwatches & áudio', 'smartwatches & audio', 'áudio', 'audio' =>
+                "(category IN ('Smartwatches & Áudio', 'Smartwatches & Audio') OR category LIKE '%Smartwatch%' OR category LIKE '%Áudio%' OR category LIKE '%Audio%' OR title LIKE '%Smartwatch%' OR title LIKE '%Relógio%' OR title LIKE '%Watch%' OR title LIKE '%Fone%' OR title LIKE '%Tws%')",
+
+            'casa', 'casa inteligente', 'casa inteligente & organização', 'casa inteligente & organizacao', 'casa & organização' =>
+                "(category IN ('Casa Inteligente', 'Casa Inteligente & Organização') OR category LIKE '%Casa%')",
+
+            'acessorios', 'acessórios', 'acessórios virais', 'acessorios virais', 'ferramentas', 'ferramentas & utilidades' =>
+                "(category IN ('Acessórios Virais', 'Ferramentas & Utilidades', 'Acessórios para Veículos') OR category LIKE '%Acessório%' OR category LIKE '%Acessorio%' OR category LIKE '%Ferramenta%')",
+
+            'beleza', 'saúde', 'saude', 'saúde & cuidados', 'saude & cuidados', 'beleza, cuidados & estilo', 'estilo' =>
+                "(category IN ('Saúde & Cuidados', 'Beleza, Cuidados & Estilo') OR category LIKE '%Beleza%' OR category LIKE '%Saúde%' OR category LIKE '%Saude%' OR category LIKE '%Cuidado%')",
+
+            'moda', 'roupas', 'vestuário', 'vestuario', 'moda, roupas & vestuário', 'moda, roupas & vestuario', 'moda & vestuário' =>
+                "(category IN ('Moda, Roupas & Vestuário', 'Roupas', 'Vestuário') OR category LIKE '%Moda%' OR category LIKE '%Roupa%' OR category LIKE '%Vestuário%' OR category LIKE '%Vestuario%')",
+
+            'lingerie', 'lingeries', 'moda íntima', 'moda intima', 'moda íntima, lingeries & pijamas', 'moda intima, lingeries & pijamas', 'pijamas' =>
+                "(category IN ('Moda Íntima, Lingeries & Pijamas', 'Lingeries') OR category LIKE '%Lingerie%' OR category LIKE '%Íntima%' OR category LIKE '%Intima%')",
+
+            'sex shop', 'sexshop', 'adulto', 'adultos', 'produtos adultos', 'sex shop & produtos adultos (+18)', '+18' =>
+                "(category IN ('Sex Shop & Produtos Adultos (+18)', 'Sex Shop') OR category LIKE '%Sex Shop%' OR category LIKE '%Adulto%' OR category LIKE '%+18%')",
+
+            'pets', 'pet shop', 'pet shop & pets virais' =>
+                "(category IN ('Pet Shop & Pets Virais', 'Pet Shop') OR category LIKE '%Pet%')",
+
+            'veiculos', 'veículos', 'acessórios para veículos', 'acessorios para veiculos', 'automotivo' =>
+                "(category IN ('Acessórios para Veículos') OR category LIKE '%Veículo%' OR category LIKE '%Veiculo%' OR category LIKE '%Auto%')",
+
+            default => (function() use ($raw, &$params) {
+                $params[] = $raw;
+                $params[] = '%' . $raw . '%';
+                return "(category = ? OR category LIKE ?)";
+            })()
+        };
     }
 
     public function delete(int $id): bool
