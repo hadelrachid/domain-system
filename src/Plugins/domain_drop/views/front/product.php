@@ -13,10 +13,10 @@ if (empty($allImages) && !empty($product->mainImageUrl)) {
 }
 $isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false;
 ?>
-<div class="domain-drop-product-page" style="max-width: 1200px; margin: 0 auto; padding: 30px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1;">
+<div class="domain-drop-product-page" style="max-width: 1200px; margin: 0 auto; padding: 24px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1; box-sizing: border-box;">
 
     <!-- Breadcrumbs -->
-    <nav style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; margin-bottom: 28px; flex-wrap: wrap;">
+    <nav style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; margin-bottom: 24px; flex-wrap: wrap;">
         <a href="<?= $baseUrl ?>/" style="color: #94a3b8; text-decoration: none;">Início</a>
         <span>/</span>
         <a href="<?= $baseUrl ?>/loja" style="color: #94a3b8; text-decoration: none;">Loja</a>
@@ -31,12 +31,12 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
     </nav>
 
     <!-- Product Layout: Gallery + Buy Box -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; margin-bottom: 45px;">
+    <div class="product-top-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 32px; margin-bottom: 45px;">
         
         <!-- Gallery Column -->
         <div>
             <!-- Main Image Stage with Zoom trigger -->
-            <div id="main-product-stage" onclick="openVisualBookLightbox(currentActiveImageIndex)" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; position: relative; cursor: zoom-in; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+            <div id="main-product-stage" onclick="openVisualBookLightbox(currentActiveImageIndex)" class="main-stage-box" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; position: relative; cursor: zoom-in; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
                 <?php if (!empty($product->mainImageUrl)): ?>
                     <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.25s ease;">
                     <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(11,15,23,0.85); color: #F0D060; border: 1px solid rgba(212,175,55,0.4); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; pointer-events: none; backdrop-filter: blur(4px);">
@@ -66,7 +66,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                     <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($product->category) ?>
                 </span>
 
-                <h1 style="font-size: clamp(22px, 3vw, 28px); font-weight: 700; color: #fff; margin: 0 0 14px 0; line-height: 1.3;">
+                <h1 style="font-size: clamp(20px, 3vw, 28px); font-weight: 700; color: #fff; margin: 0 0 14px 0; line-height: 1.3;">
                     <?= htmlspecialchars($product->title) ?>
                 </h1>
 
@@ -82,7 +82,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                 <?php endif; ?>
 
                 <!-- Price Card -->
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 22px; margin-bottom: 24px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; margin-bottom: 22px;">
                     <div style="font-size: 13px; color: #94a3b8; text-decoration: line-through; margin-bottom: 4px;">
                         De: R$ <?= number_format($refPrice, 2, ',', '.') ?>
                     </div>
@@ -121,7 +121,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
     </div>
 
     <!-- 📸 VISUAL BOOK OFICIAL DO PRODUTO (Lookbook de Ângulos & Detalhes) -->
-    <div class="domain-drop-visual-book-box" style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 28px; margin-bottom: 40px; box-shadow: 0 12px 30px rgba(0,0,0,0.3);">
+    <div class="domain-drop-visual-book-box" style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 40px; box-shadow: 0 12px 30px rgba(0,0,0,0.3);">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
@@ -131,7 +131,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                     </h2>
                 </div>
                 <p style="font-size: 13px; color: #94a3b8; margin: 0;">
-                    Fotos oficiais em alta resolução do fabricante internacional. Clique em qualquer ângulo para inspecionar em tela cheia.
+                    Fotos oficiais em alta resolução do fabricante internacional. Toque em qualquer ângulo para inspecionar em tela cheia.
                 </p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -141,13 +141,13 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
             </div>
         </div>
 
-        <!-- Visual Book Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px;">
+        <!-- Visual Book Flex Container: 1 por linha no Mobile, 2 no Tablet, 4 no Desktop -->
+        <div class="visual-book-flex">
             <?php foreach ($allImages as $idx => $imgUrl): ?>
-                <div class="visual-book-card" onclick="openVisualBookLightbox(<?= $idx ?>)" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
-                    <img src="<?= htmlspecialchars($imgUrl) ?>" alt="Ângulo <?= $idx + 1 ?> - <?= htmlspecialchars($product->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
-                    <div class="vb-card-overlay" style="position: absolute; inset: 0; background: rgba(11,15,23,0.5); opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.2s ease;">
-                        <span style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <div class="visual-book-card" onclick="openVisualBookLightbox(<?= $idx ?>)">
+                    <img src="<?= htmlspecialchars($imgUrl) ?>" alt="Ângulo <?= $idx + 1 ?> - <?= htmlspecialchars($product->title) ?>" loading="lazy">
+                    <div class="vb-card-overlay">
+                        <span class="vb-card-badge">
                             🔍 Ampliar Ângulo #<?= $idx + 1 ?>
                         </span>
                     </div>
@@ -157,7 +157,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
     </div>
 
     <!-- Full Description & Persuasive Copy -->
-    <div style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 32px; margin-bottom: 40px;">
+    <div style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 28px; margin-bottom: 40px;">
         <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
             Descrição do Produto
         </h2>
@@ -169,46 +169,148 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
 </div>
 
 <!-- LIGHTBOX MODAL FULLSCREEN FOR VISUAL BOOK -->
-<div id="visualBookLightbox" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); align-items: center; justify-content: center; flex-direction: column;">
+<div id="visualBookLightbox" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(0, 0, 0, 0.94); backdrop-filter: blur(8px); align-items: center; justify-content: center; flex-direction: column;">
     <!-- Close button -->
-    <button onclick="closeVisualBookLightbox()" aria-label="Fechar" style="position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 24px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+    <button onclick="closeVisualBookLightbox()" aria-label="Fechar" style="position: absolute; top: 18px; right: 20px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 24px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
         ✕
     </button>
 
     <!-- Navigation Chevrons -->
     <?php if (count($allImages) > 1): ?>
-        <button onclick="navigateLightbox(-1)" aria-label="Anterior" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 28px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+        <button onclick="navigateLightbox(-1)" aria-label="Anterior" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 28px; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
             ❮
         </button>
-        <button onclick="navigateLightbox(1)" aria-label="Próximo" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 28px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+        <button onclick="navigateLightbox(1)" aria-label="Próximo" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 28px; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
             ❯
         </button>
     <?php endif; ?>
 
     <!-- Main Lightbox Image Container -->
-    <div style="max-width: 90vw; max-height: 80vh; display: flex; align-items: center; justify-content: center;">
-        <img id="lightboxActiveImg" src="" alt="Visual Book" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+    <div style="max-width: 92vw; max-height: 80vh; display: flex; align-items: center; justify-content: center;">
+        <img id="lightboxActiveImg" src="" alt="Visual Book" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.85);">
     </div>
 
     <!-- Image Counter & Title Info -->
-    <div style="margin-top: 16px; text-align: center; color: #94a3b8; font-size: 13px;">
+    <div style="margin-top: 16px; text-align: center; color: #94a3b8; font-size: 13px; max-width: 80vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
         <span id="lightboxCounter" style="color: #F0D060; font-weight: 700; margin-right: 8px;"></span>
         <span><?= htmlspecialchars($product->title) ?></span>
     </div>
 </div>
 
 <style>
+/* Visual Book Container em Modo Flex */
+.visual-book-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Card base do Visual Book */
+.visual-book-card {
+    background: #0c0f12;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.visual-book-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.visual-book-card .vb-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11,15,23,0.55);
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.2s ease;
+}
+
+.visual-book-card .vb-card-badge {
+    background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%);
+    color: #0b0f17;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
 .visual-book-card:hover {
     transform: translateY(-4px);
     border-color: rgba(212, 175, 55, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.18);
 }
+
 .visual-book-card:hover img {
     transform: scale(1.05);
 }
+
 .visual-book-card:hover .vb-card-overlay {
     opacity: 1 !important;
 }
+
+/* DESKTOP (>= 992px): 4 Imagens por Linha */
+@media (min-width: 992px) {
+    .visual-book-card {
+        flex: 0 0 calc(25% - 12px);
+        max-width: calc(25% - 12px);
+        aspect-ratio: 1 / 1;
+    }
+}
+
+/* TABLET (601px até 991px): EXATAMENTE 2 IMAGENS POR LINHA */
+@media (min-width: 601px) and (max-width: 991px) {
+    .visual-book-card {
+        flex: 0 0 calc(50% - 8px);
+        max-width: calc(50% - 8px);
+        aspect-ratio: 1 / 1;
+    }
+}
+
+/* MOBILE / SMARTPHONE (<= 600px): EXATAMENTE 1 IMAGEM POR LINHA */
+@media (max-width: 600px) {
+    .visual-book-flex {
+        gap: 14px;
+    }
+    .visual-book-card {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        aspect-ratio: 4 / 3 !important;
+        min-height: 250px;
+    }
+    .visual-book-card .vb-card-overlay {
+        opacity: 1 !important;
+        background: linear-gradient(180deg, transparent 55%, rgba(11,15,23,0.75) 100%) !important;
+        justify-content: flex-end !important;
+        padding-bottom: 14px !important;
+    }
+    .main-stage-box {
+        height: 320px !important;
+    }
+}
+
+/* Thumbnails da capa */
 .product-thumb-item:hover {
     border-color: rgba(212, 175, 55, 0.6) !important;
     transform: scale(1.05);
@@ -280,7 +382,7 @@ function updateLightbox() {
     }
 }
 
-// Keyboard shortcuts for Lightbox (ESC to close, Left/Right arrows to navigate)
+// Atalhos de teclado no Lightbox (ESC fecha, Setas navegam)
 document.addEventListener('keydown', function(e) {
     var lb = document.getElementById('visualBookLightbox');
     if (lb && lb.style.display === 'flex') {
