@@ -22,10 +22,10 @@
             <div class="footer-col">
                 <h4 style="color: #fff; font-size: 15px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Atendimento ao Cliente</h4>
                 <ul class="footer-links" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-                    <li><a href="<?= $baseUrl ?>/loja" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Rastrear Meu Pedido</a></li>
+                    <li><a href="<?= $baseUrl ?>/rastrear" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Rastrear Meu Pedido</a></li>
                     <li><a href="<?= $baseUrl ?>/termos" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Termos de Uso & Compra</a></li>
                     <li><a href="<?= $baseUrl ?>/privacidade" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Privacidade</a></li>
-                    <li><a href="<?= $baseUrl ?>/loja" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Envio & Prazos</a></li>
+                    <li><a href="<?= $baseUrl ?>/politica-de-envio" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Envio & Prazos</a></li>
                     <li><a href="<?= $baseUrl ?>/sobre" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Sobre a RachidD.com</a></li>
                 </ul>
             </div>

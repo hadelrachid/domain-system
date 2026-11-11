@@ -164,7 +164,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 themeManager: $themeManager,
-                miningService: $runtime->make(ProductMiningServiceInterface::class)
+                miningService: $runtime->make(ProductMiningServiceInterface::class),
+                orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
+                apiClient: $runtime->make(AliExpressApiClientInterface::class)
             );
         });
 
@@ -217,6 +219,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             // 4. Rotas Públicas da Loja Virtual & Vitrine de Produtos
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
+            $router->addRoute('GET', '/rastrear', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackOrder'], 'domain_drop');
+            $router->addRoute('GET', '/politica-de-envio', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'shippingPolicy'], 'domain_drop');
         });
 
         // 4. Integração com DomainCommerce (Resolução de Itens Vendáveis no Checkout)

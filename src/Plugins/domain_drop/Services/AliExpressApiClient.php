@@ -122,6 +122,41 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         return is_array($products) ? $products : [];
     }
 
+    public function queryTrackingInfo(
+        string $logisticsNo,
+        string $origin = 'ESCROW',
+        string $outRef = '',
+        string $serviceName = 'CAINIAO',
+        string $toArea = 'BR'
+    ): array {
+        $logisticsNo = trim($logisticsNo);
+        if ($logisticsNo === '' && trim($outRef) === '') {
+            return [];
+        }
+
+        $params = [
+            'logistics_no' => $logisticsNo,
+            'origin'       => $origin !== '' ? $origin : 'ESCROW',
+            'out_ref'      => trim($outRef),
+            'service_name' => $serviceName !== '' ? $serviceName : 'CAINIAO',
+            'to_area'      => $toArea !== '' ? strtoupper($toArea) : 'BR',
+        ];
+
+        $response = $this->execute('aliexpress.logistics.ds.trackinginfo.query', $params, $this->accessToken);
+
+        $details = $response['result']['details']['details']
+            ?? ($response['result']['details'] ?? null)
+            ?? ($response['aliexpress_logistics_ds_trackinginfo_query_response']['details']['details'] ?? null)
+            ?? ($response['aliexpress_logistics_ds_trackinginfo_query_response']['result']['details']['details'] ?? null)
+            ?? ($response['aliexpress_logistics_ds_trackinginfo_query_response']['result']['details'] ?? []);
+
+        return [
+            'official_website' => (string)($response['result']['official_website'] ?? $response['aliexpress_logistics_ds_trackinginfo_query_response']['official_website'] ?? ''),
+            'details'          => is_array($details) ? $details : [],
+            'raw'              => $response,
+        ];
+    }
+
     /**
      * Algoritmo Oficial de Assinatura IOP da AliExpress Open Platform.
      * 1. Ordena parâmetros alfabeticamente por chave (ksort).

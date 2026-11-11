@@ -18,7 +18,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
                 <span>🌐</span>
                 <span style="color: #fff; font-weight: 600;">BRL (R$)</span>
             </div>
-            <a href="<?= $baseUrl ?>/loja" style="color: #cbd5e1; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#cbd5e1'">Rastrear</a>
+            <a href="<?= $baseUrl ?>/rastrear" style="color: #cbd5e1; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#cbd5e1'">Rastrear</a>
             <a href="<?= $baseUrl ?>/admin/dropship" style="color: #D4AF37; text-decoration: none; font-weight: 600;">Seller</a>
         </div>
     </div>

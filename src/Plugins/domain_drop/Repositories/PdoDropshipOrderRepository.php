@@ -99,8 +99,12 @@ class PdoDropshipOrderRepository implements DropshipOrderRepositoryInterface
         }
 
         if (!empty($filters['search'])) {
-            $where[] = "(order_ref LIKE :q OR customer_name LIKE :q OR customer_email LIKE :q OR tracking_code LIKE :q)";
-            $params[':q'] = '%' . (string)$filters['search'] . '%';
+            $term = '%' . (string)$filters['search'] . '%';
+            $where[] = "(order_ref LIKE :q1 OR customer_name LIKE :q2 OR customer_email LIKE :q3 OR tracking_code LIKE :q4)";
+            $params[':q1'] = $term;
+            $params[':q2'] = $term;
+            $params[':q3'] = $term;
+            $params[':q4'] = $term;
         }
 
         $sql = "SELECT * FROM domain_drop_orders";

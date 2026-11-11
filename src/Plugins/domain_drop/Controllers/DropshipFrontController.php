@@ -8,7 +8,9 @@ use DomainSystem\Core\Contracts\ResponseInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
+use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use Throwable;
 
@@ -20,7 +22,9 @@ class DropshipFrontController
     public function __construct(
         private readonly DropshipCatalogRepositoryInterface $catalogRepo,
         private readonly ?ThemeManagerInterface $themeManager = null,
-        private readonly ?ProductMiningServiceInterface $miningService = null
+        private readonly ?ProductMiningServiceInterface $miningService = null,
+        private readonly ?DropshipOrderRepositoryInterface $orderRepo = null,
+        private readonly ?AliExpressApiClientInterface $apiClient = null
     ) {
     }
 
@@ -100,22 +104,9 @@ class DropshipFrontController
 
         ob_start();
         include dirname(__DIR__) . '/views/front/storefront.php';
-        $content = ob_get_clean();
+        $content = (string)ob_get_clean();
 
-        // Tenta renderizar envelopado pelo Layout do Tema ativo, com fallback gracioso
-        if ($this->themeManager !== null) {
-            try {
-                $wrapped = $this->themeManager->render('page', [
-                    'title'   => 'Loja Oficial - Produtos Selecionados',
-                    'content' => $content,
-                ]);
-                return new Response($wrapped);
-            } catch (Throwable $e) {
-                // Renderização direta caso o tema não possua layout 'page'
-            }
-        }
-
-        return new Response($content ?: '');
+        return $this->wrapWithThemeOrRaw($content, 'Loja Oficial - Produtos Selecionados');
     }
 
     /**
@@ -141,20 +132,118 @@ class DropshipFrontController
 
         ob_start();
         include dirname(__DIR__) . '/views/front/product.php';
-        $content = ob_get_clean();
+        $content = (string)ob_get_clean();
 
+        return $this->wrapWithThemeOrRaw($content, $product->title . ' - Loja Oficial');
+    }
+
+    /**
+     * Rastreamento Público de Pedidos: GET /rastrear
+     */
+    public function trackOrder(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $searchCode = trim((string)($request->input('codigo', '') ?: $request->input('q', '')));
+        $matchedOrders = [];
+        $trackingCodeToInspect = '';
+        $aliExpressOrderId = '';
+        $sdkEvents = [];
+        $sdkOfficialUrl = '';
+
+        if ($searchCode !== '' && $this->orderRepo !== null) {
+            $exact = $this->orderRepo->findByOrderRef($searchCode);
+            if ($exact !== null) {
+                $matchedOrders[] = $exact;
+            } else {
+                $matchedOrders = $this->orderRepo->list(['search' => $searchCode], 10, 0);
+            }
+
+            foreach ($matchedOrders as &$ord) {
+                if (!empty($ord['customer_email'])) {
+                    $ord['customer_email_masked'] = $this->maskEmail((string)$ord['customer_email']);
+                }
+                if ($trackingCodeToInspect === '' && !empty($ord['tracking_code'])) {
+                    $trackingCodeToInspect = trim((string)$ord['tracking_code']);
+                    $aliExpressOrderId = trim((string)($ord['aliexpress_order_id'] ?? ''));
+                }
+            }
+            unset($ord);
+        }
+
+        // Se o visitante digitou diretamente um código de objeto (ex: BR123456789CN ou NM123456789BR)
+        if ($trackingCodeToInspect === '' && $searchCode !== '' && !str_contains($searchCode, '@')) {
+            if (preg_match('/^[A-Z]{2}\d{8,12}[A-Z]{2}$/i', $searchCode) || str_starts_with(strtoupper($searchCode), 'LP') || str_starts_with(strtoupper($searchCode), 'CN')) {
+                $trackingCodeToInspect = strtoupper($searchCode);
+            }
+        }
+
+        if ($trackingCodeToInspect !== '' && $this->apiClient !== null) {
+            try {
+                $serviceName = preg_match('/BR$/i', $trackingCodeToInspect) ? 'CORREIOS' : 'CAINIAO';
+                $sdkRes = $this->apiClient->queryTrackingInfo(
+                    logisticsNo: $trackingCodeToInspect,
+                    origin: 'ESCROW',
+                    outRef: $aliExpressOrderId,
+                    serviceName: $serviceName,
+                    toArea: 'BR'
+                );
+                if (!empty($sdkRes['details']) && is_array($sdkRes['details'])) {
+                    $sdkEvents = $sdkRes['details'];
+                }
+                if (!empty($sdkRes['official_website'])) {
+                    $sdkOfficialUrl = (string)$sdkRes['official_website'];
+                }
+            } catch (Throwable $e) {
+                // Silencioso: fallback para links oficiais Correios/Cainiao e linha do tempo do pedido
+            }
+        }
+
+        ob_start();
+        include dirname(__DIR__) . '/views/front/track_order.php';
+        $content = (string)ob_get_clean();
+
+        return $this->wrapWithThemeOrRaw($content, 'Rastrear Meu Pedido - RachidD.com');
+    }
+
+    /**
+     * Página Oficial de Política de Envio & Prazos: GET /politica-de-envio
+     */
+    public function shippingPolicy(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        ob_start();
+        include dirname(__DIR__) . '/views/front/shipping_policy.php';
+        $content = (string)ob_get_clean();
+
+        return $this->wrapWithThemeOrRaw($content, 'Política de Envio & Prazos - RachidD.com');
+    }
+
+    private function wrapWithThemeOrRaw(string $content, string $title): ResponseInterface
+    {
         if ($this->themeManager !== null) {
             try {
                 $wrapped = $this->themeManager->render('page', [
-                    'title'   => $product->title . ' - Loja Oficial',
+                    'title'   => $title,
                     'content' => $content,
                 ]);
                 return new Response($wrapped);
             } catch (Throwable $e) {
-                // Fallback
+                // Fallback para SeoMiddleware ou entrega direta
             }
         }
 
         return new Response($content ?: '');
+    }
+
+    private function maskEmail(string $email): string
+    {
+        $parts = explode('@', trim($email));
+        if (count($parts) !== 2) {
+            return '';
+        }
+        $local = $parts[0];
+        $visible = mb_substr($local, 0, min(2, mb_strlen($local)));
+        return $visible . '***@' . $parts[1];
     }
 }

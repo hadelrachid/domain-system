@@ -698,6 +698,7 @@ class DomainDropHubTest extends TestCase
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
+            public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
         };
 
@@ -763,6 +764,7 @@ class DomainDropHubTest extends TestCase
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
+            public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
         };
 
@@ -983,5 +985,54 @@ class DomainDropHubTest extends TestCase
         $this->assertArrayHasKey('termometro_demanda', $mined[0]->attributes);
         $this->assertArrayHasKey('curadoria_nota', $mined[0]->attributes);
         $this->assertSame('BR', $mined[0]->attributes['ship_from'] ?? '');
+    }
+
+    public function testTrackOrderAndShippingPolicyPages(): void
+    {
+        $catalogRepo = new PdoDropshipCatalogRepository($this->pdo);
+        $orderRepo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($this->pdo);
+        $orderRepo->create([
+            'order_ref'           => 'ORD-TRACK-999',
+            'course_id'           => 21,
+            'customer_name'       => 'Maria Silva',
+            'customer_email'      => 'maria.silva@exemplo.com',
+            'aliexpress_order_id' => '8182838485',
+            'tracking_code'       => 'NM123456789BR',
+            'status'              => 'shipped',
+            'total_paid_brl'      => 149.90,
+        ]);
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $mockApi->expects($this->once())
+            ->method('queryTrackingInfo')
+            ->with('NM123456789BR', 'ESCROW', '8182838485', 'CORREIOS', 'BR')
+            ->willReturn([
+                'official_website' => 'https://rastreamento.correios.com.br',
+                'details'          => [
+                    ['event_date' => '2026-11-11 10:00', 'event_desc' => 'Objeto em trânsito - São Paulo/SP', 'address' => 'CTE Benfica'],
+                ],
+            ]);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $catalogRepo,
+            orderRepo: $orderRepo,
+            apiClient: $mockApi
+        );
+
+        $trackRes = $controller->trackOrder(new \DomainSystem\Core\Http\Request(['codigo' => 'ORD-TRACK-999']));
+        $trackHtml = $trackRes->getContent();
+        $this->assertSame(200, $trackRes->getStatusCode());
+        $this->assertStringContainsString('ORD-TRACK-999', $trackHtml);
+        $this->assertStringContainsString('NM123456789BR', $trackHtml);
+        $this->assertStringContainsString('ma***@exemplo.com', $trackHtml);
+        $this->assertStringContainsString('Objeto em trânsito - São Paulo/SP', $trackHtml);
+        $this->assertStringContainsString('rastreamento.correios.com.br', $trackHtml);
+
+        $policyRes = $controller->shippingPolicy(new \DomainSystem\Core\Http\Request());
+        $policyHtml = $policyRes->getContent();
+        $this->assertSame(200, $policyRes->getStatusCode());
+        $this->assertStringContainsString('Política de Envio', $policyHtml);
+        $this->assertStringContainsString('Estoque Nacional no Brasil', $policyHtml);
+        $this->assertStringContainsString('Remessa Conforme', $policyHtml);
     }
 }

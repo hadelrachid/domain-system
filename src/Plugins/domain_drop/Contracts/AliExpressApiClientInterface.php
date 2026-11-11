@@ -36,4 +36,22 @@ interface AliExpressApiClientInterface
      * @return array<int, array<string, mixed>>
      */
     public function searchProducts(array $filters = []): array;
+
+    /**
+     * Consulta eventos logísticos e rastreamento oficial de um envio no SDK AliExpress.
+     *
+     * @param string $logisticsNo Código de rastreio da transportadora (Correios/Cainiao)
+     * @param string $origin Origem da ordem no AliExpress (padrão 'ESCROW')
+     * @param string $outRef ID do pedido no AliExpress
+     * @param string $serviceName Serviço logístico / transportadora (ex: 'CAINIAO', 'CORREIOS')
+     * @param string $toArea País de destino ISO-2 (padrão 'BR')
+     * @return array<string, mixed>
+     */
+    public function queryTrackingInfo(
+        string $logisticsNo,
+        string $origin = 'ESCROW',
+        string $outRef = '',
+        string $serviceName = 'CAINIAO',
+        string $toArea = 'BR'
+    ): array;
 }
