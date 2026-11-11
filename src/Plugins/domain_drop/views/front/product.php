@@ -62,9 +62,17 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
         <!-- Product Buy Box Column -->
         <div style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <span style="background: <?= $isAdult ? 'rgba(239,68,68,0.2)' : 'rgba(255,71,71,0.15)' ?>; color: <?= $isAdult ? '#f87171' : '#ff6b6b' ?>; border: <?= $isAdult ? '1px solid rgba(239,68,68,0.4)' : 'none' ?>; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;">
-                    <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($product->category) ?>
-                </span>
+                <?php $isNational = (!empty($product->attributes['origem_brasil']) || (isset($product->attributes['ship_from']) && $product->attributes['ship_from'] === 'BR')); ?>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <span style="background: <?= $isAdult ? 'rgba(239,68,68,0.2)' : 'rgba(255,71,71,0.15)' ?>; color: <?= $isAdult ? '#f87171' : '#ff6b6b' ?>; border: <?= $isAdult ? '1px solid rgba(239,68,68,0.4)' : 'none' ?>; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">
+                        <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($product->category) ?>
+                    </span>
+                    <?php if ($isNational): ?>
+                        <span style="background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                            <span>🇧🇷</span> <span>Estoque no Brasil (Envio 3 a 7 dias)</span>
+                        </span>
+                    <?php endif; ?>
+                </div>
 
                 <h1 style="font-size: clamp(20px, 3vw, 28px); font-weight: 700; color: #fff; margin: 0 0 14px 0; line-height: 1.3;">
                     <?= htmlspecialchars($product->title) ?>

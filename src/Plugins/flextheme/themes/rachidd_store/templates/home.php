@@ -282,6 +282,7 @@ if (empty($catalogProducts)) {
                                         <?= htmlspecialchars($p->title) ?>
                                     </a>
                                 </h3>
+                                <?php $isNational = (!empty($p->attributes['origem_brasil']) || (isset($p->attributes['ship_from']) && $p->attributes['ship_from'] === 'BR')); ?>
                                 <div style="margin-bottom: 14px;">
                                     <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
                                         R$ <?= number_format($refPrice, 2, ',', '.') ?>
@@ -289,8 +290,8 @@ if (empty($catalogProducts)) {
                                     <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                         R$ <?= number_format($p->salePriceBrl, 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 10.5px; color: #F0D060; margin-top: 2px;">
-                                        ⚡ Frete Internacional Grátis & Rastreado
+                                    <div style="font-size: 10.5px; color: <?= $isNational ? '#4ade80' : '#F0D060' ?>; margin-top: 2px; font-weight: <?= $isNational ? '600' : 'normal' ?>;">
+                                        <?= $isNational ? '🇧🇷 Estoque no Brasil • Envio Rápido 3 a 7 dias' : '⚡ Frete Internacional Grátis & Rastreado' ?>
                                     </div>
                                 </div>
                             </div>
