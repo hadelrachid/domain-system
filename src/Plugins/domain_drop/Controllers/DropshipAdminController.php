@@ -192,6 +192,103 @@ class DropshipAdminController
         return Response::redirect($baseUrl . '/admin/dropship/settings');
     }
 
+    public function testConnection(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse(['success' => false, 'status' => 'error', 'message' => 'Token de segurança expirado. Atualize a página e tente novamente.'], 403);
+            }
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        $config = $this->loadConfig();
+        $appKey = trim((string)$request->input('app_key', $config['app_key'] ?? ''));
+        $appSecret = trim((string)$request->input('app_secret', ''));
+        if ($appSecret === '' || str_starts_with($appSecret, '***')) {
+            $appSecret = (string)($config['app_secret'] ?? '');
+        }
+        $accessToken = trim((string)$request->input('access_token', ''));
+        if ($accessToken === '' || str_starts_with($accessToken, '***')) {
+            $accessToken = (string)($config['access_token'] ?? '');
+        }
+        $gatewayUrl = (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync');
+
+        if ($appKey === '' || $appSecret === '') {
+            $msg = '❌ O AppKey e o AppSecret são obrigatórios para testar a conexão com o servidor do AliExpress.';
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse(['success' => false, 'status' => 'error', 'message' => $msg], 400);
+            }
+            $this->session->setFlash('error', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        try {
+            $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                appKey: $appKey,
+                appSecret: $appSecret,
+                gatewayUrl: $gatewayUrl,
+                timeout: 10,
+                accessToken: $accessToken !== '' ? $accessToken : null
+            );
+
+            // Testa endpoint de detalhes de produto no gateway oficial do AliExpress
+            $res = $client->getProductDetails('1005006093867086');
+
+            if (isset($res['error_response'])) {
+                $err = $res['error_response'];
+                $errCode = (string)($err['code'] ?? '');
+                $errMsg = (string)($err['msg'] ?? '');
+
+                if (str_contains(strtolower($errMsg), 'access_token') || str_contains($errCode, 'MissingParameter') || str_contains($errCode, 'IllegalAccessToken') || str_contains($errCode, 'InvalidAccessToken')) {
+                    $status = 'warning';
+                    $msg = "⚠️ Conexão física OK com o servidor do AliExpress (api-sg.aliexpress.com), mas a aplicação está em modo TEST ou o Access Token não foi fornecido. Clique no botão 'Apply Online' no portal do AliExpress para ir para Produção e cole o Access Token gerado.";
+                } elseif (str_contains($errCode, 'InvalidAppKey') || str_contains($errMsg, 'AppKey') || str_contains($errCode, 'IncompleteSignature') || str_contains($errCode, 'Signature')) {
+                    $status = 'error';
+                    $msg = "❌ Credenciais inválidas. O servidor do AliExpress rejeitou o AppKey ou AppSecret informados. Verifique se foram digitados corretamente ou gere novas credenciais no portal openservice.aliexpress.com.";
+                } else {
+                    $status = 'warning';
+                    $msg = "⚠️ Resposta do Servidor AliExpress: [{$errCode}] {$errMsg}. Verifique as permissões da aplicação no painel de desenvolvedores.";
+                }
+
+                if ($this->isAjaxOrJson($request)) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'status'  => $status,
+                        'message' => $msg,
+                        'code'    => $errCode,
+                    ]);
+                }
+
+                $this->session->setFlash($status === 'warning' ? 'warning' : 'error', $msg);
+                return Response::redirect($baseUrl . '/admin/dropship/settings');
+            }
+
+            // Sucesso Total
+            $msg = "✔️ Conexão e sincronização 100% estabelecidas com o servidor do AliExpress! Protocolo HMAC-SHA256 validado e credenciais operantes.";
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse([
+                    'success' => true,
+                    'status'  => 'ok',
+                    'message' => $msg,
+                ]);
+            }
+
+            $this->session->setFlash('success', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+
+        } catch (Throwable $e) {
+            $msg = "❌ Falha de rede ao conectar com o servidor do AliExpress: " . $e->getMessage() . ". Verifique se o servidor possui saída HTTPS para api-sg.aliexpress.com.";
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse(['success' => false, 'status' => 'error', 'message' => $msg], 500);
+            }
+            $this->session->setFlash('error', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+    }
+
     public function orders(Request $request): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';

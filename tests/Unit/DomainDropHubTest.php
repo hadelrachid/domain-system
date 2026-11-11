@@ -725,13 +725,14 @@ class DomainDropHubTest extends TestCase
         $infoBefore = $mining->getDailyCycleInfo();
         $this->assertTrue($infoBefore['is_due']);
         $this->assertSame(0, $infoBefore['last_cycle_at']);
-        $this->assertCount(6, $infoBefore['official_categories']);
+        $officialCount = count(ProductMiningService::OFFICIAL_CATEGORIES);
+        $this->assertCount($officialCount, $infoBefore['official_categories']);
 
         // 2. Executa ciclo diário com 2 produtos por categoria
         $result = $mining->runDailyAutomatedRotation(2);
         $this->assertTrue($result['success']);
-        $this->assertGreaterThanOrEqual(12, $result['total_mined']);
-        $this->assertCount(6, $result['category_counts']);
+        $this->assertGreaterThanOrEqual($officialCount * 2, $result['total_mined']);
+        $this->assertCount($officialCount, $result['category_counts']);
 
         // 3. Após a execução, o ciclo deve estar ativo com ~24h restantes
         $infoAfter = $mining->getDailyCycleInfo();

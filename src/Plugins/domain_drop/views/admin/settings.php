@@ -49,20 +49,31 @@
         </div>
     <?php endif; ?>
 
-    <!-- Status da Conexão AliExpress -->
-    <div style="background: rgba(40,167,69,0.1); border: 1px solid rgba(40,167,69,0.3); border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(40,167,69,0.2); display: flex; align-items: center; justify-content: center; color: #5cd67d; font-size: 18px;">
-                <i class="fas fa-shield-check"></i>
+    <!-- Live Test Connection Card -->
+    <div id="aliexpressConnCard" style="background: var(--bg-panel, #1d2327); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-radius: 8px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div id="connIconBadge" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(69,243,255,0.15); border: 1px solid rgba(69,243,255,0.3); display: flex; align-items: center; justify-content: center; color: #45f3ff; font-size: 20px; flex-shrink: 0;">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                        <span id="connTitle" style="color: #fff; font-weight: 700; font-size: 15px;">Diagnóstico do Servidor AliExpress</span>
+                        <span id="connBadge" style="background: rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Pronto para Testar</span>
+                    </div>
+                    <div id="connSubtext" style="color: var(--text-muted, #94a3b8); font-size: 12px;">
+                        Gateway Oficial: <code style="color: #45f3ff;">api-sg.aliexpress.com/sync</code> • Protocolo: HMAC-SHA256 • App: <?= htmlspecialchars((string)($config['app_key'] ?? '558628')) ?>
+                    </div>
+                </div>
             </div>
-            <div>
-                <div style="color: #fff; font-weight: 600; font-size: 14px;">Status ISV AliExpress: Aprovado & Operante</div>
-                <div style="color: #94a3b8; font-size: 12px;">Permissões Ativas: <strong>AliExpress-dropship</strong> e <strong>System Tool</strong> | Protocolo: HMAC-SHA256</div>
-            </div>
+
+            <button type="button" id="btnTestAliExpressConn" style="background: linear-gradient(135deg, #45f3ff 0%, #0099ff 100%); color: #0b0f17; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(69,243,255,0.25); transition: all 0.2s ease;">
+                <i class="fas fa-bolt"></i> Testar Conexão com o Servidor
+            </button>
         </div>
-        <div style="font-size: 12px; color: #94a3b8; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 6px;">
-            Gateway: <code>api-sg.aliexpress.com/sync</code>
-        </div>
+
+        <!-- Live Result Banner -->
+        <div id="connResultBox" style="display: none; margin-top: 16px; padding: 14px 18px; border-radius: 6px; font-size: 13px; line-height: 1.5;"></div>
     </div>
 
     <!-- Main Settings Form -->
@@ -151,5 +162,133 @@
             </button>
         </div>
     </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var btnTest = document.getElementById('btnTestAliExpressConn');
+        var resultBox = document.getElementById('connResultBox');
+        var badge = document.getElementById('connBadge');
+        var iconBadge = document.getElementById('connIconBadge');
+        var title = document.getElementById('connTitle');
+
+        if (!btnTest) return;
+
+        btnTest.addEventListener('click', function() {
+            var appKeyInput = document.querySelector('input[name="app_key"]');
+            var appSecretInput = document.querySelector('input[name="app_secret"]');
+            var accessTokenInput = document.querySelector('input[name="access_token"]');
+            var csrfInput = document.querySelector('input[name="csrf_token"]');
+
+            var originalHtml = btnTest.innerHTML;
+            btnTest.disabled = true;
+            btnTest.style.opacity = '0.7';
+            btnTest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando Conexão...';
+
+            resultBox.style.display = 'block';
+            resultBox.style.background = 'rgba(69,243,255,0.08)';
+            resultBox.style.border = '1px solid rgba(69,243,255,0.25)';
+            resultBox.style.color = '#cbd5e1';
+            resultBox.innerHTML = '<i class="fas fa-sync fa-spin" style="color: #45f3ff;"></i> Enviando pacote criptográfico assinado com HMAC-SHA256 para o gateway api-sg.aliexpress.com...';
+
+            var formData = new FormData();
+            formData.append('csrf_token', csrfInput ? csrfInput.value : '');
+            formData.append('app_key', appKeyInput ? appKeyInput.value : '');
+            formData.append('app_secret', appSecretInput ? appSecretInput.value : '');
+            formData.append('access_token', accessTokenInput ? accessTokenInput.value : '');
+            formData.append('ajax', '1');
+
+            fetch('<?= $baseUrl ?>/admin/dropship/test-connection', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(res) {
+                return res.json().catch(function() {
+                    return { success: false, status: 'error', message: 'Erro na resposta HTTP (' + res.status + ')' };
+                });
+            })
+            .then(function(data) {
+                btnTest.disabled = false;
+                btnTest.style.opacity = '1';
+                btnTest.innerHTML = originalHtml;
+
+                if (data.status === 'ok' || data.success === true) {
+                    // ✔️ Conexão OK
+                    badge.textContent = '✔️ Conectado & Operante';
+                    badge.style.background = 'rgba(40,167,69,0.2)';
+                    badge.style.color = '#5cd67d';
+                    badge.style.border = '1px solid rgba(40,167,69,0.4)';
+
+                    iconBadge.style.background = 'rgba(40,167,69,0.2)';
+                    iconBadge.style.borderColor = 'rgba(40,167,69,0.4)';
+                    iconBadge.style.color = '#5cd67d';
+                    iconBadge.innerHTML = '<i class="fas fa-check-circle"></i>';
+
+                    resultBox.style.background = 'rgba(40,167,69,0.12)';
+                    resultBox.style.border = '1px solid #28a745';
+                    resultBox.style.color = '#5cd67d';
+                    resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">✔️ Sucesso: Sincronização Estabelecida!</div>' + data.message;
+                } else if (data.status === 'warning') {
+                    // ⚠️ Modo Test / Access Token
+                    badge.textContent = '⚠️ Modo Test / Requer Token';
+                    badge.style.background = 'rgba(234,179,8,0.2)';
+                    badge.style.color = '#facc15';
+                    badge.style.border = '1px solid rgba(234,179,8,0.4)';
+
+                    iconBadge.style.background = 'rgba(234,179,8,0.2)';
+                    iconBadge.style.borderColor = 'rgba(234,179,8,0.4)';
+                    iconBadge.style.color = '#facc15';
+                    iconBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+
+                    resultBox.style.background = 'rgba(234,179,8,0.1)';
+                    resultBox.style.border = '1px solid #eab308';
+                    resultBox.style.color = '#fef08a';
+                    resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">⚠️ Servidor Alcançado — Ação Requerida</div>' + 
+                        data.message + 
+                        '<div style="margin-top: 10px; font-size: 12px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; border-left: 3px solid #eab308;">' +
+                        '<strong>Dica:</strong> Se sua aplicação já foi aprovada em <em>Apply Online</em>, gere o <em>Access Token</em> permanente no console do AliExpress e cole-o no campo de token abaixo antes de salvar.' +
+                        '</div>';
+                } else {
+                    // ❌ Erro de Chave / Token / Rede
+                    badge.textContent = '❌ Falha de Autenticação';
+                    badge.style.background = 'rgba(239,68,68,0.2)';
+                    badge.style.color = '#f87171';
+                    badge.style.border = '1px solid rgba(239,68,68,0.4)';
+
+                    iconBadge.style.background = 'rgba(239,68,68,0.2)';
+                    iconBadge.style.borderColor = 'rgba(239,68,68,0.4)';
+                    iconBadge.style.color = '#f87171';
+                    iconBadge.innerHTML = '<i class="fas fa-times-circle"></i>';
+
+                    resultBox.style.background = 'rgba(220,50,50,0.12)';
+                    resultBox.style.border = '1px solid #dc3232';
+                    resultBox.style.color = '#fca5a5';
+                    resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">❌ Erro de Ligação com o Servidor</div>' + 
+                        (data.message || 'Falha ao validar credenciais com o servidor do AliExpress.') +
+                        '<div style="margin-top: 10px; font-size: 12px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; border-left: 3px solid #dc3232;">' +
+                        '<strong>Solução:</strong> Verifique se digitou o <em>AppKey</em> e o <em>App Secret</em> corretamente sem espaços ou acesse seu painel em <strong>openservice.aliexpress.com</strong> para redefinir as credenciais.' +
+                        '</div>';
+                }
+            })
+            .catch(function(err) {
+                btnTest.disabled = false;
+                btnTest.style.opacity = '1';
+                btnTest.innerHTML = originalHtml;
+
+                badge.textContent = '❌ Erro de Rede';
+                badge.style.background = 'rgba(239,68,68,0.2)';
+                badge.style.color = '#f87171';
+
+                resultBox.style.background = 'rgba(220,50,50,0.12)';
+                resultBox.style.border = '1px solid #dc3232';
+                resultBox.style.color = '#fca5a5';
+                resultBox.innerHTML = '❌ Falha de comunicação de rede: ' + err.message;
+            });
+        });
+    });
+    </script>
 
 </div>

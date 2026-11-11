@@ -52,8 +52,9 @@ $refPrice = $product->salePriceBrl * 1.35;
         <!-- Product Buy Box Column -->
         <div style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <span style="background: rgba(255,71,71,0.15); color: #ff6b6b; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;">
-                    <?= htmlspecialchars($product->category) ?>
+                <?php $isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false; ?>
+                <span style="background: <?= $isAdult ? 'rgba(239,68,68,0.2)' : 'rgba(255,71,71,0.15)' ?>; color: <?= $isAdult ? '#f87171' : '#ff6b6b' ?>; border: <?= $isAdult ? '1px solid rgba(239,68,68,0.4)' : 'none' ?>; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;">
+                    <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($product->category) ?>
                 </span>
 
                 <h1 style="font-size: clamp(22px, 3vw, 28px); font-weight: 700; color: #fff; margin: 0 0 14px 0; line-height: 1.3;">

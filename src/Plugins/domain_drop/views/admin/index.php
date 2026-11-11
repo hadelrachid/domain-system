@@ -118,19 +118,19 @@
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
                     <span style="font-size: 16px; font-weight: 800; color: #FFE082; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Ciclo Autônomo 24 Horas • Rotação de 6 Categorias
+                        Ciclo Autônomo 24 Horas • Rotação de 9 Categorias
                     </span>
                     <span style="background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
                         Ativo
                     </span>
                 </div>
                 <div style="font-size: 13px; color: #cbd5e1;">
-                    Renova o catálogo automaticamente minerando produtos virais aleatórios em todas as 6 categorias oficiais a cada 24 horas.
+                    Renova o catálogo automaticamente minerando produtos virais em todas as 9 categorias oficiais a cada 24 horas.
                 </div>
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
                     Último ciclo: <strong style="color: #fff;"><?= htmlspecialchars((string)($cycleInfo['last_cycle_date'] ?? 'Pendente')) ?></strong>
                     &nbsp;•&nbsp; 
-                    6 Categorias: <span style="color: #F0D060;">Eletrônicos & Gadget, Casa Inteligente & Organização, Beleza, Cuidados & Estilo, Ferramentas & Utilidades, Pet Shop & Pets Virais, Acessórios para Veículos</span>
+                    9 Categorias: <span style="color: #F0D060;">Eletrônicos, Casa, Beleza, Ferramentas, Pet Shop, Veículos, Moda/Roupas, Lingerie/Íntima, Sex Shop (+18)</span>
                 </div>
             </div>
         </div>
@@ -223,6 +223,9 @@
                             <option value="Ferramentas & Utilidades">Ferramentas & Utilidades</option>
                             <option value="Pet Shop & Pets Virais">Pet Shop & Pets Virais</option>
                             <option value="Acessórios para Veículos">Acessórios para Veículos</option>
+                            <option value="Moda, Roupas & Vestuário">Moda, Roupas & Vestuário</option>
+                            <option value="Moda Íntima, Lingeries & Pijamas">Moda Íntima, Lingeries & Pijamas</option>
+                            <option value="Sex Shop & Produtos Adultos (+18)">🔞 Sex Shop & Produtos Adultos (+18)</option>
                         </select>
                     </div>
                     <div>

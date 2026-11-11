@@ -225,8 +225,9 @@
                         </a>
 
                         <?php if (!empty($p->category)): ?>
-                            <span style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">
-                                <?= htmlspecialchars($p->category) ?>
+                            <?php $isAdult = str_contains($p->category, '+18') || stripos($p->category, 'sex shop') !== false; ?>
+                            <span style="position: absolute; top: 12px; left: 12px; background: <?= $isAdult ? 'rgba(185,28,28,0.9)' : 'rgba(0,0,0,0.75)' ?>; backdrop-filter: blur(4px); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: <?= $isAdult ? '1px solid rgba(239,68,68,0.6)' : 'none' ?>;">
+                                <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($p->category) ?>
                             </span>
                         <?php endif; ?>
 
@@ -276,6 +277,46 @@
                 </article>
             <?php endforeach; ?>
         </div>
+    <?php endif; ?>
+
+    <!-- Age Verification Modal for Adult (+18) / Sex Shop Categories -->
+    <?php $isAdultCategory = !empty($selectedCategory) && (str_contains($selectedCategory, '+18') || stripos($selectedCategory, 'sex shop') !== false); ?>
+    <?php if ($isAdultCategory): ?>
+        <div id="ageGateModal" style="display: none; position: fixed; inset: 0; background: rgba(5,7,10,0.92); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: #171d22; border: 1px solid rgba(239,68,68,0.5); border-radius: 14px; max-width: 480px; width: 100%; padding: 32px 28px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); animation: fadeIn 0.3s ease;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(239,68,68,0.15); border: 2px solid #ef4444; color: #f87171; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; margin: 0 auto 18px auto;">
+                    🔞
+                </div>
+                <h2 style="color: #fff; font-size: 22px; font-weight: 800; margin: 0 0 10px 0;">Conteúdo Adulto (+18)</h2>
+                <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                    Esta seção contém produtos íntimos e bem-estar destinados <strong>exclusivamente a maiores de 18 anos</strong>. Ao prosseguir, você declara sob as penas da lei ter atingido a maioridade legal.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <a href="<?= $baseUrl ?>/loja" style="flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; text-decoration: none; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+                        Não, sair
+                    </a>
+                    <button type="button" id="btnConfirmAge18" style="flex: 1.4; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: none; color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
+                        Sim, tenho 18+ anos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        (function() {
+            var modal = document.getElementById('ageGateModal');
+            var btnConfirm = document.getElementById('btnConfirmAge18');
+            if (modal && !localStorage.getItem('age_verified_18')) {
+                modal.style.display = 'flex';
+                if (btnConfirm) {
+                    btnConfirm.addEventListener('click', function() {
+                        localStorage.setItem('age_verified_18', 'true');
+                        modal.style.display = 'none';
+                    });
+                }
+            }
+        })();
+        </script>
     <?php endif; ?>
 
 </div>
