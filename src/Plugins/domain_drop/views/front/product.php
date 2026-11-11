@@ -7,6 +7,11 @@
  * @var string $baseUrl
  */
 $refPrice = $product->salePriceBrl * 1.35;
+$allImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
+if (empty($allImages) && !empty($product->mainImageUrl)) {
+    $allImages = [$product->mainImageUrl];
+}
+$isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false;
 ?>
 <div class="domain-drop-product-page" style="max-width: 1200px; margin: 0 auto; padding: 30px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1;">
 
@@ -20,28 +25,33 @@ $refPrice = $product->salePriceBrl * 1.35;
             <?= htmlspecialchars($product->category) ?>
         </a>
         <span>/</span>
-        <span style="color: #fff; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <span style="color: #fff; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
             <?= htmlspecialchars($product->title) ?>
         </span>
     </nav>
 
-    <!-- Product Layout: Gallery + Info -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; margin-bottom: 50px;">
+    <!-- Product Layout: Gallery + Buy Box -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; margin-bottom: 45px;">
         
         <!-- Gallery Column -->
         <div>
-            <div style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+            <!-- Main Image Stage with Zoom trigger -->
+            <div id="main-product-stage" onclick="openVisualBookLightbox(currentActiveImageIndex)" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; position: relative; cursor: zoom-in; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
                 <?php if (!empty($product->mainImageUrl)): ?>
-                    <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.25s ease;">
+                    <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(11,15,23,0.85); color: #F0D060; border: 1px solid rgba(212,175,55,0.4); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; pointer-events: none; backdrop-filter: blur(4px);">
+                        <span>🔍</span> <span>Toque para Ampliar</span>
+                    </div>
                 <?php else: ?>
                     <div style="font-size: 50px;">📦</div>
                 <?php endif; ?>
             </div>
 
-            <?php if (!empty($product->images) && count($product->images) > 1): ?>
-                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;">
-                    <?php foreach ($product->images as $thumb): ?>
-                        <div onclick="document.getElementById('main-product-img').src = '<?= htmlspecialchars($thumb) ?>';" style="width: 72px; height: 72px; background: #0c0f12; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden; cursor: pointer; flex-shrink: 0;">
+            <!-- Horizontal Thumbnails Strip -->
+            <?php if (count($allImages) > 1): ?>
+                <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;" class="custom-scroll">
+                    <?php foreach ($allImages as $idx => $thumb): ?>
+                        <div class="product-thumb-item <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>" onclick="selectProductImage(<?= $idx ?>, '<?= htmlspecialchars($thumb, ENT_QUOTES) ?>')" style="width: 72px; height: 72px; background: #0c0f12; border: 2px solid <?= $idx === 0 ? '#D4AF37' : 'rgba(255,255,255,0.12)' ?>; border-radius: 8px; overflow: hidden; cursor: pointer; flex-shrink: 0; transition: border-color 0.2s ease, transform 0.2s ease;">
                             <img src="<?= htmlspecialchars($thumb) ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     <?php endforeach; ?>
@@ -52,7 +62,6 @@ $refPrice = $product->salePriceBrl * 1.35;
         <!-- Product Buy Box Column -->
         <div style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <?php $isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false; ?>
                 <span style="background: <?= $isAdult ? 'rgba(239,68,68,0.2)' : 'rgba(255,71,71,0.15)' ?>; color: <?= $isAdult ? '#f87171' : '#ff6b6b' ?>; border: <?= $isAdult ? '1px solid rgba(239,68,68,0.4)' : 'none' ?>; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 12px;">
                     <?= $isAdult ? '🔞 ' : '' ?><?= htmlspecialchars($product->category) ?>
                 </span>
@@ -111,6 +120,42 @@ $refPrice = $product->salePriceBrl * 1.35;
 
     </div>
 
+    <!-- 📸 VISUAL BOOK OFICIAL DO PRODUTO (Lookbook de Ângulos & Detalhes) -->
+    <div class="domain-drop-visual-book-box" style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 28px; margin-bottom: 40px; box-shadow: 0 12px 30px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <span style="font-size: 20px;">📸</span>
+                    <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0;">
+                        Visual Book & Galeria de Detalhes
+                    </h2>
+                </div>
+                <p style="font-size: 13px; color: #94a3b8; margin: 0;">
+                    Fotos oficiais em alta resolução do fabricante internacional. Clique em qualquer ângulo para inspecionar em tela cheia.
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="background: rgba(212, 175, 55, 0.12); color: #F0D060; border: 1px solid rgba(212, 175, 55, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                    <span>✨</span> <?= count($allImages) ?> <?= count($allImages) === 1 ? 'Foto Full HD' : 'Fotos em Full HD' ?>
+                </span>
+            </div>
+        </div>
+
+        <!-- Visual Book Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px;">
+            <?php foreach ($allImages as $idx => $imgUrl): ?>
+                <div class="visual-book-card" onclick="openVisualBookLightbox(<?= $idx ?>)" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease;">
+                    <img src="<?= htmlspecialchars($imgUrl) ?>" alt="Ângulo <?= $idx + 1 ?> - <?= htmlspecialchars($product->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                    <div class="vb-card-overlay" style="position: absolute; inset: 0; background: rgba(11,15,23,0.5); opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.2s ease;">
+                        <span style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            🔍 Ampliar Ângulo #<?= $idx + 1 ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
     <!-- Full Description & Persuasive Copy -->
     <div style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 32px; margin-bottom: 40px;">
         <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
@@ -122,3 +167,126 @@ $refPrice = $product->salePriceBrl * 1.35;
     </div>
 
 </div>
+
+<!-- LIGHTBOX MODAL FULLSCREEN FOR VISUAL BOOK -->
+<div id="visualBookLightbox" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); align-items: center; justify-content: center; flex-direction: column;">
+    <!-- Close button -->
+    <button onclick="closeVisualBookLightbox()" aria-label="Fechar" style="position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 24px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+        ✕
+    </button>
+
+    <!-- Navigation Chevrons -->
+    <?php if (count($allImages) > 1): ?>
+        <button onclick="navigateLightbox(-1)" aria-label="Anterior" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 28px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+            ❮
+        </button>
+        <button onclick="navigateLightbox(1)" aria-label="Próximo" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 28px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
+            ❯
+        </button>
+    <?php endif; ?>
+
+    <!-- Main Lightbox Image Container -->
+    <div style="max-width: 90vw; max-height: 80vh; display: flex; align-items: center; justify-content: center;">
+        <img id="lightboxActiveImg" src="" alt="Visual Book" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+    </div>
+
+    <!-- Image Counter & Title Info -->
+    <div style="margin-top: 16px; text-align: center; color: #94a3b8; font-size: 13px;">
+        <span id="lightboxCounter" style="color: #F0D060; font-weight: 700; margin-right: 8px;"></span>
+        <span><?= htmlspecialchars($product->title) ?></span>
+    </div>
+</div>
+
+<style>
+.visual-book-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212, 175, 55, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+}
+.visual-book-card:hover img {
+    transform: scale(1.05);
+}
+.visual-book-card:hover .vb-card-overlay {
+    opacity: 1 !important;
+}
+.product-thumb-item:hover {
+    border-color: rgba(212, 175, 55, 0.6) !important;
+    transform: scale(1.05);
+}
+.product-thumb-item.active {
+    border-color: #D4AF37 !important;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+</style>
+
+<script>
+var productGalleryImages = <?= json_encode($allImages, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+var currentActiveImageIndex = 0;
+
+function selectProductImage(index, url) {
+    currentActiveImageIndex = index;
+    var mainImg = document.getElementById('main-product-img');
+    if (mainImg) {
+        mainImg.style.opacity = '0.3';
+        setTimeout(function() {
+            mainImg.src = url;
+            mainImg.style.opacity = '1';
+        }, 120);
+    }
+    document.querySelectorAll('.product-thumb-item').forEach(function(el, i) {
+        if (i === index) {
+            el.classList.add('active');
+            el.style.borderColor = '#D4AF37';
+        } else {
+            el.classList.remove('active');
+            el.style.borderColor = 'rgba(255,255,255,0.12)';
+        }
+    });
+}
+
+function openVisualBookLightbox(index) {
+    if (!productGalleryImages || productGalleryImages.length === 0) return;
+    currentActiveImageIndex = (index >= 0 && index < productGalleryImages.length) ? index : 0;
+    updateLightbox();
+    var lb = document.getElementById('visualBookLightbox');
+    if (lb) {
+        lb.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeVisualBookLightbox() {
+    var lb = document.getElementById('visualBookLightbox');
+    if (lb) {
+        lb.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+function navigateLightbox(step) {
+    if (!productGalleryImages || productGalleryImages.length <= 1) return;
+    currentActiveImageIndex = (currentActiveImageIndex + step + productGalleryImages.length) % productGalleryImages.length;
+    updateLightbox();
+}
+
+function updateLightbox() {
+    var imgEl = document.getElementById('lightboxActiveImg');
+    var counterEl = document.getElementById('lightboxCounter');
+    if (imgEl && productGalleryImages[currentActiveImageIndex]) {
+        imgEl.src = productGalleryImages[currentActiveImageIndex];
+    }
+    if (counterEl) {
+        counterEl.textContent = 'Foto ' + (currentActiveImageIndex + 1) + ' de ' + productGalleryImages.length;
+    }
+}
+
+// Keyboard shortcuts for Lightbox (ESC to close, Left/Right arrows to navigate)
+document.addEventListener('keydown', function(e) {
+    var lb = document.getElementById('visualBookLightbox');
+    if (lb && lb.style.display === 'flex') {
+        if (e.key === 'Escape') closeVisualBookLightbox();
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+        if (e.key === 'ArrowRight') navigateLightbox(1);
+    }
+});
+</script>
