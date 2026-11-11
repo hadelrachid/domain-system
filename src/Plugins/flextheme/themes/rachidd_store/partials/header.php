@@ -455,7 +455,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
 
     <div class="cat-drawer-list">
         <!-- Todas as Categorias -->
-        <a href="<?= $baseUrl ?>/loja<?= !empty($currentQ) ? '?q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= empty($currentCat) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja<?= !empty($currentQ) ? '?q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= empty($currentCat) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🌐</span>
                 <span>Todas as Categorias (Ver Tudo)</span>
@@ -464,7 +464,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Mais Vendidos -->
-        <a href="<?= $baseUrl ?>/loja?sort=sales<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= ($currentSort === 'sales') ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?sort=sales<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= ($currentSort === 'sales') ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🏆</span>
                 <span>Mais Vendidos (Best Sellers)</span>
@@ -473,7 +473,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Tecnologia & Gadgets -->
-        <a href="<?= $baseUrl ?>/loja?cat=Tecnologia<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'tecnologia') !== false || stripos($currentCat, 'eletrônicos') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=Tecnologia<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'tecnologia') !== false || stripos($currentCat, 'eletrônicos') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">📱</span>
                 <span>Tecnologia & Gadgets</span>
@@ -482,7 +482,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Smartwatches & Áudio -->
-        <a href="<?= $baseUrl ?>/loja?cat=Smartwatches<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'smartwatch') !== false || stripos($currentCat, 'áudio') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=Smartwatches<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'smartwatch') !== false || stripos($currentCat, 'áudio') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">⌚</span>
                 <span>Smartwatches & Áudio</span>
@@ -491,7 +491,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Casa Inteligente & Organização -->
-        <a href="<?= $baseUrl ?>/loja?cat=Casa<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'casa') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=Casa<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'casa') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🏠</span>
                 <span>Casa Inteligente & Organização</span>
@@ -500,7 +500,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Acessórios Virais & Ferramentas -->
-        <a href="<?= $baseUrl ?>/loja?cat=Acessorios<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'acessórios') !== false || stripos($currentCat, 'ferramentas') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=Acessorios<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'acessórios') !== false || stripos($currentCat, 'ferramentas') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🛠️</span>
                 <span>Acessórios Virais & Ferramentas</span>
@@ -509,7 +509,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Saúde & Cuidados (Beleza) -->
-        <a href="<?= $baseUrl ?>/loja?cat=Beleza<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=Beleza<?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">✨</span>
                 <span>Saúde & Cuidados (Beleza)</span>
@@ -518,7 +518,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Pet Shop & Pets Virais -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'pet') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'pet') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🐾</span>
                 <span>Pet Shop & Pets Virais</span>
@@ -527,7 +527,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Acessórios para Veículos -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'veículo') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'veículo') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🚗</span>
                 <span>Acessórios para Veículos</span>
@@ -536,7 +536,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Moda, Roupas & Vestuário -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'roupa') !== false || stripos($currentCat, 'vestuário') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'roupa') !== false || stripos($currentCat, 'vestuário') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">👗</span>
                 <span>Moda, Roupas & Vestuário</span>
@@ -545,7 +545,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Moda Íntima, Lingeries & Pijamas -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'lingerie') !== false || stripos($currentCat, 'íntima') !== false) ? 'active' : '' ?>">
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'lingerie') !== false || stripos($currentCat, 'íntima') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">👙</span>
                 <span>Moda Íntima, Lingeries & Pijamas</span>
@@ -554,7 +554,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         </a>
 
         <!-- Sex Shop & Adultos (+18) -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>" class="cat-drawer-item <?= (stripos($currentCat, 'sex shop') !== false || stripos($currentCat, '+18') !== false) ? 'active' : '' ?>" style="border-color: rgba(239,68,68,0.3); color: #fca5a5;">
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?><?= !empty($currentQ) ? '&q=' . urlencode($currentQ) : '' ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'sex shop') !== false || stripos($currentCat, '+18') !== false) ? 'active' : '' ?>" style="border-color: rgba(239,68,68,0.3); color: #fca5a5;">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🔞</span>
                 <span>Sex Shop & Adultos (+18)</span>
@@ -589,6 +589,20 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
 
     window.closeCatDrawer = closeDrawer;
 
+    function smoothScrollToProducts() {
+        var target = document.getElementById('produtos') || document.getElementById('storeDynamicStage') || document.querySelector('.store-combobox-toolbar');
+        if (!target) return;
+        var header = document.querySelector('.site-header');
+        var headerHeight = header ? header.offsetHeight : 80;
+        var targetTop = target.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 15);
+        window.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: 'smooth'
+        });
+    }
+
+    window.smoothScrollToProducts = smoothScrollToProducts;
+
     if (btnToggle) btnToggle.addEventListener('click', openDrawer);
     if (btnClose) btnClose.addEventListener('click', closeDrawer);
     if (overlay) overlay.addEventListener('click', closeDrawer);
@@ -597,7 +611,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         if (e.key === 'Escape') closeDrawer();
     });
 
-    // Filtragem dinâmica instantânea no Palco (sem reload e sem pular para cima!)
+    // Filtragem dinâmica instantânea no Palco + Rolagem suave até os produtos com efeito parallax
     document.addEventListener('click', function(e) {
         var link = e.target.closest('.cat-drawer-item, .header-quick-chips a');
         if (link && link.href) {
@@ -605,7 +619,8 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
             if (stage && window.filterCatalogDynamically) {
                 e.preventDefault();
                 closeDrawer();
-                window.filterCatalogDynamically(link.href);
+                window.filterCatalogDynamically(link.href, true, true);
+                setTimeout(smoothScrollToProducts, 100);
             }
         }
     });

@@ -229,7 +229,7 @@
     </script>
 
     <!-- Toolbar Responsivo de Seleção via COMBOBOX (Substitui barra de rolagem horizontal!) -->
-    <div class="store-combobox-toolbar">
+    <div id="produtos" class="store-combobox-toolbar">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">
                 📂
@@ -314,8 +314,21 @@
 </div>
 
 <script>
-window.filterCatalogDynamically = function(url, updateUrl) {
+window.smoothScrollToProducts = function() {
+    var target = document.getElementById('produtos') || document.getElementById('storeDynamicStage') || document.querySelector('.store-combobox-toolbar');
+    if (!target) return;
+    var header = document.querySelector('.site-header');
+    var headerHeight = header ? header.offsetHeight : 80;
+    var targetTop = target.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 15);
+    window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
+    });
+};
+
+window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
     if (typeof updateUrl === 'undefined') updateUrl = true;
+    if (typeof shouldScroll === 'undefined') shouldScroll = false;
     var stage = document.getElementById('storeDynamicStage');
     if (!stage) {
         window.location.href = url;
@@ -364,6 +377,10 @@ window.filterCatalogDynamically = function(url, updateUrl) {
             } else if (headerCat && !data.selectedCategory) {
                 headerCat.selectedIndex = 0;
             }
+
+            if (shouldScroll && window.smoothScrollToProducts) {
+                setTimeout(window.smoothScrollToProducts, 100);
+            }
         }
     })
     .catch(function(err) {
@@ -378,6 +395,16 @@ window.filterCatalogDynamically = function(url, updateUrl) {
 
 window.addEventListener('popstate', function() {
     filterCatalogDynamically(window.location.href, false);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash === '#produtos' || (window.location.search && window.location.search.indexOf('cat=') !== -1)) {
+        setTimeout(function() {
+            if (window.smoothScrollToProducts) {
+                window.smoothScrollToProducts();
+            }
+        }, 300);
+    }
 });
 </script>
 
