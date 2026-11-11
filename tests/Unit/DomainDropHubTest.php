@@ -708,6 +708,7 @@ class DomainDropHubTest extends TestCase
         $scraper = new class implements \DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface {
             public function canHandle(string $urlOrId): bool { return false; }
             public function scrape(string $urlOrId): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
+            public function parseRawHtml(string $rawSource, string $sourceUrl = ''): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
             public function isProductAlive(string $urlOrId): bool { return true; }
         };
 
@@ -771,6 +772,7 @@ class DomainDropHubTest extends TestCase
         $scraper = new class implements \DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface {
             public function canHandle(string $urlOrId): bool { return false; }
             public function scrape(string $urlOrId): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
+            public function parseRawHtml(string $rawSource, string $sourceUrl = ''): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
             public function isProductAlive(string $urlOrId): bool { return true; }
         };
 
@@ -820,5 +822,36 @@ class DomainDropHubTest extends TestCase
         @rmdir($tmpDir . '/config/plugins');
         @rmdir($tmpDir . '/config');
         @rmdir($tmpDir);
+    }
+
+    public function testImportFromBrowserSourceAndScraperRawHtmlParser(): void
+    {
+        $scraper = new \DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService();
+        $rawHtml = '<html><head><meta property="og:title" content="Drone Dobravel 4K Câmera Dupla - AliExpress"><meta property="og:image" content="https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg"><link rel="canonical" href="https://pt.aliexpress.com/item/1005006093867086.html"></head><body><div>dis!BRL!180.00!99.00!</div></body></html>';
+
+        $scraped = $scraper->parseRawHtml($rawHtml);
+        $this->assertNotNull($scraped);
+        $this->assertSame('1005006093867086', $scraped->sourceId);
+        $this->assertStringContainsString('Drone Dobravel 4K', $scraped->rawTitle);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg', $scraped->mainImageUrl);
+
+        $apiClient = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $mining = new ProductMiningService(
+            apiClient: $apiClient,
+            currencyConverter: $converter,
+            aiEnricher: $enricher,
+            repository: $repo,
+            linkScraper: $scraper
+        );
+
+        $product = $mining->importFromBrowserSource($rawHtml, 'Eletrônicos & Gadget');
+        $this->assertSame('1005006093867086', $product->aliexpressId);
+        $this->assertSame('Eletrônicos & Gadget', $product->category);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg', $product->mainImageUrl);
+        $this->assertGreaterThan(0.0, $product->salePriceBrl);
     }
 }

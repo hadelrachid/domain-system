@@ -202,6 +202,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/dropship', [DropshipAdminController::class, 'index'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/mine', [DropshipAdminController::class, 'mine'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/import-url', [DropshipAdminController::class, 'importUrl'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/import-browser-source', [DropshipAdminController::class, 'importBrowserSource'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/orders', [DropshipAdminController::class, 'orders'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/orders/{id}/fulfillment', [DropshipAdminController::class, 'updateFulfillment'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);

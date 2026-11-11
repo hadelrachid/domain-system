@@ -46,104 +46,154 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
                 return null;
             }
 
-            // 1. Filtro de Link Morto / 404 / Página Desativada / Desafio Anti-Robô (Slider Captcha)
-            if (stripos($html, 'Página não encontrada') !== false 
-                || stripos($html, 'Page Not Found') !== false 
-                || stripos($html, 'Item no longer available') !== false
-                || stripos($html, 'Não conseguimos encontrar esta página') !== false
-                || stripos($html, 'Arraste o controle deslizante') !== false
-                || stripos($html, 'controle deslizante para verificar') !== false
-                || stripos($html, 'verificação garante acesso normal') !== false
-                || stripos($html, 'sec.aliexpress.com') !== false
-                || stripos($html, 'punish') !== false
-                || stripos($html, 'baxia') !== false
-                || stripos($html, 'slide to verify') !== false
-                || stripos($html, 'rgv587_flag') !== false
-            ) {
-                return null;
-            }
-
-            // 2. Extração do Título
-            $title = '';
-            if (preg_match('/<meta property="og:title" content="([^"]+)"/i', $html, $m)) {
-                $title = html_entity_decode(preg_replace('/\s*-\s*AliExpress.*$/i', '', $m[1]));
-            }
-
-            if (empty($title) 
-                || stripos($title, 'Página não encontrada') !== false 
-                || stripos($title, 'Page Not Found') !== false
-            ) {
-                return null;
-            }
-
-            // 3. Extração da Imagem Principal
-            $mainImage = '';
-            if (preg_match('/<meta property="og:image" content="([^"]+)"/i', $html, $m)) {
-                $mainImage = $this->cleanImageUrl($m[1]);
-            }
-
-            // 3. Extração da Galeria Completa (imagePathList)
-            $gallery = [];
-            if (preg_match('/"imagePathList":(\[[^\]]+\])/', $html, $m)) {
-                $decoded = json_decode($m[1], true);
-                if (is_array($decoded)) {
-                    foreach ($decoded as $img) {
-                        $clean = $this->cleanImageUrl((string)$img);
-                        if ($clean !== '' && !in_array($clean, $gallery, true)) {
-                            $gallery[] = $clean;
-                        }
-                    }
-                }
-            }
-
-            // Fallback de varredura se imagePathList não veio no regex mas há imagens alicdn
-            if (empty($gallery) && !empty($mainImage)) {
-                $gallery[] = $mainImage;
-            }
-
-            if (empty($mainImage) && !empty($gallery)) {
-                $mainImage = $gallery[0];
-            }
-
-            // Se não encontrou nenhuma imagem, o scraping falhou ou foi bloqueado
-            if (empty($mainImage)) {
-                return null;
-            }
-
-            // 4. Preço Promocional (pdp_npi) ou padrão
-            $costPriceUsd = 12.0;
-            $decodedFull = urldecode($targetUrl . ' ' . $html);
-            if (preg_match('/dis!([A-Z]{3})![0-9.]+!([0-9.]+)/i', $decodedFull, $pm)) {
-                $currency = strtoupper($pm[1]);
-                $promoVal = (float)$pm[2];
-                if ($currency === 'BRL') {
-                    $costPriceUsd = round($promoVal / 5.25, 2);
-                } elseif ($currency === 'USD') {
-                    $costPriceUsd = $promoVal;
-                }
-            }
-
-            // 5. Categoria inferida pelo título
-            $category = $this->inferCategory($title);
-
-            return new ScrapedProductDto(
-                sourceId: $productId,
-                sourceUrl: $canonicalUrl,
-                rawTitle: $title !== '' ? $title : "Produto AliExpress {$productId}",
-                mainImageUrl: $mainImage,
-                galleryImages: $gallery,
-                costPriceUsd: $costPriceUsd,
-                category: $category,
-                rating: 4.8,
-                ordersCount: 1250,
-                attributes: [
-                    'Origem' => 'Importação Oficial AliExpress',
-                    'Envio'  => 'Rastreamento Internacional Expresso',
-                ]
-            );
+            return $this->parseRawHtml($html, $targetUrl);
         } catch (Throwable $e) {
             return null;
         }
+    }
+
+    public function parseRawHtml(string $rawSource, string $sourceUrl = ''): ?ScrapedProductDto
+    {
+        if (trim($rawSource) === '') {
+            return null;
+        }
+
+        // 1. Filtro de Link Morto / 404 / Página Desativada / Desafio Anti-Robô (Slider Captcha)
+        if (stripos($rawSource, 'Página não encontrada') !== false 
+            || stripos($rawSource, 'Page Not Found') !== false 
+            || stripos($rawSource, 'Item no longer available') !== false
+            || stripos($rawSource, 'Não conseguimos encontrar esta página') !== false
+            || stripos($rawSource, 'Arraste o controle deslizante') !== false
+            || stripos($rawSource, 'controle deslizante para verificar') !== false
+            || stripos($rawSource, 'verificação garante acesso normal') !== false
+            || stripos($rawSource, 'sec.aliexpress.com') !== false
+            || stripos($rawSource, 'slide to verify') !== false
+            || stripos($rawSource, 'rgv587_flag') !== false
+        ) {
+            return null;
+        }
+
+        // 2. Extração do Product ID
+        $productId = $this->extractProductId($sourceUrl);
+        if ($productId === '') {
+            if (preg_match('/(?:productId|itemId)["\']?\s*:\s*["\']?(\d{10,20})["\']?/i', $rawSource, $pm)) {
+                $productId = $pm[1];
+            } elseif (preg_match('/item\/(\d{10,20})\.html/i', $rawSource, $pm)) {
+                $productId = $pm[1];
+            } elseif (preg_match('/(\d{10,20})/', $rawSource, $pm)) {
+                $productId = $pm[1];
+            }
+        }
+
+        if ($productId === '') {
+            return null;
+        }
+
+        $canonicalUrl = "https://pt.aliexpress.com/item/{$productId}.html";
+
+        // 3. Extração do Título
+        $title = '';
+        if (preg_match('/<meta property="og:title" content="([^"]+)"/i', $rawSource, $m)) {
+            $title = html_entity_decode(preg_replace('/\s*-\s*AliExpress.*$/i', '', $m[1]));
+        } elseif (preg_match('/<title>([^<]+)<\/title>/i', $rawSource, $m)) {
+            $title = html_entity_decode(preg_replace('/\s*-\s*AliExpress.*$/i', '', $m[1]));
+        } elseif (preg_match('/["\'](?:subject|title|productTitle)["\']\s*:\s*["\']([^"\']+)["\']/i', $rawSource, $m)) {
+            $title = html_entity_decode($m[1]);
+        }
+
+        if (empty($title) 
+            || stripos($title, 'Página não encontrada') !== false 
+            || stripos($title, 'Page Not Found') !== false
+        ) {
+            return null;
+        }
+
+        // 4. Extração da Imagem Principal
+        $mainImage = '';
+        if (preg_match('/<meta property="og:image" content="([^"]+)"/i', $rawSource, $m)) {
+            $mainImage = $this->cleanImageUrl($m[1]);
+        }
+
+        // 5. Extração da Galeria Completa (imagePathList ou regex de CDN)
+        $gallery = [];
+        if (preg_match('/"imagePathList":(\[[^\]]+\])/', $rawSource, $m)) {
+            $decoded = json_decode($m[1], true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $img) {
+                    $clean = $this->cleanImageUrl((string)$img);
+                    if ($clean !== '' && !in_array($clean, $gallery, true)) {
+                        $gallery[] = $clean;
+                    }
+                }
+            }
+        }
+
+        // Se imagePathList não veio ou veio vazio, busca todas as imagens do CDN no código
+        if (empty($gallery)) {
+            preg_match_all('/https?:\/\/(?:ae-pic-[a-z0-9\-]+\.aliexpress-media\.com|[a-z0-9\-]+\.alicdn\.com)\/kf\/[a-zA-Z0-9_\-]+\.(?:jpg|png|webp)/i', $rawSource, $allCdnImgs);
+            if (!empty($allCdnImgs[0])) {
+                foreach ($allCdnImgs[0] as $cdnImg) {
+                    $clean = $this->cleanImageUrl($cdnImg);
+                    if ($clean !== '' && !in_array($clean, $gallery, true)) {
+                        $gallery[] = $clean;
+                    }
+                    if (count($gallery) >= 8) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (empty($gallery) && !empty($mainImage)) {
+            $gallery[] = $mainImage;
+        }
+
+        if (empty($mainImage) && !empty($gallery)) {
+            $mainImage = $gallery[0];
+        }
+
+        if (empty($mainImage)) {
+            return null;
+        }
+
+        // 6. Preço Promocional
+        $costPriceUsd = 12.0;
+        $decodedFull = urldecode($sourceUrl . ' ' . $rawSource);
+        if (preg_match('/dis!([A-Z]{3})![0-9.]+!([0-9.]+)/i', $decodedFull, $pm)) {
+            $currency = strtoupper($pm[1]);
+            $promoVal = (float)$pm[2];
+            if ($currency === 'BRL') {
+                $costPriceUsd = round($promoVal / 5.25, 2);
+            } elseif ($currency === 'USD') {
+                $costPriceUsd = $promoVal;
+            }
+        } elseif (preg_match('/["\'](?:actSkuCalPrice|minActivityAmount|formatedAmount|app_sale_price)["\']\s*:\s*["\']?([0-9.]+)/i', $rawSource, $pm)) {
+            $val = (float)$pm[1];
+            if ($val > 100) { // Provavelmente BRL
+                $costPriceUsd = round($val / 5.25, 2);
+            } elseif ($val > 0) {
+                $costPriceUsd = $val;
+            }
+        }
+
+        // 7. Categoria inferida
+        $category = $this->inferCategory($title);
+
+        return new ScrapedProductDto(
+            sourceId: $productId,
+            sourceUrl: $canonicalUrl,
+            rawTitle: $title !== '' ? $title : "Produto AliExpress {$productId}",
+            mainImageUrl: $mainImage,
+            galleryImages: $gallery,
+            costPriceUsd: $costPriceUsd,
+            category: $category,
+            rating: 4.8,
+            ordersCount: 1250,
+            attributes: [
+                'Origem' => 'Importação Oficial AliExpress',
+                'Envio'  => 'Rastreamento Internacional Expresso',
+            ]
+        );
     }
 
     private function extractProductId(string $urlOrId): string

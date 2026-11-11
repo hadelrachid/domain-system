@@ -29,6 +29,16 @@ interface ProductLinkScraperInterface
     public function scrape(string $urlOrId): ?ScrapedProductDto;
 
     /**
+     * Analisa o código-fonte bruto (HTML ou JSON do anúncio copiado do navegador)
+     * e extrai os dados estruturados do produto sem realizar requisições de rede.
+     * 
+     * @param string $rawSource Código HTML ou payload JSON
+     * @param string $sourceUrl URL de origem (opcional)
+     * @return ScrapedProductDto|null
+     */
+    public function parseRawHtml(string $rawSource, string $sourceUrl = ''): ?ScrapedProductDto;
+
+    /**
      * Verifica rapidamente se o link do produto existe e está ativo (filtra páginas 404/indisponíveis).
      */
     public function isProductAlive(string $urlOrId): bool;

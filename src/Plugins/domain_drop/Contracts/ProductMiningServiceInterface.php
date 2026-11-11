@@ -31,6 +31,17 @@ interface ProductMiningServiceInterface
     public function importSingleProduct(string|int $productIdOrUrl): DropshipProductDto;
 
     /**
+     * Importa um produto a partir do código-fonte bruto (HTML ou JSON) copiado diretamente
+     * do navegador autenticado do lojista, contornando bloqueios anti-robô/slider captcha.
+     * Utiliza buffer transitório por item com isolamento de memória.
+     * 
+     * @param string $rawSource HTML completo (Ctrl+U) ou JSON do anúncio
+     * @param string|null $category Categoria opcional para sobrepor a inferida
+     * @return DropshipProductDto
+     */
+    public function importFromBrowserSource(string $rawSource, ?string $category = null): DropshipProductDto;
+
+    /**
      * Executa o ciclo de rotação diária automatizada de 24 horas.
      * Minera produtos virais aleatórios para todas as 6 categorias oficiais:
      * - Eletrônicos & Gadget

@@ -118,6 +118,34 @@ class DropshipAdminController
         return Response::redirect($baseUrl . '/admin/dropship');
     }
 
+    public function importBrowserSource(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $rawSource = trim((string)$request->input('raw_source', ''));
+        $category = trim((string)$request->input('category', ''));
+        $category = $category !== '' ? $category : null;
+
+        if ($rawSource === '') {
+            $this->session->setFlash('error', 'Cole o código-fonte HTML ou JSON do produto na caixa de texto.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        try {
+            $product = $this->miningService->importFromBrowserSource($rawSource, $category);
+            $this->session->setFlash('success', "✅ Produto '{$product->title}' importado com sucesso a partir do navegador!");
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha ao processar código do produto: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
     public function settings(Request $request): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
