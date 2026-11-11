@@ -43,25 +43,114 @@
         </form>
     </div>
 
-    <!-- Category Pills Navigation -->
-    <?php if (!empty($categories)): ?>
-        <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 30px; scrollbar-width: thin;">
-            <a href="<?= $baseUrl ?>/loja<?= !empty($search) ? '?q=' . urlencode($search) : '' ?>" style="padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: all 0.2s ease; <?= empty($selectedCategory) ? 'background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; box-shadow: 0 4px 12px rgba(212,175,55,0.3);' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);' ?>">
-                Todas as Categorias
-            </a>
-            <?php foreach ($categories as $cat): ?>
-                <?php
-                $isActive = ($selectedCategory === $cat);
-                $query = ['cat' => $cat];
-                if (!empty($search)) $query['q'] = $search;
-                $catUrl = $baseUrl . '/loja?' . http_build_query($query);
-                ?>
-                <a href="<?= htmlspecialchars($catUrl) ?>" style="padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: all 0.2s ease; <?= $isActive ? 'background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; box-shadow: 0 4px 12px rgba(212,175,55,0.3);' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);' ?>">
-                    <?= htmlspecialchars($cat) ?>
-                </a>
-            <?php endforeach; ?>
+    <!-- 24h Countdown Rotation Urgency Banner -->
+    <?php
+    $remSeconds = isset($cycleInfo['seconds_remaining']) ? (int)$cycleInfo['seconds_remaining'] : 86400;
+    $initialH = str_pad((string)floor($remSeconds / 3600), 2, '0', STR_PAD_LEFT);
+    $initialM = str_pad((string)floor(($remSeconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+    $initialS = str_pad((string)($remSeconds % 60), 2, '0', STR_PAD_LEFT);
+    ?>
+    <div style="background: linear-gradient(135deg, rgba(20,24,30,0.95) 0%, rgba(35,28,15,0.95) 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 14px; padding: 18px 24px; margin-bottom: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); position: relative;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 0 15px rgba(212,175,55,0.4); flex-shrink: 0;">
+                🔥
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 14px; font-weight: 800; color: #FFE082; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Ciclo Diário de Ofertas Virais • 24 Horas
+                    </span>
+                    <span style="background: rgba(34,197,94,0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.35); padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                        Ao Vivo
+                    </span>
+                </div>
+                <div style="font-size: 13px; color: #cbd5e1; margin-top: 2px;">
+                    Nosso robô autônomo minera e renova tendências mundiais a cada 24 horas. Aproveite antes da próxima rotação!
+                </div>
+            </div>
         </div>
-    <?php endif; ?>
+
+        <!-- Digital Timer Clocks -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="text-align: right; margin-right: 6px;">
+                <div style="font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Próxima Seleção</div>
+                <div style="font-size: 12px; color: #F0D060; font-weight: 600;">Renovação Total</div>
+            </div>
+            <div id="drop24hCountdown" style="display: flex; align-items: center; gap: 6px;">
+                <div style="background: rgba(0,0,0,0.7); border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; padding: 6px 10px; min-width: 44px; text-align: center;">
+                    <div id="dropTimerH" style="font-size: 20px; font-weight: 800; color: #fff; font-family: monospace;"><?= $initialH ?></div>
+                    <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase;">Horas</div>
+                </div>
+                <span style="color: #F0D060; font-weight: 800; font-size: 18px;">:</span>
+                <div style="background: rgba(0,0,0,0.7); border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; padding: 6px 10px; min-width: 44px; text-align: center;">
+                    <div id="dropTimerM" style="font-size: 20px; font-weight: 800; color: #fff; font-family: monospace;"><?= $initialM ?></div>
+                    <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase;">Min</div>
+                </div>
+                <span style="color: #F0D060; font-weight: 800; font-size: 18px;">:</span>
+                <div style="background: rgba(0,0,0,0.7); border: 1px solid rgba(212,175,55,0.4); border-radius: 8px; padding: 6px 10px; min-width: 44px; text-align: center;">
+                    <div id="dropTimerS" style="font-size: 20px; font-weight: 800; color: #FFE082; font-family: monospace;"><?= $initialS ?></div>
+                    <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase;">Seg</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var remainingSeconds = <?= $remSeconds ?>;
+        var hElem = document.getElementById('dropTimerH');
+        var mElem = document.getElementById('dropTimerM');
+        var sElem = document.getElementById('dropTimerS');
+
+        function updateCountdown() {
+            if (remainingSeconds <= 0) {
+                if (hElem) hElem.textContent = '00';
+                if (mElem) mElem.textContent = '00';
+                if (sElem) sElem.textContent = '00';
+                var container = document.getElementById('drop24hCountdown');
+                if (container) {
+                    container.innerHTML = '<span style="color:#FFE082; font-weight:700; font-size:13px; animation: pulse 1.5s infinite;">🔄 Renovando tendências...</span>';
+                }
+                setTimeout(function() { window.location.reload(); }, 3000);
+                return;
+            }
+
+            remainingSeconds--;
+
+            var h = Math.floor(remainingSeconds / 3600);
+            var m = Math.floor((remainingSeconds % 3600) / 60);
+            var s = remainingSeconds % 60;
+
+            if (hElem) hElem.textContent = String(h).padStart(2, '0');
+            if (mElem) mElem.textContent = String(m).padStart(2, '0');
+            if (sElem) sElem.textContent = String(s).padStart(2, '0');
+        }
+
+        setInterval(updateCountdown, 1000);
+    })();
+    </script>
+
+    <!-- Category Pills Navigation -->
+    <?php
+    $officialList = \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::OFFICIAL_CATEGORIES;
+    $allPills = array_values(array_unique(array_merge($officialList, $categories ?? [])));
+    ?>
+    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 30px; scrollbar-width: thin;">
+        <a href="<?= $baseUrl ?>/loja<?= !empty($search) ? '?q=' . urlencode($search) : '' ?>" style="padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: all 0.2s ease; <?= empty($selectedCategory) ? 'background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; box-shadow: 0 4px 12px rgba(212,175,55,0.3);' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);' ?>">
+            Todas as Categorias
+        </a>
+        <?php foreach ($allPills as $cat): ?>
+            <?php
+            $isActive = ($selectedCategory === $cat);
+            $query = ['cat' => $cat];
+            if (!empty($search)) $query['q'] = $search;
+            $catUrl = $baseUrl . '/loja?' . http_build_query($query);
+            ?>
+            <a href="<?= htmlspecialchars($catUrl) ?>" style="padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: all 0.2s ease; <?= $isActive ? 'background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; box-shadow: 0 4px 12px rgba(212,175,55,0.3);' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);' ?>">
+                <?= htmlspecialchars($cat) ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
 
     <!-- Catalog Status & Filter Details -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; font-size: 14px; color: #94a3b8;">

@@ -118,6 +118,11 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
                 'label' => 'Exibir Selo de Categoria',
                 'default' => true,
             ],
+            'show_countdown' => [
+                'type' => 'boolean',
+                'label' => 'Exibir Contador de Urgência 24h',
+                'default' => true,
+            ],
         ];
     }
 
@@ -132,6 +137,7 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
         $btnText = (string)($attributes['button_text'] ?? 'Comprar Agora');
         $showRating = (bool)($attributes['show_rating'] ?? true);
         $showBadge = (bool)($attributes['show_badge'] ?? true);
+        $showCountdown = !isset($attributes['show_countdown']) || (bool)$attributes['show_countdown'];
 
         $criteria = ['status' => 'published'];
         if ($category !== '') {
@@ -157,6 +163,12 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
         <section class="<?= htmlspecialchars($cssClasses) ?>" id="<?= $uniqueId ?>" style="padding: 40px 15px; width: 100%; box-sizing: border-box; <?= htmlspecialchars($customStyles) ?>">
             <?php if (!empty($title) || !empty($subtitle)): ?>
                 <div style="text-align: center; max-width: 800px; margin: 0 auto 36px auto;">
+                    <?php if ($showCountdown): ?>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.35); padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #FFE082; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <span>🔥 Rotação 24h: Ofertas Virais Selecionadas</span>
+                            <span id="<?= $uniqueId ?>_timer" style="background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 10px; font-family: monospace; color: #fff;">24:00:00</span>
+                        </div>
+                    <?php endif; ?>
                     <?php if (!empty($title)): ?>
                         <h2 style="font-size: clamp(22px, 3vw, 32px); font-weight: 700; color: #fff; margin: 0 0 10px 0; letter-spacing: -0.5px;">
                             <?= htmlspecialchars($title) ?>

@@ -9,6 +9,7 @@ use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use Throwable;
 
 /**
@@ -18,7 +19,8 @@ class DropshipFrontController
 {
     public function __construct(
         private readonly DropshipCatalogRepositoryInterface $catalogRepo,
-        private readonly ?ThemeManagerInterface $themeManager = null
+        private readonly ?ThemeManagerInterface $themeManager = null,
+        private readonly ?ProductMiningServiceInterface $miningService = null
     ) {
     }
 
@@ -30,6 +32,24 @@ class DropshipFrontController
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $selectedCategory = trim((string)$request->input('cat', ''));
         $search = trim((string)$request->input('q', ''));
+
+        // Metadados do Ciclo Diário de 24 Horas
+        $cycleInfo = $this->miningService ? $this->miningService->getDailyCycleInfo() : [
+            'formatted_remaining' => '24:00:00',
+            'seconds_remaining'   => 86400,
+            'is_due'              => false,
+            'auto_sync_enabled'   => true,
+        ];
+
+        // Sincronização Autônoma Diária Lazy-Cron (Se o tempo zerou 00:00:00)
+        if (!empty($cycleInfo['is_due']) && !empty($cycleInfo['auto_sync_enabled']) && $this->miningService !== null) {
+            try {
+                $this->miningService->runDailyAutomatedRotation(3);
+                $cycleInfo = $this->miningService->getDailyCycleInfo();
+            } catch (Throwable $e) {
+                // Silencioso para manter a renderização da loja
+            }
+        }
 
         $criteria = ['status' => 'published'];
         if ($selectedCategory !== '') {

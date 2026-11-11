@@ -676,4 +676,149 @@ class DomainDropHubTest extends TestCase
         @rmdir($tmpDir . '/config');
         @rmdir($tmpDir);
     }
+
+    public function testOfficialCategoriesNormalization(): void
+    {
+        $this->assertSame('Eletrônicos & Gadget', ProductMiningService::normalizeCategory('Eletrônicos'));
+        $this->assertSame('Casa Inteligente & Organização', ProductMiningService::normalizeCategory('Casa Inteligente'));
+        $this->assertSame('Beleza, Cuidados & Estilo', ProductMiningService::normalizeCategory('Beleza & Estilo'));
+        $this->assertSame('Ferramentas & Utilidades', ProductMiningService::normalizeCategory('Ferramentas'));
+        $this->assertSame('Pet Shop & Pets Virais', ProductMiningService::normalizeCategory('Pet Shop'));
+        $this->assertSame('Acessórios para Veículos', ProductMiningService::normalizeCategory('Acessórios Auto'));
+        $this->assertSame('Ferramentas & Utilidades', ProductMiningService::normalizeCategory('Geral'));
+    }
+
+    public function testDailyAutomatedRotationAndCycleInfoMetadata(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/drop_test_cycle_' . uniqid();
+        @mkdir($tmpDir . '/config/plugins', 0777, true);
+        $tmpConfigFile = $tmpDir . '/config/plugins/domain_drop.json';
+
+        $apiClient = new class implements AliExpressApiClientInterface {
+            public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
+            public function searchProducts(array $params = []): array { return []; }
+            public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
+            public function generateSignature(string $method, array $params): string { return ''; }
+        };
+
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $scraper = new class implements \DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface {
+            public function canHandle(string $urlOrId): bool { return false; }
+            public function scrape(string $urlOrId): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
+            public function isProductAlive(string $urlOrId): bool { return true; }
+        };
+
+        $mining = new ProductMiningService(
+            apiClient: $apiClient,
+            currencyConverter: $converter,
+            aiEnricher: $enricher,
+            repository: $repo,
+            linkScraper: $scraper,
+            configFilePath: $tmpConfigFile
+        );
+
+        // 1. Antes da primeira execução
+        $infoBefore = $mining->getDailyCycleInfo();
+        $this->assertTrue($infoBefore['is_due']);
+        $this->assertSame(0, $infoBefore['last_cycle_at']);
+        $this->assertCount(6, $infoBefore['official_categories']);
+
+        // 2. Executa ciclo diário com 2 produtos por categoria
+        $result = $mining->runDailyAutomatedRotation(2);
+        $this->assertTrue($result['success']);
+        $this->assertGreaterThanOrEqual(12, $result['total_mined']);
+        $this->assertCount(6, $result['category_counts']);
+
+        // 3. Após a execução, o ciclo deve estar ativo com ~24h restantes
+        $infoAfter = $mining->getDailyCycleInfo();
+        $this->assertFalse($infoAfter['is_due']);
+        $this->assertGreaterThan(0, $infoAfter['last_cycle_at']);
+        $this->assertGreaterThan(86300, $infoAfter['seconds_remaining']);
+        $this->assertMatchesRegularExpression('/^(23|24):[0-9]{2}:[0-9]{2}$/', $infoAfter['formatted_remaining']);
+
+        // 4. Todas as 6 categorias devem estar presentes no catálogo do repositório
+        $dbCategories = $repo->getCategories();
+        foreach (ProductMiningService::OFFICIAL_CATEGORIES as $officialCat) {
+            $this->assertContains($officialCat, $dbCategories);
+        }
+
+        @unlink($tmpConfigFile);
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
+
+    public function testDropshipAdminControllerRunDailyCycle(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/drop_test_admin_cycle_' . uniqid();
+        @mkdir($tmpDir . '/config/plugins', 0777, true);
+        $tmpConfigFile = $tmpDir . '/config/plugins/domain_drop.json';
+
+        $apiClient = new class implements AliExpressApiClientInterface {
+            public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
+            public function searchProducts(array $params = []): array { return []; }
+            public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
+            public function generateSignature(string $method, array $params): string { return ''; }
+        };
+
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $scraper = new class implements \DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface {
+            public function canHandle(string $urlOrId): bool { return false; }
+            public function scrape(string $urlOrId): ?\DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto { return null; }
+            public function isProductAlive(string $urlOrId): bool { return true; }
+        };
+
+        $mining = new ProductMiningService(
+            apiClient: $apiClient,
+            currencyConverter: $converter,
+            aiEnricher: $enricher,
+            repository: $repo,
+            linkScraper: $scraper,
+            configFilePath: $tmpConfigFile
+        );
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('valid_token_123');
+        $session->method('validateCsrfToken')->willReturn(true);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $mining,
+            currencyConverter: $converter,
+            session: $session,
+            basePath: $tmpDir
+        );
+
+        // Requisição AJAX válida
+        $req = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token' => 'valid_token_123',
+                'items_per_category' => '2',
+            ],
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+            ]
+        );
+
+        $resp = $controller->runDailyCycle($req);
+        $this->assertSame(200, $resp->getStatusCode());
+
+        $data = json_decode((string)$resp->getContent(), true);
+        $this->assertTrue($data['success']);
+        $this->assertArrayHasKey('result', $data);
+        $this->assertArrayHasKey('cycle', $data);
+        $this->assertMatchesRegularExpression('/^(23|24):[0-9]{2}:[0-9]{2}$/', $data['cycle']['formatted_remaining']);
+
+        @unlink($tmpConfigFile);
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
 }

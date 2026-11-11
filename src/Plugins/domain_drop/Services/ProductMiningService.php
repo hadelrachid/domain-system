@@ -20,20 +20,69 @@ use Throwable;
  */
 class ProductMiningService implements ProductMiningServiceInterface
 {
+    public const OFFICIAL_CATEGORIES = [
+        'Eletrônicos & Gadget',
+        'Casa Inteligente & Organização',
+        'Beleza, Cuidados & Estilo',
+        'Ferramentas & Utilidades',
+        'Pet Shop & Pets Virais',
+        'Acessórios para Veículos',
+    ];
+
     private ProductLinkScraperInterface $linkScraper;
+    private ?string $configFilePath;
 
     public function __construct(
         private readonly AliExpressApiClientInterface $apiClient,
         private readonly CurrencyConverterInterface $currencyConverter,
         private readonly AiProductEnricherInterface $aiEnricher,
         private readonly DropshipCatalogRepositoryInterface $repository,
-        ?ProductLinkScraperInterface $linkScraper = null
+        ?ProductLinkScraperInterface $linkScraper = null,
+        ?string $configFilePath = null
     ) {
         $this->linkScraper = $linkScraper ?? new AliExpressLinkScraperService();
+        $this->configFilePath = $configFilePath;
     }
 
-    public function mineTrendingProducts(string $category = 'Eletrônicos', int $limit = 10, bool $autoPersist = true, string $sort = 'volume_desc'): array
+    /**
+     * Normaliza categorias legadas e apelidos para uma das 6 categorias oficiais.
+     */
+    public static function normalizeCategory(string $category): string
     {
+        $trimmed = trim($category);
+        if ($trimmed === '') {
+            return 'Eletrônicos & Gadget';
+        }
+
+        $map = [
+            'Eletrônicos'                    => 'Eletrônicos & Gadget',
+            'Eletrônicos & Gadget'           => 'Eletrônicos & Gadget',
+            'Gadgets'                        => 'Eletrônicos & Gadget',
+            'Casa Inteligente'               => 'Casa Inteligente & Organização',
+            'Casa Inteligente & Organização' => 'Casa Inteligente & Organização',
+            'Casa & Organização'             => 'Casa Inteligente & Organização',
+            'Beleza & Estilo'                => 'Beleza, Cuidados & Estilo',
+            'Beleza, Cuidados & Estilo'      => 'Beleza, Cuidados & Estilo',
+            'Beleza'                         => 'Beleza, Cuidados & Estilo',
+            'Ferramentas'                    => 'Ferramentas & Utilidades',
+            'Ferramentas & Utilidades'       => 'Ferramentas & Utilidades',
+            'Utilidades'                     => 'Ferramentas & Utilidades',
+            'Pet Shop'                       => 'Pet Shop & Pets Virais',
+            'Pet Shop & Pets Virais'         => 'Pet Shop & Pets Virais',
+            'Pets'                           => 'Pet Shop & Pets Virais',
+            'Acessórios Auto'                => 'Acessórios para Veículos',
+            'Acessórios para Veículos'       => 'Acessórios para Veículos',
+            'Automotivo'                     => 'Acessórios para Veículos',
+            'Veículos'                       => 'Acessórios para Veículos',
+            'Geral'                          => 'Ferramentas & Utilidades',
+        ];
+
+        return $map[$trimmed] ?? $trimmed;
+    }
+
+    public function mineTrendingProducts(string $category = 'Eletrônicos & Gadget', int $limit = 10, bool $autoPersist = true, string $sort = 'volume_desc'): array
+    {
+        $category = self::normalizeCategory($category);
         $rawProducts = [];
         try {
             $rawProducts = $this->apiClient->searchProducts([
@@ -83,13 +132,19 @@ class ProductMiningService implements ProductMiningServiceInterface
      */
     private function mineLiveFromAliExpressSearch(string $category, int $limit, bool $autoPersist): array
     {
+        if (!$this->linkScraper->canHandle('https://pt.aliexpress.com')) {
+            return [];
+        }
+
+        $category = self::normalizeCategory($category);
+
         $searchTerms = [
-            'Eletrônicos'     => ['smartwatch brasil', 'fone sem fio brasil', 'projetor portatil', 'mini drone'],
-            'Casa Inteligente' => ['lampada led inteligente wifi', 'tomada inteligente wifi', 'sensor presenca'],
-            'Beleza & Estilo' => ['modelador cabelo profissional', 'escova secadora', 'maquiagem'],
-            'Ferramentas'     => ['ferramenta multifuncao precisao', 'trena laser digital'],
-            'Pet Shop'        => ['coleira led cachorro', 'brinquedo interativo gato'],
-            'Acessórios Auto' => ['suporte veicular celular', 'aspirador portatil carro'],
+            'Eletrônicos & Gadget'           => ['smartwatch brasil', 'fone sem fio bluetooth brasil', 'projetor portatil 4k', 'mini drone 4k camera', 'power bank inducao', 'caixa som bluetooth potente', 'camera seguranca wifi 360'],
+            'Casa Inteligente & Organização' => ['lampada led inteligente wifi rgb', 'tomada inteligente wifi tuya', 'sensor presenca inteligente', 'dispensador sabonete automatico sensor', 'fita led rgb inteligente wifi', 'aspirador po robo inteligente', 'fechadura digital biometrica'],
+            'Beleza, Cuidados & Estilo'      => ['modelador cabelo profissional automatico', 'escova secadora modeladora eletrica', 'depilador laser luz pulsada ipl', 'massageador facial eletrico gua sha', 'maquina corte cabelo vintage profissional', 'espelho led maquiagem recarregavel'],
+            'Ferramentas & Utilidades'       => ['alicate desencapador fios multifuncional', 'trena laser digital fita metrica', 'parafusadeira eletrica recarregavel sem fio', 'canivete tatico multifuncional', 'chave universal precisao multifuncoes', 'lanterna tatica led potente militar'],
+            'Pet Shop & Pets Virais'         => ['coleira led luminosa cachorro recarregavel', 'bebedouro fonte automatica pet gato', 'escova a vapor pet removedora pelos', 'brinquedo interativo inteligente pet gato', 'cama nuvem calmante cachorro', 'cortador unhas pet com led'],
+            'Acessórios para Veículos'       => ['suporte celular veicular carregador inducao', 'aspirador portatil automotivo sem fio', 'transmissor bluetooth veicular fm', 'compressor ar portatil eletrico pneus carro', 'led interno veicular sensor som', 'camera dvr veicular gravador transito'],
         ];
 
         $termList = $searchTerms[$category] ?? ['smartwatch brasil', 'fone bluetooth'];
@@ -101,7 +156,8 @@ class ProductMiningService implements ProductMiningServiceInterface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -134,7 +190,7 @@ class ProductMiningService implements ProductMiningServiceInterface
                 // Filtro de Link Vivo: se for 404, indisponível ou sem imagem, descarta e busca o próximo
                 $scraped = $this->linkScraper->scrape($realId);
                 if ($scraped !== null && !empty($scraped->mainImageUrl)) {
-                    $dto = $this->createAndSaveDtoFromScraped($scraped);
+                    $dto = $this->createAndSaveDtoFromScraped($scraped, $category);
                     $mined[] = $dto;
                     $collected++;
                 }
@@ -201,9 +257,10 @@ class ProductMiningService implements ProductMiningServiceInterface
         return $this->repository->findById($savedId) ?? $dto;
     }
 
-    private function createAndSaveDtoFromScraped(ScrapedProductDto $scraped): DropshipProductDto
+    private function createAndSaveDtoFromScraped(ScrapedProductDto $scraped, ?string $overrideCategory = null): DropshipProductDto
     {
-        $polishedTitle = $this->aiEnricher->polishTitle($scraped->rawTitle, $scraped->category);
+        $category = $overrideCategory !== null ? self::normalizeCategory($overrideCategory) : self::normalizeCategory($scraped->category);
+        $polishedTitle = $this->aiEnricher->polishTitle($scraped->rawTitle, $category);
         $slug = $this->slugify($polishedTitle . '-' . substr($scraped->sourceId, -4));
         $salePriceBrl = $this->currencyConverter->calculateSalePrice($scraped->costPriceUsd);
         $salesCopy = $this->aiEnricher->generateSalesCopy(
@@ -219,7 +276,7 @@ class ProductMiningService implements ProductMiningServiceInterface
             salePriceBrl: $salePriceBrl,
             mainImageUrl: $scraped->mainImageUrl,
             images: $scraped->getAllImages(),
-            category: $scraped->category,
+            category: $category,
             description: $salesCopy,
             rating: $scraped->rating,
             ordersCount: $scraped->ordersCount,
@@ -234,17 +291,12 @@ class ProductMiningService implements ProductMiningServiceInterface
 
     /**
      * Transforma o payload bruto do AliExpress em um DTO limpo e precificado.
-     * 
-     * @param array<string, mixed> $item
-     */
-    /**
-     * Transforma o payload bruto do AliExpress em um DTO limpo e precificado.
      * Suporta tanto o payload oficial do IOP SDK (ae_item_base_info_dto, ae_multimedia_info_dto, ae_item_sku_info_dtos)
      * quanto feeds diretos, web scraping (imagePathList) e listas planas.
      * 
      * @param array<string, mixed> $item
      */
-    private function transformRawItemToDto(array $item, string $defaultCategory = 'Geral'): DropshipProductDto
+    private function transformRawItemToDto(array $item, string $defaultCategory = 'Eletrônicos & Gadget'): DropshipProductDto
     {
         $baseInfo = $item['ae_item_base_info_dto'] ?? [];
         $multiMedia = $item['ae_multimedia_info_dto'] ?? [];
@@ -252,7 +304,8 @@ class ProductMiningService implements ProductMiningServiceInterface
 
         $aeId = (string)($item['product_id'] ?? ($baseInfo['product_id'] ?? ($item['item_id'] ?? uniqid('ae_'))));
         $rawTitle = (string)($item['product_title'] ?? ($baseInfo['subject'] ?? ($item['title'] ?? 'Produto Internacional')));
-        $category = (string)($item['category_name'] ?? $defaultCategory);
+        $rawCat = (string)($item['category_name'] ?? $defaultCategory);
+        $category = self::normalizeCategory($rawCat);
 
         // 1. Higienização por I.A.
         $polishedTitle = $this->aiEnricher->polishTitle($rawTitle, $category);
@@ -389,7 +442,7 @@ class ProductMiningService implements ProductMiningServiceInterface
     private function getCuratedTrendingFallback(string $category, int $limit, string $sort = 'volume_desc'): array
     {
         $catalog = [
-            'Eletrônicos' => [
+            'Eletrônicos & Gadget' => [
                 [
                     'product_id' => '1005006123456789',
                     'product_title' => 'Smartwatch Ultra 2 AMOLED Pro Display 49mm GPS Caixa Titânio',
@@ -536,7 +589,7 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'properties' => ['Tela' => '3.5 IPS OCA', 'Armazenamento' => '64GB Cartão TF', 'Jogos' => '+10.000 inclusos'],
                 ],
             ],
-            'Casa Inteligente' => [
+            'Casa Inteligente & Organização' => [
                 [
                     'product_id' => '1005006678901234',
                     'product_title' => 'Lâmpada Lua 3D Magnética Flutuante Levitante com Iluminação RGB',
@@ -648,13 +701,16 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'properties' => ['Ângulo' => '120 graus', 'Distância' => '7 metros', 'Bateria' => 'CR2450 (Vida útil 2 anos)'],
                 ],
             ],
-            'Beleza & Estilo' => [
+            'Beleza, Cuidados & Estilo' => [
                 [
                     'product_id' => '1005007012345678',
                     'product_title' => 'Modelador de Cachos Automático sem Fio Cerâmica Turmalina',
-                    'category_name' => 'Beleza & Estilo',
+                    'category_name' => 'Beleza, Cuidados & Estilo',
                     'target_sale_price' => '16.00',
                     'product_main_image_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&auto=format&fit=crop&q=80',
+                    ],
                     'evaluate_rate' => '4.8',
                     'volume' => 6400,
                     'product_description' => 'Modelador portátil giratório automático com controle digital de temperatura e revestimento protetor anti-queimadura.',
@@ -663,19 +719,225 @@ class ProductMiningService implements ProductMiningServiceInterface
                 [
                     'product_id' => '1005007234567890',
                     'product_title' => 'Garrafa Térmica Inteligente Display LED Temperatura Inox 500ml',
-                    'category_name' => 'Beleza & Estilo',
+                    'category_name' => 'Beleza, Cuidados & Estilo',
                     'target_sale_price' => '6.50',
                     'product_main_image_url' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80',
+                    ],
                     'evaluate_rate' => '4.9',
                     'volume' => 18500,
                     'product_description' => 'Garrafa a vácuo com isolamento térmico de 12h para quente e 24h para frio com sensor touch digital na tampa.',
                     'properties' => ['Capacidade' => '500ml', 'Material' => 'Aço Inox 304', 'Display' => 'LED Touch'],
                 ],
+                [
+                    'product_id' => '1005007345678911',
+                    'product_title' => 'Escova Secadora Modeladora Oval Multifuncional Cerâmica 1200W',
+                    'category_name' => 'Beleza, Cuidados & Estilo',
+                    'target_sale_price' => '14.20',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 14200,
+                    'product_description' => 'Secador e alisador com cerdas mistas anti-frizz e tecnologia de íons para finalização profissional de salão em casa.',
+                    'properties' => ['Potência' => '1200W', 'Voltagem' => 'Bivolt Automático', 'Tecnologia' => 'Turmalina Íon'],
+                ],
+                [
+                    'product_id' => '1005007456789122',
+                    'product_title' => 'Depilador a Laser Luz Pulsada IPL Indolor Bivolt Pele Lisa',
+                    'category_name' => 'Beleza, Cuidados & Estilo',
+                    'target_sale_price' => '21.50',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 8700,
+                    'product_description' => 'Aparelho de depilação definitiva por luz pulsada intensa com 900.000 disparos e 8 níveis ajustáveis de energia.',
+                    'properties' => ['Disparos' => '900.000 Pulsos', 'Níveis' => '8 Intensidades', 'Segurança' => 'Sensor de Contato'],
+                ],
+            ],
+            'Ferramentas & Utilidades' => [
+                [
+                    'product_id' => '1005007567891233',
+                    'product_title' => 'Alicate Desencapador de Fios Automático Multifunção Cortador e Crimpador',
+                    'category_name' => 'Ferramentas & Utilidades',
+                    'target_sale_price' => '8.37',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 19300,
+                    'product_description' => 'Alicate profissional de precisão para eletricistas com decapagem rápida de fios AWG 24-10 e corpo reforçado em aço de alta liga.',
+                    'properties' => ['Capacidade' => 'AWG 24-10 (0.2 - 6.0mm²)', 'Aço' => 'Aço Carbono Forjado', 'Empunhadura' => 'Ergonômica Antiderrapante'],
+                ],
+                [
+                    'product_id' => '1005007678901344',
+                    'product_title' => 'Trena Laser Digital Profissional 40M Fita Métrica Nível Eletrônico',
+                    'category_name' => 'Ferramentas & Utilidades',
+                    'target_sale_price' => '13.00',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 8400,
+                    'product_description' => 'Medidor de distância ultrarrápido com cálculos de área, volume e Teorema de Pitágoras com tela LCD retroiluminada.',
+                    'properties' => ['Alcance' => '40 metros', 'Precisão' => '± 2mm', 'Proteção' => 'IP54 Resistente à Água'],
+                ],
+                [
+                    'product_id' => '1005007789012455',
+                    'product_title' => 'Kit Parafusadeira Elétrica de Precisão 68 em 1 Magnética Recarregável',
+                    'category_name' => 'Ferramentas & Utilidades',
+                    'target_sale_price' => '17.50',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 11200,
+                    'product_description' => 'Conjunto completo para manutenção de celulares, computadores, drones e óculos com ponteiras S2 de alta dureza e luz LED frontal.',
+                    'properties' => ['Torque' => '0.35 N.m Dual Mode', 'Bateria' => 'Lítio USB-C', 'Pontas' => '64 Bits Aço S2'],
+                ],
+                [
+                    'product_id' => '1005007890123566',
+                    'product_title' => 'Lanterna Tática Militar LED Laser Zoom Recarregável Super Brilhante',
+                    'category_name' => 'Ferramentas & Utilidades',
+                    'target_sale_price' => '10.80',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 15600,
+                    'product_description' => 'Lanterna de longo alcance até 1000 metros com corpo em liga de alumínio aeroespacial e função Power Bank de emergência.',
+                    'properties' => ['LED' => 'Laser Branco P50', 'Zoom' => 'Telescópico', 'Corpo' => 'Alumínio de Aviação'],
+                ],
+            ],
+            'Pet Shop & Pets Virais' => [
+                [
+                    'product_id' => '1005007901234677',
+                    'product_title' => 'Coleira LED Luminosa para Cães Recarregável À Prova D Água',
+                    'category_name' => 'Pet Shop & Pets Virais',
+                    'target_sale_price' => '5.90',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 22000,
+                    'product_description' => 'Coleira refletiva com fibra óptica ultrabrilhante para passeios noturnos seguros com 3 modos de pisca e recarga rápida USB.',
+                    'properties' => ['Visibilidade' => 'Até 500 metros', 'Autonomia' => '8 horas', 'Ajuste' => 'Tamanhos P/M/G'],
+                ],
+                [
+                    'product_id' => '1005008012345788',
+                    'product_title' => 'Fonte Bebedouro Automática Silenciosa com Filtro de Carvão para Gatos e Cães',
+                    'category_name' => 'Pet Shop & Pets Virais',
+                    'target_sale_price' => '11.80',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 16400,
+                    'product_description' => 'Água corrente rica em oxigênio com filtragem tripla que incentiva os pets a beberem mais água prevenindo problemas renais.',
+                    'properties' => ['Capacidade' => '2.5 Litros', 'Bomba' => 'Silenciosa < 20dB', 'Filtro' => 'Carvão Ativado Quadruplo'],
+                ],
+                [
+                    'product_id' => '1005008123456899',
+                    'product_title' => 'Escova a Vapor Elétrica Removedora de Pelos Pet com Spray Hidratante',
+                    'category_name' => 'Pet Shop & Pets Virais',
+                    'target_sale_price' => '7.40',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 28500,
+                    'product_description' => 'Escova viral 3 em 1 de massagem que remove até 95% dos pelos soltos sem estresse com micro-névoa quente aromática.',
+                    'properties' => ['Cerdas' => 'Silicone Macio Arredondado', 'Função' => 'Vapor Fino + Desembaraço', 'Bateria' => 'Recarregável'],
+                ],
+                [
+                    'product_id' => '1005008234567900',
+                    'product_title' => 'Bolinha Inteligente Interativa Automática Rolante para Gatos e Cães',
+                    'category_name' => 'Pet Shop & Pets Virais',
+                    'target_sale_price' => '6.20',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 19700,
+                    'product_description' => 'Brinquedo motorizado inteligente com sensor de desvio de obstáculos e luz suave que mantém o pet ativo e entretido.',
+                    'properties' => ['Material' => 'Silicone Resistente a Mordidas', 'Modos' => 'Normal e Inteligente', 'Recarga' => 'USB-C Rápida'],
+                ],
+            ],
+            'Acessórios para Veículos' => [
+                [
+                    'product_id' => '1005008345678011',
+                    'product_title' => 'Suporte Celular Veicular Carregador por Indução 15W Sensor Automático',
+                    'category_name' => 'Acessórios para Veículos',
+                    'target_sale_price' => '9.90',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 24100,
+                    'product_description' => 'Braços inteligentes automáticos com sensor infravermelho de toque e trava eletromagnética segura contra buracos e curvas.',
+                    'properties' => ['Potência' => '15W Fast Wireless Qi', 'Fixação' => 'Grade de Ar e Painel 360°', 'Sensor' => 'Touch Capacitivo'],
+                ],
+                [
+                    'product_id' => '1005008456789122',
+                    'product_title' => 'Aspirador Automotivo Portátil Sem Fio 120W de Alta Sucção Bateria Recarregável',
+                    'category_name' => 'Acessórios para Veículos',
+                    'target_sale_price' => '12.50',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 13400,
+                    'product_description' => 'Aspirador compacto e potente para limpeza de carpetes, frestas de bancos e porta-malas com bicos especiais e filtro lavável.',
+                    'properties' => ['Potência' => '120W Real', 'Sucção' => '8.000 Pa', 'Acessórios' => '3 Bicos Diferentes'],
+                ],
+                [
+                    'product_id' => '1005008567890233',
+                    'product_title' => 'Compressor de Ar Portátil Digital para Pneus com Bateria Recarregável 150 PSI',
+                    'category_name' => 'Acessórios para Veículos',
+                    'target_sale_price' => '18.90',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.9',
+                    'volume' => 17800,
+                    'product_description' => 'Calibrador elétrico inteligente com parada automática na pressão pré-definida, tela digital LCD e lanterna LED integrada.',
+                    'properties' => ['Pressão Máxima' => '150 PSI', 'Bateria' => '4000mAh Recarregável', 'Bicos' => 'Carro, Moto, Bicicleta e Bolas'],
+                ],
+                [
+                    'product_id' => '1005008678901344',
+                    'product_title' => 'Transmissor Veicular Bluetooth FM QC 3.0 Carga Rápida Dupla e Chamadas Viva-Voz',
+                    'category_name' => 'Acessórios para Veículos',
+                    'target_sale_price' => '5.60',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&auto=format&fit=crop&q=80',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&auto=format&fit=crop&q=80',
+                    ],
+                    'evaluate_rate' => '4.8',
+                    'volume' => 31000,
+                    'product_description' => 'Conecta o celular ao som do carro instantaneamente com graves reforçados BASS, luz LED RGB ambiente e carregamento rápido.',
+                    'properties' => ['Portas' => 'USB QC 3.0 + Type-C PD 20W', 'Bluetooth' => '5.0 Sem Ruído', 'Microfone' => 'Cancelamento de Eco'],
+                ],
             ],
         ];
 
-        // Se a categoria solicitada existir, usa seus itens; caso contrário, usa Eletrônicos
-        $pool = $catalog[$category] ?? $catalog['Eletrônicos'];
+        // Mapeia apelidos para a categoria oficial do pool
+        $normalizedCat = self::normalizeCategory($category);
+        $pool = $catalog[$normalizedCat] ?? ($catalog[$category] ?? $catalog['Eletrônicos & Gadget'] ?? $catalog['Eletrônicos']);
 
         // Se o limite solicitado for maior que o pool da categoria, completa com itens de outras categorias
         if (count($pool) < $limit) {
@@ -698,7 +960,13 @@ class ProductMiningService implements ProductMiningServiceInterface
             usort($pool, fn($a, $b) => ((int)($b['volume'] ?? 0)) <=> ((int)($a['volume'] ?? 0)));
         }
 
-        return array_slice($pool, 0, $limit);
+        $slice = array_slice($pool, 0, $limit);
+        foreach ($slice as &$p) {
+            $p['category_name'] = $normalizedCat;
+        }
+        unset($p);
+
+        return $slice;
     }
 
     /**
@@ -828,5 +1096,134 @@ class ProductMiningService implements ProductMiningServiceInterface
                 'Envio' => 'Rastreamento Internacional Expresso',
             ],
         ];
+    }
+
+    /**
+     * Executa o ciclo de rotação diária automatizada de 24 horas.
+     * Minera produtos virais aleatórios para todas as 6 categorias oficiais,
+     * atualiza o catálogo, registra a data/hora de conclusão e retorna o resumo estatístico.
+     *
+     * @param int $itemsPerCategory Quantidade de novos produtos minerados por categoria
+     * @return array<string, mixed> Resumo da rodada executada
+     */
+    public function runDailyAutomatedRotation(int $itemsPerCategory = 4): array
+    {
+        $results = [];
+        $totalProducts = 0;
+
+        foreach (self::OFFICIAL_CATEGORIES as $cat) {
+            try {
+                $mined = $this->mineTrendingProducts(category: $cat, limit: $itemsPerCategory, autoPersist: true);
+                $count = count($mined);
+                $results[$cat] = $count;
+                $totalProducts += $count;
+            } catch (Throwable $e) {
+                $results[$cat] = 0;
+            }
+        }
+
+        // Registra a conclusão do ciclo de 24 horas
+        $now = time();
+        $this->updateConfigField('last_daily_cycle_at', $now);
+
+        return [
+            'success'         => true,
+            'executed_at'     => $now,
+            'executed_date'   => date('d/m/Y H:i:s', $now),
+            'total_mined'     => $totalProducts,
+            'category_counts' => $results,
+        ];
+    }
+
+    /**
+     * Retorna os metadados do ciclo diário de 24 horas:
+     * timestamp da última execução, próxima execução, segundos restantes, tempo formatado (HH:MM:SS),
+     * status se expirado (is_due) e estatísticas de produtos por categoria.
+     *
+     * @return array<string, mixed>
+     */
+    public function getDailyCycleInfo(): array
+    {
+        $config = $this->loadConfig();
+        $intervalSeconds = (int)($config['cycle_interval_seconds'] ?? 86400); // 24 horas padrão
+        if ($intervalSeconds <= 0) {
+            $intervalSeconds = 86400;
+        }
+
+        $lastCycleAt = isset($config['last_daily_cycle_at']) && is_numeric($config['last_daily_cycle_at'])
+            ? (int)$config['last_daily_cycle_at']
+            : 0;
+
+        $now = time();
+        $autoSyncEnabled = !isset($config['auto_sync_enabled']) || !empty($config['auto_sync_enabled']);
+
+        if ($lastCycleAt <= 0) {
+            // Se nunca executou, marca como vencido para disparar a primeira rodada
+            $nextCycleAt = $now;
+            $secondsRemaining = 0;
+            $isDue = true;
+        } else {
+            $nextCycleAt = $lastCycleAt + $intervalSeconds;
+            $secondsRemaining = max(0, $nextCycleAt - $now);
+            $isDue = ($secondsRemaining === 0);
+        }
+
+        $hours = (int)floor($secondsRemaining / 3600);
+        $minutes = (int)floor(($secondsRemaining % 3600) / 60);
+        $seconds = (int)($secondsRemaining % 60);
+        $formatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+
+        return [
+            'last_cycle_at'       => $lastCycleAt,
+            'last_cycle_date'     => $lastCycleAt > 0 ? date('d/m/Y H:i:s', $lastCycleAt) : 'Pendente de primeira execução',
+            'next_cycle_at'       => $nextCycleAt,
+            'next_cycle_date'     => date('d/m/Y H:i:s', $nextCycleAt),
+            'interval_seconds'    => $intervalSeconds,
+            'seconds_remaining'   => $secondsRemaining,
+            'formatted_remaining' => $formatted,
+            'is_due'              => $isDue,
+            'auto_sync_enabled'   => $autoSyncEnabled,
+            'official_categories' => self::OFFICIAL_CATEGORIES,
+        ];
+    }
+
+    private function getConfigFilePath(): string
+    {
+        if ($this->configFilePath !== null) {
+            return $this->configFilePath;
+        }
+        $root = defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4);
+        return $root . '/config/plugins/domain_drop.json';
+    }
+
+    private function loadConfig(): array
+    {
+        $file = $this->getConfigFilePath();
+        if (file_exists($file)) {
+            $content = @file_get_contents($file);
+            if ($content !== false) {
+                $data = json_decode($content, true);
+                if (is_array($data)) {
+                    return $data;
+                }
+            }
+        }
+        return [
+            'enabled'                => true,
+            'auto_sync_enabled'      => true,
+            'cycle_interval_seconds' => 86400,
+        ];
+    }
+
+    private function updateConfigField(string $key, mixed $value): void
+    {
+        $file = $this->getConfigFilePath();
+        $config = $this->loadConfig();
+        $config[$key] = $value;
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        @file_put_contents($file, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 }

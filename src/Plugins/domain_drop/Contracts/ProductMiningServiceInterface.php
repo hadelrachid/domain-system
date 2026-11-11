@@ -29,4 +29,30 @@ interface ProductMiningServiceInterface
      * @return DropshipProductDto
      */
     public function importSingleProduct(string|int $productIdOrUrl): DropshipProductDto;
+
+    /**
+     * Executa o ciclo de rotação diária automatizada de 24 horas.
+     * Minera produtos virais aleatórios para todas as 6 categorias oficiais:
+     * - Eletrônicos & Gadget
+     * - Casa Inteligente & Organização
+     * - Beleza, Cuidados & Estilo
+     * - Ferramentas & Utilidades
+     * - Pet Shop & Pets Virais
+     * - Acessórios para Veículos
+     * 
+     * Atualiza o catálogo, registra a data/hora de conclusão e retorna o resumo estatístico.
+     * 
+     * @param int $itemsPerCategory Quantidade de produtos frescos minerados por categoria
+     * @return array<string, mixed> Resumo da rodada executada
+     */
+    public function runDailyAutomatedRotation(int $itemsPerCategory = 4): array;
+
+    /**
+     * Retorna os metadados do ciclo diário de 24 horas:
+     * timestamp da última execução, próxima execução, segundos restantes, tempo formatado (HH:MM:SS),
+     * status se expirado (is_due) e estatísticas de produtos por categoria.
+     * 
+     * @return array<string, mixed>
+     */
+    public function getDailyCycleInfo(): array;
 }

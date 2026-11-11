@@ -55,6 +55,7 @@ class DropshipAdminController
         $categories = $this->catalogRepo->getCategories();
         $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
         $config = $this->loadConfig();
+        $cycleInfo = $this->miningService->getDailyCycleInfo();
 
         $flash = $this->session->getFlash();
         $flashMsg = $flash['msg'] ?? null;
@@ -375,9 +376,46 @@ class DropshipAdminController
         return (float)$str;
     }
 
+    public function runDailyCycle(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            if ($this->isAjaxOrJson($request)) {
+                return new Response(json_encode(['success' => false, 'error' => 'Token CSRF inválido']), 403, ['Content-Type' => 'application/json']);
+            }
+            $this->session->setFlash('Token de segurança expirado. Tente novamente.', 'error');
+            return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);
+        }
+
+        try {
+            $itemsPerCategory = max(1, min(10, (int)$request->input('items_per_category', 3)));
+            $result = $this->miningService->runDailyAutomatedRotation($itemsPerCategory);
+            $cycleInfo = $this->miningService->getDailyCycleInfo();
+
+            if ($this->isAjaxOrJson($request)) {
+                return new Response(json_encode([
+                    'success' => true,
+                    'message' => "Ciclo diário 24h finalizado com sucesso! Total minerado: {$result['total_mined']} produtos.",
+                    'result'  => $result,
+                    'cycle'   => $cycleInfo,
+                ]), 200, ['Content-Type' => 'application/json']);
+            }
+
+            $this->session->setFlash("Ciclo diário 24h concluído com sucesso! {$result['total_mined']} novos produtos minerados nas 6 categorias.", 'success');
+        } catch (Throwable $e) {
+            if ($this->isAjaxOrJson($request)) {
+                return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
+            }
+            $this->session->setFlash("Falha ao executar ciclo diário: " . $e->getMessage(), 'error');
+        }
+
+        return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);
+    }
+
     private function verifyCsrf(Request $request): bool
     {
-        $token = (string)$request->input('csrf_token', '');
+        $token = (string)$request->input('csrf_token', (string)$request->input('_csrf', (string)($request->server['HTTP_X_CSRF_TOKEN'] ?? '')));
         $expected = (string)$this->session->getCsrfToken();
         return $token !== '' && hash_equals($expected, $token);
     }

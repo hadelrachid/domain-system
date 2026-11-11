@@ -103,6 +103,102 @@
         </div>
     </div>
 
+    <!-- 24h Autonomous Daily Rotation Cycle Banner -->
+    <?php
+    $adminRemSeconds = isset($cycleInfo['seconds_remaining']) ? (int)$cycleInfo['seconds_remaining'] : 86400;
+    $adminH = str_pad((string)floor($adminRemSeconds / 3600), 2, '0', STR_PAD_LEFT);
+    $adminM = str_pad((string)floor(($adminRemSeconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+    $adminS = str_pad((string)($adminRemSeconds % 60), 2, '0', STR_PAD_LEFT);
+    ?>
+    <div style="background: linear-gradient(135deg, rgba(212,175,55,0.12) 0%, rgba(20,24,30,0.95) 100%); border: 1px solid rgba(212,175,55,0.4); border-radius: 10px; padding: 22px 24px; margin-bottom: 26px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 0 16px rgba(212,175,55,0.45); flex-shrink: 0;">
+                ⚡
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <span style="font-size: 16px; font-weight: 800; color: #FFE082; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Ciclo Autônomo 24 Horas • Rotação de 6 Categorias
+                    </span>
+                    <span style="background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                        Ativo
+                    </span>
+                </div>
+                <div style="font-size: 13px; color: #cbd5e1;">
+                    Renova o catálogo automaticamente minerando produtos virais aleatórios em todas as 6 categorias oficiais a cada 24 horas.
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+                    Último ciclo: <strong style="color: #fff;"><?= htmlspecialchars((string)($cycleInfo['last_cycle_date'] ?? 'Pendente')) ?></strong>
+                    &nbsp;•&nbsp; 
+                    6 Categorias: <span style="color: #F0D060;">Eletrônicos & Gadget, Casa Inteligente & Organização, Beleza, Cuidados & Estilo, Ferramentas & Utilidades, Pet Shop & Pets Virais, Acessórios para Veículos</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <!-- Countdown Ticker -->
+            <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.5); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.3);">
+                <div style="text-align: center; min-width: 32px;">
+                    <div id="adminTimerH" style="font-size: 18px; font-weight: 800; color: #fff; font-family: monospace;"><?= $adminH ?></div>
+                    <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Horas</div>
+                </div>
+                <span style="color: #F0D060; font-weight: 800;">:</span>
+                <div style="text-align: center; min-width: 32px;">
+                    <div id="adminTimerM" style="font-size: 18px; font-weight: 800; color: #fff; font-family: monospace;"><?= $adminM ?></div>
+                    <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Min</div>
+                </div>
+                <span style="color: #F0D060; font-weight: 800;">:</span>
+                <div style="text-align: center; min-width: 32px;">
+                    <div id="adminTimerS" style="font-size: 18px; font-weight: 800; color: #FFE082; font-family: monospace;"><?= $adminS ?></div>
+                    <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Seg</div>
+                </div>
+            </div>
+
+            <!-- Manual Trigger Form -->
+            <form action="<?= $baseUrl ?>/admin/dropship/run-daily-cycle" method="POST" id="formRunDailyCycle" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <button type="submit" id="btnRunDailyCycle" style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; border: none; padding: 11px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(212,175,55,0.3); transition: transform 0.2s ease;">
+                    <i class="fas fa-bolt"></i> Rodar Ciclo Diário 24h Agora
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var adminRemSeconds = <?= $adminRemSeconds ?>;
+        var hElem = document.getElementById('adminTimerH');
+        var mElem = document.getElementById('adminTimerM');
+        var sElem = document.getElementById('adminTimerS');
+        var form = document.getElementById('formRunDailyCycle');
+        var btn = document.getElementById('btnRunDailyCycle');
+
+        if (form && btn) {
+            form.addEventListener('submit', function() {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Minerando 6 Categorias no AliExpress...';
+            });
+        }
+
+        setInterval(function() {
+            if (adminRemSeconds <= 0) {
+                if (hElem) hElem.textContent = '00';
+                if (mElem) mElem.textContent = '00';
+                if (sElem) sElem.textContent = '00';
+                return;
+            }
+            adminRemSeconds--;
+            var h = Math.floor(adminRemSeconds / 3600);
+            var m = Math.floor((adminRemSeconds % 3600) / 60);
+            var s = adminRemSeconds % 60;
+            if (hElem) hElem.textContent = String(h).padStart(2, '0');
+            if (mElem) mElem.textContent = String(m).padStart(2, '0');
+            if (sElem) sElem.textContent = String(s).padStart(2, '0');
+        }, 1000);
+    })();
+    </script>
+
     <!-- Quick Operations: 1-Click Miner & Single Product Import -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 28px;">
         
@@ -121,12 +217,12 @@
                     <div>
                         <label style="display: block; font-size: 12px; color: var(--text-muted, #94a3b8); margin-bottom: 4px;">Nicho / Categoria</label>
                         <select name="category" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px;">
-                            <option value="Eletrônicos">Eletrônicos & Gadgets</option>
-                            <option value="Casa Inteligente">Casa Inteligente & Organização</option>
-                            <option value="Beleza & Estilo">Beleza, Cuidados & Estilo</option>
-                            <option value="Ferramentas">Ferramentas & Utilidades</option>
-                            <option value="Pet Shop">Pet Shop & Pets Virais</option>
-                            <option value="Acessórios Auto">Acessórios para Veículos</option>
+                            <option value="Eletrônicos & Gadget">Eletrônicos & Gadget</option>
+                            <option value="Casa Inteligente & Organização">Casa Inteligente & Organização</option>
+                            <option value="Beleza, Cuidados & Estilo">Beleza, Cuidados & Estilo</option>
+                            <option value="Ferramentas & Utilidades">Ferramentas & Utilidades</option>
+                            <option value="Pet Shop & Pets Virais">Pet Shop & Pets Virais</option>
+                            <option value="Acessórios para Veículos">Acessórios para Veículos</option>
                         </select>
                     </div>
                     <div>

@@ -163,7 +163,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             return new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
-                themeManager: $themeManager
+                themeManager: $themeManager,
+                miningService: $runtime->make(ProductMiningServiceInterface::class)
             );
         });
 
@@ -207,6 +208,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/sync-images', [DropshipAdminController::class, 'syncImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/run-daily-cycle', [DropshipAdminController::class, 'runDailyCycle'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
 
