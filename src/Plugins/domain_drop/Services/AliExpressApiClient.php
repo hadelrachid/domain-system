@@ -87,15 +87,24 @@ class AliExpressApiClient implements AliExpressApiClientInterface
 
     public function searchProducts(array $filters = []): array
     {
+        $sort = (string)($filters['sort'] ?? 'volume_desc');
+        $mappedSort = match ($sort) {
+            'evaluate_rate_desc' => 'LAST_VOLUME_DESC',
+            'choice_desc'        => 'SALE_PRICE_ASC',
+            default              => 'LAST_VOLUME_DESC',
+        };
+
         $params = [
-            'category_id'      => (string)($filters['category_id'] ?? ''),
-            'keywords'         => (string)($filters['keywords'] ?? 'trending'),
-            'page_size'        => (string)($filters['page_size'] ?? '20'),
-            'page_no'          => (string)($filters['page_no'] ?? '1'),
-            'sort'             => (string)($filters['sort'] ?? 'volume_desc'), // Mais vendidos
-            'target_language'  => 'pt',
-            'target_currency'  => 'USD',
-            'ship_to_country'  => 'BR',
+            'category_id'       => (string)($filters['category_id'] ?? ''),
+            'keywords'          => (string)($filters['keywords'] ?? 'trending'),
+            'page_size'         => (string)($filters['page_size'] ?? '20'),
+            'page_no'           => (string)($filters['page_no'] ?? '1'),
+            'sort'              => $mappedSort,
+            'feed_name'         => (string)($filters['feed_name'] ?? 'DS bestseller'),
+            'target_language'   => 'pt',
+            'target_currency'   => 'USD',
+            'ship_to_country'   => (string)($filters['ship_to_country'] ?? 'BR'),
+            'ship_from_country' => (string)($filters['ship_from_country'] ?? 'BR'),
         ];
 
         try {
@@ -104,8 +113,10 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             return [];
         }
 
-        // Tenta normalizar tanto o feed de recomendação quanto a busca direta
+        // Normaliza diferentes formatos de payload do IOP SDK (feed ou busca de produtos)
         $products = $response['result']['products']['traffic_product_d_t_o']
+            ?? ($response['result']['products']['product'] ?? null)
+            ?? ($response['aliexpress_ds_recommend_feed_get_response']['result']['products']['traffic_product_d_t_o'] ?? null)
             ?? ($response['aliexpress_ds_recommend_feed_get_response']['result']['products'] ?? []);
 
         return is_array($products) ? $products : [];

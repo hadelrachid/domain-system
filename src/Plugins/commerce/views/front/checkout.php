@@ -136,16 +136,19 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                         </div>
 
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                            <span>Frete Internacional com Rastreio</span>
+                            <span>Frete com Rastreamento Oficial</span>
                             <span style="color: var(--accent-green); font-weight: 700;">GRÁTIS (Promoção)</span>
                         </div>
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                            <span>Seguro de Envio &amp; Proteção de Carga</span>
+                            <span>Curadoria &amp; Busca AliExpress Brasil</span>
                             <span>Incluso</span>
                         </div>
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
-                            <span>Garantia de 7 Dias para Troca/Devolução</span>
+                            <span>Garantia de Entrega (7 Dias)</span>
                             <span>Incluso</span>
+                        </div>
+                        <div style="background: rgba(240, 208, 96, 0.08); border: 1px solid rgba(240, 208, 96, 0.25); border-radius: 8px; padding: 9px 11px; margin-top: 8px; font-size: 0.76rem; color: #e2e8f0; line-height: 1.45;">
+                            🔎 <strong style="color: #F0D060;">Transparência:</strong> Este pedido remunera nosso serviço de curadoria e busca técnica de produtos físicos minerados no AliExpress Brasil, validados por nota e aprovações, com cobertura de entrega garantida.
                         </div>
                     <?php else: ?>
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">

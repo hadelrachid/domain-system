@@ -141,14 +141,19 @@
         </div>
         <br>
         <span style="background: rgba(212,175,55,0.15); color: #F0D060; border: 1px solid rgba(212,175,55,0.3); padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block; margin-bottom: 10px;">
-            ✨ O Gênio das Ofertas • Seleção Internacional Curada
+            🔎 Curadoria Oficial • Produtos Físicos Minerados no Brasil
         </span>
         <h1 style="font-size: clamp(24px, 4vw, 38px); font-weight: 800; color: #fff; margin: 0 0 10px 0; letter-spacing: -0.5px;">
             Loja Oficial <span style="background: linear-gradient(135deg, #FFE082 0%, #D4AF37 50%, #B8962E 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">RachidD.com</span>
         </h1>
-        <p style="font-size: 15px; color: #cbd5e1; max-width: 660px; margin: 0 auto; line-height: 1.5;">
-            Tesouros minerados e tendências mundiais com frete internacional rastreado e pagamento 100% protegido.
+        <p style="font-size: 14.5px; color: #cbd5e1; max-width: 740px; margin: 0 auto 14px auto; line-height: 1.55;">
+            Serviço de curadoria que localiza via SDK oficial do AliExpress os produtos físicos já no Brasil com as melhores <strong>notas, aprovações e termômetro de vendas</strong>. O valor inclui nossa busca especializada e <strong>garantia total de entrega</strong>.
         </p>
+        <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700;">
+            <span style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; padding: 4px 11px; border-radius: 20px;">🇧🇷 Estoque AliExpress Brasil</span>
+            <span style="background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fbbf24; padding: 4px 11px; border-radius: 20px;">⭐ Minerados por Nota &amp; Termômetro</span>
+            <span style="background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); color: #93c5fd; padding: 4px 11px; border-radius: 20px;">🛡️ Você paga pela Curadoria + Garantia</span>
+        </div>
     </div>
 
     <!-- 24h Countdown Rotation Urgency Banner -->

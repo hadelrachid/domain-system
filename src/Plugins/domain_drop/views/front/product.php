@@ -79,14 +79,20 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                     <?= htmlspecialchars($product->title) ?>
                 </h1>
 
+                <?php
+                $thermometerVal = \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::calculateThermometerScore((float)$product->rating, (int)$product->ordersCount);
+                ?>
                 <?php if ($product->rating > 0 || $product->ordersCount > 0): ?>
-                    <div style="display: flex; align-items: center; gap: 14px; font-size: 13px; color: #94a3b8; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #94a3b8; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                         <?php if ($product->rating > 0): ?>
-                            <span style="color: #fbbf24; font-weight: 600;">★ <?= number_format($product->rating, 1) ?> de avaliação</span>
+                            <span style="color: #fbbf24; font-weight: 600;">★ <?= number_format($product->rating, 1) ?> de nota</span>
                         <?php endif; ?>
                         <?php if ($product->ordersCount > 0): ?>
-                            <span>• <?= number_format($product->ordersCount, 0, ',', '.') ?> unidades vendidas</span>
+                            <span>• <?= number_format($product->ordersCount, 0, ',', '.') ?> aprovações / vendidos</span>
                         <?php endif; ?>
+                        <span style="background: rgba(249,115,22,0.14); border: 1px solid rgba(249,115,22,0.4); color: #fdba74; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">
+                            🔥 Termômetro: <?= (int)$thermometerVal ?>%
+                        </span>
                     </div>
                 <?php endif; ?>
 
@@ -102,20 +108,20 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                         <div id="product-qty-subtotal" style="display: none; font-size: 13px; color: #F0D060; font-weight: 700; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3); padding: 4px 10px; border-radius: 6px;"></div>
                     </div>
                     <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">
-                        em até <strong>12x sem juros</strong> no cartão ou Pix à vista
+                        em até <strong>12x sem juros</strong> no cartão ou Pix à vista • <span style="color: #cbd5e1;">Inclui serviço de curadoria e busca verificada</span>
                     </div>
                 </div>
 
-                <!-- Identificação do Vendedor / Fornecedor Exclusivo -->
-                <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 4px;">
+                <!-- Identificação do Vendedor / Fornecedor Exclusivo & Transparência da Curadoria -->
+                <div style="background: rgba(59, 130, 246, 0.06); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 13px;">
                         <span style="color: #fff; font-weight: 700;">🏪 <?= htmlspecialchars($sellerInfo['store_name']) ?></span>
                         <span style="font-family: monospace; font-size: 11px; background: rgba(255,255,255,0.08); color: #93c5fd; padding: 2px 8px; border-radius: 5px;">
                             ID: <?= htmlspecialchars($sellerInfo['seller_id']) ?>
                         </span>
                     </div>
-                    <span style="font-size: 11.5px; color: #94a3b8;">
-                        <?= htmlspecialchars($sellerInfo['warehouse']) ?> • Vendido e enviado diretamente por este fornecedor (produtos de outros vendedores têm entrega separada).
+                    <span style="font-size: 11.5px; color: #94a3b8; line-height: 1.45;">
+                        <?= htmlspecialchars($sellerInfo['warehouse']) ?> • Produto minerado no AliExpress Brasil por notas e aprovações. Vendido e enviado diretamente por este fornecedor (itens de outros vendedores têm entrega separada), com <strong>garantia de entrega RachidD.com</strong>.
                     </span>
                 </div>
 

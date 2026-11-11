@@ -936,4 +936,49 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('removeCheckoutItem()', $chkHtml);
         $this->assertStringContainsString('restoreCheckoutItem()', $chkHtml);
     }
+
+    public function testSdkCurationFiltersAndRanksByRatingApprovalsAndThermometer(): void
+    {
+        $candidates = [
+            ['product_id' => 'low_rate', 'evaluate_rate' => '3.2', 'volume' => 5000],
+            ['product_id' => 'good_mid', 'evaluate_rate' => '4.6', 'volume' => 400],
+            ['product_id' => 'top_star', 'evaluate_rate' => '5.0', 'volume' => 900],
+            ['product_id' => 'top_vol',  'evaluate_rate' => '4.8', 'volume' => 4200],
+        ];
+
+        // Filtra nota < 4.5 e ordena por notas
+        $byRating = ProductMiningService::scoreAndSortByReputation($candidates, 'evaluate_rate_desc', 4.5, 50, 10);
+        $this->assertCount(3, $byRating);
+        $this->assertSame('top_star', $byRating[0]['product_id']);
+        $this->assertSame('top_vol', $byRating[1]['product_id']);
+        $this->assertSame('good_mid', $byRating[2]['product_id']);
+
+        // Ordena por volume / aprovações
+        $byVolume = ProductMiningService::scoreAndSortByReputation($candidates, 'volume_desc', 4.5, 50, 10);
+        $this->assertSame('top_vol', $byVolume[0]['product_id']);
+
+        // Termômetro: nota + aprovações maiores geram índice superior
+        $highScore = ProductMiningService::calculateThermometerScore(4.9, 3200);
+        $lowScore = ProductMiningService::calculateThermometerScore(3.5, 10);
+        $this->assertGreaterThan($lowScore, $highScore);
+
+        // SDK envia ship_from_country=BR e ship_to_country=BR e grava metadados de termômetro
+        $capturedFilters = [];
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $mockApi->method('searchProducts')->willReturnCallback(function (array $filters) use (&$capturedFilters, $candidates) {
+            $capturedFilters = $filters;
+            return $candidates;
+        });
+
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $mining = new ProductMiningService($mockApi, $converter, new AiProductEnricherService(), new PdoDropshipCatalogRepository($this->pdo));
+        $mined = $mining->mineTrendingProducts('Eletrônicos & Gadget', 5, true, 'evaluate_rate_desc');
+
+        $this->assertSame('BR', $capturedFilters['ship_from_country'] ?? '');
+        $this->assertSame('BR', $capturedFilters['ship_to_country'] ?? '');
+        $this->assertCount(3, $mined);
+        $this->assertArrayHasKey('termometro_demanda', $mined[0]->attributes);
+        $this->assertArrayHasKey('curadoria_nota', $mined[0]->attributes);
+        $this->assertSame('BR', $mined[0]->attributes['ship_from'] ?? '');
+    }
 }

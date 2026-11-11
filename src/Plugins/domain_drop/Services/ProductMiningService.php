@@ -104,9 +104,11 @@ class ProductMiningService implements ProductMiningServiceInterface
         $rawProducts = [];
         try {
             $rawProducts = $this->apiClient->searchProducts([
-                'keywords'  => $category,
-                'page_size' => (string)min($limit, 50),
-                'sort'      => $sort,
+                'keywords'          => $category,
+                'page_size'         => (string)min(max($limit * 2, $limit), 50),
+                'sort'              => $sort,
+                'ship_from_country' => 'BR',
+                'ship_to_country'   => 'BR',
             ]);
         } catch (Throwable $e) {
             $rawProducts = [];
@@ -115,6 +117,8 @@ class ProductMiningService implements ProductMiningServiceInterface
         // Se a API remota oficial não estiver conectada (ou em modo Test), utiliza catálogo curado e verificado
         if (empty($rawProducts)) {
             $rawProducts = $this->getCuratedTrendingFallback($category, $limit, $sort);
+        } else {
+            $rawProducts = self::scoreAndSortByReputation($rawProducts, $sort, 4.5, 50, $limit);
         }
 
         $mined = [];
@@ -140,6 +144,71 @@ class ProductMiningService implements ProductMiningServiceInterface
         }
 
         return $mined;
+    }
+
+    /**
+     * Calcula o índice do Termômetro de Curadoria (0 a 100) combinando nota e aprovações/volume.
+     */
+    public static function calculateThermometerScore(float $rating, int $ordersCount): int
+    {
+        $clampedRating = max(0.0, min(5.0, $rating > 0.0 ? $rating : 4.8));
+        $ratingScore = ($clampedRating / 5.0) * 60.0;
+        $ordersScore = $ordersCount > 0 ? min(40.0, log10($ordersCount + 1) * 10.5) : 15.0;
+
+        return (int)max(10, min(100, round($ratingScore + $ordersScore)));
+    }
+
+    /**
+     * Filtra e ordena resultados brutos do SDK do AliExpress por nota, aprovações e termômetro.
+     *
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    public static function scoreAndSortByReputation(
+        array $items,
+        string $sort = 'volume_desc',
+        float $minRating = 4.5,
+        int $minOrders = 50,
+        int $limit = 20
+    ): array {
+        $scored = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $baseInfo = $item['ae_item_base_info_dto'] ?? [];
+            $rating = (float)($item['evaluate_rate'] ?? ($baseInfo['avg_evaluation_rating'] ?? ($item['rating'] ?? 4.8)));
+            $orders = (int)($item['volume'] ?? ($item['orders_count'] ?? ($item['lastest_volume'] ?? 0)));
+            $thermometer = self::calculateThermometerScore($rating, $orders);
+
+            $scored[] = [
+                'item'        => $item,
+                'rating'      => $rating,
+                'orders'      => $orders,
+                'thermometer' => $thermometer,
+                'qualified'   => ($rating === 0.0 || $rating >= $minRating) && ($orders === 0 || $orders >= $minOrders),
+            ];
+        }
+
+        $qualified = array_values(array_filter($scored, static fn($row) => $row['qualified']));
+        $pool = !empty($qualified) ? $qualified : $scored;
+
+        usort($pool, static function (array $a, array $b) use ($sort): int {
+            return match ($sort) {
+                'evaluate_rate_desc' => ($b['rating'] <=> $a['rating'])
+                    ?: ($b['thermometer'] <=> $a['thermometer'])
+                    ?: ($b['orders'] <=> $a['orders']),
+                'choice_desc' => ($b['thermometer'] <=> $a['thermometer'])
+                    ?: ($b['rating'] <=> $a['rating'])
+                    ?: ($b['orders'] <=> $a['orders']),
+                default => ($b['orders'] <=> $a['orders'])
+                    ?: ($b['thermometer'] <=> $a['thermometer'])
+                    ?: ($b['rating'] <=> $a['rating']),
+            };
+        });
+
+        $sliced = array_slice($pool, 0, max(1, $limit));
+        return array_map(static fn(array $row): array => $row['item'], $sliced);
     }
 
     /**
@@ -582,11 +651,22 @@ class ProductMiningService implements ProductMiningServiceInterface
         $costPriceUsd = (float)($item['target_sale_price'] ?? ($item['sale_price'] ?? ($item['original_price'] ?? 10.0)));
         $salePriceBrl = $this->currencyConverter->calculateSalePrice($costPriceUsd);
 
-        // 4. Métricas e Atributos
+        // 4. Métricas e Atributos de Curadoria
         $rating = (float)($item['evaluate_rate'] ?? ($baseInfo['avg_evaluation_rating'] ?? 4.8));
+        $effectiveRating = $rating > 0 ? $rating : 4.8;
         $ordersCount = (int)($item['volume'] ?? ($item['orders_count'] ?? 0));
+        $thermometer = self::calculateThermometerScore($effectiveRating, $ordersCount);
+
+        $props = is_array($item['properties'] ?? null) ? $item['properties'] : [];
+        $props['curadoria_nota'] = number_format($effectiveRating, 1) . ' ★';
+        $props['termometro_demanda'] = $thermometer . '%';
+        if (!isset($props['ship_from'])) {
+            $props['ship_from'] = 'BR';
+            $props['origem_brasil'] = true;
+        }
+
         $rawDesc = (string)($item['product_description'] ?? ($baseInfo['detail'] ?? ($item['description'] ?? '')));
-        $salesCopy = $this->aiEnricher->generateSalesCopy($rawDesc, $item['properties'] ?? []);
+        $salesCopy = $this->aiEnricher->generateSalesCopy($rawDesc, $props);
 
         return new DropshipProductDto(
             aliexpressId: $aeId,
@@ -598,9 +678,9 @@ class ProductMiningService implements ProductMiningServiceInterface
             images: $images,
             category: $category,
             description: $salesCopy,
-            rating: $rating > 0 ? $rating : 4.8,
+            rating: $effectiveRating,
             ordersCount: $ordersCount,
-            attributes: $item['properties'] ?? [],
+            attributes: $props,
             status: 'published'
         );
     }

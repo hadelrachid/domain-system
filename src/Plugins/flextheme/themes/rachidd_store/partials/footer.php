@@ -11,7 +11,7 @@
                     <span style="font-size: 1.4rem; font-weight: 800; color: #fff;">Rachid<span style="color: #F0D060;">D.com</span></span>
                 </div>
                 <p style="line-height: 1.6; margin-bottom: 20px;">
-                    O seu Gênio das Ofertas Internacionais. Conectamos você diretamente às fábricas e tendências mundiais com curadoria rigorosa, envio rastreado e suporte dedicado.
+                    Serviço especializado de curadoria para encontrar produtos físicos minerados do AliExpress no Brasil, validados por notas, aprovações e termômetro de vendas — com rastreamento e garantia de entrega.
                 </p>
                 <div class="footer-contact" style="color: #D4AF37; font-weight: 700;">
                     ✦ Atendimento: contato@rachidd.com

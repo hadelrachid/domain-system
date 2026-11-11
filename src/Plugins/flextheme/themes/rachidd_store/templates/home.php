@@ -92,23 +92,23 @@ if (empty($catalogProducts)) {
 
         <div style="display: inline-block; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.35); padding: 6px 18px; border-radius: 50px; margin-bottom: 18px;">
             <span style="color: #F0D060; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">
-                🧞 Faça um Desejo... As Melhores Ofertas do Mercado
+                🔎 Curadoria de Produtos Físicos Minerados • AliExpress Brasil
             </span>
         </div>
 
         <h1 style="font-size: clamp(32px, 5vw, 54px); font-weight: 800; color: #fff; margin-bottom: 16px; letter-spacing: -1px; line-height: 1.15;">
-            Descubra os Tesouros Virais da <br>
-            <span class="text-gold">RachidD.com Store</span>
+            Produtos Minerados com <br>
+            <span class="text-gold">Curadoria Especializada</span>
         </h1>
 
-        <p style="font-size: 18px; color: #cbd5e1; max-width: 720px; margin: 0 auto 32px auto; line-height: 1.6;">
-            Curadoria internacional com preços direto das fábricas do AliExpress. Envio com seguro, código de rastreamento e pagamento em até 12x ou Pix com desconto.
+        <p style="font-size: 17px; color: #cbd5e1; max-width: 760px; margin: 0 auto 32px auto; line-height: 1.65;">
+            Somos uma curadoria especializada em localizar, via SDK oficial do AliExpress, produtos físicos já disponíveis no Brasil com as melhores <strong>notas, aprovações e termômetro de vendas</strong>. O valor exibido remunera nossa busca técnica, filtragem de fornecedores confiáveis e cobertura integral com <strong>garantia de entrega</strong>.
         </p>
 
         <!-- CTA Buttons -->
         <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 45px;">
             <a href="<?= $baseUrl ?>/loja" class="gold-button" style="font-size: 15px; padding: 14px 32px;">
-                <span>✨ Explorar Catálogo Completo</span>
+                <span>✨ Explorar Catálogo Minerado</span>
                 <span>➔</span>
             </a>
             <a href="#desejos" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 14px 28px; border-radius: 8px; font-weight: 700; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
@@ -117,10 +117,10 @@ if (empty($catalogProducts)) {
         </div>
 
         <!-- Trust Stats (Mil e Uma Noites) -->
-        <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.08); max-width: 800px; margin: 0 auto;">
+        <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.08); max-width: 840px; margin: 0 auto;">
             <div>
-                <div style="font-size: 26px; font-weight: 800; color: #F0D060;">+5.000</div>
-                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Desejos Realizados</div>
+                <div style="font-size: 26px; font-weight: 800; color: #F0D060;">4.7★+</div>
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Notas &amp; Termômetro Real</div>
             </div>
             <div style="opacity: 0.3; align-self: center;">|</div>
             <div>
@@ -129,8 +129,8 @@ if (empty($catalogProducts)) {
             </div>
             <div style="opacity: 0.3; align-self: center;">|</div>
             <div>
-                <div style="font-size: 26px; font-weight: 800; color: #F0D060;">10 a 15 Dias</div>
-                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Frete Rastreável</div>
+                <div style="font-size: 26px; font-weight: 800; color: #F0D060;">🇧🇷 3 a 7 Dias</div>
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Curadoria AliExpress Brasil</div>
             </div>
         </div>
     </div>
