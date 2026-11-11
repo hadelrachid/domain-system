@@ -935,6 +935,9 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('adjustCheckoutQty(-1)', $chkHtml);
         $this->assertStringContainsString('removeCheckoutItem()', $chkHtml);
         $this->assertStringContainsString('restoreCheckoutItem()', $chkHtml);
+        $this->assertStringContainsString('Ambiente Oficial RachidD.com', $chkHtml);
+        $this->assertStringContainsString('Voltar para a vitrine RachidD.com', $chkHtml);
+        $this->assertStringNotContainsString('<!DOCTYPE', $chkHtml);
     }
 
     public function testSdkCurationFiltersAndRanksByRatingApprovalsAndThermometer(): void

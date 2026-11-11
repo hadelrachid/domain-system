@@ -36,14 +36,9 @@ foreach ($gateways as $g) {
 $fallbackThumb = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><rect width="100%" height="100%" fill="%23141a23"/><text x="50%" y="50%" fill="%2345f3ff" font-family="sans-serif" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="middle">🎓 ' . rawurlencode((string)($course['title'] ?? 'Academy')) . '</text></svg>';
 $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout Seguro | <?= $courseTitle ?></title>
+<section class="ds-checkout-page">
     <style>
-        :root {
+        .ds-checkout-page {
             --bg-body: #06090e;
             --bg-card: #0f141c;
             --border-color: rgba(69, 243, 255, 0.2);
@@ -51,17 +46,23 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             --accent-green: #00d284;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            color: var(--text-main);
+            padding: 28px 16px 56px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 30px 16px; }
-        .ds-checkout-container { max-width: 860px; margin: 0 auto; }
-        .ds-checkout-header { text-align: center; margin-bottom: 30px; }
-        .ds-checkout-header h1 { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 6px; }
-        .ds-checkout-header p { color: var(--text-muted); font-size: 0.95rem; }
+        .ds-checkout-page * { box-sizing: border-box; }
+        .ds-checkout-container { max-width: 920px; margin: 0 auto; }
+        .ds-checkout-breadcrumb { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.85rem; }
+        .ds-checkout-breadcrumb a { color: #F0D060; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .ds-checkout-breadcrumb a:hover { text-decoration: underline; }
+        .ds-checkout-site-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(0, 210, 132, 0.1); border: 1px solid rgba(0, 210, 132, 0.3); color: #6ee7b7; font-size: 0.78rem; font-weight: 700; }
+        .ds-checkout-header { text-align: center; margin-bottom: 28px; }
+        .ds-checkout-header h1 { font-size: 1.85rem; font-weight: 800; color: #fff; margin: 0 0 8px 0; }
+        .ds-checkout-header p { color: var(--text-muted); font-size: 0.95rem; margin: 0 auto; max-width: 680px; line-height: 1.5; }
         .ds-checkout-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; align-items: start; }
         @media (max-width: 768px) { .ds-checkout-grid { grid-template-columns: 1fr; } }
         .ds-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .ds-card-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px; }
+        .ds-card-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0 0 16px 0; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px; }
         .ds-checkout-course-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 6px 18px rgba(0,0,0,0.45); margin-bottom: 16px; background: #000; display: block; }
         .ds-order-item { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.94rem; }
         .ds-order-total { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.15); font-size: 1.25rem; font-weight: 800; color: var(--accent-green); }
@@ -75,12 +76,14 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
         .ds-pix-box { text-align: center; padding: 20px; background: rgba(0,0,0,0.35); border-radius: 10px; border: 1px solid rgba(69,243,255,0.3); margin-top: 16px; display: none; }
         .ds-pix-code-area { width: 100%; background: #06090e; color: var(--accent-cyan); font-family: monospace; font-size: 12px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin: 10px 0; word-break: break-all; resize: none; }
     </style>
-</head>
-<body>
     <div class="ds-checkout-container">
+        <div class="ds-checkout-breadcrumb">
+            <a href="<?= $baseUrl ?>/loja">← Voltar para a vitrine RachidD.com</a>
+            <span class="ds-checkout-site-pill">🛡️ Ambiente Oficial RachidD.com</span>
+        </div>
         <header class="ds-checkout-header">
             <h1>🔒 <?= $isPhysicalOrDropship ? 'Finalizar Pedido' : 'Finalizar Matrícula' ?></h1>
-            <p><?= $isPhysicalOrDropship ? 'Ambiente seguro e criptografado. Envio internacional com rastreio até sua casa.' : 'Ambiente seguro e criptografado. Seus dados estão 100% protegidos.' ?></p>
+            <p><?= $isPhysicalOrDropship ? 'Ambiente seguro e criptografado na RachidD.com. Curadoria AliExpress Brasil com rastreio e garantia de entrega até sua casa.' : 'Ambiente seguro e criptografado na RachidD.com. Seus dados estão 100% protegidos.' ?></p>
         </header>
 
         <div class="ds-checkout-grid">
@@ -712,6 +715,6 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                 showNotify('Código Pix copiado com sucesso!', 'success');
             }
         }
+        document.title = <?= json_encode('Checkout Seguro | ' . html_entity_decode($courseTitle, ENT_QUOTES, 'UTF-8') . ' — RachidD.com', JSON_UNESCAPED_UNICODE) ?>;
     </script>
-</body>
-</html>
+</section>

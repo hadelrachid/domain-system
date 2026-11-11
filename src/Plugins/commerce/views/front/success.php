@@ -21,14 +21,9 @@ if (is_string($shipping)) {
     $shipping = json_decode($shipping, true);
 }
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Confirmado! | <?= $orderRef ?></title>
+<section class="ds-success-page">
     <style>
-        :root {
+        .ds-success-page {
             --bg-body: #06090e;
             --bg-card: #0f141c;
             --accent-green: #00d284;
@@ -36,9 +31,14 @@ if (is_string($shipping)) {
             --border-color: rgba(212, 175, 55, 0.25);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            padding: 40px 16px 64px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 40px 16px; display: flex; justify-content: center; align-items: flex-start; }
+        .ds-success-page * { box-sizing: border-box; }
         .success-box { max-width: 680px; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 36px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .success-badge { width: 72px; height: 72px; background: rgba(0,210,132,0.15); border: 2px solid var(--accent-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; margin: 0 auto 20px auto; color: var(--accent-green); box-shadow: 0 0 24px rgba(0,210,132,0.3); }
         .order-title { text-align: center; font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 8px; }
@@ -49,14 +49,12 @@ if (is_string($shipping)) {
         .btn-continue { display: block; width: 100%; text-align: center; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 15px; padding: 14px 20px; border-radius: 8px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(212,175,55,0.35); transition: transform 0.2s; margin-top: 24px; }
         .btn-continue:hover { transform: translateY(-2px); }
     </style>
-</head>
-<body>
 
     <div class="success-box">
         <div class="success-badge">✓</div>
         <h1 class="order-title">Pagamento Aprovado!</h1>
         <p class="order-subtitle">
-            Obrigado, <strong><?= $customerName ?></strong>! Seu pedido foi confirmado e o centro de distribuição internacional já foi notificado para preparação do envio.
+            Obrigado, <strong><?= $customerName ?></strong>! Seu pedido na <strong>RachidD.com</strong> foi confirmado e nossa curadoria já acionou o fornecedor para envio com rastreio e garantia de entrega.
         </p>
 
         <!-- Detalhes do Pedido -->
@@ -85,7 +83,7 @@ if (is_string($shipping)) {
             </div>
             <div class="info-row">
                 <span style="color: var(--text-muted);">Frete com Seguro:</span>
-                <span style="color: #fff; font-weight: 600;">Expresso Internacional (Rastreado)</span>
+                <span style="color: #fff; font-weight: 600;">Curadoria AliExpress Brasil (Rastreado)</span>
             </div>
         </div>
 
@@ -114,6 +112,5 @@ if (is_string($shipping)) {
             Explorar Mais Ofertas na Loja ➔
         </a>
     </div>
-
-</body>
-</html>
+</section>
+<script>document.title = <?= json_encode('Pedido Confirmado | ' . html_entity_decode($orderRef, ENT_QUOTES, 'UTF-8') . ' — RachidD.com', JSON_UNESCAPED_UNICODE) ?>;</script>
