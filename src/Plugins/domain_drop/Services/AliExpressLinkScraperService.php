@@ -46,11 +46,19 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
                 return null;
             }
 
-            // 1. Filtro de Link Morto / 404 / Página Desativada
+            // 1. Filtro de Link Morto / 404 / Página Desativada / Desafio Anti-Robô (Slider Captcha)
             if (stripos($html, 'Página não encontrada') !== false 
                 || stripos($html, 'Page Not Found') !== false 
                 || stripos($html, 'Item no longer available') !== false
                 || stripos($html, 'Não conseguimos encontrar esta página') !== false
+                || stripos($html, 'Arraste o controle deslizante') !== false
+                || stripos($html, 'controle deslizante para verificar') !== false
+                || stripos($html, 'verificação garante acesso normal') !== false
+                || stripos($html, 'sec.aliexpress.com') !== false
+                || stripos($html, 'punish') !== false
+                || stripos($html, 'baxia') !== false
+                || stripos($html, 'slide to verify') !== false
+                || stripos($html, 'rgv587_flag') !== false
             ) {
                 return null;
             }

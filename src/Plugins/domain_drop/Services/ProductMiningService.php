@@ -1034,6 +1034,16 @@ class ProductMiningService implements ProductMiningServiceInterface
             return null;
         }
 
+        // Descarta se for página de desafio anti-bot ou link quebrado
+        if (stripos($html, 'Arraste o controle deslizante') !== false
+            || stripos($html, 'sec.aliexpress.com') !== false
+            || stripos($html, 'punish') !== false
+            || stripos($html, 'baxia') !== false
+            || stripos($html, 'Página não encontrada') !== false
+        ) {
+            return null;
+        }
+
         $title = '';
         if (preg_match('/<meta property="og:title" content="([^"]+)"/i', $html, $m)) {
             $title = html_entity_decode(preg_replace('/\s*-\s*AliExpress.*$/i', '', $m[1]));
