@@ -253,66 +253,64 @@
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; justify-content: flex-end;">
             <!-- Combobox Principal de Categorias (Atualiza o Palco Dinâmico sem recarregar a página!) -->
             <select id="storeCategoryCombobox" class="store-combobox-select" onchange="if(this.value) filterCatalogDynamically(this.value);">
-                <option value="<?= $baseUrl ?>/loja<?= !empty($search) ? '?q=' . urlencode($search) : '' ?>" <?= empty($selectedCategory) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja" <?= empty($selectedCategory) ? 'selected' : '' ?>>
                     🌐 Todas as Categorias (Ver Catálogo Completo)
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Tecnologia<?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'tecnologia') !== false || stripos($selectedCategory, 'eletrônicos') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=Tecnologia" <?= (stripos($selectedCategory, 'tecnologia') !== false || stripos($selectedCategory, 'eletrônicos') !== false || stripos($selectedCategory, 'eletronicos') !== false) ? 'selected' : '' ?>>
                     📱 Tecnologia & Gadgets
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Smartwatches<?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'smartwatch') !== false || stripos($selectedCategory, 'áudio') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=Smartwatches" <?= (stripos($selectedCategory, 'smartwatch') !== false || stripos($selectedCategory, 'áudio') !== false || stripos($selectedCategory, 'audio') !== false) ? 'selected' : '' ?>>
                     ⌚ Smartwatches & Áudio
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Casa<?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'casa') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=Casa" <?= (stripos($selectedCategory, 'casa') !== false) ? 'selected' : '' ?>>
                     🏠 Casa Inteligente & Organização
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Acessorios<?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'acessórios') !== false || stripos($selectedCategory, 'ferramentas') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=Acessorios" <?= (stripos($selectedCategory, 'acessorio') !== false || stripos($selectedCategory, 'acessórios') !== false || stripos($selectedCategory, 'ferramentas') !== false) ? 'selected' : '' ?>>
                     🛠️ Acessórios Virais & Ferramentas
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Beleza<?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'beleza') !== false || stripos($selectedCategory, 'saúde') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=Beleza" <?= (stripos($selectedCategory, 'beleza') !== false || stripos($selectedCategory, 'saúde') !== false || stripos($selectedCategory, 'saude') !== false) ? 'selected' : '' ?>>
                     ✨ Saúde & Cuidados (Beleza)
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?><?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'pet') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?>" <?= (stripos($selectedCategory, 'pet') !== false) ? 'selected' : '' ?>>
                     🐾 Pet Shop & Pets Virais
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?><?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'veículo') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?>" <?= (stripos($selectedCategory, 'veículo') !== false || stripos($selectedCategory, 'veiculo') !== false) ? 'selected' : '' ?>>
                     🚗 Acessórios para Veículos
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?><?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'roupa') !== false || stripos($selectedCategory, 'vestuário') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?>" <?= (stripos($selectedCategory, 'roupa') !== false || stripos($selectedCategory, 'vestuário') !== false || stripos($selectedCategory, 'vestuario') !== false) ? 'selected' : '' ?>>
                     👗 Moda, Roupas & Vestuário
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?><?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'lingerie') !== false || stripos($selectedCategory, 'íntima') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?>" <?= (stripos($selectedCategory, 'lingerie') !== false || stripos($selectedCategory, 'íntima') !== false || stripos($selectedCategory, 'intima') !== false) ? 'selected' : '' ?>>
                     👙 Moda Íntima, Lingeries & Pijamas
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?><?= !empty($search) ? '&q=' . urlencode($search) : '' ?>" <?= (stripos($selectedCategory, 'sex shop') !== false || stripos($selectedCategory, '+18') !== false) ? 'selected' : '' ?>>
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?>" <?= (stripos($selectedCategory, 'sex shop') !== false || stripos($selectedCategory, '+18') !== false) ? 'selected' : '' ?>>
                     🔞 Sex Shop & Produtos Adultos (+18)
                 </option>
             </select>
 
             <!-- Combobox de Ordenação Dinâmico -->
             <?php $currentSort = (string)($_GET['sort'] ?? ''); ?>
-            <select class="store-combobox-select" style="min-width: 170px;" onchange="if(this.value) filterCatalogDynamically(this.value);">
-                <option value="<?= $baseUrl ?>/loja?<?= http_build_query(array_merge($_GET, ['sort' => ''])) ?>" <?= empty($currentSort) ? 'selected' : '' ?>>
+            <select id="storeSortCombobox" class="store-combobox-select" style="min-width: 170px;" onchange="applyStoreSort(this.value);">
+                <option value="" <?= empty($currentSort) ? 'selected' : '' ?>>
                     ⚡ Mais Recentes
                 </option>
-                <option value="<?= $baseUrl ?>/loja?<?= http_build_query(array_merge($_GET, ['sort' => 'sales'])) ?>" <?= $currentSort === 'sales' ? 'selected' : '' ?>>
+                <option value="sales" <?= $currentSort === 'sales' ? 'selected' : '' ?>>
                     🏆 Mais Vendidos
                 </option>
-                <option value="<?= $baseUrl ?>/loja?<?= http_build_query(array_merge($_GET, ['sort' => 'price_asc'])) ?>" <?= $currentSort === 'price_asc' ? 'selected' : '' ?>>
+                <option value="price_asc" <?= $currentSort === 'price_asc' ? 'selected' : '' ?>>
                     💰 Menor Preço
                 </option>
-                <option value="<?= $baseUrl ?>/loja?<?= http_build_query(array_merge($_GET, ['sort' => 'price_desc'])) ?>" <?= $currentSort === 'price_desc' ? 'selected' : '' ?>>
+                <option value="price_desc" <?= $currentSort === 'price_desc' ? 'selected' : '' ?>>
                     💎 Maior Preço
                 </option>
-                <option value="<?= $baseUrl ?>/loja?<?= http_build_query(array_merge($_GET, ['sort' => 'rating'])) ?>" <?= $currentSort === 'rating' ? 'selected' : '' ?>>
+                <option value="rating" <?= $currentSort === 'rating' ? 'selected' : '' ?>>
                     ⭐ Mais Bem Avaliados
                 </option>
             </select>
 
-            <?php if (!empty($selectedCategory) || !empty($search) || !empty($currentSort)): ?>
-                <a href="<?= $baseUrl ?>/loja" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap;" title="Limpar todos os filtros">
-                    ✕ Limpar
-                </a>
-            <?php endif; ?>
+            <a id="btnClearStoreFilters" href="<?= $baseUrl ?>/loja" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35); color: #f87171; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; display: <?= (!empty($selectedCategory) || !empty($search) || !empty($currentSort)) ? 'inline-block' : 'none' ?>;" title="Limpar todos os filtros">
+                ✕ Limpar
+            </a>
         </div>
     </div>
 
@@ -336,6 +334,29 @@ window.smoothScrollToProducts = function() {
     });
 };
 
+window.applyStoreSort = function(sortVal) {
+    try {
+        var current = new URL(window.location.href);
+        if (sortVal && sortVal.trim() !== '') {
+            current.searchParams.set('sort', sortVal.trim());
+        } else {
+            current.searchParams.delete('sort');
+        }
+        current.hash = '#produtos';
+        window.filterCatalogDynamically(current.toString(), true, false);
+    } catch (e) {
+        window.filterCatalogDynamically('<?= $baseUrl ?>/loja' + (sortVal ? '?sort=' + encodeURIComponent(sortVal) : ''), true, false);
+    }
+};
+
+function normalizeFilterStr(str) {
+    return String(str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+}
+
 window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
     if (typeof updateUrl === 'undefined') updateUrl = true;
     if (typeof shouldScroll === 'undefined') shouldScroll = false;
@@ -345,47 +366,77 @@ window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
         return;
     }
 
+    var targetUrlObj;
+    var fetchUrlObj;
+    try {
+        targetUrlObj = new URL(url, window.location.origin);
+        fetchUrlObj = new URL(targetUrlObj.href);
+        // Remove qualquer fragmento (#produtos) antes de anexar ajax=1
+        fetchUrlObj.hash = '';
+        fetchUrlObj.searchParams.set('ajax', '1');
+    } catch (e) {
+        var cleanUrl = String(url).split('#')[0];
+        fetchUrlObj = cleanUrl + (cleanUrl.indexOf('?') === -1 ? '?' : '&') + 'ajax=1';
+    }
+
     // Feedback visual suave no próprio palco sem pular a página
     stage.style.opacity = '0.35';
     stage.style.pointerEvents = 'none';
 
-    var fetchUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + 'ajax=1';
-
-    fetch(fetchUrl, {
+    fetch(fetchUrlObj.toString(), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(function(res) {
+        if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+        }
         return res.json();
     })
     .then(function(data) {
-        if (data && data.html) {
+        if (data && typeof data.html === 'string') {
             stage.innerHTML = data.html;
-            if (updateUrl && window.history.pushState) {
-                window.history.pushState(null, '', url);
-            }
-            // Sincroniza o valor selecionado nos comboboxes
-            var catSelect = document.getElementById('storeCategoryCombobox');
-            if (catSelect && data.selectedCategory) {
-                for (var i = 0; i < catSelect.options.length; i++) {
-                    if (catSelect.options[i].value === url || catSelect.options[i].value.indexOf('cat=' + encodeURIComponent(data.selectedCategory)) !== -1) {
-                        catSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            } else if (catSelect && !data.selectedCategory) {
-                catSelect.selectedIndex = 0;
+            if (updateUrl && window.history.pushState && targetUrlObj) {
+                window.history.pushState(null, '', targetUrlObj.pathname + targetUrlObj.search + targetUrlObj.hash);
             }
 
-            var headerCat = document.getElementById('headerCatSelect');
-            if (headerCat && data.selectedCategory) {
-                for (var j = 0; j < headerCat.options.length; j++) {
-                    if (headerCat.options[j].value === url || headerCat.options[j].value.indexOf('cat=' + encodeURIComponent(data.selectedCategory)) !== -1) {
-                        headerCat.selectedIndex = j;
-                        break;
+            // Sincroniza o combobox de Categorias comparando searchParams decodificados (+ e %20 tratados igual)
+            var catSelect = document.getElementById('storeCategoryCombobox');
+            var selectedCatNorm = normalizeFilterStr(data.selectedCategory || '');
+            if (catSelect) {
+                if (!selectedCatNorm) {
+                    catSelect.selectedIndex = 0;
+                } else {
+                    var matchedIndex = 0;
+                    for (var i = 0; i < catSelect.options.length; i++) {
+                        try {
+                            var optUrl = new URL(catSelect.options[i].value, window.location.origin);
+                            var optCatNorm = normalizeFilterStr(optUrl.searchParams.get('cat') || '');
+                            if (optCatNorm && (optCatNorm === selectedCatNorm || selectedCatNorm.indexOf(optCatNorm) !== -1 || optCatNorm.indexOf(selectedCatNorm) !== -1)) {
+                                matchedIndex = i;
+                                break;
+                            }
+                        } catch (err) {}
                     }
+                    catSelect.selectedIndex = matchedIndex;
                 }
-            } else if (headerCat && !data.selectedCategory) {
-                headerCat.selectedIndex = 0;
+            }
+
+            // Sincroniza o combobox de Ordenação
+            var sortSelect = document.getElementById('storeSortCombobox');
+            if (sortSelect) {
+                sortSelect.value = data.sort || '';
+            }
+
+            // Sincroniza o botão Limpar Filtros da barra
+            var clearBtn = document.getElementById('btnClearStoreFilters');
+            if (clearBtn) {
+                var hasActiveFilter = Boolean(data.selectedCategory || data.search || data.sort);
+                clearBtn.style.display = hasActiveFilter ? 'inline-block' : 'none';
+            }
+
+            // Sincroniza o item ativo dentro do Menu Hambúrguer (Drawer) e Quick Chips do Header
+            if (window.syncHeaderFilterActiveState) {
+                window.syncHeaderFilterActiveState(data.selectedCategory || '', data.sort || '', data.search || '');
             }
 
             if (shouldScroll && window.smoothScrollToProducts) {
