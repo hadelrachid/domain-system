@@ -178,8 +178,82 @@ if (empty($catalogProducts)) {
             updateTimer();
         </script>
 
+        <style>
+            .home-products-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+                gap: 20px;
+            }
+            .home-card-body {
+                padding: 16px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            .home-card-actions {
+                display: flex;
+                gap: 6px;
+                margin-top: 6px;
+            }
+            .home-btn-details {
+                flex: 1;
+                background: rgba(255,255,255,0.06);
+                border: 1.5px solid rgba(212,175,55,0.4);
+                color: #F0D060 !important;
+                text-decoration: none;
+                padding: 0 6px;
+                height: 36px;
+                border-radius: 6px;
+                font-size: 11.5px;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                white-space: nowrap;
+                box-sizing: border-box;
+                transition: all 0.2s ease;
+            }
+            .home-btn-details:hover {
+                background: rgba(212,175,55,0.18);
+                border-color: #F0D060;
+            }
+            .home-btn-buy {
+                flex: 1;
+                background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%);
+                color: #0b0f17 !important;
+                text-decoration: none;
+                padding: 0 6px;
+                height: 36px;
+                border-radius: 6px;
+                font-size: 11.5px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                white-space: nowrap;
+                box-sizing: border-box;
+                transition: all 0.2s ease;
+            }
+            .home-btn-buy:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.55);
+            }
+            @media (max-width: 580px) {
+                .home-products-grid {
+                    grid-template-columns: 1fr;
+                    gap: 16px;
+                }
+            }
+        </style>
+
         <!-- Product Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+        <div class="home-products-grid">
             <?php if (!empty($catalogProducts)): ?>
                 <?php foreach ($catalogProducts as $p): ?>
                     <?php 
@@ -188,44 +262,44 @@ if (empty($catalogProducts)) {
                     $refPrice = $p->salePriceBrl * 1.4;
                     ?>
                     <article class="store-card">
-                        <div style="position: relative; width: 100%; height: 250px; background: #070a0e; overflow: hidden;">
+                        <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden;">
                             <a href="<?= htmlspecialchars($productUrl) ?>">
                                 <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
                             </a>
-                            <span style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 4px;">
+                            <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 10px; padding: 3px 7px; border-radius: 4px;">
                                 -40% OFF
                             </span>
                             <?php if (!empty($p->category)): ?>
-                                <span style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">
+                                <span style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px;">
                                     <?= htmlspecialchars($p->category) ?>
                                 </span>
                             <?php endif; ?>
                         </div>
-                        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="home-card-body">
                             <div>
-                                <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; line-height: 1.4; max-height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     <a href="<?= htmlspecialchars($productUrl) ?>" style="color: #fff; text-decoration: none;">
                                         <?= htmlspecialchars($p->title) ?>
                                     </a>
                                 </h3>
-                                <div style="margin-bottom: 16px;">
-                                    <div style="font-size: 12px; color: #94a3b8; text-decoration: line-through;">
+                                <div style="margin-bottom: 14px;">
+                                    <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
                                         R$ <?= number_format($refPrice, 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 22px; font-weight: 800; color: #5cd67d; font-family: monospace;">
+                                    <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                         R$ <?= number_format($p->salePriceBrl, 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 11px; color: #F0D060; margin-top: 3px;">
+                                    <div style="font-size: 10.5px; color: #F0D060; margin-top: 2px;">
                                         ⚡ Frete Internacional Grátis & Rastreado
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px; margin-top: 6px;">
-                                <a href="<?= htmlspecialchars($productUrl) ?>" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 11px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
+                            <div class="home-card-actions">
+                                <a href="<?= htmlspecialchars($productUrl) ?>" class="home-btn-details">
                                     <span>🔍</span>
                                     <span>Ver Detalhes</span>
                                 </a>
-                                <a href="<?= htmlspecialchars($checkoutUrl) ?>" class="gold-button" style="flex: 1.15; box-sizing: border-box; font-size: 13px; padding: 11px 8px; border-radius: 8px; text-align: center; text-transform: uppercase;">
+                                <a href="<?= htmlspecialchars($checkoutUrl) ?>" class="home-btn-buy">
                                     Comprar ➔
                                 </a>
                             </div>
@@ -236,42 +310,42 @@ if (empty($catalogProducts)) {
                 <!-- Fallback de demonstração caso ainda não tenha minerado itens -->
                 <?php foreach ($fallbackItems as $item): ?>
                     <article class="store-card">
-                        <div style="position: relative; width: 100%; height: 250px; background: #070a0e; overflow: hidden;">
+                        <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden;">
                             <a href="<?= $baseUrl ?>/loja">
                                 <img src="<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
                             </a>
-                            <span style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 4px;">
+                            <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 10px; padding: 3px 7px; border-radius: 4px;">
                                 DESTAQUE
                             </span>
-                            <span style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); color: #fff; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">
+                            <span style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px;">
                                 <?= $item['category'] ?>
                             </span>
                         </div>
-                        <div style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="home-card-body">
                             <div>
-                                <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; line-height: 1.4;">
+                                <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     <a href="<?= $baseUrl ?>/loja" style="color: #fff; text-decoration: none;">
                                         <?= htmlspecialchars($item['title']) ?>
                                     </a>
                                 </h3>
-                                <div style="margin-bottom: 16px;">
-                                    <div style="font-size: 12px; color: #94a3b8; text-decoration: line-through;">
+                                <div style="margin-bottom: 14px;">
+                                    <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
                                         R$ <?= number_format($item['ref_price'], 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 22px; font-weight: 800; color: #5cd67d; font-family: monospace;">
+                                    <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                         R$ <?= number_format($item['price'], 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 11px; color: #F0D060; margin-top: 3px;">
+                                    <div style="font-size: 10.5px; color: #F0D060; margin-top: 2px;">
                                         ★ <?= $item['rating'] ?> (<?= $item['sales'] ?> vendidos)
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px; margin-top: 6px;">
-                                <a href="<?= $baseUrl ?>/loja" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 11px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;">
+                            <div class="home-card-actions">
+                                <a href="<?= $baseUrl ?>/loja" class="home-btn-details">
                                     <span>🔍</span>
                                     <span>Ver Detalhes</span>
                                 </a>
-                                <a href="<?= $baseUrl ?>/loja" class="gold-button" style="flex: 1.15; box-sizing: border-box; font-size: 13px; padding: 11px 8px; border-radius: 8px; text-align: center;">
+                                <a href="<?= $baseUrl ?>/loja" class="home-btn-buy">
                                     Ver Oferta ➔
                                 </a>
                             </div>

@@ -114,6 +114,16 @@
             padding: 22px 14px;
         }
     }
+    @media (max-width: 520px) {
+        .store-card-actions {
+            flex-direction: column;
+            gap: 6px !important;
+        }
+        .store-card-actions a {
+            width: 100%;
+            height: 34px !important;
+        }
+    }
     @media (max-width: 360px) {
         .store-grid {
             grid-template-columns: 1fr;

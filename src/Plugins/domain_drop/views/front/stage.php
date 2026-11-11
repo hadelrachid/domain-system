@@ -97,12 +97,12 @@
                     </div>
 
                     <!-- Action Buttons: Ver Detalhes e Comprar Explícitos -->
-                    <div style="display: flex; gap: 6px;">
-                        <a href="<?= htmlspecialchars($productUrl) ?>" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 10px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s ease; box-sizing: border-box; white-space: nowrap;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
+                    <div class="store-card-actions" style="display: flex; gap: 6px;">
+                        <a href="<?= htmlspecialchars($productUrl) ?>" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s ease; box-sizing: border-box; white-space: nowrap; line-height: 1.2;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
                             <span>🔍</span>
                             <span>Ver Detalhes</span>
                         </a>
-                        <a href="<?= htmlspecialchars($checkoutUrl) ?>" style="flex: 1; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 10px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35); transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; white-space: nowrap;">
+                        <a href="<?= htmlspecialchars($checkoutUrl) ?>" style="flex: 1; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35); transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; white-space: nowrap; line-height: 1.2;">
                             Comprar ➔
                         </a>
                     </div>
