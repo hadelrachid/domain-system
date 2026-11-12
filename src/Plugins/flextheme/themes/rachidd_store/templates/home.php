@@ -168,10 +168,13 @@ if (empty($catalogProducts)) {
             <?php
             $homeRemSeconds = max(0, (int)($homeCycleInfo['seconds_remaining'] ?? 0));
             $homeTimerInitial = (string)($homeCycleInfo['formatted_remaining'] ?? '00:00:00');
+            if ($homeTimerInitial === '') {
+                $homeTimerInitial = '00:00:00';
+            }
             ?>
             <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.3); padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap;">
-                <span style="color: #94a3b8;">Próxima rotação 24h:</span>
-                <span style="color: #F0D060; font-weight: 800; font-family: 'Fira Code', monospace; font-size: 15px;" id="flash-timer"><?= htmlspecialchars($homeRemSeconds > 0 ? $homeTimerInitial : '✨ Curadoria Ativa', ENT_QUOTES, 'UTF-8') ?></span>
+                <span style="color: #94a3b8;">Acaba em:</span>
+                <span style="color: #F0D060; font-weight: 800; font-family: 'Fira Code', monospace; font-size: 15px;" id="flash-timer"><?= htmlspecialchars($homeTimerInitial, ENT_QUOTES, 'UTF-8') ?></span>
             </div>
         </div>
 
@@ -180,15 +183,40 @@ if (empty($catalogProducts)) {
                 var homeCycleSeconds = <?= $homeRemSeconds ?>;
                 var el = document.getElementById('flash-timer');
                 var homeTimerInt = null;
+                var autoTickFired = false;
+
+                function triggerAutoCycleTick() {
+                    if (autoTickFired) return;
+                    autoTickFired = true;
+                    fetch('<?= $baseUrl ?>/dropship/cron-tick', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
+                            homeCycleSeconds = data.seconds_remaining;
+                            if (data.rotated) {
+                                window.location.reload();
+                                return;
+                            }
+                            if (homeTimerInt === null) {
+                                homeTimerInt = setInterval(updateHomeCycleTimer, 1000);
+                            }
+                        }
+                    })
+                    .catch(function() {});
+                }
 
                 function updateHomeCycleTimer() {
                     if (!el) return;
                     if (homeCycleSeconds <= 0) {
-                        el.textContent = '✨ Curadoria Ativa';
+                        el.textContent = '00:00:00';
                         if (homeTimerInt !== null) {
                             clearInterval(homeTimerInt);
                             homeTimerInt = null;
                         }
+                        triggerAutoCycleTick();
                         return;
                     }
                     homeCycleSeconds--;
@@ -200,6 +228,8 @@ if (empty($catalogProducts)) {
 
                 if (homeCycleSeconds > 0) {
                     homeTimerInt = setInterval(updateHomeCycleTimer, 1000);
+                } else {
+                    triggerAutoCycleTick();
                 }
 
                 window.addEventListener('pageshow', function (evt) {

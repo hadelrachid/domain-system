@@ -181,11 +181,32 @@
             });
         }
 
+        var adminAutoTickFired = false;
+        function triggerAdminAutoCycle() {
+            if (adminAutoTickFired) return;
+            adminAutoTickFired = true;
+            fetch('<?= $baseUrl ?>/dropship/cron-tick', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
+                    adminRemSeconds = data.seconds_remaining;
+                    if (data.rotated) {
+                        window.location.reload();
+                    }
+                }
+            })
+            .catch(function() {});
+        }
+
         setInterval(function() {
             if (adminRemSeconds <= 0) {
                 if (hElem) hElem.textContent = '00';
                 if (mElem) mElem.textContent = '00';
                 if (sElem) sElem.textContent = '00';
+                triggerAdminAutoCycle();
                 return;
             }
             adminRemSeconds--;

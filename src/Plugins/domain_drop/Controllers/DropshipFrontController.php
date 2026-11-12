@@ -196,6 +196,40 @@ class DropshipFrontController
     }
 
     /**
+     * Gatilho assíncrono em background (auto-tick de 24h quando o cronômetro zera): POST /dropship/cron-tick
+     * Protegido por lock exclusivo (flock) dentro de runDailyAutomatedRotation() e só executa quando is_due === true.
+     */
+    public function cronTick(Request $request): ResponseInterface
+    {
+        if ($this->miningService === null) {
+            return new Response(json_encode(['success' => false, 'reason' => 'service_unavailable']), 200, ['Content-Type' => 'application/json']);
+        }
+
+        $info = $this->miningService->getDailyCycleInfo();
+        $rotated = false;
+        if (!empty($info['auto_sync_enabled']) && !empty($info['is_due'])) {
+            try {
+                $res = $this->miningService->runDailyAutomatedRotation(3);
+                $rotated = !empty($res['success']);
+            } catch (Throwable $e) {
+                $rotated = false;
+            }
+            $info = $this->miningService->getDailyCycleInfo();
+        }
+
+        return new Response(json_encode([
+            'success'             => true,
+            'rotated'             => $rotated,
+            'seconds_remaining'   => (int)($info['seconds_remaining'] ?? 86400),
+            'formatted_remaining' => (string)($info['formatted_remaining'] ?? '24:00:00'),
+            'last_cycle_date'     => (string)($info['last_cycle_date'] ?? ''),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 200, [
+            'Content-Type'  => 'application/json',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
+    }
+
+    /**
      * Página Oficial de Política de Envio & Prazos: GET /politica-de-envio
      */
     public function shippingPolicy(Request $request): ResponseInterface

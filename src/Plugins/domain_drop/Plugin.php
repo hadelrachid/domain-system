@@ -294,6 +294,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             // 4. Rotas Públicas da Loja Virtual, Vitrine & Área do Cliente
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
+            $router->addRoute('POST', '/dropship/cron-tick', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'cronTick'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
             $router->addRoute('GET', '/rastrear', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackOrder'], 'domain_drop');
             $router->addRoute('GET', '/politica-de-envio', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'shippingPolicy'], 'domain_drop');

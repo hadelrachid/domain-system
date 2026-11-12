@@ -219,20 +219,41 @@
         var mElem = document.getElementById('dropTimerM');
         var sElem = document.getElementById('dropTimerS');
         var countdownInterval = null;
+        var storeAutoTickFired = false;
+
+        function triggerStoreAutoCycle() {
+            if (storeAutoTickFired) return;
+            storeAutoTickFired = true;
+            fetch('<?= $baseUrl ?>/dropship/cron-tick', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
+                    remainingSeconds = data.seconds_remaining;
+                    if (data.rotated) {
+                        window.location.reload();
+                        return;
+                    }
+                    if (countdownInterval === null) {
+                        countdownInterval = setInterval(updateCountdown, 1000);
+                    }
+                }
+            })
+            .catch(function() {});
+        }
 
         function updateCountdown() {
             if (remainingSeconds <= 0) {
                 if (hElem) hElem.textContent = '00';
                 if (mElem) mElem.textContent = '00';
                 if (sElem) sElem.textContent = '00';
-                var container = document.getElementById('drop24hCountdown');
-                if (container) {
-                    container.innerHTML = '<span style="color:#FFE082; font-weight:700; font-size:12px;">✨ Curadoria Diária Ativa</span>';
-                }
                 if (countdownInterval !== null) {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                 }
+                triggerStoreAutoCycle();
                 return;
             }
 
