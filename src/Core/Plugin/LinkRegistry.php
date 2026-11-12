@@ -46,6 +46,9 @@ class LinkRegistry
     {
         if (isset($this->providedLinks[$linkName])) {
             $providerClass = $this->providedLinks[$linkName];
+            if (in_array($linkName, ['core.seo', 'core.mailer'], true) && !$this->container->has($providerClass)) {
+                return null;
+            }
             return $this->container->make($providerClass);
         }
 
@@ -91,15 +94,8 @@ class LinkRegistry
                 ? $this->container->make(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class)
                 : null;
         }
-        if ($linkName === 'core.seo') {
-            return $this->container->has(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class)
-                ? $this->container->make(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class)
-                : null;
-        }
-        if ($linkName === 'core.mailer') {
-            return $this->container->has(\DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface::class)
-                ? $this->container->make(\DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface::class)
-                : null;
+        if (in_array($linkName, ['core.seo', 'core.mailer'], true)) {
+            return null;
         }
 
         throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");

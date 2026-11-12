@@ -259,8 +259,8 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
                             ✅ Assim que o pagamento for confirmado, este curso será liberado automaticamente na sua <a href="<?= $baseUrl ?>/aluno/painel" style="color: #45f3ff; font-weight: 700; text-decoration: none;">Área de Estudos</a> vinculada a esta conta.
                         </div>
-                        <input type="hidden" name="payer_name" value="<?= $userName ?>">
-                        <input type="hidden" name="payer_email" value="<?= $userEmail ?>">
+                        <input type="hidden" id="payer_name" name="payer_name" value="<?= $userName ?>">
+                        <input type="hidden" id="payer_email" name="payer_email" value="<?= $userEmail ?>">
                     </div>
                     <?php endif; ?>
                     <?php if ($isPhysicalOrDropship): ?>
@@ -702,8 +702,8 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                 gateway: gateway,
                 payment_method: selectedMethod,
                 payer_cpf: rawCpf,
-                payer_name: payerNameEl ? payerNameEl.value.trim() : '',
-                payer_email: payerEmailEl ? payerEmailEl.value.trim() : '',
+                payer_name: (payerNameEl && payerNameEl.value.trim()) ? payerNameEl.value.trim() : <?= json_encode(html_entity_decode($userName, ENT_QUOTES, 'UTF-8'), JSON_UNESCAPED_UNICODE) ?>,
+                payer_email: (payerEmailEl && payerEmailEl.value.trim()) ? payerEmailEl.value.trim() : <?= json_encode(html_entity_decode($userEmail, ENT_QUOTES, 'UTF-8'), JSON_UNESCAPED_UNICODE) ?>,
                 payer_phone: payerPhoneEl ? payerPhoneEl.value.trim() : '',
                 shipping_zip: shipZipEl ? shipZipEl.value.trim() : '',
                 shipping_address: shipAddrEl ? shipAddrEl.value.trim() : '',

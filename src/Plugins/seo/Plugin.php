@@ -19,6 +19,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
     // ==========================================
     public function osRegister(OsConnectorInterface $os): void
     {
+        $os->provideLink('core.seo', \DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class);
         $os->listenHook('router.register');
     }
 

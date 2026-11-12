@@ -174,10 +174,10 @@ class CheckoutController
             }
         }
         $csrfToken = (string)$this->session->getCsrfToken();
-        $userEmail = (string)$this->session->get('academy_student_email', (string)$this->session->get('user_email', (string)$this->session->get('customer_email', '')));
-        $userName = (string)$this->session->get('academy_student_name', (string)$this->session->get('user_name', (string)$this->session->get('customer_name', $isPhysicalOrDropship ? '' : 'Aluno')));
-        $userUsername = (string)$this->session->get('academy_student_username', '');
-        $userCpf = (string)$this->session->get('user_cpf', (string)$this->session->get('academy_student_cpf', (string)$this->session->get('customer_cpf', '')));
+        $userEmail = trim((string)($this->session->get('academy_student_email') ?: $this->session->get('customer_email') ?: $this->session->get('user_email') ?: ''));
+        $userName = trim((string)($this->session->get('academy_student_name') ?: $this->session->get('customer_name') ?: $this->session->get('user_name') ?: ($isPhysicalOrDropship ? '' : 'Aluno')));
+        $userUsername = trim((string)($this->session->get('academy_student_username') ?: ''));
+        $userCpf = trim((string)($this->session->get('academy_student_cpf') ?: $this->session->get('customer_cpf') ?: $this->session->get('user_cpf') ?: ''));
 
         $courseImage = '';
         if (!empty($course['image'])) {
@@ -333,8 +333,22 @@ class CheckoutController
             'order_ref'      => $orderRef,
         ]);
 
-        $studentName = trim((string)($request->input('customer_name') ?? $request->input('payer_name') ?? $this->session->get('academy_student_name', (string)$this->session->get('user_name', $isPhysicalOrDropship ? 'Cliente' : 'Aluno'))));
-        $studentEmail = trim((string)($request->input('customer_email') ?? $request->input('payer_email') ?? $this->session->get('academy_student_email', (string)$this->session->get('user_email', 'cliente@exemplo.com'))));
+        $studentName = trim((string)(
+            $request->input('customer_name')
+            ?: $request->input('payer_name')
+            ?: $this->session->get('academy_student_name')
+            ?: $this->session->get('customer_name')
+            ?: $this->session->get('user_name')
+            ?: ($isPhysicalOrDropship ? 'Cliente' : 'Aluno')
+        ));
+        $studentEmail = trim((string)(
+            $request->input('customer_email')
+            ?: $request->input('payer_email')
+            ?: $this->session->get('academy_student_email')
+            ?: $this->session->get('customer_email')
+            ?: $this->session->get('user_email')
+            ?: 'cliente@exemplo.com'
+        ));
 
         $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
         $orderData = [

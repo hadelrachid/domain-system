@@ -418,6 +418,39 @@ class StudentAuthAndHeaderBlockTest extends TestCase
         $this->assertStringContainsString('Rachid Aluno SOLID', $checkoutHtml);
         $this->assertStringContainsString('@rachidsolid', $checkoutHtml);
         $this->assertStringContainsString('rachid.solid@academy.com', $checkoutHtml);
+        $this->assertStringContainsString('id="payer_email" name="payer_email" value="rachid.solid@academy.com"', $checkoutHtml);
+        $this->assertStringContainsString('id="payer_name" name="payer_name" value="Rachid Aluno SOLID"', $checkoutHtml);
         $this->assertStringContainsString('Minha Área de Estudos (Meus Cursos)', $checkoutHtml);
+
+        // 4. Processar pagamento Pix deve encaminhar o e-mail da sessão do aluno ao gateway mesmo se payer_email vier vazio no JSON
+        $capturedOrderData = null;
+        $mockGateway = $this->createMock(\DomainSystem\Plugins\commerce\Contracts\PaymentGatewayInterface::class);
+        $mockGateway->method('getId')->willReturn('mercadopago');
+        $mockGateway->method('isConfigured')->willReturn(true);
+        $mockGateway->method('processPayment')->willReturnCallback(function (array $orderData, array $paymentInput) use (&$capturedOrderData) {
+            $capturedOrderData = $orderData;
+            return \DomainSystem\Plugins\commerce\DTO\PaymentResult::pendingPix(
+                (string)$orderData['order_ref'],
+                '00020126580014BR.GOV.BCB.PIX',
+                null,
+                'TX_999'
+            );
+        });
+        $registry->register($mockGateway);
+
+        $processResp = $authedCheckout->process(new Request([], [
+            'csrf_token'     => 'CSRF_123',
+            'course_id'      => 8,
+            'gateway'        => 'mercadopago',
+            'payment_method' => 'pix',
+            'payer_cpf'      => '12345678909',
+            'payer_name'     => '',
+            'payer_email'    => '',
+        ]));
+
+        $this->assertSame(200, $processResp->getStatusCode());
+        $this->assertNotNull($capturedOrderData);
+        $this->assertSame('rachid.solid@academy.com', $capturedOrderData['student_email']);
+        $this->assertSame('Rachid Aluno SOLID', $capturedOrderData['student_name']);
     }
 }
