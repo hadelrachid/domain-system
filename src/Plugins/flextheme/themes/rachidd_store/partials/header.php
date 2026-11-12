@@ -4,6 +4,24 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $currentCat = trim((string)($_GET['cat'] ?? ''));
 $currentQ = trim((string)($_GET['q'] ?? ''));
 $currentSort = trim((string)($_GET['sort'] ?? ''));
+
+$customerLoggedId = 0;
+$customerLoggedName = '';
+try {
+    if (isset($GLOBALS['app'])) {
+        $c = $GLOBALS['app']->getContainer();
+        if ($c->has(\DomainSystem\Core\Contracts\SessionManagerInterface::class)) {
+            $sess = $c->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+            $customerLoggedId = (int)$sess->get('customer_id', 0);
+            $customerLoggedName = (string)$sess->get('customer_name', '');
+        }
+    }
+} catch (\Throwable $e) {
+}
+if ($customerLoggedId <= 0 && isset($_SESSION['customer_id'])) {
+    $customerLoggedId = (int)$_SESSION['customer_id'];
+    $customerLoggedName = (string)($_SESSION['customer_name'] ?? '');
+}
 ?>
 <!-- Top Utility Bar (Marketplace Internacional) -->
 <div style="background: #06090e; border-bottom: 1px solid rgba(212, 175, 55, 0.15); font-size: 11px; color: #94a3b8; padding: 6px 0;">
@@ -324,7 +342,66 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
         margin-right: 12px;
     }
 
+    .btn-mobile-actions-toggle {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(20,25,35,0.95) 100%);
+        border: 1.5px solid rgba(212,175,55,0.55);
+        color: #F0D060;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .drawer-account-block {
+        padding: 14px 14px 10px 14px;
+        border-bottom: 1px solid rgba(212,175,55,0.2);
+        background: rgba(255,255,255,0.02);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .drawer-account-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .drawer-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        border: 1px solid rgba(212,175,55,0.35);
+        background: rgba(212,175,55,0.12);
+        color: #F0D060;
+        box-sizing: border-box;
+    }
+    .drawer-action-btn.primary {
+        background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%);
+        color: #0b0f17;
+        border-color: #F0D060;
+        font-weight: 800;
+        grid-column: span 2;
+    }
+
     /* REGRAS RESPONSIVAS MOBILE E TABLET */
+    @media (max-width: 960px) {
+        .header-actions {
+            display: none !important;
+        }
+        .btn-mobile-actions-toggle {
+            display: inline-flex;
+        }
+    }
     @media (max-width: 768px) {
         .header-quick-chips {
             display: none; /* No mobile, o botão hambúrguer é o mestre da filtragem */
@@ -395,11 +472,32 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
                     <span>✨</span>
                     <span class="btn-label-text">Desejos do Dia</span>
                 </a>
+                <?php if ($customerLoggedId > 0): ?>
+                    <a href="<?= $baseUrl ?>/minha-conta" class="btn-desejos" title="Meus Pedidos e Reclamações">
+                        <span>👤</span>
+                        <span class="btn-label-text"><?= htmlspecialchars(explode(' ', trim($customerLoggedName))[0] ?: 'Conta', ENT_QUOTES, 'UTF-8') ?></span>
+                    </a>
+                <?php else: ?>
+                    <a href="<?= $baseUrl ?>/cadastro" class="btn-desejos" title="Criar Conta Grátis">
+                        <span>👤</span>
+                        <span class="btn-label-text">Cadastrar</span>
+                    </a>
+                    <a href="<?= $baseUrl ?>/entrar" class="btn-desejos" title="Acessar Minha Conta">
+                        <span>🔐</span>
+                        <span class="btn-label-text">Acessar</span>
+                    </a>
+                <?php endif; ?>
                 <a href="<?= $baseUrl ?>/loja" class="btn-loja">
                     <span>🛍️</span>
                     <span class="btn-label-text">Ver Loja</span>
                 </a>
             </div>
+
+            <!-- Toggle Hambúrguer Mobile / Tablet (substitui os botões laterais para não vazar da tela) -->
+            <button type="button" id="btnMobileHeaderToggle" class="btn-mobile-actions-toggle" aria-label="Abrir menu e conta" aria-expanded="false">
+                <span style="font-size: 16px; line-height: 1;">☰</span>
+                <span>Menu</span>
+            </button>
         </div>
 
         <!-- Row 2: Barra de Busca Oficial Ampla e Responsiva (Sem encurtamento!) -->
@@ -448,6 +546,25 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
             </div>
         </div>
         <button type="button" id="btnCloseCatDrawer" class="cat-drawer-close" aria-label="Fechar Menu">✕</button>
+    </div>
+
+    <!-- Acesso Rápido: Loja & Conta do Cliente (visível no menu toggle/hambúrguer) -->
+    <div class="drawer-account-block">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px;">
+            Conta &amp; Navegação Rápida
+        </div>
+        <div class="drawer-account-grid">
+            <a href="<?= $baseUrl ?>/loja" class="drawer-action-btn primary">🛍️ Ver Loja Oficial</a>
+            <?php if ($customerLoggedId > 0): ?>
+                <a href="<?= $baseUrl ?>/minha-conta" class="drawer-action-btn">👤 <?= htmlspecialchars(explode(' ', trim($customerLoggedName))[0] ?: 'Minha Conta', ENT_QUOTES, 'UTF-8') ?></a>
+                <a href="<?= $baseUrl ?>/sair" class="drawer-action-btn">🚪 Sair</a>
+            <?php else: ?>
+                <a href="<?= $baseUrl ?>/cadastro" class="drawer-action-btn">👤 Cadastrar</a>
+                <a href="<?= $baseUrl ?>/entrar" class="drawer-action-btn">🔐 Acessar</a>
+            <?php endif; ?>
+            <a href="<?= $baseUrl ?>/#desejos" class="drawer-action-btn">✨ Desejos</a>
+            <a href="<?= $baseUrl ?>/rastrear" class="drawer-action-btn">📦 Rastrear</a>
+        </div>
     </div>
 
     <div class="cat-drawer-list">
@@ -564,6 +681,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
 <script>
 (function() {
     var btnToggle = document.getElementById('btnToggleCatDrawer');
+    var btnMobileToggle = document.getElementById('btnMobileHeaderToggle');
     var btnClose = document.getElementById('btnCloseCatDrawer');
     var overlay = document.getElementById('catDrawerOverlay');
     var panel = document.getElementById('catDrawerPanel');
@@ -574,6 +692,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
             panel.classList.add('active');
             document.body.style.overflow = 'hidden';
             if (btnToggle) btnToggle.setAttribute('aria-expanded', 'true');
+            if (btnMobileToggle) btnMobileToggle.setAttribute('aria-expanded', 'true');
         }
     }
 
@@ -583,6 +702,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
             panel.classList.remove('active');
             document.body.style.overflow = '';
             if (btnToggle) btnToggle.setAttribute('aria-expanded', 'false');
+            if (btnMobileToggle) btnMobileToggle.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -654,6 +774,7 @@ $currentSort = trim((string)($_GET['sort'] ?? ''));
     window.smoothScrollToProducts = smoothScrollToProducts;
 
     if (btnToggle) btnToggle.addEventListener('click', openDrawer);
+    if (btnMobileToggle) btnMobileToggle.addEventListener('click', openDrawer);
     if (btnClose) btnClose.addEventListener('click', closeDrawer);
     if (overlay) overlay.addEventListener('click', closeDrawer);
 

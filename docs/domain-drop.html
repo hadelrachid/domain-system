@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DomainDrop (AliExpress SDK &amp; Dropshipping) - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="contratos.html">Contratos SOLID &rarr;</a></li>
+            <li style="margin-left:auto"><a href="domain-drop_en.html" class="lang-toggle">🇺🇸 English</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>📦 DomainDrop — Dropshipping com SDK do AliExpress</h1>
+        <p>Motor Autônomo de E-Commerce, Curadoria 24h, Rastreio Logístico e Atendimento ao Cliente (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Visão Geral</h2>
+        <p>O <strong>DomainDrop</strong> (<code>src/Plugins/domain_drop</code>) é o módulo oficial de Dropshipping e Comércio Eletrônico Físico do <strong>Domain-System v2.7.0</strong>. Ele integra o <strong>SDK Oficial da AliExpress Open Platform</strong> (protocolo TOP com assinatura criptográfica <code>HMAC-SHA256</code> e autenticação OAuth 2.0) diretamente ao núcleo leve do sistema (~30 MB), permitindo operar uma loja virtual completa sem depender de plataformas externas pesadas.</p>
+
+        <h2>🚀 Principais Funcionalidades</h2>
+        <ul>
+            <li><strong>Integração com SDK Oficial do AliExpress (<code>AliExpressApiClientInterface</code>):</strong>
+                <ul>
+                    <li>Suporte às APIs oficiais da AliExpress Open Platform: consulta de produtos (<code>aliexpress.ds.product.get</code>), feed de ofertas (<code>aliexpress.ds.recommend.feed.get</code>), cálculo de frete (<code>aliexpress.logistics.buyer.freight.get</code>), criação automatizada de pedidos (<code>aliexpress.trade.buy.placeorder</code>) e rastreamento logístico em tempo real (<code>aliexpress.logistics.redefining.getlogisticsselleraddresses</code> / <code>queryTrackingInfo</code>).</li>
+                    <li>Assinatura criptográfica <code>HMAC-SHA256</code> com <em>Circuit Breaker</em> próprio para chamadas externas.</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Mineração Autônoma &amp; Ciclo Flash de 24 Horas (<code>ProductMiningServiceInterface</code>):</strong>
+                <ul>
+                    <li>Curadoria inteligente que prioriza produtos com estoque no Brasil (Entreposto Nacional com entrega rápida) e complementa com ofertas globais de alta conversão.</li>
+                    <li>Conversão cambial dinâmica (<code>USD &rarr; BRL</code>) via <code>CurrencyConverterInterface</code> com margem de lucro configurável.</li>
+                    <li>Enriquecimento de títulos e descrições persuasivas com Inteligência Artificial (<code>AiProductEnricherInterface</code>).</li>
+                    <li>Rotação diária sincronizada com o cronômetro regressivo de 24h na vitrine e cabeçalhos anti-cache HTTP (<code>CachePolicy</code>) para exibição imediata das ofertas renovadas.</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Espaço do Cliente Completo (<code>/minha-conta</code>, <code>/entrar</code>, <code>/cadastro</code>):</strong>
+                <ul>
+                    <li>Autenticação isolada da tabela administrativa (<code>domain_drop_customers</code>) para segurança máxima de privilégios.</li>
+                    <li><strong>🛰️ Acompanhamento de Entrega Integrado:</strong> Linha do tempo visual de 5 etapas dentro da área do cliente, com consulta direta aos <strong>Correios</strong>, <strong>Cainiao Global</strong> e eventos em tempo real do SDK do AliExpress.</li>
+                    <li><strong>💬 Reclamações, Observações &amp; Dúvidas:</strong> Abertura de chamados com upload seguro de até 4 fotos/PDFs (validação de <em>magic bytes</em>) e <strong>vinculação opcional de pedido ou produto do catálogo</strong> — permitindo ao cliente indicar o produto ou código manualmente mesmo antes da compensação bancária.</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Gestão Administrativa de Clientes, Pedidos &amp; Mediação Bilingue (<code>/admin/dropship</code>):</strong>
+                <ul>
+                    <li><strong>👥 Clientes &amp; Compradores (<code>/admin/dropship/customers</code>):</strong> Listagem estilo CRM com busca por nome/e-mail/CPF, métricas de pedidos/chamados, ativação/suspensão de conta e histórico de solicitações recentes.</li>
+                    <li><strong>📦 Pedidos, SLA &amp; Disputas (<code>/admin/dropship/orders</code>):</strong> Barra de progresso de SLA de entrega e botão único de <strong>Mediação com Fornecedor</strong> (<code>SellerMediationService</code>) que traduz automaticamente o chamado para <strong>Chinês Simplificado (<code>zh-CN</code>)</strong> quando o vendedor é internacional (<code>CN</code>) ou mantém em <strong>Português (<code>pt-BR</code>)</strong> para fornecedores nacionais (<code>BR</code>).</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>🏛️ Contratos Principais (SOLID / DIP)</h2>
+        <pre><code>namespace DomainSystem\Plugins\domain_drop\Contracts;
+
+interface AliExpressApiClientInterface      // Comunicação assinada com AliExpress Open Platform SDK
+interface ProductMiningServiceInterface     // Curadoria 24h, precificação BRL e ciclo diário
+interface DropshipCatalogRepositoryInterface // Persistência PDO do catálogo (MySQL / SQLite)
+interface DropshipOrderRepositoryInterface   // Gestão de pedidos e códigos de rastreio
+interface DropshipCustomerRepositoryInterface // Gestão de clientes cadastrados e métricas CRM
+interface DropshipDisputeRepositoryInterface  // Chamados, reclamações, observações e anexos</code></pre>
+
+        <h2>🎨 Isolamento entre Temas Nativos e Flex Builder</h2>
+        <p>Temas dedicados de e-commerce como o <code>rachidd_store</code> declaram <code>"flex_builder": false</code> em seu <code>theme.json</code>. O <code>ThemeDiscoveryService::supportsFlexBuilder()</code> detecta essa diretiva e isola automaticamente o cabeçalho e o rodapé nativos do tema, exibindo um aviso claro no painel do <strong>Flex Builder</strong> para evitar conflitos de edição.</p>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Arquitetura leve (~30MB) com SDK Oficial do AliExpress integrado.
+    </footer>
+</body>
+
+</html>

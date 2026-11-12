@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Guia de Contratos para IA - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="contratos.html">Contratos SOLID &rarr;</a></li>
+            <li style="margin-left:auto"><a href="ai-contract-guide_en.html" class="lang-toggle">🇺🇸 English</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>🤖 Guia Mestre de Contratos para IA</h1>
+        <p>Diretrizes Arquiteturais para Geração Segura de Plugins e Temas (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Por que um Guia de Contratos para IA?</h2>
+        <p>O <strong>Domain-System</strong> foi projetado para trabalhar em harmonia com assistentes de Inteligência Artificial (Gemini, Claude, ChatGPT, Copilot, Cursor). Para que o código gerado por IA mantenha 100% de aderência à arquitetura <strong>SOLID</strong> e <strong>Clean Architecture</strong> do sistema, todas as extensões seguem contratos explícitos.</p>
+
+        <h2>1. Regras de Ouro Inegociáveis</h2>
+        <ul>
+            <li><strong>Zero Superglobais em Controllers:</strong> Jamais utilize <code>$_GET</code>, <code>$_POST</code>, <code>$_SESSION</code>, <code>$_FILES</code> ou <code>$_SERVER</code> dentro de Controllers. Utilize sempre o objeto <code>Request</code> (<code>$request-&gt;input()</code>, <code>$request-&gt;json()</code>) e <code>SessionManagerInterface</code> injetados no construtor (verificado por <code>NoSuperglobalsInControllersTest</code>).</li>
+            <li><strong>Inversão de Dependência (DIP):</strong> Serviços e Controllers dependem exclusivamente de interfaces em <code>Contracts/</code>, nunca de repositórios PDO concretos ou clientes HTTP externos diretos.</li>
+            <li><strong>Isolamento de Anéis (Ring 0 vs. Ring 3):</strong> Plugins em <code>src/Plugins/</code> (Ring 3) comunicam-se com o Kernel (Ring 0) através de <code>OsExtensionInterface</code> (<code>osRegister</code> e <code>osBoot</code>) e eventos, sem alterar classes do núcleo.</li>
+            <li><strong>SQL Agnóstico (MySQL &amp; SQLite):</strong> Repositórios PDO devem usar SQL ANSI compatível tanto com MySQL/MariaDB (produção Hostinger) quanto com SQLite em memória (suíte PHPUnit).</li>
+        </ul>
+
+        <h2>2. Gerador Automático via CLI</h2>
+        <p>Para iniciar qualquer plugin dentro do padrão oficial, utilize o comando:</p>
+        <pre><code>php os-cli.php make:plugin nome_do_plugin</code></pre>
+        <p>Esse comando cria automaticamente o manifesto <code>plugin.json</code> (versão <code>2.7.0</code> / <code>os_version: 2.7</code>), a classe <code>Plugin.php</code> com <code>OsExtensionInterface</code> e o módulo de documentação auto-descoberto <code>manual/module.php</code> (<code>ManualModuleInterface</code>).</p>
+
+        <h2>3. Estrutura Padrão de um Plugin</h2>
+        <pre><code>src/Plugins/meu_plugin/
+├── plugin.json
+├── Plugin.php
+├── Contracts/
+│   └── MeuRepositorioInterface.php
+├── Repositories/
+│   └── PdoMeuRepositorio.php
+├── Services/
+│   └── MeuServico.php
+├── Controllers/
+│   └── MeuController.php
+├── manual/
+│   └── module.php
+└── views/
+    ├── admin/
+    └── front/</code></pre>
+
+        <h2>4. Verificação Automatizada</h2>
+        <p>Antes de publicar qualquer alteração gerada com auxílio de IA, execute a bateria de testes de arquitetura e unidade:</p>
+        <pre><code>php phpunit.phar tests/Architecture
+php phpunit.phar</code></pre>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Arquitetura orientada a contratos e verificável por testes automatizados.
+    </footer>
+</body>
+
+</html>

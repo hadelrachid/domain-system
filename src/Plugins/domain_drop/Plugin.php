@@ -16,19 +16,28 @@ use DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\DropshipDisputeRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMediaSyncInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
+use DomainSystem\Plugins\domain_drop\Controllers\CustomerAccountController;
 use DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController;
 use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipCatalogRepository;
+use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipCustomerRepository;
+use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipDisputeRepository;
 use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository;
 use DomainSystem\Plugins\domain_drop\Services\AiProductEnricherService;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService;
 use DomainSystem\Plugins\domain_drop\Services\CurrencyConverterService;
+use DomainSystem\Plugins\domain_drop\Services\DisputeAttachmentService;
+use DomainSystem\Plugins\domain_drop\Services\OrderSlaProgressService;
 use DomainSystem\Plugins\domain_drop\Services\ProductMediaSyncService;
 use DomainSystem\Plugins\domain_drop\Services\ProductMiningService;
+use DomainSystem\Plugins\domain_drop\Services\SellerMediationService;
+use DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface;
 use Throwable;
 
 /**
@@ -119,6 +128,58 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoDropshipOrderRepository($runtime->getLink('core.db'));
         });
 
+        $runtime->singleton(DropshipCustomerRepositoryInterface::class, function () use ($runtime) {
+            return new PdoDropshipCustomerRepository($runtime->getLink('core.db'));
+        });
+
+        $runtime->singleton(DropshipDisputeRepositoryInterface::class, function () use ($runtime) {
+            return new PdoDropshipDisputeRepository($runtime->getLink('core.db'));
+        });
+
+        $runtime->singleton(OrderSlaProgressService::class, function () {
+            return new OrderSlaProgressService();
+        });
+
+        $runtime->singleton(DisputeAttachmentService::class, function () use ($root) {
+            return new DisputeAttachmentService($root, true);
+        });
+
+        $runtime->singleton(SellerMediationService::class, function () use ($runtime) {
+            $mailer = null;
+            try {
+                if ($runtime->has(EmailSenderInterface::class)) {
+                    $mailer = $runtime->make(EmailSenderInterface::class);
+                }
+            } catch (Throwable $e) {
+                $mailer = null;
+            }
+
+            return new SellerMediationService(
+                disputeRepo: $runtime->make(DropshipDisputeRepositoryInterface::class),
+                mailer: $mailer
+            );
+        });
+
+        $runtime->singleton(CustomerAccountController::class, function () use ($runtime) {
+            $themeManager = null;
+            try {
+                $themeManager = $runtime->getLink('core.theme');
+            } catch (Throwable $e) {
+            }
+
+            return new CustomerAccountController(
+                customerRepo: $runtime->make(DropshipCustomerRepositoryInterface::class),
+                orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
+                disputeRepo: $runtime->make(DropshipDisputeRepositoryInterface::class),
+                session: $runtime->getLink('core.session'),
+                attachmentService: $runtime->make(DisputeAttachmentService::class),
+                slaService: $runtime->make(OrderSlaProgressService::class),
+                themeManager: $themeManager,
+                apiClient: $runtime->make(AliExpressApiClientInterface::class),
+                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class)
+            );
+        });
+
         $runtime->singleton(ProductLinkScraperInterface::class, function () {
             return new AliExpressLinkScraperService();
         });
@@ -150,7 +211,12 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 session: $runtime->getLink('core.session'),
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
                 mediaSync: $runtime->make(ProductMediaSyncInterface::class),
-                basePath: $root
+                basePath: $root,
+                customerRepo: $runtime->make(DropshipCustomerRepositoryInterface::class),
+                disputeRepo: $runtime->make(DropshipDisputeRepositoryInterface::class),
+                slaService: $runtime->make(OrderSlaProgressService::class),
+                mediationService: $runtime->make(SellerMediationService::class),
+                apiClient: $runtime->make(AliExpressApiClientInterface::class)
             );
         });
 
@@ -189,6 +255,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                             'icon'  => '🛍️',
                         ],
                         [
+                            'title' => 'Clientes & Compradores',
+                            'url'   => '/admin/dropship/customers',
+                            'icon'  => '👥',
+                        ],
+                        [
                             'title' => 'Configurações & API',
                             'url'   => '/admin/dropship/settings',
                             'icon'  => '⚙️',
@@ -207,20 +278,36 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/import-browser-source', [DropshipAdminController::class, 'importBrowserSource'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/orders', [DropshipAdminController::class, 'orders'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/orders/{id}/fulfillment', [DropshipAdminController::class, 'updateFulfillment'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/orders/{id}/check-sdk', [DropshipAdminController::class, 'checkOrderSdk'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/orders/{id}/mediate', [DropshipAdminController::class, 'mediateDispute'], 'domain_drop', ['admin']);
+            $router->addRoute('GET', '/admin/dropship/customers', [DropshipAdminController::class, 'customers'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/customers/{id}/status', [DropshipAdminController::class, 'updateCustomerStatus'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/test-connection', [DropshipAdminController::class, 'testConnection'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/sync-images', [DropshipAdminController::class, 'syncImages'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/product/{id}/images', [DropshipAdminController::class, 'updateImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/run-daily-cycle', [DropshipAdminController::class, 'runDailyCycle'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
 
-            // 4. Rotas Públicas da Loja Virtual & Vitrine de Produtos
+            // 4. Rotas Públicas da Loja Virtual, Vitrine & Área do Cliente
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
             $router->addRoute('GET', '/rastrear', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackOrder'], 'domain_drop');
             $router->addRoute('GET', '/politica-de-envio', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'shippingPolicy'], 'domain_drop');
+
+            // 5. Cadastro, Login, Pedidos e Reclamações de Clientes
+            $router->addRoute('GET', '/cadastro', [CustomerAccountController::class, 'showRegister'], 'domain_drop');
+            $router->addRoute('POST', '/cadastro', [CustomerAccountController::class, 'register'], 'domain_drop');
+            $router->addRoute('GET', '/entrar', [CustomerAccountController::class, 'showLogin'], 'domain_drop');
+            $router->addRoute('POST', '/entrar', [CustomerAccountController::class, 'login'], 'domain_drop');
+            $router->addRoute('GET', '/sair', [CustomerAccountController::class, 'logout'], 'domain_drop');
+            $router->addRoute('POST', '/sair', [CustomerAccountController::class, 'logout'], 'domain_drop');
+            $router->addRoute('GET', '/minha-conta', [CustomerAccountController::class, 'account'], 'domain_drop');
+            $router->addRoute('POST', '/minha-conta/reclamar', [CustomerAccountController::class, 'submitComplaint'], 'domain_drop');
+            $router->addRoute('GET', '/dropship/disputes/attachment/{id}/{file}', [CustomerAccountController::class, 'serveAttachment'], 'domain_drop');
         });
 
         // 4. Integração com DomainCommerce (Resolução de Itens Vendáveis no Checkout)
@@ -258,20 +345,52 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     $orderRepo = $runtime->make(DropshipOrderRepositoryInterface::class);
                     $existing = $orderRepo->findByOrderRef($orderRef);
                     if ($existing === null) {
+                        $sellerOrigin = 'CN';
+                        $expectedDays = 25;
+                        $sellerName = null;
+                        $productSlug = null;
+                        $productTitle = null;
+                        $aeProductId = null;
+
+                        if ($itemId > 0) {
+                            try {
+                                /** @var DropshipCatalogRepositoryInterface $catRepo */
+                                $catRepo = $runtime->make(DropshipCatalogRepositoryInterface::class);
+                                $productDto = $catRepo->findById($itemId);
+                                if ($productDto !== null) {
+                                    $sellerInfo = $productDto->getSellerInfo();
+                                    $isBr = !empty($sellerInfo['is_brazil']);
+                                    $sellerOrigin = $isBr ? 'BR' : 'CN';
+                                    $expectedDays = $isBr ? 7 : 25;
+                                    $sellerName = (string)($sellerInfo['store_name'] ?? '');
+                                    $productSlug = $productDto->slug;
+                                    $productTitle = $productDto->title;
+                                    $aeProductId = $productDto->aliexpressId;
+                                }
+                            } catch (Throwable $e) {
+                            }
+                        }
+
                         $orderRepo->create([
-                            'order_ref'          => $orderRef,
-                            'customer_name'      => (string)($payload['customer_name'] ?? 'Cliente'),
-                            'customer_email'     => (string)($payload['customer_email'] ?? ''),
-                            'customer_document'  => isset($payload['customer_document']) ? (string)$payload['customer_document'] : null,
-                            'shipping_address'    => isset($payload['shipping_address']) ? $payload['shipping_address'] : null,
-                            'status'             => 'paid',
-                            'total_paid_brl'     => (float)($payload['total'] ?? 0.0),
+                            'order_ref'              => $orderRef,
+                            'customer_name'          => (string)($payload['customer_name'] ?? 'Cliente'),
+                            'customer_email'         => (string)($payload['customer_email'] ?? ''),
+                            'customer_document'      => isset($payload['customer_document']) ? (string)$payload['customer_document'] : null,
+                            'shipping_address'       => isset($payload['shipping_address']) ? $payload['shipping_address'] : null,
+                            'status'                 => 'paid',
+                            'total_paid_brl'         => (float)($payload['total'] ?? 0.0),
+                            'seller_origin'          => $sellerOrigin,
+                            'seller_name'            => $sellerName,
+                            'expected_delivery_days' => $expectedDays,
+                            'product_slug'           => $productSlug,
+                            'product_title'          => $productTitle,
+                            'aliexpress_product_id'  => $aeProductId,
                         ]);
                     } else {
                         $orderRepo->updateFulfillment($orderRef, 'paid');
                     }
                 } catch (Throwable $e) {
-                    // Isolamento de falha
+                    error_log('[DomainDrop] Falha ao registrar pedido em payment.approved: ' . $e->getMessage());
                 }
             }
         });

@@ -58,7 +58,7 @@ class ThemeController
                 if ($this->shortcodes !== null) {
                     $html = $this->shortcodes->parse($html);
                 }
-                return new Response($html);
+                return $this->withNoCache(new Response($html));
             }
         }
 
@@ -66,14 +66,14 @@ class ThemeController
         if ($siteState->isComingSoon()) {
             $response = new Response($this->renderComingSoonPage(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
             $response->setHeader('X-Robots-Tag', 'noindex, nofollow');
-            return $response;
+            return $this->withNoCache($response);
         }
 
         // 2. Estado: Manutenção (Maintenance)
         if ($siteState->isMaintenance()) {
             $response = new Response($this->renderMaintenancePage(), 503, ['Content-Type' => 'text/html; charset=utf-8']);
             $response->setHeader('Retry-After', '3600');
-            return $response;
+            return $this->withNoCache($response);
         }
 
         // 3. Estado: Live
@@ -89,7 +89,7 @@ class ThemeController
         
         if (!file_exists($themePath)) {
             if (trim($assignedSection) !== '') {
-                return new Response($assignedSection);
+                return $this->withNoCache(new Response($assignedSection));
             }
             return new Response("Tema não encontrado em: " . htmlspecialchars($themeDir), 404);
         }
@@ -111,7 +111,16 @@ class ThemeController
         }
 
         // O SEO Middleware vai interceptar esta Response e envelopá-la no main.php + Minificar!
-        return new Response($html);
+        return $this->withNoCache(new Response($html));
+    }
+
+    private function withNoCache(Response $response): Response
+    {
+        $response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->setHeader('Pragma', 'no-cache');
+        $response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+        $response->setHeader('Vary', 'Cookie, Accept-Encoding');
+        return $response;
     }
 
     private function renderComingSoonPage(): string

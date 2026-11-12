@@ -4,14 +4,24 @@
  */
 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
-// 1. Tenta carregar os produtos reais do catálogo minerado do DomainDrop
+// 1. Carrega produtos publicados ordenados pela atualização mais recente (ciclo 24h / edições no Admin)
 $catalogProducts = [];
+$homeCycleInfo = [
+    'seconds_remaining'   => 0,
+    'formatted_remaining' => '00:00:00',
+    'is_due'              => false,
+    'last_cycle_date'     => '',
+];
 try {
     if (isset($GLOBALS['app'])) {
         $container = $GLOBALS['app']->getContainer();
         if ($container->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class)) {
             $repo = $container->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
-            $catalogProducts = $repo->list(['status' => 'published'], 12);
+            $catalogProducts = $repo->list(['status' => 'published', 'sort' => 'updated_desc'], 12);
+        }
+        if ($container->has(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class)) {
+            $miningSvc = $container->make(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+            $homeCycleInfo = $miningSvc->getDailyCycleInfo();
         }
     }
 } catch (\Throwable $e) {
@@ -154,28 +164,50 @@ if (empty($catalogProducts)) {
                 </p>
             </div>
 
-            <!-- Fake Countdown Timer para Urgência -->
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.3); padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 10px; font-size: 13px;">
-                <span style="color: #94a3b8;">As ofertas terminam em:</span>
-                <span style="color: #F0D060; font-weight: 800; font-family: 'Fira Code', monospace; font-size: 15px;" id="flash-timer">07:42:19</span>
+            <!-- Countdown Real sincronizado com o Ciclo 24h do DomainDrop -->
+            <?php
+            $homeRemSeconds = max(0, (int)($homeCycleInfo['seconds_remaining'] ?? 0));
+            $homeTimerInitial = (string)($homeCycleInfo['formatted_remaining'] ?? '00:00:00');
+            ?>
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.3); padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap;">
+                <span style="color: #94a3b8;">Próxima rotação 24h:</span>
+                <span style="color: #F0D060; font-weight: 800; font-family: 'Fira Code', monospace; font-size: 15px;" id="flash-timer"><?= htmlspecialchars($homeRemSeconds > 0 ? $homeTimerInitial : '✨ Curadoria Ativa', ENT_QUOTES, 'UTF-8') ?></span>
             </div>
         </div>
 
         <script>
-            // Timer regressivo dinâmico para urgência e conversão
-            function updateTimer() {
-                const now = new Date();
-                const midnight = new Date();
-                midnight.setHours(24, 0, 0, 0);
-                const diff = midnight - now;
-                const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
-                const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
-                const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
-                const el = document.getElementById('flash-timer');
-                if (el) el.innerText = `${h}:${m}:${s}`;
-            }
-            setInterval(updateTimer, 1000);
-            updateTimer();
+            (function() {
+                var homeCycleSeconds = <?= $homeRemSeconds ?>;
+                var el = document.getElementById('flash-timer');
+                var homeTimerInt = null;
+
+                function updateHomeCycleTimer() {
+                    if (!el) return;
+                    if (homeCycleSeconds <= 0) {
+                        el.textContent = '✨ Curadoria Ativa';
+                        if (homeTimerInt !== null) {
+                            clearInterval(homeTimerInt);
+                            homeTimerInt = null;
+                        }
+                        return;
+                    }
+                    homeCycleSeconds--;
+                    var h = String(Math.floor(homeCycleSeconds / 3600)).padStart(2, '0');
+                    var m = String(Math.floor((homeCycleSeconds % 3600) / 60)).padStart(2, '0');
+                    var s = String(homeCycleSeconds % 60).padStart(2, '0');
+                    el.textContent = h + ':' + m + ':' + s;
+                }
+
+                if (homeCycleSeconds > 0) {
+                    homeTimerInt = setInterval(updateHomeCycleTimer, 1000);
+                }
+
+                window.addEventListener('pageshow', function (evt) {
+                    if (evt && evt.persisted) {
+                        window.location.reload();
+                    }
+                });
+            })();
         </script>
 
         <style>
@@ -360,6 +392,184 @@ if (empty($catalogProducts)) {
             <a href="<?= $baseUrl ?>/loja" class="gold-button" style="padding: 14px 40px; font-size: 14px;">
                 Ver Todas as Ofertas da Loja Oficial ➔
             </a>
+        </div>
+    </div>
+</section>
+
+<!-- SEÇÃO: Cadastro de Cliente na Home (Pedidos, Rastreamento e Devoluções) -->
+<?php
+$homeCustomerId = 0;
+$homeCustomerName = '';
+$homeCsrf = '';
+try {
+    if (isset($GLOBALS['app'])) {
+        $hc = $GLOBALS['app']->getContainer();
+        if ($hc->has(\DomainSystem\Core\Contracts\SessionManagerInterface::class)) {
+            $hs = $hc->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+            $homeCustomerId = (int)$hs->get('customer_id', 0);
+            $homeCustomerName = (string)$hs->get('customer_name', '');
+            $homeCsrf = (string)$hs->getCsrfToken();
+        }
+    }
+} catch (\Throwable $e) {
+}
+?>
+<style>
+.home-signup-section {
+    padding: 55px 0;
+    background: linear-gradient(135deg, rgba(16,23,36,0.98) 0%, rgba(11,15,23,1) 100%);
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+.home-signup-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(212,175,55,0.28);
+    border-radius: 18px;
+    padding: 32px;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+}
+.home-signup-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    margin: 14px 0 10px 0;
+    line-height: 1.25;
+}
+.home-signup-form {
+    background: rgba(7, 10, 16, 0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+.home-signup-row-2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+.home-signup-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    margin-top: 4px;
+    align-items: stretch;
+}
+@media (max-width: 960px) {
+    .home-signup-section {
+        padding: 38px 0;
+    }
+    .home-signup-card {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 24px 20px;
+    }
+}
+@media (max-width: 600px) {
+    .home-signup-section {
+        padding: 28px 0;
+    }
+    .home-signup-card {
+        padding: 18px 14px;
+        gap: 18px;
+        border-radius: 14px;
+    }
+    .home-signup-title {
+        font-size: 20px;
+    }
+    .home-signup-form {
+        padding: 15px 12px;
+        border-radius: 12px;
+    }
+    .home-signup-row-2,
+    .home-signup-actions {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+<section id="cadastro-cliente" class="home-signup-section">
+    <div class="container">
+        <div class="home-signup-card">
+            <div style="min-width: 0;">
+                <span style="display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: #F0D060; text-transform: uppercase; background: rgba(212,175,55,0.12); padding: 4px 12px; border-radius: 99px; border: 1px solid rgba(212,175,55,0.35);">
+                    Conta Gratuita do Comprador
+                </span>
+                <h2 class="home-signup-title">
+                    Cadastre-se para Acompanhar Pedidos e Garantias
+                </h2>
+                <p style="font-size: 14px; color: #94a3b8; line-height: 1.6; margin: 0 0 16px 0;">
+                    Com seu cadastro na RachidD.com, seus pedidos ficam vinculados ao seu painel com barra de prazo de entrega, checkout agilizado e área dedicada para enviar fotos ou PDF caso precise de reembolso ou intermediação.
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 12.5px; color: #cbd5e1;">
+                    <span>✅ Garantia 7 a 15 dias</span>
+                    <span>✅ Envio de fotos / PDF</span>
+                    <span>✅ Suporte direto com fornecedor</span>
+                </div>
+            </div>
+
+            <?php if ($homeCustomerId > 0): ?>
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 14px; padding: 22px 16px; text-align: center; box-sizing: border-box;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">👋</div>
+                    <h3 style="margin: 0 0 6px 0; color: #fff; font-size: 18px;">Bem-vindo(a), <?= htmlspecialchars($homeCustomerName, ENT_QUOTES, 'UTF-8') ?>!</h3>
+                    <p style="margin: 0 0 18px 0; font-size: 13px; color: #cbd5e1;">Sua conta já está ativa para compras, rastreamento e reclamações.</p>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        <a href="<?= $baseUrl ?>/minha-conta" class="gold-button" style="padding: 11px 22px; font-size: 13px;">Acessar Minha Conta e Pedidos ➔</a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <form method="POST" action="<?= $baseUrl ?>/cadastro" class="home-signup-form">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($homeCsrf, ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="home-signup-row-2">
+                        <input type="text" name="name" required placeholder="Nome Completo *" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
+                        <input type="email" name="email" required placeholder="Seu melhor E-mail *" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div class="home-signup-row-2">
+                        <input type="text" name="cpf" inputmode="numeric" maxlength="14" placeholder="CPF: 000.000.000-00" oninput="homeMaskCpf(this)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
+                        <input type="tel" name="phone" inputmode="tel" maxlength="15" placeholder="WhatsApp: (11) 99999-9999" oninput="homeMaskPhone(this)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div style="position: relative;">
+                        <input id="home-reg-pass" type="password" name="password" required minlength="6" placeholder="Crie uma Senha (mín. 6 dígitos) *" style="width: 100%; box-sizing: border-box; padding: 10px 38px 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
+                        <button type="button" onclick="(function(b){var i=document.getElementById('home-reg-pass');if(!i)return;var s=i.type==='password';i.type=s?'text':'password';b.textContent=s?'🙈':'👁️';b.style.color=s?'#F0D060':'#94a3b8';})(this)" aria-label="Mostrar ou ocultar senha" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;" title="Mostrar/ocultar senha">👁️</button>
+                    </div>
+                    <script>
+                    function homeMaskCpf(el) {
+                        var v = el.value.replace(/\D/g, '').slice(0, 11);
+                        if (v.length > 9) el.value = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+                        else if (v.length > 6) el.value = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+                        else if (v.length > 3) el.value = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+                        else el.value = v;
+                    }
+                    function homeMaskPhone(el) {
+                        var v = el.value.replace(/\D/g, '').slice(0, 11);
+                        if (v.length > 10) el.value = v.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
+                        else if (v.length > 6) el.value = v.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                        else if (v.length > 2) el.value = v.replace(/(\d{2})(\d{1,5})/, '($1) $2');
+                        else if (v.length > 0) el.value = '(' + v;
+                        else el.value = '';
+                    }
+                    </script>
+                    <div class="home-signup-actions">
+                        <button type="submit" style="width: 100%; padding: 12px 16px; border: none; border-radius: 9px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 14px; cursor: pointer;">
+                            Criar Minha Conta Grátis ➔
+                        </button>
+                        <a href="<?= $baseUrl ?>/entrar" style="display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; border-radius: 9px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.45); color: #F0D060; font-weight: 800; font-size: 13.5px; text-decoration: none; white-space: nowrap;">
+                            🔐 Acessar
+                        </a>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 2px;">
+                        Já é cadastrado? <a href="<?= $baseUrl ?>/entrar" style="color: #F0D060; font-weight: 700; text-decoration: none;">Entrar na Minha Conta</a>
+                    </div>
+                </form>
+            <?php endif; ?>
         </div>
     </div>
 </section>

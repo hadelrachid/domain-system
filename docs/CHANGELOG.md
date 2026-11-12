@@ -8,6 +8,23 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.7.0] - 2026-11-12
+### Added
+- **DomainDrop — Motor Autônomo de Dropshipping com SDK Oficial do AliExpress (`src/Plugins/domain_drop`):**
+  - **Integração AliExpress Open Platform SDK (`AliExpressApiClientInterface`):** Comunicação assinada via protocolo `TOP` (`HMAC-SHA256`) e OAuth 2.0 para busca de produtos (`aliexpress.ds.product.get`), feed recomendado (`aliexpress.ds.recommend.feed.get`), cálculo de frete (`aliexpress.logistics.buyer.freight.get`), criação automatizada de ordens (`aliexpress.trade.buy.placeorder`) e rastreamento logístico em tempo real (`queryTrackingInfo`).
+  - **Mineração Autônoma & Ciclo Flash de 24 Horas (`ProductMiningServiceInterface`):** Curadoria inteligente com prioridade para estoque no Brasil (Entreposto Nacional), conversão cambial dinâmica (`USD → BRL`), enriquecimento de títulos/descrições por IA, ordenação por atualização recente (`updated_desc`), sincronização do cronômetro regressivo de 24h da Home com o ciclo diário do servidor e cabeçalhos HTTP anti-cache (`CachePolicy`).
+  - **Espaço do Cliente Completo (`/minha-conta`, `/entrar`, `/cadastro`):**
+    - **🛰️ Acompanhamento de Entrega Integrado:** Linha do tempo visual de 5 etapas dentro da área do cliente, com consulta direta aos **Correios**, **Cainiao Global** e eventos ao vivo do SDK do AliExpress.
+    - **💬 Reclamações, Observações & Dúvidas com Vinculação Opcional:** Abertura de chamados com upload seguro de até 4 fotos/PDFs (validação de *magic bytes*) e vinculação opcional de pedido da conta, código manual (`manual_order_ref`) ou produto do catálogo (`catalog_product_id`), identificando automaticamente o produto e o fornecedor (`BR`/`CN`) mesmo antes da compensação bancária.
+  - **Gestão Administrativa de Clientes, SLA & Mediação Bilingue (`/admin/dropship`):**
+    - **👥 Clientes & Compradores (`/admin/dropship/customers`):** Submenu estilo CRM (semelhante ao módulo de Alunos do Academy) com busca por nome/e-mail/CPF, métricas de compras e chamados, ativação/suspensão de conta e histórico de solicitações recentes.
+    - **📦 Pedidos & Mediação 1-Clique (`/admin/dropship/orders`):** Barra de progresso de SLA de entrega e botão único de mediação (`SellerMediationService`) com tradução automática para **Chinês Simplificado (`zh-CN`)** quando o fornecedor é internacional (`CN`) ou **Português (`pt-BR`)** para fornecedores nacionais (`BR`).
+- **Isolamento de Temas Nativos no Flex Builder (`"flex_builder": false`):**
+  - Adicionado `ThemeDiscoveryService::supportsFlexBuilder()` e constante `ThemePartInterface::TYPE_PAGE`. Temas dedicados como `rachidd_store` mantêm seu cabeçalho e rodapé nativos isolados de substituições acidentais do Flex Builder, exibindo um banner informativo no editor `/admin/builder`.
+
+### Fixed
+- **Links de Documentação HTML (`docs/index.html`, `docs/index_en.html`):** Convertidos todos os links que apontavam para arquivos `.md` externos em páginas HTML nativas (`domain-drop.html`, `ai-contract-guide.html`, `flex-builder.html` e versões em inglês) para abertura direta no navegador e no GitHub Pages sem erro 404.
+
 ## [2.6.0] - 2026-11-06
 ### Added
 - **DomainCommerce & Gateways Nativos (Mercado Pago, PayPal, Stripe e Afiliados):**

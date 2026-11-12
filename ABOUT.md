@@ -26,7 +26,7 @@ Pensei: será que posso aplicar um pouco desse conceito a uma plataforma web em 
 No **Domain System**, busco manter dois elementos fundamentais e distintos:
 
 - **O núcleo (core):** A parte responsável pelos fundamentos necessários para o funcionamento do sistema, como roteamento, injeção de dependências, armazenamento e outros serviços compartilhados.
-- **Os plugins:** Os componentes que adicionam funcionalidades de negócio à plataforma (como LMS de cursos, construtor visual de páginas, gestão de links e SEO).
+- **Os plugins:** Os componentes que adicionam funcionalidades de negócio à plataforma (como motor de Dropshipping com SDK do AliExpress, LMS de cursos, construtor visual de páginas, gestão de links e SEO).
 
 A ideia é direta: não quero que o núcleo precise conhecer os detalhes específicos de cada plugin. Prefiro que a comunicação ocorra estritamente por meio de interfaces e contratos; assim, posso alterar uma parte sem precisar modificar todo o restante.
 
@@ -82,7 +82,7 @@ Ainda estou buscando a melhor forma de utilizar a IA sem tornar o código difíc
 
 O Domain System é construído em **PHP 8.2+**. Ele oferece suporte a MySQL/MariaDB e SQLite por meio de PDO, além de contar com uma opção própria de armazenamento estruturado em JSON com travas concorrentes.
 
-Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **536 testes automatizados** e quase **3.000 asserções** cobrindo pagamentos, matrículas, ciclo de vida, segurança, roteamento e compilação visual.
+Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **629 testes automatizados** e mais de **3.600 asserções** cobrindo pagamentos, dropshipping (SDK AliExpress, SLA e disputas), matrículas, ciclo de vida, segurança, roteamento e compilação visual.
 
 Esses números são úteis como métrica de estabilidade, mas não contam a história completa. É importante que os testes passem, mas também é fundamental verificar continuamente se o código está organizado de maneira compreensível e sustentável ao longo do tempo.
 

@@ -1,4 +1,4 @@
-# Guia do Desenvolvedor: Domain System (v2.6.0)
+# Guia do Desenvolvedor: Domain System (v2.7.0)
 
 Este guia apresenta a estrutura do sistema, como desenvolver novos plugins e como estender as funcionalidades do núcleo utilizando interfaces e injeção de dependências em PHP 8.2+.
 
@@ -17,11 +17,11 @@ Para criar um plugin básico, crie uma pasta em `src/Plugins/{nome_do_plugin}/` 
 ```json
 {
     "name": "meu_app",
-    "version": "2.6.0",
+    "version": "2.7.0",
     "description": "Exemplo de plugin para o Domain System",
     "author": "Seu Nome ou Empresa",
     "core": false,
-    "os_version": "2.6"
+    "os_version": "2.7"
 }
 ```
 
@@ -149,7 +149,7 @@ class MeuAppManualModule implements ManualModuleInterface
     public function getId(): string { return 'meu_app'; }
     public function getTitle(): string { return 'Meu App — Manual'; }
     public function getSubtitle(): string { return 'Guia de operação e checklist de testes.'; }
-    public function getBadge(): string { return 'Plugin v2.6.0'; }
+    public function getBadge(): string { return 'Plugin v2.7.0'; }
     public function getAccentColor(): string { return '#38bdf8'; }
     public function getAdminUrl(): ?string { return '/admin/meu-app'; }
 
@@ -234,6 +234,18 @@ if (trim($customHeader) !== '') {
 }
 ?>
 ```
+
+> **Isolamento de Temas Nativos (`"flex_builder": false`):** Caso um tema dedicado (como `rachidd_store` no **DomainDrop**) possua cabeçalho e rodapé exclusivos que não devam ser substituídos pelo editor do Flex Builder, basta adicionar `"flex_builder": false` ao arquivo `theme.json` do tema. O serviço `ThemeDiscoveryService::supportsFlexBuilder()` bloqueará automaticamente a vinculação de partes de cabeçalho/rodapé e exibirá um aviso informativo no painel `/admin/builder`.
+
+---
+
+## 📦 Arquitetura do DomainDrop (`src/Plugins/domain_drop`)
+
+O módulo **DomainDrop** demonstra a integração de SDKs externos e fluxos completos de e-commerce seguindo os contratos do sistema:
+
+- `AliExpressApiClientInterface`: Cliente para o protocolo **AliExpress Open Platform (`TOP`)** com assinatura `HMAC-SHA256`, OAuth 2.0, consulta de catálogo, cálculo de frete e rastreio logístico (`queryTrackingInfo`).
+- `ProductMiningServiceInterface`: Orquestrador do ciclo diário de 24h de mineração de ofertas, conversão cambial (`CurrencyConverterInterface`) e enriquecimento por IA (`AiProductEnricherInterface`).
+- `DropshipCustomerRepositoryInterface` & `DropshipDisputeRepositoryInterface`: Gestão isolada de clientes compradores (`/minha-conta` e `/admin/dropship/customers`), rastreio integrado Correios/Cainiao, abertura de chamados com vinculação opcional de pedido/produto e mediação bilingue (`SellerMediationService` em `pt-BR` e `zh-CN`).
 
 ---
 

@@ -13,6 +13,7 @@ interface ThemePartInterface extends LayoutContainerInterface, SectionedPartInte
     public const TYPE_HEADER  = 'header';
     public const TYPE_FOOTER  = 'footer';
     public const TYPE_SECTION = 'section';
+    public const TYPE_PAGE    = 'page';
 
     /** Identificador único (slug ou hash) */
     public function getId(): string;

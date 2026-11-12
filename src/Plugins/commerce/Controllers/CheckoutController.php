@@ -29,6 +29,8 @@ class CheckoutController
     private ?EventDispatcherInterface $dispatcher;
     private ?PurchasableItemResolverInterface $itemResolver;
     private ?CommerceSettingsInterface $settings;
+    /** @var callable|null */
+    private $dropshipOrderFinder;
 
     public function __construct(
         SessionManagerInterface $session,
@@ -37,7 +39,8 @@ class CheckoutController
         ?CourseRepositoryInterface $courseRepo = null,
         ?EventDispatcherInterface $dispatcher = null,
         ?PurchasableItemResolverInterface $itemResolver = null,
-        ?CommerceSettingsInterface $settings = null
+        ?CommerceSettingsInterface $settings = null,
+        ?callable $dropshipOrderFinder = null
     ) {
         $this->session = $session;
         $this->orderRepo = $orderRepo;
@@ -46,10 +49,15 @@ class CheckoutController
         $this->dispatcher = $dispatcher;
         $this->itemResolver = $itemResolver;
         $this->settings = $settings;
+        $this->dropshipOrderFinder = $dropshipOrderFinder;
     }
 
     private function isDemoModeEnabled(): bool
     {
+        $appEnv = strtolower((string)(getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? '')));
+        if ($appEnv === 'production') {
+            return false;
+        }
         return $this->settings !== null && (bool)$this->settings->get('commerce_demo_mode', false);
     }
 
@@ -375,7 +383,7 @@ class CheckoutController
         }
 
         if ($paymentResult->status === 'pending') {
-            return new JsonResponse([
+            $payload = [
                 'success'           => true,
                 'status'            => 'pending',
                 'order_ref'         => $orderRef,
@@ -385,7 +393,15 @@ class CheckoutController
                 'boleto_url'        => $paymentResult->boletoUrl,
                 'redirect_url'      => $paymentResult->redirectUrl,
                 'message'           => $paymentResult->message,
-            ]);
+            ];
+
+            if (!empty($paymentResult->rawPayload['demo_mode']) || !empty($paymentResult->rawPayload['simulated'])) {
+                $payload['demo_mode'] = true;
+                $payload['simulated'] = true;
+                $payload['warning'] = 'MODO DEMONSTRAÇÃO: Nenhum pagamento real foi processado.';
+            }
+
+            return new JsonResponse($payload);
         }
 
         return new JsonResponse([
@@ -563,13 +579,17 @@ class CheckoutController
             }
         }
 
-        // Tenta obter os dados do pedido de dropshipping se houver
+        // Tenta obter os dados do pedido de dropshipping via callback injetado (DI) ou fallback legado
         $dropshipOrder = null;
         try {
-            $connection = \DomainSystem\Core\Database\Connection::getInstance();
-            if ($connection) {
-                $dropRepo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($connection);
-                $dropshipOrder = $dropRepo->findByOrderRef($orderRef);
+            if ($this->dropshipOrderFinder !== null) {
+                $dropshipOrder = ($this->dropshipOrderFinder)($orderRef);
+            } else {
+                $connection = \DomainSystem\Core\Database\Connection::getInstance();
+                if ($connection) {
+                    $dropRepo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($connection);
+                    $dropshipOrder = $dropRepo->findByOrderRef($orderRef);
+                }
             }
         } catch (\Throwable $e) {
             // Silencioso

@@ -125,19 +125,20 @@ class ThemePartsAdminController
         $globalFooter = $this->partAssoc->getGlobalDefault(ThemePartInterface::TYPE_FOOTER);
 
         return $this->renderView('admin/parts_list', [
-            'headers'        => $headers,
-            'footers'        => $footers,
-            'sections'       => $sections,
-            'themes'         => $themes,
-            'activeTheme'    => $activeTheme,
-            'assignments'    => $assignments,
-            'allAssignments' => $allAssignments,
-            'globalHeader'   => $globalHeader,
-            'globalFooter'   => $globalFooter,
-            'templates'      => $this->getThemeTemplates($activeTheme),
-            'baseUrl'        => $this->urlResolver->getBaseUrl(),
-            'session'        => $this->session,
-            'csrfToken'      => $this->getCsrfToken(),
+            'headers'                        => $headers,
+            'footers'                        => $footers,
+            'sections'                       => $sections,
+            'themes'                         => $themes,
+            'activeTheme'                    => $activeTheme,
+            'activeThemeSupportsFlexBuilder' => $this->isThemeFlexBuilderCompatible($activeTheme),
+            'assignments'                    => $assignments,
+            'allAssignments'                 => $allAssignments,
+            'globalHeader'                   => $globalHeader,
+            'globalFooter'                   => $globalFooter,
+            'templates'                      => $this->getThemeTemplates($activeTheme),
+            'baseUrl'                        => $this->urlResolver->getBaseUrl(),
+            'session'                        => $this->session,
+            'csrfToken'                      => $this->getCsrfToken(),
         ], true);
     }
 
@@ -243,6 +244,29 @@ class ThemePartsAdminController
     public function assign(Request $request): Response
     {
         $input = $this->extractInput($request);
+        $targetTheme = trim((string)($input['theme_folder'] ?? ''));
+        $partType = trim((string)($input['part_type'] ?? ''));
+        $isGlobal = !empty($input['is_global']);
+
+        if (
+            !$isGlobal
+            && $targetTheme !== ''
+            && in_array($partType, [ThemePartInterface::TYPE_HEADER, ThemePartInterface::TYPE_FOOTER], true)
+            && !$this->isThemeFlexBuilderCompatible($targetTheme)
+        ) {
+            $warnMsg = "O tema '{$targetTheme}' possui estrutura nativa própria e está isolado: ele não faz parte da edição de Cabeçalho/Rodapé do Flex Builder.";
+            if ($this->isAjax($request)) {
+                return new Response(json_encode([
+                    'success' => false,
+                    'message' => $warnMsg,
+                ], JSON_UNESCAPED_UNICODE), 400, ['Content-Type' => 'application/json']);
+            }
+            if ($this->session) {
+                $this->session->setFlash('error', $warnMsg);
+            }
+            return Response::redirect($this->urlResolver->resolve('/admin/builder'));
+        }
+
         $assigned = $this->managementService->assignFromPayload($input);
 
         if ($this->isAjax($request)) {
@@ -422,23 +446,32 @@ class ThemePartsAdminController
         $activeTheme = $this->getActiveThemeFolder();
 
         return $this->renderView('admin/builder_editor', [
-            'part'             => $part,
-            'isNew'            => $isNew,
-            'presets'          => $presets,
-            'blocks'           => $blocks,
-            'shortcodes'       => $shortcodes,
-            'menus'            => $menus,
-            'tokens'           => $tokens,
-            'themes'           => $themes,
-            'activeTheme'      => $activeTheme,
-            'templates'        => $this->getThemeTemplates($activeTheme),
-            'assignedTemplate' => ($part->getType() === ThemePartInterface::TYPE_SECTION) ? $this->getAssignedTemplateForSection($activeTheme, $part->getId()) : '',
-            'baseUrl'          => $this->urlResolver->getBaseUrl(),
-            'session'          => $this->session,
-            'csrfToken'        => $this->getCsrfToken(),
-            'locale'           => $this->translator !== null ? $this->translator->getLocale() : 'pt_BR',
-            'i18n'             => $this->translator !== null ? $this->translator->getCatalog() : [],
+            'part'                           => $part,
+            'isNew'                          => $isNew,
+            'presets'                        => $presets,
+            'blocks'                         => $blocks,
+            'shortcodes'                     => $shortcodes,
+            'menus'                          => $menus,
+            'tokens'                         => $tokens,
+            'themes'                         => $themes,
+            'activeTheme'                    => $activeTheme,
+            'activeThemeSupportsFlexBuilder' => $this->isThemeFlexBuilderCompatible($activeTheme),
+            'templates'                      => $this->getThemeTemplates($activeTheme),
+            'assignedTemplate'               => ($part->getType() === ThemePartInterface::TYPE_SECTION) ? $this->getAssignedTemplateForSection($activeTheme, $part->getId()) : '',
+            'baseUrl'                        => $this->urlResolver->getBaseUrl(),
+            'session'                        => $this->session,
+            'csrfToken'                      => $this->getCsrfToken(),
+            'locale'                         => $this->translator !== null ? $this->translator->getLocale() : 'pt_BR',
+            'i18n'                           => $this->translator !== null ? $this->translator->getCatalog() : [],
         ], false);
+    }
+
+    public function isThemeFlexBuilderCompatible(string $themeFolder): bool
+    {
+        if (method_exists($this->themeDiscovery, 'supportsFlexBuilder')) {
+            return (bool)$this->themeDiscovery->supportsFlexBuilder($themeFolder);
+        }
+        return true;
     }
 
     private function getCsrfToken(): string

@@ -2,9 +2,9 @@
 
 ---
 
-# 🇧🇷 Visão Geral do Domain System (v2.6.0)
+# 🇧🇷 Visão Geral do Domain System (v2.7.0)
 
-O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, serviços e temas, projetada sob os princípios de **Clean Architecture**, **SOLID** e **Inversão de Dependência (DIP)**.
+O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, lojas de dropshipping, cursos online e temas, projetada sob os princípios de **Clean Architecture**, **SOLID** e **Inversão de Dependência (DIP)**.
 
 O sistema opera com um núcleo enxuto (~30 MB em disco e ~5 MB de RAM no motor Zend), onde as funcionalidades de negócio são desacopladas em módulos independentes. O projeto encontra-se em ciclo ativo de desenvolvimento e melhorias contínuas.
 
@@ -25,9 +25,10 @@ Módulos essenciais para o funcionamento da plataforma (Banco de Dados, Autentic
 
 ### 3. Extensões de Domínio (`src/Plugins`)
 Módulos de negócio e funcionalidades da plataforma:
+- **DomainDrop (Dropshipping com SDK do AliExpress):** Integração com AliExpress Open Platform SDK (`HMAC-SHA256` + OAuth 2.0), mineração autônoma 24h com IA, Espaço do Cliente (`/minha-conta`) com rastreio Correios/Cainiao integrado, vinculação opcional de pedido/produto em chamados, CRM de clientes (`/admin/dropship/customers`) e mediação bilingue (`pt-BR` / `zh-CN`).
 - **Academy LMS:** Gestão completa de cursos, aulas com vídeos e apostilas em PDF, área do aluno e certificados.
 - **DomainCommerce:** Pagamentos integrados via Mercado Pago (Pix instantâneo e Cartão até 12x), PayPal oficial e webhooks de plataformas de afiliados (Hotmart, Eduzz, Monetizze, ClickBank).
-- **Flex Builder:** Construtor visual de cabeçalhos, rodapés e seções em grid responsivo.
+- **Flex Builder:** Construtor visual de cabeçalhos, rodapés e seções em grid responsivo, com isolamento automático de temas nativos (`"flex_builder": false`).
 - **Páginas e SEO:** Criação de páginas de conteúdo e otimização para motores de busca.
 
 ---
@@ -49,6 +50,7 @@ O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)
 
 ## 📚 Documentos da Wiki
 
+* **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — Integração com SDK Oficial do AliExpress, mineração 24h, Espaço do Cliente com rastreio integrado e mediação bilingue.
 * **[Flex Builder FSE](Flex-Builder.md)** — Funcionamento dos blocos semânticos, visibilidade responsiva em 4 resoluções com Auto-Reflow e contratos visuais.
 * **[Atualizações e Deploy](Atualizacoes.md)** — Guia do atualizador automático via GitHub Releases e rotinas de backup.
 * **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Isolamento de falhas em plugins para garantir alta disponibilidade.
@@ -59,9 +61,9 @@ O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)
 
 <br>
 
-# 🇺🇸 Domain System Overview (v2.6.0)
+# 🇺🇸 Domain System Overview (v2.7.0)
 
-**Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, online courses, and content, built with clean, decoupled architecture.
+**Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, dropshipping e-commerce stores, online courses, and content, built with clean, decoupled architecture.
 
 The platform operates with a minimal footprint (~30 MB on disk and ~5 MB of Zend RAM), where business features live in decoupled modules.
 
@@ -82,9 +84,10 @@ Core system components (Database, Authentication, Cockpit Admin, Monitoring, and
 
 ### 3. Feature Extensions (`src/Plugins`)
 Business modules and platform capabilities:
+- **DomainDrop (AliExpress SDK Dropshipping):** Official AliExpress Open Platform SDK integration (`HMAC-SHA256` + OAuth 2.0), autonomous 24h product mining with AI, Customer Portal (`/minha-conta`) with integrated Correios/Cainiao tracking, optional order/product linking on tickets, Customer CRM (`/admin/dropship/customers`), and bilingual supplier mediation (`pt-BR` / `zh-CN`).
 - **Academy LMS:** Complete course management, video and PDF lessons, student dashboard, and automated certificates.
 - **DomainCommerce:** Integrated checkout with Mercado Pago (Instant Pix, credit cards up to 12x), official PayPal, and affiliate webhooks (Hotmart, Eduzz, Monetizze, ClickBank).
-- **Flex Builder:** Visual layout builder for headers, footers, and page sections on a responsive 12-column grid.
+- **Flex Builder:** Visual layout builder for headers, footers, and page sections on a responsive 12-column grid, with automatic native theme isolation (`"flex_builder": false`).
 - **Pages & SEO:** Content pages and search engine optimization.
 
 ---
@@ -117,6 +120,7 @@ This enables developers and AI models (Claude, ChatGPT, Gemini) to perform compr
 
 ## 📚 Wiki Guides
 
+* **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — Official AliExpress SDK integration, 24h curation, Customer Portal with built-in tracking, and bilingual supplier mediation.
 * **[Flex Builder FSE](Flex-Builder.md)** — Guide to the 14 semantic blocks, 4-resolution responsive visibility with Auto-Reflow, and visual contracts.
 * **[Updates & Deployment](Atualizacoes.md)** — Documentation on the GitHub Releases auto-updater and backup workflows.
 * **[Circuit Breaker & Resilience](Disjuntor-Circuit-Breaker.md)** — Mechanics of runtime fault isolation for extensions and cascading deactivation.

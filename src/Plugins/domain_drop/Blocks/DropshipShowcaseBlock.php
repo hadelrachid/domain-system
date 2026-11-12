@@ -64,7 +64,7 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
 
     public function getAllowedPartTypes(): array
     {
-        return [ThemePartInterface::TYPE_SECTION, ThemePartInterface::TYPE_PAGE, ThemePartInterface::TYPE_FOOTER];
+        return [ThemePartInterface::TYPE_SECTION, ThemePartInterface::TYPE_FOOTER];
     }
 
     public function getSchema(): array

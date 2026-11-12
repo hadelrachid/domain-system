@@ -123,6 +123,16 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 }
             }
 
+            $dropshipOrderFinder = null;
+            if (interface_exists(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
+                && $runtime->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
+            ) {
+                $dropshipOrderFinder = static function (string $ref) use ($runtime): ?array {
+                    $repo = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class);
+                    return $repo->findByOrderRef($ref);
+                };
+            }
+
             return new CheckoutController(
                 session: $runtime->getLink('core.session'),
                 orderRepo: $runtime->make(OrderRepositoryInterface::class),
@@ -130,7 +140,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 courseRepo: $courseRepo,
                 dispatcher: $dispatcher,
                 itemResolver: $runtime->make(PurchasableItemResolverInterface::class),
-                settings: $runtime->make(CommerceSettingsInterface::class)
+                settings: $runtime->make(CommerceSettingsInterface::class),
+                dropshipOrderFinder: $dropshipOrderFinder
             );
         });
 

@@ -218,7 +218,7 @@ class ProductMiningService implements ProductMiningServiceInterface
      *
      * @return array<int, DropshipProductDto>
      */
-    private function mineLiveFromAliExpressSearch(string $category, int $limit, bool $autoPersist): array
+    protected function mineLiveFromAliExpressSearch(string $category, int $limit, bool $autoPersist): array
     {
         $category = self::normalizeCategory($category);
 
@@ -236,21 +236,7 @@ class ProductMiningService implements ProductMiningServiceInterface
         // Empurra para a vitrine e estoques do Brasil (Remessa Conforme e Envio Local)
         $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html?country=BR&locale=pt_BR&currency=BRL&isrefine=y";
 
-        $ch = curl_init($searchUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Cookie: aep_usuc_f=region=BR&site=bra&b_locale=pt_BR&c_tp=BRL; xman_us_f=x_locale=pt_BR; intl_locale=pt_BR;',
-        ]);
-        $html = curl_exec($ch);
-        curl_close($ch);
-
+        $html = $this->fetchLiveSearchHtml($searchUrl);
         if (!$html || !is_string($html)) {
             return [];
         }
@@ -337,24 +323,34 @@ class ProductMiningService implements ProductMiningServiceInterface
                 }
 
                 $ordersCount = 0;
-                $tradeDesc = (string)($raw['trade']['tradeDesc'] ?? '');
-                if (preg_match('/(\d+[\.,]?\d*)/', $tradeDesc, $mTrade)) {
-                    $ordersCount = (int)str_replace(['.', ','], '', $mTrade[1]);
-                }
-                if ($ordersCount <= 0) {
-                    $ordersCount = rand(25, 420);
+                $ordersCountKnown = false;
+                $tradeDesc = trim((string)($raw['trade']['tradeDesc'] ?? ''));
+                if ($tradeDesc !== '' && preg_match('/(\d+[\.,]?\d*)/', $tradeDesc, $mTrade)) {
+                    $ordersCount = max(0, (int)str_replace(['.', ','], '', $mTrade[1]));
+                    $ordersCountKnown = true;
+                } elseif (isset($raw['trade']['tradeCount']) && is_numeric($raw['trade']['tradeCount'])) {
+                    $ordersCount = max(0, (int)$raw['trade']['tradeCount']);
+                    $ordersCountKnown = true;
+                } elseif (isset($raw['orders_count']) && is_numeric($raw['orders_count'])) {
+                    $ordersCount = max(0, (int)$raw['orders_count']);
+                    $ordersCountKnown = true;
                 }
 
                 // Enriquecimento e Polimento de Cópia Comercial por IA
                 $polishedTitle = $this->aiEnricher->polishTitle($rawTitle, $category);
                 $slug = $this->slugify($polishedTitle . '-' . substr($aeId, -4));
 
+                $salesLabel = $ordersCount > 0
+                    ? "{$ordersCount} vendidos"
+                    : ($ordersCountKnown ? '0 vendidos' : 'vendas não informadas');
+
                 $attributes = [
-                    'Origem'     => 'Estoque Brasil / Remessa Conforme',
-                    'Categoria'  => $category,
-                    'Garantia'   => '90 dias contra defeitos de fabricação',
-                    'Envio'      => 'Rastreamento Expresso com Seguro',
-                    'Avaliações' => "{$rating} estrelas ({$ordersCount} vendidos)",
+                    'Origem'            => 'Estoque Brasil / Remessa Conforme',
+                    'Categoria'         => $category,
+                    'Garantia'          => '90 dias contra defeitos de fabricação',
+                    'Envio'             => 'Rastreamento Expresso com Seguro',
+                    'Avaliações'        => "{$rating} estrelas ({$salesLabel})",
+                    'Vendas_Informadas' => $ordersCountKnown ? 'sim' : 'nao',
                 ];
                 if (!empty($raw['sellingPoints']) && is_array($raw['sellingPoints'])) {
                     foreach ($raw['sellingPoints'] as $sp) {
@@ -405,6 +401,30 @@ class ProductMiningService implements ProductMiningServiceInterface
         }
 
         return $mined;
+    }
+
+    /**
+     * Executa requisição HTTPS para a página pública de busca com verificação estrita de certificado SSL.
+     */
+    protected function fetchLiveSearchHtml(string $searchUrl): ?string
+    {
+        $ch = curl_init($searchUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cookie: aep_usuc_f=region=BR&site=bra&b_locale=pt_BR&c_tp=BRL; xman_us_f=x_locale=pt_BR; intl_locale=pt_BR;',
+        ]);
+        $html = curl_exec($ch);
+        curl_close($ch);
+
+        return is_string($html) && $html !== '' ? $html : null;
     }
 
     public function importSingleProduct(string|int $productIdOrUrl): DropshipProductDto
@@ -1540,7 +1560,8 @@ class ProductMiningService implements ProductMiningServiceInterface
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 8);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         $html = curl_exec($ch);
         curl_close($ch);
 
@@ -1632,31 +1653,67 @@ class ProductMiningService implements ProductMiningServiceInterface
      */
     public function runDailyAutomatedRotation(int $itemsPerCategory = 4): array
     {
-        $results = [];
-        $totalProducts = 0;
-
-        foreach (self::OFFICIAL_CATEGORIES as $cat) {
-            try {
-                $mined = $this->mineTrendingProducts(category: $cat, limit: $itemsPerCategory, autoPersist: true);
-                $count = count($mined);
-                $results[$cat] = $count;
-                $totalProducts += $count;
-            } catch (Throwable $e) {
-                $results[$cat] = 0;
-            }
+        $lockPath = $this->getConfigFilePath() . '.rotation.lock';
+        $lockDir = dirname($lockPath);
+        if (!is_dir($lockDir)) {
+            @mkdir($lockDir, 0775, true);
         }
 
-        // Registra a conclusão do ciclo de 24 horas
-        $now = time();
-        $this->updateConfigField('last_daily_cycle_at', $now);
+        $lockHandle = @fopen($lockPath, 'c+');
+        if ($lockHandle === false) {
+            return [
+                'success'         => false,
+                'skipped'         => true,
+                'reason'          => 'lock_file_unavailable',
+                'executed_at'     => 0,
+                'total_mined'     => 0,
+                'category_counts' => [],
+            ];
+        }
 
-        return [
-            'success'         => true,
-            'executed_at'     => $now,
-            'executed_date'   => date('d/m/Y H:i:s', $now),
-            'total_mined'     => $totalProducts,
-            'category_counts' => $results,
-        ];
+        if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
+            fclose($lockHandle);
+            return [
+                'success'         => false,
+                'skipped'         => true,
+                'reason'          => 'rotation_already_running',
+                'executed_at'     => 0,
+                'total_mined'     => 0,
+                'category_counts' => [],
+            ];
+        }
+
+        try {
+            $results = [];
+            $totalProducts = 0;
+
+            foreach (self::OFFICIAL_CATEGORIES as $cat) {
+                try {
+                    $mined = $this->mineTrendingProducts(category: $cat, limit: $itemsPerCategory, autoPersist: true);
+                    $count = count($mined);
+                    $results[$cat] = $count;
+                    $totalProducts += $count;
+                } catch (Throwable $e) {
+                    $results[$cat] = 0;
+                }
+            }
+
+            // Registra a conclusão do ciclo de 24 horas
+            $now = time();
+            $this->updateConfigField('last_daily_cycle_at', $now);
+
+            return [
+                'success'         => true,
+                'skipped'         => false,
+                'executed_at'     => $now,
+                'executed_date'   => date('d/m/Y H:i:s', $now),
+                'total_mined'     => $totalProducts,
+                'category_counts' => $results,
+            ];
+        } finally {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
+        }
     }
 
     /**

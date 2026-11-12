@@ -22,10 +22,12 @@
             <div class="footer-col">
                 <h4 style="color: #fff; font-size: 15px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Atendimento ao Cliente</h4>
                 <ul class="footer-links" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                    <li><a href="<?= $baseUrl ?>/minha-conta" style="color: #F0D060; text-decoration: none; font-weight: 600;">Minha Conta &amp; Reclamações</a></li>
+                    <li><a href="<?= $baseUrl ?>/cadastro" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Criar Conta de Cliente</a></li>
                     <li><a href="<?= $baseUrl ?>/rastrear" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Rastrear Meu Pedido</a></li>
-                    <li><a href="<?= $baseUrl ?>/termos" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Termos de Uso & Compra</a></li>
+                    <li><a href="<?= $baseUrl ?>/termos" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Termos de Uso &amp; Compra</a></li>
                     <li><a href="<?= $baseUrl ?>/privacidade" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Privacidade</a></li>
-                    <li><a href="<?= $baseUrl ?>/politica-de-envio" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Envio & Prazos</a></li>
+                    <li><a href="<?= $baseUrl ?>/politica-de-envio" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Envio &amp; Prazos</a></li>
                     <li><a href="<?= $baseUrl ?>/sobre" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Sobre a RachidD.com</a></li>
                 </ul>
             </div>
@@ -34,10 +36,10 @@
             <div class="footer-col">
                 <h4 style="color: #fff; font-size: 15px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Tendências Globais</h4>
                 <ul class="footer-links" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-                    <li><a href="<?= $baseUrl ?>/loja?cat=Smartwatches" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Smartwatches & Pulseiras</a></li>
+                    <li><a href="<?= $baseUrl ?>/loja?cat=Smartwatches" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Smartwatches &amp; Pulseiras</a></li>
                     <li><a href="<?= $baseUrl ?>/loja?cat=Audio" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Fones Bluetooth TWS</a></li>
-                    <li><a href="<?= $baseUrl ?>/loja?cat=Casa" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Casa & Organização Inteligente</a></li>
-                    <li><a href="<?= $baseUrl ?>/loja?cat=Tecnologia" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Acessórios para Celular</a></li>
+                    <li><a href="<?= $baseUrl ?>/loja?cat=Casa" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Casa &amp; Organização Inteligente</a></li>
+                    <li><a href="<?= $baseUrl ?>/loja?cat=Celular" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Acessórios para Celular</a></li>
                     <li><a href="<?= $baseUrl ?>/loja" style="color: #F0D060; text-decoration: none; font-weight: 600;">Ver Catálogo Completo ➔</a></li>
                 </ul>
             </div>
@@ -48,11 +50,18 @@
                 <p style="font-size: 12px; margin-bottom: 14px; line-height: 1.5;">
                     Ambiente criptografado com certificados de segurança de nível bancário:
                 </p>
-                <div class="footer-payment-badges" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #5cd67d;">PIX Instantâneo</span>
-                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #60a5fa;">Mercado Pago</span>
-                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #38bdf8;">PayPal Global</span>
-                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff;">Cartões de Crédito (12x)</span>
+                <div class="footer-payment-badges" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px;">
+                    <span class="footer-payment-logo-card" title="Mercado Pago">
+                        <img src="<?= $baseUrl ?>/assets/img/payments/mercado-pago.png" alt="Mercado Pago" loading="lazy">
+                    </span>
+                    <span class="footer-payment-logo-card" title="PayPal">
+                        <img src="<?= $baseUrl ?>/assets/img/payments/paypal.png" alt="PayPal" loading="lazy">
+                    </span>
+                    <span class="footer-payment-logo-card" title="Stripe">
+                        <img src="<?= $baseUrl ?>/assets/img/payments/stripe.png" alt="Stripe" loading="lazy">
+                    </span>
+                    <span style="background: rgba(92,214,125,0.12); border: 1px solid rgba(92,214,125,0.35); padding: 0 10px; height: 32px; border-radius: 6px; font-size: 11px; font-weight: 700; color: #5cd67d; display: inline-flex; align-items: center; box-sizing: border-box;">PIX Instantâneo</span>
+                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 0 10px; height: 32px; border-radius: 6px; font-size: 11px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; box-sizing: border-box;">Cartões (12x)</span>
                 </div>
                 <div style="font-size: 11px; color: #D4AF37;">
                     🛡️ Compra 100% Protegida ou Seu Dinheiro de Volta
@@ -68,6 +77,25 @@
 </footer>
 
 <style>
+.footer-payment-logo-card {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 0 10px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.footer-payment-logo-card img {
+    height: 18px;
+    width: auto;
+    max-width: 90px;
+    object-fit: contain;
+    display: block;
+}
 @media (max-width: 768px) {
     .site-footer {
         padding: 40px 0 25px !important;

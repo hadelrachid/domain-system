@@ -11,7 +11,7 @@ interface DropshipOrderRepositoryInterface
 {
     /**
      * Cria um novo registro de pedido de dropshipping.
-     * 
+     *
      * @param array<string, mixed> $data
      * @return int ID da ordem criada
      */
@@ -19,15 +19,24 @@ interface DropshipOrderRepositoryInterface
 
     /**
      * Localiza uma ordem pela referência oficial (order_ref).
-     * 
+     *
      * @param string $orderRef
      * @return array<string, mixed>|null
      */
     public function findByOrderRef(string $orderRef): ?array;
 
     /**
+     * Lista pedidos pertencentes a um e-mail de cliente.
+     *
+     * @param string $email
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
+    public function findByCustomerEmail(string $email, int $limit = 50): array;
+
+    /**
      * Atualiza o status e/ou código de rastreamento do AliExpress.
-     * 
+     *
      * @param string $orderRef
      * @param string $status
      * @param string|null $aliExpressOrderId
@@ -37,8 +46,29 @@ interface DropshipOrderRepositoryInterface
     public function updateFulfillment(string $orderRef, string $status, ?string $aliExpressOrderId = null, ?string $trackingCode = null): bool;
 
     /**
+     * Atualiza origem do fornecedor e janela SLA esperada do pedido.
+     */
+    public function updateSellerAndSla(
+        string $orderRef,
+        string $sellerOrigin,
+        int $expectedDays,
+        ?string $sellerName = null,
+        ?string $sellerEmail = null
+    ): bool;
+
+    /**
+     * Registra resultado da checagem logística oficial do SDK AliExpress.
+     */
+    public function updateSdkTracking(
+        string $orderRef,
+        ?string $sdkDeliveredAt,
+        ?string $summaryJson,
+        ?string $newStatus = null
+    ): bool;
+
+    /**
      * Lista pedidos de dropshipping com paginação e filtros.
-     * 
+     *
      * @param array<string, mixed> $filters
      * @param int $limit
      * @param int $offset

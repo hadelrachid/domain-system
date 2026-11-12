@@ -251,7 +251,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                             </div>
                             <div>
                                 <label for="payer_phone" class="ds-field-label">WhatsApp / Telefone</label>
-                                <input type="tel" id="payer_phone" name="payer_phone" placeholder="(11) 99999-9999" class="ds-field-input">
+                                <input type="tel" id="payer_phone" name="payer_phone" inputmode="tel" maxlength="15" placeholder="(11) 99999-9999" oninput="formatPhoneInput(this)" class="ds-field-input">
                             </div>
                         </div>
                     </div>
@@ -349,7 +349,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                             <span>🆔 CPF do Pagador</span>
                             <span id="cpf_required_badge" style="color: var(--accent-cyan); font-size: 0.76rem; font-weight: 600;">(Obrigatório para Pix)</span>
                         </label>
-                        <input type="text" id="payer_cpf" name="payer_cpf" value="<?= $userCpf ?>" placeholder="000.000.000-00" maxlength="14" style="width: 100%; padding: 12px 14px; background: #06090e; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; font-size: 1rem; font-family: monospace; outline: none; transition: border-color 0.2s;" oninput="formatCpfInput(this)">
+                        <input type="text" id="payer_cpf" name="payer_cpf" value="<?= $userCpf ?>" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" style="width: 100%; padding: 12px 14px; background: #06090e; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; font-size: 1rem; font-family: monospace; outline: none; transition: border-color 0.2s;" oninput="formatCpfInput(this)">
                         <span style="display: block; font-size: 0.76rem; color: var(--text-muted); margin-top: 6px;">
                             Exigência do Banco Central do Brasil para emissão e liquidação instantânea de Pix.
                         </span>
@@ -471,6 +471,21 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             }
         }
 
+        function formatPhoneInput(el) {
+            var v = el.value.replace(/\D/g, '').slice(0, 11);
+            if (v.length > 10) {
+                el.value = v.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
+            } else if (v.length > 6) {
+                el.value = v.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+            } else if (v.length > 2) {
+                el.value = v.replace(/(\d{2})(\d{1,5})/, '($1) $2');
+            } else if (v.length > 0) {
+                el.value = '(' + v;
+            } else {
+                el.value = '';
+            }
+        }
+
         function formatCepAndSearch(el) {
             var v = el.value.replace(/\D/g, '').slice(0, 8);
             if (v.length > 5) {
@@ -537,6 +552,10 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             var cpfEl = document.getElementById('payer_cpf');
             if (cpfEl && cpfEl.value) {
                 formatCpfInput(cpfEl);
+            }
+            var phoneEl = document.getElementById('payer_phone');
+            if (phoneEl && phoneEl.value) {
+                formatPhoneInput(phoneEl);
             }
             <?php if ($hasPayPal && ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe))): ?>
             selectPaymentMethod('paypal', 'paypal');

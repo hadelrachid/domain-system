@@ -22,6 +22,18 @@ class CachePolicy
         '/emergency',
     ];
 
+    private const DYNAMIC_STOREFRONT_PATHS = [
+        '/',
+        '/loja',
+        '/produto',
+        '/cadastro',
+        '/acessar',
+        '/minha-conta',
+        '/rastrear',
+        '/carrinho',
+        '/checkout',
+    ];
+
     /**
      * Aplica os cabeçalhos apropriados à resposta antes do envio.
      */
@@ -33,6 +45,15 @@ class CachePolicy
             return $this->applyStrictNoCache($response, $uri);
         }
 
+        if ($this->isDynamicStorefrontPath($uri) && $this->missingCacheControl($response)) {
+            return $this->applyHeaders($response, [
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma'        => 'no-cache',
+                'Expires'       => 'Thu, 01 Jan 1970 00:00:00 GMT',
+                'Vary'          => 'Cookie, Accept-Encoding',
+            ]);
+        }
+
         return $response;
     }
 
@@ -40,6 +61,19 @@ class CachePolicy
     {
         foreach (self::SENSITIVE_PREFIXES as $prefix) {
             if ($uri === $prefix || str_starts_with($uri, $prefix . '/')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isDynamicStorefrontPath(string $uri): bool
+    {
+        foreach (self::DYNAMIC_STOREFRONT_PATHS as $prefix) {
+            if ($uri === $prefix) {
+                return true;
+            }
+            if ($prefix !== '/' && str_starts_with($uri, $prefix . '/')) {
                 return true;
             }
         }
@@ -60,6 +94,11 @@ class CachePolicy
             $headers['Clear-Site-Data'] = '"cache", "storage"';
         }
 
+        return $this->applyHeaders($response, $headers);
+    }
+
+    private function applyHeaders(ResponseInterface $response, array $headers): ResponseInterface
+    {
         foreach ($headers as $name => $value) {
             if (method_exists($response, 'setHeader')) {
                 $response->setHeader($name, $value);
@@ -71,8 +110,14 @@ class CachePolicy
         return $response;
     }
 
+    private function missingCacheControl(ResponseInterface $response): bool
+    {
+        return !method_exists($response, 'getHeader') || $response->getHeader('Cache-Control') === null;
+    }
+
     private function hasActiveSession(): bool
     {
-        return session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['user_id']);
+        return session_status() === PHP_SESSION_ACTIVE
+            && (!empty($_SESSION['user_id']) || !empty($_SESSION['customer_id']));
     }
 }

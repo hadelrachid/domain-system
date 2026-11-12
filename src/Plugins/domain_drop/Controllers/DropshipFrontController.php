@@ -37,23 +37,13 @@ class DropshipFrontController
         $selectedCategory = trim((string)$request->input('cat', ''));
         $search = trim((string)$request->input('q', ''));
 
-        // Metadados do Ciclo Diário de 24 Horas
+        // Metadados do Ciclo Diário de 24 Horas (somente leitura na vitrine; execução via CLI dropship:cycle ou Admin)
         $cycleInfo = $this->miningService ? $this->miningService->getDailyCycleInfo() : [
             'formatted_remaining' => '24:00:00',
             'seconds_remaining'   => 86400,
             'is_due'              => false,
             'auto_sync_enabled'   => true,
         ];
-
-        // Sincronização Autônoma Diária Lazy-Cron (Se o tempo zerou 00:00:00)
-        if (!empty($cycleInfo['is_due']) && !empty($cycleInfo['auto_sync_enabled']) && $this->miningService !== null) {
-            try {
-                $this->miningService->runDailyAutomatedRotation(3);
-                $cycleInfo = $this->miningService->getDailyCycleInfo();
-            } catch (Throwable $e) {
-                // Silencioso para manter a renderização da loja
-            }
-        }
 
         $sort = trim((string)$request->input('sort', ''));
 
@@ -221,19 +211,26 @@ class DropshipFrontController
 
     private function wrapWithThemeOrRaw(string $content, string $title): ResponseInterface
     {
+        $headers = [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma'        => 'no-cache',
+            'Expires'       => 'Thu, 01 Jan 1970 00:00:00 GMT',
+            'Vary'          => 'Cookie, Accept-Encoding',
+        ];
+
         if ($this->themeManager !== null) {
             try {
                 $wrapped = $this->themeManager->render('page', [
                     'title'   => $title,
                     'content' => $content,
                 ]);
-                return new Response($wrapped);
+                return new Response($wrapped, 200, $headers);
             } catch (Throwable $e) {
                 // Fallback para SeoMiddleware ou entrega direta
             }
         }
 
-        return new Response($content ?: '');
+        return new Response($content ?: '', 200, $headers);
     }
 
     private function maskEmail(string $email): string

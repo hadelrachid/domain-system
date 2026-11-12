@@ -150,4 +150,51 @@ class PageServiceTest extends TestCase
         // Deve renderizar com sucesso via fallback do SafeThemeResolver para 'default'
         $this->assertStringContainsString('Sobre', $response->getContent());
     }
+
+    public function testPageFrontControllerPrefersActiveThemeTemplateOverrideForSobre(): void
+    {
+        $this->pdo->exec("
+            INSERT INTO pages (slug, title, content, theme, template_file)
+            VALUES ('sobre', 'Sobre', 'Conteúdo padrão', 'default', 'templates/sobre.php')
+        ");
+
+        $repo = new PageRepository($this->pdo);
+        $shortcodes = new ShortcodeManager();
+        $seo = $this->createMock(SeoManagerInterface::class);
+        $themeManager = new ThemeManager(DOMAIN_SYSTEM_ROOT . '/src/Plugins/flextheme/themes/rachidd_store');
+
+        $controller = new PageFrontController($repo, $shortcodes, $seo, $themeManager);
+        $response = $controller->show('sobre');
+
+        $content = $response->getContent();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertStringContainsString('Sobre a', $content);
+        $this->assertStringContainsString('RachidD.com', $content);
+        $this->assertStringNotContainsString('No-Break Shield', $content);
+    }
+
+    public function testPageFrontControllerUsesSiteStateActiveThemeWhenThemeManagerPointsToAdmin(): void
+    {
+        $this->pdo->exec("
+            INSERT INTO pages (slug, title, content, theme, template_file)
+            VALUES ('sobre', 'Sobre', 'Conteúdo padrão', 'default', 'templates/sobre.php')
+        ");
+
+        $repo = new PageRepository($this->pdo);
+        $shortcodes = new ShortcodeManager();
+        $seo = $this->createMock(SeoManagerInterface::class);
+        $themeManager = new ThemeManager(DOMAIN_SYSTEM_ROOT . '/themes/admin');
+
+        $siteState = $this->createMock(\DomainSystem\Core\Contracts\SiteStateInterface::class);
+        $siteState->method('getActiveTheme')->willReturn('rachidd_store');
+
+        $controller = new PageFrontController($repo, $shortcodes, $seo, $themeManager, null, $siteState);
+        $response = $controller->show('sobre');
+
+        $content = $response->getContent();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertStringContainsString('Sobre a', $content);
+        $this->assertStringContainsString('RachidD.com', $content);
+        $this->assertStringNotContainsString('No-Break Shield', $content);
+    }
 }

@@ -146,6 +146,8 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             $sortVal = (string)$criteria['sort'];
             if ($sortVal === 'sales' || $sortVal === 'best_sellers' || $sortVal === 'volume_desc') {
                 $orderBy = "orders_count DESC, id DESC";
+            } elseif ($sortVal === 'updated_desc' || $sortVal === 'recent' || $sortVal === 'cycle') {
+                $orderBy = "updated_at DESC, id DESC";
             } elseif ($sortVal === 'price_asc') {
                 $orderBy = "sale_price_brl ASC, id DESC";
             } elseif ($sortVal === 'price_desc') {
@@ -314,11 +316,20 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             'tecnologia', 'tecnologia & gadgets', 'gadgets', 'eletrônicos', 'eletrônicos & gadget', 'eletronicos', 'eletronicos & gadget' =>
                 "(category IN ('Tecnologia & Gadgets', 'Eletrônicos & Gadget', 'Eletrônicos') OR category LIKE '%Tecnologia%' OR category LIKE '%Eletrônicos%' OR category LIKE '%Eletronicos%' OR category LIKE '%Gadget%')",
 
-            'smartwatches', 'smartwatch', 'smartwatches & áudio', 'smartwatches & audio', 'áudio', 'audio' =>
+            'smartwatches', 'smartwatch', 'smartwatches & pulseiras', 'pulseiras' =>
+                "(category IN ('Smartwatches', 'Smartwatches & Pulseiras') OR category LIKE '%Smartwatch%' OR title LIKE '%Smartwatch%' OR title LIKE '%Relógio%' OR title LIKE '%Relogio%' OR title LIKE '%Apple Watch%' OR title LIKE '%Pulseira%')",
+
+            'áudio', 'audio', 'fones', 'fones bluetooth tws', 'fones tws' =>
+                "(category IN ('Áudio', 'Audio', 'Fones Bluetooth TWS') OR category LIKE '%Áudio%' OR category LIKE '%Audio%' OR title LIKE 'Fone%' OR title LIKE '% Fone%' OR title LIKE '%Tws%' OR title LIKE '%Earphone%' OR title LIKE '%Headphone%' OR title LIKE '%Microfone%')",
+
+            'smartwatches & áudio', 'smartwatches & audio' =>
                 "(category IN ('Smartwatches & Áudio', 'Smartwatches & Audio') OR category LIKE '%Smartwatch%' OR category LIKE '%Áudio%' OR category LIKE '%Audio%' OR title LIKE '%Smartwatch%' OR title LIKE '%Relógio%' OR title LIKE '%Watch%' OR title LIKE '%Fone%' OR title LIKE '%Tws%')",
 
-            'casa', 'casa inteligente', 'casa inteligente & organização', 'casa inteligente & organizacao', 'casa & organização' =>
+            'casa', 'casa inteligente', 'casa inteligente & organização', 'casa inteligente & organizacao', 'casa & organização', 'casa & organização inteligente', 'casa & organizacao inteligente' =>
                 "(category IN ('Casa Inteligente', 'Casa Inteligente & Organização') OR category LIKE '%Casa%')",
+
+            'celular', 'acessórios para celular', 'acessorios para celular', 'smartphone', 'smartphones' =>
+                "(category IN ('Acessórios para Celular') OR title LIKE '%Celular%' OR title LIKE '%Smartphone%' OR title LIKE '%Reparo Do Telefone%' OR title LIKE '%iPhone%' OR title LIKE '%Usb-C%' OR title LIKE '%Lightning%' OR title LIKE '%Carregador%' OR title LIKE '%Capinha%' OR title LIKE '%MagSafe%')",
 
             'acessorios', 'acessórios', 'acessórios virais', 'acessorios virais', 'ferramentas', 'ferramentas & utilidades' =>
                 "(category IN ('Acessórios Virais', 'Ferramentas & Utilidades', 'Acessórios para Veículos') OR category LIKE '%Acessório%' OR category LIKE '%Acessorio%' OR category LIKE '%Ferramenta%')",

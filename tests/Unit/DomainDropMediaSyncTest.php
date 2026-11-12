@@ -140,4 +140,125 @@ class DomainDropMediaSyncTest extends TestCase
 
         @unlink($tmpCache);
     }
+
+    public function testAdminSyncImagesReturnsJsonOnAjaxRequest(): void
+    {
+        $savedId = $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005012009938049',
+            title: 'Smartwatch Ultra Teste',
+            slug: 'smartwatch-ultra-teste',
+            costPriceUsd: 10.0,
+            salePriceBrl: 110.0,
+            mainImageUrl: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600',
+            images: [],
+            category: 'Eletrônicos',
+            description: 'Desc',
+            rating: 4.9,
+            ordersCount: 100
+        ));
+
+        $mockScraper = $this->createMock(ProductLinkScraperInterface::class);
+        $mockScraper->method('scrape')->with('1005012009938049')->willReturn(new ScrapedProductDto(
+            sourceId: '1005012009938049',
+            sourceUrl: 'https://pt.aliexpress.com/item/1005012009938049.html',
+            rawTitle: 'Smartwatch Ultra Pro',
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/A111.jpg',
+            galleryImages: [
+                'https://ae-pic-a1.aliexpress-media.com/kf/A111.jpg',
+                'https://ae-pic-a1.aliexpress-media.com/kf/B222.jpg',
+            ],
+            costPriceUsd: 12.0,
+            category: 'Eletrônicos'
+        ));
+
+        $tmpCache = sys_get_temp_dir() . '/test_exchange_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.50]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+        $syncService = new ProductMediaSyncService($this->repo, $mockScraper, $enricher, $converter);
+        $mining = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('tok123');
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->repo,
+            miningService: $mining,
+            currencyConverter: $converter,
+            session: $session,
+            mediaSync: $syncService
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: ['csrf_token' => 'tok123', 'ajax' => '1'],
+            server: ['REQUEST_METHOD' => 'POST', 'HTTP_ACCEPT' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']
+        );
+
+        $response = $controller->syncImages($request, (string)$savedId);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertTrue($data['success']);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/A111.jpg', $data['main_image_url']);
+        $this->assertSame(2, $data['count']);
+
+        @unlink($tmpCache);
+    }
+
+    public function testAdminUpdateImagesSanitizesUnsafeUrlsAndPersistsGallery(): void
+    {
+        $savedId = $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005005967732299',
+            title: 'Fone TWS',
+            slug: 'fone-tws',
+            costPriceUsd: 12.0,
+            salePriceBrl: 130.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/OLD.jpg',
+            images: ['https://ae-pic-a1.aliexpress-media.com/kf/OLD.jpg'],
+            category: 'Eletrônicos',
+            description: 'Desc',
+            rating: 4.8,
+            ordersCount: 250
+        ));
+
+        $converter = $this->createMock(CurrencyConverterInterface::class);
+        $mining = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('tok123');
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->repo,
+            miningService: $mining,
+            currencyConverter: $converter,
+            session: $session
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token'     => 'tok123',
+                'ajax'           => '1',
+                'main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/CAPA.jpg',
+                'images_json'    => json_encode([
+                    'javascript:alert(1)',
+                    'https://ae-pic-a1.aliexpress-media.com/kf/CAPA.jpg',
+                    'https://ae-pic-a1.aliexpress-media.com/kf/EXTRA.jpg',
+                ]),
+            ],
+            server: ['REQUEST_METHOD' => 'POST', 'HTTP_ACCEPT' => 'application/json', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']
+        );
+
+        $response = $controller->updateImages($request, (string)$savedId);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertTrue($data['success']);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/CAPA.jpg', $data['main_image_url']);
+        $this->assertCount(2, $data['images']);
+        $this->assertNotContains('javascript:alert(1)', $data['images']);
+
+        $reloaded = $this->repo->findById($savedId);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/CAPA.jpg', $reloaded->mainImageUrl);
+        $this->assertCount(2, $reloaded->images);
+    }
 }

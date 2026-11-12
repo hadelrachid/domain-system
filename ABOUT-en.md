@@ -26,7 +26,7 @@ I wondered: can we bring that architectural discipline into a modular PHP web pl
 In **Domain System**, I aim to keep two elements clearly decoupled:
 
 - **The Core:** Fundamental services necessary for application life-cycle — dependency injection, routing, atomic storage, and event dispatching.
-- **The Plugins:** Components providing business capabilities (such as the Academy LMS, visual layout builder, navigation menus, and SEO pipelines).
+- **The Plugins:** Components providing business capabilities (such as the DomainDrop AliExpress SDK dropshipping engine, Academy LMS, visual layout builder, navigation menus, and SEO pipelines).
 
 The idea is straightforward: the core should have zero awareness of plugin business details. Communication occurs exclusively through interfaces and contracts; this ensures one part can be refactored without breaking the rest of the application.
 
@@ -82,7 +82,7 @@ I continue to explore how best to leverage AI without sacrificing maintainabilit
 
 Domain System is built on **PHP 8.2+**. It natively supports MySQL/MariaDB and SQLite via PDO, along with concurrency-safe atomic JSON persistence.
 
-The test suite is powered by **PHPUnit**, currently featuring **536 automated unit and integration tests** and almost **3,000 assertions** covering payments, student enrollments, lifecycle, security guards, routing, contracts, and visual compilation.
+The test suite is powered by **PHPUnit**, currently featuring **629 automated unit and integration tests** and over **3,600 assertions** covering payments, dropshipping (AliExpress SDK, SLA, and disputes), student enrollments, lifecycle, security guards, routing, contracts, and visual compilation.
 
 Test metrics provide confidence, but they don't tell the whole story. Green tests are important, but writing code that is clear, well-structured, and maintainable over time is what truly matters.
 

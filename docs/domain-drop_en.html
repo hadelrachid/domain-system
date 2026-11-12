@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DomainDrop (AliExpress SDK &amp; Dropshipping) - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="contratos_en.html">SOLID Contracts &rarr;</a></li>
+            <li style="margin-left:auto"><a href="domain-drop.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>📦 DomainDrop — Dropshipping with AliExpress SDK</h1>
+        <p>Autonomous E-Commerce Engine, 24h Flash Curation, Logistics Tracking &amp; Customer Portal (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Overview</h2>
+        <p><strong>DomainDrop</strong> (<code>src/Plugins/domain_drop</code>) is the official Dropshipping and Physical E-Commerce module in <strong>Domain-System v2.7.0</strong>. It integrates the <strong>Official AliExpress Open Platform SDK</strong> (TOP protocol with cryptographic <code>HMAC-SHA256</code> signatures and OAuth 2.0 authentication) directly into our lightweight core (~30 MB), enabling a full-featured online store without bloated third-party platforms.</p>
+
+        <h2>🚀 Key Capabilities</h2>
+        <ul>
+            <li><strong>Official AliExpress Open Platform SDK Integration (<code>AliExpressApiClientInterface</code>):</strong>
+                <ul>
+                    <li>Supports official AliExpress Open Platform APIs: product lookup (<code>aliexpress.ds.product.get</code>), curated recommendation feeds (<code>aliexpress.ds.recommend.feed.get</code>), freight calculation (<code>aliexpress.logistics.buyer.freight.get</code>), automated order placement (<code>aliexpress.trade.buy.placeorder</code>), and real-time logistics tracking (<code>queryTrackingInfo</code>).</li>
+                    <li>Signed with <code>HMAC-SHA256</code> and protected by an isolated external API Circuit Breaker.</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Autonomous Mining &amp; 24-Hour Flash Cycle (<code>ProductMiningServiceInterface</code>):</strong>
+                <ul>
+                    <li>Smart product curation prioritizing local Brazil warehouse stock for fast delivery with automatic global fallback.</li>
+                    <li>Dynamic currency conversion (<code>USD &rarr; BRL</code>) via <code>CurrencyConverterInterface</code> with configurable profit margins.</li>
+                    <li>AI-powered copywriting enrichment (<code>AiProductEnricherInterface</code>) and a 24-hour flash rotation synchronized with the storefront countdown timer and HTTP anti-cache policies (<code>CachePolicy</code>).</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Complete Customer Portal (<code>/minha-conta</code>, <code>/entrar</code>, <code>/cadastro</code>):</strong>
+                <ul>
+                    <li>Dedicated customer authentication table (<code>domain_drop_customers</code>) strictly isolated from admin accounts.</li>
+                    <li><strong>🛰️ Built-In Shipment Tracking:</strong> Interactive 5-stage delivery progress bar inside the customer account with direct links to <strong>Correios</strong>, <strong>Cainiao Global</strong>, and live AliExpress SDK tracking events.</li>
+                    <li><strong>💬 Complaints, Notes &amp; Questions:</strong> Ticket submission with secure photo/PDF evidence uploads (up to 4 files with magic-byte validation) and <strong>optional order or catalog product linking</strong> — allowing customers to reference a product or order code even before payment settlement.</li>
+                </ul>
+            </li>
+            <br>
+            <li><strong>Admin CRM, SLA Monitoring &amp; Bilingual Supplier Mediation (<code>/admin/dropship</code>):</strong>
+                <ul>
+                    <li><strong>👥 Customers &amp; Buyers (<code>/admin/dropship/customers</code>):</strong> CRM view with search by name/email/CPF, order &amp; ticket counters, account status toggles, and recent customer tickets.</li>
+                    <li><strong>📦 Orders, SLA &amp; Disputes (<code>/admin/dropship/orders</code>):</strong> Delivery SLA progress bars and a 1-click <strong>Supplier Mediation</strong> button (<code>SellerMediationService</code>) that automatically translates disputes into <strong>Simplified Chinese (<code>zh-CN</code>)</strong> for international suppliers (<code>CN</code>) or keeps <strong>Portuguese (<code>pt-BR</code>)</strong> for domestic suppliers (<code>BR</code>).</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>🏛️ Core Contracts (SOLID / DIP)</h2>
+        <pre><code>namespace DomainSystem\Plugins\domain_drop\Contracts;
+
+interface AliExpressApiClientInterface        // Signed communication with AliExpress Open Platform SDK
+interface ProductMiningServiceInterface       // 24h curation, BRL pricing &amp; daily flash cycle
+interface DropshipCatalogRepositoryInterface  // PDO catalog persistence (MySQL / SQLite)
+interface DropshipOrderRepositoryInterface    // Order lifecycle &amp; tracking codes
+interface DropshipCustomerRepositoryInterface // Registered customers &amp; CRM metrics
+interface DropshipDisputeRepositoryInterface  // Customer tickets, complaints, notes &amp; attachments</code></pre>
+
+        <h2>🎨 Native Theme Isolation vs. Flex Builder</h2>
+        <p>Dedicated e-commerce themes such as <code>rachidd_store</code> declare <code>"flex_builder": false</code> in their <code>theme.json</code>. <code>ThemeDiscoveryService::supportsFlexBuilder()</code> automatically isolates the theme's native header and footer and displays an informational notice in the <strong>Flex Builder</strong> admin panel to prevent editing conflicts.</p>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Lightweight architecture (~30MB) with Official AliExpress SDK integration.
+    </footer>
+</body>
+
+</html>

@@ -81,14 +81,19 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
 
                 <?php
                 $thermometerVal = \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::calculateThermometerScore((float)$product->rating, (int)$product->ordersCount);
+                $salesInformed = (string)($product->attributes['Vendas_Informadas'] ?? '');
                 ?>
-                <?php if ($product->rating > 0 || $product->ordersCount > 0): ?>
+                <?php if ($product->rating > 0 || $product->ordersCount > 0 || $salesInformed !== ''): ?>
                     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #94a3b8; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                         <?php if ($product->rating > 0): ?>
                             <span style="color: #fbbf24; font-weight: 600;">★ <?= number_format($product->rating, 1) ?> de nota</span>
                         <?php endif; ?>
-                        <?php if ($product->ordersCount > 0): ?>
+                        <?php if ($product->ordersCount > 0 && $salesInformed !== 'nao'): ?>
                             <span>• <?= number_format($product->ordersCount, 0, ',', '.') ?> aprovações / vendidos</span>
+                        <?php elseif ($salesInformed === 'sim'): ?>
+                            <span>• 0 vendidos</span>
+                        <?php elseif ($salesInformed === 'nao'): ?>
+                            <span>• Vendas não informadas</span>
                         <?php endif; ?>
                         <span style="background: rgba(249,115,22,0.14); border: 1px solid rgba(249,115,22,0.4); color: #fdba74; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">
                             🔥 Termômetro: <?= (int)$thermometerVal ?>%

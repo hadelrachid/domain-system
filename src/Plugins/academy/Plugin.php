@@ -353,7 +353,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     $enrollmentService = $runtime->make(CourseEnrollmentInterface::class);
                     $enrollmentService->enroll($userId, $courseId, $expiresAt, $orderRef);
                 } catch (Throwable $e) {
-                    // Proteção de isolamento de falhas
+                    error_log('[Academy] Falha ao matricular aluno em payment.approved: ' . $e->getMessage());
                 }
             }
         });

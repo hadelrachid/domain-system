@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Flex Builder FSE - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="tutorial-theme.html">Building Themes &rarr;</a></li>
+            <li style="margin-left:auto"><a href="flex-builder.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>🏗️ Flex Builder FSE (Full Site Editing)</h1>
+        <p>Visual Block Engine, 12-Column CSS Grid &amp; Responsive Auto-Reflow (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Overview</h2>
+        <p><strong>Flex Builder</strong> (<code>src/Core/Theme/Parts</code> + <code>src/Plugins/flextheme</code>) is the visual layout builder for headers (<code>header</code>), footers (<code>footer</code>), and page sections (<code>section</code>) in <strong>Domain-System</strong>. It uses a single compilation pipeline to guarantee pixel parity between the live Studio editor and the published storefront.</p>
+
+        <h2>Key Capabilities</h2>
+        <ul>
+            <li><strong>Single Compilation Pipeline (<code>ThemePartCompilerInterface</code>):</strong> Both Studio Live Preview and frontend rendering share the exact same compiler.</li>
+            <li><strong>Pre-Save Structural Validation (<code>ThemePartValidatorInterface</code>):</strong> Validates part types, grid presets, and block part-type compatibility (<code>getAllowedPartTypes()</code>) before persisting changes.</li>
+            <li><strong>4-Breakpoint Responsive Visibility with Auto-Reflow:</strong> Per-element visibility toggles across Desktop (100%), Laptop (1024px), Tablet (768px), and Mobile (375px). Empty columns automatically collapse and redistribute CSS Grid columns.</li>
+            <li><strong>Hierarchical Menus &amp; Mobile Drawer (<code>ds-mobile-drawer</code>):</strong> Horizontal drag-and-drop submenu nesting and 8 customizable hamburger toggle styles.</li>
+            <li><strong>Native Theme Isolation (<code>"flex_builder": false</code>):</strong> Dedicated e-commerce themes (such as <code>rachidd_store</code> in <strong>DomainDrop</strong>) that use their own native headers and footers are automatically isolated via <code>ThemeDiscoveryService::supportsFlexBuilder()</code>, displaying a clear notice inside the Flex Builder editor.</li>
+        </ul>
+
+        <h2>Extending with <code>BlockProviderInterface</code></h2>
+        <p>Plugins can register custom visual blocks into Flex Builder without modifying the core by implementing <code>BlockInterface</code> and <code>BlockProviderInterface</code> (such as <code>DropshipShowcaseBlock</code> in <strong>DomainDrop</strong>).</p>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Flex Builder FSE &amp; Clean Architecture.
+    </footer>
+</body>
+
+</html>

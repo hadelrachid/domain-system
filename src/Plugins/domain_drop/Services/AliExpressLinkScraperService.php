@@ -176,7 +176,29 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
             }
         }
 
-        // 7. Categoria inferida
+        // 7. Métricas reais do anúncio (jamais inventar vendas ou notas fixas quando ausentes)
+        $ordersCount = 0;
+        $ordersCountKnown = false;
+        if (preg_match('/"(?:tradeCount|orders_count)"\s*:\s*(\d+)/i', $rawSource, $om)) {
+            $ordersCount = max(0, (int)$om[1]);
+            $ordersCountKnown = true;
+        } elseif (preg_match('/"formatTradeCount"\s*:\s*"([\d.,]+)"/i', $rawSource, $om)) {
+            $ordersCount = max(0, (int)str_replace(['.', ','], '', $om[1]));
+            $ordersCountKnown = true;
+        } elseif (preg_match('/(\d[\d.]*)\s*\+?\s*(?:vendidos|orders|sold)\b/i', $rawSource, $om)) {
+            $ordersCount = max(0, (int)str_replace(['.', ','], '', $om[1]));
+            $ordersCountKnown = true;
+        }
+
+        $rating = 0.0;
+        if (preg_match('/"(?:evarageStar|averageStar|ratingValue)"\s*:\s*"?([0-9]+(?:\.[0-9]+)?)"?/i', $rawSource, $rm)) {
+            $parsedRating = (float)$rm[1];
+            if ($parsedRating > 0.0 && $parsedRating <= 5.0) {
+                $rating = round($parsedRating, 1);
+            }
+        }
+
+        // 8. Categoria inferida
         $category = $this->inferCategory($title);
 
         return new ScrapedProductDto(
@@ -187,11 +209,12 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
             galleryImages: $gallery,
             costPriceUsd: $costPriceUsd,
             category: $category,
-            rating: 4.8,
-            ordersCount: 1250,
+            rating: $rating,
+            ordersCount: $ordersCount,
             attributes: [
-                'Origem' => 'Importação Oficial AliExpress',
-                'Envio'  => 'Rastreamento Internacional Expresso',
+                'Origem'            => 'Importação Oficial AliExpress',
+                'Envio'             => 'Rastreamento Internacional Expresso',
+                'Vendas_Informadas' => $ordersCountKnown ? 'sim' : 'nao',
             ]
         );
     }
@@ -222,7 +245,8 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 4);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
             'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',

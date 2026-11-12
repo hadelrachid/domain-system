@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.6.0)
+# Roteiro de Desenvolvimento — Domain System (v2.7.0)
 
 Este documento descreve as etapas de evolução do **Domain System**. O objetivo é manter uma base de código modular, previsível e com testes automatizados em PHP 8.2+.
 
@@ -46,13 +46,26 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 - [x] **PayPal Oficial:** Integração completa com a API REST v2 de Checkout para vendas internacionais com saldo PayPal e cartões globais.
 - [x] **Webhooks de Plataformas de Afiliados:** Auto-provisionamento de alunos via webhooks de venda aprovada da Hotmart, Eduzz, Monetizze e ClickBank.
 - [x] **Injeção de Dependências Condicional:** Apenas gateways com credenciais cadastradas e válidas aparecem no checkout.
-- [x] **536 Testes Automatizados:** Suíte completa no PHPUnit com 2.999 asserções cobrindo segurança, checkout, gateways e matrículas.
 
 ---
 
-## 🔵 Etapa 4: Expansão do Hub Academy (Planejamento v2.7.0)
+## 🟢 Etapa 4: DomainDrop — Motor de Dropshipping com SDK do AliExpress & Espaço do Cliente (Concluída na v2.7.0)
 
+### 4.1. Integração AliExpress Open Platform SDK & Mineração 24h
+- [x] **SDK Oficial AliExpress (`AliExpressApiClientInterface`):** Assinatura criptográfica `HMAC-SHA256` (protocolo TOP), OAuth 2.0, busca de catálogo (`aliexpress.ds.product.get`), feed recomendado (`aliexpress.ds.recommend.feed.get`), frete (`aliexpress.logistics.buyer.freight.get`), criação de ordens (`aliexpress.trade.buy.placeorder`) e rastreio (`queryTrackingInfo`).
+- [x] **Ciclo Flash de 24 Horas & Anti-Cache:** Curadoria diária priorizando estoque nacional (`BR`), conversão cambial dinâmica (`USD → BRL`), enriquecimento por IA e sincronização do cronômetro regressivo de 24h com cabeçalhos HTTP anti-cache (`CachePolicy`).
+
+### 4.2. Espaço do Cliente, Rastreio Integrado & CRM Administrativo
+- [x] **Espaço do Cliente (`/minha-conta`, `/entrar`, `/cadastro`):** Rastreamento integrado de 5 etapas (Correios + Cainiao + SDK AliExpress) dentro da conta do cliente, abertura de reclamações/observações/dúvidas com upload seguro de fotos/PDF e **vinculação opcional de pedido ou produto da loja**.
+- [x] **Gestão de Clientes & Mediação Bilingue (`/admin/dropship/customers` e `/admin/dropship/orders`):** Submenu administrativo de clientes cadastrados estilo CRM, monitoramento de SLA de entrega e mediação 1-clique com tradução automática para Chinês Simplificado (`zh-CN`) ou Português (`pt-BR`).
+- [x] **Isolamento de Temas Nativos (`"flex_builder": false`):** Isolamento automático do cabeçalho e rodapé de temas dedicados (`rachidd_store`) no Flex Builder.
+- [x] **629 Testes Automatizados:** Suíte completa no PHPUnit com **3.619 asserções** validando toda a plataforma.
+
+---
+
+## 🔵 Etapa 5: Expansão do Hub Academy & E-Commerce Físico Próprio (Planejamento v2.8.0)
+
+- [ ] **Estoque Físico Próprio & Logística Nacional Direta:** Suporte híbrido para venda de produtos em estoque próprio com cálculo de frete Correios/Melhor Envio e avaliações verificadas de compradores.
 - [ ] **Fórum de Alunos & Comunidade:** Espaço de discussão pública por curso ou geral com tópicos, respostas formatadas e marcação de respostas resolvidas.
 - [ ] **Bloco de Notas Pessoal do Aluno:** Caderno digital com auto-save em tempo real para anotações durante as aulas e exportação de estudos.
-- [ ] **Central de Ajuda & Gestão de Devoluções:** Sistema de tickets de suporte com canal de atendimento e botão de estorno rápido acionando o hook `payment.refunded`.
 - [ ] **Tutor com Inteligência Artificial (Google Gemini API):** Assistente virtual para tirar dúvidas pedagógicas dos alunos 24h com base no conteúdo das aulas.

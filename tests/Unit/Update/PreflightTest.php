@@ -284,10 +284,10 @@ final class PreflightTest extends TestCase
         $root = dirname(__DIR__, 3);
         $state = new FilesystemInstalledState($root);
 
-        $this->assertSame(defined('DS_VERSION') ? DS_VERSION : '2.6.0', $state->coreVersion());
+        $this->assertSame(defined('DS_VERSION') ? DS_VERSION : '2.7.0', $state->coreVersion());
         $plugins = $state->plugins();
         $this->assertArrayHasKey('settings', $plugins);
-        $this->assertSame(defined('DS_VERSION') ? DS_VERSION : '2.6.0', $plugins['settings']->version);
-        $this->assertSame(defined('DS_OS_VERSION') ? DS_OS_VERSION : '2.6', $plugins['settings']->osVersion);
+        $this->assertSame(defined('DS_VERSION') ? DS_VERSION : '2.7.0', $plugins['settings']->version);
+        $this->assertSame(defined('DS_OS_VERSION') ? DS_OS_VERSION : '2.7', $plugins['settings']->osVersion);
     }
 }

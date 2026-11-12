@@ -371,9 +371,9 @@
                     <!-- Image with badges -->
                     <div style="position: relative; width: 100%; height: 200px; background: #0b0e11; overflow: hidden;">
                         <?php if (!empty($prod->mainImageUrl)): ?>
-                            <img src="<?= htmlspecialchars($prod->mainImageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img id="prod-main-img-<?= (int)($prod->id ?? 0) ?>" src="<?= htmlspecialchars($prod->mainImageUrl) ?>" alt="<?= htmlspecialchars($prod->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
-                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #94a3b8);">
+                            <div id="prod-main-img-placeholder-<?= (int)($prod->id ?? 0) ?>" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #94a3b8);">
                                 <i class="fas fa-image" style="font-size: 32px;"></i>
                             </div>
                         <?php endif; ?>
@@ -382,11 +382,10 @@
                             <?= htmlspecialchars($prod->category ?: 'Dropship') ?>
                         </div>
 
-                        <?php if (!empty($prod->images) && count($prod->images) > 1): ?>
-                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #45f3ff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                <i class="fas fa-images"></i> <?= count($prod->images) ?> fotos
-                            </div>
-                        <?php endif; ?>
+                        <?php $galleryCount = !empty($prod->images) ? count($prod->images) : (!empty($prod->mainImageUrl) ? 1 : 0); ?>
+                        <div id="prod-imgs-badge-<?= (int)($prod->id ?? 0) ?>" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #45f3ff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: <?= $galleryCount > 1 ? 'flex' : 'none' ?>; align-items: center; gap: 4px;">
+                            <i class="fas fa-images"></i> <span id="prod-imgs-count-<?= (int)($prod->id ?? 0) ?>"><?= $galleryCount ?></span> fotos
+                        </div>
 
                         <?php if ($prod->rating > 0): ?>
                             <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fbbf24; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
@@ -432,12 +431,9 @@
                                     <button type="button" onclick="openPriceModal(<?= (int)$prod->id ?>, <?= htmlspecialchars(json_encode($prod->title)) ?>, <?= (float)$prod->costPriceUsd ?>, <?= (float)round($prod->costPriceUsd * $rate, 2) ?>, <?= (float)$prod->salePriceBrl ?>)" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #fbbf24; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Editar Custo e Preço de Venda">
                                         <i class="fas fa-tags"></i> Preço
                                     </button>
-                                    <form action="<?= $baseUrl ?>/admin/dropship/product/<?= (int)$prod->id ?>/sync-images" method="POST" style="margin: 0; display: inline-flex; vertical-align: middle;">
-                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                                        <button type="submit" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #45f3ff; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Sincronizar imagens reais direto do link">
-                                            <i class="fas fa-sync-alt"></i> Imagens
-                                        </button>
-                                    </form>
+                                    <button type="button" onclick="openImagesModal(<?= (int)$prod->id ?>)" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #45f3ff; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; box-sizing: border-box; line-height: 1;" title="Visualizar, editar e sincronizar imagens do produto">
+                                        <i class="fas fa-images"></i> Imagens
+                                    </button>
                                 <?php endif; ?>
                             </div>
 
@@ -553,6 +549,65 @@
         </div>
     </div>
 
+    <!-- Modal de Galeria e Sincronização de Imagens -->
+    <div id="imagesEditModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: #111722; border: 1px solid rgba(69, 243, 255, 0.35); border-radius: 12px; max-width: 720px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.85); overflow: hidden; animation: dsModalIn 0.2s ease;">
+            <div style="background: rgba(69, 243, 255, 0.08); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                    <div style="background: #45f3ff; color: #0b0f17; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <div style="min-width: 0;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #fff;">Galeria &amp; Imagens do Produto</h3>
+                        <div id="imagesModalTitle" style="font-size: 12px; color: var(--text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeImagesModal()" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 4px;">&times;</button>
+            </div>
+
+            <div style="padding: 20px 22px; overflow-y: auto; flex: 1;">
+                <div id="imagesModalStatus" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;"></div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <div style="font-size: 12px; color: #94a3b8;">
+                        Clique em <strong style="color: #fbbf24;">Definir Capa</strong> para escolher a foto principal exibida na loja.
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a id="imagesModalAeLink" href="#" target="_blank" rel="noopener noreferrer" style="background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-external-link-alt"></i> Abrir no AliExpress
+                        </a>
+                        <button type="button" id="btnSyncImagesNow" onclick="syncImagesNow()" style="background: rgba(69, 243, 255, 0.14); border: 1px solid rgba(69, 243, 255, 0.4); color: #45f3ff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-sync-alt"></i> Sincronizar do AliExpress
+                        </button>
+                    </div>
+                </div>
+
+                <div id="imagesModalGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; margin-bottom: 18px;"></div>
+
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">
+                        Adicionar nova foto por URL (https://...):
+                    </label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <input type="url" id="imagesModalNewUrl" placeholder="https://ae-pic-a1.aliexpress-media.com/kf/..." style="flex: 1; min-width: 220px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.16); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                        <button type="button" onclick="addManualImageUrl()" style="background: rgba(92,214,125,0.15); border: 1px solid rgba(92,214,125,0.4); color: #5cd67d; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                            <i class="fas fa-plus"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding: 14px 22px; display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.2);">
+                <button type="button" onclick="closeImagesModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 9px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    Fechar
+                </button>
+                <button type="button" id="btnSaveImagesGallery" onclick="handleImagesSave()" style="background: linear-gradient(135deg, #45f3ff, #0ea5e9); border: none; color: #081018; padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-save"></i> Salvar Galeria
+                </button>
+            </div>
+        </div>
+    </div>
+
     <style>
         @keyframes dsModalIn {
             from { opacity: 0; transform: scale(0.96); }
@@ -584,11 +639,18 @@
         }
 
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closePriceModal();
+            if (e.key === 'Escape') {
+                closePriceModal();
+                closeImagesModal();
+            }
         });
 
         document.getElementById('priceEditModal').addEventListener('click', function(e) {
             if (e.target === this) closePriceModal();
+        });
+
+        document.getElementById('imagesEditModal').addEventListener('click', function(e) {
+            if (e.target === this) closeImagesModal();
         });
 
         function recalcMargin() {
@@ -678,6 +740,279 @@
                 btn.innerHTML = originalText;
                 // Fallback para envio padrão se fetch falhar
                 form.submit();
+            });
+        }
+
+        <?php
+        $mediaMap = [];
+        foreach ($products as $p) {
+            if ($p->id === null) {
+                continue;
+            }
+            $imgs = !empty($p->images) ? array_values($p->images) : [];
+            if (!empty($p->mainImageUrl) && !in_array($p->mainImageUrl, $imgs, true)) {
+                array_unshift($imgs, $p->mainImageUrl);
+            }
+            $mediaMap[(string)(int)$p->id] = [
+                'id'           => (int)$p->id,
+                'title'        => (string)$p->title,
+                'aliexpressId' => (string)$p->aliexpressId,
+                'mainImageUrl' => (string)($p->mainImageUrl ?: ($imgs[0] ?? '')),
+                'images'       => $imgs,
+            ];
+        }
+        ?>
+        const dropshipCsrfToken = <?= json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+        const dropshipProductsMedia = <?= json_encode($mediaMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>;
+        let activeImagesState = { id: null, title: '', aliexpressId: '', mainImageUrl: '', images: [] };
+
+        function setImagesModalStatus(msg, type) {
+            const el = document.getElementById('imagesModalStatus');
+            if (!el) return;
+            if (!msg) {
+                el.style.display = 'none';
+                el.textContent = '';
+                return;
+            }
+            el.style.display = 'block';
+            el.textContent = msg;
+            if (type === 'error') {
+                el.style.background = 'rgba(220,50,50,0.16)';
+                el.style.border = '1px solid #dc3232';
+                el.style.color = '#ff8080';
+            } else if (type === 'info') {
+                el.style.background = 'rgba(69,243,255,0.12)';
+                el.style.border = '1px solid rgba(69,243,255,0.4)';
+                el.style.color = '#45f3ff';
+            } else {
+                el.style.background = 'rgba(40,167,69,0.16)';
+                el.style.border = '1px solid #28a745';
+                el.style.color = '#5cd67d';
+            }
+        }
+
+        function openImagesModal(id) {
+            const item = dropshipProductsMedia[String(id)];
+            if (!item) return;
+
+            activeImagesState = {
+                id: item.id,
+                title: item.title,
+                aliexpressId: item.aliexpressId,
+                mainImageUrl: item.mainImageUrl,
+                images: Array.isArray(item.images) ? item.images.slice() : []
+            };
+
+            document.getElementById('imagesModalTitle').textContent = activeImagesState.title;
+            document.getElementById('imagesModalTitle').title = activeImagesState.title;
+            document.getElementById('imagesModalAeLink').href = 'https://www.aliexpress.com/item/' + encodeURIComponent(activeImagesState.aliexpressId) + '.html';
+            document.getElementById('imagesModalNewUrl').value = '';
+            setImagesModalStatus('', 'info');
+            renderImagesModalGrid();
+
+            document.getElementById('imagesEditModal').style.display = 'flex';
+        }
+
+        function closeImagesModal() {
+            const modal = document.getElementById('imagesEditModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function renderImagesModalGrid() {
+            const grid = document.getElementById('imagesModalGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (!activeImagesState.images.length) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 26px; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px; color: #94a3b8; font-size: 13px;';
+                empty.textContent = 'Nenhuma imagem cadastrada ainda. Clique em "Sincronizar do AliExpress" ou cole uma URL abaixo.';
+                grid.appendChild(empty);
+                return;
+            }
+
+            activeImagesState.images.forEach(function(url, idx) {
+                const isMain = (url === activeImagesState.mainImageUrl);
+
+                const card = document.createElement('div');
+                card.style.cssText = 'background: #0b0f17; border: 1px solid ' + (isMain ? '#fbbf24' : 'rgba(255,255,255,0.1)') + '; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;';
+
+                const thumbWrap = document.createElement('div');
+                thumbWrap.style.cssText = 'position: relative; width: 100%; height: 120px; background: #070a10;';
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Foto ' + (idx + 1);
+                img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+                thumbWrap.appendChild(img);
+
+                if (isMain) {
+                    const badge = document.createElement('span');
+                    badge.style.cssText = 'position: absolute; top: 6px; left: 6px; background: #fbbf24; color: #0b0f17; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;';
+                    badge.textContent = 'CAPA';
+                    thumbWrap.appendChild(badge);
+                }
+
+                const openLink = document.createElement('a');
+                openLink.href = url;
+                openLink.target = '_blank';
+                openLink.rel = 'noopener noreferrer';
+                openLink.title = 'Abrir imagem em tamanho original';
+                openLink.style.cssText = 'position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); color: #45f3ff; width: 24px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; text-decoration: none;';
+                openLink.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+                thumbWrap.appendChild(openLink);
+
+                const actions = document.createElement('div');
+                actions.style.cssText = 'padding: 8px; display: flex; gap: 6px; justify-content: space-between; align-items: center;';
+
+                const coverBtn = document.createElement('button');
+                coverBtn.type = 'button';
+                coverBtn.disabled = isMain;
+                coverBtn.style.cssText = 'flex: 1; padding: 4px 6px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: ' + (isMain ? 'default' : 'pointer') + '; border: 1px solid rgba(251,191,36,0.35); background: ' + (isMain ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.05)') + '; color: ' + (isMain ? '#fbbf24' : '#cbd5e1') + ';';
+                coverBtn.textContent = isMain ? 'Capa Atual' : 'Definir Capa';
+                coverBtn.onclick = function() {
+                    activeImagesState.mainImageUrl = url;
+                    renderImagesModalGrid();
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.title = 'Remover foto da galeria';
+                delBtn.style.cssText = 'padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; cursor: pointer; border: 1px solid rgba(239,68,68,0.35); background: rgba(239,68,68,0.1); color: #ef4444;';
+                delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                delBtn.onclick = function() {
+                    activeImagesState.images.splice(idx, 1);
+                    if (activeImagesState.mainImageUrl === url) {
+                        activeImagesState.mainImageUrl = activeImagesState.images[0] || '';
+                    }
+                    renderImagesModalGrid();
+                };
+
+                actions.appendChild(coverBtn);
+                actions.appendChild(delBtn);
+                card.appendChild(thumbWrap);
+                card.appendChild(actions);
+                grid.appendChild(card);
+            });
+        }
+
+        function addManualImageUrl() {
+            const input = document.getElementById('imagesModalNewUrl');
+            const raw = (input ? input.value : '').trim();
+            if (!/^https?:\/\/\S+$/i.test(raw)) {
+                setImagesModalStatus('Informe uma URL válida começando com http:// ou https://', 'error');
+                return;
+            }
+            if (!activeImagesState.images.includes(raw)) {
+                activeImagesState.images.push(raw);
+            }
+            if (!activeImagesState.mainImageUrl) {
+                activeImagesState.mainImageUrl = raw;
+            }
+            input.value = '';
+            setImagesModalStatus('Imagem adicionada à prévia. Clique em "Salvar Galeria" para gravar.', 'info');
+            renderImagesModalGrid();
+        }
+
+        function updateCardImagesUi(id, mainUrl, imagesList) {
+            const imgEl = document.getElementById('prod-main-img-' + id);
+            if (imgEl && mainUrl) {
+                imgEl.src = mainUrl;
+            }
+            const badge = document.getElementById('prod-imgs-badge-' + id);
+            const countEl = document.getElementById('prod-imgs-count-' + id);
+            const count = Array.isArray(imagesList) ? imagesList.length : 0;
+            if (countEl) countEl.textContent = String(count);
+            if (badge) badge.style.display = count > 1 ? 'flex' : 'none';
+
+            if (dropshipProductsMedia[String(id)]) {
+                dropshipProductsMedia[String(id)].mainImageUrl = mainUrl;
+                dropshipProductsMedia[String(id)].images = imagesList.slice();
+            }
+        }
+
+        function syncImagesNow() {
+            if (!activeImagesState.id) return;
+            const id = activeImagesState.id;
+            const btn = document.getElementById('btnSyncImagesNow');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+            setImagesModalStatus('Consultando fotos oficiais direto do AliExpress...', 'info');
+
+            const fd = new FormData();
+            fd.append('csrf_token', dropshipCsrfToken);
+            fd.append('ajax', '1');
+
+            fetch(baseAdminUrl + '/product/' + id + '/sync-images', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: fd
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                if (data && data.success) {
+                    activeImagesState.mainImageUrl = data.main_image_url || '';
+                    activeImagesState.images = Array.isArray(data.images) ? data.images : [];
+                    renderImagesModalGrid();
+                    updateCardImagesUi(id, activeImagesState.mainImageUrl, activeImagesState.images);
+                    setImagesModalStatus(data.message || 'Imagens sincronizadas com sucesso!', 'success');
+                } else {
+                    setImagesModalStatus((data && data.message) ? data.message : 'O AliExpress bloqueou a coleta automática neste item. Você pode adicionar URLs de fotos manualmente abaixo.', 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                setImagesModalStatus('Erro de comunicação ao sincronizar imagens.', 'error');
+            });
+        }
+
+        function handleImagesSave() {
+            if (!activeImagesState.id) return;
+            const id = activeImagesState.id;
+            const btn = document.getElementById('btnSaveImagesGallery');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+            const fd = new FormData();
+            fd.append('csrf_token', dropshipCsrfToken);
+            fd.append('ajax', '1');
+            fd.append('main_image_url', activeImagesState.mainImageUrl || '');
+            fd.append('images_json', JSON.stringify(activeImagesState.images || []));
+
+            fetch(baseAdminUrl + '/product/' + id + '/images', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: fd
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                if (data && data.success) {
+                    activeImagesState.mainImageUrl = data.main_image_url || '';
+                    activeImagesState.images = Array.isArray(data.images) ? data.images : [];
+                    renderImagesModalGrid();
+                    updateCardImagesUi(id, activeImagesState.mainImageUrl, activeImagesState.images);
+                    setImagesModalStatus(data.message || 'Galeria salva com sucesso!', 'success');
+                } else {
+                    setImagesModalStatus((data && data.message) ? data.message : 'Falha ao salvar galeria.', 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                setImagesModalStatus('Erro de comunicação ao salvar galeria.', 'error');
             });
         }
     </script>

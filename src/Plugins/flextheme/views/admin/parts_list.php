@@ -68,6 +68,18 @@
         </div>
     <?php endif; ?>
 
+    <?php $isActiveThemeFse = (bool)($activeThemeSupportsFlexBuilder ?? true); ?>
+    <?php if (!$isActiveThemeFse): ?>
+        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.45); border-left: 4px solid #f59e0b; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; color: #fef3c7;">
+            <div style="font-weight: 800; font-size: 14px; color: #fbbf24; margin-bottom: 4px;">
+                🔒 Isolamento de Tema Ativo — Este Tema Não Faz Parte da Edição do Flex Builder
+            </div>
+            <div style="font-size: 13px; color: #fde68a; line-height: 1.55;">
+                O tema ativo no momento (<code><?= htmlspecialchars($activeTheme) ?></code>) utiliza <strong>cabeçalho, rodapé e estrutura nativos próprios</strong> (dedicados à loja) e está <strong>isolado do Flex Builder / Builder Flex</strong>. Qualquer Header ou Footer editado aqui aplica-se apenas a temas compatíveis com o motor em blocos FSE (ex.: <code>default</code>) e não altera nem sobrescreve o tema em funcionamento.
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- CARD INFORMATIVO: STATUS DO TEMA ATIVO E REDE DE SEGURANÇA -->
     <div style="background: var(--bg-panel, #161b22); border: 1px solid var(--border, #30363d); border-radius: 8px; padding: 16px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
         <div style="display: flex; align-items: center; gap: 14px;">
@@ -85,14 +97,14 @@
         <div style="display: flex; align-items: center; gap: 20px; font-size: 13px;">
             <div>
                 <span style="color: var(--text-muted);">Header Ativo:</span>
-                <strong style="color: <?= !empty($assignments[$activeTheme]['header']) ? '#00d284' : '#58a6ff' ?>;">
-                    <?= !empty($assignments[$activeTheme]['header']) ? 'Flex Builder Dinâmico' : 'Nativo do Tema (Fallback)' ?>
+                <strong style="color: <?= !$isActiveThemeFse ? '#fbbf24' : (!empty($assignments[$activeTheme]['header']) ? '#00d284' : '#58a6ff') ?>;">
+                    <?= !$isActiveThemeFse ? '🔒 Nativo Isolado (Fora do Flex Builder)' : (!empty($assignments[$activeTheme]['header']) ? 'Flex Builder Dinâmico' : 'Nativo do Tema (Fallback)') ?>
                 </strong>
             </div>
             <div>
                 <span style="color: var(--text-muted);">Footer Ativo:</span>
-                <strong style="color: <?= !empty($assignments[$activeTheme]['footer']) ? '#00d284' : '#58a6ff' ?>;">
-                    <?= !empty($assignments[$activeTheme]['footer']) ? 'Flex Builder Dinâmico' : 'Nativo do Tema (Fallback)' ?>
+                <strong style="color: <?= !$isActiveThemeFse ? '#fbbf24' : (!empty($assignments[$activeTheme]['footer']) ? '#00d284' : '#58a6ff') ?>;">
+                    <?= !$isActiveThemeFse ? '🔒 Nativo Isolado (Fora do Flex Builder)' : (!empty($assignments[$activeTheme]['footer']) ? 'Flex Builder Dinâmico' : 'Nativo do Tema (Fallback)') ?>
                 </strong>
             </div>
         </div>

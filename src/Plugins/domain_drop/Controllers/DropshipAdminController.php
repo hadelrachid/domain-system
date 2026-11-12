@@ -10,10 +10,16 @@ use DomainSystem\Core\Http\Request;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Http\Responses\JsonResponse;
 use DomainSystem\Core\Http\Responses\ViewResponse;
+use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\DropshipDisputeRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMediaSyncInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
+use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
+use DomainSystem\Plugins\domain_drop\Services\OrderSlaProgressService;
+use DomainSystem\Plugins\domain_drop\Services\SellerMediationService;
 use Throwable;
 
 /**
@@ -30,7 +36,12 @@ class DropshipAdminController
         private readonly SessionManagerInterface $session,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface $orderRepo = null,
         private readonly ?ProductMediaSyncInterface $mediaSync = null,
-        ?string $basePath = null
+        ?string $basePath = null,
+        private readonly ?DropshipCustomerRepositoryInterface $customerRepo = null,
+        private readonly ?DropshipDisputeRepositoryInterface $disputeRepo = null,
+        private readonly ?OrderSlaProgressService $slaService = null,
+        private readonly ?SellerMediationService $mediationService = null,
+        private readonly ?AliExpressApiClientInterface $apiClient = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->configFile = $root . '/config/plugins/domain_drop.json';
@@ -305,6 +316,28 @@ class DropshipAdminController
         }
 
         $orders = $this->orderRepo !== null ? $this->orderRepo->list($filters, 50, 0) : [];
+        $registeredCustomers = $this->customerRepo !== null ? $this->customerRepo->listAll(200, 0) : [];
+        $customersByEmail = [];
+        foreach ($registeredCustomers as $cust) {
+            $em = strtolower(trim((string)($cust['email'] ?? '')));
+            if ($em !== '') {
+                $customersByEmail[$em] = $cust;
+            }
+        }
+
+        $orderRefs = array_values(array_filter(array_map(static fn (array $o): string => (string)($o['order_ref'] ?? ''), $orders)));
+        $disputesByOrder = $this->disputeRepo !== null ? $this->disputeRepo->mapByOrderRefs($orderRefs) : [];
+        $slaCalc = $this->slaService ?? new OrderSlaProgressService();
+
+        foreach ($orders as &$ord) {
+            $ref = (string)($ord['order_ref'] ?? '');
+            $em = strtolower(trim((string)($ord['customer_email'] ?? '')));
+            $ordDisputes = $disputesByOrder[$ref] ?? [];
+            $ord['disputes'] = $ordDisputes;
+            $ord['is_registered_customer'] = isset($customersByEmail[$em]);
+            $ord['sla'] = $slaCalc->calculate($ord, $ordDisputes);
+        }
+        unset($ord);
 
         $flash = $this->session->getFlash();
         $flashMsg = $flash['msg'] ?? null;
@@ -330,6 +363,9 @@ class DropshipAdminController
         $status = (string)$request->input('status', 'paid');
         $aeOrderId = trim((string)$request->input('aliexpress_order_id', ''));
         $tracking = trim((string)$request->input('tracking_code', ''));
+        $sellerOrigin = strtoupper(trim((string)$request->input('seller_origin', '')));
+        $expectedDays = (int)$request->input('expected_delivery_days', 0);
+        $sellerEmail = trim((string)$request->input('seller_email', ''));
 
         if ($this->orderRepo !== null && $orderRef !== '') {
             $this->orderRepo->updateFulfillment(
@@ -338,35 +374,341 @@ class DropshipAdminController
                 $aeOrderId !== '' ? $aeOrderId : null,
                 $tracking !== '' ? $tracking : null
             );
+
+            if ($sellerOrigin !== '') {
+                $days = $expectedDays > 0 ? $expectedDays : ($sellerOrigin === 'CN' ? 25 : 7);
+                $this->orderRepo->updateSellerAndSla(
+                    $orderRef,
+                    $sellerOrigin,
+                    $days,
+                    null,
+                    $sellerEmail !== '' ? $sellerEmail : null
+                );
+            }
+
             $this->session->setFlash('success', 'Status de envio do pedido atualizado com sucesso!');
         }
 
         return Response::redirect($baseUrl . '/admin/dropship/orders');
     }
 
+    /**
+     * Consulta o SDK oficial do AliExpress para verificar se o item chegou ao destino.
+     */
+    public function checkOrderSdk(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $isAjax = $this->isAjaxOrJson($request);
+
+        if (!$this->verifyCsrf($request)) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Token de segurança expirado.'], 403);
+            }
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $orderRef = trim((string)$request->input('order_ref', ''));
+        $order = ($this->orderRepo !== null && $orderRef !== '') ? $this->orderRepo->findByOrderRef($orderRef) : null;
+        if ($order === null) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Pedido não encontrado.'], 404);
+            }
+            $this->session->setFlash('error', 'Pedido não encontrado.');
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $trackingCode = trim((string)($order['tracking_code'] ?? ''));
+        $aeOrderId = trim((string)($order['aliexpress_order_id'] ?? ''));
+
+        if ($trackingCode === '' || $this->apiClient === null) {
+            $msg = 'Informe o código de rastreio do pedido antes de consultar o SDK logístico.';
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => $msg], 422);
+            }
+            $this->session->setFlash('error', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        try {
+            $sdkRes = $this->apiClient->queryTrackingInfo(
+                logisticsNo: $trackingCode,
+                origin: 'ESCROW',
+                outRef: $aeOrderId,
+                serviceName: str_starts_with(strtoupper($trackingCode), 'BR') ? 'CORREIOS' : 'CAINIAO',
+                toArea: 'BR'
+            );
+
+            $slaCalc = $this->slaService ?? new OrderSlaProgressService();
+            $parsed = $slaCalc->parseSdkTracking($sdkRes);
+            $summaryJson = json_encode($sdkRes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+
+            if ($parsed['delivered']) {
+                $this->orderRepo->updateSdkTracking(
+                    $orderRef,
+                    date('Y-m-d H:i:s'),
+                    $summaryJson,
+                    'delivered'
+                );
+                $msg = 'SDK AliExpress confirmou: item entregue no local! Pedido atualizado para "Tudo Ok".';
+            } else {
+                $this->orderRepo->updateSdkTracking($orderRef, null, $summaryJson, null);
+                $msg = 'SDK consultado: encomenda ainda em trânsito (' . ($parsed['last_event'] !== '' ? $parsed['last_event'] : $parsed['status_code']) . ').';
+            }
+
+            if ($isAjax) {
+                return new JsonResponse(['success' => true, 'delivered' => $parsed['delivered'], 'message' => $msg, 'tracking' => $parsed]);
+            }
+            $this->session->setFlash('success', $msg);
+        } catch (Throwable $e) {
+            $msg = 'Falha ao consultar SDK logístico: ' . $e->getMessage();
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => $msg], 500);
+            }
+            $this->session->setFlash('error', $msg);
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship/orders');
+    }
+
+    /**
+     * Botão único de intermediação com o fornecedor (PT-BR se Brasil, traduzido para Chinês se China).
+     */
+    public function mediateDispute(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $isAjax = $this->isAjaxOrJson($request);
+
+        if (!$this->verifyCsrf($request)) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Token de segurança expirado.'], 403);
+            }
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $orderRef = trim((string)$request->input('order_ref', ''));
+        $disputeId = (int)$request->input('dispute_id', 0);
+
+        $order = ($this->orderRepo !== null && $orderRef !== '') ? $this->orderRepo->findByOrderRef($orderRef) : null;
+        if ($order === null) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Pedido não encontrado.'], 404);
+            }
+            $this->session->setFlash('error', 'Pedido não encontrado.');
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $dispute = null;
+        if ($this->disputeRepo !== null) {
+            $dispute = $disputeId > 0 ? $this->disputeRepo->findById($disputeId) : null;
+            if ($dispute === null) {
+                $list = $this->disputeRepo->findByOrderRef($orderRef);
+                $dispute = $list[0] ?? null;
+            }
+        }
+
+        if ($dispute === null || $this->mediationService === null) {
+            $msg = 'Nenhuma reclamação aberta encontrada para intermediar.';
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => $msg], 404);
+            }
+            $this->session->setFlash('error', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/orders');
+        }
+
+        $overrideOrigin = strtoupper(trim((string)$request->input('seller_origin', '')));
+        if (in_array($overrideOrigin, ['BR', 'CN'], true)) {
+            $dispute['seller_origin'] = $overrideOrigin;
+        }
+
+        $result = $this->mediationService->sendMediation($order, $dispute, $baseUrl);
+        $langLabel = ($result['seller_language'] ?? '') === 'zh-CN'
+            ? 'Chinês Simplificado (zh-CN)'
+            : 'Português (pt-BR)';
+
+        $msg = "Intermediação enviada ao fornecedor em {$langLabel}!";
+        if ($isAjax) {
+            return new JsonResponse([
+                'success'            => true,
+                'message'            => $msg,
+                'seller_language'    => $result['seller_language'] ?? 'zh-CN',
+                'channel'            => $result['channel'] ?? 'aliexpress_mediation_log',
+                'translated_message' => $result['translated_message'] ?? '',
+            ]);
+        }
+
+        $this->session->setFlash('success', $msg);
+        return Response::redirect($baseUrl . '/admin/dropship/orders');
+    }
+
     public function syncImages(Request $request, string $id): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $isAjax = $this->isAjaxOrJson($request);
 
         if (!$this->verifyCsrf($request)) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Token de segurança expirado.'], 403);
+            }
             $this->session->setFlash('error', 'Token de segurança expirado.');
             return Response::redirect($baseUrl . '/admin/dropship');
         }
 
         if ($this->mediaSync === null) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Serviço de sincronização de mídia indisponível.'], 503);
+            }
             $this->session->setFlash('error', 'Serviço de sincronização de mídia indisponível.');
             return Response::redirect($baseUrl . '/admin/dropship');
         }
 
         try {
             $updated = $this->mediaSync->syncProductMedia((int)$id);
-            $imgCount = count($updated->images);
-            $this->session->setFlash('success', "🔄 Produto '{$updated->title}' sincronizado com sucesso direto do link oficial! {$imgCount} fotos em alta resolução carregadas.");
+            $images = $this->filterImageUrls(array_merge([$updated->mainImageUrl], $updated->images));
+            $mainImageUrl = $updated->mainImageUrl ?: ($images[0] ?? '');
+            $imgCount = count($images);
+            $msg = "🔄 Produto '{$updated->title}' sincronizado com sucesso! {$imgCount} foto(s) em alta resolução carregada(s).";
+
+            if ($isAjax) {
+                $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
+                if ($rate <= 0) {
+                    $rate = 5.50;
+                }
+                return new JsonResponse([
+                    'success'        => true,
+                    'message'        => $msg,
+                    'title'          => $updated->title,
+                    'main_image_url' => $mainImageUrl,
+                    'images'         => $images,
+                    'count'          => $imgCount,
+                    'sale_formatted' => 'R$ ' . number_format($updated->salePriceBrl, 2, ',', '.'),
+                    'cost_formatted' => 'R$ ' . number_format($updated->costPriceUsd * $rate, 2, ',', '.'),
+                    'cost_price_usd' => $updated->costPriceUsd,
+                ]);
+            }
+
+            $this->session->setFlash('success', $msg);
         } catch (Throwable $e) {
-            $this->session->setFlash('error', "Falha ao sincronizar imagens: " . $e->getMessage());
+            $errMsg = 'Falha ao sincronizar imagens: ' . $e->getMessage();
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => $errMsg], 422);
+            }
+            $this->session->setFlash('error', $errMsg);
         }
 
         return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    public function updateImages(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $isAjax = $this->isAjaxOrJson($request);
+
+        if (!$this->verifyCsrf($request)) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Token de segurança expirado.'], 403);
+            }
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $product = $this->catalogRepo->findById((int)$id);
+        if ($product === null) {
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => 'Produto não encontrado.'], 404);
+            }
+            $this->session->setFlash('error', 'Produto não encontrado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $rawImages = $request->input('images_json');
+        $parsedImages = [];
+        if (is_string($rawImages) && trim($rawImages) !== '') {
+            $decoded = json_decode($rawImages, true);
+            if (is_array($decoded)) {
+                $parsedImages = $decoded;
+            }
+        } elseif (is_array($request->input('images'))) {
+            $parsedImages = $request->input('images');
+        }
+
+        $mainImageInput = trim((string)$request->input('main_image_url', ''));
+        $validImages = $this->filterImageUrls($parsedImages);
+        $validMain = $this->filterImageUrls([$mainImageInput])[0] ?? ($validImages[0] ?? '');
+
+        if ($validMain === '' && empty($validImages)) {
+            $errMsg = 'Informe pelo menos 1 URL de imagem HTTP/HTTPS válida.';
+            if ($isAjax) {
+                return new JsonResponse(['success' => false, 'message' => $errMsg], 422);
+            }
+            $this->session->setFlash('error', $errMsg);
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        // Garante que a imagem principal esteja na lista (em primeiro lugar)
+        $orderedImages = $this->filterImageUrls(array_merge([$validMain], $validImages));
+
+        $updatedDto = new DropshipProductDto(
+            aliexpressId: $product->aliexpressId,
+            title: $product->title,
+            slug: $product->slug,
+            costPriceUsd: $product->costPriceUsd,
+            salePriceBrl: $product->salePriceBrl,
+            mainImageUrl: $validMain,
+            images: $orderedImages,
+            category: $product->category,
+            description: $product->description,
+            rating: $product->rating,
+            ordersCount: $product->ordersCount,
+            attributes: $product->attributes,
+            status: $product->status,
+            id: $product->id
+        );
+
+        $this->catalogRepo->save($updatedDto);
+
+        $count = count($orderedImages);
+        $msg = "🖼️ Galeria de '{$product->title}' atualizada! {$count} foto(s) salva(s).";
+
+        if ($isAjax) {
+            return new JsonResponse([
+                'success'        => true,
+                'message'        => $msg,
+                'main_image_url' => $validMain,
+                'images'         => $orderedImages,
+                'count'          => $count,
+            ]);
+        }
+
+        $this->session->setFlash('success', $msg);
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    /**
+     * @param array<int, mixed> $urls
+     * @return array<int, string>
+     */
+    private function filterImageUrls(array $urls): array
+    {
+        $clean = [];
+        foreach ($urls as $raw) {
+            if (!is_string($raw)) {
+                continue;
+            }
+            $url = trim($raw);
+            if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+                continue;
+            }
+            $scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));
+            if ($scheme !== 'http' && $scheme !== 'https') {
+                continue;
+            }
+            if (!in_array($url, $clean, true)) {
+                $clean[] = $url;
+            }
+        }
+        return $clean;
     }
 
     public function syncAllImages(Request $request): ResponseInterface
@@ -536,6 +878,91 @@ class DropshipAdminController
         }
 
         return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);
+    }
+
+    /**
+     * Gestão Administrativa de Clientes Cadastrados (semelhante a Alunos & Matrículas do Academy).
+     */
+    public function customers(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $search = trim((string)$request->input('q', ''));
+        $status = trim((string)$request->input('status', 'all'));
+        $page = max(1, (int)$request->input('page', 1));
+        $perPage = 15;
+
+        $customers = [];
+        $total = 0;
+        $metrics = [
+            'total_customers'     => 0,
+            'active_customers'    => 0,
+            'suspended_customers' => 0,
+            'linked_orders'       => 0,
+        ];
+
+        if ($this->customerRepo !== null) {
+            if (method_exists($this->customerRepo, 'listCustomers')) {
+                $res = $this->customerRepo->listCustomers(
+                    $page,
+                    $perPage,
+                    $search !== '' ? $search : null,
+                    $status !== 'all' ? $status : null
+                );
+                $customers = $res['items'] ?? [];
+                $total = (int)($res['total'] ?? count($customers));
+            } else {
+                $customers = $this->customerRepo->listAll($perPage, ($page - 1) * $perPage);
+                $total = count($customers);
+            }
+
+            if (method_exists($this->customerRepo, 'getCustomerMetrics')) {
+                $metrics = $this->customerRepo->getCustomerMetrics();
+            }
+        }
+
+        $totalPages = max(1, (int)ceil($total / $perPage));
+        $csrfToken = (string)$this->session->getCsrfToken();
+        $flash = $this->session->getFlash();
+        $currentSearch = $search;
+        $currentStatus = $status;
+        $recentDisputes = ($this->disputeRepo !== null && method_exists($this->disputeRepo, 'listRecent'))
+            ? $this->disputeRepo->listRecent(30)
+            : [];
+
+        ob_start();
+        include dirname(__DIR__) . '/views/admin/customers.php';
+        $content = (string)ob_get_clean();
+
+        return new ViewResponse($content, true);
+    }
+
+    /**
+     * Ativa ou suspende a conta de um cliente cadastrado no DomainDrop.
+     */
+    public function updateCustomerStatus(Request $request, string $id): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado. Tente novamente.');
+            return Response::redirect($baseUrl . '/admin/dropship/customers');
+        }
+
+        $customerId = (int)$id;
+        $newStatus = trim((string)$request->input('status', 'active'));
+        if (!in_array($newStatus, ['active', 'suspended', 'blocked'], true)) {
+            $newStatus = 'active';
+        }
+
+        if ($this->customerRepo !== null && method_exists($this->customerRepo, 'updateStatus')) {
+            $this->customerRepo->updateStatus($customerId, $newStatus);
+            $label = $newStatus === 'active' ? 'ativado' : 'suspenso';
+            $this->session->setFlash('success', "Status do cliente #{$customerId} atualizado ({$label}).");
+        } else {
+            $this->session->setFlash('error', 'Repositório de clientes não disponível.');
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship/customers');
     }
 
     private function verifyCsrf(Request $request): bool

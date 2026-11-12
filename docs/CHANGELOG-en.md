@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 [ 🇧🇷 Ler em Português ](CHANGELOG.md)
 
+## [2.7.0] - 2026-11-12
+### Added
+- **DomainDrop — Autonomous Dropshipping Engine with Official AliExpress SDK (`src/Plugins/domain_drop`):**
+  - **Official AliExpress Open Platform SDK Integration (`AliExpressApiClientInterface`):** Cryptographically signed `TOP` protocol communication (`HMAC-SHA256`) and OAuth 2.0 for product lookup (`aliexpress.ds.product.get`), recommendation feeds (`aliexpress.ds.recommend.feed.get`), freight calculation (`aliexpress.logistics.buyer.freight.get`), automated order placement (`aliexpress.trade.buy.placeorder`), and real-time logistics tracking (`queryTrackingInfo`).
+  - **Autonomous Mining & 24-Hour Flash Cycle (`ProductMiningServiceInterface`):** Smart curation prioritizing Brazil domestic warehouse inventory, dynamic `USD → BRL` currency conversion, AI copywriting enrichment, recent-update sorting (`updated_desc`), storefront 24h countdown timer synchronization, and HTTP anti-cache policies (`CachePolicy`).
+  - **Complete Customer Portal (`/minha-conta`, `/entrar`, `/cadastro`):**
+    - **🛰️ Built-In Shipment Tracking:** Interactive 5-stage delivery progress bar inside the customer account with direct links to **Correios**, **Cainiao Global**, and live AliExpress SDK tracking events.
+    - **💬 Complaints, Notes & Questions with Optional Linking:** Ticket submission with secure photo/PDF uploads (up to 4 files with magic-byte validation) and optional linking of an account order, manual order/tracking code (`manual_order_ref`), or store catalog product (`catalog_product_id`), automatically resolving product and supplier metadata (`BR`/`CN`) even before payment settlement.
+  - **Admin Customer CRM, SLA Monitoring & Bilingual Supplier Mediation (`/admin/dropship`):**
+    - **👥 Customers & Buyers (`/admin/dropship/customers`):** CRM directory (mirroring Academy's Students & Enrollments view) with search by name/email/CPF, order & ticket metrics, account status controls, and recent customer tickets.
+    - **📦 Orders & 1-Click Supplier Mediation (`/admin/dropship/orders`):** Delivery SLA progress bars and a single-click mediation button (`SellerMediationService`) that automatically translates customer disputes into **Simplified Chinese (`zh-CN`)** for international suppliers (`CN`) or **Portuguese (`pt-BR`)** for domestic suppliers (`BR`).
+- **Native Theme Isolation in Flex Builder (`"flex_builder": false`):**
+  - Added `ThemeDiscoveryService::supportsFlexBuilder()` and `ThemePartInterface::TYPE_PAGE`. Dedicated storefront themes such as `rachidd_store` keep their native header and footer isolated from Flex Builder part overrides, displaying an informational banner inside `/admin/builder`.
+
+### Fixed
+- **HTML Documentation Links (`docs/index.html`, `docs/index_en.html`):** Replaced all links pointing to external `.md` files with native HTML documentation pages (`domain-drop_en.html`, `ai-contract-guide_en.html`, `flex-builder_en.html`, and Portuguese counterparts) so every link opens cleanly in any web browser and on GitHub Pages without 404 errors.
+
 ## [2.6.0] - 2026-11-06
 ### Added
 - **DomainCommerce & Native Gateways (Mercado Pago, PayPal, Stripe, and Affiliates):**

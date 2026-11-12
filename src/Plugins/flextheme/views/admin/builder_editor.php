@@ -394,6 +394,15 @@ body.is-resizing-sidebar iframe {
         </div>
     </header>
 
+    <?php if (!($activeThemeSupportsFlexBuilder ?? true)): ?>
+        <div style="background: rgba(245, 158, 11, 0.16); border-bottom: 1px solid rgba(245, 158, 11, 0.45); color: #fde68a; padding: 8px 18px; font-size: 12.5px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <span>
+                🔒 <strong>Aviso de Isolamento:</strong> O tema ativo (<code><?= htmlspecialchars($activeTheme ?? '') ?></code>) possui cabeçalho e rodapé nativos próprios e <strong>não faz parte da edição do Flex Builder / Builder Flex</strong>. As edições aqui ficam isoladas para temas FSE compatíveis.
+            </span>
+            <a href="<?= htmlspecialchars($baseUrl ?? '') ?>/admin/builder" style="color: #fbbf24; font-weight: 700; text-decoration: underline;">Voltar à Lista</a>
+        </div>
+    <?php endif; ?>
+
     <!-- MAIN WORKSPACE -->
     <main id="studio-workspace">
         

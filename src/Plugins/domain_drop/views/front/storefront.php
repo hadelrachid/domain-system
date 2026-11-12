@@ -78,7 +78,13 @@
         border-color: rgba(212,175,55,0.45);
     }
 
-    /* 100% Responsividade para Mobile e Tablet */
+    /* 100% Responsividade para Mobile (1 coluna) e Tablet (2 colunas) */
+    @media (max-width: 900px) {
+        .store-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+    }
     @media (max-width: 768px) {
         .store-combobox-toolbar {
             flex-direction: column;
@@ -88,45 +94,43 @@
         }
         .store-combobox-select {
             width: 100%;
-            min-width: 0;
+            min-width: 0 !important;
             font-size: 14px;
         }
     }
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
         .store-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
         .store-card h3 {
-            font-size: 13px !important;
-            line-height: 1.3 !important;
+            font-size: 15px !important;
+            line-height: 1.4 !important;
         }
         .store-card-price {
-            font-size: 17px !important;
+            font-size: 21px !important;
         }
         .store-card-body {
-            padding: 12px !important;
+            padding: 16px !important;
         }
         .store-card-img-box {
-            height: 170px !important;
+            height: 220px !important;
+        }
+        .store-card-actions a {
+            height: 40px !important;
+            font-size: 12.5px !important;
         }
         .store-hero-banner {
             padding: 22px 14px;
         }
     }
-    @media (max-width: 520px) {
+    @media (max-width: 340px) {
         .store-card-actions {
             flex-direction: column;
-            gap: 6px !important;
+            gap: 8px !important;
         }
         .store-card-actions a {
             width: 100%;
-            height: 34px !important;
-        }
-    }
-    @media (max-width: 360px) {
-        .store-grid {
-            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -210,10 +214,11 @@
 
     <script>
     (function() {
-        var remainingSeconds = <?= $remSeconds ?>;
+        var remainingSeconds = <?= (int)($remSeconds ?? 0) ?>;
         var hElem = document.getElementById('dropTimerH');
         var mElem = document.getElementById('dropTimerM');
         var sElem = document.getElementById('dropTimerS');
+        var countdownInterval = null;
 
         function updateCountdown() {
             if (remainingSeconds <= 0) {
@@ -222,9 +227,12 @@
                 if (sElem) sElem.textContent = '00';
                 var container = document.getElementById('drop24hCountdown');
                 if (container) {
-                    container.innerHTML = '<span style="color:#FFE082; font-weight:700; font-size:12px;">🔄 Renovando tendências...</span>';
+                    container.innerHTML = '<span style="color:#FFE082; font-weight:700; font-size:12px;">✨ Curadoria Diária Ativa</span>';
                 }
-                setTimeout(function() { window.location.reload(); }, 3000);
+                if (countdownInterval !== null) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
                 return;
             }
 
@@ -239,7 +247,11 @@
             if (sElem) sElem.textContent = String(s).padStart(2, '0');
         }
 
-        setInterval(updateCountdown, 1000);
+        if (remainingSeconds <= 0) {
+            updateCountdown();
+        } else {
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
     })();
     </script>
 

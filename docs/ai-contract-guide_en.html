@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AI Contract Guide - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index_en.html">&larr; Back to Home</a></li>
+            <li><a href="contratos_en.html">SOLID Contracts &rarr;</a></li>
+            <li style="margin-left:auto"><a href="ai-contract-guide.html" class="lang-toggle">🇧🇷 Português</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>🤖 Master AI Contract Guide</h1>
+        <p>Architectural Guidelines for Safe AI-Assisted Plugin &amp; Theme Generation (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Why an AI Contract Guide?</h2>
+        <p><strong>Domain-System</strong> is architected to work seamlessly with AI coding assistants (Gemini, Claude, ChatGPT, Copilot, Cursor). To ensure AI-generated code strictly respects our <strong>SOLID</strong> and <strong>Clean Architecture</strong> boundaries, every extension follows explicit interface contracts.</p>
+
+        <h2>1. Non-Negotiable Architectural Rules</h2>
+        <ul>
+            <li><strong>Zero Superglobals in Controllers:</strong> Never access <code>$_GET</code>, <code>$_POST</code>, <code>$_SESSION</code>, <code>$_FILES</code>, or <code>$_SERVER</code> directly inside Controllers. Always use constructor-injected <code>Request</code> (<code>$request-&gt;input()</code>, <code>$request-&gt;json()</code>) and <code>SessionManagerInterface</code> (enforced by <code>NoSuperglobalsInControllersTest</code>).</li>
+            <li><strong>Dependency Inversion (DIP):</strong> Services and Controllers depend strictly on interfaces under <code>Contracts/</code>, never on concrete PDO repositories or raw external HTTP clients.</li>
+            <li><strong>Ring Isolation (Ring 0 vs. Ring 3):</strong> Plugins in <code>src/Plugins/</code> (Ring 3) interact with the Kernel (Ring 0) exclusively via <code>OsExtensionInterface</code> (<code>osRegister</code> and <code>osBoot</code>) and hooks.</li>
+            <li><strong>Database-Agnostic SQL (MySQL &amp; SQLite):</strong> PDO repositories must use standard SQL compatible with both MySQL/MariaDB (production) and in-memory SQLite (PHPUnit test suite).</li>
+        </ul>
+
+        <h2>2. CLI Boilerplate Generator</h2>
+        <p>To scaffold a compliant plugin structure automatically, run:</p>
+        <pre><code>php os-cli.php make:plugin my_plugin</code></pre>
+        <p>This generates <code>plugin.json</code> (version <code>2.7.0</code> / <code>os_version: 2.7</code>), <code>Plugin.php</code> implementing <code>OsExtensionInterface</code>, and the auto-discovered manual module <code>manual/module.php</code> (<code>ManualModuleInterface</code>).</p>
+
+        <h2>3. Standard Plugin Directory Tree</h2>
+        <pre><code>src/Plugins/my_plugin/
+├── plugin.json
+├── Plugin.php
+├── Contracts/
+│   └── MyRepositoryInterface.php
+├── Repositories/
+│   └── PdoMyRepository.php
+├── Services/
+│   └── MyService.php
+├── Controllers/
+│   └── MyController.php
+├── manual/
+│   └── module.php
+└── views/
+    ├── admin/
+    └── front/</code></pre>
+
+        <h2>4. Automated Verification</h2>
+        <p>Before deploying any AI-assisted change, run the architecture and unit test suites:</p>
+        <pre><code>php phpunit.phar tests/Architecture
+php phpunit.phar</code></pre>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Contract-driven architecture verified by automated tests.
+    </footer>
+</body>
+
+</html>

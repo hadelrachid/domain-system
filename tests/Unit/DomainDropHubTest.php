@@ -837,6 +837,9 @@ class DomainDropHubTest extends TestCase
         $this->assertSame('1005006093867086', $scraped->sourceId);
         $this->assertStringContainsString('Drone Dobravel 4K', $scraped->rawTitle);
         $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg', $scraped->mainImageUrl);
+        $this->assertSame(0, $scraped->ordersCount);
+        $this->assertSame(0.0, $scraped->rating);
+        $this->assertSame('nao', $scraped->attributes['Vendas_Informadas'] ?? null);
 
         $apiClient = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
         $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
@@ -1034,5 +1037,265 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('Política de Envio', $policyHtml);
         $this->assertStringContainsString('Estoque Nacional no Brasil', $policyHtml);
         $this->assertStringContainsString('Remessa Conforme', $policyHtml);
+    }
+
+    public function testProductMiningServiceDoesNotInventOrdersAndDistinguishesUnknownFromZero(): void
+    {
+        $payload = [
+            'data' => [
+                'data' => [
+                    'root' => [
+                        'fields' => [
+                            'mods' => [
+                                'itemList' => [
+                                    'content' => [
+                                        [
+                                            'productId' => '1005001111111111',
+                                            'title'     => ['displayTitle' => 'Produto Sem Dados De Venda'],
+                                            'image'     => ['imgUrl' => '//ae-pic-a1.aliexpress-media.com/kf/img1.jpg'],
+                                            'prices'    => ['salePrice' => ['minPrice' => 89.90]],
+                                            'evaluation'=> ['starRating' => 4.7],
+                                            // Sem bloco 'trade' -> vendas desconhecidas
+                                        ],
+                                        [
+                                            'productId' => '1005002222222222',
+                                            'title'     => ['displayTitle' => 'Produto Com Zero Vendas Confirmado'],
+                                            'image'     => ['imgUrl' => '//ae-pic-a1.aliexpress-media.com/kf/img2.jpg'],
+                                            'prices'    => ['salePrice' => ['minPrice' => 59.90]],
+                                            'evaluation'=> ['starRating' => 4.5],
+                                            'trade'     => ['tradeDesc' => '0 vendidos'],
+                                        ],
+                                        [
+                                            'productId' => '1005003333333333',
+                                            'title'     => ['displayTitle' => 'Produto Com Vendas Reais'],
+                                            'image'     => ['imgUrl' => '//ae-pic-a1.aliexpress-media.com/kf/img3.jpg'],
+                                            'prices'    => ['salePrice' => ['minPrice' => 129.90]],
+                                            'evaluation'=> ['starRating' => 4.9],
+                                            'trade'     => ['tradeDesc' => '1.250 vendidos'],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $fakeHtml = '<script>window._dida_config_._init_data_ = ' . json_encode($payload) . ';</script>';
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $mining = new class($mockApi, $converter, $enricher, $repo, $fakeHtml) extends ProductMiningService {
+            public function __construct(
+                AliExpressApiClientInterface $apiClient,
+                \DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface $currencyConverter,
+                \DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface $aiEnricher,
+                \DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface $repository,
+                private readonly string $stubHtml
+            ) {
+                parent::__construct($apiClient, $currencyConverter, $aiEnricher, $repository);
+            }
+
+            protected function fetchLiveSearchHtml(string $searchUrl): ?string
+            {
+                return $this->stubHtml;
+            }
+
+            public function runLiveSearchTest(string $category, int $limit, bool $autoPersist): array
+            {
+                return $this->mineLiveFromAliExpressSearch($category, $limit, $autoPersist);
+            }
+        };
+
+        $items = $mining->runLiveSearchTest('Eletrônicos & Gadget', 5, false);
+
+        $this->assertCount(3, $items);
+
+        // 1. Vendas desconhecidas -> não inventa via rand(), mantém 0 e marca como não informadas
+        $this->assertSame(0, $items[0]->ordersCount);
+        $this->assertSame('nao', $items[0]->attributes['Vendas_Informadas'] ?? null);
+        $this->assertStringContainsString('vendas não informadas', (string)($items[0]->attributes['Avaliações'] ?? ''));
+
+        // 2. Zero vendas explícito -> mantém 0 e marca como informadas ('0 vendidos')
+        $this->assertSame(0, $items[1]->ordersCount);
+        $this->assertSame('sim', $items[1]->attributes['Vendas_Informadas'] ?? null);
+        $this->assertStringContainsString('0 vendidos', (string)($items[1]->attributes['Avaliações'] ?? ''));
+
+        // 3. Vendas reais -> extrai 1250 corretamente
+        $this->assertSame(1250, $items[2]->ordersCount);
+        $this->assertSame('sim', $items[2]->attributes['Vendas_Informadas'] ?? null);
+        $this->assertStringContainsString('1250 vendidos', (string)($items[2]->attributes['Avaliações'] ?? ''));
+    }
+
+    public function testDomainDropDoesNotDisableSslPeerVerificationAnywhere(): void
+    {
+        $pluginRoot = dirname(__DIR__, 2) . '/src/Plugins/domain_drop';
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($pluginRoot));
+
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->getExtension() !== 'php') {
+                continue;
+            }
+            $content = (string)file_get_contents($file->getPathname());
+            $this->assertDoesNotMatchRegularExpression(
+                '/CURLOPT_SSL_VERIFYPEER\s*(?:,|=>)\s*(?:false|0)\b/i',
+                $content,
+                'Falha de segurança SSL em ' . $file->getPathname()
+            );
+        }
+
+        $miningSrc = (string)file_get_contents($pluginRoot . '/Services/ProductMiningService.php');
+        $scraperSrc = (string)file_get_contents($pluginRoot . '/Services/AliExpressLinkScraperService.php');
+        $this->assertMatchesRegularExpression('/CURLOPT_SSL_VERIFYPEER\s*,\s*true/', $miningSrc);
+        $this->assertMatchesRegularExpression('/CURLOPT_SSL_VERIFYHOST\s*,\s*2/', $miningSrc);
+        $this->assertMatchesRegularExpression('/CURLOPT_SSL_VERIFYPEER\s*,\s*true/', $scraperSrc);
+        $this->assertMatchesRegularExpression('/CURLOPT_SSL_VERIFYHOST\s*,\s*2/', $scraperSrc);
+    }
+
+    public function testStorefrontDoesNotTriggerMiningDuringGetEvenWhenCycleIsDue(): void
+    {
+        $catalogRepo = new PdoDropshipCatalogRepository($this->pdo);
+        $catalogRepo->save(new DropshipProductDto(
+            aliexpressId: '1005009998887771',
+            title: 'Produto Vitrine Sem LazyCron',
+            slug: 'produto-vitrine-sem-lazycron',
+            costPriceUsd: 10.00,
+            salePriceBrl: 99.90,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/sample.jpg',
+            category: 'Eletrônicos & Gadget',
+            status: 'published'
+        ));
+
+        $miningMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+        $miningMock->expects($this->once())
+            ->method('getDailyCycleInfo')
+            ->willReturn([
+                'formatted_remaining' => '00:00:00',
+                'seconds_remaining'   => 0,
+                'is_due'              => true,
+                'auto_sync_enabled'   => true,
+            ]);
+        $miningMock->expects($this->never())->method('runDailyAutomatedRotation');
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $catalogRepo,
+            miningService: $miningMock
+        );
+
+        $response = $controller->storefront(new \DomainSystem\Core\Http\Request([], [], ['REQUEST_METHOD' => 'GET']));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('Produto Vitrine Sem LazyCron', $response->getContent());
+    }
+
+    public function testDailyAutomatedRotationPreventsConcurrentExecutionViaLock(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/drop_test_lock_' . uniqid();
+        @mkdir($tmpDir . '/config/plugins', 0777, true);
+        $tmpConfigFile = $tmpDir . '/config/plugins/domain_drop.json';
+        $lockFile = $tmpConfigFile . '.rotation.lock';
+
+        $apiClient = $this->createMock(AliExpressApiClientInterface::class);
+        $apiClient->method('searchProducts')->willReturn([]);
+        $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $mining = new ProductMiningService(
+            apiClient: $apiClient,
+            currencyConverter: $converter,
+            aiEnricher: $enricher,
+            repository: $repo,
+            configFilePath: $tmpConfigFile
+        );
+
+        // Outro processo adquire o lock exclusivo antes da rotação
+        $externalLock = fopen($lockFile, 'c+');
+        $this->assertNotFalse($externalLock);
+        $this->assertTrue(flock($externalLock, LOCK_EX | LOCK_NB));
+
+        $blockedResult = $mining->runDailyAutomatedRotation(2);
+        $this->assertFalse($blockedResult['success']);
+        $this->assertTrue($blockedResult['skipped']);
+        $this->assertSame('rotation_already_running', $blockedResult['reason']);
+        $this->assertSame(0, $blockedResult['total_mined']);
+
+        // Libera lock e confirma execução normal na sequência
+        flock($externalLock, LOCK_UN);
+        fclose($externalLock);
+
+        $okResult = $mining->runDailyAutomatedRotation(1);
+        $this->assertTrue($okResult['success']);
+        $this->assertFalse($okResult['skipped']);
+        $this->assertGreaterThan(0, $okResult['total_mined']);
+
+        @unlink($lockFile);
+        @unlink($tmpConfigFile);
+        @rmdir($tmpDir . '/config/plugins');
+        @rmdir($tmpDir . '/config');
+        @rmdir($tmpDir);
+    }
+
+    public function testScraperExtractsRealSalesAndNeverInventsFixed1250(): void
+    {
+        $scraper = new \DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService();
+        $htmlWithRealMetrics = '<html><head><meta property="og:title" content="Teclado Mecânico Compacto - AliExpress"><meta property="og:image" content="https://ae-pic-a1.aliexpress-media.com/kf/Steclado123.jpg"><link rel="canonical" href="https://pt.aliexpress.com/item/1005009998880001.html"></head><body><script>window.data={"tradeCount":342,"averageStar":"4.7"};</script></body></html>';
+
+        $parsed = $scraper->parseRawHtml($htmlWithRealMetrics);
+        $this->assertNotNull($parsed);
+        $this->assertSame(342, $parsed->ordersCount);
+        $this->assertSame(4.7, $parsed->rating);
+        $this->assertSame('sim', $parsed->attributes['Vendas_Informadas'] ?? null);
+    }
+
+    public function testStorefrontResponsiveGridUsesOneColumnOnMobileAndTwoOnTablet(): void
+    {
+        $viewPath = dirname(__DIR__, 2) . '/src/Plugins/domain_drop/views/front/storefront.php';
+        $css = (string)file_get_contents($viewPath);
+
+        $this->assertMatchesRegularExpression('/@media\s*\(max-width:\s*900px\)\s*\{[^}]*\.store-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*1fr\)/s', $css);
+        $this->assertMatchesRegularExpression('/@media\s*\(max-width:\s*640px\)\s*\{[^}]*\.store-grid\s*\{[^}]*grid-template-columns:\s*1fr/s', $css);
+    }
+
+    public function testListUpdatedDescPrioritizesMostRecentlyUpdatedOlderIdProduct(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $older = new DropshipProductDto(
+            aliexpressId: '9900001',
+            title: 'Produto Antigo Atualizado Agora',
+            slug: 'produto-antigo-atualizado-agora',
+            costPriceUsd: 10.0,
+            salePriceBrl: 120.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/older.jpg',
+            category: 'Eletrônicos',
+            status: 'published'
+        );
+        $newer = new DropshipProductDto(
+            aliexpressId: '9900002',
+            title: 'Produto Mais Novo Sem Atualizacao Recente',
+            slug: 'produto-mais-novo-sem-atualizacao',
+            costPriceUsd: 12.0,
+            salePriceBrl: 150.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/newer.jpg',
+            category: 'Eletrônicos',
+            status: 'published'
+        );
+
+        $olderId = $repo->save($older);
+        $newerId = $repo->save($newer);
+
+        $this->pdo->prepare("UPDATE domain_drop_catalog SET updated_at = '2026-11-12 01:00:00' WHERE id = ?")->execute([$olderId]);
+        $this->pdo->prepare("UPDATE domain_drop_catalog SET updated_at = '2026-11-11 01:00:00' WHERE id = ?")->execute([$newerId]);
+
+        $ordered = $repo->list(['status' => 'published', 'sort' => 'updated_desc'], 10);
+
+        $this->assertGreaterThanOrEqual(2, count($ordered));
+        $this->assertSame($olderId, $ordered[0]->id);
+        $this->assertSame($newerId, $ordered[1]->id);
     }
 }

@@ -41,8 +41,9 @@ class ThemeDiscoveryService implements ThemeDiscoveryServiceInterface
                 $themeJson = $dir . '/theme.json';
                 $json = file_exists($themeJson) ? json_decode((string)file_get_contents($themeJson), true) : [];
                 $themes[] = [
-                    'folder' => $folder,
-                    'name'   => is_array($json) && isset($json['name']) && is_string($json['name']) ? $json['name'] : ucfirst($folder),
+                    'folder'                => $folder,
+                    'name'                  => is_array($json) && isset($json['name']) && is_string($json['name']) ? $json['name'] : ucfirst($folder),
+                    'supports_flex_builder' => $this->supportsFlexBuilder($folder),
                 ];
             }
         }
@@ -59,13 +60,54 @@ class ThemeDiscoveryService implements ThemeDiscoveryServiceInterface
                 $themeJson = $dir . '/theme.json';
                 $json = file_exists($themeJson) ? json_decode((string)file_get_contents($themeJson), true) : [];
                 $themes[] = [
-                    'folder' => $folder,
-                    'name'   => is_array($json) && isset($json['name']) && is_string($json['name']) ? $json['name'] : ucfirst($folder),
+                    'folder'                => $folder,
+                    'name'                  => is_array($json) && isset($json['name']) && is_string($json['name']) ? $json['name'] : ucfirst($folder),
+                    'supports_flex_builder' => $this->supportsFlexBuilder($folder),
                 ];
             }
         }
 
         return $themes;
+    }
+
+    /**
+     * Verifica se o tema possui ligação com o motor de Header/Footer dinâmico do Flex Builder.
+     * Temas nativos independentes (como rachidd_store) declaram "flex_builder": false ou não usam ThemePartRendererInterface no layout.
+     */
+    public function supportsFlexBuilder(string $themeFolder): bool
+    {
+        $folder = basename(trim($themeFolder));
+        if ($folder === '') {
+            return false;
+        }
+
+        $candidateDirs = [
+            $this->basePath . '/themes/' . $folder,
+            $this->basePath . '/src/Plugins/flextheme/themes/' . $folder,
+        ];
+
+        foreach ($candidateDirs as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+            $themeJson = $dir . '/theme.json';
+            if (is_file($themeJson)) {
+                $json = json_decode((string)file_get_contents($themeJson), true);
+                if (is_array($json) && array_key_exists('flex_builder', $json)) {
+                    return (bool)$json['flex_builder'];
+                }
+            }
+
+            $mainLayout = $dir . '/layouts/main.php';
+            if (is_file($mainLayout)) {
+                $layoutSrc = (string)file_get_contents($mainLayout);
+                return str_contains($layoutSrc, 'ThemePartRendererInterface')
+                    || str_contains($layoutSrc, 'renderHeader(')
+                    || str_contains($layoutSrc, 'renderFooter(');
+            }
+        }
+
+        return true;
     }
 
     public function getActiveThemeFolder(): string

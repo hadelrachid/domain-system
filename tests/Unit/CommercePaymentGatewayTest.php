@@ -217,6 +217,9 @@ final class CommercePaymentGatewayTest extends TestCase
 
         $this->assertTrue($checkoutData['success']);
         $this->assertSame('pending', $checkoutData['status']);
+        $this->assertTrue($checkoutData['demo_mode'] ?? false);
+        $this->assertTrue($checkoutData['simulated'] ?? false);
+        $this->assertStringContainsString('DEMONSTRAÇÃO', (string)($checkoutData['warning'] ?? ''));
         $orderRef = $checkoutData['order_ref'];
         $this->assertNotEmpty($orderRef);
 
@@ -422,5 +425,244 @@ final class CommercePaymentGatewayTest extends TestCase
         $this->assertTrue($dataPaid['paid']);
         $this->assertSame('paid', $dataPaid['status']);
         $this->assertStringContainsString('/aluno/painel', $dataPaid['redirect_url']);
+    }
+
+    public function testMercadoPagoDemoPixIsExplicitlyMarkedAsSimulated(): void
+    {
+        $mp = new MercadoPagoGateway(settings: $this->settings);
+
+        $result = $mp->processPayment(
+            ['order_ref' => 'ORD_DEMO_PIX_01', 'total' => 75.00, 'student_name' => 'Teste Demo'],
+            ['method' => 'pix']
+        );
+
+        $this->assertTrue($result->success);
+        $this->assertSame('pending', $result->status);
+        $this->assertSame('pix', $result->paymentMethod);
+        $this->assertStringStartsWith('MP_DEMO_PIX_', (string)$result->transactionId);
+        $this->assertStringContainsString('MODO DEMONSTRAÇÃO (SIMULADO)', $result->message);
+        $this->assertStringContainsString('DEMO-PIX-', (string)$result->pixCopiaECola);
+        $this->assertTrue((bool)($result->rawPayload['demo_mode'] ?? false));
+        $this->assertTrue((bool)($result->rawPayload['simulated'] ?? false));
+    }
+
+    public function testMercadoPagoGeneratePixResultWithoutKeyInProductionReturnsFailure(): void
+    {
+        $prodSettings = $this->createMock(CommerceSettingsInterface::class);
+        $prodSettings->method('get')->willReturnMap([
+            ['mercadopago_pix_key', null, ''],
+            ['pix_key', null, ''],
+            ['commerce_demo_mode', false, false],
+        ]);
+
+        // Cenário 1: settings de produção explícito (demo_mode = false) e sem chave Pix
+        $mpProd = new MercadoPagoGateway(settings: $prodSettings);
+        $resProd = $mpProd->generatePixResult('ORD_PROD_NOKEY_1', 120.00, 'Cliente Real');
+
+        $this->assertFalse($resProd->success);
+        $this->assertSame('failed', $resProd->status);
+        $this->assertNull($resProd->pixCopiaECola);
+        $this->assertStringContainsString('Pix indisponível', $resProd->message);
+
+        // Cenário 2: gateway sem settings (ambientes sem flag de demo explícita) também não inventa MD5
+        $mpNoSettings = new MercadoPagoGateway('APP_USR-PROD-TOKEN', 'APP_USR-PROD-KEY');
+        $resNoSettings = $mpNoSettings->generatePixResult('ORD_PROD_NOKEY_2', 120.00, 'Cliente Real');
+
+        $this->assertFalse($resNoSettings->success);
+        $this->assertSame('failed', $resNoSettings->status);
+        $this->assertNull($resNoSettings->pixCopiaECola);
+    }
+
+    public function testMercadoPagoProductionPixReturnsFailureWhenApiOmitsQrCodeOrThrows(): void
+    {
+        $prodSettings = $this->createMock(CommerceSettingsInterface::class);
+        $prodSettings->method('get')->willReturnMap([
+            ['mercadopago_access_token', null, 'APP_USR-1234567890-PROD-TOKEN'],
+            ['mercadopago_public_key', null, 'APP_USR-1234567890-PROD-KEY'],
+            ['mercadopago_sandbox', false, false],
+            ['commerce_demo_mode', false, false],
+        ]);
+
+        // 1. API responde sem point_of_interaction.transaction_data.qr_code
+        $mpMissingQr = new class('APP_USR-1234567890-PROD-TOKEN', 'APP_USR-1234567890-PROD-KEY', $prodSettings) extends MercadoPagoGateway {
+            protected function sendHttpRequest(string $method, string $url, array $data = []): array
+            {
+                return [
+                    'id'      => 998877,
+                    'status'  => 'rejected',
+                    'message' => 'Collector not enabled for Pix',
+                ];
+            }
+        };
+
+        $resMissingQr = $mpMissingQr->processPayment(
+            ['order_ref' => 'ORD_LIVE_FAIL_1', 'total' => 149.90, 'student_email' => 'cliente@real.com', 'student_name' => 'Cliente Real'],
+            ['method' => 'pix', 'payer_cpf' => '12345678901']
+        );
+
+        $this->assertFalse($resMissingQr->success);
+        $this->assertSame('failed', $resMissingQr->status);
+        $this->assertNull($resMissingQr->pixCopiaECola);
+        $this->assertStringContainsString('Collector not enabled for Pix', $resMissingQr->message);
+
+        // 2. API lança exceção de comunicação
+        $mpThrows = new class('APP_USR-1234567890-PROD-TOKEN', 'APP_USR-1234567890-PROD-KEY', $prodSettings) extends MercadoPagoGateway {
+            protected function sendHttpRequest(string $method, string $url, array $data = []): array
+            {
+                throw new \RuntimeException('Falha de conexão com a API do Mercado Pago (HTTP 503).');
+            }
+        };
+
+        $resThrows = $mpThrows->processPayment(
+            ['order_ref' => 'ORD_LIVE_FAIL_2', 'total' => 149.90, 'student_email' => 'cliente@real.com', 'student_name' => 'Cliente Real'],
+            ['method' => 'pix', 'payer_cpf' => '12345678901']
+        );
+
+        $this->assertFalse($resThrows->success);
+        $this->assertSame('failed', $resThrows->status);
+        $this->assertNull($resThrows->pixCopiaECola);
+        $this->assertStringContainsString('HTTP 503', $resThrows->message);
+    }
+
+    public function testMercadoPagoProductionPixSuccessReturnsOfficialQrCode(): void
+    {
+        $prodSettings = $this->createMock(CommerceSettingsInterface::class);
+        $prodSettings->method('get')->willReturnMap([
+            ['mercadopago_access_token', null, 'APP_USR-1234567890-PROD-TOKEN'],
+            ['mercadopago_public_key', null, 'APP_USR-1234567890-PROD-KEY'],
+            ['mercadopago_sandbox', false, false],
+            ['commerce_demo_mode', false, false],
+        ]);
+
+        $mpLive = new class('APP_USR-1234567890-PROD-TOKEN', 'APP_USR-1234567890-PROD-KEY', $prodSettings) extends MercadoPagoGateway {
+            protected function sendHttpRequest(string $method, string $url, array $data = []): array
+            {
+                return [
+                    'id'                   => 5544332211,
+                    'status'               => 'pending',
+                    'point_of_interaction' => [
+                        'transaction_data' => [
+                            'qr_code'        => '00020101021226800014BR.GOV.BCB.PIX_OFICIAL_MP',
+                            'qr_code_base64' => 'iVBORw0KGgoAAAANSUhEUg==',
+                        ],
+                    ],
+                ];
+            }
+        };
+
+        $res = $mpLive->processPayment(
+            ['order_ref' => 'ORD_LIVE_OK_1', 'total' => 89.90, 'student_email' => 'cliente@real.com', 'student_name' => 'Cliente Real'],
+            ['method' => 'pix', 'payer_cpf' => '12345678901']
+        );
+
+        $this->assertTrue($res->success);
+        $this->assertSame('pending', $res->status);
+        $this->assertSame('5544332211', $res->transactionId);
+        $this->assertSame('00020101021226800014BR.GOV.BCB.PIX_OFICIAL_MP', $res->pixCopiaECola);
+        $this->assertSame('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==', $res->pixQrCode);
+    }
+
+    public function testMercadoPagoOrderWebhookUsesOrderInfoForTotalAndStatus(): void
+    {
+        $prodSettings = $this->createMock(CommerceSettingsInterface::class);
+        $prodSettings->method('get')->willReturnMap([
+            ['mercadopago_access_token', null, 'APP_USR-1234567890-PROD-TOKEN'],
+            ['mercadopago_public_key', null, 'APP_USR-1234567890-PROD-KEY'],
+            ['mercadopago_sandbox', false, false],
+            ['commerce_demo_mode', false, false],
+        ]);
+
+        $mpOrder = new class('APP_USR-1234567890-PROD-TOKEN', 'APP_USR-1234567890-PROD-KEY', $prodSettings) extends MercadoPagoGateway {
+            protected function sendHttpRequest(string $method, string $url, array $data = []): array
+            {
+                return [
+                    'id'                 => 'ORD_MP_888',
+                    'external_reference' => 'ORD_LOCAL_777',
+                    'status'             => 'paid',
+                    'total_amount'       => 197.50,
+                ];
+            }
+        };
+
+        $req = new Request(
+            [],
+            [],
+            ['REQUEST_METHOD' => 'POST'],
+            [],
+            [],
+            ['type' => 'order', 'data' => ['id' => 'ORD_MP_888']]
+        );
+        $parsed = $mpOrder->handleWebhook($req);
+
+        $this->assertIsArray($parsed);
+        $this->assertSame('ORD_LOCAL_777', $parsed['order_ref']);
+        $this->assertSame('approved', $parsed['status']);
+        $this->assertSame('ORD_MP_888', $parsed['transaction_id']);
+        $this->assertEqualsWithDelta(197.50, $parsed['total'], 0.001);
+        $this->assertSame('mercadopago', $parsed['gateway']);
+    }
+
+    public function testMercadoPagoCreditCardWithoutTokenRedirectsToCheckoutPro(): void
+    {
+        $prodSettings = $this->createMock(CommerceSettingsInterface::class);
+        $prodSettings->method('get')->willReturnMap([
+            ['mercadopago_access_token', null, 'APP_USR-PROD-TOKEN'],
+            ['mercadopago_public_key', null, 'APP_USR-PROD-KEY'],
+            ['mercadopago_sandbox', false, false],
+            ['commerce_demo_mode', false, false],
+        ]);
+
+        $calledUrls = [];
+        $mpCard = new class('APP_USR-PROD-TOKEN', 'APP_USR-PROD-KEY', $prodSettings, $calledUrls) extends MercadoPagoGateway {
+            private array $urls;
+            public function __construct(?string $t, ?string $p, ?CommerceSettingsInterface $s, array &$urls)
+            {
+                parent::__construct($t, $p, $s);
+                $this->urls = &$urls;
+            }
+            protected function sendHttpRequest(string $method, string $url, array $data = []): array
+            {
+                $this->urls[] = $url;
+                return [
+                    'id'         => 'PREF_CC_123',
+                    'init_point' => 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF_CC_123',
+                ];
+            }
+        };
+
+        $res = $mpCard->processPayment(
+            ['order_ref' => 'ORD_CC_1', 'total' => 149.00, 'student_email' => 'buyer@real.com', 'student_name' => 'Buyer'],
+            ['method' => 'credit_card']
+        );
+
+        $this->assertTrue($res->success);
+        $this->assertSame('pending', $res->status);
+        $this->assertStringContainsString('/checkout/preferences', $calledUrls[0] ?? '');
+        $this->assertStringContainsString('PREF_CC_123', (string)$res->redirectUrl);
+    }
+
+    public function testMercadoPagoDemoModeBlockedWhenAppEnvIsProduction(): void
+    {
+        $prevEnv = getenv('APP_ENV');
+        putenv('APP_ENV=production');
+        try {
+            $demoSettings = $this->createMock(CommerceSettingsInterface::class);
+            $demoSettings->method('get')->willReturnMap([
+                ['commerce_demo_mode', false, true],
+                ['mercadopago_pix_key', null, ''],
+                ['pix_key', null, ''],
+            ]);
+
+            $mp = new MercadoPagoGateway(settings: $demoSettings);
+            $res = $mp->processPayment(
+                ['order_ref' => 'ORD_ENV_PROD', 'total' => 50.00],
+                ['method' => 'pix']
+            );
+
+            $this->assertFalse($res->success);
+            $this->assertSame('failed', $res->status);
+        } finally {
+            putenv($prevEnv === false ? 'APP_ENV' : ('APP_ENV=' . $prevEnv));
+        }
     }
 }

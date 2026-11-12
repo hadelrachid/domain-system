@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\pages\Controllers;
 
 use DomainSystem\Core\Contracts\PageTreeRendererInterface;
+use DomainSystem\Core\Contracts\SiteStateInterface;
 use DomainSystem\Core\Contracts\ThemeManagerInterface;
 use DomainSystem\Core\Http\Response;
 use DomainSystem\Core\Theme\SafeThemeResolver;
@@ -19,19 +20,22 @@ class PageFrontController
     private SeoManagerInterface $seo;
     private ThemeManagerInterface $themeManager;
     private ?PageTreeRendererInterface $treeRenderer;
+    private ?SiteStateInterface $siteState;
 
     public function __construct(
         PageRepositoryInterface $pageRepo,
         ShortcodeManager $shortcodes,
         SeoManagerInterface $seo,
         ThemeManagerInterface $themeManager,
-        ?PageTreeRendererInterface $treeRenderer = null
+        ?PageTreeRendererInterface $treeRenderer = null,
+        ?SiteStateInterface $siteState = null
     ) {
         $this->pageRepo = $pageRepo;
         $this->shortcodes = $shortcodes;
         $this->seo = $seo;
         $this->themeManager = $themeManager;
         $this->treeRenderer = $treeRenderer;
+        $this->siteState = $siteState;
     }
 
     public function show(string $slug)
@@ -51,7 +55,29 @@ class PageFrontController
         if (!empty($page['theme']) && !empty($page['template_file'])) {
             $themesBaseDir = DOMAIN_SYSTEM_ROOT . '/src/Plugins/flextheme/themes';
             $resolver = new SafeThemeResolver($themesBaseDir);
-            $themeRoot = $resolver->resolveThemePath((string)$page['theme']);
+            $fallbackThemeRoot = $resolver->resolveThemePath((string)$page['theme']);
+            $activeThemePath = $this->themeManager->getActiveThemePath();
+
+            $candidateThemeRoots = [];
+            if ($this->siteState !== null) {
+                $siteThemeName = trim($this->siteState->getActiveTheme());
+                if ($siteThemeName !== '' && $resolver->themeExists($siteThemeName)) {
+                    $siteRealRoot = realpath($resolver->resolveThemePath($siteThemeName));
+                    if ($siteRealRoot !== false && is_dir($siteRealRoot)) {
+                        $candidateThemeRoots[] = $siteRealRoot;
+                    }
+                }
+            }
+
+            $activeRealRoot = ($activeThemePath !== '') ? realpath($activeThemePath) : false;
+            if ($activeRealRoot !== false && is_dir($activeRealRoot) && !in_array($activeRealRoot, $candidateThemeRoots, true)) {
+                $candidateThemeRoots[] = $activeRealRoot;
+            }
+            $fallbackRealRoot = ($fallbackThemeRoot !== '') ? realpath($fallbackThemeRoot) : false;
+            if ($fallbackRealRoot !== false && is_dir($fallbackRealRoot) && !in_array($fallbackRealRoot, $candidateThemeRoots, true)) {
+                $candidateThemeRoots[] = $fallbackRealRoot;
+            }
+
             $templateFile = $page['template_file'];
 
             // Backward compatibility: se não tiver prefixo, assume templates/
@@ -61,18 +87,25 @@ class PageFrontController
 
             if (str_starts_with($templateFile, 'pages/')) {
                 // MODO PÁGINA ESTÁTICA (Bypassa o renderizador de templates)
-                $filePath = $themeRoot . '/' . $templateFile;
-                if (!file_exists($filePath)) {
+                $matchedFile = null;
+                $matchedRoot = null;
+                foreach ($candidateThemeRoots as $candidateRoot) {
+                    $filePath = $candidateRoot . '/' . $templateFile;
+                    if (file_exists($filePath)) {
+                        $matchedFile = $filePath;
+                        $matchedRoot = $candidateRoot;
+                        break;
+                    }
+                }
+
+                if ($matchedFile === null || $matchedRoot === null) {
                     return new Response("<h1>404 - Arquivo estático não encontrado no tema</h1>", 404);
                 }
 
-                $realPath = realpath($filePath);
-                $realThemeRoot = realpath($themeRoot);
-
+                $realPath = realpath($matchedFile);
                 if (
                     $realPath === false
-                    || $realThemeRoot === false
-                    || !str_starts_with($realPath, rtrim($realThemeRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
+                    || !str_starts_with($realPath, rtrim($matchedRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
                 ) {
                     return new Response("<h1>403 - Tentativa de acesso inválido</h1>", 403);
                 }
@@ -82,16 +115,27 @@ class PageFrontController
                 include $realPath;
                 $html = ob_get_clean();
             } else {
-                // MODO TEMPLATE (Usa o ThemeManager)
+                // MODO TEMPLATE (Usa o ThemeManager, priorizando override do tema ativo)
                 $templateName = str_replace('templates/', '', preg_replace('/\.php$/', '', $templateFile));
-                $templatesDir = $themeRoot . '/templates';
-                $candidateFile = $templatesDir . '/' . basename($templateName) . '.php';
+                $safeTemplateFile = basename($templateName) . '.php';
 
-                if (file_exists($candidateFile)) {
-                    try {
-                        $html = $this->themeManager->render($templateName, ['page' => $page], $templatesDir);
-                    } catch (\Throwable $e) {
-                        $html = null;
+                foreach ($candidateThemeRoots as $candidateRoot) {
+                    $templatesDir = $candidateRoot . '/templates';
+                    $candidateFile = $templatesDir . '/' . $safeTemplateFile;
+                    $realCandidate = file_exists($candidateFile) ? realpath($candidateFile) : false;
+
+                    if (
+                        $realCandidate !== false
+                        && str_starts_with($realCandidate, rtrim($candidateRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
+                    ) {
+                        try {
+                            $html = $this->themeManager->render($templateName, ['page' => $page], $templatesDir);
+                        } catch (\Throwable $e) {
+                            $html = null;
+                        }
+                        if ($html !== null) {
+                            break;
+                        }
                     }
                 }
             }

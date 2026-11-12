@@ -20,7 +20,7 @@ array_shift($args); // Remove o nome do script
 
 if (empty($args)) {
     echo "OS-CLI v2.4.0 - Domain System Sandbox\n";
-    echo "Comandos Suportados: ls, mkdir, rm, cat, touch, make:plugin, make:widget, system:check, system:status, system:update, system:rollback, system:health\n";
+    echo "Comandos Suportados: ls, mkdir, rm, cat, touch, make:plugin, make:widget, system:check, system:status, system:update, system:rollback, system:health, dropship:cycle\n";
     exit;
 }
 
@@ -271,6 +271,47 @@ PHP
         $result = $handler->execute($command, $cliArgs);
         echo $result['output'];
         exit($result['exitCode']);
+
+    case 'dropship:cycle':
+        $force = in_array('--force', $args, true);
+        $itemsPerCategory = 3;
+        foreach (array_slice($args, 1) as $arg) {
+            if (is_numeric($arg) && (int)$arg > 0) {
+                $itemsPerCategory = min(20, (int)$arg);
+                break;
+            }
+        }
+
+        $app = require __DIR__ . '/bootstrap.php';
+        $app->boot();
+        $container = $app->getContainer();
+
+        if (!$container->has(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class)) {
+            fwrite(STDERR, "Erro: Plugin domain_drop não está ativo ou registrado no container.\n");
+            exit(1);
+        }
+
+        /** @var \DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface $miningService */
+        $miningService = $container->make(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+        $cycleInfo = $miningService->getDailyCycleInfo();
+
+        if (!$force && empty($cycleInfo['auto_sync_enabled'])) {
+            echo "Ciclo diário ignorado: auto_sync_enabled está desativado.\n";
+            exit(0);
+        }
+        if (!$force && empty($cycleInfo['is_due'])) {
+            echo "Ciclo diário vigente. Próxima execução em {$cycleInfo['formatted_remaining']} ({$cycleInfo['next_cycle_date']}).\n";
+            exit(0);
+        }
+
+        $result = $miningService->runDailyAutomatedRotation($itemsPerCategory);
+        if (!empty($result['skipped'])) {
+            echo "Rotação ignorada ({$result['reason']}): outro processo já está executando o ciclo.\n";
+            exit(0);
+        }
+
+        echo "Rotação diária concluída em {$result['executed_date']}: {$result['total_mined']} produto(s) processado(s).\n";
+        exit(!empty($result['success']) ? 0 : 1);
 
     default:
         echo "Comando não reconhecido: {$command}\n";

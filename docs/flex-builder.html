@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Flex Builder FSE - Domain-System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">&larr; Voltar ao Início</a></li>
+            <li><a href="tutorial-theme.html">Construindo Temas &rarr;</a></li>
+            <li style="margin-left:auto"><a href="flex-builder_en.html" class="lang-toggle">🇺🇸 English</a></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h1>🏗️ Flex Builder FSE (Full Site Editing)</h1>
+        <p>Motor Visual em Blocos Semânticos, CSS Grid de 12 Colunas e Auto-Reflow Responsivo (v2.7.0)</p>
+    </header>
+
+    <div class="content">
+        <h2>Visão Geral</h2>
+        <p>O <strong>Flex Builder</strong> (<code>src/Core/Theme/Parts</code> + <code>src/Plugins/flextheme</code>) é o construtor visual de cabeçalhos (<code>header</code>), rodapés (<code>footer</code>) e seções centrais (<code>section</code>) do <strong>Domain-System</strong>. Ele foi projetado com compilação unificada para garantir paridade exata entre o editor ao vivo e a página pública renderizada.</p>
+
+        <h2>Principais Recursos</h2>
+        <ul>
+            <li><strong>Caminho Único de Compilação (<code>ThemePartCompilerInterface</code>):</strong> Tanto o preview do Studio quanto o frontend público passam pelo mesmo compilador, eliminando divergências visuais.</li>
+            <li><strong>Validação Estrutural Pré-Persistência (<code>ThemePartValidatorInterface</code>):</strong> Valida tipos de partes, presets de colunas e compatibilidade de blocos (<code>getAllowedPartTypes()</code>) antes de salvar.</li>
+            <li><strong>Visibilidade Responsiva em 4 Resoluções com Auto-Reflow:</strong> Controle individual por elemento em Desktop (100%), Laptop (1024px), Tablet (768px) e Mobile (375px). Quando todos os elementos de uma coluna ficam ocultos em uma resolução, a coluna colapsa automaticamente e o CSS Grid redistribui o espaço entre as colunas visíveis.</li>
+            <li><strong>Menus Hierárquicos &amp; Gaveta Mobile (<code>ds-mobile-drawer</code>):</strong> Construtor drag-and-drop horizontal de submenus e 8 estilos de botão hambúrguer customizáveis.</li>
+            <li><strong>Isolamento de Temas Nativos (<code>"flex_builder": false</code>):</strong> Quando um tema dedicado de e-commerce (como <code>rachidd_store</code> no <strong>DomainDrop</strong>) possui cabeçalho e rodapé nativos próprios, o Flex Builder detecta a diretiva via <code>ThemeDiscoveryService::supportsFlexBuilder()</code>, bloqueia a substituição acidental de cabeçalho/rodapé e exibe um aviso claro no editor.</li>
+        </ul>
+
+        <h2>Extensão via <code>BlockProviderInterface</code></h2>
+        <p>Qualquer plugin pode registrar blocos visuais próprios no Flex Builder sem modificar o núcleo, implementando <code>BlockInterface</code> e <code>BlockProviderInterface</code> (como o bloco de vitrine <code>DropshipShowcaseBlock</code> do <strong>DomainDrop</strong>).</p>
+    </div>
+
+    <footer>
+        &copy; 2026 Domain-System v2.7.0 — Flex Builder FSE &amp; Clean Architecture.
+    </footer>
+</body>
+
+</html>
