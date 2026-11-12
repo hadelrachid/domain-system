@@ -51,7 +51,9 @@ class LinkRegistry
 
         // --- FALLBACK DO KERNEL (LINKS OFICIAIS DO SO) ---
         if ($linkName === 'core.session') {
-            return $this->container->make(\DomainSystem\Core\Security\SessionManager::class);
+            return $this->container->has(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
+                ? $this->container->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
+                : $this->container->make(\DomainSystem\Core\Security\SessionManager::class);
         }
         if ($linkName === 'core.db') {
             return $this->container->make(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class);
@@ -73,6 +75,31 @@ class LinkRegistry
         }
         if ($linkName === 'core.events') {
             return $this->container->make(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        }
+        if ($linkName === 'core.theme.resolver') {
+            return $this->container->has(\DomainSystem\Core\Contracts\ThemePathResolverInterface::class)
+                ? $this->container->make(\DomainSystem\Core\Contracts\ThemePathResolverInterface::class)
+                : null;
+        }
+        if ($linkName === 'core.site.state') {
+            return $this->container->has(\DomainSystem\Core\Contracts\SiteStateInterface::class)
+                ? $this->container->make(\DomainSystem\Core\Contracts\SiteStateInterface::class)
+                : null;
+        }
+        if ($linkName === 'core.account.status') {
+            return $this->container->has(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class)
+                ? $this->container->make(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class)
+                : null;
+        }
+        if ($linkName === 'core.seo') {
+            return $this->container->has(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class)
+                ? $this->container->make(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class)
+                : null;
+        }
+        if ($linkName === 'core.mailer') {
+            return $this->container->has(\DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface::class)
+                ? $this->container->make(\DomainSystem\SystemApps\auth\Contracts\EmailSenderInterface::class)
+                : null;
         }
 
         throw new Exception("Link não encontrado: Nenhum plugin ativo fornece o link '{$linkName}'.");
@@ -96,6 +123,11 @@ class LinkRegistry
             'core.storage',
             'core.theme_parts',
             'core.events',
+            'core.theme.resolver',
+            'core.site.state',
+            'core.account.status',
+            'core.seo',
+            'core.mailer',
         ], true);
     }
 

@@ -67,4 +67,44 @@ class AcademyBlockDecouplingTest extends TestCase
         $this->assertCount(15, $registry->all());
         $this->assertSame('Área de Login / Aluno', $registry->get('user_auth')->getName());
     }
+
+    public function testCourseFrontControllerAndStudentAuthResolveViaLinkRegistryWithoutRing3Violation(): void
+    {
+        $container = new Container();
+        $dispatcher = new EventDispatcher();
+        $connector = new OsConnector();
+
+        $pdo = new \PDO('sqlite::memory:');
+        $dbConn = $this->createMock(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class);
+        $dbConn->method('getPdo')->willReturn($pdo);
+
+        $container->singleton(\DomainSystem\Core\Contracts\DatabaseConnectionInterface::class, fn() => $dbConn);
+        $container->singleton(\DomainSystem\Core\Contracts\PublicStorageInterface::class, fn() => $this->createMock(\DomainSystem\Core\Contracts\PublicStorageInterface::class));
+        $container->singleton(\DomainSystem\Core\Contracts\SessionManagerInterface::class, fn() => $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class));
+        $container->singleton(\DomainSystem\Core\Contracts\ThemeManagerInterface::class, fn() => $this->createMock(\DomainSystem\Core\Contracts\ThemeManagerInterface::class));
+        $container->singleton(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class, fn() => $this->createMock(\DomainSystem\Plugins\seo\Contracts\SeoManagerInterface::class));
+        $container->singleton(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class, fn() => $this->createMock(\DomainSystem\Core\Contracts\AccountStatusProviderInterface::class));
+
+        $plugin = new AcademyPlugin(dirname(__DIR__, 2) . '/src/Plugins/academy');
+        $plugin->osRegister($connector);
+
+        $runtime = new OsRuntime(
+            $container,
+            $connector,
+            new LinkRegistry($container),
+            $dispatcher,
+            'DomainSystem\\Plugins\\academy'
+        );
+
+        $plugin->osBoot($runtime);
+
+        $controller = $container->make(\DomainSystem\Plugins\academy\Controllers\CourseFrontController::class);
+        $this->assertInstanceOf(\DomainSystem\Plugins\academy\Controllers\CourseFrontController::class, $controller);
+
+        $studentAuth = $container->make(\DomainSystem\Plugins\academy\Contracts\StudentAuthServiceInterface::class);
+        $this->assertInstanceOf(\DomainSystem\Plugins\academy\Contracts\StudentAuthServiceInterface::class, $studentAuth);
+
+        $pageResolver = $container->make(\DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface::class);
+        $this->assertInstanceOf(\DomainSystem\Plugins\academy\Contracts\ThemePageResolverInterface::class, $pageResolver);
+    }
 }

@@ -89,13 +89,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(PurchasableItemResolverInterface::class, function () use ($runtime) {
             $resolver = new PurchasableItemResolver();
             try {
-                $dispatcher = null;
-                try {
-                    $dispatcher = $runtime->getLink('core.events');
-                } catch (\Throwable $e) {
-                    $dispatcher = $runtime->make(EventDispatcherInterface::class);
-                }
-
+                $dispatcher = $runtime->getLink('core.events');
                 if ($dispatcher instanceof EventDispatcherInterface) {
                     $dispatcher->dispatch('commerce.register_item_resolvers', $resolver);
                 }
@@ -106,30 +100,36 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         });
 
         // 5. Fábrica Controladora do Checkout
-        $runtime->singleton(CheckoutController::class, function () use ($runtime) {
+        $runtime->singleton(CheckoutController::class, function ($c = null) use ($runtime) {
             $courseRepo = null;
             try {
-                $courseRepo = $runtime->make(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+                if (is_object($c) && method_exists($c, 'has') && $c->has(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class)) {
+                    $courseRepo = $c->make(\DomainSystem\Plugins\academy\Contracts\CourseRepositoryInterface::class);
+                }
             } catch (\Throwable $e) {
+                $courseRepo = null;
             }
 
             $dispatcher = null;
             try {
                 $dispatcher = $runtime->getLink('core.events');
             } catch (\Throwable $e) {
-                try {
-                    $dispatcher = $runtime->make(EventDispatcherInterface::class);
-                } catch (\Throwable $e2) {
-                }
+                $dispatcher = null;
             }
 
             $dropshipOrderFinder = null;
             if (interface_exists(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
                 && $runtime->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
             ) {
-                $dropshipOrderFinder = static function (string $ref) use ($runtime): ?array {
-                    $repo = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class);
-                    return $repo->findByOrderRef($ref);
+                $dropshipOrderFinder = static function (string $ref) use ($c): ?array {
+                    try {
+                        if (is_object($c) && method_exists($c, 'make')) {
+                            $repo = $c->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class);
+                            return $repo->findByOrderRef($ref);
+                        }
+                    } catch (\Throwable $e) {
+                    }
+                    return null;
                 };
             }
 

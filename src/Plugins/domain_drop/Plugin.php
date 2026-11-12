@@ -60,6 +60,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->requireLink('core.db.schema');
         $os->requireLink('core.db');
         $os->requireLink('core.session');
+        $os->requireLink('core.theme');
+        $os->requireLink('core.mailer');
         $os->listenHook('admin.menu');
         $os->listenHook('router.register');
         $os->listenHook('commerce.register_item_resolvers');
@@ -147,16 +149,14 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(SellerMediationService::class, function () use ($runtime) {
             $mailer = null;
             try {
-                if ($runtime->has(EmailSenderInterface::class)) {
-                    $mailer = $runtime->make(EmailSenderInterface::class);
-                }
+                $mailer = $runtime->getLink('core.mailer');
             } catch (Throwable $e) {
                 $mailer = null;
             }
 
             return new SellerMediationService(
                 disputeRepo: $runtime->make(DropshipDisputeRepositoryInterface::class),
-                mailer: $mailer
+                mailer: $mailer instanceof EmailSenderInterface ? $mailer : null
             );
         });
 
