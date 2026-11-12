@@ -110,7 +110,14 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
     </style>
     <div class="ds-checkout-container">
         <div class="ds-checkout-breadcrumb">
-            <a href="<?= $baseUrl ?>/loja">← Voltar para a vitrine RachidD.com</a>
+            <?php if ($isPhysicalOrDropship): ?>
+                <a href="<?= $baseUrl ?>/loja">← Voltar para a vitrine RachidD.com</a>
+            <?php else: ?>
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                    <a href="<?= $baseUrl ?>/cursos<?= !empty($course['slug']) ? '/' . htmlspecialchars((string)$course['slug'], ENT_QUOTES, 'UTF-8') : '' ?>">← Voltar para a Página do Curso</a>
+                    <a href="<?= $baseUrl ?>/aluno/painel" style="color: #45f3ff;">🎓 Minha Área de Estudos (Meus Cursos)</a>
+                </div>
+            <?php endif; ?>
             <span class="ds-checkout-site-pill">🛡️ Ambiente Oficial RachidD.com</span>
         </div>
         <header class="ds-checkout-header">
@@ -232,8 +239,30 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 
             <!-- Meios de Pagamento e Entrega -->
             <div class="ds-card">
-                <h2 class="ds-card-title"><?= $isPhysicalOrDropship ? '📦 Dados de Entrega &amp; Pagamento' : '💳 Escolha a Forma de Pagamento' ?></h2>
+                <h2 class="ds-card-title"><?= $isPhysicalOrDropship ? '📦 Dados de Entrega &amp; Pagamento' : '💳 Matrícula &amp; Forma de Pagamento' ?></h2>
                 <form id="checkout_form" onsubmit="handlePaymentSubmit(event)">
+                    <?php if (!$isPhysicalOrDropship): ?>
+                    <!-- Conta do Aluno na Área de Estudos (Estilo Udemy) -->
+                    <div style="background: rgba(69,243,255,0.05); border: 1px solid rgba(69,243,255,0.28); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 0.86rem; font-weight: 800; color: #45f3ff; display: inline-flex; align-items: center; gap: 6px;">
+                                <span>🎓</span> 1. Conta da Área de Estudos (Sala de Aula)
+                            </span>
+                            <a href="<?= $baseUrl ?>/aluno/login?logged_out=1&amp;redirect=<?= urlencode($baseUrl . '/checkout/curso/' . $courseId) ?>" style="font-size: 0.76rem; color: #F0D060; text-decoration: none; font-weight: 700;">
+                                🔄 Trocar de conta
+                            </a>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #e2e8f0; line-height: 1.55;">
+                            <div>Aluno(a): <strong style="color: #fff;"><?= $userName ?></strong><?php if (!empty($userUsername)): ?> <span style="color: #45f3ff;">(@<?= htmlspecialchars((string)$userUsername, ENT_QUOTES, 'UTF-8') ?>)</span><?php endif; ?></div>
+                            <div>E-mail de Acesso: <strong style="color: #00d284;"><?= $userEmail ?></strong></div>
+                        </div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
+                            ✅ Assim que o pagamento for confirmado, este curso será liberado automaticamente na sua <a href="<?= $baseUrl ?>/aluno/painel" style="color: #45f3ff; font-weight: 700; text-decoration: none;">Área de Estudos</a> vinculada a esta conta.
+                        </div>
+                        <input type="hidden" name="payer_name" value="<?= $userName ?>">
+                        <input type="hidden" name="payer_email" value="<?= $userEmail ?>">
+                    </div>
+                    <?php endif; ?>
                     <?php if ($isPhysicalOrDropship): ?>
                     <!-- Dados do Comprador -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">

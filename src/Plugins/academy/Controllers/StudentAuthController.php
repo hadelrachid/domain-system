@@ -174,18 +174,23 @@ class StudentAuthController
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
         if ($this->studentAuth->isLoggedIn()) {
-            return Response::redirect($baseUrl . '/aluno/painel');
+            $rawRedirect = (string)$request->input('redirect', $baseUrl . '/aluno/painel');
+            $safeRedirect = $this->redirectValidator->sanitize($rawRedirect, $baseUrl . '/aluno/painel');
+            return Response::redirect($safeRedirect);
         }
 
         $csrfToken = (string)$this->session->getCsrfToken();
-        $redirect = (string)$request->input('redirect', '');
+        $rawRedirect = (string)$request->input('redirect', '');
+        $redirect = $this->redirectValidator->sanitize($rawRedirect, '');
         $error = $this->studentAuth->getFlash('error') ?: (is_array($f = $this->session->getFlash()) && ($f['type'] ?? '') === 'error' ? $f['msg'] : null);
+        $success = $this->studentAuth->getFlash('success') ?: (isset($f) && is_array($f) && ($f['type'] ?? '') === 'success' ? $f['msg'] : null);
 
         return $this->viewRenderer->render('front/student/register', [
             'baseUrl'   => $baseUrl,
             'csrfToken' => $csrfToken,
             'redirect'  => $redirect,
             'error'     => $error,
+            'success'   => $success,
         ]);
     }
 
@@ -198,12 +203,13 @@ class StudentAuthController
         $rawRedirect = (string)$request->input('redirect', '');
         $redirect = $this->redirectValidator->sanitize($rawRedirect, '');
         $targetUrl = $redirect !== '' ? $redirect : ($baseUrl . '/aluno/painel');
+        $redirectQuery = $redirect !== '' ? ('?redirect=' . urlencode($redirect)) : '';
 
         $token = (string)$request->input('csrf_token', '');
         $expected = (string)$this->session->getCsrfToken();
         if ($token === '' || !hash_equals($expected, $token)) {
             $this->studentAuth->setFlash('error', 'Token de segurança expirado. Tente novamente.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         $name = trim((string)$request->input('name', ''));
@@ -214,7 +220,7 @@ class StudentAuthController
 
         if ($name === '' || $email === '' || $password === '') {
             $this->studentAuth->setFlash('error', 'Preencha todos os campos obrigatórios.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         // Se o username não foi preenchido, sugere a partir do nome
@@ -230,44 +236,44 @@ class StudentAuthController
         // Validação de formato de username
         if (!preg_match('/^[a-z0-9_.-]{3,40}$/', $username)) {
             $this->studentAuth->setFlash('error', 'O nome de usuário deve conter apenas letras minúsculas, números, ponto ou traço (de 3 a 40 caracteres).');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->studentAuth->setFlash('error', 'Por favor, informe um endereço de e-mail válido.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         if ($this->passwordPolicy !== null && !$this->passwordPolicy->isAcceptable($password)) {
             $missing = implode(' ', $this->passwordPolicy->getMissingRequirements($password));
             $this->studentAuth->setFlash('error', 'A senha não atende aos requisitos: ' . $missing);
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
         if ($this->passwordPolicy === null && strlen($password) < 8) {
             $this->studentAuth->setFlash('error', 'A senha de acesso deve ter pelo menos 8 caracteres.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         if ($password !== $passwordConfirm) {
             $this->studentAuth->setFlash('error', 'A confirmação de senha não confere.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         if ($this->credentialRepo === null) {
             $this->studentAuth->setFlash('error', 'Serviço de cadastro temporariamente indisponível.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         // Verifica duplicidade de e-mail
         if ($this->credentialRepo->findByEmail($email) !== null) {
             $this->studentAuth->setFlash('error', 'Este e-mail já possui cadastro. Faça login para continuar.');
-            return Response::redirect($baseUrl . '/aluno/login');
+            return Response::redirect($baseUrl . '/aluno/login' . $redirectQuery);
         }
 
         // Verifica duplicidade de nome de usuário
         if ($this->credentialRepo->findByUsername($username) !== null) {
             $this->studentAuth->setFlash('error', "O nome de usuário '@{$username}' já está em uso. Por favor, escolha outro.");
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
 
         try {
@@ -288,16 +294,16 @@ class StudentAuthController
             // Código 23000 (ANSI SQL) / 1062 (MySQL) / SQLITE_CONSTRAINT
             if ($e->getCode() === '23000' || str_contains($e->getMessage(), 'UNIQUE') || str_contains($e->getMessage(), 'Integrity constraint')) {
                 $this->studentAuth->setFlash('error', 'Este e-mail ou nome de usuário já possui cadastro. Faça login para continuar.');
-                return Response::redirect($baseUrl . '/aluno/login');
+                return Response::redirect($baseUrl . '/aluno/login' . $redirectQuery);
             }
 
             error_log('[StudentAuthController] Erro interno no cadastro: ' . $e->getMessage());
             $this->studentAuth->setFlash('error', 'Não foi possível concluir seu cadastro no momento. Por favor, tente novamente mais tarde.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         } catch (\Throwable $e) {
             error_log('[StudentAuthController] Falha inesperada no cadastro: ' . $e->getMessage());
             $this->studentAuth->setFlash('error', 'Ocorreu uma falha no processamento do cadastro. Tente novamente.');
-            return Response::redirect($baseUrl . '/aluno/cadastro');
+            return Response::redirect($baseUrl . '/aluno/cadastro' . $redirectQuery);
         }
     }
 

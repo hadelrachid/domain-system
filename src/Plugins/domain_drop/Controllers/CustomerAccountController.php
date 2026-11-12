@@ -40,8 +40,9 @@ class CustomerAccountController
     public function showRegister(Request $request): ResponseInterface
     {
         $baseUrl = $this->baseUrl();
+        $redirect = $this->sanitizeRedirect((string)$request->input('redirect', ''));
         if ($this->isLoggedIn()) {
-            return Response::redirect($baseUrl . '/minha-conta');
+            return Response::redirect($redirect !== '' ? $redirect : ($baseUrl . '/minha-conta'));
         }
 
         $csrfToken = (string)$this->session->getCsrfToken();
@@ -59,9 +60,13 @@ class CustomerAccountController
     public function register(Request $request): ResponseInterface
     {
         $baseUrl = $this->baseUrl();
+        $redirect = $this->sanitizeRedirect((string)$request->input('redirect', ''));
+        $targetUrl = $redirect !== '' ? $redirect : ($baseUrl . '/minha-conta');
+        $redirectQuery = $redirect !== '' ? ('?redirect=' . rawurlencode($redirect)) : '';
+
         if (!$this->verifyCsrf($request)) {
             $this->session->setFlash('error', 'Token de segurança expirado. Atualize a página e tente novamente.');
-            return Response::redirect($baseUrl . '/cadastro');
+            return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
 
         $name = trim((string)$request->input('name', ''));
@@ -73,24 +78,25 @@ class CustomerAccountController
 
         if (mb_strlen($name) < 2) {
             $this->session->setFlash('error', 'Informe seu nome completo.');
-            return Response::redirect($baseUrl . '/cadastro');
+            return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
         if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             $this->session->setFlash('error', 'Informe um endereço de e-mail válido.');
-            return Response::redirect($baseUrl . '/cadastro');
+            return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
         if (strlen($password) < 6) {
             $this->session->setFlash('error', 'A senha deve conter no mínimo 6 caracteres.');
-            return Response::redirect($baseUrl . '/cadastro');
+            return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
         if ($confirm !== '' && $password !== $confirm) {
             $this->session->setFlash('error', 'A confirmação de senha não confere.');
-            return Response::redirect($baseUrl . '/cadastro');
+            return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
 
         if ($this->customerRepo->findByEmail($email) !== null) {
             $this->session->setFlash('error', 'Este e-mail já possui cadastro. Faça login para acessar seus pedidos.');
-            return Response::redirect($baseUrl . '/entrar?email=' . rawurlencode($email));
+            $sep = $redirectQuery !== '' ? '&' : '?';
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery . $sep . 'email=' . rawurlencode($email));
         }
 
         $customerId = $this->customerRepo->create([
@@ -110,19 +116,21 @@ class CustomerAccountController
         ]);
 
         $this->session->setFlash('success', 'Cadastro realizado com sucesso! Seus pedidos e garantias estão disponíveis aqui.');
-        return Response::redirect($baseUrl . '/minha-conta');
+        return Response::redirect($targetUrl);
     }
 
     public function showLogin(Request $request): ResponseInterface
     {
         $baseUrl = $this->baseUrl();
+        $redirect = $this->sanitizeRedirect((string)$request->input('redirect', ''));
         if ($this->isLoggedIn()) {
-            return Response::redirect($baseUrl . '/minha-conta');
+            return Response::redirect($redirect !== '' ? $redirect : ($baseUrl . '/minha-conta'));
         }
 
         $csrfToken = (string)$this->session->getCsrfToken();
         $flash = $this->session->getFlash();
         $prefillEmail = trim((string)$request->input('email', ''));
+        $prefillName = trim((string)$request->input('name', ''));
 
         ob_start();
         include dirname(__DIR__) . '/views/front/customer_login.php';
@@ -134,9 +142,13 @@ class CustomerAccountController
     public function login(Request $request): ResponseInterface
     {
         $baseUrl = $this->baseUrl();
+        $redirect = $this->sanitizeRedirect((string)$request->input('redirect', ''));
+        $targetUrl = $redirect !== '' ? $redirect : ($baseUrl . '/minha-conta');
+        $redirectQuery = $redirect !== '' ? ('?redirect=' . rawurlencode($redirect)) : '';
+
         if (!$this->verifyCsrf($request)) {
             $this->session->setFlash('error', 'Token de segurança expirado. Tente novamente.');
-            return Response::redirect($baseUrl . '/entrar');
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
         $email = strtolower(trim((string)$request->input('email', '')));
@@ -144,24 +156,34 @@ class CustomerAccountController
 
         if ($email === '' || $password === '') {
             $this->session->setFlash('error', 'Informe e-mail e senha para entrar.');
-            return Response::redirect($baseUrl . '/entrar');
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
         $customer = $this->customerRepo->findByEmail($email);
         if ($customer === null || !password_verify($password, (string)($customer['password_hash'] ?? ''))) {
             $this->session->setFlash('error', 'E-mail ou senha inválidos.');
-            return Response::redirect($baseUrl . '/entrar?email=' . rawurlencode($email));
+            $sep = $redirectQuery !== '' ? '&' : '?';
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery . $sep . 'email=' . rawurlencode($email));
         }
 
         if (($customer['status'] ?? 'active') !== 'active') {
             $this->session->setFlash('error', 'Conta temporariamente suspensa. Entre em contato com o suporte.');
-            return Response::redirect($baseUrl . '/entrar');
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
         $this->authenticateCustomerSession($customer);
         $this->session->setFlash('success', 'Bem-vindo de volta!');
 
-        return Response::redirect($baseUrl . '/minha-conta');
+        return Response::redirect($targetUrl);
+    }
+
+    private function sanitizeRedirect(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '' || !str_starts_with($raw, '/') || str_starts_with($raw, '//') || str_contains($raw, '://') || str_contains($raw, "\r") || str_contains($raw, "\n")) {
+            return '';
+        }
+        return $raw;
     }
 
     public function logout(Request $request): ResponseInterface

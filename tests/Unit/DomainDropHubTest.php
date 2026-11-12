@@ -909,10 +909,10 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('product-qty-input', $prodHtml);
         $this->assertStringContainsString('?qty=1', $prodHtml);
 
-        // 4. Checkout exibe quantidade multiplicada, vendedor, reduzir e apagar
-        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
-        $session->method('get')->willReturnArgument(1);
-        $session->method('getCsrfToken')->willReturn('csrf_test_token');
+        // 4. Checkout exige login/cadastro quando visitante não está autenticado, e exibe checkout quando autenticado
+        $unauthSession = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $unauthSession->method('get')->willReturnArgument(1);
+        $unauthSession->method('getCsrfToken')->willReturn('csrf_test_token');
 
         $orderRepo = $this->createMock(\DomainSystem\Plugins\commerce\Contracts\OrderRepositoryInterface::class);
         $registry = new \DomainSystem\Plugins\commerce\Services\PaymentGatewayRegistry();
@@ -921,6 +921,30 @@ class DomainDropHubTest extends TestCase
             $p = $repo->findById($id);
             return $p ? new \DomainSystem\Plugins\domain_drop\Adapters\DropshipProductPurchasableAdapter($p) : null;
         });
+
+        $unauthCheckout = new \DomainSystem\Plugins\commerce\Controllers\CheckoutController(
+            session: $unauthSession,
+            orderRepo: $orderRepo,
+            gatewayRegistry: $registry,
+            itemResolver: $resolver
+        );
+        $unauthRes = $unauthCheckout->showCheckout(
+            new \DomainSystem\Core\Http\Request(['qty' => '3'], [], ['REQUEST_URI' => '/checkout/produto/' . $savedId]),
+            $savedId
+        );
+        $this->assertSame(302, $unauthRes->getStatusCode());
+        $this->assertStringContainsString('/entrar?redirect=', (string)$unauthRes->getHeader('Location'));
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('get')->willReturnCallback(function (string $key, mixed $default = null) {
+            return match ($key) {
+                'customer_id'    => 77,
+                'customer_name'  => 'Cliente RachidD',
+                'customer_email' => 'cliente@rachidd.com',
+                default          => $default,
+            };
+        });
+        $session->method('getCsrfToken')->willReturn('csrf_test_token');
 
         $checkoutController = new \DomainSystem\Plugins\commerce\Controllers\CheckoutController(
             session: $session,

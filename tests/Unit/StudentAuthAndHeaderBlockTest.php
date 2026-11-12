@@ -301,24 +301,123 @@ class StudentAuthAndHeaderBlockTest extends TestCase
 
         $controller = new StudentAuthController($sessionMock, $this->pdo);
 
-        // 1. Tela de Login do Aluno
-        $loginResponse = $controller->showLoginForm(new Request());
+        // 1. Tela de Login do Aluno (2 Cards Lado a Lado: Login + Cadastro + Olhinho de Senha)
+        $loginResponse = $controller->showLoginForm(new Request(['redirect' => '/checkout/curso/8']));
         $this->assertSame(200, $loginResponse->getStatusCode());
         $this->assertFalse($loginResponse instanceof \DomainSystem\Core\Http\Responses\ViewResponse);
         $loginHtml = $loginResponse->getContent();
         $this->assertStringContainsString('<!DOCTYPE html>', $loginHtml);
         $this->assertStringContainsString('<title>Área do Aluno | Entrar na Sala de Aula</title>', $loginHtml);
         $this->assertStringContainsString('action="/aluno/login"', $loginHtml);
+        $this->assertStringContainsString('action="/aluno/cadastro"', $loginHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-password'", $loginHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-pass'", $loginHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-pass-conf'", $loginHtml);
+        $this->assertStringContainsString('value="/checkout/curso/8"', $loginHtml);
         $this->assertStringNotContainsString('workspace-sidebar', $loginHtml);
 
-        // 2. Tela de Cadastro do Aluno
-        $registerResponse = $controller->showRegisterForm(new Request());
+        // 2. Tela de Cadastro do Aluno (2 Cards Lado a Lado: Login + Cadastro + Olhinho de Senha)
+        $registerResponse = $controller->showRegisterForm(new Request(['redirect' => '/checkout/curso/8']));
         $this->assertSame(200, $registerResponse->getStatusCode());
         $this->assertFalse($registerResponse instanceof \DomainSystem\Core\Http\Responses\ViewResponse);
         $registerHtml = $registerResponse->getContent();
         $this->assertStringContainsString('<!DOCTYPE html>', $registerHtml);
         $this->assertStringContainsString('<title>Criar Conta de Aluno | Academy LMS</title>', $registerHtml);
+        $this->assertStringContainsString('action="/aluno/login"', $registerHtml);
         $this->assertStringContainsString('action="/aluno/cadastro"', $registerHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-password'", $registerHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-pass'", $registerHtml);
+        $this->assertStringContainsString("togglePassVisibility('student-pass-conf'", $registerHtml);
+        $this->assertStringContainsString('value="/checkout/curso/8"', $registerHtml);
         $this->assertStringNotContainsString('workspace-sidebar', $registerHtml);
+    }
+
+    public function testCourseCheckoutRequiresStudentLoginEvenWhenAdminSessionIsActiveAndRedirectsBackAfterAuth(): void
+    {
+        // Simula Admin logado no painel (user_id = 1), mas SEM sessão de Aluno da Academy
+        $adminOnlySession = $this->createMock(SessionManagerInterface::class);
+        $adminOnlySession->method('getCsrfToken')->willReturn('CSRF_123');
+        $adminOnlySession->method('get')->willReturnCallback(function (string $key, mixed $default = null) {
+            return match ($key) {
+                'user_id'            => 1,
+                'user_role'          => 'admin',
+                'academy_student_id' => 0,
+                default              => $default,
+            };
+        });
+
+        $orderRepo = $this->createMock(\DomainSystem\Plugins\commerce\Contracts\OrderRepositoryInterface::class);
+        $registry = new \DomainSystem\Plugins\commerce\Services\PaymentGatewayRegistry();
+        $resolver = new \DomainSystem\Plugins\commerce\Services\PurchasableItemResolver();
+        $resolver->registerResolver('course', function (int $id) {
+            return new \DomainSystem\Plugins\academy\Adapters\CoursePurchasableAdapter([
+                'id'               => $id,
+                'title'            => 'Curso de Arquitetura SOLID',
+                'slug'             => 'curso-de-arquitetura-solid',
+                'price'            => 297.00,
+                'status'           => 'published',
+                'is_free'          => 0,
+                'max_installments' => 12,
+            ]);
+        });
+
+        $checkoutController = new \DomainSystem\Plugins\commerce\Controllers\CheckoutController(
+            session: $adminOnlySession,
+            orderRepo: $orderRepo,
+            gatewayRegistry: $registry,
+            itemResolver: $resolver
+        );
+
+        // 1. Pressionar "Comprar" sem login de aluno DEVE redirecionar para /aluno/login?redirect=/checkout/curso/8
+        $unauthResp = $checkoutController->showCheckout(
+            new Request([], [], ['REQUEST_URI' => '/checkout/curso/8']),
+            8
+        );
+        $this->assertSame(302, $unauthResp->getStatusCode());
+        $this->assertSame('/aluno/login?redirect=' . urlencode('/checkout/curso/8'), $unauthResp->getHeader('Location'));
+
+        // 2. Cadastrar novo aluno no card da direita com redirect=/checkout/curso/8 redireciona direto para a página de venda
+        $sessionValues = [];
+        $authSession = $this->createMock(SessionManagerInterface::class);
+        $authSession->method('getCsrfToken')->willReturn('CSRF_123');
+        $authSession->method('set')->willReturnCallback(function (string $k, mixed $v) use (&$sessionValues) {
+            $sessionValues[$k] = $v;
+        });
+        $authSession->method('get')->willReturnCallback(function (string $k, mixed $default = null) use (&$sessionValues) {
+            return $sessionValues[$k] ?? $default;
+        });
+
+        $studentAuth = new StudentAuthController($authSession, $this->pdo);
+        $regResp = $studentAuth->register(new Request([], [
+            'csrf_token'            => 'CSRF_123',
+            'name'                  => 'Rachid Aluno SOLID',
+            'username'              => 'rachidsolid',
+            'email'                 => 'rachid.solid@academy.com',
+            'password'              => 'senhaForte123',
+            'password_confirmation' => 'senhaForte123',
+            'redirect'              => '/checkout/curso/8',
+        ]));
+
+        $this->assertSame(302, $regResp->getStatusCode());
+        $this->assertSame('/checkout/curso/8', $regResp->getHeader('Location'));
+
+        // 3. Agora autenticado como aluno, a página de venda do curso abre e exibe a Conta da Área de Estudos
+        $authedCheckout = new \DomainSystem\Plugins\commerce\Controllers\CheckoutController(
+            session: $authSession,
+            orderRepo: $orderRepo,
+            gatewayRegistry: $registry,
+            itemResolver: $resolver
+        );
+        $checkoutResp = $authedCheckout->showCheckout(
+            new Request([], [], ['REQUEST_URI' => '/checkout/curso/8']),
+            8
+        );
+        $this->assertSame(200, $checkoutResp->getStatusCode());
+        $checkoutHtml = $checkoutResp->getContent();
+        $this->assertStringContainsString('Conta da Área de Estudos (Sala de Aula)', $checkoutHtml);
+        $this->assertStringContainsString('Rachid Aluno SOLID', $checkoutHtml);
+        $this->assertStringContainsString('@rachidsolid', $checkoutHtml);
+        $this->assertStringContainsString('rachid.solid@academy.com', $checkoutHtml);
+        $this->assertStringContainsString('Minha Área de Estudos (Meus Cursos)', $checkoutHtml);
     }
 }

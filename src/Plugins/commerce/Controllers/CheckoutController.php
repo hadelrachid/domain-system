@@ -109,15 +109,30 @@ class CheckoutController
             || (($course['type'] ?? '') === 'product')
             || (str_contains($request->server['REQUEST_URI'] ?? '', '/checkout/produto/'));
 
-        $userId = (int)$this->session->get('academy_student_id', 0);
-        if ($userId <= 0) {
-            $userId = (int)$this->session->get('user_id', 0);
-        }
+        $isStudentLoggedOut = (bool)$this->session->get('academy_logged_out', false);
+        $studentId = $isStudentLoggedOut ? 0 : (int)$this->session->get('academy_student_id', 0);
+        $customerId = (int)$this->session->get('customer_id', 0);
 
-        // Cursos digitais exigem login prévio; produtos de loja/dropshipping permitem Guest Checkout
-        if ($userId <= 0 && !$isPhysicalOrDropship) {
-            $checkoutUri = $baseUrl . '/checkout/curso/' . $courseId;
-            return Response::redirect($baseUrl . '/aluno/login?redirect=' . urlencode($checkoutUri));
+        if ($isPhysicalOrDropship) {
+            // Produtos da Loja exigem que o Cliente (ou Aluno) esteja logado; caso contrário, vai para Login/Cadastro (2 cards lado a lado)
+            if ($customerId <= 0 && $studentId <= 0) {
+                $qtyParam = max(1, min(99, (int)$request->input('qty', 1)));
+                $checkoutUri = $baseUrl . '/checkout/produto/' . $courseId . ($qtyParam > 1 ? '?qty=' . $qtyParam : '');
+                $this->session->setFlash('info', '🛍️ Para finalizar a compra do produto, entre na sua conta ou cadastre-se ao lado. Você será direcionado automaticamente para a página de venda!');
+                return Response::redirect($baseUrl . '/entrar?redirect=' . urlencode($checkoutUri));
+            }
+            $userId = $customerId > 0 ? $customerId : $studentId;
+        } else {
+            // Cursos Academy exigem que o Aluno esteja logado na Área de Estudos; caso contrário, vai para Login/Cadastro (2 cards lado a lado)
+            if ($studentId <= 0) {
+                $checkoutUri = $baseUrl . '/checkout/curso/' . $courseId;
+                $this->session->set('academy_student_flash', [
+                    'type' => 'success',
+                    'msg'  => '🎓 Para adquirir este curso e liberá-lo na sua Área de Estudos, entre na sua conta ou cadastre-se ao lado. Você será direcionado automaticamente para a página de matrícula!',
+                ]);
+                return Response::redirect($baseUrl . '/aluno/login?redirect=' . urlencode($checkoutUri));
+            }
+            $userId = $studentId;
         }
 
         // REGRA DE INJEÇÃO E DISPONIBILIDADE:
@@ -161,6 +176,7 @@ class CheckoutController
         $csrfToken = (string)$this->session->getCsrfToken();
         $userEmail = (string)$this->session->get('academy_student_email', (string)$this->session->get('user_email', (string)$this->session->get('customer_email', '')));
         $userName = (string)$this->session->get('academy_student_name', (string)$this->session->get('user_name', (string)$this->session->get('customer_name', $isPhysicalOrDropship ? '' : 'Aluno')));
+        $userUsername = (string)$this->session->get('academy_student_username', '');
         $userCpf = (string)$this->session->get('user_cpf', (string)$this->session->get('academy_student_cpf', (string)$this->session->get('customer_cpf', '')));
 
         $courseImage = '';
@@ -188,6 +204,7 @@ class CheckoutController
             'csrfToken'            => $csrfToken,
             'userEmail'            => $userEmail,
             'userName'             => $userName,
+            'userUsername'         => $userUsername,
             'userCpf'              => $userCpf,
             'unitPrice'            => $unitPrice,
             'quantity'             => $quantity,

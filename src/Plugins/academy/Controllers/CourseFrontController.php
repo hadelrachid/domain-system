@@ -164,13 +164,26 @@ class CourseFrontController
         $externalCheckout = trim((string)($course['external_checkout_url'] ?? ''));
         $externalLink = trim((string)($course['link'] ?? ''));
 
+        $isStudentLoggedOut = $this->session !== null && (bool)$this->session->get('academy_logged_out', false);
+        $studentId = (!$isStudentLoggedOut && $this->session !== null) ? (int)$this->session->get('academy_student_id', 0) : 0;
+        $isEnrolled = ($studentId > 0 && $this->enrollment !== null && isset($course['id']))
+            ? $this->enrollment->hasActiveEnrollment($studentId, (int)$course['id'])
+            : false;
+
         $ctaButton = '';
-        if ($isFree || $price <= 0.0) {
+        if ($isEnrolled) {
+            $studyUrl = htmlspecialchars($firstLessonUrl ?: ($baseUrl . '/aluno/painel'), ENT_QUOTES, 'UTF-8');
+            $panelUrl = htmlspecialchars($baseUrl . '/aluno/painel', ENT_QUOTES, 'UTF-8');
+            $ctaButton = "<div style='display:flex; gap:12px; flex-wrap:wrap; margin-top:20px;'>
+                <a href='{$studyUrl}' class='btn btn-primary' style='display:inline-block; padding:12px 24px; border-radius:6px; background:#45f3ff; color:#0b0c10; font-weight:800; text-decoration:none;'>🎓 Ir para a Sala de Aula &rarr;</a>
+                <a href='{$panelUrl}' style='display:inline-block; padding:12px 20px; border-radius:6px; background:rgba(255,255,255,0.06); border:1px solid rgba(69,243,255,0.3); color:#45f3ff; font-weight:700; text-decoration:none;'>📚 Minha Área de Estudos</a>
+            </div>";
+        } elseif ($isFree || $price <= 0.0) {
             if ($firstLessonUrl) {
                 $ctaButton = "<a href='{$firstLessonUrl}' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#45f3ff; color:#0b0c10; font-weight:700; text-decoration:none;'>🚀 Começar Agora &rarr;</a>";
             }
         } else {
-            // Curso pago: direciona para checkout externo ou DomainCommerce interno
+            // Curso pago: direciona para checkout externo ou DomainCommerce interno (/checkout/curso/{id} verifica se o aluno está logado; se não estiver, abre Login/Cadastro lado a lado e redireciona de volta para a venda)
             if ($externalCheckout !== '') {
                 $checkoutUrl = htmlspecialchars($externalCheckout, ENT_QUOTES, 'UTF-8');
                 $ctaButton = "<a href='{$checkoutUrl}' target='_blank' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#00d284; color:#0b0c10; font-weight:700; text-decoration:none;'>🛒 Comprar / Matricular-se &rarr;</a>";
