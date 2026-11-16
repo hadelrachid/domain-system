@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\domain_drop\Repositories;
 
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface;
 use PDO;
 use Throwable;
 
 final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterface
 {
-    public function __construct(private readonly PDO $pdo)
+    private readonly PDO $pdo;
+
+    public function __construct(DatabaseConnectionInterface|PDO $connection)
     {
+        $this->pdo = $connection instanceof DatabaseConnectionInterface
+            ? $connection->getPdo()
+            : $connection;
+
         DomainDropSchemaEnsurer::ensure($this->pdo);
     }
 
