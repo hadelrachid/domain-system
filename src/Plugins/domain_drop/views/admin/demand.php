@@ -8,6 +8,14 @@ $rankings = $rankings ?? [];
 $categoryProfile = $categoryProfile ?? [];
 $recentActivities = $recentActivities ?? [];
 $baseUrl = $baseUrl ?? '';
+
+$currentYear = (int)date('Y');
+$previousYear = $currentYear - 1;
+$monthsNames = [
+    1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+    5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+    9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+];
 ?>
 <div class="wrap" style="max-width: 1380px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f1f5f9;">
 
@@ -26,10 +34,30 @@ $baseUrl = $baseUrl ?? '';
             </p>
         </div>
 
-        <!-- Seletor de Período Mensal -->
+        <!-- Seletor de Período Mensal (Combobox Automático: Ano Vigente e Anterior) -->
         <form method="GET" action="<?= htmlspecialchars($baseUrl . '/admin/dropship/demand') ?>" style="display: flex; align-items: center; gap: 8px;">
             <label for="period" style="font-size: 0.84rem; color: #cbd5e1; font-weight: 600;">Mês de Fechamento:</label>
-            <input type="month" id="period" name="period" value="<?= htmlspecialchars($selectedPeriod) ?>" onchange="this.form.submit()" style="background: #0b1120; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 8px; font-size: 0.88rem; outline: none;">
+            <select id="period" name="period" onchange="this.form.submit()" style="background: #0b1120; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 7px 12px; border-radius: 8px; font-size: 0.88rem; outline: none; cursor: pointer; font-weight: 600;">
+                <optgroup label="Ano Vigente (<?= $currentYear ?>)" style="background: #1e293b; color: #38bdf8;">
+                    <?php for ($m = 12; $m >= 1; $m--): 
+                        $val = sprintf('%04d-%02d', $currentYear, $m);
+                        $isCurrentMonth = ($val === date('Y-m'));
+                    ?>
+                        <option value="<?= $val ?>" <?= $selectedPeriod === $val ? 'selected' : '' ?> style="background: #0f172a; color: #fff;">
+                            <?= $monthsNames[$m] ?> / <?= $currentYear ?><?= $isCurrentMonth ? ' (Mês Atual)' : '' ?>
+                        </option>
+                    <?php endfor; ?>
+                </optgroup>
+                <optgroup label="Ano Anterior (<?= $previousYear ?>)" style="background: #1e293b; color: #94a3b8;">
+                    <?php for ($m = 12; $m >= 1; $m--): 
+                        $val = sprintf('%04d-%02d', $previousYear, $m);
+                    ?>
+                        <option value="<?= $val ?>" <?= $selectedPeriod === $val ? 'selected' : '' ?> style="background: #0f172a; color: #fff;">
+                            <?= $monthsNames[$m] ?> / <?= $previousYear ?>
+                        </option>
+                    <?php endfor; ?>
+                </optgroup>
+            </select>
             <button type="submit" style="background: #3b82f6; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 0.84rem; font-weight: 600; cursor: pointer;">
                 Filtrar
             </button>

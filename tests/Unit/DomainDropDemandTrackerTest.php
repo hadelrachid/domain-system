@@ -178,6 +178,9 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertStringContainsString('Perfil dos Compradores', $html);
         $this->assertStringContainsString('gadgets', $html);
         $this->assertStringContainsString('Trilha de Interações Recentes', $html);
+        $this->assertStringContainsString('name="period"', $html);
+        $this->assertStringContainsString('Ano Vigente', $html);
+        $this->assertStringContainsString('Ano Anterior', $html);
         $this->assertStringContainsString('Cliente Cadastrado', $html);
         $this->assertStringContainsString('João Silva', $html);
         $this->assertStringContainsString('joao@exemplo.com', $html);
