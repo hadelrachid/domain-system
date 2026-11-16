@@ -138,7 +138,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                         <button type="button" onclick="changeProductQuantity(1)" aria-label="Aumentar quantidade" style="width: 42px; height: 100%; background: rgba(255,255,255,0.04); border: none; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;">+</button>
                     </div>
 
-                    <a id="btn-buy-now" href="<?= htmlspecialchars($checkoutUrl) ?>?qty=1" style="flex: 1; min-width: 210px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); transition: transform 0.2s ease;">
+                    <a id="btn-buy-now" href="<?= htmlspecialchars($checkoutUrl) ?>?qty=1" onclick="trackProductAction('buy_click')" style="flex: 1; min-width: 210px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); transition: transform 0.2s ease;">
                         <span>Comprar Agora</span>
                         <span>➔</span>
                     </a>
@@ -471,5 +471,40 @@ document.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowLeft') navigateLightbox(-1);
         if (e.key === 'ArrowRight') navigateLightbox(1);
     }
+});
+
+// Disparo Inteligente de Demanda (Beacon/Keepalive)
+var productTrackingData = {
+    product_id: <?= json_encode((string)($product->aliProductId ?: (string)$product->id)) ?>,
+    title: <?= json_encode((string)$product->title) ?>,
+    category: <?= json_encode((string)$product->category) ?>
+};
+
+function trackProductAction(actionType) {
+    if (!productTrackingData.product_id) return;
+    var payload = JSON.stringify({
+        product_id: productTrackingData.product_id,
+        title: productTrackingData.title,
+        category: productTrackingData.category,
+        action: actionType,
+        timestamp: Math.floor(Date.now() / 1000)
+    });
+
+    var endpoint = (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(endpoint, payload);
+    } else {
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+        }).catch(function() {});
+    }
+}
+
+// Dispara evento 'view_details' ao carregar a página de detalhes
+document.addEventListener('DOMContentLoaded', function() {
+    trackProductAction('view_details');
 });
 </script>

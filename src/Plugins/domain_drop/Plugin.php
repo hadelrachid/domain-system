@@ -138,6 +138,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new PdoDropshipDisputeRepository($runtime->getLink('core.db'));
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class, function () use ($runtime) {
+            return new \DomainSystem\Plugins\domain_drop\Repositories\PdoDemandMetricsRepository($runtime->getLink('core.db'));
+        });
+
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class, function () use ($runtime) {
+            return new \DomainSystem\Plugins\domain_drop\Services\SessionGuardedDemandTracker(
+                repository: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
+                session: $runtime->getLink('core.session')
+            );
+        });
+
         $runtime->singleton(OrderSlaProgressService::class, function () {
             return new OrderSlaProgressService();
         });
@@ -216,7 +227,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 disputeRepo: $runtime->make(DropshipDisputeRepositoryInterface::class),
                 slaService: $runtime->make(OrderSlaProgressService::class),
                 mediationService: $runtime->make(SellerMediationService::class),
-                apiClient: $runtime->make(AliExpressApiClientInterface::class)
+                apiClient: $runtime->make(AliExpressApiClientInterface::class),
+                metricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class)
             );
         });
 
@@ -232,7 +244,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 themeManager: $themeManager,
                 miningService: $runtime->make(ProductMiningServiceInterface::class),
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
-                apiClient: $runtime->make(AliExpressApiClientInterface::class)
+                apiClient: $runtime->make(AliExpressApiClientInterface::class),
+                demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class)
             );
         });
 
@@ -260,6 +273,11 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                             'icon'  => '👥',
                         ],
                         [
+                            'title' => 'Inteligência de Demanda',
+                            'url'   => '/admin/dropship/demand',
+                            'icon'  => '📊',
+                        ],
+                        [
                             'title' => 'Configurações & API',
                             'url'   => '/admin/dropship/settings',
                             'icon'  => '⚙️',
@@ -282,6 +300,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/orders/{id}/mediate', [DropshipAdminController::class, 'mediateDispute'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/customers', [DropshipAdminController::class, 'customers'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/customers/{id}/status', [DropshipAdminController::class, 'updateCustomerStatus'], 'domain_drop', ['admin']);
+            $router->addRoute('GET', '/admin/dropship/demand', [DropshipAdminController::class, 'demandLedger'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/test-connection', [DropshipAdminController::class, 'testConnection'], 'domain_drop', ['admin']);
@@ -294,6 +313,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             // 4. Rotas Públicas da Loja Virtual, Vitrine & Área do Cliente
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
+            $router->addRoute('POST', '/api/drop/track-demand', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackDemand'], 'domain_drop');
             $router->addRoute('POST', '/dropship/cron-tick', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'cronTick'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
             $router->addRoute('GET', '/rastrear', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackOrder'], 'domain_drop');
@@ -390,6 +410,18 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     } else {
                         $orderRepo->updateFulfillment($orderRef, 'paid');
                     }
+
+                    // Registra conversão de venda no Livro de Demanda
+                    try {
+                        /** @var \DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker */
+                        $demandTracker = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class);
+                        $demandTracker->recordInteraction(new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
+                            productId: $aeProductId ?: (string)$itemId,
+                            productTitle: $productTitle,
+                            categorySlug: 'geral',
+                            actionType: 'conversion'
+                        ));
+                    } catch (Throwable $e) {}
                 } catch (Throwable $e) {
                     error_log('[DomainDrop] Falha ao registrar pedido em payment.approved: ' . $e->getMessage());
                 }

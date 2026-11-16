@@ -1,0 +1,171 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit;
+
+use DomainSystem\Core\Contracts\SessionManagerInterface;
+use DomainSystem\Plugins\domain_drop\DTO\DemandEvent;
+use DomainSystem\Plugins\domain_drop\Repositories\PdoDemandMetricsRepository;
+use DomainSystem\Plugins\domain_drop\Services\SessionGuardedDemandTracker;
+use PDO;
+use PHPUnit\Framework\TestCase;
+
+final class DomainDropDemandTrackerTest extends TestCase
+{
+    private PDO $pdo;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->pdo = new PDO('sqlite::memory:');
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
+    public function testDemandMetricsRepositoryIncrementsAndAggregatesMonthly(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+
+        // 1. Incrementa clique de detalhes
+        $repo->incrementMetric('ALI-101', 'Carregador Turbo GaN 65W', 'eletronicos', 'view_details');
+        
+        // 2. Incrementa clique de comprar (fundo de funil)
+        $repo->incrementMetric('ALI-101', 'Carregador Turbo GaN 65W', 'eletronicos', 'buy_click');
+        $repo->incrementMetric('ALI-101', 'Carregador Turbo GaN 65W', 'eletronicos', 'buy_click');
+
+        // 3. Incrementa outro produto em categoria diferente
+        $repo->incrementMetric('ALI-202', 'Kit 12 Meias Algodão', 'moda', 'view_details');
+
+        $period = date('Y-m');
+        $rankings = $repo->getMonthlyRankings($period, 10);
+
+        $this->assertCount(2, $rankings);
+        $top = $rankings[0];
+        $this->assertSame('ALI-101', $top['product_id']);
+        $this->assertSame('Carregador Turbo GaN 65W', $top['product_title']);
+        $this->assertSame(1, (int)$top['detail_clicks']);
+        $this->assertSame(2, (int)$top['buy_clicks']);
+        // Score ponderado esperado: (1 * 1) + (2 * 4) = 9
+        $this->assertSame(9, (int)$top['demand_score']);
+
+        // 4. Perfil de categorias
+        $profile = $repo->getAudienceCategoryProfile($period);
+        $this->assertArrayHasKey('eletronicos', $profile);
+        $this->assertArrayHasKey('moda', $profile);
+        $this->assertSame(9, $profile['eletronicos']['score']);
+        $this->assertSame(1, $profile['moda']['score']);
+
+        // 5. Live pulse
+        $pulse = $repo->getLivePulseMetrics();
+        $this->assertSame(2, $pulse['active_products_count']);
+        $this->assertSame(2, $pulse['total_detail_clicks']);
+        $this->assertSame(2, $pulse['total_buy_clicks']);
+        $this->assertSame(10, $pulse['total_demand_score']);
+    }
+
+    public function testSessionGuardedDemandTrackerPreventsDuplicateSpamInSameSession(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        
+        $sessionStore = [];
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('get')->willReturnCallback(function (string $key, mixed $default = null) use (&$sessionStore) {
+            return $sessionStore[$key] ?? $default;
+        });
+        $sessionMock->method('set')->willReturnCallback(function (string $key, mixed $value) use (&$sessionStore) {
+            $sessionStore[$key] = $value;
+        });
+
+        $tracker = new SessionGuardedDemandTracker($repo, $sessionMock);
+
+        $event1 = new DemandEvent('ALI-303', 'Fone Sem Fio Pro', 'audio', 'view_details');
+        
+        // Primeiro clique: aceito
+        $this->assertTrue($tracker->recordInteraction($event1));
+
+        // Segundo clique imediato na mesma sessão: bloqueado pelo anti-ruído
+        $this->assertFalse($tracker->recordInteraction($event1));
+
+        // Clique em 'buy_click' para o mesmo produto: aceito (pois é ação diferente)
+        $eventBuy = new DemandEvent('ALI-303', 'Fone Sem Fio Pro', 'audio', 'buy_click');
+        $this->assertTrue($tracker->recordInteraction($eventBuy));
+
+        // Conversão paga: NUNCA deve ser bloqueada
+        $eventConv = new DemandEvent('ALI-303', 'Fone Sem Fio Pro', 'audio', 'conversion');
+        $this->assertTrue($tracker->recordInteraction($eventConv));
+        $this->assertTrue($tracker->recordInteraction($eventConv));
+
+        $period = date('Y-m');
+        $rankings = $repo->getMonthlyRankings($period, 1);
+        $this->assertSame(1, (int)$rankings[0]['detail_clicks']);
+        $this->assertSame(1, (int)$rankings[0]['buy_clicks']);
+        $this->assertSame(2, (int)$rankings[0]['conversions']);
+        // Score: (1 * 1) + (1 * 4) + (2 * 10) = 25
+        $this->assertSame(25, (int)$rankings[0]['demand_score']);
+    }
+
+    public function testDropshipFrontControllerDispatchesDemandTrackEndpoint(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $tracker = new SessionGuardedDemandTracker($repo);
+
+        $catalogRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $frontController = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $catalogRepo,
+            demandTracker: $tracker
+        );
+
+        $request = new \DomainSystem\Core\Http\Request([], [], [], [], [], [
+            'product_id' => 'ALI-777',
+            'title'      => 'Kit Meias Cano Alto',
+            'category'   => 'moda',
+            'action'     => 'buy_click',
+        ]);
+
+        $response = $frontController->trackDemand($request);
+        $this->assertSame(200, $response->getStatusCode());
+        
+        $body = json_decode((string)$response->getContent(), true);
+        $this->assertTrue($body['success']);
+        $this->assertTrue($body['tracked']);
+
+        $rankings = $repo->getMonthlyRankings(date('Y-m'), 1);
+        $this->assertCount(1, $rankings);
+        $this->assertSame('ALI-777', $rankings[0]['product_id']);
+        $this->assertSame(1, (int)$rankings[0]['buy_clicks']);
+        $this->assertSame(4, (int)$rankings[0]['demand_score']);
+    }
+
+    public function testDropshipAdminControllerRendersDemandLedgerAndPulse(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $repo->incrementMetric('ALI-999', 'Smartwatch AMOLED', 'gadgets', 'buy_click');
+
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('getCsrfToken')->willReturn('csrf_test_ledger');
+
+        $catalogRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $miningService = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class);
+        $converter = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+
+        $adminController = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $catalogRepo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $sessionMock,
+            metricsRepo: $repo
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(['period' => date('Y-m')]);
+        $response = $adminController->demandLedger($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $html = (string)$response->getContent();
+
+        $this->assertStringContainsString('Inteligência de Demanda &amp; Livro de Presença', $html);
+        $this->assertStringContainsString('Smartwatch AMOLED', $html);
+        $this->assertStringContainsString('Gráfico de Colunas: Produtos Mais Quentes', $html);
+        $this->assertStringContainsString('Perfil dos Compradores', $html);
+        $this->assertStringContainsString('gadgets', $html);
+    }
+}

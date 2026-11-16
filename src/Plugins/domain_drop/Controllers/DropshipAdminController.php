@@ -41,7 +41,8 @@ class DropshipAdminController
         private readonly ?DropshipDisputeRepositoryInterface $disputeRepo = null,
         private readonly ?OrderSlaProgressService $slaService = null,
         private readonly ?SellerMediationService $mediationService = null,
-        private readonly ?AliExpressApiClientInterface $apiClient = null
+        private readonly ?AliExpressApiClientInterface $apiClient = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $metricsRepo = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->configFile = $root . '/config/plugins/domain_drop.json';
@@ -963,6 +964,38 @@ class DropshipAdminController
         }
 
         return Response::redirect($baseUrl . '/admin/dropship/customers');
+    }
+
+    /**
+     * Tela de Inteligência de Demanda e Livro de Presença: GET /admin/dropship/demand
+     */
+    public function demandLedger(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $selectedPeriod = trim((string)$request->input('period', date('Y-m')));
+        if (!preg_match('/^\d{4}-\d{2}$/', $selectedPeriod)) {
+            $selectedPeriod = date('Y-m');
+        }
+
+        $livePulse = $this->metricsRepo ? $this->metricsRepo->getLivePulseMetrics() : [
+            'period'                => date('Y-m'),
+            'active_products_count' => 0,
+            'total_detail_clicks'   => 0,
+            'total_buy_clicks'      => 0,
+            'total_conversions'     => 0,
+            'total_demand_score'    => 0,
+            'top_products'          => [],
+        ];
+
+        $rankings = $this->metricsRepo ? $this->metricsRepo->getMonthlyRankings($selectedPeriod, 30) : [];
+        $categoryProfile = $this->metricsRepo ? $this->metricsRepo->getAudienceCategoryProfile($selectedPeriod) : [];
+        $csrfToken = (string)$this->session->getCsrfToken();
+
+        ob_start();
+        include dirname(__DIR__) . '/views/admin/demand.php';
+        $content = ob_get_clean();
+
+        return new ViewResponse($content ?: '');
     }
 
     private function verifyCsrf(Request $request): bool

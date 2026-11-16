@@ -496,6 +496,28 @@ window.addEventListener('popstate', function() {
     filterCatalogDynamically(window.location.href, false);
 });
 
+window.trackDropAction = function(productId, title, category, actionType) {
+    if (!productId) return;
+    var payload = JSON.stringify({
+        product_id: productId,
+        title: title || '',
+        category: category || 'geral',
+        action: actionType || 'view_details',
+        timestamp: Math.floor(Date.now() / 1000)
+    });
+    var endpoint = '<?= $baseUrl ?>/api/drop/track-demand';
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(endpoint, payload);
+    } else {
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+        }).catch(function() {});
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash === '#produtos' || (window.location.search && window.location.search.indexOf('cat=') !== -1)) {
         setTimeout(function() {

@@ -24,8 +24,28 @@ class DropshipFrontController
         private readonly ?ThemeManagerInterface $themeManager = null,
         private readonly ?ProductMiningServiceInterface $miningService = null,
         private readonly ?DropshipOrderRepositoryInterface $orderRepo = null,
-        private readonly ?AliExpressApiClientInterface $apiClient = null
+        private readonly ?AliExpressApiClientInterface $apiClient = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null
     ) {
+    }
+
+    /**
+     * Endpoint Assíncrono de Rastreamento de Demanda: POST /api/drop/track-demand
+     */
+    public function trackDemand(Request $request): ResponseInterface
+    {
+        $payload = $request->json();
+        if (empty($payload) || !is_array($payload)) {
+            $payload = $request->all();
+        }
+
+        if ($this->demandTracker !== null && !empty($payload)) {
+            $event = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::fromArray($payload);
+            $tracked = $this->demandTracker->recordInteraction($event);
+            return Response::json(['success' => true, 'tracked' => $tracked]);
+        }
+
+        return Response::json(['success' => false, 'message' => 'Rastreador de demanda indisponível'], 400);
     }
 
     /**
