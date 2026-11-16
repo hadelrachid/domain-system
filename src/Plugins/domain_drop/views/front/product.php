@@ -475,13 +475,15 @@ document.addEventListener('keydown', function(e) {
 
 // Disparo Inteligente de Demanda (Beacon/Keepalive)
 var productTrackingData = {
-    product_id: <?= json_encode((string)($product->aliProductId ?: (string)$product->id)) ?>,
+    product_id: <?= json_encode((string)($product->aliexpressId ?: ($product->aliProductId ?? (string)$product->id))) ?>,
     title: <?= json_encode((string)$product->title) ?>,
     category: <?= json_encode((string)$product->category) ?>
 };
 
 function trackProductAction(actionType) {
     if (!productTrackingData.product_id) return;
+    var base = <?= json_encode($baseUrl) ?>;
+    var endpoint = (base ? base.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
     var payload = JSON.stringify({
         product_id: productTrackingData.product_id,
         title: productTrackingData.title,
@@ -490,19 +492,27 @@ function trackProductAction(actionType) {
         timestamp: Math.floor(Date.now() / 1000)
     });
 
-    var endpoint = (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
-    if (!endpoint.startsWith('http') && !endpoint.startsWith('/')) {
-        endpoint = '/' + endpoint;
-    }
-    if (navigator.sendBeacon) {
-        navigator.sendBeacon(endpoint, payload);
-    } else {
-        fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            keepalive: true
-        }).catch(function() {});
+    try {
+        if (navigator.sendBeacon) {
+            var blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+        } else {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true
+            }).catch(function() {});
+        }
+    } catch (e) {
+        try {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true
+            }).catch(function() {});
+        } catch (err) {}
     }
 }
 

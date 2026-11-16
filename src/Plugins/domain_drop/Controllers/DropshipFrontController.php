@@ -26,8 +26,85 @@ class DropshipFrontController
         private readonly ?DropshipOrderRepositoryInterface $orderRepo = null,
         private readonly ?AliExpressApiClientInterface $apiClient = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null,
-        private readonly ?\DomainSystem\Core\Contracts\SessionManagerInterface $session = null
+        private readonly ?\DomainSystem\Core\Contracts\SessionManagerInterface $session = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface $customerRepo = null
     ) {
+    }
+
+    /**
+     * Resolve a identidade do usuário da sessão atual de forma unificada:
+     * 1. Cliente da loja DomainDrop (customer_id / customer_email / customer_name)
+     * 2. Aluno da Academy (academy_student_id / academy_student_email / academy_student_name)
+     * 3. Administrador ou usuário do sistema (user_id / user_name / user_email)
+     */
+    private function resolveSessionIdentity(): array
+    {
+        $session = $this->session;
+        if ($session === null && isset($GLOBALS['app'])) {
+            try {
+                $session = $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+            } catch (\Throwable $e) {}
+        }
+
+        $customerId = null;
+        $customerName = null;
+        $customerEmail = null;
+        $userType = 'externo';
+
+        if ($session instanceof \DomainSystem\Core\Contracts\SessionManagerInterface) {
+            // 1. Cliente da Loja DomainDrop
+            $cId = (int)($session->get('customer_id') ?: 0);
+            $cEmail = strtolower(trim((string)($session->get('customer_email') ?: '')));
+            $cName = trim((string)($session->get('customer_name') ?: ''));
+
+            if ($cId > 0 && ($cEmail === '' || $cName === '')) {
+                if ($this->customerRepo !== null) {
+                    try {
+                        $cust = $this->customerRepo->findById($cId);
+                        if ($cust) {
+                            if ($cEmail === '' && !empty($cust['email'])) {
+                                $cEmail = strtolower(trim((string)$cust['email']));
+                            }
+                            if ($cName === '' && !empty($cust['name'])) {
+                                $cName = trim((string)$cust['name']);
+                            }
+                        }
+                    } catch (\Throwable $e) {}
+                }
+            }
+
+            // 2. Aluno da Academy
+            if ($cId <= 0 && $cEmail === '') {
+                $cId = (int)($session->get('academy_student_id') ?: 0);
+                $cEmail = strtolower(trim((string)($session->get('academy_student_email') ?: '')));
+                $cName = trim((string)($session->get('academy_student_name') ?: ''));
+            }
+
+            // 3. Usuário / Administrador logado no sistema
+            if ($cId <= 0 && $cEmail === '') {
+                $uId = (int)($session->get('user_id') ?: 0);
+                if ($uId > 0) {
+                    $cId = $uId;
+                    $cName = trim((string)($session->get('user_name') ?: ''));
+                    $cEmail = strtolower(trim((string)($session->get('user_email') ?: $session->get('email') ?: '')));
+                }
+            }
+
+            if ($cId > 0 || $cEmail !== '') {
+                $customerId = $cId > 0 ? $cId : null;
+                $customerName = $cName !== '' ? $cName : 'Cliente Cadastrado';
+                $customerEmail = $cEmail !== '' ? $cEmail : null;
+                $userType = 'cliente_logado';
+            }
+        }
+
+        return [
+            'id'        => $customerId,
+            'name'      => $customerName,
+            'email'     => $customerEmail,
+            'user_type' => $userType,
+            'sess_id'   => session_id() ?: null,
+        ];
     }
 
     /**
@@ -41,32 +118,14 @@ class DropshipFrontController
         }
 
         if ($this->demandTracker !== null && !empty($payload)) {
-            $session = $this->session;
-            $customerId = null;
-            $customerName = null;
-            $customerEmail = null;
-            $sessId = null;
-
-            if ($session === null && isset($GLOBALS['app'])) {
-                try {
-                    $session = $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
-                } catch (\Throwable $e) {}
-            }
-
-            if ($session instanceof \DomainSystem\Core\Contracts\SessionManagerInterface) {
-                $sessId = session_id() ?: null;
-                $customerId = (int)($session->get('customer_id') ?: $session->get('academy_student_id') ?: 0);
-                if ($customerId <= 0) $customerId = null;
-                $customerName = (string)($session->get('customer_name') ?: $session->get('academy_student_name') ?: '');
-                $customerEmail = (string)($session->get('customer_email') ?: $session->get('academy_student_email') ?: '');
-            }
+            $identity = $this->resolveSessionIdentity();
 
             $event = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::fromArray(
                 payload: $payload,
-                sessionId: $sessId,
-                customerId: $customerId,
-                customerName: $customerName ?: null,
-                customerEmail: $customerEmail ?: null
+                sessionId: $identity['sess_id'],
+                customerId: $identity['id'],
+                customerName: $identity['name'],
+                customerEmail: $identity['email']
             );
             $tracked = $this->demandTracker->recordInteraction($event);
             return Response::json([
@@ -173,6 +232,9 @@ class DropshipFrontController
         if (!$product) {
             return new Response("<h1>404 - Produto não encontrado na loja</h1>", 404);
         }
+
+        // Rastreamento Server-Side Garantido de 'Ver Detalhes'
+        $this->recordDemandForProduct($product, 'view_details');
 
         $checkoutUrl = $baseUrl . '/checkout/produto/' . (int)$product->id;
 
@@ -321,6 +383,40 @@ class DropshipFrontController
         }
 
         return new Response($content ?: '', 200, $headers);
+    }
+
+    /**
+     * Registra evento de demanda diretamente no servidor (resiliente a ad-blockers e navegadores sem JS).
+     */
+    private function recordDemandForProduct(object $product, string $actionType): void
+    {
+        if ($this->demandTracker === null) {
+            return;
+        }
+
+        try {
+            $identity = $this->resolveSessionIdentity();
+            $productId = (string)($product->aliexpressId ?? ($product->aliProductId ?? ($product->id ?? '')));
+            if ($productId === '') {
+                $productId = (string)($product->id ?? '');
+            }
+
+            $event = new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
+                productId: $productId,
+                productTitle: (string)($product->title ?? 'Produto Sem Nome'),
+                categorySlug: (string)($product->category ?? 'geral'),
+                actionType: $actionType,
+                sessionId: $identity['sess_id'],
+                customerId: $identity['id'],
+                customerName: $identity['name'],
+                customerEmail: $identity['email'],
+                userType: $identity['user_type']
+            );
+
+            $this->demandTracker->recordInteraction($event);
+        } catch (\Throwable $e) {
+            // Silencioso para não interromper navegação do usuário
+        }
     }
 
     private function maskEmail(string $email): string

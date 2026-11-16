@@ -499,22 +499,35 @@ window.addEventListener('popstate', function() {
 window.trackDropAction = function(productId, title, category, actionType) {
     if (!productId) return;
     var payload = JSON.stringify({
-        product_id: productId,
-        title: title || '',
-        category: category || 'geral',
-        action: actionType || 'view_details',
+        product_id: String(productId),
+        title: String(title || ''),
+        category: String(category || 'geral'),
+        action: String(actionType || 'view_details'),
         timestamp: Math.floor(Date.now() / 1000)
     });
-    var endpoint = '<?= $baseUrl ?>/api/drop/track-demand';
-    if (navigator.sendBeacon) {
-        navigator.sendBeacon(endpoint, payload);
-    } else {
-        fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            keepalive: true
-        }).catch(function() {});
+    var base = '<?= $baseUrl ?>';
+    var endpoint = (base ? base.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
+    try {
+        if (navigator.sendBeacon) {
+            var blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+        } else {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true
+            }).catch(function() {});
+        }
+    } catch(e) {
+        try {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true
+            }).catch(function() {});
+        } catch(err) {}
     }
 };
 

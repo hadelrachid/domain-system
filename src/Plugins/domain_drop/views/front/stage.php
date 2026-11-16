@@ -9,6 +9,44 @@
  * @var string $baseUrl
  */
 ?>
+<script>
+if (typeof window.trackDropAction !== 'function') {
+    window.trackDropAction = function(productId, title, category, actionType) {
+        if (!productId) return;
+        var payload = JSON.stringify({
+            product_id: String(productId),
+            title: String(title || ''),
+            category: String(category || 'geral'),
+            action: String(actionType || 'view_details'),
+            timestamp: Math.floor(Date.now() / 1000)
+        });
+        var base = <?= json_encode($baseUrl) ?>;
+        var endpoint = (base ? base.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
+        try {
+            if (navigator.sendBeacon) {
+                var blob = new Blob([payload], { type: 'application/json' });
+                navigator.sendBeacon(endpoint, blob);
+            } else {
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(function() {});
+            }
+        } catch(e) {
+            try {
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(function() {});
+            } catch(err) {}
+        }
+    };
+}
+</script>
 <!-- Informações e Contagem de Produtos do Palco -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px; color: #94a3b8; flex-wrap: wrap; gap: 8px;">
     <div>

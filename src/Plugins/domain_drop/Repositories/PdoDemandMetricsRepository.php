@@ -42,7 +42,7 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
         $driver = (string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
         // Pontuação ponderada: conversions=10, buy_clicks=4, detail_clicks=1
-        $detailInc = ($actionType === 'view_details') ? 1 : 0;
+        $detailInc = ($actionType === 'view_details' || $actionType === 'detail_click') ? 1 : 0;
         $buyInc = ($actionType === 'buy_click') ? 1 : 0;
         $convInc = ($actionType === 'conversion') ? 1 : 0;
         $scoreInc = ($convInc * 10) + ($buyInc * 4) + ($detailInc * 1);

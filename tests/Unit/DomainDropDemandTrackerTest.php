@@ -274,6 +274,65 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertSame('carlos@empresa.com', $recent[0]['customer_email']);
     }
 
+    public function testSingleProductEndpointAutomaticallyTracksViewDetailsForLoggedInCustomer(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $tracker = new SessionGuardedDemandTracker($repo);
+
+        $sessionData = [
+            'customer_id'    => 1,
+            'customer_name'  => 'MAURA PEREIRA DE AZEVEDO',
+            'customer_email' => 'maurapereiradeazevedo@gmail.com',
+        ];
+
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('get')->willReturnCallback(function (string $key, mixed $default = null) use (&$sessionData) {
+            return $sessionData[$key] ?? $default;
+        });
+
+        $productDto = new \DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto(
+            aliexpressId: 'ALI-MAURA-999',
+            title: 'Kit de Ferramentas Profissionais 25 em 1',
+            slug: 'kit-ferramentas-25-em-1',
+            costPriceUsd: 5.0,
+            salePriceBrl: 49.90,
+            mainImageUrl: 'https://example.com/img.jpg',
+            category: 'ferramentas',
+            id: 5432
+        );
+
+        $catalogRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $catalogRepo->method('findBySlug')->with('kit-ferramentas-25-em-1')->willReturn($productDto);
+
+        $frontController = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $catalogRepo,
+            demandTracker: $tracker,
+            session: $sessionMock
+        );
+
+        $request = new \DomainSystem\Core\Http\Request();
+        $response = $frontController->singleProduct($request, 'kit-ferramentas-25-em-1');
+
+        $this->assertSame(200, $response->getStatusCode());
+
+        // Verifica que o rastro foi gravado com a Maura logada!
+        $recent = $repo->getRecentActivityLogs(1);
+        $this->assertCount(1, $recent);
+        $this->assertSame('ALI-MAURA-999', $recent[0]['product_id']);
+        $this->assertSame('Kit de Ferramentas Profissionais 25 em 1', $recent[0]['product_title']);
+        $this->assertSame('ferramentas', $recent[0]['category_slug']);
+        $this->assertSame('view_details', $recent[0]['action_type']);
+        $this->assertSame('cliente_logado', $recent[0]['user_type']);
+        $this->assertSame('MAURA PEREIRA DE AZEVEDO', $recent[0]['customer_name']);
+        $this->assertSame('maurapereiradeazevedo@gmail.com', $recent[0]['customer_email']);
+
+        // Verifica que a métrica mensal foi incrementada
+        $rankings = $repo->getMonthlyRankings(date('Y-m'), 1);
+        $this->assertCount(1, $rankings);
+        $this->assertSame(1, (int)$rankings[0]['detail_clicks']);
+        $this->assertSame(1, (int)$rankings[0]['demand_score']);
+    }
+
     public function testDailyAutomatedRotationPrioritizesHighDemandProducts(): void
     {
         $repo = new PdoDemandMetricsRepository($this->pdo);

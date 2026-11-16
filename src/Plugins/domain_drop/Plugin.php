@@ -253,7 +253,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class),
-                session: $session
+                session: $session,
+                customerRepo: $runtime->make(DropshipCustomerRepositoryInterface::class)
             );
         });
 
@@ -347,7 +348,47 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         /** @var DropshipCatalogRepositoryInterface $repo */
                         $repo = $runtime->make(DropshipCatalogRepositoryInterface::class);
                         $product = $repo->findById($id);
-                        return $product !== null ? new DropshipProductPurchasableAdapter($product) : null;
+                        if ($product !== null) {
+                            // Registra intenção máxima de compra (buy_click) ao abrir o checkout
+                            try {
+                                /** @var \DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker */
+                                $demandTracker = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class);
+                                $session = null;
+                                try {
+                                    $session = $runtime->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+                                } catch (Throwable $e) {}
+
+                                $cId = null;
+                                $cName = null;
+                                $cEmail = null;
+                                $uType = 'externo';
+                                if ($session instanceof \DomainSystem\Core\Contracts\SessionManagerInterface) {
+                                    $cId = (int)($session->get('customer_id') ?: $session->get('academy_student_id') ?: $session->get('user_id') ?: 0);
+                                    if ($cId <= 0) $cId = null;
+                                    $cEmail = strtolower(trim((string)($session->get('customer_email') ?: $session->get('academy_student_email') ?: $session->get('user_email') ?: '')));
+                                    $cName = trim((string)($session->get('customer_name') ?: $session->get('academy_student_name') ?: $session->get('user_name') ?: ''));
+                                    if ($cId > 0 || $cEmail !== '') {
+                                        $uType = 'cliente_logado';
+                                    }
+                                }
+
+                                $event = new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
+                                    productId: (string)($product->aliexpressId ?: (string)$product->id),
+                                    productTitle: (string)$product->title,
+                                    categorySlug: (string)$product->category,
+                                    actionType: 'buy_click',
+                                    sessionId: session_id() ?: null,
+                                    customerId: $cId,
+                                    customerName: $cName ?: null,
+                                    customerEmail: $cEmail ?: null,
+                                    userType: $uType
+                                );
+                                $demandTracker->recordInteraction($event);
+                            } catch (Throwable $e) {}
+
+                            return new DropshipProductPurchasableAdapter($product);
+                        }
+                        return null;
                     } catch (Throwable $e) {
                         return null;
                     }
