@@ -25,7 +25,8 @@ class DropshipFrontController
         private readonly ?ProductMiningServiceInterface $miningService = null,
         private readonly ?DropshipOrderRepositoryInterface $orderRepo = null,
         private readonly ?AliExpressApiClientInterface $apiClient = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null,
+        private readonly ?\DomainSystem\Core\Contracts\SessionManagerInterface $session = null
     ) {
     }
 
@@ -40,9 +41,44 @@ class DropshipFrontController
         }
 
         if ($this->demandTracker !== null && !empty($payload)) {
-            $event = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::fromArray($payload);
+            $session = $this->session;
+            $customerId = null;
+            $customerName = null;
+            $customerEmail = null;
+            $sessId = null;
+
+            if ($session === null && isset($GLOBALS['app'])) {
+                try {
+                    $session = $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+                } catch (\Throwable $e) {}
+            }
+
+            if ($session instanceof \DomainSystem\Core\Contracts\SessionManagerInterface) {
+                $sessId = session_id() ?: null;
+                $customerId = (int)($session->get('customer_id') ?: $session->get('academy_student_id') ?: 0);
+                if ($customerId <= 0) $customerId = null;
+                $customerName = (string)($session->get('customer_name') ?: $session->get('academy_student_name') ?: '');
+                $customerEmail = (string)($session->get('customer_email') ?: $session->get('academy_student_email') ?: '');
+            }
+
+            $event = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::fromArray(
+                payload: $payload,
+                sessionId: $sessId,
+                customerId: $customerId,
+                customerName: $customerName ?: null,
+                customerEmail: $customerEmail ?: null
+            );
             $tracked = $this->demandTracker->recordInteraction($event);
-            return Response::json(['success' => true, 'tracked' => $tracked]);
+            return Response::json([
+                'success'   => true,
+                'tracked'   => $tracked,
+                'user_type' => $event->userType,
+                'identity'  => [
+                    'id'    => $event->customerId,
+                    'name'  => $event->customerName,
+                    'email' => $event->customerEmail,
+                ],
+            ]);
         }
 
         return Response::json(['success' => false, 'message' => 'Rastreador de demanda indisponível'], 400);

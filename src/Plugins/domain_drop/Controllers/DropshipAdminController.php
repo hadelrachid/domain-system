@@ -989,6 +989,7 @@ class DropshipAdminController
 
         $rankings = $this->metricsRepo ? $this->metricsRepo->getMonthlyRankings($selectedPeriod, 30) : [];
         $categoryProfile = $this->metricsRepo ? $this->metricsRepo->getAudienceCategoryProfile($selectedPeriod) : [];
+        $recentActivities = $this->metricsRepo ? $this->metricsRepo->getRecentActivityLogs(25) : [];
         $csrfToken = (string)$this->session->getCsrfToken();
 
         ob_start();

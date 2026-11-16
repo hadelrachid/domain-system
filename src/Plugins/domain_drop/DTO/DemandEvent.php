@@ -15,12 +15,21 @@ final class DemandEvent
         public readonly string $categorySlug,
         public readonly string $actionType, // 'view_details' | 'buy_click' | 'conversion'
         public readonly int $timestamp = 0,
-        public readonly ?string $sessionId = null
+        public readonly ?string $sessionId = null,
+        public readonly ?int $customerId = null,
+        public readonly ?string $customerName = null,
+        public readonly ?string $customerEmail = null,
+        public readonly string $userType = 'externo' // 'cliente_logado' | 'externo'
     ) {
     }
 
-    public static function fromArray(array $payload, ?string $sessionId = null): self
-    {
+    public static function fromArray(
+        array $payload,
+        ?string $sessionId = null,
+        ?int $customerId = null,
+        ?string $customerName = null,
+        ?string $customerEmail = null
+    ): self {
         $rawAction = (string)($payload['action'] ?? ($payload['event_type'] ?? 'view_details'));
         $action = match ($rawAction) {
             'buy_click', 'click_buy', 'buy' => 'buy_click',
@@ -28,13 +37,26 @@ final class DemandEvent
             default => 'view_details',
         };
 
+        $resolvedCustomerId = $customerId ?? (isset($payload['customer_id']) ? (int)$payload['customer_id'] : null);
+        $resolvedCustomerName = $customerName ?? (isset($payload['customer_name']) ? (string)$payload['customer_name'] : null);
+        $resolvedCustomerEmail = $customerEmail ?? (isset($payload['customer_email']) ? (string)$payload['customer_email'] : null);
+
+        $hasUser = ($resolvedCustomerId !== null && $resolvedCustomerId > 0)
+            || (!empty($resolvedCustomerEmail) && filter_var($resolvedCustomerEmail, FILTER_VALIDATE_EMAIL));
+
+        $userType = $hasUser ? 'cliente_logado' : 'externo';
+
         return new self(
             productId: trim((string)($payload['product_id'] ?? ($payload['ali_product_id'] ?? ''))),
             productTitle: trim(mb_substr((string)($payload['title'] ?? ($payload['product_title'] ?? '')), 0, 255)),
             categorySlug: trim(mb_substr((string)($payload['category'] ?? ($payload['category_slug'] ?? 'geral')), 0, 64)),
             actionType: $action,
             timestamp: (int)($payload['timestamp'] ?? time()),
-            sessionId: $sessionId
+            sessionId: $sessionId,
+            customerId: $resolvedCustomerId,
+            customerName: $resolvedCustomerName ? trim($resolvedCustomerName) : null,
+            customerEmail: $resolvedCustomerEmail ? trim(strtolower($resolvedCustomerEmail)) : null,
+            userType: $userType
         );
     }
 }

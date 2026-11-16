@@ -6,6 +6,7 @@ $selectedPeriod = $selectedPeriod ?? date('Y-m');
 $livePulse = $livePulse ?? [];
 $rankings = $rankings ?? [];
 $categoryProfile = $categoryProfile ?? [];
+$recentActivities = $recentActivities ?? [];
 $baseUrl = $baseUrl ?? '';
 ?>
 <div class="wrap" style="max-width: 1380px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f1f5f9;">
@@ -222,6 +223,121 @@ $baseUrl = $baseUrl ?? '';
                                 </td>
                             </tr>
                         <?php $pos++; endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabela: Trilha de Acessos Recentes & Identificação de Visitantes (Leads & E-mail Marketing) -->
+    <div style="background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 22px; margin-top: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span>🕵️</span> Trilha de Interações Recentes: Identificação de Usuários &amp; Leads
+                </h3>
+                <span style="font-size: 0.82rem; color: #94a3b8;">
+                    Monitoramento individual de quem clicou em <strong>Ver Detalhes</strong> ou <strong>Comprar</strong>. Discrimina clientes cadastrados para ações diretas de E-mail Marketing vs visitantes externos anônimos.
+                </span>
+            </div>
+            <span style="background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
+                Últimos <?= count($recentActivities) ?> eventos
+            </span>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); color: #94a3b8; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">
+                        <th style="padding: 12px 14px;">Data / Hora</th>
+                        <th style="padding: 12px 14px;">Ação</th>
+                        <th style="padding: 12px 14px;">Produto / Categoria</th>
+                        <th style="padding: 12px 14px;">Perfil do Usuário</th>
+                        <th style="padding: 12px 14px;">Identificação (Nome / E-mail)</th>
+                        <th style="padding: 12px 14px; text-align: right;">Ação de Marketing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($recentActivities)): ?>
+                        <tr>
+                            <td colspan="6" style="padding: 30px; text-align: center; color: #94a3b8;">
+                                Nenhuma interação recente capturada ainda. Conforme os visitantes navegarem ou comprarem, o histórico aparecerá aqui.
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($recentActivities as $act): ?>
+                            <?php 
+                                $isLogged = ($act['user_type'] ?? '') === 'cliente_logado';
+                                $actType = $act['action_type'] ?? '';
+                            ?>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 14px; font-family: monospace; font-size: 0.8rem; color: #cbd5e1; white-space: nowrap;">
+                                    <?= htmlspecialchars(date('d/m/Y H:i:s', strtotime($act['created_at'] ?? 'now'))) ?>
+                                </td>
+                                <td style="padding: 14px; white-space: nowrap;">
+                                    <?php if ($actType === 'buy_click'): ?>
+                                        <span style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                                            🛒 Intenção de Compra
+                                        </span>
+                                    <?php elseif ($actType === 'conversion'): ?>
+                                        <span style="background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                                            💰 Venda Confirmada
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                                            👁️ Ver Detalhes
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 14px;">
+                                    <div style="font-weight: 600; color: #fff; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <?= htmlspecialchars($act['product_title'] ?? 'Sem título') ?>
+                                    </div>
+                                    <span style="font-size: 0.72rem; color: #64748b; text-transform: uppercase;">
+                                        <?= htmlspecialchars($act['category_slug'] ?? 'geral') ?> • SKU: <?= htmlspecialchars($act['product_id'] ?? '') ?>
+                                    </span>
+                                </td>
+                                <td style="padding: 14px; white-space: nowrap;">
+                                    <?php if ($isLogged): ?>
+                                        <span style="background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 3px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                                            <span>🟢</span> Cliente Cadastrado
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.25); padding: 3px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                            <span>⚪</span> Visitante Externo
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 14px;">
+                                    <?php if ($isLogged && !empty($act['customer_email'])): ?>
+                                        <div style="font-weight: 700; color: #e2e8f0;">
+                                            <?= htmlspecialchars($act['customer_name'] ?: 'Cliente Cadastrado') ?>
+                                        </div>
+                                        <div style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">
+                                            <?= htmlspecialchars($act['customer_email']) ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div style="color: #64748b; font-size: 0.8rem; font-style: italic;">
+                                            Anônimo (Tráfego da Loja)
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 14px; text-align: right; white-space: nowrap;">
+                                    <?php if ($isLogged && !empty($act['customer_email'])): ?>
+                                        <?php 
+                                            $subject = 'Vimos seu interesse em: ' . ($act['product_title'] ?? 'produto da nossa loja');
+                                            $body = "Olá " . ($act['customer_name'] ?: 'cliente') . ",\n\nNotamos seu interesse no produto '" . ($act['product_title'] ?? '') . "'. Temos condições especiais e cupom de desconto para você hoje!";
+                                            $mailUrl = 'mailto:' . rawurlencode($act['customer_email']) . '?subject=' . rawurlencode($subject) . '&body=' . rawurlencode($body);
+                                        ?>
+                                        <a href="<?= htmlspecialchars($mailUrl) ?>" style="background: #3b82f6; color: #fff; padding: 5px 11px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+                                            <span>✉️</span> E-mail Marketing
+                                        </a>
+                                    <?php else: ?>
+                                        <span style="color: #64748b; font-size: 0.75rem;">Sem dados de contato</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>

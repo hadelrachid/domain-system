@@ -35,6 +35,7 @@ final class DomainDropSchemaEnsurer
                 '2026_11_10_000001_create_domain_drop_tables.php',
                 '2026_11_12_000001_create_customer_disputes_and_mediation.php',
                 '2026_11_16_000001_create_domain_drop_demand_table.php',
+                '2026_11_16_000002_create_domain_drop_demand_activity_logs_table.php',
             ] as $file) {
                 $path = $migrationsDir . '/' . $file;
                 if (is_file($path)) {
@@ -57,22 +58,26 @@ final class DomainDropSchemaEnsurer
                 $c1 = $pdo->query("SHOW TABLES LIKE 'domain_drop_customers'");
                 $c2 = $pdo->query("SHOW TABLES LIKE 'domain_drop_disputes'");
                 $c3 = $pdo->query("SHOW TABLES LIKE 'domain_drop_product_demand'");
+                $c4 = $pdo->query("SHOW TABLES LIKE 'domain_drop_demand_activity_logs'");
                 $cols = $pdo->query("SHOW COLUMNS FROM domain_drop_orders LIKE 'seller_origin'");
                 return $c1 !== false && $c1->fetchColumn() !== false
                     && $c2 !== false && $c2->fetchColumn() !== false
                     && $c3 !== false && $c3->fetchColumn() !== false
+                    && $c4 !== false && $c4->fetchColumn() !== false
                     && $cols !== false && $cols->fetchColumn() !== false;
             }
 
             $c1 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_customers'");
             $c2 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_disputes'");
             $c3 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_product_demand'");
+            $c4 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_demand_activity_logs'");
             $cols = $pdo->query("PRAGMA table_info(domain_drop_orders)");
             $colNames = $cols ? array_column($cols->fetchAll(PDO::FETCH_ASSOC), 'name') : [];
 
             return $c1 !== false && $c1->fetchColumn() !== false
                 && $c2 !== false && $c2->fetchColumn() !== false
                 && $c3 !== false && $c3->fetchColumn() !== false
+                && $c4 !== false && $c4->fetchColumn() !== false
                 && in_array('seller_origin', $colNames, true);
         } catch (Throwable $e) {
             return false;

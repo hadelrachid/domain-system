@@ -139,7 +139,17 @@ final class DomainDropDemandTrackerTest extends TestCase
     public function testDropshipAdminControllerRendersDemandLedgerAndPulse(): void
     {
         $repo = new PdoDemandMetricsRepository($this->pdo);
-        $repo->incrementMetric('ALI-999', 'Smartwatch AMOLED', 'gadgets', 'buy_click');
+        $event = new DemandEvent(
+            productId: 'ALI-999',
+            productTitle: 'Smartwatch AMOLED',
+            categorySlug: 'gadgets',
+            actionType: 'buy_click',
+            customerId: 42,
+            customerName: 'João Silva',
+            customerEmail: 'joao@exemplo.com',
+            userType: 'cliente_logado'
+        );
+        $repo->incrementMetric('ALI-999', 'Smartwatch AMOLED', 'gadgets', 'buy_click', $event);
 
         $sessionMock = $this->createMock(SessionManagerInterface::class);
         $sessionMock->method('getCsrfToken')->willReturn('csrf_test_ledger');
@@ -167,6 +177,101 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertStringContainsString('Gráfico de Colunas: Produtos Mais Quentes', $html);
         $this->assertStringContainsString('Perfil dos Compradores', $html);
         $this->assertStringContainsString('gadgets', $html);
+        $this->assertStringContainsString('Trilha de Interações Recentes', $html);
+        $this->assertStringContainsString('Cliente Cadastrado', $html);
+        $this->assertStringContainsString('João Silva', $html);
+        $this->assertStringContainsString('joao@exemplo.com', $html);
+        $this->assertStringContainsString('E-mail Marketing', $html);
+    }
+
+    public function testDemandMetricsRepositoryLogsCustomerActivityAndDistinguishesUserTypes(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+
+        // 1. Visitante Externo / Anônimo
+        $eventAnon = new DemandEvent(
+            productId: 'ALI-101',
+            productTitle: 'Carregador Turbo',
+            categorySlug: 'eletronicos',
+            actionType: 'detail_click',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+        $repo->incrementMetric('ALI-101', 'Carregador Turbo', 'eletronicos', 'detail_click', $eventAnon);
+
+        // 2. Cliente Logado
+        $eventLogged = new DemandEvent(
+            productId: 'ALI-101',
+            productTitle: 'Carregador Turbo',
+            categorySlug: 'eletronicos',
+            actionType: 'buy_click',
+            customerId: 10,
+            customerName: 'Maria Oliveira',
+            customerEmail: 'maria@loja.com',
+            userType: 'cliente_logado'
+        );
+        $repo->incrementMetric('ALI-101', 'Carregador Turbo', 'eletronicos', 'buy_click', $eventLogged);
+
+        $logs = $repo->getRecentActivityLogs(10);
+        $this->assertCount(2, $logs);
+
+        // Ordem decrescente de inserção (o mais recente primeiro)
+        $this->assertSame('cliente_logado', $logs[0]['user_type']);
+        $this->assertSame('buy_click', $logs[0]['action_type']);
+        $this->assertSame('Maria Oliveira', $logs[0]['customer_name']);
+        $this->assertSame('maria@loja.com', $logs[0]['customer_email']);
+
+        $this->assertSame('externo', $logs[1]['user_type']);
+        $this->assertSame('detail_click', $logs[1]['action_type']);
+        $this->assertNull($logs[1]['customer_email']);
+    }
+
+    public function testDropshipFrontControllerIdentifiesLoggedInUserFromSession(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $tracker = new SessionGuardedDemandTracker($repo);
+
+        $sessionData = [
+            'customer_id'    => 88,
+            'customer_name'  => 'Carlos Santos',
+            'customer_email' => 'carlos@empresa.com',
+        ];
+
+        $sessionMock = $this->createMock(SessionManagerInterface::class);
+        $sessionMock->method('get')->willReturnCallback(function (string $key, mixed $default = null) use (&$sessionData) {
+            return $sessionData[$key] ?? $default;
+        });
+
+        $catalogRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $frontController = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $catalogRepo,
+            demandTracker: $tracker,
+            session: $sessionMock
+        );
+
+        $request = new \DomainSystem\Core\Http\Request([], [], [], [], [], [
+            'product_id' => 'ALI-888',
+            'title'      => 'Teclado Mecânico RGB',
+            'category'   => 'informatica',
+            'action'     => 'detail_click',
+        ]);
+
+        $response = $frontController->trackDemand($request);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $body = json_decode((string)$response->getContent(), true);
+        $this->assertTrue($body['success']);
+        $this->assertSame('cliente_logado', $body['user_type']);
+        $this->assertSame('carlos@empresa.com', $body['identity']['email']);
+        $this->assertSame('Carlos Santos', $body['identity']['name']);
+
+        $recent = $repo->getRecentActivityLogs(1);
+        $this->assertCount(1, $recent);
+        $this->assertSame('cliente_logado', $recent[0]['user_type']);
+        $this->assertSame('Carlos Santos', $recent[0]['customer_name']);
+        $this->assertSame('carlos@empresa.com', $recent[0]['customer_email']);
     }
 
     public function testDailyAutomatedRotationPrioritizesHighDemandProducts(): void

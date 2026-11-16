@@ -38,7 +38,8 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
             $productId,
             $event->productTitle,
             $event->categorySlug,
-            $event->actionType
+            $event->actionType,
+            $event
         );
 
         return true;

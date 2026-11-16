@@ -240,13 +240,20 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             } catch (Throwable $e) {
             }
 
+            $session = null;
+            try {
+                $session = $runtime->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+            } catch (Throwable $e) {
+            }
+
             return new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 themeManager: $themeManager,
                 miningService: $runtime->make(ProductMiningServiceInterface::class),
                 orderRepo: $runtime->make(DropshipOrderRepositoryInterface::class),
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
-                demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class)
+                demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class),
+                session: $session
             );
         });
 

@@ -10,14 +10,22 @@ namespace DomainSystem\Plugins\domain_drop\Contracts;
 interface DemandMetricsRepositoryInterface
 {
     /**
-     * Incrementa atomicamente a métrica correspondente no período YYYY-MM.
+     * Incrementa atomicamente a métrica correspondente no período YYYY-MM
+     * e registra a trilha de auditoria identificando o usuário (logado ou externo).
      */
     public function incrementMetric(
         string $productId,
         string $productTitle,
         string $categorySlug,
-        string $actionType
+        string $actionType,
+        ?\DomainSystem\Plugins\domain_drop\DTO\DemandEvent $event = null
     ): void;
+
+    /**
+     * Retorna os últimos acessos e cliques identificados com perfil do usuário (logado vs externo).
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRecentActivityLogs(int $limit = 25): array;
 
     /**
      * Retorna métricas ao vivo / tempo real (ex: hoje / últimas 24h).

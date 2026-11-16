@@ -26,7 +26,8 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
         string $productId,
         string $productTitle,
         string $categorySlug,
-        string $actionType
+        string $actionType,
+        ?\DomainSystem\Plugins\domain_drop\DTO\DemandEvent $event = null
     ): void {
         $cleanId = trim($productId);
         if ($cleanId === '') {
@@ -103,9 +104,51 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
                     ':searched_at' => $now,
                 ]);
             }
+
+            // Grava a trilha de auditoria individual com identificação de usuário (logado vs externo)
+            $userType = $event ? $event->userType : 'externo';
+            $cId = $event?->customerId;
+            $cName = $event?->customerName;
+            $cEmail = $event?->customerEmail;
+            $sessId = $event?->sessionId;
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+            $logStmt = $this->pdo->prepare("
+                INSERT INTO domain_drop_demand_activity_logs
+                    (product_id, product_title, category_slug, action_type, user_type, customer_id, customer_name, customer_email, session_id, ip_address, created_at)
+                VALUES
+                    (:pid, :title, :cat, :action, :utype, :cid, :cname, :cemail, :sess, :ip, :created)
+            ");
+            $logStmt->execute([
+                ':pid'     => $cleanId,
+                ':title'   => $title,
+                ':cat'     => $category,
+                ':action'  => $actionType,
+                ':utype'   => $userType,
+                ':cid'     => $cId,
+                ':cname'   => $cName,
+                ':cemail'  => $cEmail,
+                ':sess'    => $sessId,
+                ':ip'      => $ip,
+                ':created' => $now,
+            ]);
         } catch (Throwable $e) {
             error_log('[PdoDemandMetricsRepository] Falha ao incrementar métrica: ' . $e->getMessage());
         }
+    }
+
+    public function getRecentActivityLogs(int $limit = 25): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, product_id, product_title, category_slug, action_type, user_type, customer_id, customer_name, customer_email, created_at
+            FROM domain_drop_demand_activity_logs
+            ORDER BY id DESC
+            LIMIT :lim
+        ");
+        $stmt->bindValue(':lim', max(1, min(100, $limit)), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getLivePulseMetrics(): array
