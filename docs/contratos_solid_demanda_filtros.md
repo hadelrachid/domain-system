@@ -61,8 +61,8 @@ interface DemandTrackerInterface
 
 ---
 
-### 2.2. Contrato de Persistência e Agregação Mensal (ISP / DIP)
-Responsabilidade única: persistir contadores agregados por mês e fornecer dados consolidados para gráficos e relatórios.
+### 2.2. Contrato de Persistência, Pulso em Tempo Real e Livro de Presença Mensal (ISP / DIP)
+Responsabilidade única: persistir contadores em tempo real para o velocímetro/gráfico ao vivo e consolidar o fechamento mensal como um "livro de presença / auditoria contínua de demanda".
 
 ```php
 namespace DomainSystem\Plugins\domain_drop\Contracts;
@@ -70,7 +70,7 @@ namespace DomainSystem\Plugins\domain_drop\Contracts;
 interface DemandMetricsRepositoryInterface
 {
     /**
-     * Incrementa atomicamente os contadores do período (YYYY-MM).
+     * Incrementa atomicamente os contadores em tempo real (hoje e período YYYY-MM).
      */
     public function incrementMetric(
         string $productId,
@@ -80,8 +80,14 @@ interface DemandMetricsRepositoryInterface
     ): void;
 
     /**
-     * Retorna os produtos ranqueados por Demand Score no mês especificado.
-     * @return array<int, array{product_id: string, title: string, demand_score: int, buy_clicks: int, detail_clicks: int}>
+     * Retorna o pulso de demanda em tempo real (últimas 24h / dia corrente) para os gráficos ao vivo.
+     * @return array<string, mixed> Ex: ['live_clicks' => 84, 'top_hourly_products' => [...]]
+     */
+    public function getLivePulseMetrics(): array;
+
+    /**
+     * Retorna o fechamento consolidado do período (Livro de Presença e Auditoria de Demanda).
+     * @return array<int, array{product_id: string, title: string, demand_score: int, buy_clicks: int, detail_clicks: int, conversions: int}>
      */
     public function getMonthlyRankings(string $yearMonth, int $limit = 20): array;
 
