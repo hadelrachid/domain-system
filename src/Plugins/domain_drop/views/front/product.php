@@ -491,6 +491,9 @@ function trackProductAction(actionType) {
     });
 
     var endpoint = (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
+    if (!endpoint.startsWith('http') && !endpoint.startsWith('/')) {
+        endpoint = '/' + endpoint;
+    }
     if (navigator.sendBeacon) {
         navigator.sendBeacon(endpoint, payload);
     } else {

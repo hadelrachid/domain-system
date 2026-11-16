@@ -54,32 +54,25 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
                     VALUES 
                         (:pid, :title, :cat, :period, :d_inc, :b_inc, :c_inc, :score, :searched_at)
                     ON DUPLICATE KEY UPDATE
-                        product_title = IF(:title_upd != '', :title_upd, product_title),
-                        category_slug = IF(:cat_upd != '', :cat_upd, category_slug),
-                        detail_clicks = detail_clicks + :d_upd,
-                        buy_clicks = buy_clicks + :b_upd,
-                        conversions = conversions + :c_upd,
-                        demand_score = demand_score + :score_upd,
-                        last_searched_at = :searched_upd
+                        product_title = VALUES(product_title),
+                        category_slug = VALUES(category_slug),
+                        detail_clicks = detail_clicks + VALUES(detail_clicks),
+                        buy_clicks = buy_clicks + VALUES(buy_clicks),
+                        conversions = conversions + VALUES(conversions),
+                        demand_score = demand_score + VALUES(demand_score),
+                        last_searched_at = VALUES(last_searched_at)
                 ";
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute([
-                    ':pid'          => $cleanId,
-                    ':title'        => $title,
-                    ':cat'          => $category,
-                    ':period'       => $period,
-                    ':d_inc'        => $detailInc,
-                    ':b_inc'        => $buyInc,
-                    ':c_inc'        => $convInc,
-                    ':score'        => $scoreInc,
-                    ':searched_at'  => $now,
-                    ':title_upd'    => $title,
-                    ':cat_upd'      => $category,
-                    ':d_upd'        => $detailInc,
-                    ':b_upd'        => $buyInc,
-                    ':c_upd'        => $convInc,
-                    ':score_upd'    => $scoreInc,
-                    ':searched_upd' => $now,
+                    ':pid'         => $cleanId,
+                    ':title'       => $title,
+                    ':cat'         => $category,
+                    ':period'      => $period,
+                    ':d_inc'       => $detailInc,
+                    ':b_inc'       => $buyInc,
+                    ':c_inc'       => $convInc,
+                    ':score'       => $scoreInc,
+                    ':searched_at' => $now,
                 ]);
             } else {
                 // SQLite moderno (ON CONFLICT)
@@ -89,32 +82,25 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
                     VALUES 
                         (:pid, :title, :cat, :period, :d_inc, :b_inc, :c_inc, :score, :searched_at)
                     ON CONFLICT(product_id, period_year_month) DO UPDATE SET
-                        product_title = CASE WHEN :title_upd != '' THEN :title_upd ELSE product_title END,
-                        category_slug = CASE WHEN :cat_upd != '' THEN :cat_upd ELSE category_slug END,
-                        detail_clicks = detail_clicks + :d_upd,
-                        buy_clicks = buy_clicks + :b_upd,
-                        conversions = conversions + :c_upd,
-                        demand_score = demand_score + :score_upd,
-                        last_searched_at = :searched_upd
+                        product_title = excluded.product_title,
+                        category_slug = excluded.category_slug,
+                        detail_clicks = detail_clicks + excluded.detail_clicks,
+                        buy_clicks = buy_clicks + excluded.buy_clicks,
+                        conversions = conversions + excluded.conversions,
+                        demand_score = demand_score + excluded.demand_score,
+                        last_searched_at = excluded.last_searched_at
                 ";
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute([
-                    ':pid'          => $cleanId,
-                    ':title'        => $title,
-                    ':cat'          => $category,
-                    ':period'       => $period,
-                    ':d_inc'        => $detailInc,
-                    ':b_inc'        => $buyInc,
-                    ':c_inc'        => $convInc,
-                    ':score'        => $scoreInc,
-                    ':searched_at'  => $now,
-                    ':title_upd'    => $title,
-                    ':cat_upd'      => $category,
-                    ':d_upd'        => $detailInc,
-                    ':b_upd'        => $buyInc,
-                    ':c_upd'        => $convInc,
-                    ':score_upd'    => $scoreInc,
-                    ':searched_upd' => $now,
+                    ':pid'         => $cleanId,
+                    ':title'       => $title,
+                    ':cat'         => $category,
+                    ':period'      => $period,
+                    ':d_inc'       => $detailInc,
+                    ':b_inc'       => $buyInc,
+                    ':c_inc'       => $convInc,
+                    ':score'       => $scoreInc,
+                    ':searched_at' => $now,
                 ]);
             }
         } catch (Throwable $e) {
