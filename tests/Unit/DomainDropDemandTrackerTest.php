@@ -185,6 +185,8 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertStringContainsString('João Silva', $html);
         $this->assertStringContainsString('joao@exemplo.com', $html);
         $this->assertStringContainsString('E-mail Marketing', $html);
+        $this->assertStringContainsString('Lead Potencial', $html);
+        $this->assertStringContainsString('Apenas Leads com E-mail', $html);
     }
 
     public function testDemandMetricsRepositoryLogsCustomerActivityAndDistinguishesUserTypes(): void

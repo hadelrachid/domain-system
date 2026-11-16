@@ -258,6 +258,13 @@ $monthsNames = [
     </div>
 
     <!-- Tabela: Trilha de Acessos Recentes & Identificação de Visitantes (Leads & E-mail Marketing) -->
+    <?php
+    $loggedActivities = array_filter($recentActivities, fn($a) => ($a['user_type'] ?? '') === 'cliente_logado' && !empty($a['customer_email']));
+    $loggedCount = count($loggedActivities);
+    $anonCount = count($recentActivities) - $loggedCount;
+    $uniqueLeadEmails = array_values(array_unique(array_filter(array_column($loggedActivities, 'customer_email'))));
+    $allEmailsJson = json_encode(implode(', ', $uniqueLeadEmails));
+    ?>
     <div style="background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 22px; margin-top: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
             <div>
@@ -265,12 +272,33 @@ $monthsNames = [
                     <span>🕵️</span> Trilha de Interações Recentes: Identificação de Usuários &amp; Leads
                 </h3>
                 <span style="font-size: 0.82rem; color: #94a3b8;">
-                    Monitoramento individual de quem clicou em <strong>Ver Detalhes</strong> ou <strong>Comprar</strong>. Discrimina clientes cadastrados para ações diretas de E-mail Marketing vs visitantes externos anônimos.
+                    Monitoramento individual de quem clicou em <strong>Ver Detalhes</strong> ou <strong>Comprar</strong>. Destaque para clientes com e-mail cadastrado (potenciais compradores para campanhas de e-mail marketing).
                 </span>
             </div>
-            <span style="background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
-                Últimos <?= count($recentActivities) ?> eventos
-            </span>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <?php if (!empty($uniqueLeadEmails)): ?>
+                    <button type="button" onclick="navigator.clipboard.writeText(<?= htmlspecialchars($allEmailsJson, ENT_QUOTES) ?>); this.innerText='✅ E-mails Copiados!'; setTimeout(()=>this.innerText='📋 Copiar <?= count($uniqueLeadEmails) ?> E-mails de Leads', 2000);" style="background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.25)'" onmouseout="this.style.background='rgba(56,189,248,0.15)'">
+                        📋 Copiar <?= count($uniqueLeadEmails) ?> E-mails de Leads
+                    </button>
+                <?php endif; ?>
+                <span style="background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); font-size: 0.74rem; font-weight: 700; padding: 5px 10px; border-radius: 999px;">
+                    <?= count($recentActivities) ?> eventos
+                </span>
+            </div>
+        </div>
+
+        <!-- Filtros Rápidos de Exibição / Filtro de Clientes Potenciais -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-right: 4px;">Filtro de Audiência:</span>
+            <button type="button" onclick="filterActivityLogs('all', this)" class="btn-act-filter active" style="background: #3b82f6; color: #fff; border: 1px solid #3b82f6; padding: 6px 13px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                Todos os Acessos (<?= count($recentActivities) ?>)
+            </button>
+            <button type="button" onclick="filterActivityLogs('logged', this)" class="btn-act-filter" style="background: #0f172a; color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); padding: 6px 13px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;">
+                <span>⭐</span> Apenas Leads com E-mail (<?= $loggedCount ?>)
+            </button>
+            <button type="button" onclick="filterActivityLogs('anon', this)" class="btn-act-filter" style="background: #0f172a; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 6px 13px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                ⚪ Visitantes Externos (<?= $anonCount ?>)
+            </button>
         </div>
 
         <div style="overflow-x: auto;">
@@ -281,8 +309,8 @@ $monthsNames = [
                         <th style="padding: 12px 14px;">Ação</th>
                         <th style="padding: 12px 14px;">Produto / Categoria</th>
                         <th style="padding: 12px 14px;">Perfil do Usuário</th>
-                        <th style="padding: 12px 14px;">Identificação (Nome / E-mail)</th>
-                        <th style="padding: 12px 14px; text-align: right;">Ação de Marketing</th>
+                        <th style="padding: 12px 14px;">Identificação &amp; E-mail Marketing</th>
+                        <th style="padding: 12px 14px; text-align: right;">Ação Direta</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -298,7 +326,7 @@ $monthsNames = [
                                 $isLogged = ($act['user_type'] ?? '') === 'cliente_logado';
                                 $actType = $act['action_type'] ?? '';
                             ?>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                            <tr class="activity-row <?= $isLogged ? 'row-logged' : 'row-anon' ?>" style="border-bottom: 1px solid rgba(255,255,255,0.04); <?= $isLogged ? 'background: rgba(56,189,248,0.03); border-left: 4px solid #38bdf8;' : 'border-left: 4px solid transparent;' ?> transition: background 0.2s;" onmouseover="this.style.background='<?= $isLogged ? 'rgba(56,189,248,0.07)' : 'rgba(255,255,255,0.02)' ?>'" onmouseout="this.style.background='<?= $isLogged ? 'rgba(56,189,248,0.03)' : 'transparent' ?>'">
                                 <td style="padding: 14px; font-family: monospace; font-size: 0.8rem; color: #cbd5e1; white-space: nowrap;">
                                     <?= htmlspecialchars(date('d/m/Y H:i:s', strtotime($act['created_at'] ?? 'now'))) ?>
                                 </td>
@@ -338,11 +366,21 @@ $monthsNames = [
                                 </td>
                                 <td style="padding: 14px;">
                                     <?php if ($isLogged && !empty($act['customer_email'])): ?>
-                                        <div style="font-weight: 700; color: #e2e8f0;">
-                                            <?= htmlspecialchars($act['customer_name'] ?: 'Cliente Cadastrado') ?>
-                                        </div>
-                                        <div style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">
-                                            <?= htmlspecialchars($act['customer_email']) ?>
+                                        <!-- Destaque Especial para o E-mail Marketing / Filtro de Clientes Potenciais -->
+                                        <div style="background: rgba(56, 189, 248, 0.08); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 7px 11px; display: inline-block; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.1);">
+                                            <div style="font-weight: 700; color: #fff; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                                                <span>👤</span> <?= htmlspecialchars($act['customer_name'] ?: 'Cliente Cadastrado') ?>
+                                                <span style="background: #10b981; color: #0b0f17; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; text-transform: uppercase;">Lead Potencial</span>
+                                            </div>
+                                            <div style="margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                                                <span style="font-size: 0.95rem;">📧</span>
+                                                <span style="color: #38bdf8; font-weight: 800; font-family: monospace; font-size: 0.92rem; text-decoration: underline; letter-spacing: 0.2px;">
+                                                    <?= htmlspecialchars($act['customer_email']) ?>
+                                                </span>
+                                                <button type="button" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($act['customer_email'], ENT_QUOTES) ?>'); this.innerText='Copiado!'; setTimeout(()=>this.innerText='Copiar', 1500);" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #fff; font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; cursor: pointer; font-weight: 700; margin-left: 2px;" title="Copiar e-mail para área de transferência">
+                                                    Copiar
+                                                </button>
+                                            </div>
                                         </div>
                                     <?php else: ?>
                                         <div style="color: #64748b; font-size: 0.8rem; font-style: italic;">
@@ -357,8 +395,8 @@ $monthsNames = [
                                             $body = "Olá " . ($act['customer_name'] ?: 'cliente') . ",\n\nNotamos seu interesse no produto '" . ($act['product_title'] ?? '') . "'. Temos condições especiais e cupom de desconto para você hoje!";
                                             $mailUrl = 'mailto:' . rawurlencode($act['customer_email']) . '?subject=' . rawurlencode($subject) . '&body=' . rawurlencode($body);
                                         ?>
-                                        <a href="<?= htmlspecialchars($mailUrl) ?>" style="background: #3b82f6; color: #fff; padding: 5px 11px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-                                            <span>✉️</span> E-mail Marketing
+                                        <a href="<?= htmlspecialchars($mailUrl) ?>" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 10px rgba(2,132,199,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                                            <span>✉️</span> E-mail Marketing Direto
                                         </a>
                                     <?php else: ?>
                                         <span style="color: #64748b; font-size: 0.75rem;">Sem dados de contato</span>
@@ -371,4 +409,28 @@ $monthsNames = [
             </table>
         </div>
     </div>
+
+    <!-- Script de Filtro Interativo de Leads da Trilha -->
+    <script>
+    function filterActivityLogs(filterType, btn) {
+        document.querySelectorAll('.btn-act-filter').forEach(function(b) {
+            b.style.background = '#0f172a';
+            b.style.color = '#94a3b8';
+            b.style.borderColor = 'rgba(255,255,255,0.1)';
+        });
+        btn.style.background = '#3b82f6';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#3b82f6';
+
+        document.querySelectorAll('.activity-row').forEach(function(row) {
+            if (filterType === 'all') {
+                row.style.display = '';
+            } else if (filterType === 'logged') {
+                row.style.display = row.classList.contains('row-logged') ? '' : 'none';
+            } else if (filterType === 'anon') {
+                row.style.display = row.classList.contains('row-anon') ? '' : 'none';
+            }
+        });
+    }
+    </script>
 </div>
