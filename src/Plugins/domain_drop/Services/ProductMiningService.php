@@ -34,6 +34,7 @@ class ProductMiningService implements ProductMiningServiceInterface
 
     private ProductLinkScraperInterface $linkScraper;
     private ?string $configFilePath;
+    private ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $demandMetricsRepo;
 
     public function __construct(
         private readonly AliExpressApiClientInterface $apiClient,
@@ -41,10 +42,12 @@ class ProductMiningService implements ProductMiningServiceInterface
         private readonly AiProductEnricherInterface $aiEnricher,
         private readonly DropshipCatalogRepositoryInterface $repository,
         ?ProductLinkScraperInterface $linkScraper = null,
-        ?string $configFilePath = null
+        ?string $configFilePath = null,
+        ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $demandMetricsRepo = null
     ) {
         $this->linkScraper = $linkScraper ?? new AliExpressLinkScraperService();
         $this->configFilePath = $configFilePath;
+        $this->demandMetricsRepo = $demandMetricsRepo;
     }
 
     /**
@@ -1687,6 +1690,31 @@ class ProductMiningService implements ProductMiningServiceInterface
             $results = [];
             $totalProducts = 0;
 
+            // 1. Curadoria Prioritária por Demanda: Garante vagas cativas para os produtos campeões de cliques/compras
+            $priorityTermsPreserved = [];
+            if ($this->demandMetricsRepo !== null) {
+                try {
+                    $topDemanded = $this->demandMetricsRepo->getMonthlyRankings(date('Y-m'), 5);
+                    foreach ($topDemanded as $demandedItem) {
+                        $term = trim((string)($demandedItem['product_title'] ?? ''));
+                        $cat = trim((string)($demandedItem['category_slug'] ?? ''));
+                        if ($term !== '') {
+                            $targetCat = self::normalizeCategory($cat);
+                            try {
+                                $priorityMined = $this->mineTrendingProducts(category: $targetCat, limit: 1, autoPersist: true, sort: 'volume_desc');
+                                if (!empty($priorityMined)) {
+                                    $priorityTermsPreserved[] = $term;
+                                    $totalProducts += count($priorityMined);
+                                }
+                            } catch (Throwable $e) {}
+                        }
+                    }
+                } catch (Throwable $e) {
+                    // Isolamento gracioso
+                }
+            }
+
+            // 2. Rotação das 9 Categorias Oficiais
             foreach (self::OFFICIAL_CATEGORIES as $cat) {
                 try {
                     $mined = $this->mineTrendingProducts(category: $cat, limit: $itemsPerCategory, autoPersist: true);
@@ -1709,6 +1737,7 @@ class ProductMiningService implements ProductMiningServiceInterface
                 'executed_date'   => date('d/m/Y H:i:s', $now),
                 'total_mined'     => $totalProducts,
                 'category_counts' => $results,
+                'priority_preserved' => $priorityTermsPreserved,
             ];
         } finally {
             flock($lockHandle, LOCK_UN);

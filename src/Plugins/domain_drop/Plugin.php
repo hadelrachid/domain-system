@@ -210,7 +210,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 currencyConverter: $runtime->make(CurrencyConverterInterface::class),
                 aiEnricher: $runtime->make(AiProductEnricherInterface::class),
                 repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
-                linkScraper: $runtime->make(ProductLinkScraperInterface::class)
+                linkScraper: $runtime->make(ProductLinkScraperInterface::class),
+                demandMetricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class)
             );
         });
 

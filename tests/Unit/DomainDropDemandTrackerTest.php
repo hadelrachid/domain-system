@@ -168,4 +168,39 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertStringContainsString('Perfil dos Compradores', $html);
         $this->assertStringContainsString('gadgets', $html);
     }
+
+    public function testDailyAutomatedRotationPrioritizesHighDemandProducts(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $repo->incrementMetric('ALI-CAMP-1', 'Carregador Turbo Top', 'eletronicos', 'buy_click');
+        $repo->incrementMetric('ALI-CAMP-1', 'Carregador Turbo Top', 'eletronicos', 'conversion');
+
+        $catalogRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $catalogRepo->method('save')->willReturn(10);
+
+        $apiClient = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $apiClient->method('searchProducts')->willReturn([]);
+
+        $converter = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $converter->method('calculateSalePrice')->willReturn(89.90);
+
+        $ai = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $ai->method('polishTitle')->willReturn('Carregador Turbo Top 65W');
+        $ai->method('generateSalesCopy')->willReturn('Descrição persuasiva do carregador');
+
+        $miningService = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            apiClient: $apiClient,
+            currencyConverter: $converter,
+            aiEnricher: $ai,
+            repository: $catalogRepo,
+            demandMetricsRepo: $repo
+        );
+
+        $result = $miningService->runDailyAutomatedRotation(itemsPerCategory: 1);
+
+        $this->assertTrue($result['success']);
+        $this->assertGreaterThan(0, $result['total_mined']);
+        $this->assertArrayHasKey('priority_preserved', $result);
+        $this->assertContains('Carregador Turbo Top', $result['priority_preserved']);
+    }
 }
