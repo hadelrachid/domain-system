@@ -372,4 +372,109 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->assertArrayHasKey('priority_preserved', $result);
         $this->assertContains('Carregador Turbo Top', $result['priority_preserved']);
     }
+
+    public function testFileDemandLogStorageAppendsAndReadsJsonLogsInMonthlyFolders(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/test_demand_logs_' . uniqid();
+        $storage = new \DomainSystem\Plugins\domain_drop\Services\FileDemandLogStorage($tempDir);
+
+        $eventMaura = new DemandEvent(
+            productId: 'ALI-MAURA-01',
+            productTitle: 'Mini Teclado Sem Fio',
+            categorySlug: 'informatica',
+            actionType: 'detail_click',
+            customerId: 1,
+            customerName: 'MAURA PEREIRA DE AZEVEDO',
+            customerEmail: 'maurapereiradeazevedo@gmail.com',
+            userType: 'cliente_logado'
+        );
+
+        $eventAnon = new DemandEvent(
+            productId: 'ALI-ANON-02',
+            productTitle: 'Mouse Ergonômico',
+            categorySlug: 'informatica',
+            actionType: 'buy_click',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+
+        $storage->appendInteraction($eventMaura);
+        $storage->appendInteraction($eventAnon);
+
+        $filePath = $storage->getFilePathForPeriod();
+        $this->assertFileExists($filePath);
+
+        // Verifica padrão de pasta json_[nome_do_mes]_[ano]
+        $this->assertMatchesRegularExpression('#/json_[a-z]+_\d{4}/interactions\.json$#', str_replace('\\', '/', $filePath));
+
+        // Leitura em ordem cronológica decrescente
+        $recent = $storage->getRecentInteractions(limit: 10);
+        $this->assertCount(2, $recent);
+        $this->assertSame('ALI-ANON-02', $recent[0]['product_id']);
+        $this->assertSame('externo', $recent[0]['user_type']);
+
+        $this->assertSame('ALI-MAURA-01', $recent[1]['product_id']);
+        $this->assertSame('cliente_logado', $recent[1]['user_type']);
+        $this->assertSame('maurapereiradeazevedo@gmail.com', $recent[1]['customer_email']);
+
+        // Extração de leads únicos para e-mail marketing
+        $leads = $storage->getLeadEmails();
+        $this->assertCount(1, $leads);
+        $this->assertSame('maurapereiradeazevedo@gmail.com', $leads[0]);
+
+        // Limpeza do temp
+        $this->deleteDir($tempDir);
+    }
+
+    public function testFileDemandLogStoragePurgesFoldersOlderThanTwoYears(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/test_demand_logs_purge_' . uniqid();
+        $storage = new \DomainSystem\Plugins\domain_drop\Services\FileDemandLogStorage($tempDir);
+
+        $currentYear = (int)date('Y');
+        $oldYear = $currentYear - 3; // Mais velho que 2 anos (deve ser expurgado)
+        $validYear = $currentYear - 1; // 1 ano atrás (deve ser preservado)
+
+        $oldFolder = "{$tempDir}/{$oldYear}/json_dezembro_{$oldYear}";
+        $validFolder = "{$tempDir}/{$validYear}/json_dezembro_{$validYear}";
+
+        @mkdir($oldFolder, 0755, true);
+        @mkdir($validFolder, 0755, true);
+
+        file_put_contents("{$oldFolder}/interactions.json", "{\"test\":1}\n");
+        file_put_contents("{$validFolder}/interactions.json", "{\"test\":2}\n");
+
+        $this->assertDirectoryExists($oldFolder);
+        $this->assertDirectoryExists($validFolder);
+
+        // Expurga arquivos com mais de 2 anos
+        $purged = $storage->purgeExpiredLogs(2);
+        $this->assertSame(1, $purged);
+
+        // A pasta antiga sumiu!
+        $this->assertDirectoryDoesNotExist("{$tempDir}/{$oldYear}");
+        // A pasta recente foi preservada!
+        $this->assertDirectoryExists($validFolder);
+
+        $this->deleteDir($tempDir);
+    }
+
+    private function deleteDir(string $dir): void
+    {
+        if (!is_dir($dir)) return;
+        $items = scandir($dir);
+        if ($items === false) return;
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') continue;
+            $p = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($p)) {
+                $this->deleteDir($p);
+            } else {
+                @unlink($p);
+            }
+        }
+        @rmdir($dir);
+    }
 }

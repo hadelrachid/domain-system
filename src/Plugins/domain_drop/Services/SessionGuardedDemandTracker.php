@@ -23,7 +23,8 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
     public function __construct(
         private readonly DemandMetricsRepositoryInterface $repository,
         private readonly ?SessionManagerInterface $session = null,
-        private readonly int $debounceSeconds = self::DEFAULT_DEBOUNCE_SECONDS
+        private readonly int $debounceSeconds = self::DEFAULT_DEBOUNCE_SECONDS,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null
     ) {
     }
 
@@ -39,6 +40,12 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
             return false;
         }
 
+        // 1. Registra no arquivo JSON mensal (sem poluir o banco de dados)
+        if ($this->logStorage !== null) {
+            $this->logStorage->appendInteraction($event);
+        }
+
+        // 2. Incrementa a métrica consolidada agregada no banco de dados
         $this->repository->incrementMetric(
             $productId,
             $event->productTitle,

@@ -142,10 +142,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new \DomainSystem\Plugins\domain_drop\Repositories\PdoDemandMetricsRepository($runtime->getLink('core.db'));
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class, function () use ($root) {
+            return new \DomainSystem\Plugins\domain_drop\Services\FileDemandLogStorage(
+                baseDir: $root . '/storage/demand_logs'
+            );
+        });
+
         $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class, function () use ($runtime) {
             return new \DomainSystem\Plugins\domain_drop\Services\SessionGuardedDemandTracker(
                 repository: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
-                session: $runtime->getLink('core.session')
+                session: $runtime->getLink('core.session'),
+                logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class)
             );
         });
 
@@ -229,7 +236,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 slaService: $runtime->make(OrderSlaProgressService::class),
                 mediationService: $runtime->make(SellerMediationService::class),
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
-                metricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class)
+                metricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
+                logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class)
             );
         });
 

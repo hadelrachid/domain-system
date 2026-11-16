@@ -42,7 +42,8 @@ class DropshipAdminController
         private readonly ?OrderSlaProgressService $slaService = null,
         private readonly ?SellerMediationService $mediationService = null,
         private readonly ?AliExpressApiClientInterface $apiClient = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $metricsRepo = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $metricsRepo = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->configFile = $root . '/config/plugins/domain_drop.json';
@@ -989,7 +990,15 @@ class DropshipAdminController
 
         $rankings = $this->metricsRepo ? $this->metricsRepo->getMonthlyRankings($selectedPeriod, 30) : [];
         $categoryProfile = $this->metricsRepo ? $this->metricsRepo->getAudienceCategoryProfile($selectedPeriod) : [];
-        $recentActivities = $this->metricsRepo ? $this->metricsRepo->getRecentActivityLogs(25) : [];
+
+        // Prioriza leitura em JSON estruturado mensal (sem poluir o banco relacional)
+        if ($this->logStorage !== null) {
+            try { $this->logStorage->purgeExpiredLogs(2); } catch (\Throwable $e) {}
+            $recentActivities = $this->logStorage->getRecentInteractions($selectedPeriod, 50);
+        } else {
+            $recentActivities = $this->metricsRepo ? $this->metricsRepo->getRecentActivityLogs(50) : [];
+        }
+
         $csrfToken = (string)$this->session->getCsrfToken();
 
         ob_start();
