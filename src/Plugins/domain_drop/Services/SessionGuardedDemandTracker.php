@@ -14,11 +14,16 @@ use DomainSystem\Plugins\domain_drop\DTO\DemandEvent;
  */
 final class SessionGuardedDemandTracker implements DemandTrackerInterface
 {
-    private const WINDOW_SECONDS = 300; // 5 minutos de janela anti-spam por produto/ação
+    /**
+     * Debounce mínimo (em segundos) apenas para prevenir duplo-clique acidental de mouse.
+     * Permite auditoria imediata no exato tempo de cada interação do visitante.
+     */
+    private const DEFAULT_DEBOUNCE_SECONDS = 2;
 
     public function __construct(
         private readonly DemandMetricsRepositoryInterface $repository,
-        private readonly ?SessionManagerInterface $session = null
+        private readonly ?SessionManagerInterface $session = null,
+        private readonly int $debounceSeconds = self::DEFAULT_DEBOUNCE_SECONDS
     ) {
     }
 
@@ -60,7 +65,7 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
         $lastRecorded = (int)$this->session->get($sessionKey, 0);
         $now = time();
 
-        if ($lastRecorded > 0 && ($now - $lastRecorded) < self::WINDOW_SECONDS) {
+        if ($lastRecorded > 0 && ($now - $lastRecorded) < $this->debounceSeconds) {
             return true;
         }
 

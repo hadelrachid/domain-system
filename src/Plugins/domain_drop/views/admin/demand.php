@@ -30,7 +30,7 @@ $monthsNames = [
                 </span>
             </div>
             <p style="color: #94a3b8; margin: 0; font-size: 0.88rem;">
-                Auditor autônomo de cliques, intenção de compra de fundo de funil e mapa de interesses para o ciclo de 24h da loja.
+                Auditor autônomo em tempo real: contabiliza cliques, intenção de compra de fundo de funil e mapa de interesses no exato momento da interação do visitante.
             </p>
         </div>
 
@@ -189,7 +189,7 @@ $monthsNames = [
                     <span>📖</span> Livro de Presença de Produtos: Auditoria do Mês (<?= htmlspecialchars($selectedPeriod) ?>)
                 </h3>
                 <span style="font-size: 0.82rem; color: #94a3b8;">
-                    Ranking dos itens com maior demanda. Estes produtos são os candidatos ideais para compra em estoque próprio e vagas cativas no ciclo de 24h.
+                    Ranking dos itens com maior demanda contabilizado em tempo real. Identifica os produtos mais desejados no exato momento da interação da audiência.
                 </span>
             </div>
         </div>
