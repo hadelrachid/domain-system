@@ -364,10 +364,10 @@
         </form>
 
         <div style="display: flex; align-items: center; gap: 14px;">
-            <form action="<?= $baseUrl ?>/admin/dropship/sync-all-images" method="POST" style="margin: 0;" onsubmit="return confirm('Deseja sincronizar em tempo real as imagens oficiais de todos os produtos com seus links do AliExpress?');">
+            <form action="<?= $baseUrl ?>/admin/dropship/sync-all-images" method="POST" style="margin: 0;" onsubmit="return confirm('Deseja sincronizar as galerias oficiais dos produtos com o AliExpress?\n\nProdutos que já possuem mais de 1 imagem serão ignorados automaticamente para economizar requisições.');">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                <button type="submit" style="background: rgba(69, 243, 255, 0.12); border: 1px solid rgba(69, 243, 255, 0.35); color: #45f3ff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-sync-alt"></i> Sincronizar Todas as Imagens pelo Link
+                <button type="submit" title="Sincroniza galerias incompletas e preserva produtos que já têm mais de 1 foto" style="background: rgba(69, 243, 255, 0.12); border: 1px solid rgba(69, 243, 255, 0.35); color: #45f3ff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-sync-alt"></i> Sincronizar Galerias pelo Link
                 </button>
             </form>
             <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">

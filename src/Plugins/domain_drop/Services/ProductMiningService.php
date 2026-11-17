@@ -649,6 +649,15 @@ class ProductMiningService implements ProductMiningServiceInterface
             }
         }
 
+        // 2.5.1 De variantes estruturadas locais
+        if (!empty($item['variants']) && is_array($item['variants'])) {
+            foreach ($item['variants'] as $v) {
+                if (is_array($v) && !empty($v['image_url'])) {
+                    $collectedImages[] = (string)$v['image_url'];
+                }
+            }
+        }
+
         // 2.6 Higienização, desduplicação e normalização para Full HD (remove sufixos de thumbnails _80x80.jpg)
         $images = [];
         if (!empty($rawMainImage)) {

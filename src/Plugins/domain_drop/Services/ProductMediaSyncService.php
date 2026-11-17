@@ -56,7 +56,22 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
 
         // Galeria com todas as imagens reais raspadas
         $allImages = $scraped->getAllImages();
+        if (empty($allImages)) {
+            $allImages = $existing->images;
+        } else {
+            // Preserva fotos de variantes existentes se houver
+            if (!empty($existing->attributes['variants']) && is_array($existing->attributes['variants'])) {
+                foreach ($existing->attributes['variants'] as $v) {
+                    if (is_array($v) && !empty($v['image_url']) && !in_array($v['image_url'], $allImages, true)) {
+                        $allImages[] = $v['image_url'];
+                    }
+                }
+            }
+        }
         $mainImage = $scraped->mainImageUrl ?: ($allImages[0] ?? $existing->mainImageUrl);
+
+        // Preserva atributos existentes (como variantes e avaliações)
+        $mergedAttributes = array_merge($existing->attributes, $scraped->attributes);
 
         $updatedDto = new DropshipProductDto(
             aliexpressId: $sourceId,
@@ -70,7 +85,7 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
             description: $existing->description,
             rating: $scraped->rating > 0 ? $scraped->rating : $existing->rating,
             ordersCount: $scraped->ordersCount > 0 ? $scraped->ordersCount : $existing->ordersCount,
-            attributes: !empty($scraped->attributes) ? $scraped->attributes : $existing->attributes,
+            attributes: $mergedAttributes,
             status: $existing->status,
             id: $existing->id
         );
@@ -80,15 +95,27 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         return $this->repository->findById($productId) ?? $updatedDto;
     }
 
-    public function syncAllCatalogMedia(): array
+    public function syncAllCatalogMedia(bool $skipIfAlreadyMultiple = true): array
     {
         $products = $this->repository->list([], 200, 0);
+        $total = count($products);
+        $checked = 0;
+        $skippedAlreadyMultiple = 0;
         $synced = 0;
         $failed = 0;
         $errors = [];
 
         foreach ($products as $prod) {
             if ($prod->id === null) {
+                continue;
+            }
+
+            $checked++;
+            $images = !empty($prod->images) ? array_values(array_filter($prod->images)) : [];
+
+            // REGRA INTELIGENTE: Se o produto já possui mais de 1 imagem, NÃO precisa re-sincronizar!
+            if ($skipIfAlreadyMultiple && count($images) > 1) {
+                $skippedAlreadyMultiple++;
                 continue;
             }
 
@@ -107,10 +134,61 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         }
 
         return [
-            'total'  => count($products),
-            'synced' => $synced,
-            'failed' => $failed,
-            'errors' => $errors,
+            'total'                    => $total,
+            'checked'                  => $checked,
+            'skipped_already_multiple' => $skippedAlreadyMultiple,
+            'synced'                   => $synced,
+            'failed'                   => $failed,
+            'errors'                   => $errors,
+        ];
+    }
+
+    public function syncMissingGalleries(int $limit = 50): array
+    {
+        $products = $this->repository->list([], 200, 0);
+        $totalChecked = 0;
+        $neededSync = 0;
+        $synced = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($products as $prod) {
+            if ($prod->id === null) {
+                continue;
+            }
+
+            $totalChecked++;
+            $images = !empty($prod->images) ? array_values(array_filter($prod->images)) : [];
+
+            // Pula se já tiver mais de 1 imagem (não gasta requisição à toa)
+            if (count($images) > 1) {
+                continue;
+            }
+
+            if (!preg_match('/^\d{10,20}$/', $prod->aliexpressId)) {
+                continue;
+            }
+
+            $neededSync++;
+            if ($synced >= $limit) {
+                continue;
+            }
+
+            try {
+                $this->syncProductMedia((int)$prod->id);
+                $synced++;
+            } catch (Throwable $e) {
+                $failed++;
+                $errors[] = "Produto #{$prod->id} ({$prod->title}): " . $e->getMessage();
+            }
+        }
+
+        return [
+            'total_checked' => $totalChecked,
+            'needed_sync'   => $neededSync,
+            'synced'        => $synced,
+            'failed'        => $failed,
+            'errors'        => $errors,
         ];
     }
 

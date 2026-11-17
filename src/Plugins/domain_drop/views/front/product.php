@@ -9,6 +9,13 @@
 $refPrice = $product->salePriceBrl * 1.35;
 $sellerInfo = $product->getSellerInfo();
 $allImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
+if ($product->hasVariants()) {
+    foreach ($product->getVariants() as $v) {
+        if (!empty($v->imageUrl) && !in_array($v->imageUrl, $allImages, true)) {
+            $allImages[] = $v->imageUrl;
+        }
+    }
+}
 if (empty($allImages) && !empty($product->mainImageUrl)) {
     $allImages = [$product->mainImageUrl];
 }

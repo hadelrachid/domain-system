@@ -261,4 +261,120 @@ class DomainDropMediaSyncTest extends TestCase
         $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/CAPA.jpg', $reloaded->mainImageUrl);
         $this->assertCount(2, $reloaded->images);
     }
+
+    public function testSyncAllCatalogMediaSkipsProductsWithMultipleImages(): void
+    {
+        // Produto 1: já tem galeria completa (> 1 foto) -> deve ser ignorado
+        $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005011111111111',
+            title: 'Produto com Galeria Completa',
+            slug: 'produto-com-galeria-completa',
+            costPriceUsd: 10.0,
+            salePriceBrl: 100.0,
+            mainImageUrl: 'https://exemplo.com/foto1.jpg',
+            images: ['https://exemplo.com/foto1.jpg', 'https://exemplo.com/foto2.jpg'],
+            category: 'Moda'
+        ));
+
+        // Produto 2: tem apenas 1 foto -> deve ser sincronizado
+        $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005022222222222',
+            title: 'Produto com Foto Única',
+            slug: 'produto-com-foto-unica',
+            costPriceUsd: 15.0,
+            salePriceBrl: 150.0,
+            mainImageUrl: 'https://exemplo.com/foto-unica.jpg',
+            images: ['https://exemplo.com/foto-unica.jpg'],
+            category: 'Moda'
+        ));
+
+        $mockScraper = $this->createMock(ProductLinkScraperInterface::class);
+        $mockScraper->expects($this->once()) // Somente o produto 2 deve acionar o scraper!
+            ->method('scrape')
+            ->with('1005022222222222')
+            ->willReturn(new ScrapedProductDto(
+                sourceId: '1005022222222222',
+                sourceUrl: 'https://pt.aliexpress.com/item/1005022222222222.html',
+                rawTitle: 'Produto com Foto Única Raspado',
+                mainImageUrl: 'https://exemplo.com/nova1.jpg',
+                galleryImages: ['https://exemplo.com/nova1.jpg', 'https://exemplo.com/nova2.jpg', 'https://exemplo.com/nova3.jpg'],
+                costPriceUsd: 15.0,
+                category: 'Moda'
+            ));
+
+        $tmpCache = sys_get_temp_dir() . '/test_exchange_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.0]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+
+        $syncService = new ProductMediaSyncService($this->repo, $mockScraper, $enricher, $converter);
+        $result = $syncService->syncAllCatalogMedia(skipIfAlreadyMultiple: true);
+
+        $this->assertSame(2, $result['total']);
+        $this->assertSame(2, $result['checked']);
+        $this->assertSame(1, $result['skipped_already_multiple']);
+        $this->assertSame(1, $result['synced']);
+        $this->assertSame(0, $result['failed']);
+
+        @unlink($tmpCache);
+    }
+
+    public function testSyncMissingGalleriesTargetsOnlyIncompleteGalleries(): void
+    {
+        // Produto 1: já tem 3 fotos
+        $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005033333333333',
+            title: 'Smartwatch 3 Fotos',
+            slug: 'smartwatch-3-fotos',
+            costPriceUsd: 20.0,
+            salePriceBrl: 200.0,
+            mainImageUrl: 'https://exemplo.com/s1.jpg',
+            images: ['https://exemplo.com/s1.jpg', 'https://exemplo.com/s2.jpg', 'https://exemplo.com/s3.jpg'],
+            category: 'Eletrônicos'
+        ));
+
+        // Produto 2: tem 1 foto
+        $id2 = $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005044444444444',
+            title: 'Fone 1 Foto',
+            slug: 'fone-1-foto',
+            costPriceUsd: 8.0,
+            salePriceBrl: 80.0,
+            mainImageUrl: 'https://exemplo.com/f1.jpg',
+            images: ['https://exemplo.com/f1.jpg'],
+            category: 'Eletrônicos'
+        ));
+
+        $mockScraper = $this->createMock(ProductLinkScraperInterface::class);
+        $mockScraper->expects($this->once())
+            ->method('scrape')
+            ->with('1005044444444444')
+            ->willReturn(new ScrapedProductDto(
+                sourceId: '1005044444444444',
+                sourceUrl: 'https://pt.aliexpress.com/item/1005044444444444.html',
+                rawTitle: 'Fone com Nova Galeria',
+                mainImageUrl: 'https://exemplo.com/f1-novo.jpg',
+                galleryImages: ['https://exemplo.com/f1-novo.jpg', 'https://exemplo.com/f2-novo.jpg'],
+                costPriceUsd: 8.0,
+                category: 'Eletrônicos'
+            ));
+
+        $tmpCache = sys_get_temp_dir() . '/test_exchange_' . uniqid() . '.json';
+        file_put_contents($tmpCache, json_encode(['USD' => 5.0]));
+        $converter = new CurrencyConverterService($tmpCache);
+        $enricher = new AiProductEnricherService();
+
+        $syncService = new ProductMediaSyncService($this->repo, $mockScraper, $enricher, $converter);
+        $result = $syncService->syncMissingGalleries(limit: 10);
+
+        $this->assertSame(2, $result['total_checked']);
+        $this->assertSame(1, $result['needed_sync']);
+        $this->assertSame(1, $result['synced']);
+        $this->assertSame(0, $result['failed']);
+
+        $updatedProduct = $this->repo->findById($id2);
+        $this->assertCount(2, $updatedProduct->images);
+
+        @unlink($tmpCache);
+    }
 }

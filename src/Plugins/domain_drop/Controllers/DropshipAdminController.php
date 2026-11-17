@@ -728,8 +728,13 @@ class DropshipAdminController
         }
 
         try {
-            $res = $this->mediaSync->syncAllCatalogMedia();
-            $this->session->setFlash('success', "🔄 Varredura concluída: {$res['synced']} produtos sincronizados com as imagens oficiais dos seus links.");
+            $res = $this->mediaSync->syncAllCatalogMedia(true);
+            $skipped = (int)($res['skipped_already_multiple'] ?? 0);
+            $msg = "🔄 Varredura inteligente concluída: {$res['synced']} produto(s) sincronizado(s) com a galeria oficial.";
+            if ($skipped > 0) {
+                $msg .= " ({$skipped} produtos já possuíam galeria completa com mais de 1 foto e foram preservados).";
+            }
+            $this->session->setFlash('success', $msg);
         } catch (Throwable $e) {
             $this->session->setFlash('error', "Falha na sincronização em lote: " . $e->getMessage());
         }

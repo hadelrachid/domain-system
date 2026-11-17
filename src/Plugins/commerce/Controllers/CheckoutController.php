@@ -244,10 +244,10 @@ class CheckoutController
             return new JsonResponse(['success' => false, 'message' => 'Token CSRF inválido.'], 403);
         }
 
-        $requestedSku = trim((string)($request->input('sku') ?? ($_POST['sku'] ?? ($_GET['sku'] ?? ''))));
+        $requestedSku = trim((string)$request->input('sku', ''));
         if ($requestedSku !== '') {
-            $_GET['sku'] = $requestedSku;
-            $_POST['sku'] = $requestedSku;
+            $GLOBALS['_GET']['sku'] = $requestedSku;
+            $GLOBALS['_POST']['sku'] = $requestedSku;
         }
 
         $courseId = (int)($request->input('item_id') ?? $request->input('course_id'));
