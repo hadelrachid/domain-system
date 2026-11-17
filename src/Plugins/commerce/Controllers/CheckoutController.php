@@ -117,7 +117,16 @@ class CheckoutController
             // Produtos da Loja exigem que o Cliente (ou Aluno) esteja logado; caso contrário, vai para Login/Cadastro (2 cards lado a lado)
             if ($customerId <= 0 && $studentId <= 0) {
                 $qtyParam = max(1, min(99, (int)$request->input('qty', 1)));
-                $checkoutUri = $baseUrl . '/checkout/produto/' . $courseId . ($qtyParam > 1 ? '?qty=' . $qtyParam : '');
+                $skuParam = trim((string)$request->input('sku', ''));
+                $params = [];
+                if ($qtyParam > 1) {
+                    $params['qty'] = $qtyParam;
+                }
+                if ($skuParam !== '') {
+                    $params['sku'] = $skuParam;
+                }
+                $queryStr = !empty($params) ? '?' . http_build_query($params) : '';
+                $checkoutUri = $baseUrl . '/checkout/produto/' . $courseId . $queryStr;
                 $this->session->setFlash('info', '🛍️ Para finalizar a compra do produto, entre na sua conta ou cadastre-se ao lado. Você será direcionado automaticamente para a página de venda!');
                 return Response::redirect($baseUrl . '/entrar?redirect=' . urlencode($checkoutUri));
             }
@@ -233,6 +242,12 @@ class CheckoutController
         $expectedToken = (string)$this->session->getCsrfToken();
         if ($token === '' || !hash_equals($expectedToken, $token)) {
             return new JsonResponse(['success' => false, 'message' => 'Token CSRF inválido.'], 403);
+        }
+
+        $requestedSku = trim((string)($request->input('sku') ?? ($_POST['sku'] ?? ($_GET['sku'] ?? ''))));
+        if ($requestedSku !== '') {
+            $_GET['sku'] = $requestedSku;
+            $_POST['sku'] = $requestedSku;
         }
 
         $courseId = (int)($request->input('item_id') ?? $request->input('course_id'));

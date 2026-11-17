@@ -154,7 +154,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                                                 class="btn-variant-chip"
                                                 data-axis="<?= htmlspecialchars($axisName) ?>"
                                                 data-value="<?= htmlspecialchars($optionValue) ?>"
-                                                onclick="selectVariantOption(<?= json_encode($axisName) ?>, <?= json_encode($optionValue) ?>)"
+                                                onclick="selectVariantOption(this.getAttribute('data-axis'), this.getAttribute('data-value'))"
                                                 style="background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.14); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;">
                                             <span><?= htmlspecialchars($optionValue) ?></span>
                                         </button>
@@ -472,26 +472,30 @@ var selectedVariationOptions = {};
 var activeProductSku = null;
 
 function selectVariantOption(axis, value) {
+    if (!axis || !value) return;
     selectedVariationOptions[axis] = value;
 
-    // Atualiza o rótulo da opção selecionada
-    var labelEl = document.querySelector('.axis-selected-label[data-axis="' + CSS.escape(axis) + '"]');
-    if (labelEl) {
-        labelEl.textContent = value;
-    }
+    // Atualiza o rótulo da opção selecionada (sem usar CSS.escape para compatibilidade total)
+    document.querySelectorAll('.axis-selected-label').forEach(function(el) {
+        if (el.getAttribute('data-axis') === axis) {
+            el.textContent = value;
+        }
+    });
 
     // Atualiza os estilos visuais dos botões do mesmo eixo
-    document.querySelectorAll('.btn-variant-chip[data-axis="' + CSS.escape(axis) + '"]').forEach(function(btn) {
-        if (btn.getAttribute('data-value') === value) {
-            btn.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.28) 0%, rgba(240,208,96,0.18) 100%)';
-            btn.style.borderColor = '#D4AF37';
-            btn.style.color = '#F0D060';
-            btn.style.boxShadow = '0 0 10px rgba(212,175,55,0.3)';
-        } else {
-            btn.style.background = 'rgba(255,255,255,0.04)';
-            btn.style.borderColor = 'rgba(255,255,255,0.14)';
-            btn.style.color = '#fff';
-            btn.style.boxShadow = 'none';
+    document.querySelectorAll('.btn-variant-chip').forEach(function(btn) {
+        if (btn.getAttribute('data-axis') === axis) {
+            if (btn.getAttribute('data-value') === value) {
+                btn.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.3) 0%, rgba(240,208,96,0.2) 100%)';
+                btn.style.borderColor = '#D4AF37';
+                btn.style.color = '#F0D060';
+                btn.style.boxShadow = '0 0 10px rgba(212,175,55,0.35)';
+            } else {
+                btn.style.background = 'rgba(255,255,255,0.04)';
+                btn.style.borderColor = 'rgba(255,255,255,0.14)';
+                btn.style.color = '#fff';
+                btn.style.boxShadow = 'none';
+            }
         }
     });
 

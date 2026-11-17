@@ -241,6 +241,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             <div class="ds-card">
                 <h2 class="ds-card-title"><?= $isPhysicalOrDropship ? '📦 Dados de Entrega &amp; Pagamento' : '💳 Matrícula &amp; Forma de Pagamento' ?></h2>
                 <form id="checkout_form" onsubmit="handlePaymentSubmit(event)">
+                    <input type="hidden" id="item_sku" name="sku" value="<?= htmlspecialchars((string)($_GET['sku'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <?php if (!$isPhysicalOrDropship): ?>
                     <!-- Conta do Aluno na Área de Estudos (Estilo Udemy) -->
                     <div style="background: rgba(69,243,255,0.05); border: 1px solid rgba(69,243,255,0.28); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px;">
@@ -698,6 +699,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             var payload = {
                 csrf_token: csrfToken,
                 course_id: courseId,
+                sku: document.getElementById('item_sku') ? document.getElementById('item_sku').value : '',
                 quantity: currentQty,
                 gateway: gateway,
                 payment_method: selectedMethod,
