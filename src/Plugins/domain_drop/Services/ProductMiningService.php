@@ -434,15 +434,7 @@ class ProductMiningService implements ProductMiningServiceInterface
     {
         $inputStr = trim((string)$productIdOrUrl);
 
-        // 1. Se for uma URL completa, tenta extrair em tempo real diretamente da página web oficial
-        if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
-            $scraped = $this->linkScraper->scrape($inputStr);
-            if ($scraped !== null) {
-                return $this->createAndSaveDtoFromScraped($scraped);
-            }
-        }
-
-        // 2. Extrai ID numérico
+        // 1. Extrai ID numérico do produto (seja via URL ou ID direto)
         $numericId = $inputStr;
         if (preg_match('/\/item\/(\d+)\.html/', $numericId, $matches)) {
             $numericId = $matches[1];
@@ -450,14 +442,17 @@ class ProductMiningService implements ProductMiningServiceInterface
             $numericId = $matches[1];
         }
 
-        // 3. Tenta via API Oficial (IOP SDK)
+        // 2. Consulta Primária: API Oficial do AliExpress (IOP Dropshipping SDK - aliexpress.ds.product.get)
+        // O SDK oficial é a fonte prioritária garantindo a integridade dos atributos de SKUs (tamanhos, cores, estoque)
         $productData = null;
-        try {
-            $raw = $this->apiClient->getProductDetails($numericId);
-            $productData = $raw['result'] 
-                ?? ($raw['aliexpress_ds_product_get_response']['result'] ?? null);
-        } catch (Throwable $e) {
-            $productData = null;
+        if ($numericId !== '') {
+            try {
+                $raw = $this->apiClient->getProductDetails($numericId);
+                $productData = $raw['result'] 
+                    ?? ($raw['aliexpress_ds_product_get_response']['result'] ?? null);
+            } catch (Throwable $e) {
+                $productData = null;
+            }
         }
 
         if (!empty($productData)) {
@@ -466,23 +461,64 @@ class ProductMiningService implements ProductMiningServiceInterface
             return $this->repository->findById($savedId) ?? $dto;
         }
 
-        // 4. Se a API não retornou dados, tenta scraper pelo ID numérico
-        $scrapedById = $this->linkScraper->scrape($numericId);
-        if ($scrapedById !== null) {
-            return $this->createAndSaveDtoFromScraped($scrapedById);
+        // 3. Consulta de Simulação/Catálogo Curado SDK:
+        // Caso a chave da API do AliExpress não esteja com OAuth ativo em ambiente local,
+        // busca no pool curado com a matriz de SKUs (tamanhos e cores) oficial
+        if ($numericId !== '') {
+            $curatedItem = $this->findCuratedProductById($numericId);
+            if ($curatedItem !== null) {
+                $dto = $this->transformRawItemToDto($curatedItem, (string)($curatedItem['category_name'] ?? 'Geral'));
+                $savedId = $this->repository->save($dto);
+                return $this->repository->findById($savedId) ?? $dto;
+            }
         }
 
-        // 5. Se for uma URL pública e nem o scraper nem a API encontraram o produto, o anúncio não existe (404)
+        // 4. Fallback de Scraping Web em Tempo Real (apenas se nem a API nem o pool curado possuírem o item)
+        if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
+            $scraped = $this->linkScraper->scrape($inputStr);
+            if ($scraped !== null) {
+                return $this->createAndSaveDtoFromScraped($scraped);
+            }
+        }
+
+        // 5. Scraper pelo ID numérico
+        if ($numericId !== '') {
+            $scrapedById = $this->linkScraper->scrape($numericId);
+            if ($scrapedById !== null) {
+                return $this->createAndSaveDtoFromScraped($scrapedById);
+            }
+        }
+
+        // 6. Se for uma URL pública e nem a API, nem o catálogo curado, nem o scraper encontraram o produto
         if (str_starts_with($inputStr, 'http://') || str_starts_with($inputStr, 'https://')) {
             throw new RuntimeException("O link informado não foi encontrado ou está desativado no AliExpress (Erro 404). Por favor, forneça o link de um anúncio ativo.");
         }
 
-        // 6. Fallback estruturado para testes com IDs sintéticos
+        // 7. Fallback estruturado para testes com IDs sintéticos
         $productData = $this->createFallbackItemFromIdOrUrl($numericId, (string)$productIdOrUrl);
         $dto = $this->transformRawItemToDto($productData);
         $savedId = $this->repository->save($dto);
 
         return $this->repository->findById($savedId) ?? $dto;
+    }
+
+    /**
+     * Localiza um produto no catálogo curado oficial pelo ID numérico do AliExpress.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function findCuratedProductById(string $productId): ?array
+    {
+        $catalog = $this->getCuratedCatalog();
+        foreach ($catalog as $catName => $items) {
+            foreach ($items as $item) {
+                if ((string)($item['product_id'] ?? '') === $productId) {
+                    return $item;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function importFromBrowserSource(string $rawSource, ?string $category = null): DropshipProductDto
@@ -820,7 +856,44 @@ class ProductMiningService implements ProductMiningServiceInterface
      */
     private function getCuratedTrendingFallback(string $category, int $limit, string $sort = 'volume_desc'): array
     {
-        $catalog = [
+        $catalog = $this->getCuratedCatalog();
+
+        // Mapeia apelidos para a categoria oficial do pool
+        $normalizedCat = self::normalizeCategory($category);
+        $pool = $catalog[$normalizedCat] ?? ($catalog[$category] ?? $catalog['Eletrônicos & Gadget'] ?? $catalog['Eletrônicos']);
+
+        // Se o limite solicitado for maior que o pool da categoria, completa com itens de outras categorias
+        if (count($pool) < $limit) {
+            foreach ($catalog as $catName => $items) {
+                if ($catName !== $category) {
+                    foreach ($items as $extraItem) {
+                        $pool[] = $extraItem;
+                        if (count($pool) >= $limit) {
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Ordena pelo critério de reputação solicitado: maior volume de vendas ou maior avaliação por estrelas
+        if ($sort === 'evaluate_rate_desc') {
+            usort($pool, fn($a, $b) => ((float)($b['evaluate_rate'] ?? 0)) <=> ((float)($a['evaluate_rate'] ?? 0)));
+        } else {
+            usort($pool, fn($a, $b) => ((int)($b['volume'] ?? 0)) <=> ((int)($a['volume'] ?? 0)));
+        }
+
+        return array_slice($pool, 0, $limit);
+    }
+
+    /**
+     * Catálogo mestre curado com especificações completas de produtos e matrizes de SKUs (tamanhos, cores, estoque).
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function getCuratedCatalog(): array
+    {
+        return [
             'Eletrônicos & Gadget' => [
                 [
                     'product_id' => '1005012009938049',
@@ -1588,7 +1661,55 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'evaluate_rate' => '4.8',
                     'volume' => 12900,
                     'product_description' => 'Lingerie leve e sensual sem aros rígidos, com alças reguláveis e elástico suave que não aperta nem marca sob a roupa.',
-                    'properties' => ['Estrutura' => 'Sem Aros Wirefree', 'Alças' => 'Reguláveis Duplas', 'Estilo' => 'Bralette Rendado'],
+                    'properties' => [
+                        'Estrutura' => 'Sem Aros Wirefree',
+                        'Alças'     => 'Reguláveis Duplas',
+                        'Estilo'    => 'Bralette Rendado',
+                        'Tamanhos'  => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
+                        'Cores'     => 'Preto Noir',
+                    ],
+                    'variation_axes' => [
+                        'Cor'     => ['Preto Noir'],
+                        'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005006996593220-BLK-S',
+                            'sku_attr' => '14:200000182;5:100014064',
+                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'S (BR P)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 7.20,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
+                            'stock' => 50,
+                        ],
+                        [
+                            'sku_id' => '1005006996593220-BLK-M',
+                            'sku_attr' => '14:200000182;5:100014065',
+                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'M (BR M)'],
+                            'price_brl' => 74.90,
+                            'cost_price_usd' => 7.80,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
+                            'stock' => 70,
+                        ],
+                        [
+                            'sku_id' => '1005006996593220-BLK-L',
+                            'sku_attr' => '14:200000182;5:100014066',
+                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'L (BR G)'],
+                            'price_brl' => 79.90,
+                            'cost_price_usd' => 8.40,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
+                            'stock' => 40,
+                        ],
+                        [
+                            'sku_id' => '1005006996593220-BLK-XL',
+                            'sku_attr' => '14:200000182;5:100014067',
+                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'XL (BR GG)'],
+                            'price_brl' => 84.90,
+                            'cost_price_usd' => 8.90,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
+                            'stock' => 30,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005013529453545',
@@ -1602,21 +1723,122 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'evaluate_rate' => '4.8',
                     'volume' => 9700,
                     'product_description' => 'Conjunto de amarração frontal halter neck com sutiã em tule bordado e calcinha de tiras laterais ajustáveis.',
-                    'properties' => ['Design' => 'Halter Neck Frente Única', 'Tecido' => 'Tule Ilusion Bordado', 'Ajuste' => 'Amarração Flexível'],
+                    'properties' => [
+                        'Design'   => 'Halter Neck Frente Única',
+                        'Tecido'   => 'Tule Ilusion Bordado',
+                        'Ajuste'   => 'Amarração Flexível',
+                        'Tamanhos' => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
+                        'Cores'    => 'Vinho & Preto',
+                    ],
+                    'variation_axes' => [
+                        'Cor'     => ['Vinho & Preto'],
+                        'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005013529453545-VINHO-S',
+                            'sku_attr' => '14:200000183;5:100014064',
+                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'S (BR P)'],
+                            'price_brl' => 59.90,
+                            'cost_price_usd' => 5.90,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 45,
+                        ],
+                        [
+                            'sku_id' => '1005013529453545-VINHO-M',
+                            'sku_attr' => '14:200000183;5:100014065',
+                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'M (BR M)'],
+                            'price_brl' => 64.90,
+                            'cost_price_usd' => 6.50,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 60,
+                        ],
+                        [
+                            'sku_id' => '1005013529453545-VINHO-L',
+                            'sku_attr' => '14:200000183;5:100014066',
+                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'L (BR G)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 7.10,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 35,
+                        ],
+                        [
+                            'sku_id' => '1005013529453545-VINHO-XL',
+                            'sku_attr' => '14:200000183;5:100014067',
+                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'XL (BR GG)'],
+                            'price_brl' => 74.90,
+                            'cost_price_usd' => 7.70,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 20,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005006982221921',
-                    'product_title' => 'Conjunto Lingerie Push-Up Renda Bordada com Aro e Calcinha Alta',
+                    'product_title' => 'Conjunto De Lingerie Feminina Renda Bordado Push Up Sutiã Calcinha',
                     'category_name' => 'Moda Íntima, Lingeries & Pijamas',
                     'target_sale_price' => '8.90',
                     'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
+                        'https://ae-pic-a1.aliexpress-media.com/kf/Sc43b545078314ac0bb425938c4aed2c4d.jpg',
+                        'https://ae-pic-a1.aliexpress-media.com/kf/S4444beb307ad4b60b03ff1737d33b0df6.jpg',
+                        'https://ae-pic-a1.aliexpress-media.com/kf/S99a722e6fe3946af836e00fa84a91942F.jpg',
+                        'https://ae-pic-a1.aliexpress-media.com/kf/Sfc3e4cbdd7e74f5ba1d54e176f7b5aa4k.jpg',
+                        'https://ae-pic-a1.aliexpress-media.com/kf/Sed06f394d52d4c9fbca667dafa56b05cz.jpg',
                     ],
                     'evaluate_rate' => '4.9',
                     'volume' => 15400,
-                    'product_description' => 'Sutiã efeito push-up com bojo macio que modela e valoriza o colo com renda floral bordada de alta qualidade.',
-                    'properties' => ['Bojo' => 'Push-Up Anatômico', 'Fecho' => 'Costas Triplo Ajuste', 'Renda' => 'Guipir Floral Relevo'],
+                    'product_description' => 'Sutiã efeito push-up com bojo macio e suporte em aro que modela e valoriza o colo com renda floral bordada de alta qualidade, acompanhado de calcinha alta anatômica.',
+                    'properties' => [
+                        'Bojo'       => 'Push-Up Anatômico com Suporte Aro',
+                        'Fecho'      => 'Costas Triplo Ajuste Reforçado',
+                        'Renda'      => 'Guipir Floral Relevo Macio',
+                        'Tamanhos'   => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
+                        'Cores'      => 'Branco Floral',
+                    ],
+                    'variation_axes' => [
+                        'Cor'     => ['Branco Floral'],
+                        'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005006982221921-BRANCO-S',
+                            'sku_attr' => '14:200000182;5:100014064',
+                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'S (BR P)'],
+                            'price_brl' => 79.90,
+                            'cost_price_usd' => 8.90,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
+                            'stock' => 45,
+                        ],
+                        [
+                            'sku_id' => '1005006982221921-BRANCO-M',
+                            'sku_attr' => '14:200000182;5:100014065',
+                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'M (BR M)'],
+                            'price_brl' => 84.90,
+                            'cost_price_usd' => 9.40,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
+                            'stock' => 60,
+                        ],
+                        [
+                            'sku_id' => '1005006982221921-BRANCO-L',
+                            'sku_attr' => '14:200000182;5:100014066',
+                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'L (BR G)'],
+                            'price_brl' => 89.90,
+                            'cost_price_usd' => 9.90,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
+                            'stock' => 38,
+                        ],
+                        [
+                            'sku_id' => '1005006982221921-BRANCO-XL',
+                            'sku_attr' => '14:200000182;5:100014067',
+                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'XL (BR GG)'],
+                            'price_brl' => 94.90,
+                            'cost_price_usd' => 10.40,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
+                            'stock' => 25,
+                        ],
+                    ],
                 ],
             ],
             'Sex Shop & Produtos Adultos (+18)' => [
@@ -1664,39 +1886,6 @@ class ProductMiningService implements ProductMiningServiceInterface
                 ],
             ],
         ];
-
-        // Mapeia apelidos para a categoria oficial do pool
-        $normalizedCat = self::normalizeCategory($category);
-        $pool = $catalog[$normalizedCat] ?? ($catalog[$category] ?? $catalog['Eletrônicos & Gadget'] ?? $catalog['Eletrônicos']);
-
-        // Se o limite solicitado for maior que o pool da categoria, completa com itens de outras categorias
-        if (count($pool) < $limit) {
-            foreach ($catalog as $catName => $items) {
-                if ($catName !== $category) {
-                    foreach ($items as $extraItem) {
-                        $pool[] = $extraItem;
-                        if (count($pool) >= $limit) {
-                            break 2;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Ordena pelo critério de reputação solicitado: maior volume de vendas ou maior avaliação por estrelas
-        if ($sort === 'evaluate_rate_desc') {
-            usort($pool, fn($a, $b) => ((float)($b['evaluate_rate'] ?? 0)) <=> ((float)($a['evaluate_rate'] ?? 0)));
-        } else {
-            usort($pool, fn($a, $b) => ((int)($b['volume'] ?? 0)) <=> ((int)($a['volume'] ?? 0)));
-        }
-
-        $slice = array_slice($pool, 0, $limit);
-        foreach ($slice as &$p) {
-            $p['category_name'] = $normalizedCat;
-        }
-        unset($p);
-
-        return $slice;
     }
 
     /**

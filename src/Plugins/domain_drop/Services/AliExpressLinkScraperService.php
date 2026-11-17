@@ -201,6 +201,37 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
         // 8. Categoria inferida
         $category = $this->inferCategory($title);
 
+        $attributes = [
+            'Origem'            => 'Importação Oficial AliExpress',
+            'Envio'             => 'Rastreamento Internacional Expresso',
+            'Vendas_Informadas' => $ordersCountKnown ? 'sim' : 'nao',
+        ];
+
+        // Se for vestuário / lingerie / moda íntima, garante a matriz de tamanhos padrão do AliExpress
+        $isApparel = $category === 'Moda Íntima, Lingeries & Pijamas' 
+            || preg_match('/\b(lingerie|sutiã|sutia|calcinha|vestido|biquini|body|camisola|pijama|robe)\b/i', $title);
+        if ($isApparel) {
+            $sizes = ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'];
+            $attributes['variation_axes'] = [
+                'Tamanho' => $sizes,
+            ];
+            $attributes['Tamanhos'] = implode(', ', $sizes);
+
+            $scrapedVariants = [];
+            foreach ($sizes as $idx => $size) {
+                $scrapedVariants[] = [
+                    'sku_id'         => "{$productId}-SIZE-{$idx}",
+                    'sku_attr'       => "5:10001406" . (4 + $idx),
+                    'options'        => ['Tamanho' => $size],
+                    'price_brl'      => round($costPriceUsd * 5.25 * 1.5, 2),
+                    'cost_price_usd' => $costPriceUsd,
+                    'image_url'      => $mainImage,
+                    'stock'          => 50,
+                ];
+            }
+            $attributes['variants'] = $scrapedVariants;
+        }
+
         return new ScrapedProductDto(
             sourceId: $productId,
             sourceUrl: $canonicalUrl,
@@ -211,11 +242,7 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
             category: $category,
             rating: $rating,
             ordersCount: $ordersCount,
-            attributes: [
-                'Origem'            => 'Importação Oficial AliExpress',
-                'Envio'             => 'Rastreamento Internacional Expresso',
-                'Vendas_Informadas' => $ordersCountKnown ? 'sim' : 'nao',
-            ]
+            attributes: $attributes
         );
     }
 

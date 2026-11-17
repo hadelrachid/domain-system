@@ -223,4 +223,45 @@ class DomainDropProductVariantsTest extends TestCase
         $this->assertSame('https://example.com/tool-main.jpg', $adapter->getThumbnailUrl());
         $this->assertTrue($adapter->isAvailable());
     }
+
+    public function testLingeriePushUpProductHasSizesAndColorAttributes(): void
+    {
+        $repoMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $apiClientMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $currencyMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $aiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $scraperMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface::class);
+
+        $currencyMock->method('calculateSalePrice')->willReturnCallback(fn(float $usd) => round($usd * 5.25 * 1.5, 2));
+        $aiMock->method('polishTitle')->willReturnCallback(fn(string $t) => $t);
+        $aiMock->method('generateSalesCopy')->willReturn('Copy de venda');
+
+        $miningService = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            repository: $repoMock,
+            apiClient: $apiClientMock,
+            currencyConverter: $currencyMock,
+            aiEnricher: $aiMock,
+            linkScraper: $scraperMock
+        );
+
+        $curated = $miningService->findCuratedProductById('1005006982221921');
+        $this->assertNotNull($curated, 'Produto 1005006982221921 deve estar presente no catálogo curado');
+        $this->assertSame('Conjunto De Lingerie Feminina Renda Bordado Push Up Sutiã Calcinha', $curated['product_title']);
+        $this->assertSame('Moda Íntima, Lingeries & Pijamas', $curated['category_name']);
+
+        $axes = $curated['variation_axes'];
+        $this->assertArrayHasKey('Cor', $axes);
+        $this->assertArrayHasKey('Tamanho', $axes);
+        $this->assertContains('Branco Floral', $axes['Cor']);
+        $this->assertEquals(['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'], $axes['Tamanho']);
+
+        $variants = $curated['variants'];
+        $this->assertCount(4, $variants);
+        foreach ($variants as $v) {
+            $this->assertGreaterThan(0, $v['stock']);
+            $this->assertNotEmpty($v['image_url']);
+            $this->assertArrayHasKey('Tamanho', $v['options']);
+            $this->assertArrayHasKey('Cor', $v['options']);
+        }
+    }
 }
