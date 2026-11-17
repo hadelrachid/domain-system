@@ -8,7 +8,7 @@ Sem o peso, a lentidão e a insegurança de depender de centenas de plugins de t
 
 ---
 
-[🇺🇸 English version](README-en.md) | [🌱 Minha História](ABOUT.md) | [📚 Wiki Oficial](https://github.com/hadelrachid/domain-system/wiki) | [📖 Documentação Online](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md) | [🤝 Comunidade](#-preciso-da-sua-ajuda-junte-se-ao-projeto)
+[🇺🇸 English version](README-en.md) | [🌱 Minha História](ABOUT.md) | [🔍 Por Dentro do Sistema (Guia Passo a Passo)](docs/documentacao-sistema/README.md) | [📚 Wiki Oficial](https://github.com/hadelrachid/domain-system/wiki) | [📖 Documentação Online](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md) | [🤝 Comunidade](#-preciso-da-sua-ajuda-junte-se-ao-projeto)
 
 ---
 
@@ -26,7 +26,8 @@ Estou abrindo as portas do projeto e buscando pessoas que queiram somar forças:
 
 Se você gosta da ideia de softwares leves, diretos ao ponto e quer construir algo legal junto comigo, seu PR (Pull Request), Issue ou crítica sincera será recebido de braços abertos!
 
-👉 [Veja como contribuir no Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
+👉 [Veja como contribuir no Guia do Desenvolvedor](DEVELOPER_GUIDE.md)  
+🔍 **Para Devs, DevOps e Auditores:** [Por Dentro do Domain System — Guia Passo a Passo de Arquitetura, Start no Servidor e Auditoria](docs/documentacao-sistema/README.md) *(também disponível em [Inglês](docs/documentacao-sistema/en/README.md))*
 
 ---
 

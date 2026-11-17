@@ -8,7 +8,7 @@ No bloat. No massive framework lock-in. No fragile house-of-cards of 50 third-pa
 
 ---
 
-[🇧🇷 Versão em Português](README.md) | [🌱 My Story](ABOUT-en.md) | [📚 Official Wiki](https://github.com/hadelrachid/domain-system/wiki) | [📖 Online Docs](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md) | [🤝 Community](#-i-need-your-help-join-the-project)
+[🇧🇷 Versão em Português](README.md) | [🌱 My Story](ABOUT-en.md) | [🔍 Inside the System (Step-by-Step Guide)](docs/documentacao-sistema/en/README.md) | [📚 Official Wiki](https://github.com/hadelrachid/domain-system/wiki) | [📖 Online Docs](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md) | [🤝 Community](#-i-need-your-help-join-the-project)
 
 ---
 
@@ -26,7 +26,8 @@ I am opening the doors wide and actively looking for people who want to team up:
 
 If you like the idea of bloat-free software built with care and want to create something cool together, your Pull Request, Issue, or honest critique is truly welcome!
 
-👉 [Read how to get involved in the Developer Guide](DEVELOPER_GUIDE.md)
+👉 [Read how to get involved in the Developer Guide](DEVELOPER_GUIDE.md)  
+🔍 **For Devs, DevOps & Security Auditors:** [Inside Domain System — Step-by-Step Architecture, Server Startup & Audit Guide](docs/documentacao-sistema/en/README.md) *(also available in [Portuguese](docs/documentacao-sistema/README.md))*
 
 ---
 
