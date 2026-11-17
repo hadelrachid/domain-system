@@ -773,13 +773,19 @@
             }
         });
 
-        document.getElementById('priceEditModal').addEventListener('click', function(e) {
-            if (e.target === this) closePriceModal();
-        });
+        const priceModalEl = document.getElementById('priceEditModal');
+        if (priceModalEl) {
+            priceModalEl.addEventListener('click', function(e) {
+                if (e.target === this) closePriceModal();
+            });
+        }
 
-        document.getElementById('imagesEditModal').addEventListener('click', function(e) {
-            if (e.target === this) closeImagesModal();
-        });
+        const imagesModalEl = document.getElementById('imagesEditModal');
+        if (imagesModalEl) {
+            imagesModalEl.addEventListener('click', function(e) {
+                if (e.target === this) closeImagesModal();
+            });
+        }
 
         function recalcMargin() {
             const costBrl = parseFloat(document.getElementById('modalCostBrl').value) || 0;
