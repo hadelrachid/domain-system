@@ -1444,8 +1444,14 @@ class ProductMiningService implements ProductMiningServiceInterface
                     ],
                     'evaluate_rate' => '4.9',
                     'volume' => 16800,
-                    'product_description' => 'Conjunto de lingerie sofisticado em renda macia toque suave, decote anatômico em V e acabamento premium antialérgico.',
-                    'properties' => ['Material' => 'Renda Poliamida e Elastano', 'Sutiã' => 'Aro Anatômico Sustentação', 'Forro' => '100% Algodão Puro'],
+                    'product_description' => 'Conjunto de lingerie sensual de duas peças em renda floral e malha trançada premium. Decote em V profundo com delicados detalhes em laço, tecido elástico e respirável em mistura de poliéster e elastano que se adapta confortavelmente ao corpo.',
+                    'properties' => [
+                        'Composição' => 'Poliéster e Elastano de Alta Elasticidade',
+                        'Modelo'     => 'Conjunto 2 Peças (Sutiã Decote V + Calcinha Rendada)',
+                        'Detalhes'   => 'Renda Floral Trançada e Detalhes em Laço',
+                        'Estrutura'  => 'Sem aros rígidos / Conforto anatômico noturno',
+                        'Tamanhos'   => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
+                    ],
                     'variants' => [
                         [
                             'sku_id' => '1005013303040786-SIZE-S',
