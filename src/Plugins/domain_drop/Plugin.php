@@ -394,7 +394,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                                 $demandTracker->recordInteraction($event);
                             } catch (Throwable $e) {}
 
-                            return new DropshipProductPurchasableAdapter($product);
+                            $requestedSku = trim((string)($_GET['sku'] ?? ($_POST['sku'] ?? '')));
+                            return new DropshipProductPurchasableAdapter($product, $requestedSku !== '' ? $requestedSku : null);
                         }
                         return null;
                     } catch (Throwable $e) {

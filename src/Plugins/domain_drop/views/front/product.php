@@ -107,7 +107,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                         De: R$ <?= number_format($refPrice, 2, ',', '.') ?>
                     </div>
                     <div style="display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                        <div style="font-size: 32px; font-weight: 800; color: #5cd67d; font-family: monospace;">
+                        <div id="product-display-price" style="font-size: 32px; font-weight: 800; color: #5cd67d; font-family: monospace;">
                             R$ <?= number_format($product->salePriceBrl, 2, ',', '.') ?>
                         </div>
                         <div id="product-qty-subtotal" style="display: none; font-size: 13px; color: #F0D060; font-weight: 700; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3); padding: 4px 10px; border-radius: 6px;"></div>
@@ -129,6 +129,41 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                         <?= htmlspecialchars($sellerInfo['warehouse']) ?> • Produto minerado no AliExpress Brasil por notas e aprovações. Vendido e enviado diretamente por este fornecedor (itens de outros vendedores têm entrega separada), com <strong>garantia de entrega RachidD.com</strong>.
                     </span>
                 </div>
+
+                <?php if ($product->hasVariants()): ?>
+                    <?php
+                    $axes = $product->getVariationAxes();
+                    $variantsList = $product->getVariants();
+                    ?>
+                    <!-- SELETORES DINÂMICOS DE VARIAÇÃO (CORES, TAMANHOS, MODELOS - PADRÃO SKU MATRIX) -->
+                    <div id="product-variants-box" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #F0D060; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🎨 Opções & Variações</span>
+                            <span id="active-variant-summary" style="color: #94a3b8; font-size: 11.5px; text-transform: none; font-weight: 600;"></span>
+                        </div>
+
+                        <?php foreach ($axes as $axisName => $options): ?>
+                            <div class="variant-axis-block" style="margin-bottom: 14px;">
+                                <div style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                    <span><?= htmlspecialchars($axisName) ?>:</span>
+                                    <span class="axis-selected-label" data-axis="<?= htmlspecialchars($axisName) ?>" style="color: #5cd67d; font-weight: 700;"></span>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <?php foreach ($options as $optIdx => $optionValue): ?>
+                                        <button type="button"
+                                                class="btn-variant-chip"
+                                                data-axis="<?= htmlspecialchars($axisName) ?>"
+                                                data-value="<?= htmlspecialchars($optionValue) ?>"
+                                                onclick="selectVariantOption(<?= json_encode($axisName) ?>, <?= json_encode($optionValue) ?>)"
+                                                style="background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.14); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;">
+                                            <span><?= htmlspecialchars($optionValue) ?></span>
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Seletor de Quantidade + CTA Comprar Agora -->
                 <div style="display: flex; gap: 12px; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">
@@ -430,6 +465,112 @@ function updateLightbox() {
 var productUnitPriceBrl = <?= json_encode((float)$product->salePriceBrl) ?>;
 var productCheckoutBaseUrl = <?= json_encode($checkoutUrl, JSON_UNESCAPED_SLASHES) ?>;
 
+// Matriz de Variações e SKUs (Padrão SKU Matrix / AliExpress SDK)
+var productVariants = <?= json_encode(array_map(fn($v) => $v->toArray(), $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+var productVariationAxes = <?= json_encode($product->getVariationAxes(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+var selectedVariationOptions = {};
+var activeProductSku = null;
+
+function selectVariantOption(axis, value) {
+    selectedVariationOptions[axis] = value;
+
+    // Atualiza o rótulo da opção selecionada
+    var labelEl = document.querySelector('.axis-selected-label[data-axis="' + CSS.escape(axis) + '"]');
+    if (labelEl) {
+        labelEl.textContent = value;
+    }
+
+    // Atualiza os estilos visuais dos botões do mesmo eixo
+    document.querySelectorAll('.btn-variant-chip[data-axis="' + CSS.escape(axis) + '"]').forEach(function(btn) {
+        if (btn.getAttribute('data-value') === value) {
+            btn.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.28) 0%, rgba(240,208,96,0.18) 100%)';
+            btn.style.borderColor = '#D4AF37';
+            btn.style.color = '#F0D060';
+            btn.style.boxShadow = '0 0 10px rgba(212,175,55,0.3)';
+        } else {
+            btn.style.background = 'rgba(255,255,255,0.04)';
+            btn.style.borderColor = 'rgba(255,255,255,0.14)';
+            btn.style.color = '#fff';
+            btn.style.boxShadow = 'none';
+        }
+    });
+
+    // Localiza e aplica a variante correspondente
+    findAndApplyMatchingVariant();
+}
+
+function findAndApplyMatchingVariant() {
+    if (!productVariants || productVariants.length === 0) return;
+
+    var matched = null;
+    for (var i = 0; i < productVariants.length; i++) {
+        var v = productVariants[i];
+        var isMatch = true;
+        for (var axis in selectedVariationOptions) {
+            if (v.options && v.options[axis] !== selectedVariationOptions[axis]) {
+                isMatch = false;
+                break;
+            }
+        }
+        if (isMatch) {
+            matched = v;
+            break;
+        }
+    }
+
+    var summaryEl = document.getElementById('active-variant-summary');
+    var priceDisplayEl = document.getElementById('product-display-price');
+
+    if (matched) {
+        activeProductSku = matched.sku_id;
+
+        // Se tiver imagem específica da SKU, atualiza o palco principal
+        if (matched.image_url) {
+            var mainImg = document.getElementById('main-product-img');
+            if (mainImg) {
+                mainImg.src = matched.image_url;
+            }
+        }
+
+        // Se tiver preço diferenciado na variação, atualiza o valor
+        if (matched.price_brl && matched.price_brl > 0) {
+            productUnitPriceBrl = parseFloat(matched.price_brl);
+            if (priceDisplayEl) {
+                priceDisplayEl.textContent = 'R$ ' + productUnitPriceBrl.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+
+        // Atualiza o resumo visual da combinação
+        if (summaryEl) {
+            var optsStr = [];
+            for (var ax in matched.options) {
+                optsStr.push(matched.options[ax]);
+            }
+            summaryEl.textContent = optsStr.join(' / ') + ' • ' + (matched.stock > 0 ? (matched.stock + ' em estoque') : 'Pronta Entrega');
+            summaryEl.style.color = '#4ade80';
+        }
+    } else {
+        activeProductSku = null;
+        if (summaryEl) {
+            summaryEl.textContent = 'Selecione todas as opções';
+            summaryEl.style.color = '#f59e0b';
+        }
+    }
+
+    syncProductQuantity();
+}
+
+function initProductVariants() {
+    if (productVariationAxes && Object.keys(productVariationAxes).length > 0) {
+        for (var axis in productVariationAxes) {
+            var opts = productVariationAxes[axis];
+            if (opts && opts.length > 0) {
+                selectVariantOption(axis, opts[0]);
+            }
+        }
+    }
+}
+
 function syncProductQuantity() {
     var input = document.getElementById('product-qty-input');
     var buyBtn = document.getElementById('btn-buy-now');
@@ -442,7 +583,11 @@ function syncProductQuantity() {
     input.value = qty;
 
     if (buyBtn) {
-        buyBtn.href = productCheckoutBaseUrl + '?qty=' + qty;
+        var checkoutUrl = productCheckoutBaseUrl + '?qty=' + qty;
+        if (activeProductSku) {
+            checkoutUrl += '&sku=' + encodeURIComponent(activeProductSku);
+        }
+        buyBtn.href = checkoutUrl;
     }
     if (subtotalEl) {
         if (qty > 1) {
@@ -516,8 +661,9 @@ function trackProductAction(actionType) {
     }
 }
 
-// Dispara evento 'view_details' ao carregar a página de detalhes
+// Dispara inicialização de variações e evento 'view_details' ao carregar a página de detalhes
 document.addEventListener('DOMContentLoaded', function() {
+    initProductVariants();
     trackProductAction('view_details');
 });
 </script>

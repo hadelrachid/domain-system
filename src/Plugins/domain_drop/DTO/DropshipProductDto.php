@@ -65,6 +65,107 @@ final class DropshipProductDto
     }
 
     /**
+     * Verifica se o produto possui variações (cores, tamanhos, modelos, etc.).
+     */
+    public function hasVariants(): bool
+    {
+        return !empty($this->attributes['variants']) && is_array($this->attributes['variants']);
+    }
+
+    /**
+     * Retorna a lista de variantes estruturadas em instâncias de ProductVariantDto.
+     *
+     * @return array<int, ProductVariantDto>
+     */
+    public function getVariants(): array
+    {
+        if (!$this->hasVariants()) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($this->attributes['variants'] as $item) {
+            if ($item instanceof ProductVariantDto) {
+                $result[] = $item;
+            } elseif (is_array($item)) {
+                $result[] = ProductVariantDto::fromArray($item, $this->salePriceBrl, $this->costPriceUsd);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Retorna os eixos de variação e seus valores únicos disponíveis.
+     * Exemplo: ['Cor' => ['Preto', 'Vermelho Vinho'], 'Tamanho' => ['P', 'M', 'G']]
+     *
+     * @return array<string, array<int, string>>
+     */
+    public function getVariationAxes(): array
+    {
+        if (!empty($this->attributes['variation_axes']) && is_array($this->attributes['variation_axes'])) {
+            return $this->attributes['variation_axes'];
+        }
+
+        $axes = [];
+        foreach ($this->getVariants() as $variant) {
+            foreach ($variant->options as $axis => $val) {
+                $axis = trim((string)$axis);
+                $val = trim((string)$val);
+                if ($axis !== '' && $val !== '') {
+                    if (!isset($axes[$axis])) {
+                        $axes[$axis] = [];
+                    }
+                    if (!in_array($val, $axes[$axis], true)) {
+                        $axes[$axis][] = $val;
+                    }
+                }
+            }
+        }
+
+        return $axes;
+    }
+
+    /**
+     * Localiza uma variante específica pelo código de SKU.
+     */
+    public function findVariantBySku(string $skuId): ?ProductVariantDto
+    {
+        $skuId = trim($skuId);
+        if ($skuId === '') {
+            return null;
+        }
+
+        foreach ($this->getVariants() as $variant) {
+            if ($variant->skuId === $skuId) {
+                return $variant;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Localiza uma variante pela combinação de opções (ex: ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'M']).
+     *
+     * @param array<string, string> $selectedOptions
+     */
+    public function findVariantByOptions(array $selectedOptions): ?ProductVariantDto
+    {
+        if (empty($selectedOptions)) {
+            return null;
+        }
+
+        foreach ($this->getVariants() as $variant) {
+            if ($variant->matchesOptions($selectedOptions)) {
+                return $variant;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array

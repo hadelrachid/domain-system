@@ -688,6 +688,70 @@ class ProductMiningService implements ProductMiningServiceInterface
             $props['origem_brasil'] = true;
         }
 
+        // 4.1 Extração de Variações e SKUs (Padrão SKU Matrix / AliExpress Open Platform)
+        $extractedVariants = [];
+        $variationAxes = [];
+
+        if (!empty($item['variants']) && is_array($item['variants'])) {
+            $extractedVariants = $item['variants'];
+            if (!empty($item['variation_axes']) && is_array($item['variation_axes'])) {
+                $variationAxes = $item['variation_axes'];
+            }
+        } elseif (is_array($skuDtos) && !empty($skuDtos)) {
+            foreach ($skuDtos as $sku) {
+                if (!is_array($sku)) {
+                    continue;
+                }
+                $skuId = (string)($sku['sku_id'] ?? ($sku['id'] ?? uniqid('sku_')));
+                $skuPriceUsd = (float)($sku['sku_price'] ?? ($sku['offer_sale_price'] ?? $costPriceUsd));
+                $skuPriceBrl = $this->currencyConverter->calculateSalePrice($skuPriceUsd);
+                $skuImage = !empty($sku['sku_image_url']) ? $this->cleanImageUrl((string)$sku['sku_image_url']) : $mainImage;
+                $skuStock = (int)($sku['sku_available_stock'] ?? ($sku['sku_stock'] ?? 100));
+                $skuAttr = (string)($sku['sku_attr'] ?? ($sku['sku_code'] ?? ''));
+
+                $options = [];
+                $rawProps = $sku['ae_sku_property_dtos']['ae_sku_property_d_t_o']
+                    ?? ($sku['ae_sku_property_dtos'] ?? ($sku['sku_properties'] ?? []));
+                if (is_array($rawProps)) {
+                    foreach ($rawProps as $rp) {
+                        if (!is_array($rp)) {
+                            continue;
+                        }
+                        $propName = trim((string)($rp['sku_property_name'] ?? ($rp['property_name'] ?? '')));
+                        $propVal = trim((string)($rp['property_value_definition_name'] ?? ($rp['sku_property_value'] ?? ($rp['property_value'] ?? ''))));
+                        if ($propName !== '' && $propVal !== '') {
+                            $options[$propName] = $propVal;
+                            if (!isset($variationAxes[$propName])) {
+                                $variationAxes[$propName] = [];
+                            }
+                            if (!in_array($propVal, $variationAxes[$propName], true)) {
+                                $variationAxes[$propName][] = $propVal;
+                            }
+                        }
+                    }
+                }
+
+                if (!empty($options)) {
+                    $extractedVariants[] = [
+                        'sku_id'         => $skuId,
+                        'sku_attr'       => $skuAttr,
+                        'options'        => $options,
+                        'price_brl'      => $skuPriceBrl,
+                        'cost_price_usd' => $skuPriceUsd,
+                        'image_url'      => $skuImage,
+                        'stock'          => $skuStock,
+                    ];
+                }
+            }
+        }
+
+        if (!empty($extractedVariants)) {
+            $props['variants'] = $extractedVariants;
+            if (!empty($variationAxes)) {
+                $props['variation_axes'] = $variationAxes;
+            }
+        }
+
         $rawDesc = (string)($item['product_description'] ?? ($baseInfo['detail'] ?? ($item['description'] ?? '')));
         $salesCopy = $this->aiEnricher->generateSalesCopy($rawDesc, $props);
 
@@ -1382,6 +1446,71 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'volume' => 16800,
                     'product_description' => 'Conjunto de lingerie sofisticado em renda macia toque suave, decote anatômico em V e acabamento premium antialérgico.',
                     'properties' => ['Material' => 'Renda Poliamida e Elastano', 'Sutiã' => 'Aro Anatômico Sustentação', 'Forro' => '100% Algodão Puro'],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005013303040786-PRETO-P',
+                            'sku_attr' => '14:200000182;5:100014064',
+                            'options' => ['Cor' => 'Preto Clássico', 'Tamanho' => 'P (38-40)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 6.80,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 45,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-PRETO-M',
+                            'sku_attr' => '14:200000182;5:100014065',
+                            'options' => ['Cor' => 'Preto Clássico', 'Tamanho' => 'M (42)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 6.80,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 60,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-PRETO-G',
+                            'sku_attr' => '14:200000182;5:100014066',
+                            'options' => ['Cor' => 'Preto Clássico', 'Tamanho' => 'G (44)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 6.80,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 38,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-VINHO-P',
+                            'sku_attr' => '14:200000183;5:100014064',
+                            'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'P (38-40)'],
+                            'price_brl' => 74.90,
+                            'cost_price_usd' => 7.20,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 30,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-VINHO-M',
+                            'sku_attr' => '14:200000183;5:100014065',
+                            'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'M (42)'],
+                            'price_brl' => 74.90,
+                            'cost_price_usd' => 7.20,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 55,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-VINHO-G',
+                            'sku_attr' => '14:200000183;5:100014066',
+                            'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'G (44)'],
+                            'price_brl' => 74.90,
+                            'cost_price_usd' => 7.20,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
+                            'stock' => 22,
+                        ],
+                        [
+                            'sku_id' => '1005013303040786-BRANCO-M',
+                            'sku_attr' => '14:200000184;5:100014065',
+                            'options' => ['Cor' => 'Branco Pérola', 'Tamanho' => 'M (42)'],
+                            'price_brl' => 69.90,
+                            'cost_price_usd' => 6.80,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
+                            'stock' => 40,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005006996593220',
