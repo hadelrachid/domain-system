@@ -86,7 +86,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                 <?php if ($product->rating > 0 || $product->ordersCount > 0 || $salesInformed !== ''): ?>
                     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #94a3b8; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                         <?php if ($product->rating > 0): ?>
-                            <span style="color: #fbbf24; font-weight: 600;">★ <?= number_format($product->rating, 1) ?> de nota</span>
+                            <span style="color: #fbbf24; font-weight: 600;">★ <?= number_format($product->rating, 1) ?> de nota<?= !empty($product->attributes['reviews_count']) ? ' (' . (int)$product->attributes['reviews_count'] . ' avaliações)' : '' ?></span>
                         <?php endif; ?>
                         <?php if ($product->ordersCount > 0 && $salesInformed !== 'nao'): ?>
                             <span>• <?= number_format($product->ordersCount, 0, ',', '.') ?> aprovações / vendidos</span>

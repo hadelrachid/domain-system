@@ -1442,8 +1442,9 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
                     ],
-                    'evaluate_rate' => '4.9',
-                    'volume' => 16800,
+                    'evaluate_rate' => '5.0',
+                    'volume' => 25,
+                    'reviews_count' => 2,
                     'product_description' => 'Conjunto de lingerie sensual de duas peças em renda floral e malha trançada premium. Decote em V profundo com delicados detalhes em laço, tecido elástico e respirável em mistura de poliéster e elastano que se adapta confortavelmente ao corpo.',
                     'properties' => [
                         'Composição' => 'Poliéster e Elastano de Alta Elasticidade',
