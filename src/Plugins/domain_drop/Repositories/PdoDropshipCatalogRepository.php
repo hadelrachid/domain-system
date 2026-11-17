@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\domain_drop\Repositories;
 
 use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\CategoryTaxonomyInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
+use DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService;
 use PDO;
 
 /**
@@ -15,12 +17,16 @@ use PDO;
 class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
 {
     private PDO $pdo;
+    private CategoryTaxonomyInterface $taxonomy;
 
-    public function __construct(DatabaseConnectionInterface|PDO $connection)
-    {
+    public function __construct(
+        DatabaseConnectionInterface|PDO $connection,
+        ?CategoryTaxonomyInterface $taxonomy = null
+    ) {
         $this->pdo = $connection instanceof DatabaseConnectionInterface
             ? $connection->getPdo()
             : $connection;
+        $this->taxonomy = $taxonomy ?? new CategoryTaxonomyService();
     }
 
     public function save(DropshipProductDto $product): int
@@ -303,61 +309,13 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
     }
 
     /**
-     * Constrói cláusula SQL inteligente para categoria com tolerância a apelidos e termos semânticos.
+     * Constrói cláusula SQL inteligente para categoria delegando para a Taxonomia Desacoplada (SOLID / DIP).
      *
      * @param array<int, mixed> $params
      */
     private function buildCategoryClause(string $category, array &$params): string
     {
-        $raw = trim($category);
-        $lower = mb_strtolower($raw, 'UTF-8');
-
-        return match ($lower) {
-            'tecnologia', 'tecnologia & gadgets', 'gadgets', 'eletrônicos', 'eletrônicos & gadget', 'eletronicos', 'eletronicos & gadget' =>
-                "(category IN ('Tecnologia & Gadgets', 'Eletrônicos & Gadget', 'Eletrônicos') OR category LIKE '%Tecnologia%' OR category LIKE '%Eletrônicos%' OR category LIKE '%Eletronicos%' OR category LIKE '%Gadget%')",
-
-            'smartwatches', 'smartwatch', 'smartwatches & pulseiras', 'pulseiras' =>
-                "(category IN ('Smartwatches', 'Smartwatches & Pulseiras') OR category LIKE '%Smartwatch%' OR title LIKE '%Smartwatch%' OR title LIKE '%Relógio%' OR title LIKE '%Relogio%' OR title LIKE '%Apple Watch%' OR title LIKE '%Pulseira%')",
-
-            'áudio', 'audio', 'fones', 'fones bluetooth tws', 'fones tws' =>
-                "(category IN ('Áudio', 'Audio', 'Fones Bluetooth TWS') OR category LIKE '%Áudio%' OR category LIKE '%Audio%' OR title LIKE 'Fone%' OR title LIKE '% Fone%' OR title LIKE '%Tws%' OR title LIKE '%Earphone%' OR title LIKE '%Headphone%' OR title LIKE '%Microfone%')",
-
-            'smartwatches & áudio', 'smartwatches & audio' =>
-                "(category IN ('Smartwatches & Áudio', 'Smartwatches & Audio') OR category LIKE '%Smartwatch%' OR category LIKE '%Áudio%' OR category LIKE '%Audio%' OR title LIKE '%Smartwatch%' OR title LIKE '%Relógio%' OR title LIKE '%Watch%' OR title LIKE '%Fone%' OR title LIKE '%Tws%')",
-
-            'casa', 'casa inteligente', 'casa inteligente & organização', 'casa inteligente & organizacao', 'casa & organização', 'casa & organização inteligente', 'casa & organizacao inteligente' =>
-                "(category IN ('Casa Inteligente', 'Casa Inteligente & Organização') OR category LIKE '%Casa%')",
-
-            'celular', 'acessórios para celular', 'acessorios para celular', 'smartphone', 'smartphones' =>
-                "(category IN ('Acessórios para Celular') OR title LIKE '%Celular%' OR title LIKE '%Smartphone%' OR title LIKE '%Reparo Do Telefone%' OR title LIKE '%iPhone%' OR title LIKE '%Usb-C%' OR title LIKE '%Lightning%' OR title LIKE '%Carregador%' OR title LIKE '%Capinha%' OR title LIKE '%MagSafe%')",
-
-            'acessorios', 'acessórios', 'acessórios virais', 'acessorios virais', 'ferramentas', 'ferramentas & utilidades' =>
-                "(category IN ('Acessórios Virais', 'Ferramentas & Utilidades', 'Acessórios para Veículos') OR category LIKE '%Acessório%' OR category LIKE '%Acessorio%' OR category LIKE '%Ferramenta%')",
-
-            'beleza', 'saúde', 'saude', 'saúde & cuidados', 'saude & cuidados', 'beleza, cuidados & estilo', 'estilo' =>
-                "(category IN ('Saúde & Cuidados', 'Beleza, Cuidados & Estilo') OR category LIKE '%Beleza%' OR category LIKE '%Saúde%' OR category LIKE '%Saude%' OR category LIKE '%Cuidado%')",
-
-            'moda', 'roupas', 'vestuário', 'vestuario', 'moda, roupas & vestuário', 'moda, roupas & vestuario', 'moda & vestuário' =>
-                "(category IN ('Moda, Roupas & Vestuário', 'Roupas', 'Vestuário') OR category LIKE '%Moda%' OR category LIKE '%Roupa%' OR category LIKE '%Vestuário%' OR category LIKE '%Vestuario%')",
-
-            'lingerie', 'lingeries', 'moda íntima', 'moda intima', 'moda íntima, lingeries & pijamas', 'moda intima, lingeries & pijamas', 'pijamas' =>
-                "(category IN ('Moda Íntima, Lingeries & Pijamas', 'Lingeries') OR category LIKE '%Lingerie%' OR category LIKE '%Íntima%' OR category LIKE '%Intima%')",
-
-            'sex shop', 'sexshop', 'adulto', 'adultos', 'produtos adultos', 'sex shop & produtos adultos (+18)', '+18' =>
-                "(category IN ('Sex Shop & Produtos Adultos (+18)', 'Sex Shop') OR category LIKE '%Sex Shop%' OR category LIKE '%Adulto%' OR category LIKE '%+18%')",
-
-            'pets', 'pet shop', 'pet shop & pets virais' =>
-                "(category IN ('Pet Shop & Pets Virais', 'Pet Shop') OR category LIKE '%Pet%')",
-
-            'veiculos', 'veículos', 'acessórios para veículos', 'acessorios para veiculos', 'automotivo' =>
-                "(category IN ('Acessórios para Veículos') OR category LIKE '%Veículo%' OR category LIKE '%Veiculo%' OR category LIKE '%Auto%')",
-
-            default => (function() use ($raw, &$params) {
-                $params[] = $raw;
-                $params[] = '%' . $raw . '%';
-                return "(category = ? OR category LIKE ?)";
-            })()
-        };
+        return $this->taxonomy->buildSqlFilter($category, $params);
     }
 
     public function delete(int $id): bool
@@ -388,8 +346,10 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
 
     public function getCategories(): array
     {
+        $canonicals = $this->taxonomy->getCanonicalCategories();
         $stmt = $this->pdo->query("SELECT DISTINCT category FROM domain_drop_catalog WHERE category != '' ORDER BY category ASC");
-        return $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        $dbCats = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        return array_values(array_unique(array_merge($canonicals, $dbCats)));
     }
 
     /**

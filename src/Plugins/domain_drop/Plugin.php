@@ -14,6 +14,7 @@ use DomainSystem\Plugins\commerce\Contracts\PurchasableItemResolverInterface;
 use DomainSystem\Plugins\domain_drop\Adapters\DropshipProductPurchasableAdapter;
 use DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\CategoryTaxonomyInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface;
@@ -31,6 +32,7 @@ use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository;
 use DomainSystem\Plugins\domain_drop\Services\AiProductEnricherService;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService;
+use DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService;
 use DomainSystem\Plugins\domain_drop\Services\CurrencyConverterService;
 use DomainSystem\Plugins\domain_drop\Services\DisputeAttachmentService;
 use DomainSystem\Plugins\domain_drop\Services\OrderSlaProgressService;
@@ -122,8 +124,15 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return new AiProductEnricherService();
         });
 
+        $runtime->singleton(CategoryTaxonomyInterface::class, function () {
+            return new CategoryTaxonomyService();
+        });
+
         $runtime->singleton(DropshipCatalogRepositoryInterface::class, function () use ($runtime) {
-            return new PdoDropshipCatalogRepository($runtime->getLink('core.db'));
+            return new PdoDropshipCatalogRepository(
+                $runtime->getLink('core.db'),
+                $runtime->make(CategoryTaxonomyInterface::class)
+            );
         });
 
         $runtime->singleton(DropshipOrderRepositoryInterface::class, function () use ($runtime) {
@@ -198,8 +207,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
-        $runtime->singleton(ProductLinkScraperInterface::class, function () {
-            return new AliExpressLinkScraperService();
+        $runtime->singleton(ProductLinkScraperInterface::class, function () use ($runtime) {
+            return new AliExpressLinkScraperService(
+                $runtime->make(CategoryTaxonomyInterface::class)
+            );
         });
 
         $runtime->singleton(ProductMediaSyncInterface::class, function () use ($runtime) {
@@ -218,7 +229,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 aiEnricher: $runtime->make(AiProductEnricherInterface::class),
                 repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 linkScraper: $runtime->make(ProductLinkScraperInterface::class),
-                demandMetricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class)
+                demandMetricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
+                taxonomy: $runtime->make(CategoryTaxonomyInterface::class)
             );
         });
 

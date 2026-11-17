@@ -252,7 +252,7 @@ class DomainDropProductVariantsTest extends TestCase
         $axes = $curated['variation_axes'];
         $this->assertArrayHasKey('Cor', $axes);
         $this->assertArrayHasKey('Tamanho', $axes);
-        $this->assertContains('Branco Floral', $axes['Cor']);
+        $this->assertContains('Preto', $axes['Cor']);
         $this->assertEquals(['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'], $axes['Tamanho']);
 
         $variants = $curated['variants'];

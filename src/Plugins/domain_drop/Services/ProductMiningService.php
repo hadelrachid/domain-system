@@ -6,12 +6,14 @@ namespace DomainSystem\Plugins\domain_drop\Services;
 
 use DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\CategoryTaxonomyInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
 use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
 use DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto;
+use DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService;
 use RuntimeException;
 use Throwable;
 
@@ -33,6 +35,7 @@ class ProductMiningService implements ProductMiningServiceInterface
     ];
 
     private ProductLinkScraperInterface $linkScraper;
+    private CategoryTaxonomyInterface $taxonomy;
     private ?string $configFilePath;
     private ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $demandMetricsRepo;
 
@@ -43,9 +46,11 @@ class ProductMiningService implements ProductMiningServiceInterface
         private readonly DropshipCatalogRepositoryInterface $repository,
         ?ProductLinkScraperInterface $linkScraper = null,
         ?string $configFilePath = null,
-        ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $demandMetricsRepo = null
+        ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $demandMetricsRepo = null,
+        ?CategoryTaxonomyInterface $taxonomy = null
     ) {
-        $this->linkScraper = $linkScraper ?? new AliExpressLinkScraperService();
+        $this->taxonomy = $taxonomy ?? new CategoryTaxonomyService();
+        $this->linkScraper = $linkScraper ?? new AliExpressLinkScraperService($this->taxonomy);
         $this->configFilePath = $configFilePath;
         $this->demandMetricsRepo = $demandMetricsRepo;
     }
@@ -55,50 +60,7 @@ class ProductMiningService implements ProductMiningServiceInterface
      */
     public static function normalizeCategory(string $category): string
     {
-        $trimmed = trim($category);
-        if ($trimmed === '') {
-            return 'Eletrônicos & Gadget';
-        }
-
-        $map = [
-            'Eletrônicos'                       => 'Eletrônicos & Gadget',
-            'Eletrônicos & Gadget'              => 'Eletrônicos & Gadget',
-            'Gadgets'                           => 'Eletrônicos & Gadget',
-            'Casa Inteligente'                  => 'Casa Inteligente & Organização',
-            'Casa Inteligente & Organização'    => 'Casa Inteligente & Organização',
-            'Casa & Organização'                => 'Casa Inteligente & Organização',
-            'Beleza & Estilo'                   => 'Beleza, Cuidados & Estilo',
-            'Beleza, Cuidados & Estilo'         => 'Beleza, Cuidados & Estilo',
-            'Beleza'                            => 'Beleza, Cuidados & Estilo',
-            'Ferramentas'                       => 'Ferramentas & Utilidades',
-            'Ferramentas & Utilidades'          => 'Ferramentas & Utilidades',
-            'Utilidades'                        => 'Ferramentas & Utilidades',
-            'Pet Shop'                          => 'Pet Shop & Pets Virais',
-            'Pet Shop & Pets Virais'            => 'Pet Shop & Pets Virais',
-            'Pets'                              => 'Pet Shop & Pets Virais',
-            'Acessórios Auto'                   => 'Acessórios para Veículos',
-            'Acessórios para Veículos'          => 'Acessórios para Veículos',
-            'Automotivo'                        => 'Acessórios para Veículos',
-            'Veículos'                          => 'Acessórios para Veículos',
-            'Roupas'                            => 'Moda, Roupas & Vestuário',
-            'Vestuário'                         => 'Moda, Roupas & Vestuário',
-            'Moda'                              => 'Moda, Roupas & Vestuário',
-            'Moda & Vestuário'                  => 'Moda, Roupas & Vestuário',
-            'Moda, Roupas & Vestuário'          => 'Moda, Roupas & Vestuário',
-            'Lingerie'                          => 'Moda Íntima, Lingeries & Pijamas',
-            'Lingeries'                         => 'Moda Íntima, Lingeries & Pijamas',
-            'Moda Íntima'                       => 'Moda Íntima, Lingeries & Pijamas',
-            'Moda Íntima, Lingeries & Pijamas'  => 'Moda Íntima, Lingeries & Pijamas',
-            'Sex Shop'                          => 'Sex Shop & Produtos Adultos (+18)',
-            'Sexshop'                           => 'Sex Shop & Produtos Adultos (+18)',
-            'Adulto'                            => 'Sex Shop & Produtos Adultos (+18)',
-            'Adultos'                           => 'Sex Shop & Produtos Adultos (+18)',
-            'Produtos Adultos'                  => 'Sex Shop & Produtos Adultos (+18)',
-            'Sex Shop & Produtos Adultos (+18)' => 'Sex Shop & Produtos Adultos (+18)',
-            'Geral'                             => 'Ferramentas & Utilidades',
-        ];
-
-        return $map[$trimmed] ?? $trimmed;
+        return (new CategoryTaxonomyService())->normalizeCategory($category);
     }
 
     public function mineTrendingProducts(string $category = 'Eletrônicos & Gadget', int $limit = 10, bool $autoPersist = true, string $sort = 'volume_desc'): array
@@ -1795,44 +1757,44 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'Fecho'      => 'Costas Triplo Ajuste Reforçado',
                         'Renda'      => 'Guipir Floral Relevo Macio',
                         'Tamanhos'   => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
-                        'Cores'      => 'Branco Floral',
+                        'Cores'      => 'Preto',
                     ],
                     'variation_axes' => [
-                        'Cor'     => ['Branco Floral'],
+                        'Cor'     => ['Preto'],
                         'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
                     ],
                     'variants' => [
                         [
-                            'sku_id' => '1005006982221921-BRANCO-S',
+                            'sku_id' => '1005006982221921-PRETO-S',
                             'sku_attr' => '14:200000182;5:100014064',
-                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'S (BR P)'],
+                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'S (BR P)'],
                             'price_brl' => 79.90,
                             'cost_price_usd' => 8.90,
                             'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
                             'stock' => 45,
                         ],
                         [
-                            'sku_id' => '1005006982221921-BRANCO-M',
+                            'sku_id' => '1005006982221921-PRETO-M',
                             'sku_attr' => '14:200000182;5:100014065',
-                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'M (BR M)'],
+                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'M (BR M)'],
                             'price_brl' => 84.90,
                             'cost_price_usd' => 9.40,
                             'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
                             'stock' => 60,
                         ],
                         [
-                            'sku_id' => '1005006982221921-BRANCO-L',
+                            'sku_id' => '1005006982221921-PRETO-L',
                             'sku_attr' => '14:200000182;5:100014066',
-                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'L (BR G)'],
+                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'L (BR G)'],
                             'price_brl' => 89.90,
                             'cost_price_usd' => 9.90,
                             'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
                             'stock' => 38,
                         ],
                         [
-                            'sku_id' => '1005006982221921-BRANCO-XL',
+                            'sku_id' => '1005006982221921-PRETO-XL',
                             'sku_attr' => '14:200000182;5:100014067',
-                            'options' => ['Cor' => 'Branco Floral', 'Tamanho' => 'XL (BR GG)'],
+                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'XL (BR GG)'],
                             'price_brl' => 94.90,
                             'cost_price_usd' => 10.40,
                             'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',

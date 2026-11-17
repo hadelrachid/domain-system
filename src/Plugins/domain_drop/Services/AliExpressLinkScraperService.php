@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace DomainSystem\Plugins\domain_drop\Services;
 
+use DomainSystem\Plugins\domain_drop\Contracts\CategoryTaxonomyInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
 use DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto;
+use DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService;
 use Throwable;
 
 /**
@@ -19,6 +21,12 @@ use Throwable;
  */
 class AliExpressLinkScraperService implements ProductLinkScraperInterface
 {
+    private CategoryTaxonomyInterface $taxonomy;
+
+    public function __construct(?CategoryTaxonomyInterface $taxonomy = null)
+    {
+        $this->taxonomy = $taxonomy ?? new CategoryTaxonomyService();
+    }
     public function canHandle(string $urlOrId): bool
     {
         $trim = trim($urlOrId);
@@ -316,23 +324,6 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
 
     private function inferCategory(string $title): string
     {
-        $t = mb_strtolower($title, 'UTF-8');
-        if (str_contains($t, 'pulseira') || str_contains($t, 'watch') || str_contains($t, 'relogio') || str_contains($t, 'fone') || str_contains($t, 'projetor') || str_contains($t, 'carregador')) {
-            return 'Eletrônicos';
-        }
-        if (str_contains($t, 'lampada') || str_contains($t, 'luminaria') || str_contains($t, 'led') || str_contains($t, 'aspirador') || str_contains($t, 'cozinha') || str_contains($t, 'quarto')) {
-            return 'Casa Inteligente';
-        }
-        if (str_contains($t, 'cabelo') || str_contains($t, 'pele') || str_contains($t, 'maquiagem') || str_contains($t, 'barbeador') || str_contains($t, 'beleza')) {
-            return 'Beleza & Estilo';
-        }
-        if (str_contains($t, 'carro') || str_contains($t, 'suporte veicular') || str_contains($t, 'automotivo')) {
-            return 'Acessórios Auto';
-        }
-        if (str_contains($t, 'pet') || str_contains($t, 'cachorro') || str_contains($t, 'gato')) {
-            return 'Pet Shop';
-        }
-
-        return 'Geral';
+        return $this->taxonomy->classifyFromText($title);
     }
 }
