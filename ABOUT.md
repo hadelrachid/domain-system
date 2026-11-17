@@ -1,95 +1,72 @@
-# Estou construindo minha própria plataforma PHP e tenho aprendido muito ao longo do caminho
+# Construindo um sistema web do zero: Por que escolhi fazer isso e por que preciso de você
 
 > 🇧🇷 [Ler em Português](ABOUT.md) | 🇺🇸 [Read in English](ABOUT-en.md)
 
 ---
 
-Sou um desenvolvedor autodidata e, há algum tempo, venho trabalhando em um projeto chamado **Domain System**.
+Olá! Meu nome é Hadel e sou um desenvolvedor autodidata.
 
-Tudo começou com uma ideia simples: e se eu pudesse criar minha própria plataforma PHP, na qual o sistema principal e seus plugins tivessem responsabilidades bem definidas, sem depender excessivamente uns dos outros?
+Há algum tempo, decidi embarcar em um desafio grande: criar o meu próprio ambiente operacional e plataforma web em PHP puro, batizado de **Domain System**.
 
-À medida que continuei trabalhando, o projeto cresceu. Precisei pensar em como organizar o código, como os plugins deveriam se comunicar com o núcleo (*core*), como tratar erros e como evitar que algo que já funcionava parasse de funcionar repentinamente.
+Tudo começou com uma indignação e uma pergunta: por que hoje em dia precisamos de frameworks gigantescos com centenas de pacotes de terceiros, ou de CMSs tradicionais que consomem centenas de megabytes de RAM e dependem de dezenas de plugins instáveis apenas para colocar uma loja ou uma escola de cursos no ar?
 
-Não vou fingir que tenho todas as respostas. Ainda estou aprendendo, cometendo erros e voltando atrás para aprimorar as coisas. Mas é justamente isso que torna este projeto fascinante para mim.
+Eu queria o oposto: um sistema simples, leve (que coubesse em **~30 MB de disco** e gastasse **~5 MB de memória RAM**), rápido, seguro e que funcionasse até na hospedagem compartilhada mais barata do mercado.
 
-Você pode conferir o código-fonte aberto no GitHub aqui:  
+O código está aberto para todo mundo ver e testar no GitHub:  
 👉 [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
 
 ---
 
-## Por que comecei a pensar de forma diferente sobre o PHP
+## Sem "fantasiar o pavão": Sou autodidata e aprendo na prática
 
-Ao refletir sobre como organizar o projeto, comecei a me interessar pela maneira como os sistemas operacionais modernos separam seus componentes essenciais das aplicações que rodam sobre eles.
+Eu não tenho diploma de ciência da computação nem trabalho em uma big tech. Tudo o que sei aprendi lendo documentação, errando, quebrando coisas no servidor, passando horas procurando bugs e refazendo o código até ele ficar bom.
 
-Pensei: será que posso aplicar um pouco desse conceito a uma plataforma web em PHP?
+Por não ter uma equipe de engenheiros ao meu lado, eu uso ferramentas de **Inteligência Artificial (como Claude, ChatGPT, Nemotron e DeepSeek) como minhas parceiras de bancada e auditoria**.
 
-No **Domain System**, busco manter dois elementos fundamentais e distintos:
+Minha rotina é direta:
+1. Eu penso na solução, crio a lógica e estruturo o código.
+2. Em seguida, coloco as I.A.s para **auditar o código linha por linha de forma implacável**.
+3. Peço para elas agirem como revisores críticos: caçando falhas de concorrência, brechas de injeção SQL, problemas de CSRF, regras de negócio mal tratadas, redundâncias e código morto.
+4. Para cada problema encontrado, eu escrevo testes de regressão no PHPUnit para garantir que aquele erro nunca mais volte a acontecer.
 
-- **O núcleo (core):** A parte responsável pelos fundamentos necessários para o funcionamento do sistema, como roteamento, injeção de dependências, armazenamento e outros serviços compartilhados.
-- **Os plugins:** Os componentes que adicionam funcionalidades de negócio à plataforma (como motor de Dropshipping com SDK do AliExpress, LMS de cursos, construtor visual de páginas, gestão de links e SEO).
+Hoje, essa disciplina diária resultou em uma suíte robusta de **656 testes automatizados e 3.922 asserções** cobrindo checkout, controle de estoque, criptografia, webhooks de pagamento e segurança.
 
-A ideia é direta: não quero que o núcleo precise conhecer os detalhes específicos de cada plugin. Prefiro que a comunicação ocorra estritamente por meio de interfaces e contratos; assim, posso alterar uma parte sem precisar modificar todo o restante.
-
-Na prática, acertar isso é bem mais difícil do que parece. É possível criar interfaces e, ainda assim, acabar com um código excessivamente dependente de classes concretas. Esse é um aspecto ao qual tenho prestado cada vez mais atenção conforme o projeto evolui.
-
----
-
-## Algumas coisas nas quais tenho trabalhado
-
-### Instalação de plugins de forma mais segura
-
-Um aspecto que exigiu reflexão cuidadosa foi a instalação de plugins via painel.
-
-Ao enviar um arquivo compactado (ZIP), não se pode simplesmente presumir que todos os arquivos contidos nele sejam seguros para serem extraídos em qualquer lugar do servidor.
-
-Por isso, adicionei uma etapa em que os arquivos enviados são inspecionados antes de serem movidos para o destino final. O processo inclui verificações contra problemas clássicos como *path traversal* (travessia de diretórios) e *ZIP Slip*.
-
-Não diria que isso garante a prevenção de todos os ataques possíveis. A segurança exige muito mais do que apenas algumas verificações, e sei que essa é uma área que requer estudo e atenção contínua.
-
-### Facilitando a recuperação após problemas
-
-Outro desafio constante é lidar com erros sem deixar o sistema em um estado instável ou comprometido.
-
-O *Domain System* inclui persistência atômica em JSON (`AtomicJsonStore`), técnicas de bloqueio de arquivos (*file-locking* com `LOCK_EX`), ferramentas de verificação de esquema de banco de dados (`SchemaDoctorInterface`), além de isolamento de falhas em plugins (Circuit Breaker) e rotinas de *snapshot* e *rollback* automático antes de atualizações.
-
-Alguns desenvolvedores questionam o uso de um Circuit Breaker em plugins PHP, defendendo que erros devem estourar imediatamente. Em ambiente de desenvolvimento, concordo plenamente: os erros devem aparecer na tela com detalhes para serem corrigidos. Mas em produção, o foco é a disponibilidade do serviço: se um plugin secundário quebrar, não faz sentido derrubar o site inteiro ou impedir que um aluno assista às suas aulas. O sistema desarma apenas o plugin com falha, registra tudo nos logs e na tela de supervisão para o administrador corrigir, e mantém a aplicação funcionando.
-
-### Criando meu próprio editor visual de páginas
-
-Também tenho trabalhado no **Flex Builder**, um editor visual para a criação de layouts de páginas, cabeçalhos e rodapés (Full Site Editing).
-
-Um dos meus objetivos principais era que a pré-visualização no editor fosse o mais fiel possível ao site real publicado. Para garantir isso, ambos utilizam exatamente o mesmo processo de compilação por meio de um contrato compartilhado (`ThemePartCompilerInterface`).
-
-Além disso, tenho trabalhado em layouts responsivos em CSS Grid de 12 colunas, de modo que, ao ocultar um elemento em uma tela menor (tablet ou mobile), as colunas restantes se reorganizem automaticamente sem deixar espaços vazios indesejados (*auto-reflow*).
-
-Um editor como esse envolve centenas de detalhes, e tem sido uma excelente experiência de aprendizado.
-
-### Usando IA sem perder o controle do código
-
-Também utilizo ferramentas de IA voltadas para programação para me auxiliarem no desenvolvimento do projeto.
-
-Elas podem ser incrivelmente úteis, especialmente ao lidar com uma base de código que já conta com dezenas de milhares de linhas. No entanto, aprendi na prática que obter um trecho de código que funciona isoladamente não é o mesmo que obter um código que se integre bem à arquitetura do projeto.
-
-Às vezes, uma alteração gerada pode resolver um problema imediato, mas acabar criando outro oculto. Uma nova classe, por exemplo, pode funcionar corretamente no teste pontual, mas introduzir dependências que tornam futuras modificações muito mais difíceis.
-
-Para ajudar a evitar isso, criei documentações de contratos ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md)) e testes de arquitetura automatizados que explicam como o projeto é organizado e como novos plugins devem ser desenvolvidos. Também existe uma ferramenta de linha de comando (`os-cli.php make:plugin`) para gerar a estrutura básica padronizada de um plugin.
-
-Ainda estou buscando a melhor forma de utilizar a IA sem tornar o código difícil de manter. A documentação e os contratos ajudam, mas o desenvolvedor ainda precisa revisar cada alteração, rodar testes e entender profundamente o que o código faz.
+Mas aqui está a verdade mais importante: **I.A. tem limite. Ela ajuda a caçar padrões, mas não tem a vivência, a intuição e o bom senso de um programador humano experiente.**
 
 ---
 
-## Um pouco sobre a tecnologia
+## Por que preciso de uma comunidade de programadores?
 
-O Domain System é construído em **PHP 8.2+**. Ele oferece suporte a MySQL/MariaDB e SQLite por meio de PDO, além de contar com uma opção própria de armazenamento estruturado em JSON com travas concorrentes.
+Nenhum desenvolvedor sozinho, por mais dedicado que seja, consegue antecipar todos os cenários de uso de um sistema em escala real. 
 
-Utilizo o **PHPUnit** para testes automatizados. O projeto conta atualmente com **629 testes automatizados** e mais de **3.600 asserções** cobrindo pagamentos, dropshipping (SDK AliExpress, SLA e disputas), matrículas, ciclo de vida, segurança, roteamento e compilação visual.
+É por isso que estou sendo transparente e fazendo este **chamado aberto**:
 
-Esses números são úteis como métrica de estabilidade, mas não contam a história completa. É importante que os testes passem, mas também é fundamental verificar continuamente se o código está organizado de maneira compreensível e sustentável ao longo do tempo.
+Preciso de pessoas que queiram somar forças para fazer o Domain System ser cada vez mais estável, seguro, leve e rápido.
+
+### O que você pode fazer para ajudar?
+- **Auditar o código:** Olhe o repositório com olhar crítico. Se encontrar uma linha que parece frágil ou uma lógica mal construída, abra uma *Issue* ou mande um *Pull Request*. Críticas sinceras são muito bem-vindas!
+- **Revisar a arquitetura:** O sistema usa contratos e injeção de dependências, mas às vezes eu mesmo fico na dúvida se uma parte não poderia ser mais desacoplada ou se não estamos complicando o que deveria ser simples. Sua opinião técnica é ouro para mim.
+- **Testar em ambientes reais:** Suba o sistema em servidores diferentes (Nginx, Apache, Docker, VPS, hospedagem compartilhada) e tente usá-lo de verdade. Encontrou um aviso ou algo quebrou? Me avise.
+- **Contribuir com código:** Se quiser criar um plugin novo, melhorar o motor de temas ou refinar os gateways de pagamento, o projeto é totalmente livre (licença MIT).
 
 ---
 
-## Estou compartilhando isso porque gostaria de aprender com outras pessoas
+## O que o sistema tem hoje (Sem enrolação)
 
-Este projeto me ensinou que criar algo do zero é um desafio enorme; mantê-lo limpo, seguro e compreensível à medida que cresce é um desafio ainda maior.
+- **Núcleo sem dependências externas:** Roteamento rápido, injeção de dependências e eventos sem precisar instalar toneladas de pacotes pelo Composer.
+- **Motor de Dropshipping com API do AliExpress (DomainDrop):** Cálculo de frete real, criação de ordens, rotação diária de ofertas e área do cliente com rastreio de encomendas.
+- **Escola de Cursos (Academy LMS):** Aulas em vídeo, leitor leve de PDF embutido e emissão de certificados.
+- **Checkout e Pagamentos (DomainCommerce):** Pix instantâneo, cartão de crédito em até 12x via Mercado Pago, PayPal e webhooks de afiliados (Hotmart, Eduzz, etc.).
+- **Construtor Visual (Flex Builder):** Criação de cabeçalhos, rodapés e seções em CSS Grid de 12 colunas adaptável para celular e computador.
+- **Tolerância a Falhas (Circuit Breaker):** Se um plugin der erro inesperado em produção, ele não derruba o site inteiro com tela branca. Ele desarma apenas o plugin defeituoso e mantém o restante da loja ou escola no ar.
 
-Feedbacks sinceros, críticas construtivas e sugestões de arquitetura são sempre muito bem-vindos de qualquer colega desenvolvedor!
+---
+
+## Vamos conversar?
+
+Se você gosta da ideia de resgatar o que o PHP tem de melhor — ser simples, direto, rápido e rodar em qualquer lugar sem frescura —, venha fazer parte.
+
+- Repositório no GitHub: [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+- E-mail pessoal: `hadelrachid@gmail.com`
+
+Toda contribuição, sugestão ou crítica sincera é muito bem-vinda. Obrigado por ler até aqui!

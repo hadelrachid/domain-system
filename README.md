@@ -1,120 +1,117 @@
 # Domain System (v2.7.0)
 
-O **Domain System** é um CMS, plataforma de comércio eletrônico / dropshipping (**DomainDrop**) e escola de cursos online (**Academy LMS**) feito em **PHP 8.2+**. Ele foi criado com um objetivo simples: ser extremamente leve, rápido e fácil de manter, sem o peso, a lentidão e a montanha de plugins de CMSs como o WordPress.
+> **Um sistema web completo, ultraleve (~30 MB) e rápido feito em PHP 8.2 puro — sem frameworks pesados, sem dezenas de plugins lentos.**
 
-O sistema consome cerca de **5 MB de RAM** por requisição e ocupa apenas **~30 MB de espaço em disco**, rodando liso em qualquer VPS barata ou até em hospedagem compartilhada simples (como a Hostinger) com PHP e MySQL/SQLite.
+Olá! Meu nome é Hadel e sou um desenvolvedor autodidata. Criei o **Domain System** com uma ideia simples na cabeça: provar que é possível ter um CMS completo com loja virtual de dropshipping/e-commerce e escola de cursos online rodando liso, consumindo apenas **~5 MB de memória RAM** e ocupando **~30 MB em disco**, funcionando perfeito em qualquer hospedagem barata ou VPS simples.
 
----
-
-[🇺🇸 English version](README-en.md) | [📖 Documentação](https://hadelrachid.github.io/domain-system/) | [🌱 Sobre o Projeto](ABOUT.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
+Sem o peso, a lentidão e a insegurança de depender de centenas de plugins de terceiros.
 
 ---
 
-## 💡 O que o Domain System traz pronto?
-
-O projeto já vem pronto para colocar lojas de dropshipping, e-commerce próprio, sites e escolas de cursos no ar:
-
-### 📦 1. Motor de Dropshipping & E-Commerce com SDK do AliExpress (DomainDrop)
-- **Integração com SDK Oficial da AliExpress Open Platform:** Comunicação assinada via protocolo `TOP` (`HMAC-SHA256`) e OAuth 2.0 para consulta de catálogo (`aliexpress.ds.product.get`), feed de ofertas recomendadas (`aliexpress.ds.recommend.feed.get`), cálculo de frete (`aliexpress.logistics.buyer.freight.get`), criação automatizada de pedidos (`aliexpress.trade.buy.placeorder`) e rastreio logístico em tempo real (`queryTrackingInfo`).
-- **Mineração Autônoma & Ciclo Flash de 24 Horas:** Curadoria inteligente que prioriza produtos com estoque no Brasil (Entreposto Nacional com entrega rápida), conversão cambial dinâmica (`USD → BRL`) com margem configurável, enriquecimento de títulos/descrições com Inteligência Artificial e rotação diária de ofertas sincronizada com o cronômetro regressivo de 24h da vitrine.
-- **Espaço do Cliente Completo (`/minha-conta`, `/entrar`, `/cadastro`):**
-  - **🛰️ Acompanhamento de Entrega Integrado:** Linha do tempo visual de 5 etapas dentro da área do cliente, com consulta direta aos **Correios**, **Cainiao Global** e eventos ao vivo do SDK do AliExpress.
-  - **💬 Reclamações, Observações & Dúvidas:** Abertura de chamados com upload seguro de fotos e PDFs (até 4 arquivos com validação de *magic bytes*) e **vinculação opcional de ordem de pedido ou produto da loja** — permitindo ao cliente indicar qual é o produto ou código da compra mesmo antes da compensação bancária.
-- **Gestão Administrativa de Clientes, SLA & Mediação Bilingue (`/admin/dropship`):**
-  - **👥 Clientes & Compradores (`/admin/dropship/customers`):** Listagem estilo CRM com busca por nome/e-mail/CPF, métricas de compras e chamados, ativação/suspensão de conta e histórico de solicitações recentes.
-  - **📦 Pedidos & Mediação 1-Clique (`/admin/dropship/orders`):** Barra de progresso de SLA de entrega e botão único de mediação que traduz automaticamente o chamado para **Chinês Simplificado (`zh-CN`)** quando o fornecedor é internacional (`CN`) ou mantém em **Português (`pt-BR`)** para fornecedores nacionais (`BR`).
-
-### 🎓 2. Plataforma de Cursos Completa (Academy LMS)
-- **Área do Aluno Segura:** Tela de login e cadastro com recuperação de acesso e painel intuitivo.
-- **Estrutura de Aulas:** Cursos organizados por módulos e aulas sequenciais com controle de progresso (barra de porcentagem e marcação de aula concluída).
-- **Formatos de Aulas Flexíveis:** Vídeos (YouTube, Vimeo ou links diretos), textos formatados em blocos e **leitor de apostilas/PDF embutido** (com modos de visualização em canvas leve ou embutido).
-- **Certificados Automáticos:** Emissão de certificado de conclusão quando o aluno atinge 100% das aulas.
-
-### 💳 3. Pagamentos e Cobrança Direta (DomainCommerce)
-- **Mercado Pago Oficial (Brasil):**
-  - **Pix Instantâneo na Tela:** Gera o QR Code dinâmico e o código Copia-e-Cola direto na página, com checagem automática de recebimento a cada 3 segundos e liberação imediata do pedido ou matrícula.
-  - **Cartão de Crédito:** Parcelamento em até 12x (com opção de usar 2 cartões de crédito na mesma compra).
-  - **Boleto Bancário** e Checkout Pro oficial.
-- **PayPal Oficial (Vendas Internacionais):** Cobrança em moeda estrangeira ou saldo PayPal com proteção ao comprador.
-- **Webhooks de Afiliados:** Recebimento automático de notificações de venda da Hotmart, Eduzz, Monetizze e ClickBank, criando o usuário e matriculando o aluno na hora.
-
-### 🎨 4. Construtor Visual de Layouts (Flex Builder) & Isolamento de Temas
-- Criação e personalização de cabeçalhos, rodapés e seções centrais em CSS Grid de 12 colunas.
-- **Menus Responsivos & Gaveta Mobile:** Criação visual de menus com submenus (arraste horizontal e indentação fácil) e menu móvel com 8 estilos de botão hambúrguer.
-- **Visibilidade Responsiva com Auto-Reflow:** Defina quais blocos aparecem ou somem em Desktop, Laptop, Tablet ou Celular.
-- **Isolamento Automático de Temas Nativos (`"flex_builder": false`):** Temas dedicados de e-commerce (como `rachidd_store`) mantêm seu cabeçalho e rodapé próprios isolados da edição do Flex Builder, com aviso claro no painel administrativo.
-
-### 🔄 5. Atualizador Integrado (1 Clique)
-- Atualização direta pelo painel administrativo conectando aos pacotes de versão do GitHub Releases.
-- Verificação de integridade com SHA-256 e backup automático do banco e arquivos antes de aplicar qualquer atualização.
-
-### 🛡️ 6. Resiliência e o Circuit Breaker (Por que ele existe?)
-- **Sobre as críticas ao Circuit Breaker em PHP:** Alguns desenvolvedores com razão perguntam: *"Por que usar um Circuit Breaker em plugins PHP monolíticos se a boa prática comum é deixar a exceção estourar?"*. Essa é uma dúvida muito justa.
-- **O motivo prático:** Em um ambiente de produção real (como uma loja online com clientes no checkout ou uma escola com alunos assistindo aulas), se um plugin secundário quebrar por qualquer motivo inesperado, **o site inteiro não pode sair do ar com um erro fatal 500**.
-- **O equilíbrio que adotamos:**
-  - O Circuit Breaker **não esconde erros**: ele apenas desarma temporariamente o plugin defeituoso e grava o relatório completo da falha em log e na tela de **Supervisão do Sistema** (`/admin/supervision`) para o administrador corrigir.
-  - Em modo de **Desenvolvimento (`dev`)**, os erros continuam estourando na tela com stack trace completo para facilitar o debug.
-  - Em modo de **Produção**, a prioridade é a experiência do cliente/aluno e a disponibilidade das vendas.
-- **Segurança Nativa:** Proteção automática contra ataques de CSRF, injeção SQL via PDO com prepared statements e sanitização estrita de HTML contra XSS.
+[🇺🇸 English version](README-en.md) | [🌱 Minha História e Sobre o Projeto](ABOUT.md) | [🤝 Como Ajudar / Comunidade](#-preciso-da-sua-ajuda-junte-se-ao-projeto) | [🗺️ O que vem por aí (Roadmap)](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
 
 ---
 
-## 📊 Estatísticas e Testes
+## 🤝 Preciso da sua ajuda: Junte-se ao projeto!
 
-- **Linguagem:** PHP 8.2 ou superior (código moderno e tipado com `strict_types=1`).
-- **Suíte de Testes Automatizados:** **629 testes unitários, de arquitetura e de integração** no PHPUnit com **3.619 asserções** cobrindo segurança, DomainDrop (SDK AliExpress, SLA, disputas e clientes), checkout, gateways, matrículas e rotas.
-- **Banco de Dados:** Suporte nativo e transparente para **MySQL** e **SQLite**.
-- **Dependências Externas no Núcleo:** Zero. Não depende de frameworks gigantescos; utiliza apenas as extensões oficiais do PHP (`pdo`, `mbstring`, `zip`, `curl` e `openssl`).
+Como programo a maior parte do tempo sozinho, utilizo ferramentas de Inteligência Artificial como minhas **parceiras diárias de bancada e auditoria**. Coloco diferentes modelos para varrer o código linha por linha, procurando falhas de lógica, riscos de segurança, problemas de concorrência e redundâncias. Hoje o projeto já conta com uma suíte de **656 testes automatizados no PHPUnit e mais de 3.900 asserções**.
+
+Mas convenhamos: **I.A. só vai até certo ponto. Nada substitui o olhar, a bagagem e o bom senso de desenvolvedores humanos reais.**
+
+Estou abrindo as portas do projeto e buscando pessoas que queiram somar forças:
+- **Auditores de Código e Segurança:** Venha tentar quebrar o sistema! Encontre falhas, aponte brechas e sugira correções.
+- **Arquitetos e Entusiastas de PHP:** Me ajude a manter o código simples, limpo e desacoplado, sem cair no exagero de complicar o que deveria ser direto.
+- **Testadores:** Suba o sistema na sua máquina ou servidor, teste o fluxo de compras, crie cursos, monte temas e me diga o que funcionou e o que quebrou.
+- **Desenvolvedores de Plugins e Temas:** Crie novas extensões usando nossos contratos leves.
+
+Se você gosta da ideia de softwares leves, diretos ao ponto e quer construir algo legal junto comigo, seu PR (Pull Request), Issue ou crítica sincera será recebido de braços abertos!
+
+👉 [Veja como contribuir no Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
 
 ---
 
-## 🚀 Como Rodar Localmente
+## 💡 O que o sistema já faz hoje?
 
-### Requisitos Mínimos
-- PHP 8.2 ou superior com as extensões comuns ativadas: `pdo`, `mbstring`, `zip`, `curl`, `openssl` (e `pdo_mysql` ou `pdo_sqlite`).
-- Servidor web (Apache, Nginx ou o próprio servidor embutido do PHP).
+O Domain System já vem com as ferramentas essenciais prontas para rodar:
 
-### Passo a Passo
+### 📦 1. Loja Virtual & Dropshipping Internacional (DomainDrop)
+- **Integração com a API do AliExpress:** Conexão nativa e segura com a AliExpress Open Platform para consultar produtos, calcular frete, criar pedidos e rastrear encomendas em tempo real.
+- **Curadoria e Ofertas 24 Horas:** Prioriza produtos que já estão em estoque no Brasil (entrega rápida), calcula conversão de moedas (Dólar para Real) com sua margem de lucro e atualiza as ofertas da vitrine em ciclos automáticos de 24 horas.
+- **Espaço do Cliente Completo (`/minha-conta`):** Área limpa para o comprador acompanhar o rastreio da encomenda (Correios e internacional) e abrir chamados de suporte enviando fotos ou documentos.
+- **Painel Administrativo com Tradução Automática:** Acompanhe os pedidos, veja o prazo de entrega e responda a chamados com um botão que já traduz as mensagens para fornecedores internacionais.
+
+### 🎓 2. Escola de Cursos Online (Academy LMS)
+- **Área do Aluno:** Login simples, painel intuitivo e controle de progresso das aulas com barra de porcentagem.
+- **Aulas em Vídeo, Texto e Leitor de PDF:** Suporte a vídeos do YouTube, Vimeo ou arquivos próprios, além de um leitor embutido de apostilas em PDF que não pesa no navegador.
+- **Certificados de Conclusão:** Emissão automática em PDF quando o aluno conclui todas as aulas.
+
+### 💳 3. Pagamentos sem Complicação (DomainCommerce)
+- **Mercado Pago Nativo:**
+  - **Pix na Tela:** QR Code e código Copia-e-Cola gerados na hora, conferindo o pagamento a cada poucos segundos e liberando o pedido ou matrícula imediatamente.
+  - **Cartão de Crédito:** Parcelamento em até 12x (com opção de usar até 2 cartões na mesma compra).
+  - **Boleto Bancário.**
+- **PayPal:** Para quem quiser vender para clientes de fora do Brasil em moeda estrangeira.
+- **Integração com Plataformas de Afiliados:** Recebe vendas da Hotmart, Eduzz, Monetizze e ClickBank via webhook e matricula o aluno automaticamente.
+
+### 🎨 4. Construtor de Páginas Visual (Flex Builder)
+- Crie cabeçalhos, rodapés e seções arrastando blocos em uma grade responsiva de 12 colunas.
+- Defina facilmente o que aparece no computador e o que aparece no celular.
+- Se você criar um tema dedicado com visual próprio (como o tema `rachidd_store`), o sistema isola o cabeçalho e rodapé para que edições visuais não quebrem o design original.
+
+### 🔄 5. Atualizador com 1 Clique & Segurança
+- **Atualização Direta:** O sistema verifica novas versões no GitHub e aplica atualizações pelo painel, fazendo backup automático do banco e dos arquivos antes de mexer em qualquer coisa.
+- **Proteção contra Falhas:** Se um plugin secundário der erro inesperado, o sistema desarma temporariamente aquele plugin e mantém o restante do site no ar, gravando o erro para você corrigir (sem dar aquela tela branca de erro 500 para os clientes).
+- **Segurança Nativa:** Proteção automática contra ataques comuns da web (CSRF, injeção SQL com PDO e filtros contra XSS).
+
+---
+
+## 📊 Números e Tecnologias
+
+- **Linguagem:** PHP 8.2 ou superior (código estritamente tipado).
+- **Testes Automatizados:** **656 testes** rodando no PHPUnit com **3.922 asserções** cobrindo checkout, segurança, pedidos, gateways e rotas.
+- **Banco de Dados:** Funciona tanto com **MySQL/MariaDB** quanto com **SQLite** (sem precisar mexer no código).
+- **Zero Frameworks Pesados no Núcleo:** Não usamos Laravel, Symfony ou pacotes gigantescos no core. Apenas as extensões normais do PHP (`pdo`, `mbstring`, `zip`, `curl`, `openssl`).
+
+---
+
+## 🚀 Como testar na sua máquina
+
+Você só precisa do PHP 8.2 instalado no seu computador:
 
 ```bash
-# 1. Clone o repositório
+# 1. Baixe o código
 git clone https://github.com/hadelrachid/domain-system.git
 cd domain-system
 
-# 2. Inicie o servidor interno do PHP para testar
+# 2. Inicie o servidor embutido do PHP
 php -S localhost:8000 -t public
 ```
 
-Abra o seu navegador e acesse:
+Agora abra no seu navegador:  
 👉 `http://localhost:8000`
 
-O instalador inicial do sistema será exibido para você configurar o banco de dados e criar seu primeiro usuário administrador.
+O instalador vai abrir na hora para você escolher o banco de dados e criar seu login de administrador.
 
----
-
-## 🧪 Executando os Testes Automatizados
-
-Para rodar todos os testes do sistema com o PHPUnit:
-
+Para rodar todos os testes automatizados:
 ```bash
 php phpunit.phar
 ```
 
 ---
 
-## 📁 Estrutura das Pastas
+## 📁 Como o código está organizado
 
-Para quem for explorar o código-fonte, a estrutura é bem organizada e intuitiva:
+Se quiser abrir o projeto no seu editor de código, a estrutura é bem direta:
 
-- `public/`: Ponto de entrada web (`index.php`) e arquivos estáticos (CSS, JS, imagens).
-- `src/Core/`: Núcleo da aplicação (roteador, políticas de cache HTTP, container de injeção de dependências e eventos).
-- `src/SystemApps/`: Módulos de infraestrutura interna (autenticação, banco de dados, painel admin e atualizador).
-- `src/Plugins/`: Módulos de negócio (`domain_drop` Dropshipping AliExpress SDK, `academy` LMS, `commerce` Pagamentos, `flextheme` Temas & Flex Builder, `pages` e `seo`).
-- `themes/`: Temas e layouts visuais do site.
-- `tests/`: Bateria completa de testes automatizados com PHPUnit.
+- `public/`: A porta de entrada do site (`index.php`) e os arquivos visuais (CSS, JS, imagens).
+- `src/Core/`: O coração do sistema (o roteador de páginas, o container de dependências e eventos).
+- `src/Plugins/`: Onde ficam os módulos (`domain_drop` para dropshipping, `academy` para cursos, `commerce` para pagamentos, `flextheme` para o editor visual).
+- `src/SystemApps/`: Funções internas de apoio (login do admin, conexão de banco, atualizador).
+- `themes/`: Os temas visuais e páginas do site.
+- `tests/`: Todos os testes unitários e de integração do PHPUnit.
 
 ---
 
 ## 📄 Licença
 
-Este projeto é software livre sob a licença [MIT](LICENSE).
+O Domain System é software livre sob a licença [MIT](LICENSE). Você pode usar, estudar, modificar e colocar no seu próprio negócio à vontade.

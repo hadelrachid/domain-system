@@ -1,95 +1,72 @@
-# Building My Own Modular PHP Platform: Lessons Learned Along the Way
+# Building a Web Platform from Scratch: Why I Started It and Why I Need Your Help
 
 > 🇧🇷 [Ler em Português](ABOUT.md) | 🇺🇸 [Read in English](ABOUT-en.md)
 
 ---
 
-I am a self-taught developer and, for some time now, I have been building a project called **Domain System**.
+Hi! My name is Hadel, and I am a self-taught developer.
 
-It all started with a simple question: what if I could design my own PHP web platform where core foundations and application plugins have strictly defined boundaries, without excessive coupling or brittle dependencies?
+Some time ago, I decided to tackle a big personal challenge: building my own web operating environment and platform in pure, modern PHP, named **Domain System**.
 
-As work progressed, the codebase grew significantly. I had to solve practical architecture challenges: how to organize services, how plugins should communicate with the core runtime, how to isolate runtime errors, and how to prevent existing features from breaking unexpectedly.
+It all started from frustration and a simple question: why do we nowadays need multi-gigabyte frameworks with hundreds of third-party packages, or traditional CMSs that chew through hundreds of megabytes of RAM and break every time you install an unvetted plugin, just to launch an e-commerce store or an online school?
 
-I won't pretend I have all the answers. I am still learning, making mistakes, and continuously iterating to improve things. That journey of problem-solving is precisely what makes this project so rewarding to me.
+I wanted the exact opposite: a straightforward, ultra-lightweight system (taking up **~30 MB on disk** and using **~5 MB of RAM** per request), fast, secure, and running smoothly even on the cheapest shared hosting.
 
-You can explore the open source repository here:  
+The source code is completely open for everyone to inspect and test on GitHub:  
 👉 [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
 
 ---
 
-## Why I Started Thinking Differently About PHP
+## No Fluff: I Am Self-Taught and Learn by Doing
 
-While designing the architecture, I became fascinated by how modern operating systems isolate core system services from user applications running on top of them.
+I don't have a computer science degree, and I don't work at a big tech company. Everything I know comes from reading documentation, breaking things on real servers, spending late hours hunting down bugs, and rewriting code until it actually works well.
 
-I wondered: can we bring that architectural discipline into a modular PHP web platform?
+Because I don't have a large engineering team beside me, I use modern **Artificial Intelligence models (like Claude, ChatGPT, Nemotron, and DeepSeek) as my daily code audit partners**.
 
-In **Domain System**, I aim to keep two elements clearly decoupled:
+My day-to-day workflow is simple:
+1. I think through the problem, design the solution, and write the code.
+2. Then, I set different AI models to **relentlessly audit the code line by line**.
+3. I ask them to act as tough code reviewers: hunting for race conditions, SQL injection risks, CSRF flaws, unhandled business edge cases, redundancies, and dead code.
+4. For every issue discovered, I write regression tests in PHPUnit to make sure that bug can never quietly sneak back in.
 
-- **The Core:** Fundamental services necessary for application life-cycle — dependency injection, routing, atomic storage, and event dispatching.
-- **The Plugins:** Components providing business capabilities (such as the DomainDrop AliExpress SDK dropshipping engine, Academy LMS, visual layout builder, navigation menus, and SEO pipelines).
+Today, this daily habit has produced a test suite of **656 automated tests with 3,922 assertions** covering checkouts, stock control, encryption, payment webhooks, and core security.
 
-The idea is straightforward: the core should have zero awareness of plugin business details. Communication occurs exclusively through interfaces and contracts; this ensures one part can be refactored without breaking the rest of the application.
-
-In practice, getting this right is much harder than it sounds. One can define interfaces and still end up with excessive coupling between concrete classes. That is an area I pay closer attention to with every iteration.
-
----
-
-## Areas I Have Been Focusing On
-
-### Safer Plugin Installation
-
-Allowing users to upload zip packages required careful defensive design.
-
-When extracting an archive, one cannot assume every file is safe or intended for extraction.
-
-I introduced pre-extraction inspections that sanitize filenames and paths, guarding against *path traversal* and *Zip Slip* attacks.
-
-While no single check guarantees immunity against every security threat, defensive measures and constant vigilance are essential practices in software engineering.
-
-### Resilience and Graceful Recovery
-
-Another constant challenge is handling runtime errors without leaving the system in an inconsistent or corrupted state.
-
-*Domain System* incorporates atomic JSON persistence (`AtomicJsonStore`), exclusive file-locking (`LOCK_EX`), database schema diagnostics (`SchemaDoctorInterface`), extension-level fault isolation (Circuit Breaker), and automated pre-update backups with rollback capability.
-
-Some developers question using a Circuit Breaker pattern in PHP plugins, arguing that unhandled errors should always crash immediately. In local development, I completely agree: errors should bubble up with full stack traces so we can fix them. But in production, the priority shifts to business availability: if a secondary widget fails, it makes little sense to take down the entire school or prevent students from watching their lessons. The system isolates the failing plugin, logs full details for the admin to review, and keeps the platform running smoothly.
-
-### Building a Custom Visual Page Builder (Flex Builder)
-
-I have also been developing **Flex Builder**, a visual Full Site Editing (FSE) engine for headers, footers, and page sections.
-
-A primary requirement was ensuring that the Studio live preview matched the published frontend output down to the pixel. Both environments share the exact same compilation pipeline through `ThemePartCompilerInterface`.
-
-Additionally, the builder implements a 12-column CSS Grid with responsive visibility controls across 4 breakpoints (Desktop, Laptop, Tablet, Mobile) and automatic column readjustment (*auto-reflow*), eliminating awkward blank spaces when elements are hidden.
-
-Building an interactive block editor involves hundreds of subtle edge cases, making it a tremendous learning experience.
-
-### Leveraging AI Without Losing Control of the Codebase
-
-I use AI coding tools as an accelerator throughout development.
-
-They are remarkably productive, especially across a repository spanning tens of thousands of lines. However, practical experience taught me that code that works in isolation does not necessarily integrate well into an existing architecture.
-
-An AI-generated snippet might resolve an immediate bug while introducing hidden coupling that makes future changes painful.
-
-To prevent architectural drift, I created strict contract guidelines ([`AI_CONTRACT_GUIDE.md`](AI_CONTRACT_GUIDE.md)) and automated architectural tests (`UpdateArchitectureTest`, `RingIsolationTest`). I also built a CLI generator (`php os-cli.php make:plugin`) to bootstrap plugins with proper contract compliance.
-
-I continue to explore how best to leverage AI without sacrificing maintainability. Detailed documentation helps, but human oversight, thorough code reviews, and automated test suites remain irreplaceable.
+Yet, here is the honest truth: **AI has strict limits. It is great at pattern matching, but it lacks the real-world intuition, experience, and sanity checks of an experienced human programmer.**
 
 ---
 
-## The Tech Stack
+## Why I Need a Community of Developers
 
-Domain System is built on **PHP 8.2+**. It natively supports MySQL/MariaDB and SQLite via PDO, along with concurrency-safe atomic JSON persistence.
+No developer working alone, no matter how dedicated, can anticipate every real-world scenario of a system operating at scale.
 
-The test suite is powered by **PHPUnit**, currently featuring **629 automated unit and integration tests** and over **3,600 assertions** covering payments, dropshipping (AliExpress SDK, SLA, and disputes), student enrollments, lifecycle, security guards, routing, contracts, and visual compilation.
+That is why I am being transparent and making this **open call**:
 
-Test metrics provide confidence, but they don't tell the whole story. Green tests are important, but writing code that is clear, well-structured, and maintainable over time is what truly matters.
+I genuinely need people to join forces with me to make Domain System even more stable, secure, lightweight, and fast.
+
+### How can you help?
+- **Audit the code:** Look at the repository with a critical eye. If you spot a line that looks brittle or a piece of logic that could fail, open an *Issue* or submit a *Pull Request*. Honest, direct critiques are deeply appreciated!
+- **Review the architecture:** The system relies on explicit interfaces and dependency injection, but sometimes I wonder if a component could be cleaner or if we are overcomplicating what should be simple. Your technical opinion is gold to me.
+- **Test in real-world environments:** Run the system on different setups (Nginx, Apache, Docker, VPS, cheap shared hosting) and try using it for real. Found a warning or did something break? Let me know.
+- **Contribute code:** If you'd like to build a new plugin, improve theme capabilities, or refine payment gateways, the project is 100% free software (MIT License).
 
 ---
 
-## Sharing to Learn and Grow
+## What the System Does Today (Without the Marketing Speak)
 
-Building a platform from scratch is challenging; keeping it clean, secure, and comprehensible as it grows is an even greater challenge.
+- **Kernel with zero third-party dependencies:** Fast routing, dependency injection, and event dispatching without pulling in heavy Composer packages.
+- **Dropshipping Engine with AliExpress API (DomainDrop):** Live freight calculation, automated order placement, daily deal rotation, and a full customer area with parcel tracking.
+- **Online Course Platform (Academy LMS):** Video lessons, a built-in lightweight PDF reader, and automated certificate generation.
+- **Checkout & Payments (DomainCommerce):** Instant Pix, credit cards up to 12x via Mercado Pago, PayPal for international sales, and affiliate webhooks (Hotmart, Eduzz, etc.).
+- **Visual Page Builder (Flex Builder):** Drag-and-drop 12-column CSS Grid for building responsive headers, footers, and page sections for desktop and mobile.
+- **Fault Tolerance (Circuit Breaker):** If an auxiliary plugin throws an unexpected error in production, it won't crash your whole site with a white screen of death. It isolates only the broken plugin, logs the issue, and keeps the rest of your business online.
 
-Honest feedback, constructive critiques, and architectural discussions from fellow developers are always genuinely appreciated!
+---
+
+## Let's Connect!
+
+If you like the idea of getting back to what PHP does best — being simple, direct, fast, and running anywhere without friction —, come be a part of this.
+
+- GitHub Repository: [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+- Personal Email: `hadelrachid@gmail.com`
+
+Every contribution, suggestion, or honest critique is truly welcome. Thanks for reading!

@@ -1,6 +1,25 @@
 # Guia do Desenvolvedor: Domain System (v2.7.0)
 
-Este guia apresenta a estrutura do sistema, como desenvolver novos plugins e como estender as funcionalidades do núcleo utilizando interfaces e injeção de dependências em PHP 8.2+.
+> **Bem-vindo ao código do Domain System!**  
+> Este documento é para programadores que querem entender como o sistema funciona por dentro, criar novos plugins ou temas, e **principalmente nos ajudar a auditar e melhorar a arquitetura**.
+
+Olá! Como desenvolvedor autodidata, construí o Domain System buscando uma arquitetura limpa, simples e sem segredos: o núcleo (Core) apenas resolve dependências, roteia páginas e despacha eventos. Todo o resto — loja de dropshipping, cursos, pagamentos e construtor de páginas — vive isolado dentro da pasta `src/Plugins/`.
+
+Se você gosta de código direto ao ponto, PHP moderno e quer nos ajudar a caçar bugs, refinar interfaces ou criar novos recursos, você está no lugar certo!
+
+---
+
+## 🤝 Como você pode colaborar?
+
+Não estamos procurando apenas novos recursos: **precisamos de ajuda para auditar, simplificar e fortalecer o que já existe**.
+
+1. **Auditoria de Código e Segurança:**
+   - Como programo sozinho a maior parte do tempo, uso I.A.s para varrer o código procurando falhas de segurança e lógica. Mas a I.A. falha e tem limitações.
+   - Dê uma olhada crítica nas pastas `src/Core/`, `src/Plugins/commerce/` e `src/Plugins/domain_drop/`. Encontrou algo que pode quebrar ou uma brecha de segurança? Abra uma *Issue* ou envie um *Pull Request*!
+2. **Refinamento de Arquitetura:**
+   - Ajudar a manter o princípio de Inversão de Dependência (DIP) sem complicar desnecessariamente o código. Menos abstrações vazias, mais código testável e legível.
+3. **Criação de Plugins e Temas:**
+   - Criar novos meios de pagamento, novas integrações de frete ou temas visuais leves.
 
 ---
 

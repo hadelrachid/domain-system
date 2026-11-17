@@ -1,120 +1,117 @@
 # Domain System (v2.7.0)
 
-**Domain System** is a lightweight CMS, autonomous dropshipping / e-commerce platform (**DomainDrop**), and online learning platform (**Academy LMS**) built with **PHP 8.2+**. It was designed with a simple goal in mind: fast, lightweight, and easy to maintain, without the bloat, slowness, and endless plugin maintenance of traditional CMS platforms like WordPress.
+> **A full-featured, ultra-lightweight (~30 MB), and fast web operating platform built with clean, modern PHP 8.2 — no heavy frameworks, no bloated plugin mazes.**
 
-The system uses around **5 MB of RAM** per request and takes up only **~30 MB of disk space**, running smoothly on any inexpensive VPS or standard shared hosting (such as Hostinger) with PHP and MySQL or SQLite.
+Hi! My name is Hadel, and I am a self-taught developer. I started building **Domain System** around a simple question: can we build a full CMS with international dropshipping/e-commerce and an online school that runs blazing fast, uses only **~5 MB of RAM** per request, and takes up just **~30 MB on disk** — running smoothly even on inexpensive shared hosting or a cheap VPS?
 
----
-
-[🇧🇷 Versão em Português](README.md) | [📖 Documentation](https://hadelrachid.github.io/domain-system/) | [🌱 About the Project](ABOUT-en.md) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md)
+No bloat. No massive framework lock-in. No fragile house-of-cards of 50 third-party plugins.
 
 ---
 
-## 💡 What's Included Out of the Box?
+[🇧🇷 Versão em Português](README.md) | [🌱 My Story & About the Project](ABOUT-en.md) | [🤝 Join & Help the Project](#-i-need-your-help-join-the-project) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md)
 
-Domain System comes ready to launch dropshipping stores, physical e-commerce checkouts, websites, and online schools:
+---
 
-### 📦 1. Autonomous Dropshipping & E-Commerce with AliExpress SDK (DomainDrop)
-- **Official AliExpress Open Platform SDK Integration:** Cryptographically signed communication via the `TOP` protocol (`HMAC-SHA256`) and OAuth 2.0 for product lookup (`aliexpress.ds.product.get`), recommendation feeds (`aliexpress.ds.recommend.feed.get`), freight calculation (`aliexpress.logistics.buyer.freight.get`), automated order placement (`aliexpress.trade.buy.placeorder`), and real-time logistics tracking (`queryTrackingInfo`).
-- **Autonomous Mining & 24-Hour Flash Cycle:** Smart product curation prioritizing local Brazil warehouse inventory for fast shipping, dynamic `USD → BRL` currency conversion with configurable profit margins, AI-powered copywriting enrichment, and a daily 24h flash rotation synchronized with the storefront countdown timer.
-- **Complete Customer Portal (`/minha-conta`, `/entrar`, `/cadastro`):**
-  - **🛰️ Built-In Shipment Tracking:** Interactive 5-stage delivery progress bar directly inside the customer account with instant links to **Correios**, **Cainiao Global**, and live AliExpress SDK tracking events.
-  - **💬 Complaints, Notes & Questions:** Ticket submission with secure photo and PDF uploads (up to 4 files with magic-byte validation) and **optional order or catalog product linking** — allowing buyers to reference a specific product or order code even before payment settlement.
-- **Admin Customer CRM, SLA Monitoring & Bilingual Supplier Mediation (`/admin/dropship`):**
-  - **👥 Customers & Buyers (`/admin/dropship/customers`):** CRM directory with search by name/email/CPF, order & ticket metrics, account status controls, and recent customer tickets.
-  - **📦 Orders & 1-Click Supplier Mediation (`/admin/dropship/orders`):** Delivery SLA progress bars and a single-click mediation button that automatically translates customer disputes into **Simplified Chinese (`zh-CN`)** for international suppliers (`CN`) or keeps **Portuguese (`pt-BR`)** for domestic suppliers (`BR`).
+## 🤝 I need your help: Join the project!
+
+Because I build mostly on my own, I use modern Artificial Intelligence models as my **daily code audit partners**. I have them comb through the code line by line, hunting down logic errors, concurrency issues, edge cases, and security vulnerabilities. Today, the project has a battle-tested suite of **656 automated tests in PHPUnit with over 3,900 assertions**.
+
+But let's be real: **AI only goes so far. Nothing replaces the sharp eyes, hard-earned experience, and sanity checks of real human developers.**
+
+I am opening the doors wide and actively looking for people who want to team up:
+- **Code & Security Auditors:** Come try to break the system! Spot weaknesses, point out flaws, and propose fixes.
+- **Software Architects & PHP Enthusiasts:** Help me keep the architecture clean, simple, and decoupled, without falling into the trap of overengineering what should be straightforward.
+- **Testers:** Spin it up on your local machine or server. Test the dropshipping checkout, create courses, build themes, and tell me what worked and what broke.
+- **Plugin & Theme Developers:** Build new extensions using our lightweight, explicit contracts.
+
+If you like the idea of bloat-free software built with care and want to create something cool together, your Pull Request, Issue, or honest critique is truly welcome!
+
+👉 [Read how to get involved in the Developer Guide](DEVELOPER_GUIDE.md)
+
+---
+
+## 💡 What does the system do out of the box?
+
+Domain System comes with everything you need to launch online businesses:
+
+### 📦 1. Autonomous Dropshipping & E-Commerce (DomainDrop)
+- **AliExpress Open Platform API Integration:** Secure, direct communication to search products, calculate real freight, place orders, and track shipments live.
+- **24-Hour Flash Curadoria:** Prioritizes products already stored in domestic warehouses (for lightning-fast delivery), handles automatic currency conversion (USD to BRL) with custom markup, and rotates daily deals with a 24-hour countdown timer.
+- **Customer Portal (`/minha-conta`):** A clean buyer area with 5-stage shipment tracking (postal services + international tracking) and support ticket creation with photo/PDF uploads.
+- **Admin Dashboard with 1-Click Translation:** Monitor orders, delivery SLAs, and resolve disputes with an automated translation button for international suppliers.
 
 ### 🎓 2. Online Course Platform (Academy LMS)
-- **Student Dashboard:** Clean, secure login and registration with intuitive navigation.
-- **Course & Lesson Structure:** Courses organized into modules and sequential lessons with real-time progress tracking (progress bar and completed lesson marks).
-- **Flexible Lesson Content:** Video embedding (YouTube, Vimeo, or direct video URLs), structured text blocks, and an **in-browser PDF lesson reader** (lightweight canvas mode or native viewer).
-- **Automated Certificates:** Automatic certificate generation as soon as a student completes 100% of the lessons.
+- **Student Dashboard:** Clean, distraction-free interface with progress bars and lesson tracking.
+- **Video, Text & PDF Lessons:** Embed YouTube, Vimeo, or local videos, alongside an embedded, lightweight PDF lesson reader that doesn't drag the browser down.
+- **Automated Certificates:** Automatic completion certificates in PDF format as soon as a student reaches 100%.
 
-### 💳 3. Payments & Checkout (DomainCommerce)
-- **Mercado Pago Integration (Brazil):**
-  - **Instant Pix on Screen:** Generates the dynamic QR Code and copy-paste code directly on the checkout screen, with auto-polling every 3 seconds to confirm payment and instantly fulfill orders or enroll students.
-  - **Credit Cards:** Installments up to 12x (including split payment across two different credit cards).
-  - **Bank Slips (Boleto)** and official Checkout Pro.
-- **PayPal Integration (Global Sales):** International checkout with PayPal balance or global credit cards and automatic buyer protection.
-- **Affiliate Webhooks:** Automatic processing of sales notifications from Hotmart, Eduzz, Monetizze, and ClickBank, creating the user and granting course access on the spot.
+### 💳 3. Frictionless Payments (DomainCommerce)
+- **Mercado Pago (Brazil):**
+  - **Instant Pix on Screen:** Dynamic QR Code and Copy-and-Paste code with background polling every few seconds, releasing orders immediately upon confirmation.
+  - **Credit Cards:** Installments up to 12x (with support for split payments across 2 cards).
+  - **Bank Slips (Boleto).**
+- **PayPal:** For international customers purchasing in foreign currencies.
+- **Affiliate Webhooks:** Automatic sales listener for Hotmart, Eduzz, Monetizze, and ClickBank, creating accounts and enrolling students instantly.
 
-### 🎨 4. Visual Layout Builder (Flex Builder) & Native Theme Isolation
-- Design headers, footers, and page sections using a flexible 12-column CSS Grid.
-- **Responsive Menus & Mobile Drawer:** Create multi-level navigation trees with horizontal drag-and-drop indentation and a mobile side drawer with 8 hamburger button styles.
-- **Per-Device Visibility with Auto-Reflow:** Easily decide which blocks appear on Desktop, Laptop, Tablet, or Mobile screens.
-- **Automatic Native Theme Isolation (`"flex_builder": false`):** Dedicated e-commerce themes (such as `rachidd_store`) keep their native header and footer isolated from Flex Builder part overrides, displaying a clear informational notice in the admin editor.
+### 🎨 4. Visual Layout Builder (Flex Builder)
+- Design headers, footers, and central sections with a responsive 12-column CSS Grid.
+- Easily choose what shows up on desktops, tablets, or smartphones.
+- Dedicated e-commerce themes (like `rachidd_store`) isolate their custom headers and footers so visual builder edits don't break the bespoke design.
 
-### 🔄 5. 1-Click System Updater
-- Update the system directly from the admin panel, pulling verified releases from GitHub Releases.
-- Integrity verification using SHA-256 checksums and automated database and code backups before applying any updates.
-
-### 🛡️ 6. Resilience & The Circuit Breaker (Why Does It Exist?)
-- **Addressing Developer Feedback on Circuit Breakers in PHP:** Some developers reasonably ask: *"Why implement a Circuit Breaker pattern for PHP plugins when standard practice is simply letting exceptions bubble up?"*. That is a completely fair critique.
-- **The Practical Rationale:** In a production environment (such as an online store with buyers at checkout or a school where students are actively watching lessons), if an auxiliary plugin throws an unhandled error, **the entire site shouldn't crash with a fatal 500 white screen**.
-- **The Balance We Struck:**
-  - The Circuit Breaker **never hides errors**: it temporarily disables only the faulty plugin and records full stack traces in the error logs and inside the **System Supervision** dashboard (`/admin/supervision`) for prompt investigation.
-  - In **Development Mode (`dev`)**, exceptions bubble up immediately with full stack traces on screen for smooth debugging.
-  - In **Production**, the priority is business availability and keeping buyers and students served without disruption.
-- **Built-in Security:** Automatic CSRF token validation, SQL injection prevention via PDO prepared statements, and strict HTML sanitization against XSS.
+### 🔄 5. 1-Click System Updater & Safety
+- **Direct Updates:** Inspects new releases on GitHub and updates through the admin panel, taking automated backups of both code and database before touching anything.
+- **Failure Isolation (Circuit Breaker):** If an auxiliary plugin throws an unexpected error, the system isolates only that plugin and keeps the rest of the store or school online, logging the details for the admin (instead of showing a fatal 500 white screen to your customers).
+- **Native Security:** Out-of-the-box CSRF defense, PDO prepared statements for SQL injection prevention, and strict HTML sanitization.
 
 ---
 
-## 📊 Telemetry and Automated Tests
+## 📊 Tech Stack & Numbers
 
-- **Language:** PHP 8.2 or higher (clean, modern code with `strict_types=1`).
-- **Test Suite:** **629 automated unit, architectural, and integration tests** in PHPUnit with **3,619 assertions** covering security, DomainDrop (AliExpress SDK, SLA, disputes, and customers), checkout flows, payment gateways, student enrollments, and routing.
-- **Databases:** Seamless support for both **MySQL** and **SQLite**.
-- **External Dependencies:** Zero bloated framework dependencies in the core. Runs strictly on standard PHP extensions: `pdo`, `mbstring`, `zip`, `curl`, and `openssl`.
+- **Language:** PHP 8.2 or higher (strict-typed code with zero framework bloat).
+- **Automated Tests:** **656 automated tests** in PHPUnit with **3,922 assertions** covering checkouts, security, orders, payment gateways, and routing.
+- **Databases:** Works seamlessly with both **MySQL/MariaDB** and **SQLite** (switchable with zero code changes).
+- **Zero Heavy Frameworks:** No heavy dependencies in the core. Runs purely on standard PHP extensions: `pdo`, `mbstring`, `zip`, `curl`, and `openssl`.
 
 ---
 
 ## 🚀 Quick Start (Local Setup)
 
-### Requirements
-- PHP 8.2 or higher with standard extensions: `pdo`, `mbstring`, `zip`, `curl`, `openssl` (and `pdo_mysql` or `pdo_sqlite`).
-- Web server (Apache, Nginx, or the built-in PHP development server).
-
-### Steps
+All you need is PHP 8.2 installed on your machine:
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/hadelrachid/domain-system.git
 cd domain-system
 
-# 2. Start PHP built-in server
+# 2. Start PHP's built-in server
 php -S localhost:8000 -t public
 ```
 
-Open your browser and navigate to:
+Open your browser and navigate to:  
 👉 `http://localhost:8000`
 
-The setup wizard will appear to guide you through database setup and creating your initial admin account.
+The setup wizard will walk you through choosing your database and creating your admin account.
 
----
-
-## 🧪 Running the Tests
-
-To run the full automated test suite with PHPUnit:
-
+To run the automated test suite:
 ```bash
 php phpunit.phar
 ```
 
 ---
 
-## 📁 Directory Structure
+## 📁 Codebase Layout
 
-For developers exploring the codebase:
+If you want to open the code and explore:
 
-- `public/`: Web server document root (`index.php`) and static assets (CSS, JS, images).
-- `src/Core/`: Micro-kernel (routing, HTTP cache policies, dependency injection container, and event dispatcher).
-- `src/SystemApps/`: Core infrastructure modules (auth, database, admin panel, and updater).
-- `src/Plugins/`: Feature modules (`domain_drop` AliExpress SDK Dropshipping, `academy` LMS, `commerce` Checkout, `flextheme` Themes & Flex Builder, `pages`, and `seo`).
+- `public/`: The web entry point (`index.php`) and static assets (CSS, JS, images).
+- `src/Core/`: The kernel (router, container, event dispatcher, and resilience).
+- `src/Plugins/`: Feature modules (`domain_drop` for dropshipping, `academy` for courses, `commerce` for payments, `flextheme` for visual building).
+- `src/SystemApps/`: Internal utilities (admin auth, database doctor, updater).
 - `themes/`: Front-end themes and layouts.
-- `tests/`: Automated PHPUnit test suite.
+- `tests/`: Full PHPUnit test suite.
 
 ---
 
 ## 📄 License
 
-This project is open-source software licensed under the [MIT license](LICENSE).
+Domain System is free open-source software licensed under the [MIT License](LICENSE). You are free to use, modify, learn from, and run your business on it.

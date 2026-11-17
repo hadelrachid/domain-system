@@ -4,7 +4,9 @@
 
 # 🇧🇷 Visão Geral do Domain System (v2.7.0)
 
-O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, lojas de dropshipping, cursos online e temas, projetada sob os princípios de **Clean Architecture**, **SOLID** e **Inversão de Dependência (DIP)**.
+> **Nota do Autor:** Olá! Sou um desenvolvedor autodidata e construí o **Domain System** buscando simplicidade, leveza (~30 MB em disco e ~5 MB de RAM) e transparência. Como programo a maior parte do tempo sozinho, utilizo modelos de I.A. como parceiros implacáveis de auditoria de código linha por linha (o projeto já conta com 656 testes automatizados no PHPUnit). No entanto, **a I.A. tem limites e nada substitui a experiência e o bom senso de desenvolvedores humanos reais**. Convido você abertamente a testar, auditar o código e colaborar com sugestões e melhorias no nosso GitHub!
+
+O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, lojas de dropshipping, cursos online e temas, projetada para ser leve, direta e sem bloatware.
 
 O sistema opera com um núcleo enxuto (~30 MB em disco e ~5 MB de RAM no motor Zend), onde as funcionalidades de negócio são desacopladas em módulos independentes. O projeto encontra-se em ciclo ativo de desenvolvimento e melhorias contínuas.
 
@@ -62,6 +64,8 @@ O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)
 <br>
 
 # 🇺🇸 Domain System Overview (v2.7.0)
+
+> **Author's Note:** Hi! I am a self-taught developer and I built **Domain System** focused on simplicity, a lightweight footprint (~30 MB on disk and ~5 MB of RAM), and transparency. Building mostly on my own, I use AI models as daily line-by-line code auditing partners (with 656 automated PHPUnit tests). However, **AI has strict limits and nothing replaces the real-world experience and intuition of human developers**. I openly invite you to test, audit the code, and join the project on GitHub!
 
 **Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, dropshipping e-commerce stores, online courses, and content, built with clean, decoupled architecture.
 

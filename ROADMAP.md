@@ -59,13 +59,25 @@ Este documento descreve as etapas de evolução do **Domain System**. O objetivo
 - [x] **Espaço do Cliente (`/minha-conta`, `/entrar`, `/cadastro`):** Rastreamento integrado de 5 etapas (Correios + Cainiao + SDK AliExpress) dentro da conta do cliente, abertura de reclamações/observações/dúvidas com upload seguro de fotos/PDF e **vinculação opcional de pedido ou produto da loja**.
 - [x] **Gestão de Clientes & Mediação Bilingue (`/admin/dropship/customers` e `/admin/dropship/orders`):** Submenu administrativo de clientes cadastrados estilo CRM, monitoramento de SLA de entrega e mediação 1-clique com tradução automática para Chinês Simplificado (`zh-CN`) ou Português (`pt-BR`).
 - [x] **Isolamento de Temas Nativos (`"flex_builder": false`):** Isolamento automático do cabeçalho e rodapé de temas dedicados (`rachidd_store`) no Flex Builder.
-- [x] **629 Testes Automatizados:** Suíte completa no PHPUnit com **3.619 asserções** validando toda a plataforma.
+- [x] **656 Testes Automatizados:** Suíte completa no PHPUnit com **3.922 asserções** validando segurança, integridade, e-commerce, SLA e persistência.
 
 ---
 
-## 🔵 Etapa 5: Expansão do Hub Academy & E-Commerce Físico Próprio (Planejamento v2.8.0)
+## 🔵 Etapa 5: Expansão, Estabilidade & Chamado à Comunidade (Planejamento v2.8.0)
 
-- [ ] **Estoque Físico Próprio & Logística Nacional Direta:** Suporte híbrido para venda de produtos em estoque próprio com cálculo de frete Correios/Melhor Envio e avaliações verificadas de compradores.
-- [ ] **Fórum de Alunos & Comunidade:** Espaço de discussão pública por curso ou geral com tópicos, respostas formatadas e marcação de respostas resolvidas.
-- [ ] **Bloco de Notas Pessoal do Aluno:** Caderno digital com auto-save em tempo real para anotações durante as aulas e exportação de estudos.
-- [ ] **Tutor com Inteligência Artificial (Google Gemini API):** Assistente virtual para tirar dúvidas pedagógicas dos alunos 24h com base no conteúdo das aulas.
+> Como desenvolvedor autodidata, sei que o sistema chegou a um estágio em que **a comunidade é indispensável**. O roadmap da v2.8.0 não é apenas sobre adicionar novas funções, mas sobre **refinar, auditar, simplificar e tornar o código cada vez mais robusto**.
+
+- [ ] **Auditoria Aberta com a Comunidade:** Revisão de segurança, concorrência em checkout e simplificação de contratos arquiteturais com programadores reais.
+- [ ] **Estoque Físico Próprio & Logística Nacional Direta:** Suporte híbrido para venda de produtos em estoque físico próprio com cálculo de frete Correios/Melhor Envio e avaliações verificadas de compradores.
+- [ ] **Fórum de Alunos & Comunidade da Academy:** Espaço de discussão por curso com tópicos, respostas formatadas e marcação de dúvidas resolvidas.
+- [ ] **Bloco de Notas Pessoal do Aluno:** Caderno digital com salvamento automático para anotações durante as aulas e exportação de estudos.
+- [ ] **Tutor com Inteligência Artificial Opcional:** Assistente para responder dúvidas frequentes dos alunos com base no conteúdo das aulas.
+
+---
+
+## 🤝 Quer sugerir ou ajudar a implementar um item do Roadmap?
+
+O roadmap é dinâmico e feito para quem usa o sistema de verdade. Se você acha que uma funcionalidade deve ser priorizada ou se tem uma ideia melhor para simplificar a arquitetura:
+1. Abra uma **Issue** ou discussão no nosso repositório: [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+2. Envie um e-mail direto para mim: `hadelrachid@gmail.com`
+3. Mande um Pull Request com seu código e testes! Toda ajuda é muito bem-vinda.
