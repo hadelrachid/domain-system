@@ -9,7 +9,13 @@ if (!empty($title)) {
         ->setDescription('Descubra as melhores ofertas mundiais do AliExpress no RachidD.com. Preços de fábrica, frete com rastreamento internacional e pagamento protegido com Pix, Mercado Pago e PayPal.');
 }
 
-$seo->setCanonical('https://rachidd.com')
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$canonicalUrl = 'https://rachidd.com' . ($requestPath === '/' ? '' : $requestPath);
+if (!empty($_GET['cat'])) {
+    $canonicalUrl .= '?cat=' . urlencode((string)$_GET['cat']);
+}
+
+$seo->setCanonical($canonicalUrl)
     ->setFavicon((defined('BASE_URL') ? BASE_URL : '') . '/assets/img/site-home/logo-lampada.svg')
     ->addMeta('theme-color', '#06090e');
 ?>

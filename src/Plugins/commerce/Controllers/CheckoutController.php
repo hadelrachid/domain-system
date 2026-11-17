@@ -16,6 +16,7 @@ use DomainSystem\Plugins\commerce\Contracts\CommerceSettingsInterface;
 use DomainSystem\Plugins\commerce\Contracts\OrderRepositoryInterface;
 use DomainSystem\Plugins\commerce\Contracts\PaymentGatewayRegistryInterface;
 use DomainSystem\Plugins\commerce\Contracts\PurchasableItemResolverInterface;
+use DomainSystem\Plugins\commerce\Contracts\SellerAwarePurchasableInterface;
 
 /**
  * Controlador de Checkout e Finalização de Matrículas (SRP / DIP / Sem Superglobais).
@@ -92,7 +93,9 @@ class CheckoutController
                     'image'       => $item->getThumbnailUrl(),
                     'type'        => $item->getItemType(),
                 ];
-                if (method_exists($item, 'getProduct')) {
+                if ($item instanceof SellerAwarePurchasableInterface) {
+                    $sellerInfo = $item->getSellerInfo();
+                } elseif (method_exists($item, 'getProduct')) {
                     $innerProduct = $item->getProduct();
                     if (is_object($innerProduct) && method_exists($innerProduct, 'getSellerInfo')) {
                         $sellerInfo = $innerProduct->getSellerInfo();
@@ -268,7 +271,9 @@ class CheckoutController
                     'type'  => $item->getItemType(),
                 ];
                 $itemType = $item->getItemType();
-                if (method_exists($item, 'getProduct')) {
+                if ($item instanceof SellerAwarePurchasableInterface) {
+                    $sellerInfo = $item->getSellerInfo();
+                } elseif (method_exists($item, 'getProduct')) {
                     $innerProduct = $item->getProduct();
                     if (is_object($innerProduct) && method_exists($innerProduct, 'getSellerInfo')) {
                         $sellerInfo = $innerProduct->getSellerInfo();
@@ -295,12 +300,22 @@ class CheckoutController
 
         $isPhysicalOrDropship = in_array($itemType, ['dropship_product', 'dropship', 'product'], true);
 
-        $userId = (int)$this->session->get('academy_student_id', 0);
-        if ($userId <= 0) {
-            $userId = (int)$this->session->get('user_id', 0);
+        if ($isPhysicalOrDropship) {
+            $userId = (int)$this->session->get('customer_id', 0);
+            if ($userId <= 0) {
+                $userId = (int)$this->session->get('academy_student_id', 0);
+            }
+            if ($userId <= 0) {
+                $userId = (int)$this->session->get('user_id', 0);
+            }
+        } else {
+            $userId = (int)$this->session->get('academy_student_id', 0);
+            if ($userId <= 0) {
+                $userId = (int)$this->session->get('user_id', 0);
+            }
         }
 
-        if ($userId <= 0 && !$isPhysicalOrDropship) {
+        if ($userId <= 0) {
             return new JsonResponse(['success' => false, 'message' => 'Faça login para concluir o pagamento.'], 401);
         }
 
@@ -309,9 +324,16 @@ class CheckoutController
         $total = round($unitPrice * $quantity, 2);
         $gatewayId = (string)($request->input('gateway') ?? 'mercadopago');
         $paymentMethod = (string)($request->input('payment_method') ?? 'pix');
-        $payerCpf = preg_replace('/\D/', '', (string)($request->input('payer_cpf') ?? $this->session->get('user_cpf', '')));
+        $payerCpf = preg_replace('/\D/', '', (string)(
+            $request->input('payer_cpf')
+            ?? ($this->session->get('customer_cpf')
+                ?: $this->session->get('user_cpf')
+                ?: $this->session->get('academy_student_cpf')
+                ?: '')
+        ));
 
         if ($payerCpf !== '') {
+            $this->session->set('customer_cpf', $payerCpf);
             $this->session->set('user_cpf', $payerCpf);
             $this->session->set('academy_student_cpf', $payerCpf);
         }
@@ -351,18 +373,16 @@ class CheckoutController
         $studentName = trim((string)(
             $request->input('customer_name')
             ?: $request->input('payer_name')
-            ?: $this->session->get('academy_student_name')
-            ?: $this->session->get('customer_name')
-            ?: $this->session->get('user_name')
-            ?: ($isPhysicalOrDropship ? 'Cliente' : 'Aluno')
+            ?: ($isPhysicalOrDropship
+                ? ($this->session->get('customer_name') ?: $this->session->get('academy_student_name') ?: $this->session->get('user_name') ?: 'Cliente')
+                : ($this->session->get('academy_student_name') ?: $this->session->get('customer_name') ?: $this->session->get('user_name') ?: 'Aluno'))
         ));
         $studentEmail = trim((string)(
             $request->input('customer_email')
             ?: $request->input('payer_email')
-            ?: $this->session->get('academy_student_email')
-            ?: $this->session->get('customer_email')
-            ?: $this->session->get('user_email')
-            ?: 'cliente@exemplo.com'
+            ?: ($isPhysicalOrDropship
+                ? ($this->session->get('customer_email') ?: $this->session->get('academy_student_email') ?: $this->session->get('user_email') ?: 'cliente@exemplo.com')
+                : ($this->session->get('academy_student_email') ?: $this->session->get('customer_email') ?: $this->session->get('user_email') ?: 'aluno@exemplo.com'))
         ));
 
         $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
@@ -625,17 +645,11 @@ class CheckoutController
             }
         }
 
-        // Tenta obter os dados do pedido de dropshipping via callback injetado (DI) ou fallback legado
+        // Obtém os dados do pedido de dropshipping via callback desacoplado injetado pelo container (DIP)
         $dropshipOrder = null;
         try {
             if ($this->dropshipOrderFinder !== null) {
                 $dropshipOrder = ($this->dropshipOrderFinder)($orderRef);
-            } else {
-                $connection = \DomainSystem\Core\Database\Connection::getInstance();
-                if ($connection) {
-                    $dropRepo = new \DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipOrderRepository($connection);
-                    $dropshipOrder = $dropRepo->findByOrderRef($orderRef);
-                }
             }
         } catch (\Throwable $e) {
             // Silencioso

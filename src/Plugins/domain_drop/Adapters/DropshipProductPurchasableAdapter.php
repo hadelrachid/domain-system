@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\domain_drop\Adapters;
 
 use DomainSystem\Plugins\commerce\Contracts\PurchasableItemInterface;
+use DomainSystem\Plugins\commerce\Contracts\SellerAwarePurchasableInterface;
 use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
 use DomainSystem\Plugins\domain_drop\DTO\ProductVariantDto;
 
 /**
- * Adaptador que transforma um Produto do DomainDrop (ou uma SKU específica) em um Item Vendável do Commerce (Padrão Adapter / DIP).
+ * Adaptador que transforma um Produto do DomainDrop (ou uma SKU específica) em um Item Vendável do Commerce (Padrão Adapter / DIP / ISP).
  */
-class DropshipProductPurchasableAdapter implements PurchasableItemInterface
+class DropshipProductPurchasableAdapter implements PurchasableItemInterface, SellerAwarePurchasableInterface
 {
     private readonly ?ProductVariantDto $variant;
 
@@ -87,6 +88,11 @@ class DropshipProductPurchasableAdapter implements PurchasableItemInterface
         }
 
         return $this->product->mainImageUrl;
+    }
+
+    public function getSellerInfo(): array
+    {
+        return $this->product->getSellerInfo();
     }
 
     public function getProduct(): DropshipProductDto
