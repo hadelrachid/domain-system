@@ -255,8 +255,13 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
                                 <?php endif; ?>
 
                                 <?php if ($showRating && $p->rating > 0): ?>
-                                    <span style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); color: #fbbf24; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                                        ★ <?= number_format($p->rating, 1) ?>
+                                    <?php
+                                    $bStarsCount = (int)max(1, min(5, round((float)$p->rating)));
+                                    $bStarsEmoji = str_repeat('⭐', $bStarsCount);
+                                    ?>
+                                    <span style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.85); border: 1px solid rgba(251,191,36,0.3); backdrop-filter: blur(4px); color: #fbbf24; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span><?= $bStarsEmoji ?></span>
+                                        <span style="color: #fff; font-family: monospace;"><?= number_format($p->rating, 1) ?></span>
                                     </span>
                                 <?php endif; ?>
 
