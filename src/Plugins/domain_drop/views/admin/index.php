@@ -363,13 +363,10 @@
             <?php endif; ?>
         </form>
 
-        <div style="display: flex; align-items: center; gap: 14px;">
-            <form action="<?= $baseUrl ?>/admin/dropship/sync-all-images" method="POST" style="margin: 0;" onsubmit="return confirm('Deseja sincronizar as galerias oficiais dos produtos com o AliExpress?\n\nProdutos que já possuem mais de 1 imagem serão ignorados automaticamente para economizar requisições.');">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                <button type="submit" title="Sincroniza galerias incompletas e preserva produtos que já têm mais de 1 foto" style="background: rgba(69, 243, 255, 0.12); border: 1px solid rgba(69, 243, 255, 0.35); color: #45f3ff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <i class="fas fa-sync-alt"></i> Sincronizar Galerias pelo Link
-                </button>
-            </form>
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <button type="button" onclick="openBatchMediaSyncModal()" title="Sincroniza produto por produto em tempo real com barra de progresso e log de status" style="background: linear-gradient(135deg, rgba(69, 243, 255, 0.16) 0%, rgba(59, 130, 246, 0.22) 100%); border: 1.5px solid rgba(69, 243, 255, 0.45); color: #45f3ff; padding: 7px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(69, 243, 255, 0.15); transition: all 0.2s ease;">
+                <i class="fas fa-sync-alt"></i> Atualizar Todas as Imagens (Fila & Status)
+            </button>
             <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">
                 Mostrando <strong style="color: #fff;"><?= count($products) ?></strong> de <?= $totalCount ?> produtos
             </div>
@@ -626,6 +623,116 @@
                     <i class="fas fa-save"></i> Salvar Galeria
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sincronização em Lote de Imagens (Fila Assíncrona com Barra de Status em Tempo Real) -->
+    <div id="batchSyncModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: #0f172a; border: 1px solid rgba(69, 243, 255, 0.4); border-radius: 14px; max-width: 680px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.9); overflow: hidden; animation: dsModalIn 0.25s ease; display: flex; flex-direction: column;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, rgba(69, 243, 255, 0.12) 0%, rgba(37, 99, 235, 0.18) 100%); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: linear-gradient(135deg, #45f3ff, #2563eb); color: #0f172a; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; box-shadow: 0 4px 12px rgba(69, 243, 255, 0.35);">
+                        <i class="fas fa-sync-alt" id="batchSyncHeaderIcon"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Sincronização de Imagens em Fila</h3>
+                        <div style="font-size: 12px; color: #94a3b8;">Atualização produto por produto com o AliExpress sem travar o navegador</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBatchSyncModal()" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 4px; line-height: 1;">&times;</button>
+            </div>
+
+            <!-- Body -->
+            <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Modo de Sincronização -->
+                <div id="batchSyncConfigSection" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Escolha o Escopo da Fila:
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 8px 10px; border-radius: 8px; background: rgba(69, 243, 255, 0.05); border: 1px solid rgba(69, 243, 255, 0.25);">
+                            <input type="radio" name="batchSyncMode" value="incomplete" checked style="margin-top: 3px; accent-color: #45f3ff;">
+                            <div>
+                                <strong style="color: #45f3ff; font-size: 13px;">⚡ Apenas Galerias Incompletas (Recomendado)</strong>
+                                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                                    Sincroniza apenas os produtos com 1 foto ou vazios (<strong id="batchCountSingle" style="color:#fff;">carregando...</strong>). Pula os que já têm mais de 1 foto.
+                                </div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);">
+                            <input type="radio" name="batchSyncMode" value="all" style="margin-top: 3px; accent-color: #45f3ff;">
+                            <div>
+                                <strong style="color: #cbd5e1; font-size: 13px;">🔥 Todos os Produtos do Catálogo (Forçar Varredura Geral)</strong>
+                                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                                    Varre todos os produtos do catálogo (<strong id="batchCountTotal" style="color:#fff;">carregando...</strong>), buscando galerias oficiais completas.
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Painel de Contadores de Status -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Total Fila</div>
+                        <div id="batchStatTotal" style="font-size: 20px; font-weight: 800; color: #fff; font-family: monospace; margin-top: 2px;">0</div>
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 11px; color: #6ee7b7; text-transform: uppercase;">Atualizados</div>
+                        <div id="batchStatSynced" style="font-size: 20px; font-weight: 800; color: #10b981; font-family: monospace; margin-top: 2px;">0</div>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 11px; color: #fcd34d; text-transform: uppercase;">Preservados</div>
+                        <div id="batchStatSkipped" style="font-size: 20px; font-weight: 800; color: #f59e0b; font-family: monospace; margin-top: 2px;">0</div>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 11px; color: #fca5a5; text-transform: uppercase;">Falhas</div>
+                        <div id="batchStatFailed" style="font-size: 20px; font-weight: 800; color: #ef4444; font-family: monospace; margin-top: 2px;">0</div>
+                    </div>
+                </div>
+
+                <!-- Barra de Progresso Animada -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span id="batchProgressLabel" style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">Aguardando início...</span>
+                        <strong id="batchProgressPercent" style="font-size: 13px; font-weight: 800; color: #45f3ff; font-family: monospace;">0%</strong>
+                    </div>
+                    <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; position: relative;">
+                        <div id="batchProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #45f3ff, #10b981); border-radius: 10px; transition: width 0.3s ease; box-shadow: 0 0 12px rgba(69, 243, 255, 0.5);"></div>
+                    </div>
+                </div>
+
+                <!-- Console de Logs em Tempo Real -->
+                <div style="background: #020617; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Log de Execução em Tempo Real:</span>
+                        <span id="batchSyncStatusBadge" style="font-size: 10.5px; color: #94a3b8; font-family: monospace;">Pronto</span>
+                    </div>
+                    <div id="batchSyncLogConsole" style="max-height: 180px; min-height: 110px; overflow-y: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11.5px; line-height: 1.55; color: #cbd5e1; display: flex; flex-direction: column; gap: 3px;">
+                        <div style="color: #64748b;">[Status] Clique em "Iniciar Sincronização" para iniciar a fila de processamento produto por produto.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25);">
+                <button type="button" id="btnBatchSyncCancel" onclick="cancelBatchSync()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 9px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    Cancelar / Fechar
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="btnBatchSyncAction" onclick="startBatchSync()" style="background: linear-gradient(135deg, #45f3ff, #0ea5e9); border: none; color: #081018; padding: 9px 22px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(69, 243, 255, 0.3);">
+                        <i class="fas fa-play"></i> Iniciar Sincronização
+                    </button>
+                    <button type="button" id="btnBatchSyncDone" onclick="finishAndReload()" style="display: none; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; padding: 9px 22px; border-radius: 6px; font-size: 13px; font-weight: 800; cursor: pointer; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                        <i class="fas fa-check"></i> Concluir e Atualizar Tela
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1035,6 +1142,236 @@
                 btn.innerHTML = origHtml;
                 setImagesModalStatus('Erro de comunicação ao salvar galeria.', 'error');
             });
+        }
+
+        // ========================================================
+        // FILA DE SINCRONIZAÇÃO EM LOTE COM BARRA DE STATUS
+        // ========================================================
+        let batchSyncQueue = [];
+        let batchSyncRunning = false;
+        let batchSyncCancelled = false;
+        let batchSyncedCount = 0;
+        let batchSkippedCount = 0;
+        let batchFailedCount = 0;
+
+        function escapeBatchHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+
+        function openBatchMediaSyncModal() {
+            const modal = document.getElementById('batchSyncModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            resetBatchSyncUI();
+
+            appendBatchLog('Carregando inventário de produtos do catálogo...', 'info');
+            fetch(baseAdminUrl + '/sync-queue')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success && Array.isArray(data.items)) {
+                        batchSyncQueue = data.items;
+                        document.getElementById('batchCountTotal').textContent = data.total;
+                        document.getElementById('batchCountSingle').textContent = data.single_or_empty_count;
+                        document.getElementById('batchStatTotal').textContent = data.total;
+                        appendBatchLog('Inventário carregado: ' + data.total + ' produtos (' + data.single_or_empty_count + ' precisam de galeria completa).', 'success');
+                    } else {
+                        appendBatchLog('Aviso: Não foi possível carregar a lista de produtos.', 'warning');
+                    }
+                })
+                .catch(err => {
+                    appendBatchLog('Erro ao carregar fila: ' + err.message, 'error');
+                });
+        }
+
+        function closeBatchSyncModal() {
+            if (batchSyncRunning) {
+                if (!confirm('A sincronização está em andamento. Deseja realmente interromper e fechar?')) {
+                    return;
+                }
+                batchSyncCancelled = true;
+            }
+            const modal = document.getElementById('batchSyncModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function resetBatchSyncUI() {
+            batchSyncRunning = false;
+            batchSyncCancelled = false;
+            batchSyncedCount = 0;
+            batchSkippedCount = 0;
+            batchFailedCount = 0;
+
+            document.getElementById('batchStatSynced').textContent = '0';
+            document.getElementById('batchStatSkipped').textContent = '0';
+            document.getElementById('batchStatFailed').textContent = '0';
+            document.getElementById('batchProgressBar').style.width = '0%';
+            document.getElementById('batchProgressPercent').textContent = '0%';
+            document.getElementById('batchProgressLabel').textContent = 'Pronto para iniciar';
+            document.getElementById('batchSyncStatusBadge').textContent = 'Aguardando';
+            document.getElementById('batchSyncStatusBadge').style.color = '#94a3b8';
+
+            const logBox = document.getElementById('batchSyncLogConsole');
+            logBox.innerHTML = '';
+
+            document.getElementById('batchSyncConfigSection').style.display = 'block';
+            document.getElementById('btnBatchSyncAction').style.display = 'inline-flex';
+            document.getElementById('btnBatchSyncAction').innerHTML = '<i class="fas fa-play"></i> Iniciar Sincronização';
+            document.getElementById('btnBatchSyncAction').disabled = false;
+            document.getElementById('btnBatchSyncDone').style.display = 'none';
+            document.getElementById('btnBatchSyncCancel').textContent = 'Cancelar / Fechar';
+        }
+
+        function appendBatchLog(text, type = 'info') {
+            const logBox = document.getElementById('batchSyncLogConsole');
+            if (!logBox) return;
+            const time = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            
+            let color = '#cbd5e1';
+            let icon = 'ℹ️';
+            if (type === 'success') { color = '#10b981'; icon = '✅'; }
+            else if (type === 'warning' || type === 'skip') { color = '#f59e0b'; icon = '⏭️'; }
+            else if (type === 'error') { color = '#ef4444'; icon = '❌'; }
+            else if (type === 'active') { color = '#38bdf8'; icon = '⏳'; }
+
+            line.style.color = color;
+            line.innerHTML = `<span style="color:#64748b;">[${time}]</span> ${icon} ${escapeBatchHtml(text)}`;
+            logBox.appendChild(line);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        async function startBatchSync() {
+            if (batchSyncRunning) return;
+            if (!batchSyncQueue.length) {
+                alert('A fila de produtos ainda não foi carregada. Tente novamente em instantes.');
+                return;
+            }
+
+            const modeRadio = document.querySelector('input[name="batchSyncMode"]:checked');
+            const mode = modeRadio ? modeRadio.value : 'incomplete';
+
+            batchSyncRunning = true;
+            batchSyncCancelled = false;
+            batchSyncedCount = 0;
+            batchSkippedCount = 0;
+            batchFailedCount = 0;
+
+            document.getElementById('batchSyncConfigSection').style.display = 'none';
+            document.getElementById('btnBatchSyncAction').disabled = true;
+            document.getElementById('btnBatchSyncAction').style.display = 'none';
+            document.getElementById('btnBatchSyncCancel').textContent = 'Pausar / Interromper';
+            document.getElementById('batchSyncStatusBadge').textContent = 'Executando em fila...';
+            document.getElementById('batchSyncStatusBadge').style.color = '#38bdf8';
+
+            const headerIcon = document.getElementById('batchSyncHeaderIcon');
+            if (headerIcon) headerIcon.classList.add('fa-spin');
+
+            const total = batchSyncQueue.length;
+            appendBatchLog(`🚀 Fila iniciada no modo: ${mode === 'incomplete' ? 'Apenas galerias incompletas' : 'Todos os produtos'}. Total: ${total} itens.`, 'info');
+
+            for (let i = 0; i < total; i++) {
+                if (batchSyncCancelled) {
+                    appendBatchLog('⏸️ Sincronização interrompida pelo usuário.', 'warning');
+                    break;
+                }
+
+                const item = batchSyncQueue[i];
+                const stepNum = i + 1;
+                const percent = Math.round((stepNum / total) * 100);
+
+                // Se o modo for apenas incompletos e o produto já tem mais de 1 imagem, pula!
+                if (mode === 'incomplete' && item.images_count > 1) {
+                    batchSkippedCount++;
+                    document.getElementById('batchStatSkipped').textContent = batchSkippedCount;
+                    appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} (${item.title}): Já possui ${item.images_count} fotos. Preservado!`, 'skip');
+                    updateBatchProgress(stepNum, total, percent, `Preservado: #${item.id} (${item.images_count} fotos)`);
+                    continue;
+                }
+
+                // Valida se possui identificador oficial numérico
+                if (!item.aliexpress_id || !/^\d{10,20}$/.test(item.aliexpress_id)) {
+                    batchSkippedCount++;
+                    document.getElementById('batchStatSkipped').textContent = batchSkippedCount;
+                    appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} (${item.title}): ID do fornecedor simulado ou inválido (${item.aliexpress_id}). Ignorado.`, 'warning');
+                    updateBatchProgress(stepNum, total, percent, `Ignorado: #${item.id}`);
+                    continue;
+                }
+
+                // Executa a requisição assíncrona unitária para este produto
+                updateBatchProgress(stepNum, total, percent, `Sincronizando #${item.id}: ${item.title}...`);
+                appendBatchLog(`[${stepNum}/${total}] Sincronizando Produto #${item.id} com o AliExpress (${item.aliexpress_id})...`, 'active');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('csrf_token', dropshipCsrfToken);
+                    formData.append('ajax', '1');
+
+                    const res = await fetch(baseAdminUrl + '/product/' + item.id + '/sync-images', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        batchSyncedCount++;
+                        item.images_count = data.count || (Array.isArray(data.images) ? data.images.length : 1);
+                        document.getElementById('batchStatSynced').textContent = batchSyncedCount;
+                        appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} atualizado com sucesso! ${item.images_count} imagens em Full HD.`, 'success');
+                        updateCardImagesUi(item.id, data.main_image_url || '', data.images || []);
+                    } else {
+                        batchFailedCount++;
+                        document.getElementById('batchStatFailed').textContent = batchFailedCount;
+                        appendBatchLog(`[${stepNum}/${total}] Falha no Produto #${item.id}: ${(data && data.message) ? data.message : 'Erro na requisição'}`, 'error');
+                    }
+                } catch (err) {
+                    batchFailedCount++;
+                    document.getElementById('batchStatFailed').textContent = batchFailedCount;
+                    appendBatchLog(`[${stepNum}/${total}] Erro de rede no Produto #${item.id}: ${err.message}`, 'error');
+                }
+
+                // Pausa suave de 250ms entre produtos para estabilidade da conexão
+                await new Promise(r => setTimeout(r, 250));
+            }
+
+            // Finalização
+            batchSyncRunning = false;
+            if (headerIcon) headerIcon.classList.remove('fa-spin');
+
+            document.getElementById('batchProgressBar').style.width = '100%';
+            document.getElementById('batchProgressPercent').textContent = '100%';
+            document.getElementById('batchProgressLabel').textContent = 'Sincronização 100% Concluída!';
+            document.getElementById('batchSyncStatusBadge').textContent = 'Concluído 100%';
+            document.getElementById('batchSyncStatusBadge').style.color = '#10b981';
+
+            appendBatchLog(`🎉 Processo 100% finalizado! Atualizados: ${batchSyncedCount} | Preservados: ${batchSkippedCount} | Falhas: ${batchFailedCount}.`, 'success');
+
+            document.getElementById('btnBatchSyncDone').style.display = 'inline-flex';
+            document.getElementById('btnBatchSyncCancel').textContent = 'Fechar';
+        }
+
+        function updateBatchProgress(current, total, percent, statusText) {
+            document.getElementById('batchProgressBar').style.width = percent + '%';
+            document.getElementById('batchProgressPercent').textContent = percent + '%';
+            document.getElementById('batchProgressLabel').textContent = `[${current}/${total}] ${statusText}`;
+        }
+
+        function cancelBatchSync() {
+            if (batchSyncRunning) {
+                batchSyncCancelled = true;
+            } else {
+                closeBatchSyncModal();
+            }
+        }
+
+        function finishAndReload() {
+            window.location.reload();
         }
     </script>
 </div>

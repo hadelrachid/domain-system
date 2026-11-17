@@ -713,6 +713,47 @@ class DropshipAdminController
         return $clean;
     }
 
+    public function syncQueue(Request $request): ResponseInterface
+    {
+        $products = $this->catalogRepo->list([], 500, 0);
+        $items = [];
+        $totalSingleOrEmpty = 0;
+        $totalMulti = 0;
+
+        foreach ($products as $p) {
+            if ($p->id === null) {
+                continue;
+            }
+            $images = !empty($p->images) ? array_values(array_filter($p->images)) : [];
+            $imgCount = count($images);
+            $hasMultiple = $imgCount > 1;
+
+            if ($hasMultiple) {
+                $totalMulti++;
+            } else {
+                $totalSingleOrEmpty++;
+            }
+
+            $items[] = [
+                'id'            => (int)$p->id,
+                'title'         => $p->title,
+                'aliexpress_id' => $p->aliexpressId,
+                'images_count'  => $imgCount,
+                'needs_sync'    => !$hasMultiple,
+                'category'      => $p->category,
+                'main_image'    => $p->mainImageUrl,
+            ];
+        }
+
+        return new JsonResponse([
+            'success'               => true,
+            'total'                 => count($items),
+            'single_or_empty_count' => $totalSingleOrEmpty,
+            'multi_count'           => $totalMulti,
+            'items'                 => $items,
+        ]);
+    }
+
     public function syncAllImages(Request $request): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';

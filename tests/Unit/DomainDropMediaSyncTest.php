@@ -377,4 +377,59 @@ class DomainDropMediaSyncTest extends TestCase
 
         @unlink($tmpCache);
     }
+
+    public function testAdminSyncQueueReturnsStructuredItemsAndCounts(): void
+    {
+        $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005011111111111',
+            title: 'Produto 1 (Multi)',
+            slug: 'prod-1',
+            costPriceUsd: 10.0,
+            salePriceBrl: 100.0,
+            mainImageUrl: 'https://exemplo.com/1.jpg',
+            images: ['https://exemplo.com/1.jpg', 'https://exemplo.com/2.jpg'],
+            category: 'Moda'
+        ));
+
+        $this->repo->save(new DropshipProductDto(
+            aliexpressId: '1005022222222222',
+            title: 'Produto 2 (Single)',
+            slug: 'prod-2',
+            costPriceUsd: 15.0,
+            salePriceBrl: 150.0,
+            mainImageUrl: 'https://exemplo.com/single.jpg',
+            images: ['https://exemplo.com/single.jpg'],
+            category: 'Eletrônicos'
+        ));
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->repo,
+            miningService: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class),
+            currencyConverter: $this->createMock(CurrencyConverterInterface::class),
+            session: $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class)
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(query: [], request: [], server: ['REQUEST_METHOD' => 'GET']);
+        $response = $controller->syncQueue($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertTrue($data['success']);
+        $this->assertSame(2, $data['total']);
+        $this->assertSame(1, $data['single_or_empty_count']);
+        $this->assertSame(1, $data['multi_count']);
+        $this->assertCount(2, $data['items']);
+
+        $itemsByAli = [];
+        foreach ($data['items'] as $item) {
+            $itemsByAli[$item['aliexpress_id']] = $item;
+        }
+
+        $this->assertFalse($itemsByAli['1005011111111111']['needs_sync']);
+        $this->assertSame(2, $itemsByAli['1005011111111111']['images_count']);
+
+        $this->assertTrue($itemsByAli['1005022222222222']['needs_sync']);
+        $this->assertSame(1, $itemsByAli['1005022222222222']['images_count']);
+    }
 }
