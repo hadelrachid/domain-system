@@ -1,5 +1,6 @@
 # Capítulo 01 — O "Start": o que acontece quando alguém abre o site
 
+> 🇧🇷 **Português** | [🇺🇸 English version](en/01-server-start.md)  
 > ⬅️ [Anterior: Capítulo 00 — Introdução](00-introducao.md) | 🏠 [Voltar ao Índice](README.md)
 
 Neste capítulo vamos acompanhar o **primeiro segundo de vida** de uma requisição — desde o momento em que alguém digita um endereço no navegador até o sistema começar a responder.

@@ -1,5 +1,7 @@
 # Por Dentro do Domain System (v2.7.0)
 
+> 🇧🇷 **Português** | [🇺🇸 English version](en/README.md)
+
 > **Um guia direto, sem enrolação e sem "economês de programação" sobre como o Domain System foi construído — do zero até a auditoria de falhas e segurança.**
 
 Se você está começando agora na programação, entrando na faculdade ou nunca estudou "Padrões de Projeto" nem "Arquitetura SOLID", **este guia foi escrito para você**.

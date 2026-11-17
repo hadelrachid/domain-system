@@ -1,5 +1,6 @@
 # Capítulo 00 — Introdução: O Mapa do Sistema (sem palavras difíceis)
 
+> 🇧🇷 **Português** | [🇺🇸 English version](en/00-introduction.md)  
 > 🏠 [Voltar ao Índice](README.md) | ➡️ [Próximo: Capítulo 01 — O "Start" no Servidor](01-start-servidor.md)
 
 ---
