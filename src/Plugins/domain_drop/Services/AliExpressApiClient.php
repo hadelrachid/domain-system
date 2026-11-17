@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\domain_drop\Services;
 
 use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
+use DomainSystem\Plugins\domain_drop\Exceptions\AliExpressApiException;
 use RuntimeException;
 use Throwable;
 
@@ -216,23 +217,33 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         curl_close($ch);
 
         if ($rawResponse === false) {
-            throw new RuntimeException("[AliExpressApiClient] Falha na conexão com o gateway do AliExpress: {$error}");
+            throw new AliExpressApiException("[AliExpressApiClient] Falha na conexão com o gateway do AliExpress: {$error}", 0, 'CONNECTION_ERROR');
         }
 
+        // 1. Validar Status HTTP primeiro (HTTP 2xx é sucesso HTTP)
+        if ($httpCode < 200 || $httpCode >= 300) {
+            throw new AliExpressApiException(
+                "[AliExpress Gateway HTTP {$httpCode}] Falha de resposta HTTP do gateway AliExpress.",
+                $httpCode,
+                'HTTP_ERROR'
+            );
+        }
+
+        // 2. Decodificar resposta JSON
         $decoded = json_decode((string)$rawResponse, true);
 
         if (!is_array($decoded)) {
-            // Se vier XML ou erro de gateway
+            // Se vier XML ou formato inesperado
             return [
                 'raw_response' => (string)$rawResponse,
                 'http_code'    => $httpCode,
             ];
         }
 
-        // Se o AliExpress retornar erro formal na resposta
+        // 3. Se o AliExpress retornar erro formal na resposta
         if (isset($decoded['code']) && (int)$decoded['code'] !== 0 && !isset($decoded['result'])) {
             $msg = $decoded['message'] ?? ($decoded['sub_msg'] ?? 'Erro desconhecido da AliExpress API');
-            throw new RuntimeException("[AliExpress Gateway Error: {$decoded['code']}] {$msg}");
+            throw new AliExpressApiException("[AliExpress Gateway Error: {$decoded['code']}] {$msg}", (int)$decoded['code'], 'API_ERROR');
         }
 
         return $decoded;

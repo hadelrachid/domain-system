@@ -191,4 +191,152 @@ final class CheckoutSecurityTest extends TestCase
         $this->assertSame('dropship_product', $createdPayload['item_type']);
         $this->assertSame(300.0, $createdPayload['total'], '150.0 * 2 = 300.0');
     }
+
+    public function testStripeSuccessRejectsDivergentAmount(): void
+    {
+        $orderRepo = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepo->method('findByOrderRef')->with('ORD_STRIPE_DIV')->willReturn([
+            'id'        => 50,
+            'order_ref' => 'ORD_STRIPE_DIV',
+            'total'     => 150.00,
+            'user_id'   => 12,
+            'item_id'   => 99,
+            'item_type' => 'dropship_product',
+        ]);
+        $orderRepo->expects($this->never())->method('updateStatus');
+
+        $stripeGateway = $this->createMock(\DomainSystem\Plugins\commerce\Services\Gateways\StripeGateway::class);
+        $stripeGateway->method('getId')->willReturn('stripe');
+        $stripeGateway->method('isConfigured')->willReturn(true);
+        $stripeGateway->method('verifySession')->with('sess_divergent_123')->willReturn([
+            'status'         => 'approved',
+            'total'          => 15.00, // Divergente de 150.00
+            'transaction_id' => 'tx_stripe_cheap',
+        ]);
+
+        $registry = $this->createMock(PaymentGatewayRegistryInterface::class);
+        $registry->method('get')->with('stripe')->willReturn($stripeGateway);
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->never())->method('dispatch');
+
+        $session = $this->createMock(SessionManagerInterface::class);
+
+        $controller = new CheckoutController(
+            $session,
+            $orderRepo,
+            $registry,
+            null,
+            $dispatcher
+        );
+
+        $request = new Request([], [
+            'session_id' => 'sess_divergent_123',
+            'order_ref'  => 'ORD_STRIPE_DIV',
+        ]);
+
+        $response = $controller->stripeSuccess($request);
+        $location = $response->getHeader('Location');
+        $this->assertStringContainsString('payment_status=error', (string)$location);
+        $this->assertStringContainsString('divergente', (string)$location);
+    }
+
+    public function testStripeSuccessApprovesMatchingAmount(): void
+    {
+        $orderRepo = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepo->method('findByOrderRef')->with('ORD_STRIPE_OK')->willReturn([
+            'id'        => 51,
+            'order_ref' => 'ORD_STRIPE_OK',
+            'total'     => 150.00,
+            'user_id'   => 12,
+            'item_id'   => 99,
+            'item_type' => 'dropship_product',
+        ]);
+        $orderRepo->expects($this->once())->method('updateStatus')->with(51, 'paid', 'tx_stripe_valid');
+
+        $stripeGateway = $this->createMock(\DomainSystem\Plugins\commerce\Services\Gateways\StripeGateway::class);
+        $stripeGateway->method('getId')->willReturn('stripe');
+        $stripeGateway->method('isConfigured')->willReturn(true);
+        $stripeGateway->method('verifySession')->with('sess_ok_123')->willReturn([
+            'status'         => 'approved',
+            'total'          => 150.00, // Idêntico a 150.00
+            'transaction_id' => 'tx_stripe_valid',
+        ]);
+
+        $registry = $this->createMock(PaymentGatewayRegistryInterface::class);
+        $registry->method('get')->with('stripe')->willReturn($stripeGateway);
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())->method('dispatch')->with('payment.approved', $this->callback(function ($payload) {
+            return ($payload['order_ref'] ?? '') === 'ORD_STRIPE_OK' && ($payload['user_id'] ?? 0) === 12;
+        }));
+
+        $session = $this->createMock(SessionManagerInterface::class);
+
+        $controller = new CheckoutController(
+            $session,
+            $orderRepo,
+            $registry,
+            null,
+            $dispatcher
+        );
+
+        $request = new Request([], [
+            'session_id' => 'sess_ok_123',
+            'order_ref'  => 'ORD_STRIPE_OK',
+        ]);
+
+        $response = $controller->stripeSuccess($request);
+        $location = $response->getHeader('Location');
+        $this->assertStringContainsString('payment_status=approved', (string)$location);
+    }
+
+    public function testPayPalSuccessRejectsDivergentAmount(): void
+    {
+        $orderRepo = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepo->method('findByOrderRef')->with('ORD_PP_DIV')->willReturn([
+            'id'        => 60,
+            'order_ref' => 'ORD_PP_DIV',
+            'total'     => 200.00,
+            'user_id'   => 15,
+            'item_id'   => 10,
+            'item_type' => 'course',
+        ]);
+        $orderRepo->expects($this->never())->method('updateStatus');
+
+        $payPalGateway = $this->createMock(\DomainSystem\Plugins\commerce\Services\Gateways\PayPalGateway::class);
+        $payPalGateway->method('getId')->willReturn('paypal');
+        $payPalGateway->method('isConfigured')->willReturn(true);
+        $payPalGateway->method('captureOrder')->with('token_pp_div')->willReturn([
+            'status'         => 'approved',
+            'total'          => 20.00, // Divergente de 200.00
+            'transaction_id' => 'tx_pp_divergent',
+        ]);
+
+        $registry = $this->createMock(PaymentGatewayRegistryInterface::class);
+        $registry->method('get')->with('paypal')->willReturn($payPalGateway);
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->never())->method('dispatch');
+
+        $session = $this->createMock(SessionManagerInterface::class);
+
+        $controller = new CheckoutController(
+            $session,
+            $orderRepo,
+            $registry,
+            null,
+            $dispatcher
+        );
+
+        $request = new Request([], [
+            'token'     => 'token_pp_div',
+            'order_ref' => 'ORD_PP_DIV',
+        ]);
+
+        $response = $controller->paypalSuccess($request);
+        $location = $response->getHeader('Location');
+        $this->assertStringContainsString('payment_status=error', (string)$location);
+        $this->assertStringContainsString('divergente', (string)$location);
+    }
 }

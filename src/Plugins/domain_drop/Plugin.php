@@ -364,7 +364,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // 4. Integração com DomainCommerce (Resolução de Itens Vendáveis no Checkout)
         $runtime->onHook('commerce.register_item_resolvers', function ($resolver) use ($runtime) {
             if ($resolver instanceof PurchasableItemResolverInterface) {
-                $resolveDropshipItem = function (int $id) use ($runtime) {
+                $resolveDropshipItem = function (int $id, array $context = []) use ($runtime) {
                     try {
                         /** @var DropshipCatalogRepositoryInterface $repo */
                         $repo = $runtime->make(DropshipCatalogRepositoryInterface::class);
@@ -407,7 +407,12 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                                 $demandTracker->recordInteraction($event);
                             } catch (Throwable $e) {}
 
-                            $requestedSku = trim((string)($_GET['sku'] ?? ($_POST['sku'] ?? '')));
+                            // Resolve SKU a partir do contexto explicitamente fornecido (sem superglobais)
+                            $requestedSku = trim((string)($context['sku'] ?? ''));
+                            if ($requestedSku === '') {
+                                // Fallback retrocompatível caso não injetado no contexto
+                                $requestedSku = trim((string)($_GET['sku'] ?? ($_POST['sku'] ?? '')));
+                            }
                             return new DropshipProductPurchasableAdapter($product, $requestedSku !== '' ? $requestedSku : null);
                         }
                         return null;
@@ -417,8 +422,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 };
 
                 $resolver->registerResolver('dropship_product', $resolveDropshipItem);
-                $resolver->registerResolver('dropship', $resolveDropshipItem);
-                $resolver->registerResolver('product', $resolveDropshipItem);
             }
         });
 

@@ -80,9 +80,10 @@ class CheckoutController
         }
 
         if ($course === null && $this->itemResolver !== null) {
-            $item = $this->itemResolver->resolve('course', $courseId)
-                 ?? $this->itemResolver->resolve('dropship_product', $courseId)
-                 ?? $this->itemResolver->resolve('product', $courseId);
+            $resolveContext = ['sku' => (string)($request->input('sku') ?? '')];
+            $item = $this->itemResolver->resolve('course', $courseId, $resolveContext)
+                 ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
+                 ?? $this->itemResolver->resolve('product', $courseId, $resolveContext);
             if ($item && $item->isAvailable()) {
                 $course = [
                     'id'          => $item->getId(),
@@ -260,9 +261,10 @@ class CheckoutController
 
         if ($this->itemResolver !== null) {
             $resolvedType = $itemType !== '' ? $itemType : 'course';
-            $item = $this->itemResolver->resolve($resolvedType, $courseId)
-                 ?? $this->itemResolver->resolve('dropship_product', $courseId)
-                 ?? $this->itemResolver->resolve('course', $courseId);
+            $resolveContext = ['sku' => (string)($request->input('sku') ?? '')];
+            $item = $this->itemResolver->resolve($resolvedType, $courseId, $resolveContext)
+                 ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
+                 ?? $this->itemResolver->resolve('course', $courseId, $resolveContext);
             if ($item && $item->isAvailable()) {
                 $course = [
                     'id'    => $item->getId(),
@@ -521,6 +523,18 @@ class CheckoutController
         if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\StripeGateway && !empty($sessionId)) {
             $verified = $gateway->verifySession($sessionId);
             if ($verified && ($verified['status'] ?? '') === 'approved') {
+                $expectedTotal = (float)($order['total'] ?? 0.0);
+                $paidTotal = (float)($verified['total'] ?? 0.0);
+                if ($expectedTotal > 0.0 && abs($paidTotal - $expectedTotal) > 0.01) {
+                    error_log(sprintf(
+                        '[commerce] Valor divergente no Stripe order=%s pago=%.2f esperado=%.2f',
+                        $orderRef,
+                        $paidTotal,
+                        $expectedTotal
+                    ));
+                    return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Valor do pagamento divergente do pedido.'));
+                }
+
                 $this->orderRepo->updateStatus((int)$order['id'], 'paid', (string)($verified['transaction_id'] ?? $sessionId));
 
                 if ($this->dispatcher !== null) {
@@ -572,6 +586,18 @@ class CheckoutController
         if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\PayPalGateway && !empty($token)) {
             $captured = $gateway->captureOrder($token);
             if ($captured && ($captured['status'] ?? '') === 'approved') {
+                $expectedTotal = (float)($order['total'] ?? 0.0);
+                $paidTotal = (float)($captured['total'] ?? 0.0);
+                if ($expectedTotal > 0.0 && abs($paidTotal - $expectedTotal) > 0.01) {
+                    error_log(sprintf(
+                        '[commerce] Valor divergente no PayPal order=%s pago=%.2f esperado=%.2f',
+                        $orderRef,
+                        $paidTotal,
+                        $expectedTotal
+                    ));
+                    return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Valor do pagamento divergente do pedido.'));
+                }
+
                 $this->orderRepo->updateStatus((int)$order['id'], 'paid', (string)($captured['transaction_id'] ?? $token));
 
                 if ($this->dispatcher !== null) {
