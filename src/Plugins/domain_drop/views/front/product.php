@@ -77,7 +77,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                     </span>
                     <?php if ($isNational): ?>
                         <span style="background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
-                            <span>🇧🇷</span> <span>Estoque no Brasil (Envio 3 a 7 dias)</span>
+                            <?= \DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(16, 11) ?> <span>Estoque no Brasil (Envio 3 a 7 dias)</span>
                         </span>
                     <?php endif; ?>
                 </div>

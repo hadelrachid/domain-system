@@ -139,7 +139,9 @@ if (empty($catalogProducts)) {
             </div>
             <div style="opacity: 0.3; align-self: center;">|</div>
             <div>
-                <div style="font-size: 26px; font-weight: 800; color: #F0D060;">🇧🇷 3 a 7 Dias</div>
+                <div style="font-size: 26px; font-weight: 800; color: #F0D060; display: inline-flex; align-items: center; gap: 8px;">
+                    <?= \DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(26, 18) ?> 3 a 7 Dias
+                </div>
                 <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase;">Curadoria AliExpress Brasil</div>
             </div>
         </div>
@@ -380,8 +382,8 @@ if (empty($catalogProducts)) {
                                     <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                         R$ <?= number_format($p->salePriceBrl, 2, ',', '.') ?>
                                     </div>
-                                    <div style="font-size: 10.5px; color: <?= $isNational ? '#4ade80' : '#F0D060' ?>; margin-top: 2px; font-weight: <?= $isNational ? '600' : 'normal' ?>;">
-                                        <?= $isNational ? '🇧🇷 Estoque no Brasil • Envio Rápido 3 a 7 dias' : '⚡ Frete Internacional Grátis & Rastreado' ?>
+                                    <div style="font-size: 10.5px; color: <?= $isNational ? '#4ade80' : '#F0D060' ?>; margin-top: 2px; font-weight: <?= $isNational ? '600' : 'normal' ?>; display: flex; align-items: center; flex-wrap: wrap;">
+                                        <?= $isNational ? (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(15, 10) . ' Estoque no Brasil • Envio Rápido 3 a 7 dias') : '⚡ Frete Internacional Grátis & Rastreado' ?>
                                     </div>
                                 </div>
                             </div>

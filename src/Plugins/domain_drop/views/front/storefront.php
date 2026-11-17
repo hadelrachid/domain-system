@@ -154,7 +154,7 @@
             Serviço de curadoria que localiza via SDK oficial do AliExpress os produtos físicos já no Brasil com as melhores <strong>notas, aprovações e termômetro de vendas</strong>. O valor inclui nossa busca especializada e <strong>garantia total de entrega</strong>.
         </p>
         <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700;">
-            <span style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; padding: 4px 11px; border-radius: 20px;">🇧🇷 Estoque AliExpress Brasil</span>
+            <span style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; padding: 4px 11px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;"><?= \DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(15, 10) ?> Estoque AliExpress Brasil</span>
             <span style="background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); color: #fbbf24; padding: 4px 11px; border-radius: 20px;">⭐ Minerados por Nota &amp; Termômetro</span>
             <span style="background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); color: #93c5fd; padding: 4px 11px; border-radius: 20px;">🛡️ Você paga pela Curadoria + Garantia</span>
         </div>

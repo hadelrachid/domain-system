@@ -187,8 +187,8 @@ foreach ($orders as $ordItem) {
                                     <?php endif; ?>
                                 </div>
                                 <div style="font-size: 12px; color: var(--text-muted, #94a3b8); margin-top: 2px;"><?= $e($o['customer_email'] ?? '') ?></div>
-                                <div style="font-size: 11px; margin-top: 6px; color: #cbd5e1;">
-                                    Fornecedor: <strong><?= $slaOrigin === 'BR' ? '🇧🇷 Brasil (7d)' : '🇨🇳 China (' . (int)($sla['expected_days'] ?? 25) . 'd)' ?></strong>
+                                <div style="font-size: 11px; margin-top: 6px; color: #cbd5e1; display: flex; align-items: center; gap: 4px;">
+                                    Fornecedor: <strong><?= $slaOrigin === 'BR' ? (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(14, 10) . ' Brasil (7d)') : (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::cn(14, 10) . ' China (' . (int)($sla['expected_days'] ?? 25) . 'd)') ?></strong>
                                 </div>
                             </td>
 
@@ -263,9 +263,9 @@ foreach ($orders as $ordItem) {
                                             <input type="hidden" name="dispute_id" value="<?= (int)($latestDispute['id'] ?? 0) ?>">
                                             <input type="hidden" name="seller_origin" value="<?= $e($dispSellerOrigin) ?>">
 
-                                            <button type="submit" style="width: 100%; padding: 8px 12px; border: none; border-radius: 6px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-size: 12px; font-weight: 800; cursor: pointer;">
-                                                🤝 <?= $isSent ? 'Reenviar Intermediação ao Fornecedor' : 'Enviar Intermediação ao Fornecedor' ?>
-                                                (<?= $isChineseSeller ? '🇨🇳 Traduzir p/ Chinês zh-CN' : '🇧🇷 Manter em Português' ?>)
+                                            <button type="submit" style="width: 100%; padding: 8px 12px; border: none; border-radius: 6px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                                <span>🤝 <?= $isSent ? 'Reenviar Intermediação ao Fornecedor' : 'Enviar Intermediação ao Fornecedor' ?></span>
+                                                (<?= $isChineseSeller ? (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::cn(14, 10) . ' Traduzir p/ Chinês zh-CN') : (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(14, 10) . ' Manter em Português') ?>)
                                             </button>
                                         </form>
 

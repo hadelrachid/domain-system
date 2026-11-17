@@ -64,8 +64,8 @@ $baseUrl = $baseUrl ?? '';
     </style>
 
     <div class="ds-policy-hero">
-        <span class="ds-policy-badge" style="background:rgba(0,210,132,0.12); border:1px solid rgba(0,210,132,0.35); color:#6ee7b7;">
-            🇧🇷 Diretrizes AliExpress Brasil &amp; Logística Global
+        <span class="ds-policy-badge" style="background:rgba(0,210,132,0.12); border:1px solid rgba(0,210,132,0.35); color:#6ee7b7; display: inline-flex; align-items: center; gap: 6px;">
+            <?= \DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(16, 11) ?> Diretrizes AliExpress Brasil &amp; Logística Global
         </span>
         <h1>🚚 Política de Envio &amp; Prazos</h1>
         <p>
@@ -76,7 +76,7 @@ $baseUrl = $baseUrl ?? '';
     <div class="ds-policy-grid">
         <div class="ds-policy-card" style="border-color: rgba(0,210,132,0.3);">
             <span class="ds-policy-badge" style="background:rgba(0,210,132,0.14); color:#00d284;">PRIORIDADE ATUAL</span>
-            <h2>🇧🇷 Estoque Nacional no Brasil</h2>
+            <h2 style="display: flex; align-items: center; gap: 8px;"><?= \DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(22, 15) ?> Estoque Nacional no Brasil</h2>
             <p>Produtos já internalizados por vendedores parceiros em centros de distribuição dentro do território brasileiro.</p>
             <ul>
                 <li><strong>Prazo médio de entrega:</strong> <strong>2 a 7 dias úteis</strong> após a postagem (podendo variar em regiões Norte/Nordeste ou áreas remotas).</li>

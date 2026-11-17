@@ -154,8 +154,8 @@ if (typeof window.trackDropAction !== 'function') {
                             <div class="store-card-price" style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                 R$ <?= number_format($p->salePriceBrl, 2, ',', '.') ?>
                             </div>
-                            <div style="font-size: 10px; color: <?= $isNational ? '#4ade80' : '#94a3b8' ?>; margin-top: 2px; font-weight: <?= $isNational ? '600' : 'normal' ?>;">
-                                <?= $isNational ? '🇧🇷 Estoque no Brasil • Envio 3 a 7 dias' : 'em até 12x ou Pix com desconto' ?>
+                            <div style="font-size: 10px; color: <?= $isNational ? '#4ade80' : '#94a3b8' ?>; margin-top: 2px; font-weight: <?= $isNational ? '600' : 'normal' ?>; display: flex; align-items: center; flex-wrap: wrap;">
+                                <?= $isNational ? (\DomainSystem\Plugins\domain_drop\Helpers\FlagHelper::br(15, 10) . ' Estoque no Brasil • Envio 3 a 7 dias') : 'em até 12x ou Pix com desconto' ?>
                             </div>
                         </div>
                     </div>
