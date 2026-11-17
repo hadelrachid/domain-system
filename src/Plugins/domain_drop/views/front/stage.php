@@ -120,11 +120,31 @@ if (typeof window.trackDropAction !== 'function') {
                 <!-- Details -->
                 <div class="store-card-body" style="padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
-                        <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; line-height: 1.4; max-height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.4; max-height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                             <a href="<?= htmlspecialchars($productUrl) ?>" style="color: #fff; text-decoration: none;" title="<?= htmlspecialchars($p->title) ?>">
                                 <?= htmlspecialchars($p->title) ?>
                             </a>
                         </h3>
+
+                        <?php
+                        $cardRating = (float)($p->rating ?? 4.8);
+                        $starCount = (int)max(1, min(5, round($cardRating > 0 ? $cardRating : 4.8)));
+                        $starsEmoji = str_repeat('⭐', $starCount);
+                        $ordersCount = (int)($p->ordersCount ?? 0);
+                        $salesInformed = (string)($p->attributes['Vendas_Informadas'] ?? '');
+                        $reviewsCount = (int)($p->attributes['reviews_count'] ?? 0);
+                        ?>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; font-size: 11.5px;">
+                            <span style="letter-spacing: 1px; font-size: 12px;"><?= $starsEmoji ?></span>
+                            <strong style="color: #fbbf24; font-family: monospace; font-size: 12px;"><?= number_format($cardRating > 0 ? $cardRating : 4.8, 1) ?></strong>
+                            <?php if ($ordersCount > 0 && $salesInformed !== 'nao'): ?>
+                                <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= number_format($ordersCount, 0, ',', '.') ?></strong> vendidos</span>
+                            <?php elseif ($reviewsCount > 0): ?>
+                                <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= $reviewsCount ?></strong> avaliações</span>
+                            <?php else: ?>
+                                <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;">Destaque</strong> em vendas</span>
+                            <?php endif; ?>
+                        </div>
 
                         <?php $isNational = (!empty($p->attributes['origem_brasil']) || (isset($p->attributes['ship_from']) && $p->attributes['ship_from'] === 'BR')); ?>
                         <div style="margin-bottom: 14px;">

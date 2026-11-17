@@ -336,14 +336,42 @@ if (empty($catalogProducts)) {
                                     <?= htmlspecialchars($p->category) ?>
                                 </span>
                             <?php endif; ?>
+
+                            <?php
+                            $cardRating = (float)($p->rating ?? 4.8);
+                            $starCount = (int)max(1, min(5, round($cardRating > 0 ? $cardRating : 4.8)));
+                            $starsEmoji = str_repeat('⭐', $starCount);
+                            $ordersCount = (int)($p->ordersCount ?? 0);
+                            $salesInformed = (string)($p->attributes['Vendas_Informadas'] ?? '');
+                            $reviewsCount = (int)($p->attributes['reviews_count'] ?? 0);
+                            ?>
+                            <?php if ($cardRating > 0): ?>
+                                <span style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.85); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);">
+                                    <span><?= $starsEmoji ?></span>
+                                    <span style="color: #fff; font-family: monospace;"><?= number_format($cardRating, 1) ?></span>
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <div class="home-card-body">
                             <div>
-                                <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     <a href="<?= htmlspecialchars($productUrl) ?>" style="color: #fff; text-decoration: none;">
                                         <?= htmlspecialchars($p->title) ?>
                                     </a>
                                 </h3>
+
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; font-size: 11.5px;">
+                                    <span style="letter-spacing: 1px; font-size: 12px;"><?= $starsEmoji ?></span>
+                                    <strong style="color: #fbbf24; font-family: monospace; font-size: 12px;"><?= number_format($cardRating > 0 ? $cardRating : 4.8, 1) ?></strong>
+                                    <?php if ($ordersCount > 0 && $salesInformed !== 'nao'): ?>
+                                        <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= number_format($ordersCount, 0, ',', '.') ?></strong> vendidos</span>
+                                    <?php elseif ($reviewsCount > 0): ?>
+                                        <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= $reviewsCount ?></strong> avaliações</span>
+                                    <?php else: ?>
+                                        <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;">Destaque</strong> em vendas</span>
+                                    <?php endif; ?>
+                                </div>
+
                                 <?php $isNational = (!empty($p->attributes['origem_brasil']) || (isset($p->attributes['ship_from']) && $p->attributes['ship_from'] === 'BR')); ?>
                                 <div style="margin-bottom: 14px;">
                                     <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
@@ -372,6 +400,11 @@ if (empty($catalogProducts)) {
             <?php else: ?>
                 <!-- Fallback de demonstração caso ainda não tenha minerado itens -->
                 <?php foreach ($fallbackItems as $item): ?>
+                    <?php
+                    $fRating = (float)($item['rating'] ?? 5.0);
+                    $fStarsCount = (int)max(1, min(5, round($fRating)));
+                    $fStarsEmoji = str_repeat('⭐', $fStarsCount);
+                    ?>
                     <article class="store-card">
                         <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden;">
                             <a href="<?= $baseUrl ?>/loja">
@@ -383,23 +416,29 @@ if (empty($catalogProducts)) {
                             <span style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px;">
                                 <?= $item['category'] ?>
                             </span>
+                            <span style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.85); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);">
+                                <span><?= $fStarsEmoji ?></span>
+                                <span style="color: #fff; font-family: monospace;"><?= number_format($fRating, 1) ?></span>
+                            </span>
                         </div>
                         <div class="home-card-body">
                             <div>
-                                <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     <a href="<?= $baseUrl ?>/loja" style="color: #fff; text-decoration: none;">
                                         <?= htmlspecialchars($item['title']) ?>
                                     </a>
                                 </h3>
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; font-size: 11.5px;">
+                                    <span style="letter-spacing: 1px; font-size: 12px;"><?= $fStarsEmoji ?></span>
+                                    <strong style="color: #fbbf24; font-family: monospace; font-size: 12px;"><?= number_format($fRating, 1) ?></strong>
+                                    <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= $item['sales'] ?></strong> vendidos</span>
+                                </div>
                                 <div style="margin-bottom: 14px;">
                                     <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
                                         R$ <?= number_format($item['ref_price'], 2, ',', '.') ?>
                                     </div>
                                     <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
                                         R$ <?= number_format($item['price'], 2, ',', '.') ?>
-                                    </div>
-                                    <div style="font-size: 10.5px; color: #F0D060; margin-top: 2px;">
-                                        ★ <?= $item['rating'] ?> (<?= $item['sales'] ?> vendidos)
                                     </div>
                                 </div>
                             </div>
