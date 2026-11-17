@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Purpose and Vision - Domain-System</title>
+    <title>Vision, Purpose and Community - Domain-System</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,28 +15,30 @@
     </nav>
 
     <header>
-        <h1>Vision, Purpose and Target Audience</h1>
+        <h1>The Story, The Purpose, and an Open Call to the Community</h1>
     </header>
 
     <div class="content">
-        <h2>Why create this project?</h2>
-        <p>In modern web development, teams often encounter a common dilemma: traditional CMS engines that carry accumulated legacy code and heavy dependencies on one hand; complex frameworks that require extensive setup and dozens of third-party packages just to bootstrap a basic application on the other.</p>
-        <p><strong>Domain-System</strong> was designed as a balanced, decoupled alternative: written in strictly-typed <strong>PHP 8.2+</strong>, featuring zero third-party runtime dependencies in the core, and structured around <strong>Clean Architecture</strong> and <strong>Dependency Inversion (DIP)</strong> principles.</p>
+        <h2>Why does this project exist?</h2>
+        <p>Hi! My name is Hadel, and I am a self-taught developer. I started building <strong>Domain-System</strong> out of real-world frustration: why does launching a clean e-commerce store or an online school today require massive frameworks, hundreds of third-party dependencies, or CMS platforms that chew through hundreds of megabytes of RAM and break with every update?</p>
+        <p>I wanted to prove that modern, pure <strong>PHP 8.2+</strong> can do much better: a modular, fast, bloat-free system that occupies just <strong>~30 MB of disk space</strong> and uses only <strong>~5 MB of RAM</strong>, running smoothly even on inexpensive shared hosting environments.</p>
 
-        <h2>What is the purpose?</h2>
-        <p>To provide a lightweight, decoupled <strong>Core</strong> whose primary responsibility is managing foundational runtime infrastructure: dependency resolution via a service container, request lifecycle routing, fault tolerance (Circuit Breaker), and event dispatching.</p>
-        <p>The core has zero application-specific domain coupling. All feature sets — such as page management, visual theme building (Flex Builder), LMS, and SEO — are implemented as <strong>Plugins</strong> and <strong>SystemApps</strong> communicating strictly through interface contracts.</p>
+        <h2>How it is built: Human craftsmanship and AI side-by-side</h2>
+        <p>Because I am self-taught and build mostly on my own, I adopted modern <strong>AI models (Claude, ChatGPT, Nemotron, DeepSeek) as relentless daily code auditing partners</strong>. I design the architecture and write every line of logic; then, I set these models to audit the code line by line, hunting for security vulnerabilities, injection flaws, concurrency issues, and dead code.</p>
+        <p>For every issue found, I write regression tests in PHPUnit. Today, the project features a battle-tested suite of <strong>over 650 automated tests and nearly 4,000 assertions</strong> covering dropshipping, payment gateways, student enrollments, and security.</p>
 
-        <h2>Who is this project for?</h2>
-        <p>For developers, small teams, and production deployments that prioritize a predictable, lightweight footprint (~5 MB active Zend RAM and ~30 MB on disk), making it well-suited for cost-effective cloud instances or shared hosting environments, while backed by an automated test suite (over 430 tests in PHPUnit).</p>
-
-        <h2>How can it be extended?</h2>
-        <p>The architecture is designed for extension without core modification (Open/Closed Principle):</p>
+        <h2>The limits of AI and why I need you</h2>
+        <p>Let's be completely honest: AI only goes so far. It helps spot patterns, but <strong>nothing replaces the intuition, real-world production experience, and sanity checks of real human developers</strong>.</p>
+        <p>I don't claim to have all the answers or to be able to build a perfect system alone. That is why the code is 100% open source and I am making this <strong>open call to the developer community</strong>:</p>
         <ul>
-            <li><strong>New Plugins:</strong> Created in <code>src/Plugins/</code> by implementing <code>OsExtensionInterface</code> and registering routes, database migrations, and capabilities.</li>
-            <li><strong>New Flex Builder Blocks:</strong> Extended by implementing <code>BlockProviderInterface</code> without altering core renderers.</li>
-            <li><strong>Hooks and Events:</strong> Custom event listeners can intervene at key lifecycle stages using the central <code>EventDispatcher</code>.</li>
+            <li><strong>Code and Security Auditors:</strong> Come test, audit, and try to break the system to help us make it rock-solid.</li>
+            <li><strong>Architecture Enthusiasts:</strong> Help me keep the code clean, decoupled, and simple, avoiding the temptation of overcomplicating what should be straightforward.</li>
+            <li><strong>Contributors and Builders:</strong> Help build new plugins, lightweight visual themes, or run real-world stress tests.</li>
         </ul>
+
+        <h2>What is the ultimate goal?</h2>
+        <p>To keep an ultra-lightweight, resilient, and stable Core that simply handles dependencies, routes, and events, allowing anyone to launch and extend e-commerce stores, online schools, or websites without depending on bloated software or expensive monopolies.</p>
+        <p>If you share this vision for simple, fast, and transparent software, come join us on GitHub: <a href="https://github.com/hadelrachid/domain-system" target="_blank">github.com/hadelrachid/domain-system</a>!</p>
     </div>
 </body>
 </html>

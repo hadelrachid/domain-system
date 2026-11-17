@@ -1,291 +1,339 @@
 # Guia do Desenvolvedor: Domain System (v2.7.0)
 
-> **Bem-vindo ao código do Domain System!**  
-> Este documento é para programadores que querem entender como o sistema funciona por dentro, criar novos plugins ou temas, e **principalmente nos ajudar a auditar e melhorar a arquitetura**.
-
-Olá! Como desenvolvedor autodidata, construí o Domain System buscando uma arquitetura limpa, simples e sem segredos: o núcleo (Core) apenas resolve dependências, roteia páginas e despacha eventos. Todo o resto — loja de dropshipping, cursos, pagamentos e construtor de páginas — vive isolado dentro da pasta `src/Plugins/`.
-
-Se você gosta de código direto ao ponto, PHP moderno e quer nos ajudar a caçar bugs, refinar interfaces ou criar novos recursos, você está no lugar certo!
+> **Bem-vindo à área de desenvolvimento do Domain System!**  
+> Este guia foi escrito de forma simples, prática e direta ao ponto para você aprender a **criar seus próprios plugins**, **desenvolver seus próprios temas visuais** e nos ajudar a **auditar e fortalecer o sistema**.
 
 ---
 
-## 🤝 Como você pode colaborar?
+## 🧭 Sumário Rápido
 
-Não estamos procurando apenas novos recursos: **precisamos de ajuda para auditar, simplificar e fortalecer o que já existe**.
-
-1. **Auditoria de Código e Segurança:**
-   - Como programo sozinho a maior parte do tempo, uso I.A.s para varrer o código procurando falhas de segurança e lógica. Mas a I.A. falha e tem limitações.
-   - Dê uma olhada crítica nas pastas `src/Core/`, `src/Plugins/commerce/` e `src/Plugins/domain_drop/`. Encontrou algo que pode quebrar ou uma brecha de segurança? Abra uma *Issue* ou envie um *Pull Request*!
-2. **Refinamento de Arquitetura:**
-   - Ajudar a manter o princípio de Inversão de Dependência (DIP) sem complicar desnecessariamente o código. Menos abstrações vazias, mais código testável e legível.
-3. **Criação de Plugins e Temas:**
-   - Criar novos meios de pagamento, novas integrações de frete ou temas visuais leves.
+1. [🤝 Como nos ajudar e colaborar](#-como-nos-ajudar-e-colaborar)
+2. [🧩 Tutorial 1: Criando seu Primeiro Plugin do Zero](#-tutorial-1-criando-seu-primeiro-plugin-do-zero)
+3. [🎨 Tutorial 2: Criando seu Primeiro Tema Visual do Zero](#-tutorial-2-criando-seu-primeiro-tema-visual-do-zero)
+4. [🧪 Como Rodar e Criar Testes com PHPUnit](#-como-rodar-e-criar-testes-com-phpunit)
+5. [🛡️ Boas Práticas de Código e Segurança](#️-boas-práticas-de-código-e-segurança)
 
 ---
 
-## 🏗️ Estrutura de um Plugin (`src/Plugins`)
+## 🤝 Como nos ajudar e colaborar
 
-No Domain System, a lógica de negócio e as funcionalidades específicas são organizadas na camada de plugins (`src/Plugins/`). 
+O Domain System foi construído por um desenvolvedor autodidata que queria uma alternativa simples e ultraleve (~30 MB em disco e ~5 MB de RAM) para e-commerce, dropshipping e cursos online. 
 
-Para criar um plugin básico, crie uma pasta em `src/Plugins/{nome_do_plugin}/` contendo:
-- `plugin.json`: Manifesto de metadados do módulo.
-- `Plugin.php`: Classe de inicialização que gerencia o ciclo de vida do plugin.
-- `manual/module.php` *(opcional)*: Módulo de documentação e checklist exibido no painel administrativo (`/admin/manual`).
+Como programo a maior parte do tempo sozinho, utilizo modelos de Inteligência Artificial como revisores de bancada diários para varrer o código linha por linha caçando falhas. Mas **I.A. tem limites e nada substitui a experiência e o bom senso de desenvolvedores humanos reais**.
 
-### 1. O Arquivo `plugin.json`
+Você pode ajudar muito de várias formas:
+- **Auditoria de Código e Segurança:** Vasculhe o repositório, tente quebrar o checkout, procure falhas de concorrência ou injeção e abra uma *Issue* ou *Pull Request*.
+- **Simplificação de Arquitetura:** Nos ajude a manter o código desacoplado e limpo, sem cair na armadilha de criar camadas vazias de abstração onde o simples funciona melhor.
+- **Novos Plugins e Temas:** Crie extensões úteis (novos meios de pagamento, fretes, blocos visuais) seguindo os tutoriais abaixo!
+
+---
+
+## 🧩 Tutorial 1: Criando seu Primeiro Plugin do Zero
+
+Um plugin no Domain System é apenas uma pasta dentro de `src/Plugins/{nome_do_plugin}/`. Ele não precisa mexer em nenhuma linha do núcleo do sistema.
+
+### O Atalho via Terminal:
+Você pode gerar o esqueleto do seu plugin com um único comando:
+```bash
+php os-cli.php make:plugin meu_plugin
+```
+
+Se preferir criar na mão, você só precisa de **dois arquivos**:
+
+```text
+src/Plugins/meu_plugin/
+├── plugin.json       # A certidão de nascimento do plugin
+└── Plugin.php        # A lógica onde você registra suas rotas e eventos
+```
+
+---
+
+### Passo 1: O arquivo `plugin.json`
+Crie `src/Plugins/meu_plugin/plugin.json`:
+
 ```json
 {
-    "name": "meu_app",
-    "version": "2.7.0",
-    "description": "Exemplo de plugin para o Domain System",
-    "author": "Seu Nome ou Empresa",
+    "name": "meu_plugin",
+    "version": "1.0.0",
+    "description": "Meu primeiro plugin incrível para o Domain System",
+    "author": "Seu Nome",
     "core": false,
     "os_version": "2.7"
 }
 ```
 
-### 2. A Classe `Plugin.php`
+---
 
-Os plugins estendem `AbstractPlugin` e implementam `OsExtensionInterface`. A inicialização ocorre em fases bem definidas:
+### Passo 2: O arquivo `Plugin.php`
+Crie `src/Plugins/meu_plugin/Plugin.php`. O ciclo de vida do plugin tem 3 momentos simples:
+
+1. **`osRegister` (Registro):** Você avisa ao sistema quais serviços do núcleo você precisa (banco de dados, rotas, sessão) e quais eventos deseja escutar.
+2. **`osBoot` (Inicialização):** Você registra suas rotas (`$router->addRoute`), menus no painel admin ou integrações.
+3. **`activate` (Instalação):** Roda apenas na primeira vez que o plugin for ativado pelo admin (ótimo para criar tabelas no banco de dados).
 
 ```php
 <?php
-namespace DomainSystem\Plugins\meu_app;
+
+declare(strict_types=1);
+
+namespace DomainSystem\Plugins\meu_plugin;
 
 use DomainSystem\Core\Plugin\AbstractPlugin;
 use DomainSystem\Core\Contracts\OsExtensionInterface;
 use DomainSystem\Core\Contracts\OsConnectorInterface;
 use DomainSystem\Core\Contracts\OsRuntimeInterface;
+use DomainSystem\Core\Routing\Router;
+use DomainSystem\Core\Http\Request;
+use DomainSystem\Core\Http\Response;
 
 class Plugin extends AbstractPlugin implements OsExtensionInterface
 {
     public function register(): void {}
 
-    // FASE 1: REGISTRO E DECLARAÇÃO DE SERVIÇOS
+    // 1. O que meu plugin precisa usar?
     public function osRegister(OsConnectorInterface $os): void
     {
-        // Declara quais serviços do núcleo e eventos o plugin utilizará
-        $os->requireLink('core.db.schema');            // Acesso ao construtor de esquema
-        $os->requireLink('core.identity');             // Acesso ao gerenciador de permissões
-        $os->listenHook('dashboard.register_widgets'); // Escuta o evento de registro de widgets
+        $os->requireLink('core.db.schema'); // Preciso do banco de dados
+        $os->listenHook('router.register'); // Preciso criar rotas
+        $os->listenHook('admin.menu');       // Preciso adicionar um item no menu do admin
     }
 
-    // FASE 2: INICIALIZAÇÃO (BOOT)
+    // 2. O plugin iniciando no carregamento da página
     public function osBoot(OsRuntimeInterface $runtime): void
     {
-        // Resolução dos serviços autorizados
-        $identity = $runtime->getLink('core.identity');
-        
-        $runtime->onHook('dashboard.register_widgets', function($registry) use ($identity) {
-            $registry->registerProvider(new MeuWidgetProvider($identity));
+        // Registrando rotas web públicas
+        $runtime->onHook('router.register', function (Router $router) {
+            $router->addRoute('GET', '/ola-mundo', function (Request $request) {
+                return new Response("<h1>Olá Mundo! Meu plugin está funcionando perfeitamente.</h1>");
+            });
+        });
+
+        // Adicionando um botão no menu lateral do painel admin
+        $runtime->onHook('admin.menu', function ($menus, $role = 'guest') {
+            if ($role === 'admin') {
+                $menus[] = [
+                    'title' => 'Meu Plugin',
+                    'url'   => '/ola-mundo',
+                    'icon'  => '🚀',
+                ];
+            }
+            return $menus;
         });
     }
 
-    // FASE 3: ATIVAÇÃO (Executado no momento da ativação do módulo)
+    // 3. Executado quando você clica em "Ativar" no painel
     public function activate(OsRuntimeInterface $runtime): void
     {
-        // Criação de tabelas caso necessário
+        // Cria uma tabela simples no banco (funciona em MySQL e SQLite automaticamente)
         $schema = $runtime->getLink('core.db.schema');
-        $schema->create('minha_tabela', function($table) {
+        $schema->create('minha_tabela_exemplo', function ($table) {
             $table->id();
-            $table->string('nome');
+            $table->string('titulo');
+            $table->timestamps();
         });
-
-        // Registro de permissões (Capabilities)
-        $runtime->registerCapability('meu_app.gerenciar', 'Gerenciar Meu App');
     }
 }
 ```
 
+Pronto! Ao salvar, acesse `http://localhost:8000/ola-mundo` no seu navegador e você verá sua página funcionando. No painel em `/admin/plugins`, seu plugin aparecerá com botão de ativar e desativar.
+
 ---
 
-## 🔒 Permissões, Capabilities e Requisições HTTP
+## 🎨 Tutorial 2: Criando seu Primeiro Tema Visual do Zero
 
-O sistema utiliza um modelo de permissões baseado em **Capabilities** granulares em vez de perfis engessados:
+Criar temas no Domain System é extremamente simples porque usamos **PHP limpo com HTML puro**. Você não precisa aprender sintaxes complicadas de templates como Twig ou Blade.
 
-```php
-$runtime->registerCapability('slug_da_permissao', 'Nome Visível no Painel');
+Os temas ficam na pasta `themes/{nome_do_tema}/` (ou em `src/Plugins/flextheme/themes/{nome_do_tema}/`).
+
+### Estrutura básica de um tema:
+```text
+themes/meu_tema/
+├── theme.json         # Nome e configurações do tema
+├── layouts/
+│   └── main.php       # A "casca" HTML completa (head, tags de SEO, etc.)
+├── partials/
+│   ├── header.php     # O cabeçalho (logo, menu de navegação)
+│   └── footer.php     # O rodapé (direitos autorais, links de redes)
+├── templates/
+│   └── home.php       # O conteúdo que aparece na página inicial (/)
+└── assets/            # CSS, JavaScript e imagens
+    ├── css/style.css
+    └── img/logo.svg
 ```
 
-O administrador do sistema pode associar cada permissão aos perfis desejados no painel.
-
-Para verificar se um usuário autenticado possui determinada permissão:
-
-```php
-$identity = $runtime->getLink('core.identity');
-$userId = (int) $this->session->get('auth_user_id', 0);
-
-if (!$identity->userCan($userId, 'slug_da_permissao')) {
-    return new Response("Acesso Negado", 403);
-}
-```
-
-> **Boas Práticas de Arquitetura:** Evite o acesso direto a superglobais (`$_SESSION`, `$_POST`, `$_GET` ou `php://input`) em Controllers. Utilize `SessionManagerInterface` e os métodos de `Request` (`$request->input()`, `$request->json()`, `$request->withJsonBody()`) injetados via construtor.
-
 ---
 
-## 🏗️ Arquitetura do Flex Builder (`src/Core/Theme/Parts`)
-
-O construtor de temas **Flex Builder** (`/admin/builder`) separa a compilação no núcleo (`src/Core/Theme/Parts`) da gestão de interface no plugin `flextheme`:
-
-1. **Compilação Unificada (`ThemePartCompilerInterface` e `ThemePartRendererInterface`):**
-   - Tanto a pré-visualização no editor quanto a renderização do site compartilham o mesmo motor (`ThemePartCompilerInterface::compilePart()`). Isso garante que as regras de blocos, estilos inline e visibilidade responsiva funcionem com paridade entre editor e visualização final.
-2. **Validação Estrutural Pré-Persistência (`ThemePartValidatorInterface`):**
-   - Antes de salvar seções e blocos, o sistema valida a estrutura do payload, presets de layout e compatibilidade dos blocos. Em caso de falha em associações, é executado rollback automático das alterações anteriores.
-3. **Visibilidade Responsiva (4 Resoluções) e Auto-Reflow:**
-   - Ocultar um elemento específico em uma resolução não afeta a seção como um todo. A visibilidade é aplicada ao elemento individual.
-   - Quando todos os elementos de uma coluna ficam ocultos em determinada resolução, o renderizador colapsa a coluna vazia e recalcula o grid CSS para as colunas visíveis restantes.
-4. **Criação de Novos Blocos (`BlockProviderInterface`):**
-   - É possível estender a biblioteca de blocos sem alterar o núcleo, implementando `BlockInterface` e `BlockProviderInterface`:
-   ```php
-   use DomainSystem\Core\Theme\Parts\Contracts\BlockProviderInterface;
-   use DomainSystem\Core\Theme\Parts\Contracts\BlockRegistryInterface;
-
-   final class MeuBlocoProvider implements BlockProviderInterface
-   {
-       public function registerBlocks(BlockRegistryInterface $registry): void
-       {
-           $registry->register(new MeuBlocoCustomizado());
-       }
-   }
-   ```
-
----
-
-## 📖 Módulos de Documentação (`ManualModuleInterface`)
-
-Cada plugin pode fornecer sua própria documentação e checklist de testes para exibição no painel administrativo (`/admin/manual`):
-
-1. Crie a classe que implementa `ManualModuleInterface`:
-```php
-<?php
-namespace DomainSystem\Plugins\meu_app\manual;
-
-use DomainSystem\Core\Contracts\ManualModuleInterface;
-
-class MeuAppManualModule implements ManualModuleInterface
+### Passo 1: O arquivo `theme.json`
+Crie `themes/meu_tema/theme.json`:
+```json
 {
-    public function getId(): string { return 'meu_app'; }
-    public function getTitle(): string { return 'Meu App — Manual'; }
-    public function getSubtitle(): string { return 'Guia de operação e checklist de testes.'; }
-    public function getBadge(): string { return 'Plugin v2.7.0'; }
-    public function getAccentColor(): string { return '#38bdf8'; }
-    public function getAdminUrl(): ?string { return '/admin/meu-app'; }
-
-    public function getChecklistItems(): array
-    {
-        return [
-            ['id' => 'chk_meu_app_1', 'label' => '1. Testar cadastro e validação de dados.'],
-        ];
-    }
-
-    public function renderContent(string $baseUrl = ''): string
-    {
-        return '<p>Instruções de uso e configuração do módulo...</p>';
-    }
+    "name": "Meu Tema Moderno",
+    "slug": "meu_tema",
+    "version": "1.0.0",
+    "description": "Um tema limpo, rápido e responsivo",
+    "author": "Seu Nome",
+    "flex_builder": true
 }
 ```
+> **Dica de Ouro:** Se o seu tema tiver um design autoral fixo que você **não quer** que seja alterado pelo editor visual do Flex Builder, basta mudar para `"flex_builder": false`. O sistema vai respeitar seu design 100% isolado!
 
-2. Retorne a instância em `src/Plugins/meu_app/manual/module.php`:
+---
+
+### Passo 2: O Layout Principal (`layouts/main.php`)
+Este arquivo é o esqueleto HTML que envolve todas as páginas do site:
 ```php
 <?php
-require_once __DIR__ . '/MeuAppManualModule.php';
-return new \DomainSystem\Plugins\meu_app\manual\MeuAppManualModule();
+declare(strict_types=1);
+
+$baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+// Resolve SEO dinamicamente para o Google indexar a página certa
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$canonicalUrl = 'https://meusite.com' . ($requestPath === '/' ? '' : $requestPath);
+
+$seo->setCanonical($canonicalUrl)
+    ->addMeta('theme-color', '#0f172a');
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?= $seo->generateTags() ?>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/themes/meu_tema/assets/css/style.css">
+</head>
+<body>
+
+    <!-- Cabeçalho -->
+    <?php require $themeDir . '/partials/header.php'; ?>
+
+    <!-- O conteúdo da página atual entra aqui -->
+    <main class="site-main">
+        <?= $content ?>
+    </main>
+
+    <!-- Rodapé -->
+    <?php require $themeDir . '/partials/footer.php'; ?>
+
+</body>
+</html>
 ```
 
 ---
 
-## 🧩 Widgets para o Painel Administrativo
+### Passo 3: Cabeçalho e Rodapé (`partials/header.php` e `partials/footer.php`)
 
-Widgets de dashboard utilizam o contrato `DashboardWidgetProviderInterface`:
-
+No arquivo `partials/header.php`:
 ```php
-<?php
-namespace DomainSystem\Plugins\meu_app;
+<?php $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : ''; ?>
+<header class="site-header">
+    <div class="container">
+        <a href="<?= $baseUrl ?>/" class="site-logo">MeuSite</a>
+        <nav class="site-nav">
+            <a href="<?= $baseUrl ?>/">Início</a>
+            <a href="<?= $baseUrl ?>/loja">Loja</a>
+            <a href="<?= $baseUrl ?>/cursos">Cursos</a>
+            <a href="<?= $baseUrl ?>/minha-conta">Minha Conta</a>
+        </nav>
+    </div>
+</header>
+```
 
-use DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
-
-class MeuWidgetProvider implements DashboardWidgetProviderInterface
-{
-    public function getProviderName(): string {
-        return 'Módulo de Relatórios';
-    }
-
-    public function getAvailableWidgets(): array {
-        return [
-            'grafico_vendas' => [
-                'title' => 'Vendas do Mês',
-                'description' => 'Exibe o total faturado no mês atual'
-            ]
-        ];
-    }
-
-    public function renderWidget(string $widgetId): string {
-        if ($widgetId === 'grafico_vendas') {
-            return '<div class="widget-box">Conteúdo do widget aqui...</div>';
-        }
-        return '';
-    }
-}
+No arquivo `partials/footer.php`:
+```php
+<footer class="site-footer">
+    <div class="container">
+        <p>&copy; <?= date('Y') ?> MeuSite — Feito com Domain System.</p>
+    </div>
+</footer>
 ```
 
 ---
 
-## 🎨 Temas e Renderização
-
-Os temas ficam localizados em `src/Plugins/flextheme/themes/{nome_do_tema}/` (ou `themes/{nome_do_tema}/`).
-
-No arquivo `layouts/main.php`, utilize `ThemePartRendererInterface` para renderizar os cabeçalhos e rodapés customizados criados no Flex Builder, com fallback para os arquivos parciais locais:
+### Passo 4: A Página Inicial (`templates/home.php`)
+O arquivo `templates/home.php` gera o conteúdo que será injetado dentro da variável `$content` do layout:
 
 ```php
 <?php
-$partRenderer = (isset($GLOBALS['app']) && $GLOBALS['app']->getContainer()->has(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class))
-    ? $GLOBALS['app']->getContainer()->make(\DomainSystem\Core\Theme\Parts\Contracts\ThemePartRendererInterface::class)
-    : null;
+// Inicia a captura do conteúdo da página
+ob_start();
+$baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+?>
 
-$themeFolder = basename($themeDir);
-$customHeader = ($partRenderer !== null) ? $partRenderer->renderHeader($themeFolder, get_defined_vars()) : '';
+<section class="hero-banner">
+    <h1>Bem-vindo ao Meu Site!</h1>
+    <p>Construído em PHP ultraleve com carregamento instantâneo.</p>
+    <a href="<?= $baseUrl ?>/loja" class="btn-primary">Ver Produtos</a>
+</section>
 
-if (trim($customHeader) !== '') {
-    echo $customHeader;
-} else {
-    require $themeDir . '/partials/header.php';
-}
+<?php
+// Finaliza a captura e carrega o layout principal
+$content = (string)ob_get_clean();
+require $themeDir . '/layouts/main.php';
 ?>
 ```
 
-> **Isolamento de Temas Nativos (`"flex_builder": false`):** Caso um tema dedicado (como `rachidd_store` no **DomainDrop**) possua cabeçalho e rodapé exclusivos que não devam ser substituídos pelo editor do Flex Builder, basta adicionar `"flex_builder": false` ao arquivo `theme.json` do tema. O serviço `ThemeDiscoveryService::supportsFlexBuilder()` bloqueará automaticamente a vinculação de partes de cabeçalho/rodapé e exibirá um aviso informativo no painel `/admin/builder`.
+---
+
+### Passo 5: Ativando seu Tema
+1. Acesse o painel administrativo em: `http://localhost:8000/admin/themes`
+2. Seu tema **"Meu Tema Moderno"** aparecerá na lista de temas disponíveis.
+3. Clique em **"Ativar Tema"**.
+4. Pronto! Abra a página inicial e seu novo tema estará no ar!
 
 ---
 
-## 📦 Arquitetura do DomainDrop (`src/Plugins/domain_drop`)
+## 🧪 Como Rodar e Criar Testes com PHPUnit
 
-O módulo **DomainDrop** demonstra a integração de SDKs externos e fluxos completos de e-commerce seguindo os contratos do sistema:
+O Domain System leva testes automatizados muito a sério para garantir que nenhuma alteração quebre recursos existentes.
 
-- `AliExpressApiClientInterface`: Cliente para o protocolo **AliExpress Open Platform (`TOP`)** com assinatura `HMAC-SHA256`, OAuth 2.0, consulta de catálogo, cálculo de frete e rastreio logístico (`queryTrackingInfo`).
-- `ProductMiningServiceInterface`: Orquestrador do ciclo diário de 24h de mineração de ofertas, conversão cambial (`CurrencyConverterInterface`) e enriquecimento por IA (`AiProductEnricherInterface`).
-- `DropshipCustomerRepositoryInterface` & `DropshipDisputeRepositoryInterface`: Gestão isolada de clientes compradores (`/minha-conta` e `/admin/dropship/customers`), rastreio integrado Correios/Cainiao, abertura de chamados com vinculação opcional de pedido/produto e mediação bilingue (`SellerMediationService` em `pt-BR` e `zh-CN`).
+Para rodar toda a suíte de testes (mais de 650 testes):
+```bash
+php phpunit.phar
+```
+
+Para rodar apenas um arquivo de teste específico:
+```bash
+php phpunit.phar tests/Unit/CheckoutSecurityTest.php
+```
+
+### Criando um teste simples para seu plugin:
+Crie um arquivo em `tests/Unit/MeuPluginTest.php`:
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace DomainSystem\Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+
+final class MeuPluginTest extends TestCase
+{
+    public function testPluginFazCalculoCorreto(): void
+    {
+        $resultado = 10 + 15;
+        $this->assertSame(25, $resultado);
+    }
+}
+```
 
 ---
 
-## 🔍 Documentação Consolidada do Código: `project.txt`
+## 🛡️ Boas Práticas de Código e Segurança
 
-Para facilitar revisões técnicas de código, análise estática e auditorias arquiteturais completas, o arquivo `project.txt` na raiz reúne a árvore de diretórios e contratos do sistema de forma organizada:
+Ao desenvolver plugins para o Domain System, siga estas regrinhas de ouro:
 
-1. **Visão Global:** Permite inspecionar rapidamente as interfaces, controllers e serviços sem precisar navegar por dezenas de pastas.
-2. **Gerador de Plugins via Terminal:**
-   ```bash
-   php os-cli.php make:plugin nome_do_plugin
-   ```
-   Cria automaticamente a estrutura básica de um novo plugin com seu `plugin.json` e classe `Plugin.php`.
+1. **Nunca use superglobais diretamente em controllers:**  
+   Em vez de `$_POST['email']` ou `$_GET['id']`, use o objeto `$request->input('email')` e `$request->query('id')`.
+2. **Sempre use Prepared Statements com PDO:**  
+   Nunca concatene variáveis em consultas SQL (`"SELECT * WHERE id = " . $id`). Use interrogações ou parâmetros nomeados (`$pdo->prepare("SELECT * WHERE id = ?")`).
+3. **Não traga dependências pesadas:**  
+   O grande diferencial do Domain System é rodar em ~30 MB e gastar pouca memória. Evite instalar bibliotecas gigantes pelo Composer se uma função nativa do PHP resolver o problema.
+4. **Trate falhas com elegância:**  
+   Se você estiver se comunicando com uma API externa (como Correios ou gateway de pagamento), sempre use `try/catch` e registre erros em log, para que uma falha externa não trave o site do seu cliente.
 
 ---
 
-## 🚀 Padrão de Releases e Atualizações (`SystemUpdater`)
-
-Para garantir compatibilidade com o atualizador automático via GitHub Releases:
-
-1. **Migrations Aditivas:** Dentro de uma mesma versão maior (`2.x`), todas as migrações de banco devem ser aditivas (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN`) e utilizar `\PDO` explicitamente se não houver namespace no arquivo de migração.
-2. **Contrato de Esquema (`release/schema-expects.json`):** Novas tabelas ou colunas essenciais devem ser registradas para verificação pós-atualização pelo `SchemaVerifier`.
-3. **Consistência de Versão:** A versão na tag (`vX.Y.Z`) deve ser idêntica a `DS_VERSION` em `bootstrap.php` e `version` em `composer.json`.
-4. **Arquivos Locais Protegidos:** O arquivo `release/exclude.txt` garante que arquivos de ambiente local (`.env`, `config/`, mídias e banco de dados) nunca sejam sobrescritos durante atualizações.
+## 💬 Ficou com alguma dúvida?
+Se travar em qualquer ponto ao criar seu plugin ou tema, abra uma discussão no nosso GitHub ou envie um e-mail para `hadelrachid@gmail.com`. Vamos adorar ajudar você a construir sua ideia!

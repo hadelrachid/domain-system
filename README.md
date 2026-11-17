@@ -8,7 +8,7 @@ Sem o peso, a lentidão e a insegurança de depender de centenas de plugins de t
 
 ---
 
-[🇺🇸 English version](README-en.md) | [🌱 Minha História e Sobre o Projeto](ABOUT.md) | [🤝 Como Ajudar / Comunidade](#-preciso-da-sua-ajuda-junte-se-ao-projeto) | [🗺️ O que vem por aí (Roadmap)](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md)
+[🇺🇸 English version](README-en.md) | [🌱 Minha História](ABOUT.md) | [📚 Wiki Oficial](https://github.com/hadelrachid/domain-system/wiki) | [📖 Documentação Online](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Guia do Desenvolvedor](DEVELOPER_GUIDE.md) | [🤝 Comunidade](#-preciso-da-sua-ajuda-junte-se-ao-projeto)
 
 ---
 

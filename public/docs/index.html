@@ -3,72 +3,97 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Documentação - Domain-System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Oficial - Domain-System (v2.7.0)</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .top-nav { background: #0b1120; padding: 12px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 14px; }
+        .top-nav a { color: #38bdf8; text-decoration: none; font-weight: 600; margin-right: 15px; }
+        .top-nav a:hover { text-decoration: underline; }
+        .community-banner { background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 20px; margin: 25px 0; }
+        .community-banner h3 { margin-top: 0; color: #38bdf8; }
+        .community-banner p { margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+        .btn-wiki { background: #38bdf8; color: #0b1120; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 5px; }
+        .btn-wiki:hover { background: #7dd3fc; }
+    </style>
 </head>
 
 <body>
+    <nav class="top-nav">
+        <div>
+            <a href="https://github.com/hadelrachid/domain-system" target="_blank">💻 GitHub</a>
+            <a href="https://github.com/hadelrachid/domain-system/wiki" target="_blank">📚 Wiki Oficial</a>
+            <a href="proposito.html">🌱 Propósito &amp; História</a>
+            <a href="tutorial-dev.html">🧩 Como Criar Plugins</a>
+            <a href="tutorial-theme.html">🎨 Como Criar Temas</a>
+        </div>
+        <div>
+            <a href="index_en.html" class="lang-toggle">🇺🇸 English</a>
+        </div>
+    </nav>
+
     <header>
-        <a href="index_en.html" class="lang-toggle">🇺🇸 English</a>
-        <img src="images/logo.svg" alt="Cockpit Logo" class="logo-docs">
-        <h1>Domain-System Documentação</h1>
-        <p>O Kernel PHP Moderno, Modular e Orientado a Eventos.</p>
+        <img src="images/logo.svg" alt="Domain System Logo" class="logo-docs">
+        <h1>Domain-System Documentação Oficial (v2.7.0)</h1>
+        <p>Um ambiente web completo, ultraleve (~30 MB em disco e ~5 MB de RAM) e rápido em PHP 8.2 puro.</p>
     </header>
 
     <div class="content">
-        <h2>Índice Oficial</h2>
-        <p>Bem-vindo à documentação oficial do <strong>Domain-System</strong>. Escolha um dos tópicos abaixo para
-            explorar a arquitetura e aprender como utilizar e estender o nosso motor.</p>
 
+        <!-- Banner Humano & Comunidade -->
+        <div class="community-banner">
+            <h3>👋 Olá! Um chamado sincero à comunidade técnica</h3>
+            <p>
+                O <strong>Domain System</strong> foi construído por um desenvolvedor autodidata com um objetivo claro: resgatar a simplicidade e a alta performance do PHP moderno sem depender de frameworks gigantescos ou de dezenas de plugins pesados.
+            </p>
+            <p>
+                Como programo a maior parte do tempo sozinho, utilizo modelos de I.A. como parceiros de auditoria de bancada caçando falhas linha por linha (com mais de <strong>650 testes automatizados no PHPUnit</strong>). No entanto, <strong>nada substitui o olhar, a experiência e o bom senso de desenvolvedores humanos reais</strong>.
+            </p>
+            <p>
+                Convido você abertamente a testar, auditar o código, tentar quebrar o sistema e nos ajudar a deixá-lo cada vez mais estável, seguro e rápido!
+            </p>
+            <a href="https://github.com/hadelrachid/domain-system/wiki" target="_blank" class="btn-wiki">📚 Acessar a Wiki no GitHub &rarr;</a>
+        </div>
+
+        <h2>Guias Essenciais para Desenvolvedores</h2>
         <ul>
-            <li><strong><a href="proposito.html">Visão, Propósito e Público-Alvo</a></strong><br>
-                Entenda por que criamos este sistema, que dor ele resolve e para quem ele é feito.</li>
+            <li><strong><a href="proposito.html">🌱 Visão, Propósito e a História do Projeto</a></strong><br>
+                Conheça a história de como o projeto nasceu e o chamado aberto para a comunidade de programadores.</li>
             <br>
-            <li><strong><a href="arquitetura.html">Como o Motor Funciona (Arquitetura)</a></strong><br>
-                A visão macro do sistema: Container de Injeção de Dependência, Roteamento, MVC, SSR e Auto-Descoberta de Manuais.</li>
+            <li><strong><a href="tutorial-dev.html">🧩 Como Criar seu Primeiro Plugin do Zero</a></strong><br>
+                Passo a passo prático para criar rotas, menus no painel admin e tabelas no banco de dados em menos de 5 minutos.</li>
             <br>
-            <li><strong><a href="contratos.html">Contratos e Interfaces (SOLID)</a></strong><br>
-                Como as regras rígidas mantêm o núcleo blindado. (PluginInterface, OsExtensionInterface, ManualModuleInterface, ExtractorInterface, etc).</li>
+            <li><strong><a href="tutorial-theme.html">🎨 Como Criar um Tema Visual Limpo e Responsivo</a></strong><br>
+                Aprenda a construir layouts modernos com PHP e HTML puro, integração de SEO automático e isolamento de design.</li>
             <br>
-            <li><strong><a href="circuit-breaker.html">Resiliência & Circuit Breaker ⚡</a></strong><br>
-                Como o motor intercepta erros fatais e desarma plugins sozinhos para proteger o núcleo.</li>
+            <li><strong><a href="domain-drop.html">📦 DomainDrop: Motor de Dropshipping com API do AliExpress</a></strong><br>
+                Como funciona a integração oficial com a API do AliExpress, mineração de ofertas 24h, cálculo de frete e rastreio.</li>
+            <br>
+            <li><strong><a href="circuit-breaker.html">⚡ Resiliência &amp; Circuit Breaker</a></strong><br>
+                Como o motor intercepta erros fatais e isola plugins com falha sem nunca derrubar o site do seu cliente com tela branca 500.</li>
+            <br>
+            <li><strong><a href="arquitetura.html">🏛️ Arquitetura do Núcleo (Core)</a></strong><br>
+                Container de Injeção de Dependências, Roteador flexível e Despacho de Eventos (Hooks).</li>
         </ul>
-        
-        <h2>Domain System (v2.5.0 — Plataforma Modular e Resiliente em PHP 8.2+)</h2>
-        <p>Uma plataforma web modular, leve (~30MB em disco) e resiliente, construída com foco em Clean Architecture, Flex Builder FSE (4 resoluções com Auto-Reflow de CSS Grid), manuais auto-descobertos por contrato e testes automatizados de arquitetura.</p>
-        
+
+        <h2>Documentação Avançada e Contratos</h2>
         <ul>
-            <li><strong><a href="../AI_CONTRACT_GUIDE.md">🤖 Guia de Contratos para IA (AI_CONTRACT_GUIDE.md)</a></strong><br>
-                Diretrizes estruturadas para modelos de IA gerarem plugins e páginas aderentes aos contratos e à arquitetura do projeto.</li>
+            <li><strong><a href="ai-contract-guide.html">🤖 Guia de Contratos para I.A. (AI Contract Guide)</a></strong><br>
+                Diretrizes estruturadas para modelos de inteligência artificial gerarem plugins e páginas aderentes à arquitetura limpa.</li>
             <br>
-            <li><strong><a href="../wiki/Flex-Builder.md">🏗️ Flex Builder FSE (Motor Visual em Blocos, 14 Blocos &amp; Grid Auto-Reflow)</a></strong><br>
-                Composição visual de Headers, Footers e Seções Centrais com Compilador Único (<code>ThemePartCompilerInterface</code>), Validador Estrutural (<code>ThemePartValidatorInterface</code>) e Visibilidade Responsiva por Elemento em 4 Resoluções.</li>
+            <li><strong><a href="flex-builder.html">🏗️ Flex Builder FSE (Construtor Visual de Páginas)</a></strong><br>
+                Composição visual de cabeçalhos, rodapés e seções centrais em CSS Grid de 12 colunas com suporte a mobile e desktop.</li>
             <br>
-            <li><strong><a href="tutorial-dev.html">Guia do Desenvolvedor: Construindo Plugins 🧩</a></strong><br>
-                Tutorial de como usar <code>php os-cli.php make:plugin &lt;slug&gt;</code>, <strong>OsExtensionInterface</strong>, <strong>ManualModuleInterface</strong> e Injeção de Dependências.</li>
+            <li><strong><a href="contratos.html">Contratos e Interfaces (SOLID &amp; DIP)</a></strong><br>
+                Como as interfaces mantêm o núcleo desacoplado de regras de negócio específicas.</li>
             <br>
-            <li><strong><a href="tutorial-theme.html">Guia do Desenvolvedor: Construindo Temas &amp; Integração Flex Builder 🎨</a></strong><br>
-                Tutorial de como construir layouts com MVC, Output Buffering, <code>ThemePartRendererInterface</code> e SEO integrado.</li>
-            <br>
-            <li><strong><a href="tutoriais/02-a-escotilha-de-emergencia.html">Sistema de Prioridades e Resiliência em Hooks 🛡️</a></strong><br>
-                Entenda o ordenamento de prioridades de Hooks e o mecanismo de contingência para recuperação administrativa.</li>
-            <br>
-            <li><strong><a href="tutoriais/03-pacotes-de-plugins.html">Pacotes de Plugins (Hubs) &amp; Academy LMS 📦</a></strong><br>
-                Aprenda a estruturar pacotes que agrupam múltiplos módulos independentes e conheça a Fábrica Automática de Aulas <code>.php</code> (<code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>) e os 3 Perfis Mobile do Academy LMS.</li>
-            <br>
-            <li><strong><a href="lifecycle.html">O Fluxo de Vida do Plugin (Analogia Visual) 🛂</a></strong><br>
-                Entenda a abstração do Kernel e o processo de boot usando a didática "Analogia da Imigração".</li>
-            <br>
-            <li><strong><a href="01-o-contrato-do-sistema.html">Manifesto: O Contrato do Sistema</a></strong><br>
-                Leia o porquê adotamos Injeção de Dependências em vez da caça por variáveis globais.</li>
-            <br>
-            <li><strong><a href="architecture/01-ciclo-de-confianca-verificavel.html">O Ciclo de Confiança Verificável (IA)</a></strong><br>
-                A fundação arquitetural que permite a IAs criarem e auditarem plugins com 100% de segurança.</li>
+            <li><strong><a href="lifecycle.html">O Ciclo de Vida do Plugin</a></strong><br>
+                Entenda o fluxo de inicialização e a analogia visual de execução dos módulos.</li>
         </ul>
     </div>
 
     <footer>
-        &copy; 2026 Domain-System v2.5.0 — Alternativa leve (~30MB) desenvolvida com foco absoluto em qualidade e SOLID.
+        &copy; 2026 Domain-System v2.7.0 — Software Livre (Licença MIT). Criado com foco absoluto em simplicidade, estabilidade e leveza.
     </footer>
 </body>
 

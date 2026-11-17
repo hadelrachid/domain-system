@@ -1,70 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Documentation - Domain-System (v2.7.0)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Documentation - Domain-System (v2.7.0)</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .top-nav { background: #0b1120; padding: 12px 20px; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 14px; }
+        .top-nav a { color: #38bdf8; text-decoration: none; font-weight: 600; margin-right: 15px; }
+        .top-nav a:hover { text-decoration: underline; }
+        .community-banner { background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 20px; margin: 25px 0; }
+        .community-banner h3 { margin-top: 0; color: #38bdf8; }
+        .community-banner p { margin-bottom: 10px; font-size: 15px; line-height: 1.6; }
+        .btn-wiki { background: #38bdf8; color: #0b1120; padding: 8px 16px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 5px; }
+        .btn-wiki:hover { background: #7dd3fc; }
+    </style>
 </head>
+
 <body>
+    <nav class="top-nav">
+        <div>
+            <a href="https://github.com/hadelrachid/domain-system" target="_blank">💻 GitHub</a>
+            <a href="https://github.com/hadelrachid/domain-system/wiki" target="_blank">📚 Official Wiki</a>
+            <a href="proposito_en.html">🌱 Purpose &amp; Story</a>
+            <a href="tutorial-dev.html">🧩 How to Build Plugins</a>
+            <a href="tutorial-theme.html">🎨 How to Build Themes</a>
+        </div>
+        <div>
+            <a href="index.html" class="lang-toggle">🇧🇷 Português</a>
+        </div>
+    </nav>
+
     <header>
-        <a href="index.html" class="lang-toggle">🇧🇷 Português</a>
-        <h1>📚 Domain-System Documentation (v2.7.0)</h1>
-        <p>The Modern, Modular, and Event-Driven PHP Kernel.</p>
+        <img src="images/logo.svg" alt="Domain System Logo" class="logo-docs">
+        <h1>Domain-System Official Documentation (v2.7.0)</h1>
+        <p>A full-featured, ultra-lightweight (~30 MB on disk &amp; ~5 MB of RAM), fast platform in pure PHP 8.2.</p>
     </header>
 
     <div class="content">
-        <h2>Official Table of Contents</h2>
-        <p>Welcome to the official <strong>Domain-System</strong> documentation. Choose a topic below to explore the architecture and learn how to use and extend our engine.</p>
 
+        <!-- Human & Community Banner -->
+        <div class="community-banner">
+            <h3>👋 Hello! An honest call to the developer community</h3>
+            <p>
+                <strong>Domain System</strong> was built by a self-taught developer with a clear goal: reclaim the speed, simplicity, and efficiency of modern PHP without relying on bloated multi-gigabyte frameworks or endless plugin mazes.
+            </p>
+            <p>
+                Building mostly on my own, I use AI models as relentless daily code auditing partners (with <strong>over 650 automated tests in PHPUnit</strong>). However, <strong>nothing replaces the real-world experience, intuition, and sanity checks of experienced human engineers</strong>.
+            </p>
+            <p>
+                I warmly invite you to test, audit the code, try to break it, and help us make it even more stable, secure, and fast!
+            </p>
+            <a href="https://github.com/hadelrachid/domain-system/wiki" target="_blank" class="btn-wiki">📚 Access the Wiki on GitHub &rarr;</a>
+        </div>
+
+        <h2>Essential Guides for Developers</h2>
         <ul>
-            <li><strong><a href="proposito_en.html">Vision, Purpose and Target Audience</a></strong><br>
-            Understand why we built this system, the pain it solves, and who it is for.</li>
+            <li><strong><a href="proposito_en.html">🌱 Vision, Purpose &amp; The Project Story</a></strong><br>
+                Discover how the project started and the open invitation for the developer community.</li>
             <br>
-            <li><strong><a href="arquitetura_en.html">How the Engine Works (Architecture)</a></strong><br>
-            The macro vision of the system: Dependency Injection Container, Routing, MVC, SSR, and Manual Auto-Discovery.</li>
+            <li><strong><a href="tutorial-dev.html">🧩 How to Build Your First Plugin from Scratch</a></strong><br>
+                Practical step-by-step tutorial to create routes, admin menus, and database tables in under 5 minutes.</li>
             <br>
-            <li><strong><a href="contratos_en.html">Contracts and Interfaces (SOLID)</a></strong><br>
-            How strict rules keep the core shielded. (PluginInterface, OsExtensionInterface, ManualModuleInterface, ExtractorInterface, etc).</li>
+            <li><strong><a href="tutorial-theme.html">🎨 How to Build a Clean, Responsive Visual Theme</a></strong><br>
+                Learn how to construct modern layouts using clean PHP &amp; HTML, automated SEO, and isolated styling.</li>
             <br>
-            <li><strong><a href="circuit-breaker_en.html">Resilience &amp; Circuit Breaker ⚡</a></strong><br>
-            How the engine intercepts fatal errors and disarms faulty plugins to protect the core.</li>
+            <li><strong><a href="domain-drop_en.html">📦 DomainDrop: Dropshipping Engine with AliExpress API</a></strong><br>
+                How the official AliExpress Open Platform integration works, 24h deal curation, freight calculation, and tracking.</li>
+            <br>
+            <li><strong><a href="circuit-breaker_en.html">⚡ Resilience &amp; Circuit Breaker</a></strong><br>
+                How the engine catches fatal errors and temporarily isolates broken plugins without crashing the entire store with a 500 white screen.</li>
+            <br>
+            <li><strong><a href="arquitetura_en.html">🏛️ Core Architecture</a></strong><br>
+                Dependency Injection Container, flexible router, and Event Dispatcher (Hooks).</li>
         </ul>
 
-        <h2>Domain-System OS (v2.7.0 — Lightweight &amp; Resilient Alternative ~30MB)</h2>
-        <p>A lightweight (~30MB unpacked on Linux servers), modular, and resilient web platform featuring <strong>DomainDrop (AliExpress SDK Dropshipping)</strong>, Academy LMS, DomainCommerce, Flex Builder FSE, and automated architectural tests.</p>
-        
+        <h2>Advanced Architecture &amp; Contracts</h2>
         <ul>
-            <li><strong><a href="domain-drop_en.html">📦 DomainDrop: Dropshipping with Official AliExpress SDK &amp; AI</a></strong><br>
-                Autonomous 24h product curation, dynamic currency conversion, Customer Portal with integrated Correios/Cainiao tracking, optional order/product linking, and bilingual supplier mediation (PT-BR / Chinese).</li>
-            <br>
-            <li><strong><a href="ai-contract-guide_en.html">🤖 Master AI Contract Guide</a></strong><br>
+            <li><strong><a href="ai-contract-guide_en.html">🤖 Master AI Contract Guide (AI Contract Guide)</a></strong><br>
                 Structured guidelines for AI assistants to generate clean, decoupled plugins and pages adhering strictly to system contracts.</li>
             <br>
-            <li><strong><a href="tutorial-dev.html">Developer Guide: Building Plugins 🧩</a></strong><br>
-                Interactive tutorial on how to use <code>php os-cli.php make:plugin &lt;slug&gt;</code>, <strong>OsExtensionInterface</strong>, <strong>ManualModuleInterface</strong>, and Dependency Injection. <i>(Bilingual)</i></li>
+            <li><strong><a href="flex-builder_en.html">🏗️ Flex Builder FSE (Visual Page Builder)</a></strong><br>
+                Semantic block composition, responsive 12-column CSS Grid with Auto-Reflow across mobile and desktop screens.</li>
             <br>
-            <li><strong><a href="flex-builder_en.html" style="margin-right:8px;">🏗️ Flex Builder FSE Guide</a> | <a href="tutorial-theme.html">Developer Guide: Building Themes 🎨</a></strong><br>
-                Interactive tutorial on how to build high-performance layouts with MVC, Output Buffering, Automatic SEO, and native theme isolation. <i>(Bilingual)</i></li>
+            <li><strong><a href="contratos_en.html">Contracts and Interfaces (SOLID &amp; DIP)</a></strong><br>
+                How strict interface boundaries protect the core from domain-specific coupling.</li>
             <br>
-            <li><strong><a href="tutoriais/02-a-escotilha-de-emergencia.html">Priority System &amp; Hook Resilience 🛡️</a></strong><br>
-                Understand Hook execution priorities and the administrative contingency recovery pattern. <i>(Bilingual)</i></li>
-            <br>
-            <li><strong><a href="tutoriais/03-pacotes-de-plugins.html">Plugin Packages (Hubs) &amp; Academy LMS 📦</a></strong><br>
-                Learn how to cleanly structure a package that bundles multiple independent modules and explore the Automatic <code>.php</code> Lesson Factory (<code>pages/estrutura-de-dados.php</code> &rarr; <code>/cursos/estrutura-de-dados</code>) and 3 Mobile Profiles in Academy LMS. <i>(Bilingual)</i></li>
-            <br>
-            <li><strong><a href="lifecycle.html">The Plugin Lifecycle (Visual Analogy) 🛂</a></strong><br>
-                Understand the Kernel's abstraction and the boot process using the didactic "Immigration Analogy". <i>(Bilingual)</i></li>
-            <br>
-            <li><strong><a href="01-o-contrato-do-sistema.html">Manifesto: The System Contract</a></strong><br>
-                Read why we adopted Dependency Injection instead of hunting for global variables. <i>(Bilingual)</i></li>
-            <br>
-            <li><strong><a href="architecture/01-ciclo-de-confianca-verificavel.html">The Verifiable Trust Cycle (AI)</a></strong><br>
-                The architectural foundation that allows AIs to create and audit plugins with 100% security. <i>(Bilingual)</i></li>
+            <li><strong><a href="lifecycle.html">The Plugin Lifecycle</a></strong><br>
+                Visual analogy explaining the boot stages, service negotiation, and plugin runtime.</li>
         </ul>
     </div>
 
     <footer>
-        &copy; 2026 Domain-System v2.7.0 — Lightweight alternative (~30MB) developed with absolute focus on quality and SOLID principles.
+        &copy; 2026 Domain-System v2.7.0 — Free Open-Source Software (MIT License). Built for simplicity, stability, and speed.
     </footer>
 </body>
+
 </html>

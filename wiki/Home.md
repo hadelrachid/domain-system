@@ -1,132 +1,96 @@
-> 🇧🇷 [Ler em Português](#-visão-geral-do-domain-system) | 🇺🇸 [Read in English](#-domain-system-overview)
+# 📚 Wiki Oficial do Domain System (v2.7.0)
+
+> 🇧🇷 [Ler em Português](#-visão-geral-e-boas-vindas) | 🇺🇸 [Read in English](#-english-overview--welcome)  
+> 🌐 **Documentação Online:** [https://hadelrachid.github.io/domain-system/](https://hadelrachid.github.io/domain-system/)  
+> 💻 **Repositório GitHub:** [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
 
 ---
 
-# 🇧🇷 Visão Geral do Domain System (v2.7.0)
+# 🇧🇷 Visão Geral e Boas-Vindas
 
-> **Nota do Autor:** Olá! Sou um desenvolvedor autodidata e construí o **Domain System** buscando simplicidade, leveza (~30 MB em disco e ~5 MB de RAM) e transparência. Como programo a maior parte do tempo sozinho, utilizo modelos de I.A. como parceiros implacáveis de auditoria de código linha por linha (o projeto já conta com 656 testes automatizados no PHPUnit). No entanto, **a I.A. tem limites e nada substitui a experiência e o bom senso de desenvolvedores humanos reais**. Convido você abertamente a testar, auditar o código e colaborar com sugestões e melhorias no nosso GitHub!
+Olá! Seja muito bem-vindo à Wiki oficial do **Domain System**.
 
-O **Domain System** é uma plataforma modular em PHP 8.2+ para gerenciamento de páginas, lojas de dropshipping, cursos online e temas, projetada para ser leve, direta e sem bloatware.
+Eu sou o Hadel, um desenvolvedor autodidata. Criei este projeto porque estava cansado da lentidão e complexidade de softwares que exigem dezenas de plugins e servidores caros para rodar uma loja ou uma escola online. 
 
-O sistema opera com um núcleo enxuto (~30 MB em disco e ~5 MB de RAM no motor Zend), onde as funcionalidades de negócio são desacopladas em módulos independentes. O projeto encontra-se em ciclo ativo de desenvolvimento e melhorias contínuas.
-
----
-
-## 🏛️ Arquitetura do Sistema
-
-A arquitetura organiza-se em camadas bem definidas:
-
-### 1. Núcleo e Despacho de Eventos (`src/Core`)
-O núcleo do sistema provê apenas a infraestrutura básica:
-- **Injeção de Dependências:** Container desacoplado para resolução de serviços.
-- **Event Dispatcher (Hooks):** Comunicação entre módulos por meio de publicação e escuta de eventos.
-- **Roteador Flexível:** Suporte nativo a execução em raiz de domínio ou subpastas de forma agnóstica.
-
-### 2. Módulos de Infraestrutura (`src/SystemApps`)
-Módulos essenciais para o funcionamento da plataforma (Banco de Dados, Autenticação, Painel Administrativo, Monitoramento e Atualizador). Possuem prioridade na ordem de inicialização do sistema.
-
-### 3. Extensões de Domínio (`src/Plugins`)
-Módulos de negócio e funcionalidades da plataforma:
-- **DomainDrop (Dropshipping com SDK do AliExpress):** Integração com AliExpress Open Platform SDK (`HMAC-SHA256` + OAuth 2.0), mineração autônoma 24h com IA, Espaço do Cliente (`/minha-conta`) com rastreio Correios/Cainiao integrado, vinculação opcional de pedido/produto em chamados, CRM de clientes (`/admin/dropship/customers`) e mediação bilingue (`pt-BR` / `zh-CN`).
-- **Academy LMS:** Gestão completa de cursos, aulas com vídeos e apostilas em PDF, área do aluno e certificados.
-- **DomainCommerce:** Pagamentos integrados via Mercado Pago (Pix instantâneo e Cartão até 12x), PayPal oficial e webhooks de plataformas de afiliados (Hotmart, Eduzz, Monetizze, ClickBank).
-- **Flex Builder:** Construtor visual de cabeçalhos, rodapés e seções em grid responsivo, com isolamento automático de temas nativos (`"flex_builder": false`).
-- **Páginas e SEO:** Criação de páginas de conteúdo e otimização para motores de busca.
+O Domain System foi feito em **PHP 8.2 puro**, ocupa apenas **~30 MB de espaço em disco** e consome **~5 MB de memória RAM**, funcionando de forma rápida e estável até na hospedagem compartilhada mais barata.
 
 ---
 
-## 🛡️ Resiliência e Estabilidade
+## 🤝 O Papel da I.A. e o Chamado à Comunidade
 
-- **Circuit Breaker:** Isolamento de falhas em tempo de execução para evitar que erros em extensões derrubem o site.
-- **Persistência Segura (`AtomicJsonStore`):** Gravação segura de arquivos de configuração com bloqueio concorrente (`LOCK_EX`).
-- **Verificação de Banco (`SchemaDoctorInterface`):** Verificação da integridade das tabelas de banco de dados (SQLite e MySQL).
-- **Segurança de Acesso:** Proteção anti-CSRF, controle de permissões por perfil e tipagem estrita no PHP 8.2+.
+Como programo a maior parte do tempo sozinho, utilizo modelos de Inteligência Artificial como **auditores diários de código de bancada**. Passo linha por linha com eles caçando falhas de concorrência, brechas de segurança e redundâncias. Hoje o sistema conta com mais de **650 testes automatizados no PHPUnit** e quase **4.000 asserções**.
 
----
+No entanto, **I.A. tem limites e nunca vai substituir a experiência, o olhar crítico e o bom senso de desenvolvedores humanos reais**.
 
-## 🔍 Visão Geral do Código: `project.txt`
-
-O repositório disponibiliza na raiz o arquivo **[`project.txt`](../project.txt)**, contendo o mapeamento consolidado da arquitetura, contratos e código-fonte, facilitando auditorias e revisões completas da base de código.
+Esta Wiki e o repositório estão abertos para você:
+- **Testar e auditar:** Tente quebrar o sistema, aponte falhas e nos ajude a blindar o código.
+- **Simplificar a arquitetura:** Ajude a manter os contratos limpos e diretos, sem complicar o que deve ser simples.
+- **Criar extensões:** Desenvolva novos plugins e temas visuais leves.
 
 ---
 
-## 📚 Documentos da Wiki
+## 🚀 Guias de Início Rápido
 
-* **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — Integração com SDK Oficial do AliExpress, mineração 24h, Espaço do Cliente com rastreio integrado e mediação bilingue.
-* **[Flex Builder FSE](Flex-Builder.md)** — Funcionamento dos blocos semânticos, visibilidade responsiva em 4 resoluções com Auto-Reflow e contratos visuais.
-* **[Atualizações e Deploy](Atualizacoes.md)** — Guia do atualizador automático via GitHub Releases e rotinas de backup.
-* **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Isolamento de falhas em plugins para garantir alta disponibilidade.
-* **[Controle de Acesso Centralizado](Global-Gatekeeper.md)** — Autorização declarativa no roteador e validação de permissões.
-* **[Modo de Recuperação Administrativa](Emergency-Hatch.md)** — Mecanismo de contingência para acesso seguro ao painel administrativo.
+Quer começar a programar ou criar algo novo no sistema? Siga nossos tutoriais passo a passo:
+
+* 🧩 **[Como Criar um Plugin do Zero](Criando-Plugins.md)** — Crie seu primeiro módulo em 5 minutos com rotas, menu no admin e banco de dados.
+* 🎨 **[Como Criar um Tema Visual](Criando-Temas.md)** — Construa um layout limpo, moderno e responsivo com PHP puro e HTML.
+* 📦 **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — Como funciona a integração oficial com o AliExpress, cálculo de frete e rastreio.
+* 🏗️ **[Flex Builder (Construtor Visual de Páginas)](Flex-Builder.md)** — Como funcionam os blocos visuais, grid responsivo e isolamento de temas.
+* ⚡ **[Disjuntor (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Como o sistema isola plugins com erro para nunca derrubar sua loja em produção.
+* 🔄 **[Atualizações e Deploy](Atualizacoes.md)** — Como funciona o atualizador com 1 clique e backups automáticos.
+* 🛡️ **[Controle de Acesso Centralizado](Global-Gatekeeper.md)** — Como funcionam as permissões e segurança por capabilities.
+* 🚨 **[Modo de Recuperação Administrativa](Emergency-Hatch.md)** — Procedimento de contingência para acesso seguro ao painel.
+
+---
+
+## 🏛️ A Estrutura em Camadas (Sem Complicação)
+
+1. **Núcleo (`src/Core`):** Cuida apenas do essencial — roteamento de URLs, injeção de dependências e eventos (Hooks). Não possui regras de negócio.
+2. **Aplicativos do Sistema (`src/SystemApps`):** Funções internas vitais (Login de Admin, Banco de Dados, Atualizador).
+3. **Módulos e Recursos (`src/Plugins`):** Onde o negócio acontece:
+   - `domain_drop`: Catálogo, mineração 24h e rastreio do AliExpress.
+   - `commerce`: Checkout com Pix instantâneo, cartão e webhooks de afiliados.
+   - `academy`: Gestão de cursos, aulas em vídeo, leitor de PDF e certificados.
+   - `flextheme`: Motor de temas e editor visual.
 
 ---
 
 <br>
 
-# 🇺🇸 Domain System Overview (v2.7.0)
+# 🇺🇸 English Overview & Welcome
 
-> **Author's Note:** Hi! I am a self-taught developer and I built **Domain System** focused on simplicity, a lightweight footprint (~30 MB on disk and ~5 MB of RAM), and transparency. Building mostly on my own, I use AI models as daily line-by-line code auditing partners (with 656 automated PHPUnit tests). However, **AI has strict limits and nothing replaces the real-world experience and intuition of human developers**. I openly invite you to test, audit the code, and join the project on GitHub!
+> 🌐 **Online Documentation:** [https://hadelrachid.github.io/domain-system/](https://hadelrachid.github.io/domain-system/)  
+> 💻 **GitHub Repository:** [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
 
-**Domain System** is a lightweight, modular web platform in PHP 8.2+ designed for managing websites, dropshipping e-commerce stores, online courses, and content, built with clean, decoupled architecture.
+Welcome to the official **Domain System** Wiki!
 
-The platform operates with a minimal footprint (~30 MB on disk and ~5 MB of Zend RAM), where business features live in decoupled modules.
+I am Hadel, a self-taught software developer. I built Domain System because I was frustrated with bloated platforms requiring heavy frameworks, dozens of unvetted plugins, and expensive servers just to run an e-commerce store or an online school.
 
----
-
-## 🏛️ System Architecture
-
-The architecture is organized into clear layers:
-
-### 1. Core Infrastructure (`src/Core`)
-Provides essential foundation services:
-- **Dependency Injection:** Container for service resolution.
-- **Event Dispatcher (Hooks):** Inter-module communication through event publication.
-- **Environment-Agnostic Router:** Native execution in domain root or subfolder paths.
-
-### 2. Infrastructure Modules (`src/SystemApps`)
-Core system components (Database, Authentication, Cockpit Admin, Monitoring, and Auto-Updater).
-
-### 3. Feature Extensions (`src/Plugins`)
-Business modules and platform capabilities:
-- **DomainDrop (AliExpress SDK Dropshipping):** Official AliExpress Open Platform SDK integration (`HMAC-SHA256` + OAuth 2.0), autonomous 24h product mining with AI, Customer Portal (`/minha-conta`) with integrated Correios/Cainiao tracking, optional order/product linking on tickets, Customer CRM (`/admin/dropship/customers`), and bilingual supplier mediation (`pt-BR` / `zh-CN`).
-- **Academy LMS:** Complete course management, video and PDF lessons, student dashboard, and automated certificates.
-- **DomainCommerce:** Integrated checkout with Mercado Pago (Instant Pix, credit cards up to 12x), official PayPal, and affiliate webhooks (Hotmart, Eduzz, Monetizze, ClickBank).
-- **Flex Builder:** Visual layout builder for headers, footers, and page sections on a responsive 12-column grid, with automatic native theme isolation (`"flex_builder": false`).
-- **Pages & SEO:** Content pages and search engine optimization.
+Domain System is built on pure **PHP 8.2+**, takes up only **~30 MB on disk**, and uses just **~5 MB of RAM** per request, running fast and smooth on any basic shared hosting or cheap VPS.
 
 ---
 
-## 🛡️ Resilience and Stability
+## 🤝 Craftsmanship, AI Auditing, and Open Collaboration
 
-- **Circuit Breaker:** Runtime failure isolation ensuring plugins cannot crash the core system.
-- **Safe Persistence (`AtomicJsonStore`):** Concurrency-safe configuration writes using `LOCK_EX`.
-- **Database Schema Validation (`SchemaDoctorInterface`):** Automatic integrity checks for MySQL and SQLite tables.
-- **Access Security:** Strict CSRF validation, role-based capabilities, and modern PHP 8.2+ type safety.
+Working mostly on my own, I use modern AI models as **relentless daily code-auditing partners**. I review the codebase line by line alongside them, hunting down edge cases, concurrency pitfalls, and security vulnerabilities. Today, the project has over **650 automated tests in PHPUnit** with nearly **4,000 assertions**.
 
----
+Yet, **AI has strict limits and can never replace the intuition, real-world experience, and sanity checks of experienced human engineers**.
 
-## 🔍 Codebase Overview: `project.txt`
-
-The repository provides a consolidated **[`project.txt`](../project.txt)** file at the root, mapping out the complete architecture and code tree for quick technical reviews.
-- **Atomic Persistence (`AtomicJsonStore`):** Safe configuration writes using exclusive file locking (`LOCK_EX`) and atomic renames.
-- **Schema Doctor (`SchemaDoctorInterface`):** Table structure verification across SQLite and MySQL engines.
-- **Capability-Based Access Control:** Granular permissions configurable via the admin panel, featuring CSRF tokens and strict typing.
+This project is completely open for you to:
+- **Audit and test:** Try to break it, find flaws, and help us make it rock-solid.
+- **Refine architecture:** Help us keep explicit contracts clean, readable, and bloat-free.
+- **Build extensions:** Create new payment gateways, shipping integrations, or lightweight visual themes.
 
 ---
 
-## 🔍 Open Auditing: `project.txt`
+## 🚀 Quick Start Guides
 
-The root directory provides **[`project.txt`](../project.txt)**, compiling the complete system architecture, interface contracts, and source code into a single document.
-
-This enables developers and AI models (Claude, ChatGPT, Gemini) to perform comprehensive audits and static analysis with complete context.
-
----
-
-## 📚 Wiki Guides
-
-* **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — Official AliExpress SDK integration, 24h curation, Customer Portal with built-in tracking, and bilingual supplier mediation.
-* **[Flex Builder FSE](Flex-Builder.md)** — Guide to the 14 semantic blocks, 4-resolution responsive visibility with Auto-Reflow, and visual contracts.
-* **[Updates & Deployment](Atualizacoes.md)** — Documentation on the GitHub Releases auto-updater and backup workflows.
-* **[Circuit Breaker & Resilience](Disjuntor-Circuit-Breaker.md)** — Mechanics of runtime fault isolation for extensions and cascading deactivation.
-* **[Centralized Access Control](Global-Gatekeeper.md)** — Declarative routing authorization and preemptive permission validation.
-* **[Administrative Recovery Mode](Emergency-Hatch.md)** — Core contingency fallback route for recovery when auth services are unavailable.
+* 🧩 **[How to Build a Plugin from Scratch](Criando-Plugins.md)** — Step-by-step guide to building your first module in 5 minutes.
+* 🎨 **[How to Build a Visual Theme](Criando-Temas.md)** — Create a modern, lightweight, responsive theme using clean PHP and HTML.
+* 📦 **[DomainDrop (Dropshipping & AliExpress SDK)](DomainDrop.md)** — How the official AliExpress Open Platform integration works.
+* 🏗️ **[Flex Builder (Visual Page Builder)](Flex-Builder.md)** — Semantic blocks, responsive grid, and theme isolation.
+* ⚡ **[Circuit Breaker & Resilience](Disjuntor-Circuit-Breaker.md)** — How runtime failure isolation keeps your business online during errors.
+* 🔄 **[Updates & Deployment](Atualizacoes.md)** — 1-click updates via GitHub Releases with automated rollbacks.
+* 🛡️ **[Access Control & Security](Global-Gatekeeper.md)** — Capability-based permissions and route protection.
+* 🚨 **[Emergency Recovery Mode](Emergency-Hatch.md)** — Administrative recovery workflows when access is impaired.

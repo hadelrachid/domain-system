@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Propósito e Visão - Domain-System</title>
+    <title>Visão, Propósito e Comunidade - Domain-System</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,28 +15,30 @@
     </nav>
 
     <header>
-        <h1>Visão, Propósito e Público-Alvo</h1>
+        <h1>A História, o Propósito e um Chamado à Comunidade</h1>
     </header>
 
     <div class="content">
-        <h2>Por que criar este projeto?</h2>
-        <p>No desenvolvimento web moderno, frequentemente nos deparamos com um dilema: de um lado, CMSs tradicionais que acumulam camadas históricas de código e dependências excessivas; do outro, frameworks que demandam configurações extensas e dezenas de pacotes de terceiros apenas para inicializar uma aplicação básica.</p>
-        <p>O <strong>Domain-System</strong> foi concebido para oferecer uma alternativa intermediária e equilibrada: um sistema desenvolvido em <strong>PHP 8.2+ tipado</strong>, sem dependências externas no núcleo de execução, estruturado sob os princípios de <strong>Clean Architecture</strong> e <strong>Inversão de Dependência (DIP)</strong>.</p>
+        <h2>Por que este projeto existe?</h2>
+        <p>Olá! Meu nome é Hadel e sou um desenvolvedor autodidata. Comecei o <strong>Domain-System</strong> a partir de uma inquietação prática: por que hoje em dia colocar uma loja virtual simples ou uma escola de cursos online no ar exige dezenas de pacotes pesados ou CMSs que consomem centenas de megabytes de RAM e quebram a cada atualização?</p>
+        <p>Quis provar para mim mesmo que era possível fazer diferente com <strong>PHP 8.2 puro e moderno</strong>: criar um sistema web modular, rápido, sem inchaço e que ocupe apenas <strong>~30 MB de espaço em disco</strong> e <strong>~5 MB de RAM</strong>, rodando liso até em hospedagens compartilhadas simples de baixo custo.</p>
 
-        <h2>Qual é o propósito?</h2>
-        <p>Desenvolver um <strong>núcleo (Core)</strong> desacoplado e agnóstico, cuja responsabilidade seja apenas gerenciar a infraestrutura básica: resolução de dependências via Container, ciclo de vida de requisições, tratamento de exceções (Circuit Breaker) e despacho de eventos.</p>
-        <p>O núcleo não possui regras de negócio específicas. Todas as funcionalidades — como gerenciamento de páginas, construtor visual de temas (Flex Builder), LMS e SEO — são implementadas como <strong>Plugins</strong> e <strong>SystemApps</strong> que se comunicam através de interfaces e contratos estritos.</p>
+        <h2>Como o sistema é construído: Homem e I.A. lado a lado</h2>
+        <p>Por ser autodidata e programar a maior parte do tempo sozinho, encontrei na <strong>Inteligência Artificial (Claude, ChatGPT, Nemotron, DeepSeek)</strong> uma parceira implacável de auditoria de bancada. Eu desenho a lógica e programo cada linha; em seguida, coloco os modelos para auditar linha por linha, procurando falhas de segurança, brechas de injeção, problemas de concorrência e código redundante.</p>
+        <p>Para cada problema encontrado, criei testes automatizados no PHPUnit. Hoje o projeto já conta com mais de <strong>650 testes automatizados e quase 4.000 asserções</strong> cobrindo o motor de dropshipping, gateways de pagamento, matrículas e segurança.</p>
 
-        <h2>Para quem é este projeto?</h2>
-        <p>O projeto destina-se a desenvolvedores, pequenas equipes e projetos que buscam um ambiente modular, previsível e leve (~5 MB de consumo de RAM ativo e ~30 MB em disco), ideal para servidores de baixo custo ou hospedagens compartilhadas, mantendo cobertura por testes automatizados (mais de 430 testes no PHPUnit).</p>
-
-        <h2>Como o sistema pode ser estendido?</h2>
-        <p>A arquitetura favorece a extensão sem modificação do núcleo (princípio Aberto/Fechado):</p>
+        <h2>O limite da I.A. e por que preciso de você</h2>
+        <p>Mas sejamos honestos: I.A. só vai até certo ponto. Ela ajuda a enxergar padrões repetitivos, mas <strong>nada substitui o bom senso, a vivência de produção e o olhar crítico de desenvolvedores humanos reais</strong>.</p>
+        <p>Não tenho a pretensão de ter todas as respostas nem de criar um sistema perfeito sozinho. É por isso que o código é 100% aberto e estou fazendo um <strong>chamado sincero à comunidade técnica</strong>:</p>
         <ul>
-            <li><strong>Novos Plugins:</strong> Podem ser criados na pasta <code>src/Plugins/</code> implementando <code>OsExtensionInterface</code> e registrando suas rotas, tabelas e permissões.</li>
-            <li><strong>Novos Blocos do Flex Builder:</strong> Implementando <code>BlockProviderInterface</code> para estender a biblioteca de blocos visuais.</li>
-            <li><strong>Hooks e Eventos:</strong> Ouvintes de eventos podem intervir em pontos específicos do fluxo da aplicação através do <code>EventDispatcher</code>.</li>
+            <li><strong>Auditores de Código e Segurança:</strong> Venha testar, auditar e tentar quebrar o sistema para nos ajudar a deixá-lo cada vez mais blindado.</li>
+            <li><strong>Entusiastas de Arquitetura:</strong> Nos ajude a manter o código simples, limpo e direto, evitando a tentação de complicar o que deveria ser fácil de manter.</li>
+            <li><strong>Colaboradores e Criadores:</strong> Ajude a criar novos plugins, temas visuais ou testes de estresse em servidores reais.</li>
         </ul>
+
+        <h2>Qual é o propósito final?</h2>
+        <p>Manter um núcleo (Core) ultraleve, seguro e estável que apenas gerencie dependências, rotas e eventos, permitindo que qualquer pessoa crie e estenda lojas virtuais, cursos ou portais sem depender de soluções pesadas ou monopólios tecnológicos.</p>
+        <p>Se você compartilha dessa visão de software simples, rápido e transparente, venha participar no nosso GitHub: <a href="https://github.com/hadelrachid/domain-system" target="_blank">github.com/hadelrachid/domain-system</a>!</p>
     </div>
 </body>
 </html>
