@@ -2,52 +2,97 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Tutorial: Criando Plugins - Domain System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Criando Plugins - Domain System v2.7.0</title>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; line-height: 1.6; }
-        .container { max-width: 900px; margin: 0 auto; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-        h2 { color: #10b981; margin-top: 30px; }
-        p { font-size: 16px; color: #cbd5e1; }
-        pre { background: #0b1120; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: Consolas, monospace; font-size: 14px; border: 1px solid #334155; color: #e2e8f0; }
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --border-color: #334155;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-main); color: var(--text-main); padding: 40px 20px; line-height: 1.6; }
+        .container { max-width: 960px; margin: 0 auto; background: var(--bg-card); padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 25px; font-size: 14px; }
+        .nav-links a { color: var(--accent-blue); text-decoration: none; padding: 6px 12px; background: rgba(56, 189, 248, 0.1); border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); transition: all 0.2s; }
+        .nav-links a:hover { background: rgba(56, 189, 248, 0.25); text-decoration: underline; }
+        .nav-links a.wiki-link { color: #a78bfa; background: rgba(167, 139, 250, 0.1); border-color: rgba(167, 139, 250, 0.3); }
+        h1 { color: var(--accent-blue); border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; font-size: 2rem; }
+        h2 { color: var(--accent-green); margin-top: 35px; margin-bottom: 12px; font-size: 1.4rem; border-left: 4px solid var(--accent-green); padding-left: 10px; }
+        h3 { color: var(--accent-blue); margin-top: 20px; margin-bottom: 10px; font-size: 1.15rem; }
+        p { font-size: 15px; color: #cbd5e1; margin-bottom: 15px; }
+        pre { background: #0b1120; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', Consolas, monospace; font-size: 13.5px; border: 1px solid var(--border-color); color: #e2e8f0; margin-bottom: 20px; line-height: 1.5; }
+        code { font-family: Consolas, monospace; background: #0b1120; padding: 2px 6px; border-radius: 4px; color: #38bdf8; font-size: 0.9em; }
         .keyword { color: #c678dd; }
         .string { color: #98c379; }
         .variable { color: #e06c75; }
         .function { color: #61afef; }
-        .comment { color: #5c6370; font-style: italic; }
-        .alert { background: #451a03; color: #fde047; padding: 15px; border-left: 4px solid #eab308; border-radius: 4px; margin: 20px 0; }
+        .comment { color: #64748b; font-style: italic; }
+        .alert { background: rgba(245, 158, 11, 0.12); color: #fde047; padding: 16px; border-left: 4px solid var(--accent-yellow); border-radius: 6px; margin: 25px 0; }
+        .note { background: rgba(56, 189, 248, 0.08); color: #cbd5e1; padding: 16px; border-left: 4px solid var(--accent-blue); border-radius: 6px; margin: 25px 0; }
+        .community-box { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 20px; margin-top: 40px; }
+        .community-box h3 { color: var(--accent-green); margin-top: 0; }
+        ul, ol { margin-left: 25px; margin-bottom: 20px; color: #cbd5e1; }
+        li { margin-bottom: 6px; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted); font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Construindo Plugins no Domain System (v2.5)</h1>
-        <p>O <strong>Domain System</strong> orquestra seus plugins através de contratos e interfaces bem definidos. Siga este tutorial para criar o seu primeiro módulo, com widgets de dashboard, permissões declarativas de acesso (ACL) e manuais auto-descobertos (<code>ManualModuleInterface</code>).</p>
-
-        <div class="alert">
-            <strong>Atenção:</strong> Nunca injete HTML sujo nos Hooks do sistema nem acesse superglobais (<code>$_SESSION</code>) diretamente em Controllers. Todos os componentes vitais agora exigem <em>Providers</em> e <em>Interfaces</em>.
+        <div class="nav-links">
+            <a href="index.html">← Voltar à Documentação</a>
+            <a href="proposito.html">🌱 Propósito &amp; História</a>
+            <a href="contratos.html">📜 Contratos do Sistema</a>
+            <a href="tutorial-theme.html">🎨 Como Criar Temas</a>
+            <a href="https://github.com/hadelrachid/domain-system/wiki/Criando-Plugins" target="_blank" rel="noopener" class="wiki-link">📖 Ver Tutorial na Wiki Oficial ↗</a>
         </div>
 
-        <h2>Passo 0 (Atalho Oficial): Gerador de Boilerplate via CLI &amp; IA</h2>
-        <p>Você pode gerar toda a árvore de contratos automaticamente via linha de comando ou usando qualquer Inteligência Artificial guiada pelo <a href="ai-contract-guide.html" style="color:#38bdf8;"><code>Guia de Contratos para IA</code></a>:</p>
+        <h1>Construindo Plugins no Domain System (v2.7.0)</h1>
+        
+        <p>Criar um plugin no <strong>Domain System v2.7.0</strong> é simples, direto e sem mágica escondida. Como desenvolvedor autodidata, projetei o sistema para ser o mais enxuto e transparente possível. Não usamos frameworks gigantescos nem centenas de pacotes de terceiros: tudo roda em PHP limpo, com contratos bem definidos e uma arquitetura orientada a eventos.</p>
+
+        <p>Neste tutorial passo a passo, você vai aprender a construir um plugin do zero, com:</p>
+        <ul>
+            <li>Estrutura de arquivos e manifesto <code>plugin.json</code>;</li>
+            <li>Ciclo de vida (<code>osRegister</code>, <code>osBoot</code>, <code>activate</code>, <code>deactivate</code>);</li>
+            <li>Criação de rotas HTTP públicas e privadas;</li>
+            <li>Registro de menu no Cockpit Administrativo;</li>
+            <li>Criação de tabelas no banco de dados de forma agnóstica;</li>
+            <li>Widgets de dashboard e documentação com auto-descoberta no Manual.</li>
+        </ul>
+
+        <div class="alert">
+            <strong>Regra de Ouro da Arquitetura:</strong> Nunca injete HTML sujo nos Hooks do sistema nem acesse superglobais (<code>$_SESSION</code>, <code>$_POST</code>) diretamente. Todos os componentes do ecossistema Domain utilizam <em>Providers</em> e <em>Interfaces</em> para garantir segurança e testabilidade com 100% de cobertura.
+        </div>
+
+        <h2>Passo 0: Atalho via CLI ou com Suporte de I.A.</h2>
+        <p>Você pode criar o esqueleto do seu plugin em segundos usando o comando de console:</p>
 <pre>
 php os-cli.php make:plugin meu_app
 </pre>
+        <p>Se você usa ferramentas de Inteligência Artificial (GitHub Copilot, Cursor, Gemini, Claude ou Cline), consulte o nosso <a href="ai-contract-guide.html" style="color:var(--accent-blue);"><code>Guia de Contratos para IA</code></a> para gerar plugins perfeitamente compatíveis de primeira.</p>
 
-        <h2>Passo 1: A Estrutura Base (plugin.json)</h2>
-        <p>Crie uma pasta em <code>src/Plugins/meu_app</code> e adicione o <code>plugin.json</code>:</p>
+        <h2>Passo 1: A Estrutura de Pastas e o plugin.json</h2>
+        <p>Crie uma pasta em <code>src/Plugins/meu_app</code>. O ponto de partida é o arquivo de manifesto <code>plugin.json</code>:</p>
 <pre>
 {
     <span class="string">"name"</span>: <span class="string">"meu_app"</span>,
     <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
-    <span class="string">"description"</span>: <span class="string">"Um App Moderno para o Web OS"</span>,
-    <span class="string">"author"</span>: <span class="string">"Sua Empresa"</span>,
-    <span class="string">"os_version"</span>: <span class="string">"2.5"</span>
+    <span class="string">"description"</span>: <span class="string">"Meu primeiro módulo no Domain System v2.7.0"</span>,
+    <span class="string">"author"</span>: <span class="string">"Seu Nome ou Comunidade"</span>,
+    <span class="string">"os_version"</span>: <span class="string">"2.7"</span>
 }
 </pre>
 
-        <h2>Passo 2: A Classe Plugin (O Coração)</h2>
-        <p>O arquivo <code>Plugin.php</code> deve implementar a fase de <strong>Negociação (Gatekeeper)</strong>, <strong>Execução (Boot)</strong> e <strong>Instalação (Activate)</strong>.</p>
+        <h2>Passo 2: A Classe Principal (Plugin.php)</h2>
+        <p>A classe <code>Plugin.php</code> gerencia as fases de <strong>Negociação (osRegister)</strong>, <strong>Execução (osBoot)</strong> e <strong>Instalação (activate)</strong>.</p>
 <pre>
+<span class="keyword">&lt;?php</span>
 <span class="keyword">namespace</span> DomainSystem\Plugins\meu_app;
 
 <span class="keyword">use</span> DomainSystem\Core\Plugin\AbstractPlugin;
@@ -57,38 +102,62 @@ php os-cli.php make:plugin meu_app
 
 <span class="keyword">class</span> Plugin <span class="keyword">extends</span> AbstractPlugin <span class="keyword">implements</span> OsExtensionInterface
 {
-    <span class="keyword">public function</span> <span class="function">register</span>(): <span class="keyword">void</span> {}
-
-    <span class="comment">// FASE 1: NEGOCIAÇÃO</span>
+    <span class="comment">// 1. NEGOCIAÇÃO: Declara dependências e hooks ouvidos</span>
     <span class="keyword">public function</span> <span class="function">osRegister</span>(OsConnectorInterface <span class="variable">$os</span>): <span class="keyword">void</span>
     {
-        <span class="variable">$os</span>-><span class="function">requireLink</span>(<span class="string">'core.identity'</span>); <span class="comment">// Pede permissão à ACL</span>
-        <span class="variable">$os</span>-><span class="function">listenHook</span>(<span class="string">'dashboard.register_widgets'</span>); <span class="comment">// Pede para criar um Widget</span>
+        <span class="variable">$os</span>-&gt;<span class="function">requireLink</span>(<span class="string">'core.identity'</span>);
+        <span class="variable">$os</span>-&gt;<span class="function">requireLink</span>(<span class="string">'core.database'</span>);
+        <span class="variable">$os</span>-&gt;<span class="function">listenHook</span>(<span class="string">'admin_menu.register'</span>);
+        <span class="variable">$os</span>-&gt;<span class="function">listenHook</span>(<span class="string">'dashboard.register_widgets'</span>);
     }
 
-    <span class="comment">// FASE 2: EXECUÇÃO (Runtime)</span>
+    <span class="comment">// 2. EXECUÇÃO: Registra rotas, menus e ouve eventos</span>
     <span class="keyword">public function</span> <span class="function">osBoot</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span>
     {
-        <span class="variable">$identity</span> = <span class="variable">$runtime</span>-><span class="function">getLink</span>(<span class="string">'core.identity'</span>);
-        
-        <span class="variable">$runtime</span>-><span class="function">onHook</span>(<span class="string">'dashboard.register_widgets'</span>, <span class="keyword">function</span>(<span class="variable">$registry</span>) <span class="keyword">use</span> (<span class="variable">$identity</span>) {
-            <span class="variable">$registry</span>-><span class="function">registerProvider</span>(<span class="keyword">new</span> MeuWidgetProvider(<span class="variable">$identity</span>));
+        <span class="comment">// Registra uma rota pública no sistema</span>
+        <span class="variable">$runtime</span>-&gt;<span class="function">addRoute</span>(<span class="string">'GET'</span>, <span class="string">'/meu-app'</span>, <span class="keyword">function</span>() {
+            <span class="keyword">return</span> <span class="string">'&lt;h1&gt;Olá mundo do Plugin Meu App!&lt;/h1&gt;'</span>;
+        });
+
+        <span class="comment">// Adiciona um item no menu do painel administrativo</span>
+        <span class="variable">$runtime</span>-&gt;<span class="function">onHook</span>(<span class="string">'admin_menu.register'</span>, <span class="keyword">function</span>(&amp;<span class="variable">$menuItems</span>) {
+            <span class="variable">$menuItems</span>[] = [
+                <span class="string">'title'</span> =&gt; <span class="string">'Meu App'</span>,
+                <span class="string">'url'</span>   =&gt; <span class="string">'/admin/meu-app'</span>,
+                <span class="string">'icon'</span>  =&gt; <span class="string">'box'</span>
+            ];
+        });
+
+        <span class="comment">// Registra um widget no Dashboard</span>
+        <span class="variable">$identity</span> = <span class="variable">$runtime</span>-&gt;<span class="function">getLink</span>(<span class="string">'core.identity'</span>);
+        <span class="variable">$runtime</span>-&gt;<span class="function">onHook</span>(<span class="string">'dashboard.register_widgets'</span>, <span class="keyword">function</span>(<span class="variable">$registry</span>) <span class="keyword">use</span> (<span class="variable">$identity</span>) {
+            <span class="variable">$registry</span>-&gt;<span class="function">registerProvider</span>(<span class="keyword">new</span> MeuWidgetProvider(<span class="variable">$identity</span>));
         });
     }
 
-    <span class="comment">// FASE 3: INSTALAÇÃO (Só roda quando o Admin clica em Instalar)</span>
+    <span class="comment">// 3. INSTALAÇÃO: Executado apenas uma vez ao clicar em Ativar</span>
     <span class="keyword">public function</span> <span class="function">activate</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span>
     {
-        <span class="comment">// Cria a permissão no Banco de Dados para o menu "Controle de Acessos"</span>
-        <span class="variable">$runtime</span>-><span class="function">registerCapability</span>(<span class="string">'meu_app.acessar'</span>, <span class="string">'Módulo Meu App'</span>);
+        <span class="variable">$db</span> = <span class="variable">$runtime</span>-&gt;<span class="function">getDb</span>();
+        <span class="variable">$db</span>-&gt;<span class="function">exec</span>(<span class="string">"CREATE TABLE IF NOT EXISTS ds_meu_app_itens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo VARCHAR(255) NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )"</span>);
+
+        <span class="comment">// Registra a permissão no controle de acessos (ACL)</span>
+        <span class="variable">$runtime</span>-&gt;<span class="function">registerCapability</span>(<span class="string">'meu_app.acessar'</span>, <span class="string">'Módulo Meu App'</span>);
     }
+
+    <span class="keyword">public function</span> <span class="function">deactivate</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span> {}
+    <span class="keyword">public function</span> <span class="function">uninstall</span>(OsRuntimeInterface <span class="variable">$runtime</span>): <span class="keyword">void</span> {}
 }
 </pre>
 
-        <h2>Passo 3: Criando o Widget Profissional (O Provider)</h2>
-        <p>No padrão corporativo do OS, você não ejeta HTML no vazio. Você cria um Contrato de Fornecedor de Widgets (<code>DashboardWidgetProviderInterface</code>) e injeta o <code>SessionManagerInterface</code>:</p>
-
+        <h2>Passo 3: Criando o Widget do Dashboard (MeuWidgetProvider.php)</h2>
+        <p>Para adicionar caixas e resumos no painel sem injetar HTML no vazio, implemente <code>DashboardWidgetProviderInterface</code>:</p>
 <pre>
+<span class="keyword">&lt;?php</span>
 <span class="keyword">namespace</span> DomainSystem\Plugins\meu_app;
 
 <span class="keyword">use</span> DomainSystem\Core\Contracts\DashboardWidgetProviderInterface;
@@ -102,8 +171,8 @@ php os-cli.php make:plugin meu_app
 
     <span class="keyword">public function</span> <span class="function">__construct</span>(IdentityManager <span class="variable">$identity</span>, ?SessionManagerInterface <span class="variable">$session</span> = <span class="keyword">null</span>)
     {
-        <span class="variable">$this</span>->identity = <span class="variable">$identity</span>;
-        <span class="variable">$this</span>->session = <span class="variable">$session</span>;
+        <span class="variable">$this</span>-&gt;identity = <span class="variable">$identity</span>;
+        <span class="variable">$this</span>-&gt;session = <span class="variable">$session</span>;
     }
 
     <span class="keyword">public function</span> <span class="function">getProviderName</span>(): <span class="keyword">string</span>
@@ -114,23 +183,23 @@ php os-cli.php make:plugin meu_app
     <span class="keyword">public function</span> <span class="function">getAvailableWidgets</span>(): <span class="keyword">array</span>
     {
         <span class="keyword">return</span> [
-            <span class="string">'meu_grafico'</span> => [
-                <span class="string">'title'</span> => <span class="string">'Gráfico de Vendas'</span>,
-                <span class="string">'description'</span> => <span class="string">'Visualização de Vendas Mensais'</span>
+            <span class="string">'resumo_meu_app'</span> =&gt; [
+                <span class="string">'title'</span> =&gt; <span class="string">'Status do Meu App'</span>,
+                <span class="string">'description'</span> =&gt; <span class="string">'Métricas e avisos rápidos'</span>
             ]
         ];
     }
 
     <span class="keyword">public function</span> <span class="function">renderWidget</span>(<span class="keyword">string</span> <span class="variable">$widgetId</span>): <span class="keyword">string</span>
     {
-        <span class="keyword">if</span> (<span class="variable">$widgetId</span> === <span class="string">'meu_grafico'</span>) {
-            <span class="variable">$userId</span> = (<span class="keyword">int</span>)(<span class="variable">$this</span>->session?-><span class="function">get</span>(<span class="string">'auth_user_id'</span>, <span class="string">0</span>) ?? <span class="string">0</span>);
+        <span class="keyword">if</span> (<span class="variable">$widgetId</span> === <span class="string">'resumo_meu_app'</span>) {
+            <span class="variable">$userId</span> = (<span class="keyword">int</span>)(<span class="variable">$this</span>-&gt;session?-&gt;<span class="function">get</span>(<span class="string">'auth_user_id'</span>, <span class="string">0</span>) ?? <span class="string">0</span>);
             
-            <span class="keyword">if</span> (!<span class="variable">$this</span>->identity-><span class="function">userCan</span>(<span class="variable">$userId</span>, <span class="string">'meu_app.acessar'</span>)) {
-                <span class="keyword">return</span> <span class="string">'&lt;div class="error"&gt;Acesso Negado pela ACL&lt;/div&gt;'</span>;
+            <span class="keyword">if</span> (!<span class="variable">$this</span>-&gt;identity-&gt;<span class="function">userCan</span>(<span class="variable">$userId</span>, <span class="string">'meu_app.acessar'</span>)) {
+                <span class="keyword">return</span> <span class="string">'&lt;div class="error"&gt;Acesso restrito.&lt;/div&gt;'</span>;
             }
             
-            <span class="keyword">return</span> <span class="string">'&lt;h3&gt;Seu gráfico aqui!&lt;/h3&gt;'</span>;
+            <span class="keyword">return</span> <span class="string">'&lt;div class="card"&gt;&lt;h4&gt;Meu App Ativo!&lt;/h4&gt;&lt;p&gt;Tudo operando normalmente.&lt;/p&gt;&lt;/div&gt;'</span>;
         }
         <span class="keyword">return</span> <span class="string">''</span>;
     }
@@ -138,14 +207,27 @@ php os-cli.php make:plugin meu_app
 </pre>
 
         <h2>Passo 4: Auto-Descoberta no Manual de Instruções (manual/module.php)</h2>
-        <p>Na versão <strong>2.5.0</strong>, basta criar a pasta <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>. O motor <code>PluginManualScanner</code> irá rastreá-la automaticamente e exibir seu tutorial interativo e seus itens de checklist no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> do Cockpit!</p>
+        <p>No <strong>Domain System v2.7.0</strong>, você não precisa editar o core para ter documentação do seu plugin. Basta criar o arquivo <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>:</p>
 <pre>
+<span class="keyword">&lt;?php</span>
 <span class="comment">// src/Plugins/meu_app/manual/module.php</span>
 <span class="keyword">require_once</span> __DIR__ . <span class="string">'/MeuAppManualModule.php'</span>;
+
 <span class="keyword">return new</span> \DomainSystem\Plugins\meu_app\manual\MeuAppManualModule();
 </pre>
+        <p>O <code>PluginManualScanner</code> detecta seu módulo automaticamente e o insere no menu <strong>Manual de Instruções (<code>/admin/manual</code>)</strong> com seu checklist de homologação e guia interativo!</p>
 
-        <p>E pronto! O seu plugin é um cidadão de primeira classe do Web OS (~30MB), perfeitamente blindado, validado e auto-documentado.</p>
+        <div class="community-box">
+            <h3>🤝 Ajude a Construir o Futuro do Domain System</h3>
+            <p>Este sistema nasceu da necessidade real de um ambiente web enxuto, independente de gigantes corporativos, capaz de rodar uma loja, portal ou aplicação inteira em um servidor modesto consumindo menos de 30 MB.</p>
+            <p>Sou um desenvolvedor <strong>autodidata</strong>. Utilizo Inteligências Artificiais constantemente na bancada de trabalho para auditar linha por linha do código, caçando brechas de segurança, falhas de lógica e gargalos de performance. Mas <strong>nada substitui o olhar de outros programadores humanos experientes</strong>.</p>
+            <p>Se você entende de arquitetura PHP, segurança, testes automatizados ou usabilidade, venha somar conosco! Abra uma issue, proponha um Pull Request ou ajude a revisar nossos contratos:</p>
+            <p>👉 <strong>GitHub:</strong> <a href="https://github.com/hadelrachid/domain-system" target="_blank" rel="noopener" style="color:var(--accent-green); font-weight:bold;">github.com/hadelrachid/domain-system</a> | <strong>Wiki:</strong> <a href="https://github.com/hadelrachid/domain-system/wiki" target="_blank" rel="noopener" style="color:var(--accent-green); font-weight:bold;">github.com/hadelrachid/domain-system/wiki</a></p>
+        </div>
+
+        <footer>
+            &copy; 2026 Domain-System v2.7.0 &bull; Software Livre &bull; Criado com simplicidade e paixão por tecnologia aberta.
+        </footer>
     </div>
 </body>
 </html>
