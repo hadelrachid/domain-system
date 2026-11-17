@@ -104,6 +104,17 @@ class DomainDropProductVariantsTest extends TestCase
         $this->assertSame('Preto Espacial / Couro Legítimo', $variant->getShortLabel());
         $this->assertTrue($variant->matchesOptions(['Cor da Caixa' => 'Preto Espacial', 'Pulseira' => 'Couro Legítimo']));
         $this->assertFalse($variant->matchesOptions(['Cor da Caixa' => 'Prata']));
+        $this->assertTrue($variant->isAvailable());
+
+        $outOfStockVariant = new ProductVariantDto(
+            skuId: 'SKU-WATCH-OOS',
+            skuAttr: '',
+            options: ['Cor' => 'Dourado'],
+            priceBrl: 199.90,
+            costPriceUsd: 25.00,
+            stock: 0
+        );
+        $this->assertFalse($outOfStockVariant->isAvailable());
     }
 
     public function testDropshipProductDtoDetectsVariantsAndExtractsAxes(): void
@@ -120,6 +131,17 @@ class DomainDropProductVariantsTest extends TestCase
         $this->assertArrayHasKey('Modelo', $axes);
         $this->assertEquals(['Preto', 'Vermelho Vinho'], $axes['Cor']);
         $this->assertEquals(['iPhone 15', 'iPhone 14'], $axes['Modelo']);
+
+        // Preto está disponível (iPhone 15 tem stock=120)
+        $this->assertTrue($this->productWithVariants->isOptionAvailable('Cor', 'Preto'));
+        // Vermelho Vinho está disponível (iPhone 15 tem stock=45)
+        $this->assertTrue($this->productWithVariants->isOptionAvailable('Cor', 'Vermelho Vinho'));
+        // iPhone 15 está disponível (tem stock)
+        $this->assertTrue($this->productWithVariants->isOptionAvailable('Modelo', 'iPhone 15'));
+        // iPhone 14 só tem SKU Preto com stock=0, então não deve estar disponível
+        $this->assertFalse($this->productWithVariants->isOptionAvailable('Modelo', 'iPhone 14'));
+        // Opção inexistente
+        $this->assertFalse($this->productWithVariants->isOptionAvailable('Cor', 'Azul Neon'));
     }
 
     public function testDropshipProductDtoFindsVariantBySkuAndOptions(): void

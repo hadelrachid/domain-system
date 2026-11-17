@@ -1500,15 +1500,15 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
                             'stock' => 20,
                         ],
-                        // Vermelho Vinho
+                        // Vermelho Vinho (Indisponível no link oficial da loja -> stock: 0 desativado)
                         [
                             'sku_id' => '1005013303040786-VINHO-S',
                             'sku_attr' => '14:200000183;5:100014064',
                             'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'S (BR P)'],
                             'price_brl' => 69.90,
                             'cost_price_usd' => 6.60,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 30,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-VINHO-M',
@@ -1516,8 +1516,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'M (BR M)'],
                             'price_brl' => 74.90,
                             'cost_price_usd' => 7.20,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 55,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-VINHO-L',
@@ -1525,8 +1525,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'L (BR G)'],
                             'price_brl' => 79.90,
                             'cost_price_usd' => 7.80,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 28,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-VINHO-XL',
@@ -1534,18 +1534,18 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Vermelho Vinho', 'Tamanho' => 'XL (BR GG)'],
                             'price_brl' => 84.90,
                             'cost_price_usd' => 8.30,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 15,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
-                        // Branco Pérola
+                        // Branco Pérola (Indisponível no link oficial da loja -> stock: 0 desativado)
                         [
                             'sku_id' => '1005013303040786-BRANCO-S',
                             'sku_attr' => '14:200000184;5:100014064',
                             'options' => ['Cor' => 'Branco Pérola', 'Tamanho' => 'S (BR P)'],
                             'price_brl' => 64.90,
                             'cost_price_usd' => 6.10,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 25,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-BRANCO-M',
@@ -1553,8 +1553,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Branco Pérola', 'Tamanho' => 'M (BR M)'],
                             'price_brl' => 69.90,
                             'cost_price_usd' => 6.80,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 40,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-BRANCO-L',
@@ -1562,8 +1562,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Branco Pérola', 'Tamanho' => 'L (BR G)'],
                             'price_brl' => 74.90,
                             'cost_price_usd' => 7.40,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 22,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                         [
                             'sku_id' => '1005013303040786-BRANCO-XL',
@@ -1571,8 +1571,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                             'options' => ['Cor' => 'Branco Pérola', 'Tamanho' => 'XL (BR GG)'],
                             'price_brl' => 79.90,
                             'cost_price_usd' => 7.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 18,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
+                            'stock' => 0,
                         ],
                     ],
                 ],

@@ -33,6 +33,14 @@ final class ProductVariantDto
     }
 
     /**
+     * Informa se a variação possui estoque disponível para compra.
+     */
+    public function isAvailable(): bool
+    {
+        return $this->stock > 0;
+    }
+
+    /**
      * Retorna a descrição formatada das opções selecionadas (ex: "Cor: Vermelho Vinho • Tamanho: M").
      */
     public function getFormattedOptions(): string

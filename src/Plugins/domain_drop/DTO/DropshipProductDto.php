@@ -127,6 +127,25 @@ final class DropshipProductDto
     }
 
     /**
+     * Verifica se um determinado valor de opção possui pelo menos uma SKU com estoque ativo.
+     */
+    public function isOptionAvailable(string $axis, string $value): bool
+    {
+        $variants = $this->getVariants();
+        if (empty($variants)) {
+            return true;
+        }
+
+        foreach ($variants as $variant) {
+            if (isset($variant->options[$axis]) && $variant->options[$axis] === $value && $variant->isAvailable()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Localiza uma variante específica pelo código de SKU.
      */
     public function findVariantBySku(string $skuId): ?ProductVariantDto

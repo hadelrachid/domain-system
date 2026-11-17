@@ -11,7 +11,7 @@ $sellerInfo = $product->getSellerInfo();
 $allImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
 if ($product->hasVariants()) {
     foreach ($product->getVariants() as $v) {
-        if (!empty($v->imageUrl) && !in_array($v->imageUrl, $allImages, true)) {
+        if ($v->isAvailable() && !empty($v->imageUrl) && !in_array($v->imageUrl, $allImages, true)) {
             $allImages[] = $v->imageUrl;
         }
     }
@@ -165,13 +165,21 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                                 </div>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                     <?php foreach ($options as $optIdx => $optionValue): ?>
+                                        <?php $isInStock = $product->isOptionAvailable($axisName, $optionValue); ?>
                                         <button type="button"
-                                                class="btn-variant-chip"
+                                                class="btn-variant-chip <?= !$isInStock ? 'is-disabled' : '' ?>"
                                                 data-axis="<?= htmlspecialchars($axisName) ?>"
                                                 data-value="<?= htmlspecialchars($optionValue) ?>"
-                                                onclick="selectVariantOption(this.getAttribute('data-axis'), this.getAttribute('data-value'))"
-                                                style="background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.14); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;">
+                                                data-in-stock="<?= $isInStock ? '1' : '0' ?>"
+                                                <?= !$isInStock ? 'disabled title="Opção indisponível / esgotada neste modelo"' : '' ?>
+                                                onclick="if(!this.disabled) selectVariantOption(this.getAttribute('data-axis'), this.getAttribute('data-value'))"
+                                                style="<?= $isInStock
+                                                    ? 'background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.14); color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;'
+                                                    : 'background: rgba(255,255,255,0.01); border: 1.5px dashed rgba(255,255,255,0.1); color: #64748b; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: not-allowed; opacity: 0.4; display: inline-flex; align-items: center; gap: 6px; text-decoration: line-through; pointer-events: none;' ?>">
                                             <span><?= htmlspecialchars($optionValue) ?></span>
+                                            <?php if (!$isInStock): ?>
+                                                <span style="font-size: 9.5px; background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 1px 5px; border-radius: 4px; text-decoration: none; font-weight: 700;">Esgotado</span>
+                                            <?php endif; ?>
                                         </button>
                                     <?php endforeach; ?>
                                 </div>
@@ -488,6 +496,20 @@ var activeProductSku = null;
 
 function selectVariantOption(axis, value) {
     if (!axis || !value) return;
+
+    // Impede seleção de opções desativadas ou sem estoque
+    var isAllowed = false;
+    document.querySelectorAll('.btn-variant-chip').forEach(function(btn) {
+        if (btn.getAttribute('data-axis') === axis && btn.getAttribute('data-value') === value) {
+            if (btn.disabled || btn.getAttribute('data-in-stock') === '0') {
+                isAllowed = false;
+            } else {
+                isAllowed = true;
+            }
+        }
+    });
+    if (!isAllowed) return;
+
     selectedVariationOptions[axis] = value;
 
     // Atualiza o rótulo da opção selecionada (sem usar CSS.escape para compatibilidade total)
@@ -497,9 +519,18 @@ function selectVariantOption(axis, value) {
         }
     });
 
-    // Atualiza os estilos visuais dos botões do mesmo eixo
+    // Atualiza os estilos visuais dos botões do mesmo eixo (mantendo os desativados/esgotados apagados)
     document.querySelectorAll('.btn-variant-chip').forEach(function(btn) {
         if (btn.getAttribute('data-axis') === axis) {
+            var inStock = (btn.getAttribute('data-in-stock') !== '0') && !btn.disabled;
+            if (!inStock) {
+                btn.style.background = 'rgba(255,255,255,0.01)';
+                btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                btn.style.color = '#64748b';
+                btn.style.boxShadow = 'none';
+                return;
+            }
+
             if (btn.getAttribute('data-value') === value) {
                 btn.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.3) 0%, rgba(240,208,96,0.2) 100%)';
                 btn.style.borderColor = '#D4AF37';
@@ -582,9 +613,24 @@ function findAndApplyMatchingVariant() {
 function initProductVariants() {
     if (productVariationAxes && Object.keys(productVariationAxes).length > 0) {
         for (var axis in productVariationAxes) {
-            var opts = productVariationAxes[axis];
-            if (opts && opts.length > 0) {
-                selectVariantOption(axis, opts[0]);
+            var preferredVal = null;
+            // Procura o primeiro chip deste eixo que tem estoque ativo e não está disabled
+            var chips = document.querySelectorAll('.btn-variant-chip');
+            for (var c = 0; c < chips.length; c++) {
+                var chip = chips[c];
+                if (chip.getAttribute('data-axis') === axis && !chip.disabled && chip.getAttribute('data-in-stock') === '1') {
+                    preferredVal = chip.getAttribute('data-value');
+                    break;
+                }
+            }
+
+            if (preferredVal) {
+                selectVariantOption(axis, preferredVal);
+            } else {
+                var opts = productVariationAxes[axis];
+                if (opts && opts.length > 0) {
+                    selectVariantOption(axis, opts[0]);
+                }
             }
         }
     }
