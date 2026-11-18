@@ -98,7 +98,10 @@
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
                 App Secret
             </label>
-            <input type="password" name="app_secret" placeholder="<?= !empty($config['app_secret']) ? '•••••••••••••••••••••••••••••••• (Salvo com segurança)' : 'Cole seu App Secret aqui' ?>" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+            <div style="position: relative;">
+                <input type="password" id="input_app_secret" name="app_secret" placeholder="<?= !empty($config['app_secret']) ? '•••••••••••••••••••••••••••••••• (Salvo com segurança)' : 'Cole seu App Secret aqui' ?>" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 44px 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+                <button type="button" onclick="ddToggleSecret('input_app_secret', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar App Secret" aria-label="Mostrar ou ocultar chave">👁️</button>
+            </div>
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
                 Armazenado com segurança em <code>config/plugins/domain_drop.json</code> (protegido contra commit no Git). Deixe em branco para manter o atual.
             </span>
@@ -108,7 +111,10 @@
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
                 Access Token OAuth2 (Sessão do Dropshipper)
             </label>
-            <input type="password" name="access_token" placeholder="<?= !empty($config['access_token']) ? '•••••••••••••••••••••••••••••••• (Token Ativo)' : 'Cole o Access Token de autorização OAuth (opcional)' ?>" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+            <div style="position: relative;">
+                <input type="password" id="input_access_token" name="access_token" placeholder="<?= !empty($config['access_token']) ? '•••••••••••••••••••••••••••••••• (Token Ativo)' : 'Cole o Access Token de autorização OAuth (opcional)' ?>" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 44px 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+                <button type="button" onclick="ddToggleSecret('input_access_token', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar Access Token" aria-label="Mostrar ou ocultar token">👁️</button>
+            </div>
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
                 Token de sessão concedido pelo AliExpress para chamadas autenticadas de produtos e pedidos dropshipping. Caso não possua, o motor utilizará a base inteligente curada.
             </span>
@@ -289,6 +295,15 @@
             });
         });
     });
+
+    function ddToggleSecret(id, btn) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? '🙈' : '👁️';
+        btn.style.transform = show ? 'translateY(-50%) scale(1.15)' : 'translateY(-50%) scale(1)';
+    }
     </script>
 
 </div>

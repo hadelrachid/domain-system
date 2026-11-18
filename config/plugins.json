@@ -19,6 +19,6 @@
     "radio_online": true,
     "commerce": false,
     "DomainCommerce": true,
-    "domain_drop": false,
+    "domain_drop": true,
     "DomainDrop": true
 }
