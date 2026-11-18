@@ -1,136 +1,146 @@
-# Chapter 00 — Introduction: Map of the System (No Hard Words)
+# Chapter 00 — Introduction: System Map & Architectural Philosophy
 
-> [🇧🇷 Versão em Português](../00-introducao.md) | 🇺🇸 **English**  
-> 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 01 — The "Start" on the Server](01-server-start.md)
-
----
-
-## 1. What is Domain System, really?
-
-**Domain System (v2.7.0)** is a complete web platform written in **pure PHP 8.2+** — built from scratch without heavy third-party frameworks (like Laravel or Symfony) inside its core.
-
-With it, a single website can run:
-- pages and CMS content,
-- an online store and dropshipping hub (`domain_drop`),
-- payments with Pix, credit cards, and PayPal (`commerce`),
-- an online courses school (`academy`),
-- a drag-and-drop visual page builder (`flextheme`).
-
-### Why do we say it works like an "Operating System"?
-
-Think about your phone or your laptop (Windows, macOS, or Linux):
-- **Windows** doesn't stuff Photoshop, Spotify, and WhatsApp inside one giant file.
-- It provides a small **core** (handling memory, screen, network, and passwords) and lets you **install apps** on top. If Spotify crashes, Windows keeps running.
-
-Domain System was built with **that exact same idea**. Instead of dumping store logic, courses, login, and database queries into one tangled pile of files, it organizes the codebase like a **modern commercial building**:
-
-- **The Single Front Desk (`public/index.php`):** nobody climbs in through a back window. Every visitor enters through reception.
-- **Building Management / Kernel (`src/Core/Application.php`):** there is only **one** management office running the whole building (the *Singleton* pattern).
-- **Water, Electricity & Locks (`src/SystemApps/`):** essential services required just to open the doors: login (`auth`), database (`Database`), installer (`installer`), admin panel (`SystemAdmin`), and updater (`SystemUpdater`).
-- **Rented Shop Spaces (`src/Plugins/`):** the store, the online school, and payments are independent tenants. You can turn one off without bringing the others down.
-- **Paint & Interior Design (`themes/`):** handles only the visual look (HTML/CSS). You can redesign the storefront without touching the wiring.
-- **Circuit Breaker (`src/Core/Error/CircuitBreaker.php`):** if one shop keeps short-circuiting (throwing repeated crashes), the breaker shuts off **only that room** so the rest of the building stays lit.
+> 🇺🇸 **English** | [🇧🇷 Versão em Português](../00-introducao.md)  
+> 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 01 — Server "Start"](01-server-start.md)
 
 ---
 
-## 2. Where Everything Lives (Folder Map)
+## 1. The Pain Nobody Tells You About
 
-When you open the project folder on your computer, you will see several directories. You **don't** need to memorize them all today — just know the job of the main ones:
+This guide was not born inside an academic lecture hall, nor was it written to satisfy university committees. It was forged in the **authentic trenches of programming**:
+- From the frustration of seeing code that began clean and elegant devolve, over a few short months, into an uncontrollable monster;
+- From the dread of tweaking a single line in a file only to realize that three unrelated screens suddenly stopped working;
+- From the anxiety of touching legacy systems because they resemble a fragile house of cards waiting to crumble at the slightest breeze.
 
-| Folder or File | What it does, in plain English |
-| :--- | :--- |
-| `.htaccess` & `public/.htaccess` | Rules for the web server (Apache/XAMPP/LiteSpeed). They say: *"if the visitor didn't ask for a real image or CSS file, send the request to `public/index.php`"* and shield private folders. |
-| `public/index.php` | **The front door.** The very first PHP file that runs whenever someone visits any page on the site. |
-| `bootstrap.php` | **The ignition key.** Reads `.env` (secrets and settings), turns on automatic class loading, arms crash protection, and creates the system's brain (`Application`). |
-| `src/Core/` | **The central engine.** Holds the brain (`Application`), URL router (`Router`), object storage (`Container`), event radio (`EventDispatcher`), security tools, and contracts. |
-| `src/SystemApps/` | **Mandatory system apps.** Login, database, installer, admin dashboard, monitor, and updater. |
-| `src/Plugins/` | **Optional business modules.** Store (`domain_drop`), courses (`academy`), payments (`commerce`), visual builder (`flextheme`), pages (`pages`), SEO (`seo`), etc. |
-| `themes/` | **The visual screens.** Templates for the admin dashboard (`themes/admin/`) and public website themes. |
-| `config/` | **State files.** Small `.json` files recording which plugins are turned on or tripped by the circuit breaker. |
-| `composer.json` | **Class address book (PSR-4).** Tells PHP which folder holds each class so you don't need 200 manual `require_once` lines. |
-| `tests/` | **Automated test robots.** Over 600 PHPUnit tests checking that nothing breaks when code changes. |
+Traditional textbooks often introduce object-oriented principles through sterile, childish examples: *"Animal makes sound"*, *"Dog barks"*, *"Cat meows"*. In real-world software engineering — when building an e-commerce platform, a medical clinic portal, or an LMS with payment gateways — you don't write barking dogs. You deal with clients demanding:
+> *"Today we want notifications sent via WhatsApp. Two weeks from now, we want them replaced by email. Next month, we want both along with SMS. And by the end of the year, we must accept Pix, credit cards, and PayPal without causing server downtime."*
+
+If your classes instantiate their dependencies directly inside themselves, each change of mind results in dozens of cascading `if/else` statements, bloated files, and catastrophic coupling.
+
+To solve this sustainably, we don't need to memorize arcane acronyms. **We need to understand the physics and biology of connections**.
 
 ---
 
-## 3. Plain-English Translator for Technical Words
+## 2. Key Paradigm Shifts: The Wall Socket, Arduino, and Nature
 
-Programmers love giving fancy names to very simple ideas. Here is an honest translation of the words you will run into in the next chapters:
+As explored in the book [**Understanding SOLID Architecture: From Object to Contract, From Coupling to Architecture**](https://www.amazon.com.br/dp/B0H74L5GFL) (available on Amazon Kindle), software architecture is fundamentally about **connections between parts**, not raw syntax.
 
-### 1. Front Controller = "Single Front Desk"
-In very old PHP websites, every page was a separate file: `about.php`, `contact.php`, `product.php`, `admin.php`. The problem? If you wanted to add a login check or maintenance lock, you had to copy-paste it into 50 files — and you would always forget one!
+### 🔌 The Wall Socket and the Plug: "Contract First, Implementation Second"
 
-With a **Front Controller**, **every** page passes through **one single file**: `public/index.php`. It runs the global checks, wakes the system up, and hands the request to the right piece of code.
+Consider the electrical wall socket in your home:
+1. **The Socket is the Interface (the Contract):** it specifies immutable rules — hole spacing, voltage (110V/220V), and current frequency. It **never changes**.
+2. **Appliances are Concrete Classes (the Plugs):** you can plug in a fan, a refrigerator, a television, or a smartphone charger. Each contains completely distinct internal electronics, yet all adhere to the exact same pin standard.
+3. **Dependency Injection is the Connection:** the wall never manufactures the fan. The fan arrives pre-assembled and is simply plugged into the wall.
 
-### 2. Bootstrap = "Ignition Key"
-Before a car drives, you turn the key: the battery wakes up, dashboard lights check in, and the engine starts. In Domain System, `bootstrap.php` does that exact job: reads `.env`, sets timezone, turns on error handling, and builds the system's brain.
+> **The Golden Rule:** *"The socket never changes. The plugs change constantly. The core system depends strictly on the socket (contract), never on the plug."*
 
-### 3. Singleton = "There Can Only Be One"
-Imagine a school with **two principals** giving opposite orders at the same time, or a beehive with **two queens**. Total chaos.
+### 🤖 The Arduino Motherboard
 
-A **Singleton** is simply a way to guarantee that a critical class (here, `Application`, the system's brain) only ever has **1 living instance** during a request. Everyone who asks for it gets **the exact same one**.
+When connecting an LED or a sensor to an Arduino pin:
+- The microcontroller board has no awareness whether it is illuminating a room, spinning a stepper motor, or sounding a buzzer.
+- It only knows that a component is connected to a standard pin honoring the electrical protocol (0V or 5V).
+- The **Kernel is the motherboard**. The **modules and plugins are the components**. And the **connections are the interfaces**.
 
-### 4. Dependency Injection (DI) Container = "The Tool Room"
-Suppose a mechanic needs a screwdriver. There are two ways to work:
-- **Messy way:** every time they need a screwdriver, they walk out and buy a brand-new one (`new DatabaseConnection()`). By noon you have 40 database connections eating memory.
-- **Organized way (Container):** there is a **Tool Room** (`src/Core/Container/Container.php`). Whenever code needs the database or session manager, it asks the Tool Room — which hands back a ready-to-use tool (reusing the same one when appropriate).
+### 🐝 Nature as the Master Architect (Alan Kay & Biology)
 
-### 5. Interface / Contract (`src/Core/Contracts/`) = "The Wall Outlet"
-You never have to tear open your living room wall just to plug in a new blender. Why? Because the wall and the blender agree on the **shape of the plug**.
+Alan Kay, the father of Object-Oriented Programming, did not look to formal mathematics for inspiration — he looked to **biology**:
+- Cells possess membranes (**interfaces**) and internal nucleus state (**encapsulation**);
+- Organisms communicate across distance through chemical signals known as **pheromones**.
 
-An **Interface** (called a **Contract** in Domain System) is just a short checklist of required methods (for example: *"any database driver must have `query()` and `execute()`"*). That lets the core work seamlessly with both **SQLite** and **MySQL** without rewriting the engine.
-
-### 6. Event Dispatcher = "The Building Intercom"
-Instead of hardcoding the names of every installed plugin inside the core, the core picks up the intercom and announces:
-> *"Attention everyone! I just finished booting (`kernel_post_boot`). Anyone who wants to register URLs, do it now (`router.register`)!"*
-
-Any active plugin listening to the intercom responds. If you delete a plugin, the core doesn't crash or even notice it's gone.
-
-### 7. Router & Middleware = "The Receptionist and Hallway Guards"
-- **Router (`src/Core/Routing/Router.php`):** looks at the requested URL (e.g., `/admin/users`) and checks the directory: *"Ah, `/admin/users` goes to `AdminController`!"*.
-- **Middleware:** security guards standing in the hallway **before** the room. One checks: *"Are you logged in?"*. Another checks: *"Does this form have a valid anti-forgery token (CSRF)?"*. If any guard says no, the visitor never reaches the room.
-
-### 8. And what is "SOLID", without the textbook hype?
-People make **SOLID** sound intimidating, but it's just **5 common-sense habits** to keep code from turning into tangled wires:
-
-1. **S (One job each):** every file/class has one clear job. The class that draws error pages doesn't also run SQL queries.
-2. **O (Grow without breaking):** to add a new store or course feature, you create a new plugin — instead of constantly hacking the core.
-3. **L (True substitutes):** if a replacement part promises to follow the same contract, it shouldn't surprise the rest of the system when swapped in.
-4. **I (Small contracts):** several small, focused contracts are better than one giant contract forcing classes to implement methods they don't need.
-5. **D (Depend on the outlet, not the brand):** the core depends on the *plug shape* (Interface), not on one hardcoded brand of tool.
+Consider a **Beehive Colony**:
+- **The Queen is Nature's Hardened Singleton:** there can only be **one** queen in a hive. If two queens emerge simultaneously, the colony plunges into chaos and collapse. The queen doesn't perform manual labor; she orchestrates and stabilizes.
+- **Worker Bees (Eager Loading):** continuously born to sustain core hive operations (foraging, defense, comb maintenance). They are indispensable and always active.
+- **Drones (Lazy Loading):** produced strictly on demand for reproduction and discarded after serving their specialized lifecycle.
+- **Pheromones (Interfaces & Events):** when a scout bee discovers a nectar field, she releases a trail pheromone into the air. She **does not know which bees will receive it** and does not call each companion individually. Any bee equipped with a compatible receptor detects the scent and reacts. This is **flawless decoupling**!
 
 ---
 
-## 4. Bird's-Eye View: The Complete Trip of 1 Browser Click
+## 3. Demystifying SOLID Through Physical Analogies
 
-In PHP, the website does **not** sit idle in memory waiting like a video game. On every click, the server runs this entire pipeline in a few milliseconds and clears memory right after:
+SOLID (formalized by Robert C. Martin, "Uncle Bob") is an emergency toolkit designed to heal real architectural pain:
+
+| Letter | Principle | Plain English Meaning | Physical Analogy | Pain It Solves |
+| :---: | :--- | :--- | :--- | :--- |
+| **S** | **SRP** (*Single Responsibility*) | A class should have only one reason to change. | Each caste in a beehive has one job (guards defend, nurses feed larvae). | The 3,000-line "god class" that breaks whenever anything in the app changes. |
+| **O** | **OCP** (*Open-Closed*) | Open for extension, closed for modification. | The wall socket or subway turnstile: you plug in new devices without tearing down the wall. | Modifying core files and adding endless `elseif` branches for every new feature. |
+| **L** | **LSP** (*Liskov Substitution*) | Implementations must be interchangeable without breaking expectations. | Any certified 3-prong plug works in the socket without short-circuiting the house. | Swapping payment providers and watching checkout fail because the new class misses expected behavior. |
+| **I** | **ISP** (*Interface Segregation*) | Clients should never be forced to depend on methods they do not need. | Standard wall sockets have 3 pins — not 50 unused pins that clutter appliances. | Bloated interfaces with 20 methods when your simple plugin only needed one. |
+| **D** | **DIP** (*Dependency Inversion*) | High-level policies depend on abstractions, not on concrete low-level details. | The room depends on standard wall sockets, not on a specific brand of fan. | Tight coupling where changing an external library or database breaks the entire system. |
+
+---
+
+## 4. Domain System: Nature Implemented in Code
+
+**Domain System (v2.7.0)** is built in **pure PHP 8.2+** to serve as a modular **Web Operating System**:
+
+```
+┌────────────────────────────────────────────────────────┐
+│               DOMAIN SYSTEM ECOSYSTEM                  │
+├────────────────────────────────────────────────────────┤
+│ 👑 KERNEL (Application)    → The Queen / Motherboard   │
+│ 📦 CONTAINER (DI)          → Central Warehouse         │
+│ 📡 EVENT DISPATCHER        → Chemical Pheromones       │
+│ 🚪 ROUTER                  → Global Turnstile Gatekeeper│
+│ 🔌 PLUGINS & APPS          → Castes & Components       │
+│ 🛡️ CIRCUIT BREAKER        → Biological Immune System  │
+└────────────────────────────────────────────────────────┘
+```
+
+- **Single Gateway (`public/index.php`):** zero side-doors. Every HTTP request enters through the official reception.
+- **The BIOS Ritual (`bootstrap.php`):** verifies timezone, boots `.env` environment variables, registers class autoloaders, arms safety error handlers, and gives birth to the Kernel.
+- **The Single Queen (`src/Core/Application.php`):** a **hardened Singleton** (guarded constructor, blocked cloning, and disabled unserialization). Only one exists, distributing itself via the Container.
+- **System Applications (`src/SystemApps/`):** vital organs (Authentication, Database, Cockpit Admin, Auto-Updater).
+- **Business Plugins (`src/Plugins/`):** pluggable feature units (Dropshipping with official AliExpress SDK, Academy LMS, Payments with Pix/Mercado Pago/PayPal, Flex Builder).
+- **Immortal Circuit Breaker (`CircuitBreaker`):** when a faulty plugin throws a fatal error, the breaker automatically disarms it inside `config/plugins.json`, allowing the core hive to remain completely operational.
+
+---
+
+## 5. Directory Layout & Roles
+
+| Directory or File | Analogy | Architectural Role |
+| :--- | :--- | :--- |
+| `.htaccess` & `public/.htaccess` | Perimeter fences & turnstiles | Directs all web traffic into `public/index.php` while shielding internal secrets (`.env`, SQLite). |
+| `public/index.php` | The Single Front Gate (*Front Controller*) | The first PHP file executed for every web request. |
+| `bootstrap.php` | System BIOS & Ignition | Loads `.env`, activates autoloading, arms error catching, and instantiates `Application`. |
+| `src/Core/` | The Motherboard & Central Bus | Contains the Kernel (`Application`), Warehouse (`Container`), Router, Event Dispatcher, and Contracts. |
+| `src/SystemApps/` | Vital System Organs | Mandatory modules: authentication, database layer, administration, and updates. |
+| `src/Plugins/` | Pluggable Modules | Decoupled business capabilities that can be activated or deactivated without core changes. |
+| `themes/` | Styling & Visual Presentation | View templates and CSS. Themes modify appearance without touching business logic. |
+| `config/` | Electrical Fuse Panel | Lightweight `.json` state stores tracking active and disarmed plugins. |
+| `tests/` | Automated QA Workbench | Comprehensive PHPUnit test suite ensuring contract compliance. |
+
+---
+
+## 6. The Request Journey in 10 Steps
+
+PHP does not stay perpetually in memory between requests like a desktop background service. For every user click, a complete lifecycle starts and finishes in milliseconds:
 
 ```mermaid
 flowchart LR
-    U["1. User opens URL<br/>(e.g., /cursos)"] --> H["2. .htaccess +<br/>public/.htaccess"]
-    H --> IDX["3. public/index.php<br/>(Single Front Desk)"]
-    IDX --> M{"4. Does .maintenance<br/>file exist?"}
-    M -- "Yes (regular visitor)" --> M503["Returns 503<br/>public/maintenance.php"]
-    M -- "No (or admin/login route)" --> BOOT["5. bootstrap.php<br/>(Ignition + .env + Errors)"]
-    BOOT --> APP["6. Application::boot()<br/>(Loads Services & Plugins)"]
-    APP --> REG["7. router.register event<br/>(Plugins register URLs)"]
-    REG --> HK["8. HttpKernel → Router<br/>→ Middlewares → Controller"]
-    HK --> RES["9. Response sends<br/>HTML or JSON to browser"]
+    CLI["1. User Request<br/>(e.g., /courses)"] --> HT["2. Web Filters<br/>(.htaccess)"]
+    HT --> IDX["3. Front Controller<br/>(public/index.php)"]
+    IDX --> LOCK{"4. Maintenance Lock?<br/>(.maintenance)"}
+    LOCK -- "Yes (Guest)" --> S503["Isolated 503 Screen<br/>(public/maintenance.php)"]
+    LOCK -- "No (or Admin)" --> BOOT["5. BIOS Ritual<br/>(bootstrap.php)"]
+    BOOT --> KRN["6. Hive Wakes Up<br/>($app->boot())"]
+    KRN --> RAD["7. Pheromone Broadcast<br/>(router.register)"]
+    RAD --> GATE["8. Global Gatekeeper<br/>(Router + Middlewares)"]
+    GATE --> WORK["9. Controller Execution<br/>(Handler + Repository)"]
+    WORK --> RES["10. Response Sent<br/>(HTML/JSON Output)"]
 ```
 
-In the next chapters, we will **zoom into each box in this diagram**, reading the real Domain System code line by line.
+---
+
+## 7. How This Walkthrough Uncovers Real Bugs and Vulnerabilities
+
+Real security incidents rarely stem from exotic exploits; they typically result from **oversights in component seams**:
+- Publicly accessible scripts left in the web root that bypass authentication;
+- Operations executed before the `.env` configuration file has been parsed;
+- Raw request URIs rendered directly into HTML responses without encoding, enabling **XSS**;
+- Administrative routes missing CSRF signatures or role checks.
+
+Each chapter concludes with an **🔍 Audit Spotlight** detailing concrete vulnerabilities, risk ratings, and architectural remedies.
 
 ---
 
-## 5. How Does This Help Catch Bugs and Security Holes?
-
-Most real-world hacks and nasty bugs do **not** come from Hollywood-style math. They come from tiny mistakes in the seams between pieces, such as:
-- a stray `.php` file left inside `public/` that **skips** the front desk and asks for no password;
-- a check that runs **before** `.env` has been loaded;
-- text from the URL printed straight into HTML without escaping (allowing `<script>` injection);
-- an admin route missing a login guard (middleware) or missing anti-forgery protection (CSRF).
-
-That is why at the end of **every chapter** we include a **🔍 Audit Lens** listing the real risks and bugs found at that exact layer!
-
----
-
-> 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 01 — The "Start" on the Server](01-server-start.md)
+> 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 01 — Server "Start"](01-server-start.md)

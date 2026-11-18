@@ -1,135 +1,147 @@
-# Capítulo 00 — Introdução: O Mapa do Sistema (sem palavras difíceis)
+# Capítulo 00 — Introdução: O Mapa do Sistema e a Filosofia da Arquitetura
 
 > 🇧🇷 **Português** | [🇺🇸 English version](en/00-introduction.md)  
 > 🏠 [Voltar ao Índice](README.md) | ➡️ [Próximo: Capítulo 01 — O "Start" no Servidor](01-start-servidor.md)
 
 ---
 
-## 1. Afinal, o que é o Domain System?
+## 1. A Dor que Ninguém Te Conta
 
-O **Domain System (v2.7.0)** é um sistema web completo feito em **PHP 8.2+ puro** — ou seja, construído na mão, sem usar frameworks gigantes de terceiros (como Laravel ou Symfony) no seu miolo.
+Este guia não nasceu em uma sala de aula de universidade nem foi escrito para agradar bancas acadêmicas. Ele nasceu da **dor real de quem programa**:
+- Da frustração de ver um código que começou simples e bonito virar, em poucos meses, um monstro incontrolável;
+- Do desespero de alterar uma simples linha em um arquivo e descobrir que três telas completamente diferentes pararam de funcionar;
+- Do medo de tocar em um sistema antigo porque ele parece um castelo de cartas pronto para desabar ao menor sopro.
 
-Com ele, um mesmo site pode ter:
-- páginas e blog (CMS),
-- loja virtual e dropshipping (`domain_drop`),
-- pagamentos com Pix, cartão e PayPal (`commerce`),
-- escola de cursos online (`academy`),
-- editor visual de páginas (`flextheme`).
+Os livros clássicos de programação costumam ensinar conceitos teóricos com exemplos infantis e distantes da realidade: *"Animal que faz som"*, *"Cachorro que late"*, *"Gato que mia"*. Quando você vai para a vida real — construir uma loja virtual, um sistema médico ou uma plataforma de cursos com pagamentos — você não programa gatos latindo. Você lida com clientes exigindo:
+> *"Hoje queremos notificar por WhatsApp. Daqui a duas semanas, queremos trocar por e-mail. No próximo mês, queremos os dois juntos e mais SMS. E no fim do ano, queremos aceitar Pix, cartão e boleto sem que o sistema saia do ar."*
 
-### Por que dizemos que ele funciona como um "Sistema Operacional"?
+Se o seu código cria as coisas de forma engessada (uma classe instanciando a outra diretamente dentro de si), cada nova vontade do cliente vira um pesadelo de dezenas de `if/else`, arquivos gigantes e acoplamento desastroso.
 
-Pense no seu celular ou no seu computador (Windows/Linux):
-- O **Windows** não vem com Photoshop, Spotify e WhatsApp embutidos dentro do mesmo arquivo.
-- Ele vem com um **núcleo** (que cuida de memória, tela, internet e senhas) e permite **instalar aplicativos** por cima. Se o Spotify travar, o Windows continua funcionando.
-
-O Domain System foi construído com **exatamente essa mesma ideia**. Em vez de jogar loja, escola, login e banco de dados tudo misturado nos mesmos arquivos, ele separa o projeto em camadas claras — como um **prédio comercial bem organizado**:
-
-- **A Portaria Única (`public/index.php`):** ninguém entra pelos fundos nem pela janela. Toda pessoa que acessa o site passa primeiro pela recepção.
-- **A Administração do Prédio (`src/Core/Application.php`):** existe apenas **uma** administração comandando tudo (é isso que chamam de *Kernel*).
-- **Água, Luz e Fechaduras (`src/SystemApps/`):** coisas obrigatórias para o prédio abrir: login (`auth`), banco de dados (`Database`), instalador (`installer`), painel do dono (`SystemAdmin`) e atualizador (`SystemUpdater`).
-- **As Salas Alugadas (`src/Plugins/`):** a loja virtual, a escola de cursos e o módulo de pagamentos funcionam como lojas dentro do prédio. Você pode ligar ou desligar uma sala sem derrubar as outras.
-- **A Pintura e Fachada (`themes/`):** cuida só do visual (HTML/CSS). Você muda a cara do site sem mexer nas regras do sistema.
-- **O Disjuntor Elétrico (`src/Core/Error/CircuitBreaker.php`):** se uma loja der curto-circuito (erro grave repetido), o disjuntor desliga só aquela sala e mantém o resto do prédio funcionando.
+Para resolver isso de verdade, não precisamos decorar siglas difíceis em inglês. **Precisamos entender a física e a biologia das coisas**.
 
 ---
 
-## 2. Onde fica cada coisa no projeto (Mapa das Pastas)
+## 2. As Grandes Viradas de Chave: A Tomada, o Arduino e a Natureza
 
-Se você abrir a pasta do projeto no computador (por exemplo `D:\xampp\htdocs\domain-system`), vai ver várias pastas. Você **não** precisa entender todas hoje — basta saber o papel das principais:
+Como ensinado no livro [**Entendendo Arquitetura SOLID: Do Objeto ao Contrato, do Acoplamento à Arquitetura**](https://www.amazon.com.br/dp/B0H74L5GFL) (disponível na Amazon Kindle), a arquitetura de software não é sobre linhas de código — **é sobre conexões entre partes**.
 
-| Pasta ou Arquivo | O que faz, em português claro |
-| :--- | :--- |
-| `.htaccess` e `public/.htaccess` | Regras para o servidor web (Apache/XAMPP). Dizem: *"se o usuário não pediu uma imagem ou CSS real, mande tudo para `public/index.php`"* e protegem as pastas internas. |
-| `public/index.php` | **A porta de entrada.** É o primeiro código PHP que roda quando alguém abre qualquer página do site. |
-| `bootstrap.php` | **A chave de ignição.** Lê o arquivo `.env` (senhas e configurações), liga o localizador automático de classes, ativa a rede contra erros e cria o cérebro do sistema (`Application`). |
-| `src/Core/` | **O motor central.** Aqui ficam o cérebro (`Application`), o roteador de endereços (`Router`), o guardador de peças (`Container`), o rádio de avisos (`EventDispatcher`), a segurança e os contratos. |
-| `src/SystemApps/` | **Os módulos obrigatórios do sistema.** Login, banco de dados, instalador, painel admin, monitor e atualizador. |
-| `src/Plugins/` | **Os módulos opcionais (negócio).** Loja (`domain_drop`), escola (`academy`), pagamentos (`commerce`), construtor visual (`flextheme`), páginas (`pages`), SEO (`seo`), etc. |
-| `themes/` | **As telas visuais.** Layouts do painel administrativo (`themes/admin/`) e temas públicos do site. |
-| `config/` | **Arquivos de estado.** Pequenos arquivos `.json` dizendo quais plugins estão ligados ou quais foram desarmados pelo disjuntor. |
-| `composer.json` | **O mapa de endereços das classes.** Ensina ao PHP onde está cada arquivo de classe para você não precisar escrever 200 linhas de `require_once`. |
-| `tests/` | **Os robôs de teste.** Mais de 600 testes automáticos (PHPUnit) que conferem se nada quebrou quando o código muda. |
+### 🔌 A Tomada e o Plugue: "Primeiro a fêmea, depois os machos"
 
----
+Pense na tomada da parede da sua casa:
+1. **A tomada na parede é a Interface (o Contrato):** ela define as regras imutáveis — o formato dos furos, a voltagem (110V/220V) e a frequência. Ela **nunca muda**.
+2. **Os aparelhos são as Classes Concretas (os Plugues):** você pode ligar um ventilador, uma geladeira, uma televisão ou o carregador do seu celular. Cada um tem um circuito interno completamente diferente, mas todos respeitam o mesmo formato de pinos.
+3. **A Injeção de Dependência é o Encaixe:** a parede não "fabrica" o ventilador. O ventilador já vem pronto e é simplesmente plugado na tomada.
 
-## 3. Tradutor de Nomes Técnicos (para nunca mais travar lendo código)
+> **A Regra de Ouro:** *"A tomada nunca muda. Os plugues sempre mudam. O sistema depende da tomada (do contrato), jamais do plugue."*
 
-No mundo da programação, as pessoas adoram dar nomes difíceis em inglês para ideias bem simples. Aqui está a tradução honesta dos termos que você vai ver nos próximos capítulos:
+### 🤖 O Arduino e a Placa-Mãe
 
-### 1. Front Controller = "Portaria Única"
-Em sites muito antigos em PHP, cada página era um arquivo separado: `sobre.php`, `contato.php`, `produto.php`, `admin.php`. O problema? Se você precisasse colocar uma checagem de segurança ou modo manutenção, teria que copiar e colar o mesmo código em 50 arquivos — e sempre esqueceria algum!
+Quando você espeta um LED ou um sensor no pino de uma placa Arduino:
+- A placa não sabe se está acendendo uma lâmpada na sala, girando o motor de um robô ou tocando uma buzina.
+- Ela só sabe que existe um componente conectado ao pino que respeita o padrão elétrico (0V ou 5V).
+- O **Kernel do sistema é a placa-mãe**. Os **módulos e plugins são os componentes**. E as **conexões são as interfaces**.
 
-Com o **Front Controller**, **todas** as páginas passam primeiro por **um único arquivo**: `public/index.php`. Ele faz a segurança, liga o sistema e depois decide qual pedaço de código vai responder.
+### 🐝 A Natureza como Arquiteta Original (Alan Kay e a Biologia)
 
-### 2. Bootstrap = "Chave de Ignição"
-Antes de o carro andar, você gira a chave: a bateria liga, o painel acende, o motor dá partida. No Domain System, o arquivo `bootstrap.php` faz exatamente isso: carrega o `.env`, configura fuso horário, liga o tratamento de erros e monta o cérebro do sistema.
+Alan Kay, o criador da Programação Orientada a Objetos, não se inspirou na matemática — ele se inspirou na **biologia**:
+- Células têm membrana (**interface**) e núcleo com estado interno (**encapsulamento**);
+- Organismos se comunicam por mensagens químicas chamadas **feromônios**.
 
-### 3. Singleton = "Só pode existir UM"
-Imagine uma escola com **dois diretores** dando ordens opostas ao mesmo tempo, ou uma colmeia com **duas rainhas**. Vira caos.
-
-**Singleton** é apenas uma técnica para garantir que uma classe muito importante (no nosso caso, `Application`, o cérebro do sistema) só possa ter **1 exemplar vivo** durante a requisição. Quem precisar dela recebe sempre **a mesma**.
-
-### 4. Container de Injeção de Dependências (DI) = "O Almoxarifado"
-Imagine um mecânico que precisa de uma chave de fenda. Existem dois jeitos:
-- **Jeito bagunçado:** toda vez que precisa de uma chave, o mecânico sai da oficina e compra uma nova (`new ConexaoBanco()`). No fim do dia existem 40 conexões abertas gastando memória.
-- **Jeito organizado (Container):** existe um **Almoxarifado** (`src/Core/Container/Container.php`). Quando uma parte do código precisa do banco de dados ou da sessão, ela pede ao Almoxarifado — e ele entrega a ferramenta pronta (reutilizando a mesma sempre que fizer sentido).
-
-### 5. Interface / Contrato (`src/Core/Contracts/`) = "A Tomada de 3 Pinos"
-Você nunca precisou abrir a parede da sua casa para ligar um liquidificador novo, certo? Por quê? Porque a parede e o liquidificador combinam no **formato da tomada**.
-
-Uma **Interface** (que o Domain System chama de **Contrato**) é exatamente isso: uma lista curta de regras combinadas (por exemplo: *"todo banco de dados precisa ter os métodos `query()` e `execute()`"*). Assim, o núcleo do sistema funciona tanto com **SQLite** quanto com **MySQL** sem precisar mudar uma linha do motor!
-
-### 6. Event Dispatcher = "O Rádio Comunicador da Empresa"
-Em vez de o núcleo do sistema saber o nome de cada plugin instalado, ele pega o rádio e avisa no alto-falante:
-> *"Atenção, pessoal! Acabei de iniciar (`kernel_post_boot`). Quem quiser cadastrar URLs, pode mandar agora (`router.register`)!"*
-
-Cada plugin que estiver ligado escuta o rádio e responde. Se você apagar um plugin, o núcleo nem sente falta e não dá erro.
-
-### 7. Router e Middleware = "A Recepcionista e os Seguranças do Corredor"
-- **Router (`src/Core/Routing/Router.php`):** olha o endereço digitado (ex.: `/admin/usuarios`) e consulta a lista de salas: *"Ah, `/admin/usuarios` é atendido pelo `AdminController`!"*.
-- **Middleware:** são seguranças parados no corredor **antes** da sala. Um confere: *"Você está logado?"*. Outro confere: *"Esse formulário tem o selo anti-fraude (CSRF)?"*. Se algum segurança barrar, o usuário nem chega na sala.
-
-### 8. E o famoso "SOLID", o que é isso sem enrolação?
-Muita gente faz drama com a sigla **SOLID**, mas ela é só **5 regras de bom senso** para o código não virar uma bola de fios emaranhados:
-
-1. **S (Uma coisa só):** cada arquivo/classe tem uma tarefa clara. Quem desenha tela de erro não fica conectando no banco de dados.
-2. **O (Crescer sem quebrar):** para adicionar uma loja ou curso novo, você cria um plugin novo — em vez de ficar remendando o núcleo o tempo todo.
-3. **L (Substituto de verdade):** se uma peça promete fazer o mesmo papel de outra (seguir o mesmo contrato), ela não pode dar surpresa quando você fizer a troca.
-4. **I (Contratos enxutos):** melhor ter vários combinados pequenos e diretos do que um contratão gigante obrigando todo mundo a fazer o que não precisa.
-5. **D (Depender da tomada, não da marca):** o motor do sistema depende do *formato da tomada* (Interface), não de uma marca específica de peça.
+Pense em uma **Colmeia**:
+- **A Rainha é o Singleton da Natureza:** só pode existir **uma** rainha. Se duas rainhas acordarem ao mesmo tempo, a colmeia entra em colapso e guerra civil. A rainha não faz trabalho pesado; ela orquestra e coordena.
+- **As Operárias (Eager Loading):** nascem constantemente para manter a estrutura viva (coleta, proteção, manutenção). Elas são essenciais e estão prontas a todo momento.
+- **Os Zangões (Lazy Loading):** nascem sob demanda apenas na época da reprodução e são descartados depois.
+- **Os Feromônios (Interfaces e Eventos):** quando uma abelha encontra comida, ela libera um feromônio de rastro no ar. Ela **não sabe quem vai ler** e não precisa telefonar para cada companheira. Quem tiver o receptor compatível escuta e reage. Isso é o **desacoplamento perfeito**!
 
 ---
 
-## 4. Visão Geral: a viagem completa de 1 clique no navegador
+## 3. O que é o SOLID na Vida Real?
 
-No PHP, o site **não fica "rodando parado na memória" esperando** como um jogo de videogame. A cada clique do usuário, o servidor faz tudo isso em poucos milissegundos e depois limpa a memória:
+O SOLID (formalizado por Robert C. Martin, o Uncle Bob) não é um mantra acadêmico para decorar para provas. É um estojo de socorro para problemas que você já sentiu na pele:
+
+| Letra | Princípio | O que diz na prática | A Analogia Física | A Dor que ele cura |
+| :---: | :--- | :--- | :--- | :--- |
+| **S** | **SRP** (*Single Responsibility*) | Uma classe deve ter uma única razão para mudar. | Cada operária da colmeia faz apenas seu papel (a guardiã defende, a nutriz alimenta). | A classe "faz-tudo" de 3.000 linhas que quebra por qualquer motivo. |
+| **O** | **OCP** (*Open-Closed*) | Aberto para extensão, fechado para alteração. | A tomada na parede ou a catraca do metrô: você conecta aparelhos novos sem precisar quebrar a parede. | Ter que abrir o código antigo e enfiar mais um `elseif` toda vez que surge uma novidade. |
+| **L** | **LSP** (*Liskov Substitution*) | Objetos devem poder ser trocados por outros que seguem o mesmo contrato sem quebrar nada. | Qualquer plugue de 3 pinos funciona na mesma tomada sem dar curto-circuito na casa. | Trocar um provedor de envio e o sistema travar porque o novo não tem os mesmos métodos. |
+| **I** | **ISP** (*Interface Segregation*) | Ninguém deve ser forçado a assinar contratos cheios de regras que não vai usar. | Uma tomada elétrica padrão tem apenas 3 pinos — não tem 50 pinos inúteis para a maioria dos aparelhos. | Uma interface gigante com 20 métodos onde seu plugin só precisava de um. |
+| **D** | **DIP** (*Dependency Inversion*) | O sistema principal depende de abstrações (contratos), nunca de classes concretas engessadas. | A casa depende da tomada (padrão universal), não da marca do fabricante do ventilador. | Ficar refém de uma biblioteca ou banco de dados específico espalhado pelo código todo. |
+
+---
+
+## 4. O Domain System: A Natureza em Código
+
+O **Domain System (v2.7.0)** é a materialização viva dessa filosofia. Ele foi construído em **PHP 8.2+ puro** para funcionar como um verdadeiro **Sistema Operacional Web**:
+
+```
+┌────────────────────────────────────────────────────────┐
+│             O ECOSSISTEMA DO DOMAIN SYSTEM             │
+├────────────────────────────────────────────────────────┤
+│ 👑 KERNEL (Application)    → A Rainha / Placa-Mãe      │
+│ 📦 CONTAINER (DI)          → O Almoxarifado Central    │
+│ 📡 EVENT DISPATCHER        → Os Feromônios / Mensagens │
+│ 🚪 ROUTER                  → O Porteiro Global (Catraca│
+│ 🔌 PLUGINS & APPS          → As Castas e Componentes   │
+│ 🛡️ CIRCUIT BREAKER        → O Sistema Imunológico     │
+└────────────────────────────────────────────────────────┘
+```
+
+- **A Portaria Única (`public/index.php`):** nenhuma requisição entra pelos fundos. Tudo bate na recepção oficial.
+- **O BIOS de Ignição (`bootstrap.php`):** prepara o terreno físico, confere fusos e credenciais (`.env`), arma os disjuntores de erro e dá à luz ao Kernel.
+- **A Rainha Única (`src/Core/Application.php`):** o Kernel é um **Singleton blindado** (construtor controlado, proteção contra clonagem e desserialização). Só existe um, e ele se distribui para o sistema todo através do Container DI.
+- **Os Módulos Vitais (`src/SystemApps/`):** o coração do prédio (Autenticação, Banco de Dados, Painel Admin, Atualizador).
+- **Os Módulos de Negócio (`src/Plugins/`):** os plugues intercambiáveis (Loja Dropshipping com AliExpress, Escola LMS de Cursos, Checkout com Pix e Mercado Pago, Construtor Visual).
+- **O Disjuntor Imortal (`CircuitBreaker`):** se um plugin defeituoso tentar explodir o sistema com um erro fatal, o disjuntor desarma apenas aquele plugin no `config/plugins.json` e a colmeia continua viva!
+
+---
+
+## 5. Onde Fica Cada Coisa no Projeto (Mapa das Pastas)
+
+Ao abrir o repositório (`D:\xampp\htdocs\domain-system`), você encontrará esta organização clara de pastas:
+
+| Pasta ou Arquivo | O que é na analogia | Papel real no sistema |
+| :--- | :--- | :--- |
+| `.htaccess` e `public/.htaccess` | Os portões externos e as catracas | Garantem que o visitante nunca acesse arquivos internos e direcionam o fluxo para `public/index.php`. |
+| `public/index.php` | A Portaria do Prédio (*Front Controller*) | O primeiro arquivo PHP a ser executado a cada requisição. |
+| `bootstrap.php` | O BIOS / Ritual de Ignição | Lê o `.env`, ativa os autoloaders, prepara o tratamento de erros e instancia a Rainha (`Application`). |
+| `src/Core/` | A Placa-Mãe e os Circuitos Centrais | Contém a Rainha (`Application`), o Almoxarifado (`Container`), o Roteador (`Router`), o Rádio (`EventDispatcher`) e os Contratos (`Contracts`). |
+| `src/SystemApps/` | Órgãos Vitais do Sistema | Módulos obrigatórios para o Kernel respirar: autenticação, banco de dados, administração e atualizações. |
+| `src/Plugins/` | Os Componentes / Plugues | Módulos de negócio independentes que podem ser ligados e desligados sem quebrar o motor. |
+| `themes/` | A Pintura e Decoração | Layouts visuais (CSS/HTML). O tema muda a aparência sem encostar em regras de negócio. |
+| `config/` | O Painel de Chaves Elétricas | Arquivos `.json` que guardam quais plugues estão energizados ou desarmados pelo disjuntor. |
+| `tests/` | A Bancada de Testes Automatizada | Bateria de centenas de testes unitários que garantem que nenhuma tomada ou plugue quebrou. |
+
+---
+
+## 6. A Jornada Completa de 1 Clique
+
+No PHP, um sistema não fica ocupando memória de processo contínuo como um aplicativo desktop comum. A cada clique do usuário, um ciclo completo de vida nasce, floresce e encerra em milissegundos:
 
 ```mermaid
 flowchart LR
-    U["1. Usuário acessa URL<br/>(ex.: /cursos)"] --> H["2. .htaccess +<br/>public/.htaccess"]
-    H --> IDX["3. public/index.php<br/>(Portaria Única)"]
-    IDX --> M{"4. Existe arquivo<br/>.maintenance?"}
-    M -- "Sim (visitante comum)" --> M503["Devolve erro 503<br/>public/maintenance.php"]
-    M -- "Não (ou rota admin/login)" --> BOOT["5. bootstrap.php<br/>(Ignição + .env + Erros)"]
-    BOOT --> APP["6. Application::boot()<br/>(Liga Serviços e Plugins)"]
-    APP --> REG["7. Aviso router.register<br/>(Plugins cadastram URLs)"]
-    REG --> HK["8. HttpKernel → Router<br/>→ Middlewares → Controller"]
-    HK --> RES["9. Response devolve<br/>HTML ou JSON ao navegador"]
+    CLI["1. Clique do Usuário<br/>(ex.: /cursos)"] --> HT["2. Filtros Web<br/>(.htaccess)"]
+    HT --> IDX["3. Portaria Única<br/>(public/index.php)"]
+    IDX --> LOCK{"4. Trava Física?<br/>(.maintenance)"}
+    LOCK -- "Sim (Visitante)" --> S503["Tela 503 Isolada<br/>(public/maintenance.php)"]
+    LOCK -- "Não (ou Admin)" --> BOOT["5. O Ritual do BIOS<br/>(bootstrap.php)"]
+    BOOT --> KRN["6. A Rainha Acorda<br/>($app->boot())"]
+    KRN --> RAD["7. Chamada Geral<br/>(router.register)"]
+    RAD --> GATE["8. Porteiro Global<br/>(Router + Middlewares)"]
+    GATE --> WORK["9. Operária Executa<br/>(Controller + Repository)"]
+    WORK --> RES["10. Resposta Entregue<br/>(Response HTML/JSON)"]
 ```
-
-Nos próximos capítulos, vamos dar **zoom em cada caixinha desse desenho**, lendo o código real do Domain System linha por linha.
 
 ---
 
-## 5. Como essa leitura ajuda a caçar bugs e brechas de segurança?
+## 7. Como Essa Leitura Ajuda a Encontrar Falhas e Brechas?
 
-A maior parte das invasões e bugs sérios **não** acontece por fórmulas mirabolantes. Ela acontece por descuidos simples na costura entre uma peça e outra, como:
-- um arquivo `.php` esquecido dentro de `public/` que **pula** a portaria e não pede senha;
-- uma checagem que roda **antes** do `.env` ser lido;
-- um texto vindo da URL impresso direto no HTML sem proteção (permitindo injetar `<script>`);
-- uma rota administrativa sem o segurança (middleware) de login ou sem proteção contra formulário falso (CSRF).
+A maior parte dos problemas graves em software não vem de códigos misteriosos, mas de **falhas elementares nas conexões**:
+- Uma porta que ficou destrancada na pasta pública permitindo que qualquer pessoa acione rotas sensíveis;
+- Uma peça que tenta ler dados antes de o ambiente ter sido ligado;
+- Um texto que veio da rua e é desenhado na tela sem filtro, gerando vulnerabilidades como **XSS**;
+- Uma rota crítica que não passa pelo segurança de permissões ou pelo carimbo anti-fraude (**CSRF**).
 
-Por isso, ao final de **cada capítulo**, teremos uma seção chamada **🔍 Lupa de Auditoria** listando exatamente os riscos e falhas reais encontrados naquela etapa!
+Por isso, cada capítulo desta documentação termina com uma **🔍 Lupa de Auditoria**, mostrando de forma transparente o que foi auditado, as falhas encontradas e a cura para cada uma delas.
 
 ---
 

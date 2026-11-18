@@ -1,38 +1,45 @@
 # Inside Domain System (v2.7.0)
 
-> [🇧🇷 Versão em Português](../README.md) | 🇺🇸 **English**
+> 🇺🇸 **English** | [🇧🇷 Versão em Português](../README.md)
 
-> **A plain-English, zero-jargon walkthrough of how Domain System is built from the inside out — from the very first millisecond of a request all the way to finding logic bugs and security holes.**
-
-If you are just getting started in programming, starting university, or have never studied "Design Patterns" or "SOLID Architecture", **this guide was written for you**.
-
-The goal here is not to sound academic. The goal is to pop the hood open on Domain System piece by piece, show **how it was built**, **why each file exists**, and **what really happens** every time someone opens a page in their browser.
-
-Once you understand the actual path a request travels through the code, spotting **logic bugs** and **security vulnerabilities** stops feeling like magic and becomes obvious.
+> **"Architecture is not about the code you write today. It is about the connections you forge, the pain you prevent, and the future you build."**  
+> *— From the book ["Understanding SOLID Architecture: From Object to Contract, From Coupling to Architecture"](https://www.amazon.com.br/dp/B0H74L5GFL) (available on Amazon Kindle / KDP)*
 
 ---
 
-## Table of Contents
+If you are starting out in programming, have never studied "Design Patterns", or always found academic explanations of **SOLID** tedious and filled with sterile examples (*"Dogs that bark"* and *"Cats that meow"*), **this guide was tailored specifically for you**.
 
-Read the chapters in order. Each chapter picks up right where the previous one left off, following the real life of a single user click:
+Here, we lift the hood of **Domain System** component by component using **real-world physical and biological analogies**:
+- **The Wall Socket and the Plug:** *"First the socket (contract/interface), then the plugs (concrete classes/implementations)"*.
+- **The Arduino Motherboard:** The Kernel doesn't need to know if you connected an LED or an ultrasonic sensor; it only knows the standard pin interface.
+- **Nature's Beehive:** The Kernel acts as the **single Queen (Singleton)**, essential worker bees act as **Eager Loading**, on-demand drones act as **Lazy Loading**, and interfaces and events operate as **chemical pheromones** communicating with zero tight coupling.
+- **The Immortal Circuit Breaker:** An immune system that trips only the faulty extension so the colony never dies.
 
-| Ch. | Chapter | What you will understand | Real files covered | Status |
+By understanding the authentic lifecycle of a request as it traverses the system, finding **logical flaws** and **security vulnerabilities** ceases to be a mystery and becomes straightforward.
+
+---
+
+## 🗂️ Table of Contents
+
+Read in sequential order. Each chapter follows the real lifecycle of an HTTP request:
+
+| Ch. | Chapter | Concepts & Analogies Covered | Inspected Source Files | Status |
 | :---: | :--- | :--- | :--- | :---: |
-| **00** | [Introduction — Map of the System (No Hard Words)](00-introduction.md) | What Domain System is, where each folder lives, and a plain-English translator for the technical words used in the codebase. | Project overview | ✅ Done |
-| **01** | [Chapter 01 — The "Start": What Happens When Someone Opens the Site](01-server-start.md) | How Apache redirects requests, why everything lands in `public/index.php`, how URLs are cleaned, how maintenance mode locks the site, and **4 real issues found right at the front door**. | `.htaccess`, `public/.htaccess`, `public/index.php`, `public/maintenance.php`, `public/reset_opcache.php` | ✅ Done |
-| **02** | Chapter 02 — Waking Up the System (`bootstrap.php`) | How `.env` is loaded, how PHP finds classes automatically (Autoload), and how the "airbag" for crashes is armed (`ErrorHandler` & `CircuitBreaker`). | `bootstrap.php`, `composer.json`, `src/Core/Error/` | ⏭️ Next |
-| **03** | Chapter 03 — The "Single Brain" (Singleton & `Application.php`) | What a Singleton actually is, why there can only be one `Application`, how it is coded, and where its limits are. | `src/Core/Application.php` | ⏳ Coming soon |
-| **04** | Chapter 04 — The "Tool Room" (`Container`) & "Wall Outlets" (`Contracts`) | How the system builds and shares objects without turning into spaghetti, and how to swap parts without breaking everything (SOLID in real life). | `src/Core/Container/`, `src/Core/Providers/`, `src/Core/Contracts/` | ⏳ Coming soon |
-| **05** | Chapter 05 — Starting the Modules (`SystemApps`, `Plugins` & Events) | How the system discovers plugins, starts them in the right order, and uses the "walkie-talkie" (`EventDispatcher`) to communicate loosely. | `src/Core/Plugin/`, `src/Core/Events/`, `src/SystemApps/` | ⏳ Coming soon |
-| **06** | Chapter 06 — Journey of a Request (`Request`, `HttpKernel`, `Router`, `Middlewares` & `Response`) | How a raw request becomes an object, passes through security guards (middlewares), hits the right `Controller`, and returns HTML or JSON. | `src/Core/Http/`, `src/Core/Routing/` | ⏳ Coming soon |
-| **07** | Chapter 07 — Security in Practice (Login, Sessions, Permissions, CSRF & Safe Redirects) | How the system knows who is logged in, protects admin routes, blocks CSRF/XSS attacks, and stops fake redirects. | `src/Core/Security/`, `src/SystemApps/auth/` | ⏳ Coming soon |
-| **08** | Chapter 08 — Database, Safe JSON Files, Themes & Workspaces | How data is stored (SQLite/MySQL + atomic JSON writes) and how the final screen is assembled for each user role. | `src/Core/Database/`, `src/Core/Storage/`, `src/Core/Theme/`, `src/Core/Workspace/` | ⏳ Coming soon |
-| **09** | Chapter 09 — Final Audit Notebook (Full Checklist) | Every logic bug and security hole found across the entire series, organized by priority. | Full summary | ⏳ Coming soon |
+| **00** | [Introduction — System Map & Architectural Philosophy](00-introduction.md) | The pain of tight coupling, the revelation of wall sockets and Arduino, Alan Kay's biological metaphor, SOLID in real life, and project layout. | Global architecture overview | ✅ Ready |
+| **01** | [Chapter 01 — The "Start": Request Birth & The Single Gateway](01-server-start.md) | The silence before the Big Bang, `.htaccess` filters, the *Front Controller* (`public/index.php`), maintenance locks, and **4 audit findings**. | `.htaccess`, `public/.htaccess`, `public/index.php`, `public/maintenance.php`, `public/reset_opcache.php` | ✅ Ready |
+| **02** | Chapter 02 — The Bootstrap Ritual (`bootstrap.php`) | The system BIOS ritual, `.env` loading, Composer autoloading mechanics, and the fail-safe error handling immune system (`ErrorHandler`). | `bootstrap.php`, `composer.json`, `src/Core/Error/` | ⏭️ Next |
+| **03** | Chapter 03 — The Hive Queen (The Hardened Singleton Pattern) | Why multiple queens mean total collapse, how `Application` was armored against cloning and unserialization, and Container DI throne registration. | `src/Core/Application.php` | ⏳ Soon |
+| **04** | Chapter 04 — The Central Warehouse (`Container`) & Wall Sockets (`Contracts`) | Dependency Inversion (DIP) in action, service binding without coupling, and swapping implementations without touching the engine. | `src/Core/Container/`, `src/Core/Providers/`, `src/Core/Contracts/` | ⏳ Soon |
+| **05** | Chapter 05 — Awakening the Hive (`boot()`, Plugins & Pheromones) | How `PluginManager` discovers manifests (`plugin.json`), wakes worker extensions, and uses `EventDispatcher` as a broadcast radio. | `src/Core/Plugin/`, `src/Core/Events/`, `src/SystemApps/` | ⏳ Soon |
+| **06** | Chapter 06 — The Global Gatekeeper & Request Dispatching | The Router as a subway turnstile (OCP), preemptive ACL/CSRF verification, reflection-based DI, and Controller execution. | `src/Core/Routing/`, `src/Core/Http/` | ⏳ Soon |
+| **07** | Chapter 07 — Layered Security (Auth, Session, ACL & Guards) | Session management, safeguarding administrative routes, mitigating open redirects, session hijacking, and CSRF attacks. | `src/Core/Security/`, `src/SystemApps/auth/` | ⏳ Soon |
+| **08** | Chapter 08 — Decoupled Persistence & Workspace Layouts | The Repository Pattern (Controller asks *"what"*, Repository answers *"how"*), atomic JSON storage, and role-based user workspaces. | `src/Core/Database/`, `src/Core/Storage/`, `src/Core/Theme/`, `src/Core/Workspace/` | ⏳ Soon |
+| **09** | Chapter 09 — Consolidated Security & Quality Audit Log | Complete audit dossier detailing every vulnerability, performance bottleneck, and logic issue discovered with actionable fixes. | System-wide audit overview | ⏳ Soon |
 
 ---
 
-## How to get the most out of this guide
+## 💡 How to Get the Most Out of This Guide
 
-- **Don't try to memorize buzzwords:** whenever a technical word shows up (*Front Controller*, *Singleton*, *Middleware*), it is immediately explained in everyday language.
-- **Keep the real code open side by side:** whenever a chapter mentions something like `public/index.php (line 64)`, open that file in your editor and see it with your own eyes.
-- **Read the "Audit Lens" section at the end of every chapter:** that is where we record real bugs and security gaps discovered directly in the source code, explaining **what is wrong, what could go wrong in production, and how to fix it**.
+1. **Keep the actual codebase open:** when you see a reference to a specific file or line, open it in your editor and inspect the implementation.
+2. **Focus on connections rather than syntax:** ask yourself *who depends on whom*, *who instantiates what*, and *what happens when a component needs to be swapped*.
+3. **Review the Audit Spotlight at the end of each chapter:** that is where theoretical principles translate into the practical skill of catching bugs and vulnerabilities before production.
