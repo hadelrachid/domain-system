@@ -57,6 +57,35 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
         return true;
     }
 
+    public function promoteSession(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail
+    ): int {
+        $promoted = 0;
+
+        if ($this->logStorage !== null) {
+            $promoted += $this->logStorage->promoteSessionInteractions(
+                $sessionId,
+                $customerId,
+                $customerName,
+                $customerEmail
+            );
+        }
+
+        if ($this->repository instanceof DemandMetricsRepositoryInterface) {
+            $promoted += $this->repository->promoteSessionInteractions(
+                $sessionId,
+                $customerId,
+                $customerName,
+                $customerEmail
+            );
+        }
+
+        return $promoted;
+    }
+
     private function isDuplicate(string $productId, string $actionType): bool
     {
         if ($this->session === null) {

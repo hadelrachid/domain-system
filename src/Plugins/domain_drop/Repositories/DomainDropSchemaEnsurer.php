@@ -21,11 +21,14 @@ final class DomainDropSchemaEnsurer
     {
         $connId = spl_object_id($pdo);
         if (isset(self::$ensuredConnections[$connId])) {
-            return;
+            if (self::schemaAlreadyPresent($pdo)) {
+                return;
+            }
+            unset(self::$ensuredConnections[$connId]);
         }
-        self::$ensuredConnections[$connId] = true;
 
         if (self::schemaAlreadyPresent($pdo)) {
+            self::$ensuredConnections[$connId] = true;
             return;
         }
 
@@ -45,9 +48,17 @@ final class DomainDropSchemaEnsurer
                     }
                 }
             }
+            if (self::schemaAlreadyPresent($pdo)) {
+                self::$ensuredConnections[$connId] = true;
+            }
         } catch (Throwable $e) {
             // Não mascara erro real se o banco estiver indisponível; o caller tratará.
         }
+    }
+
+    public static function resetCache(): void
+    {
+        self::$ensuredConnections = [];
     }
 
     private static function schemaAlreadyPresent(PDO $pdo): bool

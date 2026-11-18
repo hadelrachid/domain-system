@@ -33,7 +33,8 @@ class CustomerAccountController
         private readonly OrderSlaProgressService $slaService,
         private readonly ?ThemeManagerInterface $themeManager = null,
         private readonly ?AliExpressApiClientInterface $apiClient = null,
-        private readonly ?DropshipCatalogRepositoryInterface $catalogRepo = null
+        private readonly ?DropshipCatalogRepositoryInterface $catalogRepo = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null
     ) {
     }
 
@@ -474,11 +475,34 @@ class CustomerAccountController
      */
     private function authenticateCustomerSession(array $customer): void
     {
+        $oldSessionId = session_id() ?: '';
+        if ($oldSessionId === '' && method_exists($this->session, 'getId')) {
+            $oldSessionId = (string)$this->session->getId();
+        }
+
         $this->session->regenerate();
         $this->session->set('customer_id', (int)($customer['id'] ?? 0));
         $this->session->set('customer_name', (string)($customer['name'] ?? 'Cliente'));
         $this->session->set('customer_email', strtolower(trim((string)($customer['email'] ?? ''))));
         $this->session->set('customer_cpf', (string)($customer['cpf'] ?? ''));
+
+        $newSessionId = session_id() ?: '';
+        if ($newSessionId === '' && method_exists($this->session, 'getId')) {
+            $newSessionId = (string)$this->session->getId();
+        }
+
+        if ($this->demandTracker !== null) {
+            $cId = (int)($customer['id'] ?? 0);
+            $cName = (string)($customer['name'] ?? 'Cliente');
+            $cEmail = strtolower(trim((string)($customer['email'] ?? '')));
+
+            if ($oldSessionId !== '') {
+                $this->demandTracker->promoteSession($oldSessionId, $cId, $cName, $cEmail);
+            }
+            if ($newSessionId !== '' && $newSessionId !== $oldSessionId) {
+                $this->demandTracker->promoteSession($newSessionId, $cId, $cName, $cEmail);
+            }
+        }
     }
 
     private function isLoggedIn(): bool

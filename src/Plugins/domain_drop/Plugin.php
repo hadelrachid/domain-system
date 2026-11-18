@@ -203,7 +203,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 slaService: $runtime->make(OrderSlaProgressService::class),
                 themeManager: $themeManager,
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
-                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class)
+                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
+                demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class)
             );
         });
 
@@ -485,20 +486,76 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         $orderRepo->updateFulfillment($orderRef, 'paid');
                     }
 
-                    // Registra conversão de venda no Livro de Demanda
+                    // Registra conversão de venda no Livro de Demanda com identidade completa do comprador
                     try {
                         /** @var \DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker */
                         $demandTracker = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class);
+                        $cId = (int)($payload['user_id'] ?? 0);
+                        $cName = trim((string)($payload['customer_name'] ?? ''));
+                        $cEmail = strtolower(trim((string)($payload['customer_email'] ?? '')));
+                        $sessionId = session_id() ?: null;
+
                         $demandTracker->recordInteraction(new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
                             productId: $aeProductId ?: (string)$itemId,
                             productTitle: $productTitle,
                             categorySlug: 'geral',
-                            actionType: 'conversion'
+                            actionType: 'conversion',
+                            sessionId: $sessionId,
+                            customerId: $cId ?: null,
+                            customerName: $cName ?: null,
+                            customerEmail: $cEmail ?: null,
+                            userType: ($cId > 0 || $cEmail !== '') ? 'cliente_logado' : 'externo'
                         ));
                     } catch (Throwable $e) {}
                 } catch (Throwable $e) {
                     error_log('[DomainDrop] Falha ao registrar pedido em payment.approved: ' . $e->getMessage());
                 }
+            }
+        });
+
+        // 5.1 Registro de Intenção e Atribuição de Demanda ao Gerar Pedido no Checkout
+        $runtime->onHook('dropship.order_created', function ($payload) use ($runtime) {
+            if (!is_array($payload)) {
+                return;
+            }
+            $itemType = (string)($payload['item_type'] ?? '');
+            if (!in_array($itemType, ['dropship_product', 'dropship', 'product'], true)) {
+                return;
+            }
+
+            try {
+                /** @var \DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker */
+                $demandTracker = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class);
+                $sessionId = session_id() ?: '';
+                $cId = (int)($payload['user_id'] ?? 0);
+                $cName = trim((string)($payload['customer_name'] ?? ''));
+                $cEmail = strtolower(trim((string)($payload['customer_email'] ?? '')));
+
+                if ($sessionId !== '' && $cId > 0) {
+                    $demandTracker->promoteSession($sessionId, $cId, $cName, $cEmail);
+                }
+
+                $itemId = (int)($payload['item_id'] ?? 0);
+                if ($itemId > 0) {
+                    /** @var DropshipCatalogRepositoryInterface $catRepo */
+                    $catRepo = $runtime->make(DropshipCatalogRepositoryInterface::class);
+                    $productDto = $catRepo->findById($itemId);
+                    if ($productDto !== null) {
+                        $demandTracker->recordInteraction(new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
+                            productId: (string)($productDto->aliexpressId ?: (string)$productDto->id),
+                            productTitle: (string)$productDto->title,
+                            categorySlug: (string)$productDto->category,
+                            actionType: 'buy_click',
+                            sessionId: $sessionId ?: null,
+                            customerId: $cId ?: null,
+                            customerName: $cName ?: null,
+                            customerEmail: $cEmail ?: null,
+                            userType: ($cId > 0 || $cEmail !== '') ? 'cliente_logado' : 'externo'
+                        ));
+                    }
+                }
+            } catch (Throwable $e) {
+                // Isolamento gracioso
             }
         });
 

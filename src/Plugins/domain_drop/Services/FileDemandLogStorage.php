@@ -189,6 +189,77 @@ class FileDemandLogStorage implements DemandLogStorageInterface
         return "{$this->baseDir}/{$year}/{$folderName}/interactions.json";
     }
 
+    public function promoteSessionInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail,
+        ?string $yearMonth = null
+    ): int {
+        $cleanSession = trim($sessionId);
+        if ($cleanSession === '' || $customerId <= 0) {
+            return 0;
+        }
+
+        $filePath = $this->getFilePathForPeriod($yearMonth);
+        if (!file_exists($filePath)) {
+            return 0;
+        }
+
+        $fp = @fopen($filePath, 'c+');
+        if (!$fp) {
+            return 0;
+        }
+
+        $updatedCount = 0;
+        try {
+            if (!flock($fp, LOCK_EX)) {
+                fclose($fp);
+                return 0;
+            }
+
+            $lines = [];
+            while (($line = fgets($fp)) !== false) {
+                $trimmed = trim($line);
+                if ($trimmed === '') {
+                    continue;
+                }
+                $record = json_decode($trimmed, true);
+                if (is_array($record)) {
+                    $recSession = (string)($record['session_id'] ?? '');
+                    $recCustId = (int)($record['customer_id'] ?? 0);
+                    $recUserType = (string)($record['user_type'] ?? 'externo');
+
+                    if ($recSession === $cleanSession && ($recCustId <= 0 || $recUserType === 'externo')) {
+                        $record['customer_id'] = $customerId;
+                        $record['customer_name'] = $customerName;
+                        $record['customer_email'] = $customerEmail;
+                        $record['user_type'] = 'cliente_logado';
+                        $updatedCount++;
+                    }
+                    $lines[] = json_encode($record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+                }
+            }
+
+            if ($updatedCount > 0) {
+                ftruncate($fp, 0);
+                rewind($fp);
+                foreach ($lines as $lineStr) {
+                    fwrite($fp, $lineStr);
+                }
+                fflush($fp);
+            }
+
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        } catch (Throwable $e) {
+            @fclose($fp);
+            error_log('[FileDemandLogStorage] Falha ao promover interações de sessão: ' . $e->getMessage());
+        }
+
+        return $updatedCount;
+    }
+
     private function deleteDirectoryRecursive(string $dir): void
     {
         if (!is_dir($dir)) {

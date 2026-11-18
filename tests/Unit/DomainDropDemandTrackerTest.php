@@ -461,6 +461,158 @@ final class DomainDropDemandTrackerTest extends TestCase
         $this->deleteDir($tempDir);
     }
 
+    public function testPromoteSessionInteractionsInRepository(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+
+        $eventAnon = new DemandEvent(
+            productId: 'PROD-777',
+            productTitle: 'Camisa Polo Premium',
+            categorySlug: 'moda',
+            actionType: 'buy_click',
+            sessionId: 'sess_anon_99',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+        $repo->incrementMetric('PROD-777', 'Camisa Polo Premium', 'moda', 'buy_click', $eventAnon);
+
+        $logsBefore = $repo->getRecentActivityLogs(10);
+        $this->assertNotEmpty($logsBefore);
+        $this->assertSame('externo', $logsBefore[0]['user_type']);
+        $this->assertNull($logsBefore[0]['customer_id']);
+
+        // Promove a sessão quando o cliente loga/cadastra
+        $promotedCount = $repo->promoteSessionInteractions(
+            'sess_anon_99',
+            42,
+            'Mônica Medeiros',
+            'monica@teste.com'
+        );
+
+        $this->assertSame(1, $promotedCount);
+
+        $logsAfter = $repo->getRecentActivityLogs(10);
+        $this->assertSame('cliente_logado', $logsAfter[0]['user_type']);
+        $this->assertSame(42, (int)$logsAfter[0]['customer_id']);
+        $this->assertSame('Mônica Medeiros', $logsAfter[0]['customer_name']);
+        $this->assertSame('monica@teste.com', $logsAfter[0]['customer_email']);
+    }
+
+    public function testPromoteSessionInteractionsInFileStorage(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/test_demand_promote_' . uniqid();
+        $storage = new \DomainSystem\Plugins\domain_drop\Services\FileDemandLogStorage($tempDir);
+
+        $event1 = new DemandEvent(
+            productId: 'PROD-888',
+            productTitle: 'Relógio Smartwatch',
+            categorySlug: 'tecnologia',
+            actionType: 'view_details',
+            sessionId: 'sess_promo_1',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+        $event2 = new DemandEvent(
+            productId: 'PROD-888',
+            productTitle: 'Relógio Smartwatch',
+            categorySlug: 'tecnologia',
+            actionType: 'buy_click',
+            sessionId: 'sess_promo_1',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+        $eventOther = new DemandEvent(
+            productId: 'PROD-999',
+            productTitle: 'Outro Produto',
+            categorySlug: 'casa',
+            actionType: 'view_details',
+            sessionId: 'sess_other',
+            customerId: null,
+            customerName: null,
+            customerEmail: null,
+            userType: 'externo'
+        );
+
+        $storage->appendInteraction($event1);
+        $storage->appendInteraction($event2);
+        $storage->appendInteraction($eventOther);
+
+        // Promove apenas a sessão 'sess_promo_1'
+        $promoted = $storage->promoteSessionInteractions(
+            'sess_promo_1',
+            105,
+            'Comprador Promovido',
+            'comprador@loja.com'
+        );
+
+        $this->assertSame(2, $promoted);
+
+        $recent = $storage->getRecentInteractions(null, 10);
+        $this->assertCount(3, $recent);
+
+        // Verifica os registros da sessão promovida
+        $promotedRecords = array_filter($recent, fn($r) => ($r['session_id'] ?? '') === 'sess_promo_1');
+        $this->assertCount(2, $promotedRecords);
+        foreach ($promotedRecords as $pr) {
+            $this->assertSame('cliente_logado', $pr['user_type']);
+            $this->assertSame(105, $pr['customer_id']);
+            $this->assertSame('Comprador Promovido', $pr['customer_name']);
+            $this->assertSame('comprador@loja.com', $pr['customer_email']);
+        }
+
+        // Sessão de outro usuário deve continuar inalterada
+        $otherRecords = array_filter($recent, fn($r) => ($r['session_id'] ?? '') === 'sess_other');
+        $this->assertCount(1, $otherRecords);
+        $otherRec = reset($otherRecords);
+        $this->assertSame('externo', $otherRec['user_type']);
+
+        $this->deleteDir($tempDir);
+    }
+
+    public function testSessionGuardedDemandTrackerCoordinatesPromotion(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $tempDir = sys_get_temp_dir() . '/test_tracker_promo_' . uniqid();
+        $storage = new \DomainSystem\Plugins\domain_drop\Services\FileDemandLogStorage($tempDir);
+
+        $tracker = new SessionGuardedDemandTracker(
+            repository: $repo,
+            logStorage: $storage
+        );
+
+        $event = new DemandEvent(
+            productId: 'PROD-555',
+            productTitle: 'Tênis Running',
+            categorySlug: 'esportes',
+            actionType: 'buy_click',
+            sessionId: 'sess_coord_1',
+            userType: 'externo'
+        );
+        $tracker->recordInteraction($event);
+
+        $totalPromoted = $tracker->promoteSession(
+            'sess_coord_1',
+            7,
+            'Corredor Silva',
+            'corredor@atleta.com'
+        );
+
+        // Deve promover 1 no storage + 1 no repositório = 2
+        $this->assertSame(2, $totalPromoted);
+
+        $logs = $repo->getRecentActivityLogs(1);
+        $this->assertSame('cliente_logado', $logs[0]['user_type']);
+        $this->assertSame('corredor@atleta.com', $logs[0]['customer_email']);
+
+        $this->deleteDir($tempDir);
+    }
+
     private function deleteDir(string $dir): void
     {
         if (!is_dir($dir)) return;

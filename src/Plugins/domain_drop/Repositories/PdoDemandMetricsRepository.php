@@ -245,4 +245,40 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
 
         return $profile;
     }
+
+    public function promoteSessionInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail
+    ): int {
+        $cleanSession = trim($sessionId);
+        if ($cleanSession === '' || $customerId <= 0) {
+            return 0;
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE domain_drop_demand_activity_logs
+                SET 
+                    customer_id = :cid,
+                    customer_name = :cname,
+                    customer_email = :cemail,
+                    user_type = 'cliente_logado'
+                WHERE session_id = :sess
+                  AND (customer_id IS NULL OR customer_id = 0 OR user_type = 'externo')
+            ");
+            $stmt->execute([
+                ':cid'    => $customerId,
+                ':cname'  => $customerName,
+                ':cemail' => $customerEmail,
+                ':sess'   => $cleanSession,
+            ]);
+
+            return $stmt->rowCount();
+        } catch (Throwable $e) {
+            error_log('[PdoDemandMetricsRepository] Falha ao promover interações de sessão: ' . $e->getMessage());
+            return 0;
+        }
+    }
 }

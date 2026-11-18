@@ -387,6 +387,25 @@ class CheckoutController
                 : ($this->session->get('academy_student_email') ?: $this->session->get('customer_email') ?: $this->session->get('user_email') ?: 'aluno@exemplo.com'))
         ));
 
+        // Dispara evento reativo de criação do pedido para inteligência de demanda e telemetria de dropship/físico
+        if ($isPhysicalOrDropship && $this->dispatcher !== null) {
+            $this->dispatcher->dispatch('dropship.order_created', [
+                'order_id'          => $orderId,
+                'order_ref'         => $orderRef,
+                'user_id'           => $userId,
+                'item_id'           => $courseId,
+                'item_type'         => $itemType,
+                'total'             => $total,
+                'customer_name'     => $studentName,
+                'customer_email'    => $studentEmail,
+                'customer_document' => $payerCpf,
+                'gateway'           => $gateway->getId(),
+                'payment_method'    => $paymentMethod,
+                'status'            => 'pending',
+                'seller_info'       => $sellerInfo,
+            ]);
+        }
+
         $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
         $orderData = [
             'order_ref'     => $orderRef,
