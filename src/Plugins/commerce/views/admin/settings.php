@@ -85,9 +85,9 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
                 <div>
                     <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">Access Token (Produção ou Teste <code>TEST-...</code>)</label>
-                    <div style="position: relative;">
-                        <input type="password" id="mp_access_token_input" name="mercadopago_access_token" value="<?= htmlspecialchars((string)($settings['mercadopago_access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="APP_USR-... ou TEST-..." style="width: 100%; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 44px 10px 12px; color: #fff; font-family: monospace;">
-                        <button type="button" onclick="commTogglePass('mp_access_token_input', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar token" aria-label="Mostrar ou ocultar token">👁️</button>
+                    <div style="display: flex; align-items: stretch;">
+                        <input type="password" id="mp_access_token_input" name="mercadopago_access_token" value="<?= htmlspecialchars((string)($settings['mercadopago_access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="APP_USR-... ou TEST-..." style="flex: 1; min-width: 0; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; padding: 10px 14px; color: #fff; font-family: monospace;">
+                        <button type="button" onclick="commTogglePass('mp_access_token_input', this)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar token" aria-label="Mostrar ou ocultar token">👁️</button>
                     </div>
                     <div id="mp_token_status_box" style="margin-top: 8px; font-size: 0.83rem; display: none; padding: 8px 12px; border-radius: 6px;"></div>
                 </div>
@@ -149,9 +149,9 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">Client Secret (Chave Secreta)</label>
-                    <div style="position: relative;">
-                        <input type="password" id="pp_client_secret_input" name="paypal_client_secret" value="<?= htmlspecialchars((string)($settings['paypal_client_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="E... ou Live Secret" style="width: 100%; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 44px 10px 12px; color: #fff; font-family: monospace;">
-                        <button type="button" onclick="commTogglePass('pp_client_secret_input', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar secret" aria-label="Mostrar ou ocultar secret">👁️</button>
+                    <div style="display: flex; align-items: stretch;">
+                        <input type="password" id="pp_client_secret_input" name="paypal_client_secret" value="<?= htmlspecialchars((string)($settings['paypal_client_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="E... ou Live Secret" style="flex: 1; min-width: 0; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; padding: 10px 14px; color: #fff; font-family: monospace;">
+                        <button type="button" onclick="commTogglePass('pp_client_secret_input', this)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar secret" aria-label="Mostrar ou ocultar secret">👁️</button>
                     </div>
                 </div>
             </div>
@@ -201,9 +201,9 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                 <div>
                     <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">Secret Key (<code>sk_test_...</code> ou <code>sk_live_...</code>)</label>
-                    <div style="position: relative;">
-                        <input type="password" id="stripe_secret_key_input" name="stripe_secret_key" value="<?= htmlspecialchars((string)($settings['stripe_secret_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="sk_test_..." style="width: 100%; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 44px 10px 12px; color: #fff; font-family: monospace;">
-                        <button type="button" onclick="commTogglePass('stripe_secret_key_input', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar chave" aria-label="Mostrar ou ocultar chave">👁️</button>
+                    <div style="display: flex; align-items: stretch;">
+                        <input type="password" id="stripe_secret_key_input" name="stripe_secret_key" value="<?= htmlspecialchars((string)($settings['stripe_secret_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="sk_test_..." style="flex: 1; min-width: 0; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; padding: 10px 14px; color: #fff; font-family: monospace;">
+                        <button type="button" onclick="commTogglePass('stripe_secret_key_input', this)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar chave" aria-label="Mostrar ou ocultar chave">👁️</button>
                     </div>
                 </div>
                 <div>
@@ -212,9 +212,9 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">Webhook Signing Secret (<code>whsec_...</code>)</label>
-                    <div style="position: relative;">
-                        <input type="password" id="stripe_webhook_secret_input" name="stripe_webhook_secret" value="<?= htmlspecialchars((string)($settings['stripe_webhook_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="whsec_..." style="width: 100%; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 10px 44px 10px 12px; color: #fff; font-family: monospace;">
-                        <button type="button" onclick="commTogglePass('stripe_webhook_secret_input', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar webhook secret" aria-label="Mostrar ou ocultar webhook secret">👁️</button>
+                    <div style="display: flex; align-items: stretch;">
+                        <input type="password" id="stripe_webhook_secret_input" name="stripe_webhook_secret" value="<?= htmlspecialchars((string)($settings['stripe_webhook_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="whsec_..." style="flex: 1; min-width: 0; box-sizing: border-box; background: #151c28; border: 1px solid rgba(255,255,255,0.15); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; padding: 10px 14px; color: #fff; font-family: monospace;">
+                        <button type="button" onclick="commTogglePass('stripe_webhook_secret_input', this)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar webhook secret" aria-label="Mostrar ou ocultar webhook secret">👁️</button>
                     </div>
                 </div>
             </div>
@@ -551,7 +551,7 @@
             var show = input.type === 'password';
             input.type = show ? 'text' : 'password';
             btn.textContent = show ? '🙈' : '👁️';
-            btn.style.transform = show ? 'translateY(-50%) scale(1.15)' : 'translateY(-50%) scale(1)';
+            btn.style.transform = show ? 'scale(1.15)' : 'scale(1)';
         }
     </script>
 

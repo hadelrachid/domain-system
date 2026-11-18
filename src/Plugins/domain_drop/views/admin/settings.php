@@ -98,9 +98,9 @@
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
                 App Secret
             </label>
-            <div style="position: relative;">
-                <input type="password" id="input_app_secret" name="app_secret" value="<?= htmlspecialchars((string)($config['app_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole seu App Secret aqui" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 44px 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
-                <button type="button" onclick="ddToggleSecret('input_app_secret', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar App Secret" aria-label="Mostrar ou ocultar chave">👁️</button>
+            <div style="display: flex; align-items: stretch;">
+                <input type="password" id="input_app_secret" name="app_secret" value="<?= htmlspecialchars((string)($config['app_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole seu App Secret aqui" style="flex: 1; min-width: 0; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; color: #fff; padding: 10px 14px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+                <button type="button" onclick="ddToggleSecret('input_app_secret', this)" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar App Secret" aria-label="Mostrar ou ocultar chave">👁️</button>
             </div>
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
                 Armazenado com segurança em <code>config/plugins/domain_drop.json</code> (protegido contra commit no Git). Deixe em branco para manter o atual.
@@ -111,9 +111,9 @@
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
                 Access Token OAuth2 (Sessão do Dropshipper)
             </label>
-            <div style="position: relative;">
-                <input type="password" id="input_access_token" name="access_token" value="<?= htmlspecialchars((string)($config['access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole o Access Token de autorização OAuth (opcional)" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 44px 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
-                <button type="button" onclick="ddToggleSecret('input_access_token', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 17px; padding: 4px; line-height: 1; transition: transform 0.15s ease;" title="Revelar ou ocultar Access Token" aria-label="Mostrar ou ocultar token">👁️</button>
+            <div style="display: flex; align-items: stretch;">
+                <input type="password" id="input_access_token" name="access_token" value="<?= htmlspecialchars((string)($config['access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole o Access Token de autorização OAuth (opcional)" style="flex: 1; min-width: 0; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; color: #fff; padding: 10px 14px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+                <button type="button" onclick="ddToggleSecret('input_access_token', this)" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar Access Token" aria-label="Mostrar ou ocultar token">👁️</button>
             </div>
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
                 Token de sessão concedido pelo AliExpress para chamadas autenticadas de produtos e pedidos dropshipping. Caso não possua, o motor utilizará a base inteligente curada.
@@ -302,7 +302,7 @@
         var show = input.type === 'password';
         input.type = show ? 'text' : 'password';
         btn.textContent = show ? '🙈' : '👁️';
-        btn.style.transform = show ? 'translateY(-50%) scale(1.15)' : 'translateY(-50%) scale(1)';
+        btn.style.transform = show ? 'scale(1.15)' : 'scale(1)';
     }
     </script>
 
