@@ -42,6 +42,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->provideHook('commerce.register_item_resolvers');
         $os->provideHook('commerce.register_gateways');
         $os->provideHook('payment.approved');
+        $os->provideHook('dropship.order_created');
         $os->listenHook('router.register');
         $os->listenHook('admin.menu');
     }
