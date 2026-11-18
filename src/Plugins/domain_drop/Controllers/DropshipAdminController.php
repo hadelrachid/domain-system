@@ -43,7 +43,8 @@ class DropshipAdminController
         private readonly ?SellerMediationService $mediationService = null,
         private readonly ?AliExpressApiClientInterface $apiClient = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $metricsRepo = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService $notificationService = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->configFile = $root . '/config/plugins/domain_drop.json';
@@ -370,6 +371,7 @@ class DropshipAdminController
         $sellerEmail = trim((string)$request->input('seller_email', ''));
 
         if ($this->orderRepo !== null && $orderRef !== '') {
+            $existingOrder = $this->orderRepo->findByOrderRef($orderRef);
             $this->orderRepo->updateFulfillment(
                 $orderRef,
                 $status,
@@ -386,6 +388,15 @@ class DropshipAdminController
                     null,
                     $sellerEmail !== '' ? $sellerEmail : null
                 );
+            }
+
+            // Notifica o cliente por e-mail automaticamente caso haja novo código de rastreio
+            if ($this->notificationService !== null && $tracking !== '' && is_array($existingOrder)) {
+                $prevTracking = trim((string)($existingOrder['tracking_code'] ?? ''));
+                if (strcasecmp($prevTracking, $tracking) !== 0) {
+                    $existingOrder['order_ref'] = $orderRef;
+                    $this->notificationService->notifyOrderShipped($existingOrder, $tracking);
+                }
             }
 
             $this->session->setFlash('success', 'Status de envio do pedido atualizado com sucesso!');

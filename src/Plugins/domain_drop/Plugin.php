@@ -236,6 +236,21 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class, function () use ($runtime) {
+            $mailer = null;
+            try {
+                $mailer = $runtime->getLink('core.mailer');
+            } catch (Throwable $e) {
+                $mailer = null;
+            }
+
+            return new \DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService(
+                mailer: $mailer instanceof EmailSenderInterface ? $mailer : null,
+                storeName: 'RachidD Store',
+                supportEmail: 'contato@rachidd.com'
+            );
+        });
+
         $runtime->singleton(DropshipAdminController::class, function () use ($runtime, $root) {
             return new DropshipAdminController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
@@ -251,7 +266,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 mediationService: $runtime->make(SellerMediationService::class),
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 metricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
-                logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class)
+                logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class),
+                notificationService: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class)
             );
         });
 
@@ -431,7 +447,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                             }
                         }
 
-                        $orderRepo->create([
+                        $newDropOrder = [
                             'order_ref'              => $orderRef,
                             'customer_name'          => (string)($payload['customer_name'] ?? 'Cliente'),
                             'customer_email'         => (string)($payload['customer_email'] ?? ''),
@@ -445,7 +461,17 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                             'product_slug'           => $productSlug,
                             'product_title'          => $productTitle,
                             'aliexpress_product_id'  => $aeProductId,
-                        ]);
+                        ];
+                        $orderRepo->create($newDropOrder);
+
+                        // Dispara e-mail de confirmação de pagamento para o cliente
+                        try {
+                            /** @var \DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService $notifService */
+                            $notifService = $runtime->make(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class);
+                            $notifService->notifyOrderPaid($newDropOrder);
+                        } catch (Throwable $e) {
+                            // Isolamento gracioso
+                        }
                     } else {
                         $orderRepo->updateFulfillment($orderRef, 'paid');
                     }
