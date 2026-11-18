@@ -27,15 +27,21 @@
         </div>
     </header>
 
-    <?php if (!empty($flash)): ?>
+    <?php 
+    $flashText = is_array($flash ?? null) ? ($flash['msg'] ?? '') : (string)($flash ?? '');
+    if ($flashText !== ''): 
+    ?>
         <div style="background: rgba(0, 210, 132, 0.15); border: 1px solid rgba(0, 210, 132, 0.4); color: #00d284; padding: 14px 20px; border-radius: 8px; margin-bottom: 24px; font-size: 0.92rem;">
-            ✓ <?= htmlspecialchars($flash, ENT_QUOTES, 'UTF-8') ?>
+            ✓ <?= htmlspecialchars($flashText, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
+    <?php 
+    $errorText = is_array($error ?? null) ? ($error['msg'] ?? '') : (string)($error ?? '');
+    if ($errorText !== ''): 
+    ?>
         <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; padding: 14px 20px; border-radius: 8px; margin-bottom: 24px; font-size: 0.92rem;">
-            ⚠ <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+            ⚠ <?= htmlspecialchars($errorText, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 

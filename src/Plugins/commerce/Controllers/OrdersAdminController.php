@@ -57,6 +57,8 @@ class OrdersAdminController
         $salesTimeline = $this->orderRepo->getSalesTimeline($filterPeriod);
         $paymentBreakdown = $this->orderRepo->getPaymentMethodBreakdown($filterPeriod);
 
+        $flashMessages = $this->extractFlashMessages();
+
         $html = $this->renderView('admin/dashboard', [
             'baseUrl'          => $baseUrl,
             'gateways'         => $gateways,
@@ -65,8 +67,8 @@ class OrdersAdminController
             'salesTimeline'    => $salesTimeline,
             'paymentBreakdown' => $paymentBreakdown,
             'csrfToken'        => (string)$this->session->getCsrfToken(),
-            'flash'            => $this->session->getFlash('success'),
-            'error'            => $this->session->getFlash('error'),
+            'flash'            => $flashMessages['flash'],
+            'error'            => $flashMessages['error'],
             'settings'         => $this->settings ? $this->settings->all() : [],
             'selectedPeriod'   => $filterPeriod,
             'availablePeriods' => $availablePeriods,
@@ -83,17 +85,42 @@ class OrdersAdminController
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $gateways = $this->gatewayRegistry->getAll();
         $currentSettings = $this->settings ? $this->settings->all() : [];
+        $flashMessages = $this->extractFlashMessages();
 
         $html = $this->renderView('admin/settings', [
             'baseUrl'   => $baseUrl,
             'gateways'  => $gateways,
             'settings'  => $currentSettings,
             'csrfToken' => (string)$this->session->getCsrfToken(),
-            'flash'     => $this->session->getFlash('success'),
-            'error'     => $this->session->getFlash('error'),
+            'flash'     => $flashMessages['flash'],
+            'error'     => $flashMessages['error'],
         ]);
 
         return new ViewResponse($html);
+    }
+
+    /**
+     * @return array{flash: ?string, error: ?string}
+     */
+    private function extractFlashMessages(): array
+    {
+        $flashData = $this->session->getFlash();
+        $flash = null;
+        $error = null;
+        if (is_array($flashData)) {
+            $msg = trim((string)($flashData['msg'] ?? ''));
+            if ($msg !== '') {
+                if (($flashData['type'] ?? '') === 'error') {
+                    $error = $msg;
+                } else {
+                    $flash = $msg;
+                }
+            }
+        } elseif (is_string($flashData) && trim($flashData) !== '') {
+            $flash = trim($flashData);
+        }
+
+        return ['flash' => $flash, 'error' => $error];
     }
 
     /**

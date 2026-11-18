@@ -254,4 +254,30 @@ final class OrdersAdminControllerTest extends TestCase
         $respMonth = $controller->export($reqMonth);
         $this->assertStringContainsString('filename="balanco-vendas-2026-11.csv"', (string)$respMonth->getHeader('Content-Disposition'));
     }
+
+    public function testSettingsAndDashboardHandleArrayFlashMessagesGracefully(): void
+    {
+        $session = $this->createMock(SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('csrf_token_xyz');
+        // Simula o SessionManager retornando o array ['type' => 'success', 'msg' => 'Credenciais salvas com sucesso!']
+        $session->method('getFlash')->willReturn(['type' => 'success', 'msg' => 'Credenciais salvas com sucesso!']);
+
+        $settings = $this->createMock(CommerceSettingsInterface::class);
+        $settings->method('all')->willReturn([]);
+        $registry = new PaymentGatewayRegistry();
+
+        $controller = new OrdersAdminController($session, $this->orderRepo, $registry, $settings);
+
+        // 1. Tela de Settings
+        $reqSettings = new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/commerce/settings']);
+        $respSettings = $controller->settings($reqSettings);
+        $this->assertSame(200, $respSettings->getStatusCode());
+        $this->assertStringContainsString('Credenciais salvas com sucesso!', $respSettings->getContent());
+
+        // 2. Tela de Dashboard
+        $reqDashboard = new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/commerce']);
+        $respDashboard = $controller->index($reqDashboard);
+        $this->assertSame(200, $respDashboard->getStatusCode());
+        $this->assertStringContainsString('Credenciais salvas com sucesso!', $respDashboard->getContent());
+    }
 }

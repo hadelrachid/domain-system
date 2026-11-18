@@ -140,15 +140,21 @@ foreach ($gateways as $gw) {
         </div>
     </header>
 
-    <?php if (!empty($flash)): ?>
+    <?php 
+    $flashText = is_array($flash ?? null) ? ($flash['msg'] ?? '') : (string)($flash ?? '');
+    if ($flashText !== ''): 
+    ?>
         <div style="background: rgba(0, 210, 132, 0.12); border: 1px solid rgba(0, 210, 132, 0.35); color: #00d284; padding: 14px 20px; border-radius: 10px; margin-bottom: 24px; font-size: 0.94rem; display: flex; align-items: center; gap: 10px;">
-            <span>✓</span> <?= htmlspecialchars($flash, ENT_QUOTES, 'UTF-8') ?>
+            <span>✓</span> <?= htmlspecialchars($flashText, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
+    <?php 
+    $errorText = is_array($error ?? null) ? ($error['msg'] ?? '') : (string)($error ?? '');
+    if ($errorText !== ''): 
+    ?>
         <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; padding: 14px 20px; border-radius: 10px; margin-bottom: 24px; font-size: 0.94rem; display: flex; align-items: center; gap: 10px;">
-            <span>⚠</span> <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+            <span>⚠</span> <?= htmlspecialchars($errorText, ENT_QUOTES, 'UTF-8') ?>
         </div>
     <?php endif; ?>
 
