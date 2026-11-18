@@ -111,7 +111,7 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
             $cName = $event?->customerName;
             $cEmail = $event?->customerEmail;
             $sessId = $event?->sessionId;
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $ip = $event?->ipAddress ?: (\DomainSystem\Plugins\domain_drop\DTO\DemandEvent::resolveClientIp());
 
             $logStmt = $this->pdo->prepare("
                 INSERT INTO domain_drop_demand_activity_logs
@@ -140,7 +140,7 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
     public function getRecentActivityLogs(int $limit = 25): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT id, product_id, product_title, category_slug, action_type, user_type, customer_id, customer_name, customer_email, created_at
+            SELECT id, product_id, product_title, category_slug, action_type, user_type, customer_id, customer_name, customer_email, session_id, ip_address, created_at
             FROM domain_drop_demand_activity_logs
             ORDER BY id DESC
             LIMIT :lim
@@ -246,39 +246,99 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
         return $profile;
     }
 
+    public function promoteInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail,
+        ?string $ipAddress = null
+    ): int {
+        $cleanSession = trim($sessionId);
+        $cleanIp = trim($ipAddress ?? '');
+        if ($customerId <= 0 || ($cleanSession === '' && $cleanIp === '')) {
+            return 0;
+        }
+
+        try {
+            // Janela temporal recente para correlação por IP (últimas 4 horas)
+            $recentThreshold = date('Y-m-d H:i:s', time() - 14400);
+
+            if ($cleanSession !== '' && $cleanIp !== '') {
+                $sql = "
+                    UPDATE domain_drop_demand_activity_logs
+                    SET 
+                        customer_id = :cid,
+                        customer_name = :cname,
+                        customer_email = :cemail,
+                        user_type = 'cliente_logado'
+                    WHERE (
+                        session_id = :sess 
+                        OR (ip_address = :ip AND created_at >= :recent)
+                    )
+                    AND (customer_id IS NULL OR customer_id = 0 OR user_type = 'externo')
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([
+                    ':cid'    => $customerId,
+                    ':cname'  => $customerName,
+                    ':cemail' => $customerEmail,
+                    ':sess'   => $cleanSession,
+                    ':ip'     => $cleanIp,
+                    ':recent' => $recentThreshold,
+                ]);
+            } elseif ($cleanSession !== '') {
+                $sql = "
+                    UPDATE domain_drop_demand_activity_logs
+                    SET 
+                        customer_id = :cid,
+                        customer_name = :cname,
+                        customer_email = :cemail,
+                        user_type = 'cliente_logado'
+                    WHERE session_id = :sess
+                      AND (customer_id IS NULL OR customer_id = 0 OR user_type = 'externo')
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([
+                    ':cid'    => $customerId,
+                    ':cname'  => $customerName,
+                    ':cemail' => $customerEmail,
+                    ':sess'   => $cleanSession,
+                ]);
+            } else {
+                $sql = "
+                    UPDATE domain_drop_demand_activity_logs
+                    SET 
+                        customer_id = :cid,
+                        customer_name = :cname,
+                        customer_email = :cemail,
+                        user_type = 'cliente_logado'
+                    WHERE ip_address = :ip
+                      AND created_at >= :recent
+                      AND (customer_id IS NULL OR customer_id = 0 OR user_type = 'externo')
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([
+                    ':cid'    => $customerId,
+                    ':cname'  => $customerName,
+                    ':cemail' => $customerEmail,
+                    ':ip'     => $cleanIp,
+                    ':recent' => $recentThreshold,
+                ]);
+            }
+
+            return $stmt->rowCount();
+        } catch (Throwable $e) {
+            error_log('[PdoDemandMetricsRepository] Falha ao promover interações de sessão/IP: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
     public function promoteSessionInteractions(
         string $sessionId,
         int $customerId,
         string $customerName,
         string $customerEmail
     ): int {
-        $cleanSession = trim($sessionId);
-        if ($cleanSession === '' || $customerId <= 0) {
-            return 0;
-        }
-
-        try {
-            $stmt = $this->pdo->prepare("
-                UPDATE domain_drop_demand_activity_logs
-                SET 
-                    customer_id = :cid,
-                    customer_name = :cname,
-                    customer_email = :cemail,
-                    user_type = 'cliente_logado'
-                WHERE session_id = :sess
-                  AND (customer_id IS NULL OR customer_id = 0 OR user_type = 'externo')
-            ");
-            $stmt->execute([
-                ':cid'    => $customerId,
-                ':cname'  => $customerName,
-                ':cemail' => $customerEmail,
-                ':sess'   => $cleanSession,
-            ]);
-
-            return $stmt->rowCount();
-        } catch (Throwable $e) {
-            error_log('[PdoDemandMetricsRepository] Falha ao promover interações de sessão: ' . $e->getMessage());
-            return 0;
-        }
+        return $this->promoteInteractions($sessionId, $customerId, $customerName, $customerEmail);
     }
 }

@@ -9,6 +9,8 @@ namespace DomainSystem\Plugins\domain_drop\DTO;
  */
 final class DemandEvent
 {
+    public readonly string $ipAddress;
+
     public function __construct(
         public readonly string $productId,
         public readonly string $productTitle,
@@ -19,8 +21,33 @@ final class DemandEvent
         public readonly ?int $customerId = null,
         public readonly ?string $customerName = null,
         public readonly ?string $customerEmail = null,
-        public readonly string $userType = 'externo' // 'cliente_logado' | 'externo'
+        public readonly string $userType = 'externo', // 'cliente_logado' | 'externo'
+        ?string $ipAddress = null
     ) {
+        $this->ipAddress = $ipAddress ?: self::resolveClientIp();
+    }
+
+    public static function resolveClientIp(): string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_CLIENT_IP',
+            'REMOTE_ADDR',
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $raw = (string)$_SERVER[$header];
+                $ips = explode(',', $raw);
+                $candidate = trim($ips[0]);
+                if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return '127.0.0.1';
     }
 
     public static function fromArray(
@@ -28,7 +55,8 @@ final class DemandEvent
         ?string $sessionId = null,
         ?int $customerId = null,
         ?string $customerName = null,
-        ?string $customerEmail = null
+        ?string $customerEmail = null,
+        ?string $ipAddress = null
     ): self {
         $rawAction = (string)($payload['action'] ?? ($payload['event_type'] ?? 'view_details'));
         $action = match ($rawAction) {
@@ -40,6 +68,7 @@ final class DemandEvent
         $resolvedCustomerId = $customerId ?? (isset($payload['customer_id']) ? (int)$payload['customer_id'] : null);
         $resolvedCustomerName = $customerName ?? (isset($payload['customer_name']) ? (string)$payload['customer_name'] : null);
         $resolvedCustomerEmail = $customerEmail ?? (isset($payload['customer_email']) ? (string)$payload['customer_email'] : null);
+        $resolvedIp = $ipAddress ?? (isset($payload['ip_address']) ? (string)$payload['ip_address'] : null);
 
         $hasUser = ($resolvedCustomerId !== null && $resolvedCustomerId > 0)
             || (!empty($resolvedCustomerEmail) && filter_var($resolvedCustomerEmail, FILTER_VALIDATE_EMAIL));
@@ -56,7 +85,8 @@ final class DemandEvent
             customerId: $resolvedCustomerId,
             customerName: $resolvedCustomerName ? trim($resolvedCustomerName) : null,
             customerEmail: $resolvedCustomerEmail ? trim(strtolower($resolvedCustomerEmail)) : null,
-            userType: $userType
+            userType: $userType,
+            ipAddress: $resolvedIp
         );
     }
 }

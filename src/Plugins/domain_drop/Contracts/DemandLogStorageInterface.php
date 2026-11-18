@@ -52,6 +52,27 @@ interface DemandLogStorageInterface
     public function getFilePathForPeriod(?string $yearMonth = null): string;
 
     /**
+     * Promove interações anônimas de uma sessão e/ou endereço de IP para um cliente identificado.
+     * Atualiza registros que estavam como 'externo' para 'cliente_logado'.
+     *
+     * @param string $sessionId Identificador da sessão PHP a promover
+     * @param int $customerId ID do cliente cadastrado
+     * @param string $customerName Nome completo do cliente
+     * @param string $customerEmail E-mail do cliente
+     * @param string|null $ipAddress Endereço IP do cliente para correlação por rede/dispositivo
+     * @param string|null $yearMonth Período YYYY-MM ou null para mês corrente
+     * @return int Quantidade de registros promovidos
+     */
+    public function promoteInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail,
+        ?string $ipAddress = null,
+        ?string $yearMonth = null
+    ): int;
+
+    /**
      * Promove interações anônimas de uma sessão para um cliente identificado.
      * Atualiza registros daquela sessão que estavam como 'externo' para 'cliente_logado'.
      *

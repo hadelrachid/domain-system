@@ -381,11 +381,23 @@ $monthsNames = [
                                                     Copiar
                                                 </button>
                                             </div>
+                                            <?php if (!empty($act['ip_address'])): ?>
+                                                <div style="font-size: 0.72rem; color: #94a3b8; font-family: monospace; margin-top: 5px; display: flex; align-items: center; gap: 4px;">
+                                                    <span style="opacity: 0.6;">🌐 IP:</span>
+                                                    <span><?= htmlspecialchars($act['ip_address']) ?></span>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     <?php else: ?>
                                         <div style="color: #64748b; font-size: 0.8rem; font-style: italic;">
                                             Anônimo (Tráfego da Loja)
                                         </div>
+                                        <?php if (!empty($act['ip_address'])): ?>
+                                            <div style="font-size: 0.72rem; color: #64748b; font-family: monospace; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                                                <span style="opacity: 0.6;">🌐 IP:</span>
+                                                <span><?= htmlspecialchars($act['ip_address']) ?></span>
+                                            </div>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                                 <td style="padding: 14px; text-align: right; white-space: nowrap;">

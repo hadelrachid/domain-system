@@ -67,6 +67,7 @@ class FileDemandLogStorage implements DemandLogStorageInterface
                 'customer_name'  => $event->customerName,
                 'customer_email' => $event->customerEmail,
                 'session_id'     => $event->sessionId,
+                'ip_address'     => $event->ipAddress ?: (\DomainSystem\Plugins\domain_drop\DTO\DemandEvent::resolveClientIp()),
                 'created_at'     => date('Y-m-d H:i:s'),
             ];
 
@@ -189,15 +190,17 @@ class FileDemandLogStorage implements DemandLogStorageInterface
         return "{$this->baseDir}/{$year}/{$folderName}/interactions.json";
     }
 
-    public function promoteSessionInteractions(
+    public function promoteInteractions(
         string $sessionId,
         int $customerId,
         string $customerName,
         string $customerEmail,
+        ?string $ipAddress = null,
         ?string $yearMonth = null
     ): int {
         $cleanSession = trim($sessionId);
-        if ($cleanSession === '' || $customerId <= 0) {
+        $cleanIp = trim($ipAddress ?? '');
+        if ($customerId <= 0 || ($cleanSession === '' && $cleanIp === '')) {
             return 0;
         }
 
@@ -227,14 +230,21 @@ class FileDemandLogStorage implements DemandLogStorageInterface
                 $record = json_decode($trimmed, true);
                 if (is_array($record)) {
                     $recSession = (string)($record['session_id'] ?? '');
+                    $recIp = (string)($record['ip_address'] ?? '');
                     $recCustId = (int)($record['customer_id'] ?? 0);
                     $recUserType = (string)($record['user_type'] ?? 'externo');
 
-                    if ($recSession === $cleanSession && ($recCustId <= 0 || $recUserType === 'externo')) {
+                    $matchesSession = ($cleanSession !== '' && $recSession === $cleanSession);
+                    $matchesIp = ($cleanIp !== '' && $recIp === $cleanIp);
+
+                    if (($matchesSession || $matchesIp) && ($recCustId <= 0 || $recUserType === 'externo')) {
                         $record['customer_id'] = $customerId;
                         $record['customer_name'] = $customerName;
                         $record['customer_email'] = $customerEmail;
                         $record['user_type'] = 'cliente_logado';
+                        if (empty($record['ip_address']) && $cleanIp !== '') {
+                            $record['ip_address'] = $cleanIp;
+                        }
                         $updatedCount++;
                     }
                     $lines[] = json_encode($record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
@@ -254,10 +264,20 @@ class FileDemandLogStorage implements DemandLogStorageInterface
             fclose($fp);
         } catch (Throwable $e) {
             @fclose($fp);
-            error_log('[FileDemandLogStorage] Falha ao promover interações de sessão: ' . $e->getMessage());
+            error_log('[FileDemandLogStorage] Falha ao promover interações de sessão/IP: ' . $e->getMessage());
         }
 
         return $updatedCount;
+    }
+
+    public function promoteSessionInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail,
+        ?string $yearMonth = null
+    ): int {
+        return $this->promoteInteractions($sessionId, $customerId, $customerName, $customerEmail, null, $yearMonth);
     }
 
     private function deleteDirectoryRecursive(string $dir): void

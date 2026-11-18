@@ -495,12 +495,13 @@ class CustomerAccountController
             $cId = (int)($customer['id'] ?? 0);
             $cName = (string)($customer['name'] ?? 'Cliente');
             $cEmail = strtolower(trim((string)($customer['email'] ?? '')));
+            $clientIp = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::resolveClientIp();
 
             if ($oldSessionId !== '') {
-                $this->demandTracker->promoteSession($oldSessionId, $cId, $cName, $cEmail);
+                $this->demandTracker->promoteSession($oldSessionId, $cId, $cName, $cEmail, $clientIp);
             }
             if ($newSessionId !== '' && $newSessionId !== $oldSessionId) {
-                $this->demandTracker->promoteSession($newSessionId, $cId, $cName, $cEmail);
+                $this->demandTracker->promoteSession($newSessionId, $cId, $cName, $cEmail, $clientIp);
             }
         }
     }

@@ -372,43 +372,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         $repo = $runtime->make(DropshipCatalogRepositoryInterface::class);
                         $product = $repo->findById($id);
                         if ($product !== null) {
-                            // Registra intenção máxima de compra (buy_click) ao abrir o checkout
-                            try {
-                                /** @var \DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker */
-                                $demandTracker = $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class);
-                                $session = null;
-                                try {
-                                    $session = $runtime->make(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
-                                } catch (Throwable $e) {}
-
-                                $cId = null;
-                                $cName = null;
-                                $cEmail = null;
-                                $uType = 'externo';
-                                if ($session instanceof \DomainSystem\Core\Contracts\SessionManagerInterface) {
-                                    $cId = (int)($session->get('customer_id') ?: $session->get('academy_student_id') ?: $session->get('user_id') ?: 0);
-                                    if ($cId <= 0) $cId = null;
-                                    $cEmail = strtolower(trim((string)($session->get('customer_email') ?: $session->get('academy_student_email') ?: $session->get('user_email') ?: '')));
-                                    $cName = trim((string)($session->get('customer_name') ?: $session->get('academy_student_name') ?: $session->get('user_name') ?: ''));
-                                    if ($cId > 0 || $cEmail !== '') {
-                                        $uType = 'cliente_logado';
-                                    }
-                                }
-
-                                $event = new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
-                                    productId: (string)($product->aliexpressId ?: (string)$product->id),
-                                    productTitle: (string)$product->title,
-                                    categorySlug: (string)$product->category,
-                                    actionType: 'buy_click',
-                                    sessionId: session_id() ?: null,
-                                    customerId: $cId,
-                                    customerName: $cName ?: null,
-                                    customerEmail: $cEmail ?: null,
-                                    userType: $uType
-                                );
-                                $demandTracker->recordInteraction($event);
-                            } catch (Throwable $e) {}
-
                             // Resolve SKU a partir do contexto explicitamente fornecido (sem superglobais)
                             $requestedSku = trim((string)($context['sku'] ?? ''));
                             if ($requestedSku === '') {
@@ -532,28 +495,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 $cName = trim((string)($payload['customer_name'] ?? ''));
                 $cEmail = strtolower(trim((string)($payload['customer_email'] ?? '')));
 
-                if ($sessionId !== '' && $cId > 0) {
-                    $demandTracker->promoteSession($sessionId, $cId, $cName, $cEmail);
-                }
-
-                $itemId = (int)($payload['item_id'] ?? 0);
-                if ($itemId > 0) {
-                    /** @var DropshipCatalogRepositoryInterface $catRepo */
-                    $catRepo = $runtime->make(DropshipCatalogRepositoryInterface::class);
-                    $productDto = $catRepo->findById($itemId);
-                    if ($productDto !== null) {
-                        $demandTracker->recordInteraction(new \DomainSystem\Plugins\domain_drop\DTO\DemandEvent(
-                            productId: (string)($productDto->aliexpressId ?: (string)$productDto->id),
-                            productTitle: (string)$productDto->title,
-                            categorySlug: (string)$productDto->category,
-                            actionType: 'buy_click',
-                            sessionId: $sessionId ?: null,
-                            customerId: $cId ?: null,
-                            customerName: $cName ?: null,
-                            customerEmail: $cEmail ?: null,
-                            userType: ($cId > 0 || $cEmail !== '') ? 'cliente_logado' : 'externo'
-                        ));
-                    }
+                $clientIp = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::resolveClientIp();
+                if ($cId > 0) {
+                    $demandTracker->promoteSession($sessionId, $cId, $cName, $cEmail, $clientIp);
                 }
             } catch (Throwable $e) {
                 // Isolamento gracioso

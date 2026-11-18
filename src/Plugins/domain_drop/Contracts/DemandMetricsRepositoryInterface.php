@@ -46,6 +46,25 @@ interface DemandMetricsRepositoryInterface
     public function getAudienceCategoryProfile(string $yearMonth): array;
 
     /**
+     * Promove retroativamente interações anônimas de uma sessão e/ou IP na trilha de auditoria para o cliente identificado.
+     * Atualiza registros que estavam como 'externo' para 'cliente_logado'.
+     *
+     * @param string $sessionId Identificador da sessão PHP a promover
+     * @param int $customerId ID do cliente cadastrado
+     * @param string $customerName Nome completo do cliente
+     * @param string $customerEmail E-mail do cliente
+     * @param string|null $ipAddress Endereço IP do cliente para correlação por rede/dispositivo
+     * @return int Quantidade de registros promovidos
+     */
+    public function promoteInteractions(
+        string $sessionId,
+        int $customerId,
+        string $customerName,
+        string $customerEmail,
+        ?string $ipAddress = null
+    ): int;
+
+    /**
      * Promove retroativamente interações anônimas de uma sessão na trilha de auditoria para o cliente identificado.
      * Atualiza registros daquela sessão que estavam como 'externo' para 'cliente_logado'.
      *

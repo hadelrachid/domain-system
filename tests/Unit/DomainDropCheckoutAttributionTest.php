@@ -135,6 +135,46 @@ final class DomainDropCheckoutAttributionTest extends TestCase
         $this->assertContains('monicamedeirosdaher@gmail.com', $leadEmails);
     }
 
+    public function testAnonymousInteractionIsPromotedViaIpAddressEvenIfSessionChanges(): void
+    {
+        $repo = new PdoDemandMetricsRepository($this->pdo);
+        $logStorage = new FileDemandLogStorage($this->tempDir);
+        $tracker = new SessionGuardedDemandTracker($repo, null, 2, $logStorage);
+
+        $clientIp = '200.189.45.10';
+        $oldSession = 'anon_session_111';
+
+        // 1. Visitante anônimo navega do IP 200.189.45.10
+        $event = new DemandEvent(
+            productId: 'AE-777',
+            productTitle: 'Produto Teste IP',
+            categorySlug: 'geral',
+            actionType: 'view_details',
+            sessionId: $oldSession,
+            userType: 'externo',
+            ipAddress: $clientIp
+        );
+        $this->assertTrue($tracker->recordInteraction($event));
+
+        // 2. O usuário troca de aba ou limpa cookie (nova sessão: 'new_session_222'), mas mesmo IP!
+        $promoted = $tracker->promoteSession(
+            'new_session_222',
+            10,
+            'Comprador IP',
+            'comprador.ip@loja.com',
+            $clientIp
+        );
+
+        // Deve promover o registro que bateu por IP
+        $this->assertGreaterThan(0, $promoted);
+
+        $logs = $repo->getRecentActivityLogs(10);
+        $this->assertSame('cliente_logado', $logs[0]['user_type']);
+        $this->assertSame(10, (int)$logs[0]['customer_id']);
+        $this->assertSame('comprador.ip@loja.com', $logs[0]['customer_email']);
+        $this->assertSame($clientIp, $logs[0]['ip_address']);
+    }
+
     private function deleteDir(string $dir): void
     {
         if (!is_dir($dir)) return;

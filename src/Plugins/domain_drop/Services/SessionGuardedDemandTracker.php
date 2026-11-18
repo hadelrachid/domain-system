@@ -61,25 +61,29 @@ final class SessionGuardedDemandTracker implements DemandTrackerInterface
         string $sessionId,
         int $customerId,
         string $customerName,
-        string $customerEmail
+        string $customerEmail,
+        ?string $ipAddress = null
     ): int {
+        $ip = $ipAddress ?: DemandEvent::resolveClientIp();
         $promoted = 0;
 
         if ($this->logStorage !== null) {
-            $promoted += $this->logStorage->promoteSessionInteractions(
+            $promoted += $this->logStorage->promoteInteractions(
                 $sessionId,
                 $customerId,
                 $customerName,
-                $customerEmail
+                $customerEmail,
+                $ip
             );
         }
 
         if ($this->repository instanceof DemandMetricsRepositoryInterface) {
-            $promoted += $this->repository->promoteSessionInteractions(
+            $promoted += $this->repository->promoteInteractions(
                 $sessionId,
                 $customerId,
                 $customerName,
-                $customerEmail
+                $customerEmail,
+                $ip
             );
         }
 
