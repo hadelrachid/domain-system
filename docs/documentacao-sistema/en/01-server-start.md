@@ -1,39 +1,52 @@
-# Chapter 01 — The "Start": What Happens When Someone Opens the Site
+# Chapter 01 — The "Start": Request Genesis & The Single Gateway
 
-> [🇧🇷 Versão em Português](../01-start-servidor.md) | 🇺🇸 **English**  
-> ⬅️ [Previous: Chapter 00 — Introduction](00-introduction.md) | 🏠 [Back to Index](README.md)
-
-In this chapter, we follow the **very first millisecond** of a request — from the moment someone types an address in their browser until the system hands back a response.
-
-The real files involved at this stage are:
-- `.htaccess` (at the project root)
-- `public/.htaccess`
-- `public/index.php`
-- `public/maintenance.php`
-- `public/reset_opcache.php` *(remember this filename — it shows up in our security audit at the end!)*
+> 🇺🇸 **English** | [🇧🇷 Versão em Português](../01-start-servidor.md)  
+> ⬅️ [Previous: Chapter 00 — Introduction](00-introduction.md) | 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 02 — The Bootstrap Ritual](02-the-bootstrap-ritual.md)
 
 ---
 
-## 1. Before PHP Even Wakes Up: The Web Server's Job (`.htaccess`)
+## 🎬 Cinematic View: The Silence Before the Big Bang
 
-When someone opens `http://localhost/domain-system/cursos` (in XAMPP) or `https://yoursite.com/cursos` (in production), **PHP is still asleep**.
+Picture the scene:
+> *Black screen. Complete silence. Only a terminal cursor blinking softly in the dark.*  
+> *Suddenly, a server command executes:*  
+> `php -S localhost:8000` *(or Apache starts in XAMPP).*  
+>  
+> *Elsewhere, a user enters their browser and navigates to:*  
+> `http://localhost/domain-system/courses`  
+>  
+> *The browser sends an HTTP call across the network: "Anyone there?"*  
+> *The web server awakens, intercepts the packet, and sets a powerful architectural engine in motion.*
 
-The first program to answer the door is the **Web Server** (**Apache** in XAMPP, or **LiteSpeed/Apache** on shared hosting). Before doing anything else, Apache checks for hidden `.htaccess` files containing routing instructions.
+In this chapter, we dissect the **first second of life** of an HTTP request — the exact instant the front door unlocks, security turnstiles engage, and the system begins to breathe.
 
-Domain System uses **two `.htaccess` files working as a pair**:
+Key files involved in this stage:
+- `.htaccess` *(project root)*
+- `public/.htaccess` *(public directory)*
+- `public/index.php` *(Front Controller)*
+- `public/maintenance.php` *(Isolated fallback screen)*
+- `public/reset_opcache.php` *(Remember this file — it is the focus of our Audit Spotlight!)*
+
+---
+
+## 1. The Perimeter Gate: Web Server Rewriting (`.htaccess`)
+
+Before a single line of PHP code is evaluated, the initial gatekeeper is the **Web Server** (Apache in XAMPP, or LiteSpeed/Nginx in production).
+
+In legacy PHP architectures, every page was a separate script: `about.php`, `courses.php`, `admin.php`. Applying global security or maintenance mode required copy-pasting the same snippet across dozens of files — where missing a single one opened a critical vulnerability.
+
+**Domain System** enforces a strict **single entry point** architecture. Two `.htaccess` files act as cascading filters:
 
 ```mermaid
 flowchart TD
-    U["User requests: /cursos"] --> H1["1st Guard: .htaccess (project root)"]
-    H1 -- "Pushes everything into public/" --> H2["2nd Guard: public/.htaccess"]
-    H2 --> Q{"Does a REAL file or folder<br/>with that name exist in public/?"}
-    Q -- "YES (e.g., logo.png, style.css... or reset_opcache.php!)" --> DIR["Apache serves/runs it directly<br/>(SKIPS index.php!)"]
-    Q -- "NO (e.g., /cursos, /admin, /login)" --> IDX["Apache runs public/index.php"]
+    U["1. User visits:<br/>/domain-system/courses"] --> H1["2. Outer Guard:<br/>.htaccess (Root)"]
+    H1 -- "Silently rewrites to public/" --> H2["3. Inner Guard:<br/>public/.htaccess"]
+    H2 --> Q{"4. Is the requested path a<br/>REAL file or directory on disk?"}
+    Q -- "YES (e.g., logo.png, style.css, reset_opcache.php)" --> DIR["Direct File Delivery<br/>(Bypasses index.php)"]
+    Q -- "NO (e.g., /courses, /admin, /login)" --> IDX["Forward to Front Controller:<br/>public/index.php"]
 ```
 
-### 1.1. The first guard: `.htaccess` (project root)
-
-Here is the real file (`.htaccess`, lines 1–10):
+### 1.1. The Outer Guard: `.htaccess` (Project Root)
 
 ```apache
 <IfModule mod_rewrite.c>
@@ -48,14 +61,11 @@ Here is the real file (`.htaccess`, lines 1–10):
 </IfModule>
 ```
 
-**In plain English:**
-- `RewriteRule ^(.*)$ public/$1 [L]` says: *"Whatever URL the visitor asked for, silently push it inside the `public/` folder."*
-- **Why was it built this way?** Think about a local XAMPP folder (`D:\xampp\htdocs\domain-system`). The project root contains private files **nobody should ever download**, like `.env` (secrets), `database.sqlite` (the database), and `config/plugins.json`. Redirecting everything into `public/` prevents visitors from directly requesting `/.env`.
-- The three lines at the bottom (`128M`, `135M`, `256M`) raise PHP upload and memory limits so large PDFs/handouts can be uploaded in the Academy LMS.
+- `RewriteRule ^(.*)$ public/$1 [L]`: transparently forwards all traffic into the `public/` directory.
+- **Why this is critical:** sensitive files reside in the root, including `.env` (API keys, database passwords), `database.sqlite`, and `config/plugins.json`. Without this barrier, anyone could type `https://example.com/.env` and download your secrets!
+- PHP limits are bumped to accommodate large file uploads, course attachments, and catalog media syncs.
 
-### 1.2. The second guard: `public/.htaccess`
-
-Once the request enters `public/`, Apache reads the second file (`public/.htaccess`, lines 1–6):
+### 1.2. The Inner Guard: `public/.htaccess`
 
 ```apache
 <IfModule mod_rewrite.c>
@@ -66,54 +76,34 @@ Once the request enters `public/`, Apache reads the second file (`public/.htacce
 </IfModule>
 ```
 
-**Line by line in plain English:**
-1. `RewriteCond %{REQUEST_FILENAME} !-f` → *"Is this path **NOT** a real file on disk?"* (Example: `logo.png` is a real file; `/cursos` is not.)
-2. `RewriteCond %{REQUEST_FILENAME} !-d` → *"And is it also **NOT** a real folder on disk?"*
-3. `RewriteRule ^(.*)$ index.php [QSA,L]` → *"If neither, hand the request to `public/index.php`! And keep everything after `?` in the URL (like `?page=2`) — that's what `QSA` (Query String Append) does."*
-
-**Why not send EVERY file (including images) through `index.php`?**
-Speed! If a page loads 20 images and 3 CSS files, Apache serves them directly from disk without waking PHP up 23 times. PHP only wakes up for real dynamic pages (`/`, `/cursos`, `/admin`, `/login`).
-
-The rest of `public/.htaccess` adds three helpful extras:
-- **Compression (Gzip/Deflate):** shrinks HTML/CSS/JS before sending it over the network.
-- **Browser caching:** tells browsers to keep images/fonts cached for 1 year and CSS/JS for 1 month.
-- **Basic hardening:** `Options -Indexes` forbids showing raw folder file listings, and `X-Content-Type-Options: nosniff` stops browsers from guessing and executing disguised file types.
+- `!-f` (*not a file*) and `!-d` (*not a directory*): static assets like images (`logo.png`) or stylesheets are served directly from disk without waking PHP.
+- When an endpoint is virtual (`/courses`, `/admin`, `/checkout`), the rule forwards the request to **`public/index.php`** while preserving query parameters (`QSA`).
 
 ---
 
-## 2. Entering PHP: `public/index.php` (The Single Front Desk)
+## 2. The Official Gateway: `public/index.php` (*Front Controller*)
 
-Now PHP wakes up and executes **`public/index.php`** (124 lines).
+In accordance with **SRP (Single Responsibility Principle)**, `public/index.php` (~124 lines) does not handle business logic, database queries, or UI rendering.
 
-It is intentionally short and clean. Instead of stuffing business logic here, it simply **orchestrates 5 steps in order**:
+Its sole responsibility is to **receive the request, normalize paths, and orchestrate kernel initialization in 5 discrete acts**:
 
-### Step 1 — Clean up the URL (`$resolveAgnosticPath`, lines 10–54)
+### Act 1 — The Agnostic Path Resolver (`$resolveAgnosticPath`, lines 10–54)
 
-Think about a classic headache when moving a website from your laptop to a live server:
-- On XAMPP: `http://localhost/domain-system/admin`
-- On a real domain: `https://mystore.com/admin`
-- Without `.htaccess`: `http://localhost/domain-system/public/admin`
+Whether running locally on XAMPP (`http://localhost/domain-system/admin`) or under a production root domain (`https://example.com/admin`), the closure `$resolveAgnosticPath` strips directory prefixes and normalizes the route into two clean variables:
+1. **`BASE_URL`**: installation base path (`/domain-system` or empty string `""`);
+2. **`$route`**: clean target route (`/admin`).
 
-If every file in the project had to deal with all three shapes, links and routes would constantly break!
+### Act 2 — The Emergency Maintenance Hatch (`.maintenance`, lines 59–77)
 
-So right at the top of `public/index.php`, `$resolveAgnosticPath` slices the URL into **two clean pieces**:
-1. **`BASE_URL` (where the app lives):** `/domain-system` on XAMPP, or empty `""` at a domain root.
-2. **`$route` (the pure destination):** always `/admin`!
-
-How does it figure that out?
-- **Attempt 1 (line 16):** checks if `BASE_URL` or `APP_URL` is set in environment variables (`getenv`).
-- **Attempt 2 (lines 28–53):** otherwise compares where `index.php` lives (`$_SERVER['SCRIPT_NAME']`) against what the user typed (`$_SERVER['REQUEST_URI']`), stripping `/public` if present.
-
-### Step 2 — The Early Maintenance Padlock (`.maintenance`, lines 59–77)
+Before bootstrapping heavy services or connecting to databases, the gateway checks for a physical `.maintenance` file:
 
 ```php
 $maintenanceFile = dirname(__DIR__) . '/.maintenance';
 if (file_exists($maintenanceFile)) {
     [$earlyBase, $cleanPath] = $resolveAgnosticPath();
 
-    // Only critical system paths pass through (Admin/Login/Logout/API/Setup)
+    // Critical paths remain accessible to staff
     if (!preg_match('#^/(admin|login|logout|api|setup)(/|$)#', $cleanPath)) {
-        ...
         header('Retry-After: 3600');
         http_response_code(503);
         require $maintenancePage;
@@ -122,142 +112,111 @@ if (file_exists($maintenanceFile)) {
 }
 ```
 
-**Why does this lock sit way up here, BEFORE the rest of the system even boots?**
-Imagine the auto-updater is actively replacing PHP files inside `src/`. If a visitor came in and PHP tried to boot the half-updated core, it would crash with an ugly fatal error!
+During automated updates or migrations, guests immediately receive an **HTTP 503** with the standalone, zero-dependency `public/maintenance.php` page, preventing broken partial state rendering. Meanwhile, `/admin` and `/login` remain accessible for maintenance workflows.
 
-With this physical file lock:
-- Just dropping a `.maintenance` file in the project root stops regular visitors **at the door**, returns HTTP **503 (Service Unavailable)** with `Retry-After: 3600`, displays `public/maintenance.php` (a standalone HTML+CSS page with zero dependencies), and immediately calls `exit`.
-- Only URLs starting with `/admin`, `/login`, `/logout`, `/api`, or `/setup` are allowed past this early gate so the owner can still log in and finish maintenance.
-
-### Step 3 — Turn the Ignition (`bootstrap.php`) & Pack the Request (lines 80–92)
+### Act 3 — Handing Over to the Bootstrap Ritual (lines 80–92)
 
 ```php
 $app = require_once dirname(__DIR__) . '/bootstrap.php';
-
-$app->getDispatcher()->dispatch('kernel_pre_boot');
-
-$earlyRequest = \DomainSystem\Core\Http\Request::capture();
-
-[$baseUrl, $routeUri] = $resolveAgnosticPath($earlyRequest->uri());
-if (!defined('BASE_URL')) {
-    define('BASE_URL', $baseUrl);
-}
-$earlyRequest->server['REQUEST_URI'] = $routeUri;
 ```
 
-Watch the assembly line:
-1. **Line 80:** loads `bootstrap.php` (we will open it in **Chapter 02**), which prepares the environment and hands back the system's brain in `$app`.
-2. **Line 83:** uses the intercom (`getDispatcher()->dispatch(...)`) to announce: *"About to boot!"* (`kernel_pre_boot`).
-3. **Line 85:** `Request::capture()` gathers all the raw PHP globals (`$_GET`, `$_POST`, `$_SERVER`, headers) into one neat object called `$earlyRequest`.
-4. **Lines 88–92:** computes the clean URL again, defines the global `BASE_URL` constant (used across views for CSS/images/links), and replaces `REQUEST_URI` inside `$earlyRequest` with the clean `$routeUri`.
+`index.php` delegates environment and kernel bootstrapping to `bootstrap.php` (the system BIOS, dissected in Chapter 02), which returns the initialized `Application` kernel.
 
-### Step 4 — Boot Modules & Register All Routes (lines 95–101)
+The first pheromone is broadcast:
+```php
+$app->getDispatcher()->dispatch('kernel_pre_boot');
+```
+
+### Act 4 — Request Encapsulation & Waking the Hive
+
+Raw PHP superglobals (`$_GET`, `$_POST`, `$_SERVER`) are converted into a structured `Request` object:
 
 ```php
+$earlyRequest = \DomainSystem\Core\Http\Request::capture();
+$earlyRequest->server['REQUEST_URI'] = $routeUri;
+
+// Wake the hive!
 $app->boot();
 
+// Notify that all core modules and plugins are initialized
 $app->getDispatcher()->dispatch('kernel_post_boot');
 
+// Provide the routing registry for extensions to declare their endpoints
 $app->getDispatcher()->dispatch('router.register', $app->getRouter());
 ```
 
-1. **`$app->boot()`:** starts core services, wakes up `SystemApps` (login, database, admin), and loads active `Plugins` (store, academy, payments).
-2. **`kernel_post_boot`:** announces on the intercom that everything has booted.
-3. **`router.register`:** hands the `Router` notebook over the intercom so every app/plugin can register its URLs (*"When someone asks for `/cursos`, call Academy! When someone asks for `/checkout`, call Commerce!"*).
+Through `$app->boot()`, active plugins and system apps initialize. Via `router.register`, each extension adds routes without requiring modifications to the core kernel (**Open-Closed Principle**).
 
-### Step 5 — Handle the Request & Send the Response (lines 104–123)
+### Act 5 — HttpKernel Execution & Response Delivery (lines 104–123)
 
 ```php
-try {
-    $request = $earlyRequest;
+$httpKernel = new \DomainSystem\Core\Http\HttpKernel(
+    $app->getRouter(),
+    $app->getContainer(),
+    $app->getWorkspaceManager()
+);
 
-    $httpKernel = new \DomainSystem\Core\Http\HttpKernel(
-        $app->getRouter(),
-        $app->getContainer(),
-        $app->getWorkspaceManager()
-    );
-    $response = $httpKernel->handle($request, file_exists($maintenanceFile), __DIR__ . '/maintenance.php');
-    $response->send();
-    
-} catch (Exception $e) {
-    if ($e->getCode() == 404) {
-        $errorResponse = new \DomainSystem\Core\Http\Response("404 Not Found: " . $e->getMessage(), 404);
-        $errorResponse->send();
-    } else {
-        throw $e;
-    }
-}
+$response = $httpKernel->handle($request, file_exists($maintenanceFile), __DIR__ . '/maintenance.php');
+$response->send();
 ```
 
-1. Creates `HttpKernel` and runs `$httpKernel->handle(...)`.
-   - **Smart detail:** inside `HttpKernel`, there is a **2nd maintenance check** (`MaintenancePolicy::shouldBlock`). Why check twice? Because now the system is booted and can read the user's session! If maintenance was toggled in settings (without the `.maintenance` file), a logged-in `admin` can browse and test the whole site normally while regular visitors get 503.
-2. `HttpKernel` asks the `Router` to run the security `Middlewares` and the matching `Controller`, returning a `$response`.
-3. `$response->send()` outputs the HTTP headers and HTML/JSON body to the browser.
-4. **If an error happens (`catch`):**
-   - If the error code is `404` (page not found), it returns `404 Not Found`.
-   - Otherwise, it re-throws (`throw $e`) so the official `ErrorHandler` (Chapter 02) logs it and shows a safe error screen.
+`HttpKernel` coordinates router execution, middleware security checks, and controller invocation, returning a `Response`. `$response->send()` outputs HTTP headers and payload to the client.
 
 ---
 
-## 3. 🔍 Audit Lens — 4 Real Issues Found in Chapter 01
+## 3. 🔍 Audit Spotlight: 4 Concrete Vulnerabilities & Architectural Findings
 
-Look how walking through the entry point line by line already uncovers concrete, real-world findings:
-
-### 🔴 Finding 1 (Security — High/Medium): `public/reset_opcache.php` is wide open to the public
-
-- **Where:** `public/reset_opcache.php` (lines 1–8).
-- **Current code:**
-  ```php
-  <?php
-  if (function_exists('opcache_reset')) {
-      opcache_reset();
-      echo "OPcache reset successfully!";
-  } else {
-      echo "OPcache is not enabled.";
-  }
-  ```
-- **Why is this a hole?** Remember `public/.htaccess`: `RewriteCond %{REQUEST_FILENAME} !-f` tells Apache to **skip** `public/index.php` whenever a real file exists inside `public/`. Because `reset_opcache.php` sits inside `public/`, **anyone on the internet** can hit `https://yoursite.com/reset_opcache.php` with **no login, no CSRF protection, and even during maintenance mode**.
-- **What could go wrong?**
-  1. An attacker can hit that URL 100 times per second. OPcache is what keeps PHP fast — constantly wiping it forces the server to recompile every PHP file nonstop, causing heavy CPU load / mini-DoS.
-  2. It leaks server configuration info (whether OPcache is enabled).
-  3. It is **not** listed in `release/exclude.txt`, meaning it can ship inside production release packages!
-- **How to fix later:** delete `public/reset_opcache.php` (or move it behind an authenticated Admin `POST` route with CSRF) and add it to `release/exclude.txt`.
+A thorough architectural audit reveals subtle flaws that often go unnoticed in superficial reviews:
 
 ---
 
-### 🟠 Finding 2 (Security — Medium): 404 error prints exception message as raw HTML without escaping
+### 🔴 Finding 1 (Security — High/Medium): `public/reset_opcache.php` Publicly Accessible
 
-- **Where:**
-  - `src/Core/Routing/Router.php` (lines 61 & 82): throws `new Exception("Rota não encontrada: $uri", 404);`
-  - `public/index.php` (line 117): returns `new Response("404 Not Found: " . $e->getMessage(), 404);`
-  - `src/Core/Http/Response.php` (line 30): sets `Content-Type: text/html; charset=utf-8` by default and echoes `$this->content` raw.
-- **Why is this risky?** Anytime user-controlled input from the URL (`$uri`) is echoed into HTML without `htmlspecialchars()`, you open the door to **Reflected XSS (Cross-Site Scripting)** — letting someone inject malicious HTML/JavaScript. Modern browsers usually percent-encode `<` and `>` in URLs, which reduces casual exploitation, **but** relying on the browser is never safe (proxies, custom clients, or any other 404 exception reflecting raw text become instant XSS).
-- **How to fix later:** always escape with `htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')` — or even better, show a static 404 page without echoing raw exception messages.
-
----
-
-### 🟡 Finding 3 (Logic): Early maintenance check runs BEFORE `.env` is loaded
-
-- **Where:** `public/index.php` (lines 16 & 61) vs `bootstrap.php` (lines 164–207).
-- **What happens:** `$resolveAgnosticPath()` checks `getenv('BASE_URL')` and `getenv('APP_URL')` on line 16. However, `.env` is only read inside `bootstrap.php` — which isn't required until **line 80**!
-- **Why it matters:** when `.maintenance` exists, line 61 runs **before** `.env` is loaded. If a deployment relies only on `BASE_URL` inside `.env` (for example behind a reverse proxy prefix), the early maintenance check may compute the wrong `$cleanPath` and accidentally block `/admin` or `/login`!
-- **How to fix later:** document the requirement or lightly read only `BASE_URL`/`APP_URL` from `.env` before the `.maintenance` check.
+- **File:** `public/reset_opcache.php` (lines 1–8)
+- **Vulnerability:**  
+  Because `public/.htaccess` delivers any existing file directly without executing `index.php`, **`public/reset_opcache.php` can be invoked by anyone on the internet without login or authorization**.
+- **Impact:**  
+  1. **Denial of Service (DoS):** Rapidly pinging this file forces the web server to invalidate bytecode cache and recompile PHP scripts on every request, spiking CPU usage to 100%.
+  2. **Information Disclosure:** Leaks whether bytecode caching is enabled.
+  3. **Packaging Risk:** The file was not excluded in `release/exclude.txt`, meaning it could ship to production environments.
+- **Remedy:**  
+  Remove `public/reset_opcache.php`. Expose OPcache invalidation exclusively through an authenticated admin action requiring `POST` and a valid CSRF token.
 
 ---
 
-### 🟡 Finding 4 (Architecture & Hosting): Duplicated maintenance regex + Nginx warning
+### 🟠 Finding 2 (Security — Medium): Unescaped 404 Exception Message in HTML
 
-1. **Duplicated rule:** the exempt-routes regex `#^/(admin|login|logout|api|setup)(/|$)#` is copy-pasted in `public/index.php` (line 64) and `src/Core/Http/MaintenancePolicy.php` (line 57). Updating one and forgetting the other creates silent inconsistencies. Also notice that **all `/api/...` routes stay open during `.maintenance`** — so every API endpoint must enforce its own authentication/signature check (we will audit those in Chapters 6 & 7).
-2. **Production hosting outside Apache:** the root `.htaccess` only works on Apache/LiteSpeed with `mod_rewrite` and `AllowOverride All`. On **Nginx** (which ignores `.htaccess` completely), pointing the web root at the project root instead of `public/` would expose `.env` and `database.sqlite` for public download! In production, your server's **DocumentRoot** must **always** point directly to `public/`.
-
----
-
-## Quick Recap of Chapter 01
-
-- **Entry path:** Browser → `.htaccess` (root) → `public/.htaccess` → `public/index.php`.
-- **What `public/index.php` does:** cleans the URL → checks `.maintenance` → runs `bootstrap.php` → captures `Request` → calls `$app->boot()` → triggers `router.register` → hands off to `HttpKernel` → sends the `Response`.
-- **Audit score so far:** 4 concrete findings logged (1 unauthenticated file in `public/`, 1 unescaped HTML 404 response, 1 `.env` loading-order bug in maintenance mode, and 2 architecture/hosting cautions).
+- **Vulnerability:**  
+  `Router.php` throws `Exception("Rota não encontrada: $uri", 404)`, and `public/index.php` prints this raw exception message directly via `new Response(...)` with `text/html`.
+- **Impact:**  
+  Unescaped user input reflected into an HTML document opens a risk of **Reflected Cross-Site Scripting (XSS)**.
+- **Remedy:**  
+  Always sanitize output using `htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')` or render a static, user-friendly 404 view.
 
 ---
 
-> ⬅️ [Previous: Chapter 00 — Introduction](00-introduction.md) | 🏠 [Back to Index](README.md) | ➡️ *Next: Chapter 02 — Waking Up the System (`bootstrap.php`)*
+### 🟡 Finding 3 (Logic — Low/Medium): Execution Order Between `.maintenance` and `.env`
+
+- **Issue:**  
+  `$resolveAgnosticPath()` checks for `BASE_URL`/`APP_URL` at line 16, but `.env` is loaded inside `bootstrap.php` on line 80.
+- **Impact:**  
+  If a server depends solely on `.env` configuration to resolve subfolder routing, maintenance checks may evaluate route prefixes incorrectly, potentially locking admins out of `/admin`.
+- **Remedy:**  
+  Ensure `.env` parsing occurs prior to maintenance path evaluation.
+
+---
+
+### 🟡 Finding 4 (Architecture & Portability): Duplicated Rules & Nginx Configuration
+
+- **Rule Duplication:** The maintenance whitelist regex (`#^/(admin|login|logout|api|setup)(/|$)#`) is duplicated across `public/index.php` (line 64) and `MaintenancePolicy.php` (line 57).
+- **Nginx Note:** Nginx ignores `.htaccess`. If an administrator points Nginx root to the project root instead of `/public`, sensitive files (`.env`, SQLite database) become downloadable. The DocumentRoot must always be explicitly configured to `/public`.
+
+---
+
+## 📌 Summary in One Sentence
+
+> *"The Single Gateway (`public/index.php`) and server guards (`.htaccess`) do not perform heavy lifting; their job is to protect core assets, sanitize paths, and ensure every request undergoes proper security rituals before waking the Kernel."*
+
+---
+
+> ⬅️ [Previous: Chapter 00 — Introduction](00-introduction.md) | 🏠 [Back to Index](README.md) | ➡️ [Next: Chapter 02 — The Bootstrap Ritual](02-the-bootstrap-ritual.md)
