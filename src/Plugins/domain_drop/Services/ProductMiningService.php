@@ -23,15 +23,16 @@ use Throwable;
 class ProductMiningService implements ProductMiningServiceInterface
 {
     public const OFFICIAL_CATEGORIES = [
-        'Eletrônicos & Gadget',
-        'Casa Inteligente & Organização',
-        'Beleza, Cuidados & Estilo',
+        'Eletrônicos & Telefonia',
+        'Relógios & Smartwatches',
+        'Casa, Iluminação & Eletro',
         'Ferramentas & Utilidades',
-        'Pet Shop & Pets Virais',
-        'Acessórios para Veículos',
-        'Moda, Roupas & Vestuário',
-        'Moda Íntima, Lingeries & Pijamas',
-        'Sex Shop & Produtos Adultos (+18)',
+        'Beleza, Saúde & Maquiagem',
+        'Pet Shop',
+        'Peças & Acessórios Automotivos',
+        'Roupas, Bolsas & Calçados',
+        'Roupa Íntima & Pijamas',
+        'Novidades & Uso Especial',
     ];
 
     private ProductLinkScraperInterface $linkScraper;
@@ -836,7 +837,20 @@ class ProductMiningService implements ProductMiningServiceInterface
 
         // Mapeia apelidos para a categoria oficial do pool
         $normalizedCat = self::normalizeCategory($category);
-        $pool = $catalog[$normalizedCat] ?? ($catalog[$category] ?? $catalog['Eletrônicos & Gadget'] ?? $catalog['Eletrônicos']);
+        $aliasMap = [
+            'Eletrônicos & Telefonia'        => 'Eletrônicos & Gadget',
+            'Relógios & Smartwatches'        => 'Eletrônicos & Gadget',
+            'Casa, Iluminação & Eletro'      => 'Casa Inteligente & Organização',
+            'Ferramentas & Utilidades'       => 'Ferramentas & Utilidades',
+            'Beleza, Saúde & Maquiagem'      => 'Beleza, Cuidados & Estilo',
+            'Pet Shop'                       => 'Pet Shop & Pets Virais',
+            'Peças & Acessórios Automotivos' => 'Acessórios para Veículos',
+            'Roupas, Bolsas & Calçados'      => 'Moda, Roupas & Vestuário',
+            'Roupa Íntima & Pijamas'         => 'Moda Íntima, Lingeries & Pijamas',
+            'Novidades & Uso Especial'       => 'Sex Shop & Produtos Adultos (+18)',
+        ];
+        $curatedKey = $aliasMap[$normalizedCat] ?? ($aliasMap[$category] ?? $normalizedCat);
+        $pool = $catalog[$normalizedCat] ?? ($catalog[$category] ?? ($catalog[$curatedKey] ?? $catalog['Eletrônicos & Gadget']));
 
         // Se o limite solicitado for maior que o pool da categoria, completa com itens de outras categorias
         if (count($pool) < $limit) {

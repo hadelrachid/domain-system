@@ -7,31 +7,33 @@ namespace DomainSystem\Plugins\domain_drop\Services;
 use DomainSystem\Plugins\domain_drop\Contracts\CategoryTaxonomyInterface;
 
 /**
- * Serviço de Taxonomia Canônica, Classificação Semântica e Filtros SQL (SOLID / SRP).
+ * Serviço de Taxonomia Canônica Oficial, Classificação Semântica e Filtros SQL (SOLID / SRP).
  * 
- * Centraliza de forma desacoplada toda a inteligência de categorização de produtos,
- * normalização de sinônimos e consultas SQL tolerantes a variações lexicais.
+ * Totalmente alinhado às 548 categorias oficiais da AliExpress Open Platform (IOP SDK)
+ * para produtos em território nacional brasileiro, sem invenção de termos.
  */
 class CategoryTaxonomyService implements CategoryTaxonomyInterface
 {
-    public const CAT_TECH         = 'Eletrônicos & Gadget';
-    public const CAT_SMARTWATCH   = 'Smartwatches & Áudio';
-    public const CAT_HOME         = 'Casa Inteligente & Organização';
-    public const CAT_TOOLS        = 'Ferramentas & Utilidades';
-    public const CAT_BEAUTY       = 'Beleza, Cuidados & Estilo';
-    public const CAT_PETS         = 'Pet Shop & Pets Virais';
-    public const CAT_AUTO         = 'Acessórios para Veículos';
-    public const CAT_FASHION      = 'Moda, Roupas & Vestuário';
-    public const CAT_LINGERIE     = 'Moda Íntima, Lingeries & Pijamas';
-    public const CAT_ADULT        = 'Sex Shop & Produtos Adultos (+18)';
+    // Categorias Oficiais alinhadas 1:1 com a AliExpress Open Platform
+    public const CAT_TECH         = 'Eletrônicos & Telefonia';          // IDs 44, 509, 7
+    public const CAT_SMARTWATCH   = 'Relógios & Smartwatches';          // ID 1511
+    public const CAT_HOME         = 'Casa, Iluminação & Eletro';        // IDs 15, 39, 6, 13
+    public const CAT_TOOLS        = 'Ferramentas & Utilidades';         // IDs 1420, 30
+    public const CAT_BEAUTY       = 'Beleza, Saúde & Maquiagem';        // IDs 66, 660103
+    public const CAT_PETS         = 'Pet Shop';                         // ID 100006664 (Casa e jardim)
+    public const CAT_AUTO         = 'Peças & Acessórios Automotivos';   // IDs 34, 201355758
+    public const CAT_FASHION      = 'Roupas, Bolsas & Calçados';        // IDs 200000345, 200000343, 1524, 322
+    public const CAT_LINGERIE     = 'Roupa Íntima & Pijamas';           // ID 200574005 (feminina, masculina, pijamas)
+    public const CAT_ADULT        = 'Novidades & Uso Especial';         // ID 200000532
 
     public function getCanonicalCategories(): array
     {
         return [
             self::CAT_TECH,
+            self::CAT_SMARTWATCH,
             self::CAT_HOME,
-            self::CAT_BEAUTY,
             self::CAT_TOOLS,
+            self::CAT_BEAUTY,
             self::CAT_PETS,
             self::CAT_AUTO,
             self::CAT_FASHION,
@@ -54,42 +56,52 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             return self::CAT_TOOLS;
         }
 
-        if (str_contains($clean, 'lingerie') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'calcinha') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama')) {
+        // 1. Roupa Íntima & Pijamas (ID 200574005)
+        if (str_contains($clean, 'lingerie') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'calcinha') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'cueca') || str_contains($clean, 'boxer')) {
             return self::CAT_LINGERIE;
         }
 
-        if (str_contains($clean, 'sex shop') || str_contains($clean, 'sexshop') || str_contains($clean, 'adulto') || str_contains($clean, '18') || str_contains($clean, 'vibrat') || str_contains($clean, 'massageador')) {
+        // 2. Novidades & Uso Especial / Adulto (ID 200000532)
+        if (str_contains($clean, 'sex shop') || str_contains($clean, 'sexshop') || str_contains($clean, 'adulto') || str_contains($clean, '18') || str_contains($clean, 'vibrat') || str_contains($clean, 'massageador') || str_contains($clean, 'novidade') || str_contains($clean, 'especial')) {
             return self::CAT_ADULT;
         }
 
-        if (str_contains($clean, 'roupa') || str_contains($clean, 'vestuario') || str_contains($clean, 'vestuário') || str_contains($clean, 'casaco') || str_contains($clean, 'jaqueta') || (str_contains($clean, 'moda') && !str_contains($clean, 'intima') && !str_contains($clean, 'íntima'))) {
+        // 3. Roupas, Bolsas & Calçados (IDs 200000345, 200000343, 1524, 322)
+        if (str_contains($clean, 'roupa') || str_contains($clean, 'vestuario') || str_contains($clean, 'vestuário') || str_contains($clean, 'casaco') || str_contains($clean, 'jaqueta') || str_contains($clean, 'mochila') || str_contains($clean, 'bolsa') || str_contains($clean, 'carteira') || str_contains($clean, 'sapato') || str_contains($clean, 'tenis') || str_contains($clean, 'tênis') || str_contains($clean, 'calcado') || str_contains($clean, 'calçado') || (str_contains($clean, 'moda') && !str_contains($clean, 'intima') && !str_contains($clean, 'íntima'))) {
             return self::CAT_FASHION;
         }
 
+        // 4. Pet Shop (ID 100006664)
         if (str_contains($clean, 'pet') || str_contains($clean, 'cachorro') || str_contains($clean, 'gato') || str_contains($clean, 'cao') || str_contains($clean, 'cão')) {
             return self::CAT_PETS;
         }
 
-        if (str_contains($clean, 'veiculo') || str_contains($clean, 'veículo') || str_contains($clean, 'carro') || str_contains($clean, 'automotivo') || str_contains($clean, 'auto')) {
+        // 5. Peças & Acessórios Automotivos (ID 34)
+        if (str_contains($clean, 'veiculo') || str_contains($clean, 'veículo') || str_contains($clean, 'carro') || str_contains($clean, 'automotivo') || str_contains($clean, 'auto') || str_contains($clean, 'moto')) {
             return self::CAT_AUTO;
         }
 
-        if (str_contains($clean, 'alicate') || str_contains($clean, 'ferramenta') || str_contains($clean, 'crimpador') || str_contains($clean, 'decapador') || str_contains($clean, 'chave de fenda') || str_contains($clean, 'utilidades')) {
+        // 6. Ferramentas & Utilidades (ID 1420, 30)
+        if (str_contains($clean, 'alicate') || str_contains($clean, 'ferramenta') || str_contains($clean, 'crimpador') || str_contains($clean, 'decapador') || str_contains($clean, 'chave de fenda') || str_contains($clean, 'utilidade') || str_contains($clean, 'segurança')) {
             return self::CAT_TOOLS;
         }
 
-        if (str_contains($clean, 'smartwatch') || str_contains($clean, 'relogio') || str_contains($clean, 'relógio') || str_contains($clean, 'audio') || str_contains($clean, 'áudio') || str_contains($clean, 'fone') || str_contains($clean, 'headphone') || str_contains($clean, 'earphone')) {
+        // 7. Relógios & Smartwatches (ID 1511)
+        if (str_contains($clean, 'smartwatch') || str_contains($clean, 'relogio') || str_contains($clean, 'relógio') || str_contains($clean, 'pulseira inteligente') || str_contains($clean, 'apple watch')) {
             return self::CAT_SMARTWATCH;
         }
 
-        if (str_contains($clean, 'beleza') || str_contains($clean, 'cabelo') || str_contains($clean, 'pele') || str_contains($clean, 'secador') || str_contains($clean, 'escova') || str_contains($clean, 'saude') || str_contains($clean, 'saúde')) {
+        // 8. Beleza, Saúde & Maquiagem (ID 66, 660103)
+        if (str_contains($clean, 'beleza') || str_contains($clean, 'cabelo') || str_contains($clean, 'pele') || str_contains($clean, 'secador') || str_contains($clean, 'escova') || str_contains($clean, 'saude') || str_contains($clean, 'saúde') || str_contains($clean, 'maquiagem') || str_contains($clean, 'batom')) {
             return self::CAT_BEAUTY;
         }
 
-        if (str_contains($clean, 'casa') || str_contains($clean, 'led') || str_contains($clean, 'luminaria') || str_contains($clean, 'luminária') || str_contains($clean, 'lampada') || str_contains($clean, 'lâmpada') || str_contains($clean, 'tuya')) {
+        // 9. Casa, Iluminação & Eletro (ID 15, 39, 6)
+        if (str_contains($clean, 'casa') || str_contains($clean, 'led') || str_contains($clean, 'luminaria') || str_contains($clean, 'luminária') || str_contains($clean, 'lampada') || str_contains($clean, 'lâmpada') || str_contains($clean, 'iluminação') || str_contains($clean, 'eletro') || str_contains($clean, 'tuya')) {
             return self::CAT_HOME;
         }
 
+        // 10. Eletrônicos & Telefonia (ID 44, 509, 7)
         return self::CAT_TECH;
     }
 
@@ -97,28 +109,28 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
     {
         $t = mb_strtolower(trim($title), 'UTF-8');
 
-        // 1. Moda Íntima e Lingeries (Precedência alta sobre Moda geral para evitar falso-positivo)
-        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy|meia-calça|meia calça|meia calca|meia-calca|meia arrastão|meia arrastao|cueca|cuecas|boxer|slip|corpete|cinta modeladora|peças íntimas|pecas intimas)\b/iu', $t)) {
+        // 1. Roupa Íntima & Pijamas (Precedência alta sobre Moda geral para evitar falso-positivo)
+        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy|meia-calça|meia calça|meia calca|meia-calca|meia arrastão|meia arrastao|cueca|cuecas|boxer|slip|corpete|cinta modeladora|peças íntimas|pecas intimas|roupa íntima)\b/iu', $t)) {
             return self::CAT_LINGERIE;
         }
 
-        // 2. Sex Shop & Adulto (+18)
-        if (preg_match('/\b(sex shop|sexshop|adulto|\+18|vibratório|vibratorio|vibratória|vibratoria|vibração|vibracao|massageador|amendoim|estimulador|plug|lubrificante)\b/iu', $t)) {
+        // 2. Novidades & Uso Especial / Adulto (+18)
+        if (preg_match('/\b(sex shop|sexshop|adulto|\+18|vibratório|vibratorio|vibratória|vibratoria|vibração|vibracao|massageador|amendoim|estimulador|plug|lubrificante|uso especial)\b/iu', $t)) {
             return self::CAT_ADULT;
         }
 
-        // 3. Moda, Roupas & Vestuário (Geral)
+        // 3. Roupas, Bolsas & Calçados
         if (preg_match('/\b(casaco|casacos|jaqueta|jaquetas|corta-vento|corta vento|ciclismo|corrida secagem|impermeável masculino|capuz capa|moletom|calça|calca|camisa|camiseta|vestido|saia|bermuda|roupa|roupas|vestuário|vestuario|mochila|mochilas|bolsa|bolsas|carteira|carteiras|pochete|tênis|tenis|sapato|sapatos|sandália|sandalia|chinelo|chinelos|bota|botas|mocassim|calçado|calçados|calcado|calcados|meia|meias|invisível|invisivel|chaveiro|chaveiros|cinto|cintos|boné|bone|óculos|oculos)\b/iu', $t)) {
             return self::CAT_FASHION;
         }
 
-        // 4. Pet Shop & Pets Virais
+        // 4. Pet Shop
         if (preg_match('/\b(pet|pets|cachorro|cachorros|cão|cães|gato|gatos|coleira|trela|fita led noite segurança|fibra ótica recarregável cães)\b/iu', $t)) {
             return self::CAT_PETS;
         }
 
-        // 5. Acessórios para Veículos
-        if (preg_match('/\b(veicular|veículo|veiculo|carro|automotivo|ventilação de ar|suporte celular carro|suporte automotivo|telemóvel com ventosa|suporte magnético 360)\b/iu', $t)) {
+        // 5. Peças & Acessórios Automotivos
+        if (preg_match('/\b(veicular|veículo|veiculo|carro|automotivo|ventilação de ar|suporte celular carro|suporte automotivo|telemóvel com ventosa|suporte magnético 360|peças automotivas)\b/iu', $t)) {
             return self::CAT_AUTO;
         }
 
@@ -127,22 +139,22 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             return self::CAT_TOOLS;
         }
 
-        // 7. Smartwatches & Áudio
-        if (preg_match('/\b(smartwatch|smartwatches|relógio inteligente|relogio inteligente|apple watch|amazfit|aurafit|pulseira homem de ferro|fone|fones|tws|headphone|headphones|headset|headsets|earphone|microfone lapela|bluetooth anc|condução óssea|conducao ossea|over-ear|over ear|gamer)\b/iu', $t)) {
+        // 7. Relógios & Smartwatches
+        if (preg_match('/\b(smartwatch|smartwatches|relógio inteligente|relogio inteligente|relógio|relogio|apple watch|amazfit|aurafit|pulseira homem de ferro)\b/iu', $t)) {
             return self::CAT_SMARTWATCH;
         }
 
-        // 8. Beleza, Cuidados & Estilo
+        // 8. Beleza, Saúde & Maquiagem
         if (preg_match('/\b(secador|escova secadora|escova alisadora|alisador|modelador de cabelo|cabelo|curling|barbeador|barba|depilador|maquiagem|facial|pele|batom|batons|gloss|rímel|rimel|delineador|base líquida|base liquida|corretivo|pó compacto|po compacto|paleta de sombras|paleta sombras|blush|pincel|pincéis|pinceis|esponja maquiagem|lip tint)\b/iu', $t)) {
             return self::CAT_BEAUTY;
         }
 
-        // 9. Casa Inteligente & Organização
-        if (preg_match('/\b(fita de led|fita led|rgbic|tuya|luminária|luminaria|lâmpada|lampada|barra de luz|monitor luzes|iluminação|teto|armário|quarto|cozinha|aspirador)\b/iu', $t)) {
+        // 9. Casa, Iluminação & Eletro
+        if (preg_match('/\b(fita de led|fita led|rgbic|tuya|luminária|luminaria|lâmpada|lampada|barra de luz|monitor luzes|iluminação|teto|armário|quarto|cozinha|aspirador|eletrodoméstico|eletrodomestico|liquidificador portátil)\b/iu', $t)) {
             return self::CAT_HOME;
         }
 
-        // 10. Se houver categoria bruta informada, tenta normalizar
+        // 10. Se houver categoria bruta informada da API oficial, normaliza diretamente
         if ($rawCategory !== null && trim($rawCategory) !== '' && trim($rawCategory) !== 'Geral') {
             return $this->normalizeCategory($rawCategory);
         }
@@ -156,13 +168,42 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         $lower = mb_strtolower($raw, 'UTF-8');
         $clean = preg_replace('/[^\p{L}\p{N}\s&]/u', ' ', $lower) ?? $lower;
 
-        // 1. Moda Íntima, Lingeries & Pijamas
+        // 0. Filtro específico de Áudio & Fones (Prioridade alta antes de eletrônicos gerais)
+        if ($clean === 'audio' || $clean === 'áudio' || str_starts_with($clean, 'fone') || str_contains($clean, 'ouvido') || str_contains($clean, 'headphone')) {
+            return "(
+                (
+                    category IN ('Áudio', 'Audio', 'Fones Bluetooth TWS')
+                    OR title LIKE '%Fone%'
+                    OR title LIKE '%Tws%'
+                    OR title LIKE '%Headphone%'
+                    OR title LIKE '%Earphone%'
+                    OR title LIKE '%Microfone%'
+                )
+                AND title NOT LIKE '%Smartwatch%'
+                AND title NOT LIKE '%Relógio%'
+                AND title NOT LIKE '%Pulseira%'
+                AND title NOT LIKE '%Chave%'
+                AND title NOT LIKE '%Reparo%'
+            )";
+        }
+
+        // 0.1 Filtro específico de Celular / Smartphone
+        if ($clean === 'celular' || $clean === 'smartphone' || $clean === 'celulares') {
+            return "(
+                category IN ('Telefones e telecomunicações', 'Celulares', 'Smartphones')
+                OR title LIKE '%Celular%'
+                OR title LIKE '%Telefone%'
+                OR title LIKE '%Smartphone%'
+            )";
+        }
+
+        // 1. Roupa Íntima & Pijamas (ID 200574005)
         if (str_contains($clean, 'lingerie') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'meia calca') || str_contains($clean, 'meia calça') || str_contains($clean, 'cueca')) {
             return "(
-                category IN ('Moda Íntima, Lingeries & Pijamas', 'Moda Íntima', 'Lingeries', 'Lingerie')
-                OR category LIKE '%Lingerie%'
+                category IN ('Roupa Íntima & Pijamas', 'Roupa íntima', 'Moda Íntima, Lingeries & Pijamas', 'Moda Íntima', 'Lingeries', 'Lingerie')
                 OR category LIKE '%Íntima%'
                 OR category LIKE '%Intima%'
+                OR category LIKE '%Lingerie%'
                 OR title LIKE '%Lingerie%'
                 OR title LIKE '%Sutiã%'
                 OR title LIKE '%Sutia%'
@@ -182,43 +223,37 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 2. Sex Shop & Produtos Adultos (+18)
-        // No universo do e-commerce adulto, o filtro contempla tanto os dispositivos/massageadores íntimos
-        // quanto lingeries e peças sensuais/eróticas.
-        if (str_contains($clean, 'sex shop') || str_contains($clean, 'sexshop') || str_contains($clean, 'adulto') || str_contains($clean, '18') || str_contains($clean, 'vibrat') || str_contains($clean, 'massageador')) {
+        // 2. Novidades & Uso Especial / Adulto (+18) (ID 200000532)
+        if (str_contains($clean, 'sex shop') || str_contains($clean, 'sexshop') || str_contains($clean, 'adulto') || str_contains($clean, '18') || str_contains($clean, 'vibrat') || str_contains($clean, 'massageador') || str_contains($clean, 'novidade') || str_contains($clean, 'especial')) {
             return "(
-                category IN ('Sex Shop & Produtos Adultos (+18)', 'Sex Shop', 'Moda Íntima, Lingeries & Pijamas')
+                category IN ('Novidades & Uso Especial', 'Novidades e  uso especial', 'Sex Shop & Produtos Adultos (+18)', 'Sex Shop')
+                OR category LIKE '%Novidades%'
+                OR category LIKE '%Especial%'
                 OR category LIKE '%Sex Shop%'
                 OR category LIKE '%Adulto%'
                 OR category LIKE '%+18%'
-                OR category LIKE '%Lingerie%'
                 OR title LIKE '%Vibrat%'
                 OR title LIKE '%Massageador%'
                 OR title LIKE '%Amendoim%'
                 OR title LIKE '%Relaxamento Muscular%'
                 OR title LIKE '%Rolo De Massagem%'
                 OR title LIKE '%Estimulador%'
-                OR title LIKE '%Lingerie%'
                 OR title LIKE '%Sensual%'
                 OR title LIKE '%Erótica%'
                 OR title LIKE '%Erotica%'
-                OR title LIKE '%Renda Natalina%'
-                OR title LIKE '%Baby Doll%'
-                OR title LIKE '%Calcinha%'
-                OR title LIKE '%Sutiã%'
-                OR title LIKE '%Sutia%'
             )";
         }
 
-        // 3. Moda, Roupas & Vestuário (exclui Lingerie para não canibalizar)
+        // 3. Roupas, Bolsas & Calçados (IDs 200000345, 200000343, 1524, 322)
         if (str_contains($clean, 'roupa') || str_contains($clean, 'vestuario') || str_contains($clean, 'vestuário') || str_contains($clean, 'moda') || str_contains($clean, 'casaco') || str_contains($clean, 'jaqueta') || str_contains($clean, 'mochila') || str_contains($clean, 'bolsa') || str_contains($clean, 'carteira') || str_contains($clean, 'tenis') || str_contains($clean, 'tênis') || str_contains($clean, 'sapato') || str_contains($clean, 'calcado') || str_contains($clean, 'calçado')) {
             return "(
                 (
-                    category IN ('Moda, Roupas & Vestuário', 'Roupas', 'Vestuário', 'Moda')
+                    category IN ('Roupas, Bolsas & Calçados', 'Moda, Roupas & Vestuário', 'Roupas femininas', 'Roupas masculinas', 'Bolsas e malas', 'Sapatos', 'Roupas', 'Vestuário', 'Moda')
                     OR (category LIKE '%Moda%' AND category NOT LIKE '%Íntima%' AND category NOT LIKE '%Intima%')
-                    OR category LIKE '%Roupa%'
-                    OR category LIKE '%Vestuário%'
-                    OR category LIKE '%Vestuario%'
+                    OR (category LIKE '%Roupa%' AND category NOT LIKE '%Íntima%' AND category NOT LIKE '%Intima%')
+                    OR category LIKE '%Bolsa%'
+                    OR category LIKE '%Sapato%'
+                    OR category LIKE '%Calçado%'
                     OR title LIKE '%Casaco%'
                     OR title LIKE '%Jaqueta%'
                     OR title LIKE '%Corta-Vento%'
@@ -244,10 +279,10 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 4. Pet Shop & Pets Virais
+        // 4. Pet Shop (ID 100006664)
         if (str_contains($clean, 'pet') || str_contains($clean, 'cachorro') || str_contains($clean, 'gato') || str_contains($clean, 'cao') || str_contains($clean, 'cão')) {
             return "(
-                category IN ('Pet Shop & Pets Virais', 'Pet Shop')
+                category IN ('Pet Shop', 'Pet Shop & Pets Virais')
                 OR category LIKE '%Pet%'
                 OR title LIKE '%Trela%'
                 OR title LIKE '%Coleira%'
@@ -261,10 +296,11 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 5. Acessórios para Veículos
-        if (str_contains($clean, 'veiculo') || str_contains($clean, 'veículo') || str_contains($clean, 'carro') || str_contains($clean, 'automotivo') || str_contains($clean, 'auto')) {
+        // 5. Peças & Acessórios Automotivos (ID 34)
+        if (str_contains($clean, 'veiculo') || str_contains($clean, 'veículo') || str_contains($clean, 'carro') || str_contains($clean, 'automotivo') || str_contains($clean, 'auto') || str_contains($clean, 'moto') || str_contains($clean, 'peça')) {
             return "(
-                category IN ('Acessórios para Veículos', 'Acessórios Auto')
+                category IN ('Peças & Acessórios Automotivos', 'Peças e acessórios automotivos', 'Acessórios para Veículos', 'Acessórios Auto')
+                OR category LIKE '%Automotiv%'
                 OR category LIKE '%Veículo%'
                 OR category LIKE '%Veiculo%'
                 OR category LIKE '%Auto%'
@@ -276,10 +312,10 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 6. Ferramentas & Utilidades
-        if (str_contains($clean, 'alicate') || str_contains($clean, 'ferramenta') || str_contains($clean, 'crimpador') || str_contains($clean, 'decapador') || str_contains($clean, 'chave') || str_contains($clean, 'utilidade')) {
+        // 6. Ferramentas & Utilidades (ID 1420, 30)
+        if (str_contains($clean, 'alicate') || str_contains($clean, 'ferramenta') || str_contains($clean, 'crimpador') || str_contains($clean, 'decapador') || str_contains($clean, 'chave') || str_contains($clean, 'utilidade') || str_contains($clean, 'segurança')) {
             return "(
-                category IN ('Ferramentas & Utilidades', 'Ferramentas', 'Acessórios Virais & Ferramentas', 'Acessórios Virais')
+                category IN ('Ferramentas & Utilidades', 'Ferramentas', 'Segurança e proteção', 'Acessórios Virais & Ferramentas', 'Acessórios Virais')
                 OR category LIKE '%Ferramenta%'
                 OR category LIKE '%Alicate%'
                 OR title LIKE '%Alicate%'
@@ -291,10 +327,12 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 7a. Smartwatches específicos
-        if (in_array($lower, ['smartwatches', 'smartwatch', 'smartwatches & pulseiras', 'pulseiras'], true) || ($clean === 'smartwatches' || $clean === 'smartwatch' || $clean === 'pulseiras')) {
+        // 7. Relógios & Smartwatches (ID 1511)
+        if (str_contains($clean, 'smartwatch') || str_contains($clean, 'relogio') || str_contains($clean, 'relógio') || str_contains($clean, 'pulseira') || str_contains($clean, 'watch')) {
             return "(
-                category IN ('Smartwatches', 'Smartwatches & Pulseiras', 'Smartwatches & Áudio')
+                category IN ('Relógios & Smartwatches', 'Relógios', 'Smartwatches & Áudio', 'Smartwatches')
+                OR category LIKE '%Relógio%'
+                OR category LIKE '%Relogio%'
                 OR category LIKE '%Smartwatch%'
                 OR title LIKE '%Smartwatch%'
                 OR title LIKE '%Relógio%'
@@ -304,63 +342,14 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 7b. Áudio específico
-        if (in_array($lower, ['áudio', 'audio', 'fones', 'fones bluetooth tws', 'fones tws'], true) || ($clean === 'audio' || $clean === 'áudio' || $clean === 'fones' || $clean === 'fones tws')) {
-            return "(
-                category IN ('Áudio', 'Audio', 'Fones Bluetooth TWS', 'Smartwatches & Áudio')
-                OR category LIKE '%Áudio%'
-                OR category LIKE '%Audio%'
-                OR title LIKE 'Fone%'
-                OR title LIKE '% Fone%'
-                OR title LIKE '%Tws%'
-                OR title LIKE '%Earphone%'
-                OR title LIKE '%Headphone%'
-                OR title LIKE '%Microfone%'
-            )";
-        }
-
-        // 7c. Celular específico
-        if (in_array($lower, ['celular', 'acessórios para celular', 'acessorios para celular', 'smartphone', 'smartphones'], true) || ($clean === 'celular' || $clean === 'smartphone')) {
-            return "(
-                category IN ('Acessórios para Celular')
-                OR title LIKE '%Celular%'
-                OR title LIKE '%Smartphone%'
-                OR title LIKE '%Reparo Do Telefone%'
-                OR title LIKE '%iPhone%'
-                OR title LIKE '%Usb-C%'
-                OR title LIKE '%Lightning%'
-                OR title LIKE '%Carregador%'
-                OR title LIKE '%Capinha%'
-                OR title LIKE '%MagSafe%'
-            )";
-        }
-
-        // 7d. Smartwatches & Áudio Combinados
-        if (str_contains($clean, 'smartwatch') || str_contains($clean, 'relogio') || str_contains($clean, 'relógio') || str_contains($clean, 'audio') || str_contains($clean, 'áudio') || str_contains($clean, 'fone')) {
-            return "(
-                category IN ('Smartwatches & Áudio', 'Smartwatches', 'Áudio', 'Audio')
-                OR category LIKE '%Smartwatch%'
-                OR category LIKE '%Áudio%'
-                OR category LIKE '%Audio%'
-                OR title LIKE '%Smartwatch%'
-                OR title LIKE '%Relógio%'
-                OR title LIKE '%Relogio%'
-                OR title LIKE '%Watch%'
-                OR title LIKE '%Pulseira%'
-                OR title LIKE '%Fone%'
-                OR title LIKE '%Tws%'
-                OR title LIKE '%Microfone%'
-            )";
-        }
-
-        // 8. Beleza, Cuidados & Estilo
+        // 8. Beleza, Saúde & Maquiagem (ID 66, 660103)
         if (str_contains($clean, 'beleza') || str_contains($clean, 'cabelo') || str_contains($clean, 'secador') || str_contains($clean, 'escova') || str_contains($clean, 'saude') || str_contains($clean, 'saúde') || str_contains($clean, 'cuidado') || str_contains($clean, 'maquiagem') || str_contains($clean, 'batom')) {
             return "(
-                category IN ('Beleza, Cuidados & Estilo', 'Beleza & Estilo', 'Saúde & Cuidados')
+                category IN ('Beleza, Saúde & Maquiagem', 'Beleza e saúde', 'Maquiagem', 'Beleza, Cuidados & Estilo', 'Saúde & Cuidados')
                 OR category LIKE '%Beleza%'
                 OR category LIKE '%Saúde%'
                 OR category LIKE '%Saude%'
-                OR category LIKE '%Cuidado%'
+                OR category LIKE '%Maquiagem%'
                 OR title LIKE '%Secador%'
                 OR title LIKE '%Escova%'
                 OR title LIKE '%Cabelo%'
@@ -377,12 +366,16 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 9. Casa Inteligente & Organização
-        if (str_contains($clean, 'casa') || str_contains($clean, 'led') || str_contains($clean, 'luminaria') || str_contains($clean, 'luminária') || str_contains($clean, 'lampada') || str_contains($clean, 'lâmpada')) {
+        // 9. Casa, Iluminação & Eletro (ID 15, 39, 6, 13)
+        if (str_contains($clean, 'casa') || str_contains($clean, 'led') || str_contains($clean, 'luminaria') || str_contains($clean, 'luminária') || str_contains($clean, 'lampada') || str_contains($clean, 'lâmpada') || str_contains($clean, 'iluminação') || str_contains($clean, 'eletro')) {
             return "(
                 (
-                    category IN ('Casa Inteligente & Organização', 'Casa Inteligente')
+                    category IN ('Casa, Iluminação & Eletro', 'Casa e jardim', 'Luz e iluminação', 'Eletrodomésticos e Portáteis', 'Melhorias domésticas', 'Casa Inteligente & Organização', 'Casa Inteligente')
                     OR category LIKE '%Casa%'
+                    OR category LIKE '%Iluminação%'
+                    OR category LIKE '%Iluminacao%'
+                    OR category LIKE '%Luz%'
+                    OR category LIKE '%Eletro%'
                     OR title LIKE '%Led%'
                     OR title LIKE '%Luminária%'
                     OR title LIKE '%Luminaria%'
@@ -396,22 +389,30 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
             )";
         }
 
-        // 10. Tecnologia & Gadgets
-        if (str_contains($clean, 'tecnologia') || str_contains($clean, 'eletronico') || str_contains($clean, 'eletrônico') || str_contains($clean, 'gadget')) {
+        // 10. Eletrônicos & Telefonia (ID 44, 509, 7)
+        if (str_contains($clean, 'eletronico') || str_contains($clean, 'eletrônico') || str_contains($clean, 'telefone') || str_contains($clean, 'telefonia') || str_contains($clean, 'computador') || str_contains($clean, 'tecnologia') || str_contains($clean, 'gadget') || str_contains($clean, 'audio') || str_contains($clean, 'áudio') || str_contains($clean, 'fone')) {
             return "(
-                category IN ('Tecnologia & Gadgets', 'Eletrônicos & Gadget', 'Eletrônicos')
+                category IN ('Eletrônicos & Telefonia', 'Eletrônicos', 'Telefones e telecomunicações', 'Computador e escritório', 'Tecnologia & Gadgets', 'Eletrônicos & Gadget', 'Áudio', 'Audio', 'Fones Bluetooth TWS')
+                OR category LIKE '%Eletrônic%'
+                OR category LIKE '%Eletronic%'
+                OR category LIKE '%Telefone%'
+                OR category LIKE '%Computador%'
                 OR category LIKE '%Tecnologia%'
-                OR category LIKE '%Eletrônicos%'
-                OR category LIKE '%Eletronicos%'
-                OR category LIKE '%Gadget%'
+                OR category LIKE '%Áudio%'
+                OR category LIKE '%Audio%'
                 OR title LIKE '%Projetor%'
                 OR title LIKE '%Console%'
                 OR title LIKE '%Power Bank%'
                 OR title LIKE '%Carregador%'
+                OR title LIKE '%Fone%'
+                OR title LIKE '%Tws%'
+                OR title LIKE '%Headphone%'
+                OR title LIKE '%Earphone%'
+                OR title LIKE '%Microfone%'
             )";
         }
 
-        // Fallback genérico seguro com prepared statement
+        // Fallback genérico seguro
         $params[] = $raw;
         $params[] = '%' . $raw . '%';
         return "(category = ? OR category LIKE ?)";

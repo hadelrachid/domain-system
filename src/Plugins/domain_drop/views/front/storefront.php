@@ -294,35 +294,35 @@
                 <option value="<?= $baseUrl ?>/loja" <?= empty($selectedCategory) ? 'selected' : '' ?>>
                     🌐 Todas as Categorias (Ver Catálogo Completo)
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Tecnologia" <?= (stripos($selectedCategory, 'tecnologia') !== false || stripos($selectedCategory, 'eletrônicos') !== false || stripos($selectedCategory, 'eletronicos') !== false) ? 'selected' : '' ?>>
-                    📱 Tecnologia & Gadgets
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Eletrônicos & Telefonia') ?>" <?= (stripos($selectedCategory, 'eletrônic') !== false || stripos($selectedCategory, 'telefonia') !== false || stripos($selectedCategory, 'tecnologia') !== false) ? 'selected' : '' ?>>
+                    📱 Eletrônicos & Telefonia
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Smartwatches" <?= (stripos($selectedCategory, 'smartwatch') !== false || stripos($selectedCategory, 'áudio') !== false || stripos($selectedCategory, 'audio') !== false) ? 'selected' : '' ?>>
-                    ⌚ Smartwatches & Áudio
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Relógios & Smartwatches') ?>" <?= (stripos($selectedCategory, 'relógio') !== false || stripos($selectedCategory, 'relogio') !== false || stripos($selectedCategory, 'smartwatch') !== false || stripos($selectedCategory, 'áudio') !== false || stripos($selectedCategory, 'audio') !== false) ? 'selected' : '' ?>>
+                    ⌚ Relógios & Smartwatches
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Casa" <?= (stripos($selectedCategory, 'casa') !== false) ? 'selected' : '' ?>>
-                    🏠 Casa Inteligente & Organização
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Casa, Iluminação & Eletro') ?>" <?= (stripos($selectedCategory, 'casa') !== false || stripos($selectedCategory, 'iluminação') !== false || stripos($selectedCategory, 'iluminacao') !== false || stripos($selectedCategory, 'eletro') !== false) ? 'selected' : '' ?>>
+                    🏠 Casa, Iluminação & Eletro
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Acessorios" <?= (stripos($selectedCategory, 'acessorio') !== false || stripos($selectedCategory, 'acessórios') !== false || stripos($selectedCategory, 'ferramentas') !== false) ? 'selected' : '' ?>>
-                    🛠️ Acessórios Virais & Ferramentas
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Ferramentas & Utilidades') ?>" <?= (stripos($selectedCategory, 'ferramenta') !== false || stripos($selectedCategory, 'utilidade') !== false || stripos($selectedCategory, 'acessorio') !== false || stripos($selectedCategory, 'acessórios') !== false) ? 'selected' : '' ?>>
+                    🛠️ Ferramentas & Utilidades
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=Beleza" <?= (stripos($selectedCategory, 'beleza') !== false || stripos($selectedCategory, 'saúde') !== false || stripos($selectedCategory, 'saude') !== false) ? 'selected' : '' ?>>
-                    ✨ Saúde & Cuidados (Beleza)
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Beleza, Saúde & Maquiagem') ?>" <?= (stripos($selectedCategory, 'beleza') !== false || stripos($selectedCategory, 'saúde') !== false || stripos($selectedCategory, 'saude') !== false || stripos($selectedCategory, 'maquiagem') !== false) ? 'selected' : '' ?>>
+                    ✨ Beleza, Saúde & Maquiagem
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?>" <?= (stripos($selectedCategory, 'pet') !== false) ? 'selected' : '' ?>>
-                    🐾 Pet Shop & Pets Virais
+                <option value="<?= $baseUrl ?>/loja?cat=Pet+Shop" <?= (stripos($selectedCategory, 'pet') !== false) ? 'selected' : '' ?>>
+                    🐾 Pet Shop
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?>" <?= (stripos($selectedCategory, 'veículo') !== false || stripos($selectedCategory, 'veiculo') !== false) ? 'selected' : '' ?>>
-                    🚗 Acessórios para Veículos
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Peças & Acessórios Automotivos') ?>" <?= (stripos($selectedCategory, 'automotiv') !== false || stripos($selectedCategory, 'veículo') !== false || stripos($selectedCategory, 'veiculo') !== false) ? 'selected' : '' ?>>
+                    🚗 Peças & Acessórios Automotivos
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?>" <?= (stripos($selectedCategory, 'roupa') !== false || stripos($selectedCategory, 'vestuário') !== false || stripos($selectedCategory, 'vestuario') !== false) ? 'selected' : '' ?>>
-                    👗 Moda, Roupas & Vestuário
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Roupas, Bolsas & Calçados') ?>" <?= ((stripos($selectedCategory, 'roupa') !== false || stripos($selectedCategory, 'bolsa') !== false || stripos($selectedCategory, 'calçado') !== false || stripos($selectedCategory, 'calcado') !== false || stripos($selectedCategory, 'vestuário') !== false || stripos($selectedCategory, 'vestuario') !== false) && stripos($selectedCategory, 'íntima') === false && stripos($selectedCategory, 'intima') === false) ? 'selected' : '' ?>>
+                    👗 Roupas, Bolsas & Calçados
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?>" <?= (stripos($selectedCategory, 'lingerie') !== false || stripos($selectedCategory, 'íntima') !== false || stripos($selectedCategory, 'intima') !== false) ? 'selected' : '' ?>>
-                    👙 Moda Íntima, Lingeries & Pijamas
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Roupa Íntima & Pijamas') ?>" <?= (stripos($selectedCategory, 'lingerie') !== false || stripos($selectedCategory, 'íntima') !== false || stripos($selectedCategory, 'intima') !== false || stripos($selectedCategory, 'pijama') !== false) ? 'selected' : '' ?>>
+                    👙 Roupa Íntima & Pijamas
                 </option>
-                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?>" <?= (stripos($selectedCategory, 'sex shop') !== false || stripos($selectedCategory, '+18') !== false) ? 'selected' : '' ?>>
-                    🔞 Sex Shop & Produtos Adultos (+18)
+                <option value="<?= $baseUrl ?>/loja?cat=<?= urlencode('Novidades & Uso Especial') ?>" <?= (stripos($selectedCategory, 'novidade') !== false || stripos($selectedCategory, 'especial') !== false || stripos($selectedCategory, 'sex shop') !== false || stripos($selectedCategory, '+18') !== false) ? 'selected' : '' ?>>
+                    🔞 Novidades & Uso Especial
                 </option>
             </select>
 

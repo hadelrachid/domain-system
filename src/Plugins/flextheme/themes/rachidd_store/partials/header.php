@@ -117,11 +117,12 @@ if ($customerLoggedId <= 0 && isset($_SESSION['customer_id'])) {
             <!-- Quick Chips Rápidos para Desktop / Tablet -->
             <div class="header-quick-chips">
                 <a href="<?= $baseUrl ?>/loja" class="<?= (empty($currentCat) && empty($currentSort)) ? 'active' : '' ?>">🔥 Super Ofertas</a>
-                <a href="<?= $baseUrl ?>/loja?cat=Tecnologia" class="<?= (stripos($currentCat, 'tecnologia') !== false || stripos($currentCat, 'eletrônicos') !== false) ? 'active' : '' ?>">Tecnologia & Gadgets</a>
-                <a href="<?= $baseUrl ?>/loja?cat=Smartwatches" class="<?= (stripos($currentCat, 'smartwatch') !== false || stripos($currentCat, 'áudio') !== false) ? 'active' : '' ?>">Smartwatches & Áudio</a>
-                <a href="<?= $baseUrl ?>/loja?cat=Casa" class="<?= (stripos($currentCat, 'casa') !== false) ? 'active' : '' ?>">Casa Inteligente</a>
-                <a href="<?= $baseUrl ?>/loja?cat=Acessorios" class="<?= (stripos($currentCat, 'acessórios') !== false || stripos($currentCat, 'ferramentas') !== false) ? 'active' : '' ?>">Acessórios Virais</a>
-                <a href="<?= $baseUrl ?>/loja?cat=Beleza" class="<?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false) ? 'active' : '' ?>">Saúde & Cuidados</a>
+                <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Eletrônicos & Telefonia') ?>" class="<?= (stripos($currentCat, 'eletrônic') !== false || stripos($currentCat, 'telefonia') !== false || stripos($currentCat, 'tecnologia') !== false) ? 'active' : '' ?>">Eletrônicos & Telefonia</a>
+                <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Relógios & Smartwatches') ?>" class="<?= (stripos($currentCat, 'relógio') !== false || stripos($currentCat, 'relogio') !== false || stripos($currentCat, 'smartwatch') !== false) ? 'active' : '' ?>">Relógios & Smartwatches</a>
+                <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Casa, Iluminação & Eletro') ?>" class="<?= (stripos($currentCat, 'casa') !== false || stripos($currentCat, 'iluminação') !== false || stripos($currentCat, 'eletro') !== false) ? 'active' : '' ?>">Casa, Iluminação & Eletro</a>
+                <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Ferramentas & Utilidades') ?>" class="<?= (stripos($currentCat, 'ferramenta') !== false || stripos($currentCat, 'utilidade') !== false) ? 'active' : '' ?>">Ferramentas & Utilidades</a>
+                <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Beleza, Saúde & Maquiagem') ?>" class="<?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false || stripos($currentCat, 'maquiagem') !== false) ? 'active' : '' ?>">Beleza & Saúde</a>
+                <a href="<?= $baseUrl ?>/loja?cat=Pet+Shop" class="<?= (stripos($currentCat, 'pet') !== false) ? 'active' : '' ?>">Pet Shop</a>
                 <a href="<?= $baseUrl ?>/loja?sort=sales" class="<?= ($currentSort === 'sales') ? 'active' : '' ?>">🏆 Mais Vendidos</a>
             </div>
         </div>
@@ -180,92 +181,92 @@ if ($customerLoggedId <= 0 && isset($_SESSION['customer_id'])) {
             <span>➔</span>
         </a>
 
-        <!-- Tecnologia & Gadgets -->
-        <a href="<?= $baseUrl ?>/loja?cat=Tecnologia#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'tecnologia') !== false || stripos($currentCat, 'eletrônicos') !== false || stripos($currentCat, 'eletronicos') !== false) ? 'active' : '' ?>">
+        <!-- Eletrônicos & Telefonia -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Eletrônicos & Telefonia') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'eletrônic') !== false || stripos($currentCat, 'telefonia') !== false || stripos($currentCat, 'tecnologia') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">📱</span>
-                <span>Tecnologia & Gadgets</span>
+                <span>Eletrônicos & Telefonia</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Smartwatches & Áudio -->
-        <a href="<?= $baseUrl ?>/loja?cat=Smartwatches#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'smartwatch') !== false || stripos($currentCat, 'áudio') !== false || stripos($currentCat, 'audio') !== false) ? 'active' : '' ?>">
+        <!-- Relógios & Smartwatches -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Relógios & Smartwatches') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'relógio') !== false || stripos($currentCat, 'relogio') !== false || stripos($currentCat, 'smartwatch') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">⌚</span>
-                <span>Smartwatches & Áudio</span>
+                <span>Relógios & Smartwatches</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Casa Inteligente & Organização -->
-        <a href="<?= $baseUrl ?>/loja?cat=Casa#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'casa') !== false) ? 'active' : '' ?>">
+        <!-- Casa, Iluminação & Eletro -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Casa, Iluminação & Eletro') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'casa') !== false || stripos($currentCat, 'iluminação') !== false || stripos($currentCat, 'eletro') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🏠</span>
-                <span>Casa Inteligente & Organização</span>
+                <span>Casa, Iluminação & Eletro</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Acessórios Virais & Ferramentas -->
-        <a href="<?= $baseUrl ?>/loja?cat=Acessorios#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'acessorio') !== false || stripos($currentCat, 'acessórios') !== false || stripos($currentCat, 'ferramentas') !== false) ? 'active' : '' ?>">
+        <!-- Ferramentas & Utilidades -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Ferramentas & Utilidades') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'ferramenta') !== false || stripos($currentCat, 'utilidade') !== false || stripos($currentCat, 'acessorio') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🛠️</span>
-                <span>Acessórios Virais & Ferramentas</span>
+                <span>Ferramentas & Utilidades</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Saúde & Cuidados (Beleza) -->
-        <a href="<?= $baseUrl ?>/loja?cat=Beleza#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false || stripos($currentCat, 'saude') !== false) ? 'active' : '' ?>">
+        <!-- Beleza, Saúde & Maquiagem -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Beleza, Saúde & Maquiagem') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'beleza') !== false || stripos($currentCat, 'saúde') !== false || stripos($currentCat, 'maquiagem') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">✨</span>
-                <span>Saúde & Cuidados (Beleza)</span>
+                <span>Beleza, Saúde & Maquiagem</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Pet Shop & Pets Virais -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Pet Shop & Pets Virais') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'pet') !== false) ? 'active' : '' ?>">
+        <!-- Pet Shop -->
+        <a href="<?= $baseUrl ?>/loja?cat=Pet+Shop#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'pet') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🐾</span>
-                <span>Pet Shop & Pets Virais</span>
+                <span>Pet Shop</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Acessórios para Veículos -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Acessórios para Veículos') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'veículo') !== false || stripos($currentCat, 'veiculo') !== false) ? 'active' : '' ?>">
+        <!-- Peças & Acessórios Automotivos -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Peças & Acessórios Automotivos') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'automotiv') !== false || stripos($currentCat, 'veículo') !== false || stripos($currentCat, 'veiculo') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🚗</span>
-                <span>Acessórios para Veículos</span>
+                <span>Peças & Acessórios Automotivos</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Moda, Roupas & Vestuário -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda, Roupas & Vestuário') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'roupa') !== false || stripos($currentCat, 'vestuário') !== false || stripos($currentCat, 'vestuario') !== false) ? 'active' : '' ?>">
+        <!-- Roupas, Bolsas & Calçados -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Roupas, Bolsas & Calçados') ?>#produtos" class="cat-drawer-item <?= ((stripos($currentCat, 'roupa') !== false || stripos($currentCat, 'bolsa') !== false || stripos($currentCat, 'calçado') !== false || stripos($currentCat, 'vestuário') !== false) && stripos($currentCat, 'íntima') === false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">👗</span>
-                <span>Moda, Roupas & Vestuário</span>
+                <span>Roupas, Bolsas & Calçados</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Moda Íntima, Lingeries & Pijamas -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Moda Íntima, Lingeries & Pijamas') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'lingerie') !== false || stripos($currentCat, 'íntima') !== false || stripos($currentCat, 'intima') !== false) ? 'active' : '' ?>">
+        <!-- Roupa Íntima & Pijamas -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Roupa Íntima & Pijamas') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'lingerie') !== false || stripos($currentCat, 'íntima') !== false || stripos($currentCat, 'intima') !== false || stripos($currentCat, 'pijama') !== false) ? 'active' : '' ?>">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">👙</span>
-                <span>Moda Íntima, Lingeries & Pijamas</span>
+                <span>Roupa Íntima & Pijamas</span>
             </div>
             <span>➔</span>
         </a>
 
-        <!-- Sex Shop & Adultos (+18) -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Sex Shop & Produtos Adultos (+18)') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'sex shop') !== false || stripos($currentCat, '+18') !== false) ? 'active' : '' ?>" style="border-color: rgba(239,68,68,0.3); color: #fca5a5;">
+        <!-- Novidades & Uso Especial -->
+        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Novidades & Uso Especial') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'novidade') !== false || stripos($currentCat, 'especial') !== false || stripos($currentCat, 'sex shop') !== false || stripos($currentCat, '+18') !== false) ? 'active' : '' ?>" style="border-color: rgba(239,68,68,0.3); color: #fca5a5;">
             <div style="display: flex; align-items: center;">
                 <span class="item-icon">🔞</span>
-                <span>Sex Shop & Adultos (+18)</span>
+                <span>Novidades & Uso Especial</span>
             </div>
             <span>➔</span>
         </a>

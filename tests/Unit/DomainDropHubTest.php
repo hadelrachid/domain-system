@@ -679,12 +679,12 @@ class DomainDropHubTest extends TestCase
 
     public function testOfficialCategoriesNormalization(): void
     {
-        $this->assertSame('Eletrônicos & Gadget', ProductMiningService::normalizeCategory('Eletrônicos'));
-        $this->assertSame('Casa Inteligente & Organização', ProductMiningService::normalizeCategory('Casa Inteligente'));
-        $this->assertSame('Beleza, Cuidados & Estilo', ProductMiningService::normalizeCategory('Beleza & Estilo'));
+        $this->assertSame('Eletrônicos & Telefonia', ProductMiningService::normalizeCategory('Eletrônicos'));
+        $this->assertSame('Casa, Iluminação & Eletro', ProductMiningService::normalizeCategory('Casa Inteligente'));
+        $this->assertSame('Beleza, Saúde & Maquiagem', ProductMiningService::normalizeCategory('Beleza & Estilo'));
         $this->assertSame('Ferramentas & Utilidades', ProductMiningService::normalizeCategory('Ferramentas'));
-        $this->assertSame('Pet Shop & Pets Virais', ProductMiningService::normalizeCategory('Pet Shop'));
-        $this->assertSame('Acessórios para Veículos', ProductMiningService::normalizeCategory('Acessórios Auto'));
+        $this->assertSame('Pet Shop', ProductMiningService::normalizeCategory('Pet Shop'));
+        $this->assertSame('Peças & Acessórios Automotivos', ProductMiningService::normalizeCategory('Acessórios Auto'));
         $this->assertSame('Ferramentas & Utilidades', ProductMiningService::normalizeCategory('Geral'));
     }
 
@@ -856,9 +856,9 @@ class DomainDropHubTest extends TestCase
             linkScraper: $scraper
         );
 
-        $product = $mining->importFromBrowserSource($rawHtml, 'Eletrônicos & Gadget');
+        $product = $mining->importFromBrowserSource($rawHtml, 'Eletrônicos & Telefonia');
         $this->assertSame('1005006093867086', $product->aliexpressId);
-        $this->assertSame('Eletrônicos & Gadget', $product->category);
+        $this->assertSame('Eletrônicos & Telefonia', $product->category);
         $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/Sf81b4a7a3ae246c886c77f6f74fc939dn.jpg', $product->mainImageUrl);
         $this->assertGreaterThan(0.0, $product->salePriceBrl);
     }

@@ -268,16 +268,15 @@ img {
     background: linear-gradient(135deg, #FFE082 0%, #E6C34E 100%);
 }
 
-/* Barra de Filtro com Botão Toggle Hambúrguer */
+/* Barra de Filtro com Botão Toggle Hambúrguer e Chips Horizontais */
 .header-filter-strip {
     margin-top: 10px;
     padding-top: 8px;
     border-top: 1px solid rgba(255,255,255,0.06);
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .btn-toggle-hamburguer {
@@ -294,6 +293,8 @@ img {
     gap: 10px;
     transition: all 0.2s ease;
     outline: none;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .btn-toggle-hamburguer:hover {
@@ -309,10 +310,21 @@ img {
 }
 
 .header-quick-chips {
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+    padding-bottom: 2px;
+}
+
+.header-quick-chips::-webkit-scrollbar {
+    display: none;
 }
 
 .header-quick-chips a {
@@ -697,10 +709,11 @@ img {
 
 @media (max-width: 768px) {
     .header-quick-chips {
-        display: none;
+        display: none !important;
     }
     .header-filter-strip {
         justify-content: center;
+        flex-wrap: wrap;
     }
     .btn-toggle-hamburguer {
         width: 100%;

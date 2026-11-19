@@ -78,11 +78,47 @@
         var b = normalizeText(currentCat);
         if (!a || !b) return false;
         if (a === b) return true;
-        if (a === 'tecnologia' && (b.indexOf('tecnologia') !== -1 || b.indexOf('eletronic') !== -1 || b.indexOf('gadget') !== -1)) return true;
-        if (a === 'smartwatches' && (b.indexOf('smartwatch') !== -1 || b.indexOf('audio') !== -1)) return true;
-        if (a === 'casa' && b.indexOf('casa') !== -1) return true;
-        if (a === 'acessorios' && (b.indexOf('acessorio') !== -1 || b.indexOf('ferramenta') !== -1)) return true;
-        if (a === 'beleza' && (b.indexOf('beleza') !== -1 || b.indexOf('saude') !== -1 || b.indexOf('cuidado') !== -1)) return true;
+
+        // 1. Eletrônicos & Telefonia
+        if ((a.indexOf('eletronic') !== -1 || a.indexOf('telefonia') !== -1 || a.indexOf('tecnologia') !== -1) &&
+            (b.indexOf('eletronic') !== -1 || b.indexOf('telefonia') !== -1 || b.indexOf('tecnologia') !== -1 || b.indexOf('gadget') !== -1)) return true;
+
+        // 2. Relógios & Smartwatches
+        if ((a.indexOf('relogio') !== -1 || a.indexOf('smartwatch') !== -1) &&
+            (b.indexOf('relogio') !== -1 || b.indexOf('smartwatch') !== -1 || b.indexOf('pulseira') !== -1)) return true;
+
+        // 3. Casa, Iluminação & Eletro
+        if ((a.indexOf('casa') !== -1 || a.indexOf('iluminacao') !== -1 || a.indexOf('eletro') !== -1) &&
+            (b.indexOf('casa') !== -1 || b.indexOf('iluminacao') !== -1 || b.indexOf('eletro') !== -1)) return true;
+
+        // 4. Ferramentas & Utilidades
+        if ((a.indexOf('ferramenta') !== -1 || a.indexOf('utilidade') !== -1 || a.indexOf('acessorio') !== -1) &&
+            (b.indexOf('ferramenta') !== -1 || b.indexOf('utilidade') !== -1 || b.indexOf('acessorio') !== -1)) return true;
+
+        // 5. Beleza, Saúde & Maquiagem
+        if ((a.indexOf('beleza') !== -1 || a.indexOf('saude') !== -1 || a.indexOf('maquiagem') !== -1) &&
+            (b.indexOf('beleza') !== -1 || b.indexOf('saude') !== -1 || b.indexOf('maquiagem') !== -1 || b.indexOf('cuidado') !== -1)) return true;
+
+        // 6. Pet Shop
+        if (a.indexOf('pet') !== -1 && b.indexOf('pet') !== -1) return true;
+
+        // 7. Peças & Acessórios Automotivos
+        if ((a.indexOf('automotiv') !== -1 || a.indexOf('veiculo') !== -1) &&
+            (b.indexOf('automotiv') !== -1 || b.indexOf('veiculo') !== -1 || b.indexOf('carro') !== -1)) return true;
+
+        // 8. Roupas, Bolsas & Calçados
+        if ((a.indexOf('roupa') !== -1 || a.indexOf('bolsa') !== -1 || a.indexOf('calcado') !== -1 || a.indexOf('sapato') !== -1 || a.indexOf('vestuario') !== -1) &&
+            (b.indexOf('roupa') !== -1 || b.indexOf('bolsa') !== -1 || b.indexOf('calcado') !== -1 || b.indexOf('sapato') !== -1 || b.indexOf('vestuario') !== -1) &&
+            b.indexOf('intima') === -1 && a.indexOf('intima') === -1) return true;
+
+        // 9. Roupa Íntima & Pijamas
+        if ((a.indexOf('intima') !== -1 || a.indexOf('lingerie') !== -1 || a.indexOf('pijama') !== -1) &&
+            (b.indexOf('intima') !== -1 || b.indexOf('lingerie') !== -1 || b.indexOf('pijama') !== -1)) return true;
+
+        // 10. Novidades & Uso Especial
+        if ((a.indexOf('novidade') !== -1 || a.indexOf('especial') !== -1 || a.indexOf('sex shop') !== -1 || a.indexOf('+18') !== -1) &&
+            (b.indexOf('novidade') !== -1 || b.indexOf('especial') !== -1 || b.indexOf('sex shop') !== -1 || b.indexOf('+18') !== -1)) return true;
+
         return b.indexOf(a) !== -1 || a.indexOf(b) !== -1;
     }
 
