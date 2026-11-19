@@ -84,11 +84,13 @@ if (typeof window.trackDropAction !== 'function') {
             $refPrice = $p->salePriceBrl * 1.35;
             ?>
             <article class="store-card">
-                <!-- Image Box -->
-                <div class="store-card-img-box" style="position: relative; width: 100%; height: 230px; background: #0c0f12; overflow: hidden;">
-                    <a href="<?= htmlspecialchars($productUrl) ?>">
-                        <?php if (!empty($p->mainImageUrl)): ?>
-                            <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
+                <!-- Image Box com Proteção Anti-Cópia e URL Mascarada -->
+                <?php $maskedImg = $p->getProtectedMainImageUrl($baseUrl); ?>
+                <div class="store-card-img-box" style="position: relative; width: 100%; height: 230px; background: #0c0f12; overflow: hidden; user-select: none; -webkit-user-select: none;">
+                    <a href="<?= htmlspecialchars($productUrl) ?>" style="display: block; width: 100%; height: 100%; position: relative;">
+                        <?php if (!empty($maskedImg)): ?>
+                            <img src="<?= htmlspecialchars($maskedImg) ?>" alt="<?= htmlspecialchars($p->title) ?>" draggable="false" oncontextmenu="return false;" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; -webkit-user-drag: none; pointer-events: none;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; inset: 0; z-index: 2;"></div>
                         <?php else: ?>
                             <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 36px;">📦</div>
                         <?php endif; ?>

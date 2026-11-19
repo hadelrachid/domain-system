@@ -239,10 +239,12 @@ class DropshipShowcaseBlock implements BlockInterface, StylableElementInterface
                         $costRef = $p->salePriceBrl * 1.35; // Preço original tachado simulado
                         ?>
                         <article class="drop-card">
-                            <!-- Image Frame -->
-                            <div style="position: relative; width: 100%; height: 230px; background: #0c0f12; overflow: hidden;">
-                                <?php if (!empty($p->mainImageUrl)): ?>
-                                    <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                            <!-- Image Frame com Proteção Anti-Cópia e URL Mascarada -->
+                            <?php $bMasked = $p->getProtectedMainImageUrl($baseUrl); ?>
+                            <div style="position: relative; width: 100%; height: 230px; background: #0c0f12; overflow: hidden; user-select: none; -webkit-user-select: none;">
+                                <?php if (!empty($bMasked)): ?>
+                                    <img src="<?= htmlspecialchars($bMasked) ?>" alt="<?= htmlspecialchars($p->title) ?>" draggable="false" oncontextmenu="return false;" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; pointer-events: none;">
+                                    <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; inset: 0; z-index: 2;"></div>
                                 <?php else: ?>
                                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #94a3b8); font-size: 32px;">
                                         📦

@@ -12,6 +12,7 @@ use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface;
+use DomainSystem\Plugins\domain_drop\Services\ProductMediaProxyService;
 use Throwable;
 
 /**
@@ -19,6 +20,8 @@ use Throwable;
  */
 class DropshipFrontController
 {
+    private ProductMediaProxyService $mediaProxy;
+
     public function __construct(
         private readonly DropshipCatalogRepositoryInterface $catalogRepo,
         private readonly ?ThemeManagerInterface $themeManager = null,
@@ -27,8 +30,10 @@ class DropshipFrontController
         private readonly ?AliExpressApiClientInterface $apiClient = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface $demandTracker = null,
         private readonly ?\DomainSystem\Core\Contracts\SessionManagerInterface $session = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface $customerRepo = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface $customerRepo = null,
+        ?ProductMediaProxyService $mediaProxy = null
     ) {
+        $this->mediaProxy = $mediaProxy ?? new ProductMediaProxyService($this->catalogRepo);
     }
 
     /**
@@ -428,5 +433,16 @@ class DropshipFrontController
         $local = $parts[0];
         $visible = mb_substr($local, 0, min(2, mb_strlen($local)));
         return $visible . '***@' . $parts[1];
+    }
+
+    /**
+     * Rota de Imagem Protegida e Mascarada: GET /dropship/media/{productId}/{token}
+     *
+     * Serve a imagem diretamente do cache local do servidor ou busca sob demanda,
+     * ocultando qualquer menção ou link da CDN original do AliExpress.
+     */
+    public function serveMedia(Request $request, string $productId, string $token): ResponseInterface
+    {
+        return $this->mediaProxy->resolveAndServe((int)$productId, $token);
     }
 }

@@ -326,9 +326,11 @@ if (empty($catalogProducts)) {
                     $refPrice = $p->salePriceBrl * 1.4;
                     ?>
                     <article class="store-card">
-                        <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden;">
-                            <a href="<?= htmlspecialchars($productUrl) ?>">
-                                <img src="<?= htmlspecialchars($p->mainImageUrl) ?>" alt="<?= htmlspecialchars($p->title) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
+                        <?php $maskedImg = $p->getProtectedMainImageUrl($baseUrl); ?>
+                        <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden; user-select: none; -webkit-user-select: none;">
+                            <a href="<?= htmlspecialchars($productUrl) ?>" style="display: block; width: 100%; height: 100%; position: relative;">
+                                <img src="<?= htmlspecialchars($maskedImg) ?>" alt="<?= htmlspecialchars($p->title) ?>" draggable="false" oncontextmenu="return false;" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; -webkit-user-drag: none; pointer-events: none;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
+                                <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; inset: 0; z-index: 2;"></div>
                             </a>
                             <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 10px; padding: 3px 7px; border-radius: 4px;">
                                 -40% OFF
