@@ -117,6 +117,16 @@ $seo->setCanonical($canonicalUrl)
             box-shadow: 0 16px 36px rgba(0,0,0,0.6);
             border-color: rgba(212, 175, 55, 0.5);
         }
+
+        /* Bloqueio de arrastar imagens */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +138,23 @@ $seo->setCanonical($canonicalUrl)
     </main>
 
     <?php require __DIR__ . '/../partials/footer.php'; ?>
+
+    <!-- Proteção contra cópia e clique com botão direito em imagens -->
+    <script>
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target && (e.target.tagName === 'IMG' || (e.target.closest && e.target.closest('img')))) {
+            e.preventDefault();
+            return false;
+        }
+    }, false);
+
+    document.addEventListener('dragstart', function(e) {
+        if (e.target && (e.target.tagName === 'IMG' || (e.target.closest && e.target.closest('img')))) {
+            e.preventDefault();
+            return false;
+        }
+    }, false);
+    </script>
 
 </body>
 </html>
