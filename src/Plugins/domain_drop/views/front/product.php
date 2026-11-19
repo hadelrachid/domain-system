@@ -202,6 +202,62 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                     </a>
                 </div>
 
+                <!-- Simulador de Frete & Prazos por CEP -->
+                <div class="product-shipping-calc-box" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 16px; margin-bottom: 22px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; gap: 7px;">
+                            <span>🚚</span> <span>Calcular Frete &amp; Prazo de Entrega</span>
+                        </span>
+                        <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #94a3b8; text-decoration: underline;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Não sei meu CEP</a>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="position: relative; flex: 1;">
+                            <input type="text" id="shipping-cep-input" maxlength="9" placeholder="Digite seu CEP..." oninput="formatShippingCep(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();calculateProductShipping();}" style="width: 100%; background: #0c0f12; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; font-family: monospace; outline: none; box-sizing: border-box;" aria-label="Digite seu CEP">
+                        </div>
+                        <button type="button" id="btn-calc-shipping" onclick="calculateProductShipping()" style="background: rgba(212, 175, 55, 0.15); border: 1px solid #D4AF37; color: #F0D060; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+                            Calcular
+                        </button>
+                    </div>
+
+                    <!-- Resultado do Frete e Opções de Envio -->
+                    <div id="shipping-result-box" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+                        <div id="shipping-location-text" style="font-size: 12px; color: #38bdf8; margin-bottom: 10px; font-weight: 600;"></div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Opção 1: Frete Padrão com Rastreio -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,210,132,0.06); border: 1px solid rgba(0,210,132,0.3); border-radius: 8px; padding: 10px 12px;">
+                                <div>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">
+                                        <span>📦</span> <span>Frete Padrão com Rastreamento</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                                        <?= $isNational ? 'Prazo estimado de <strong>3 a 7 dias úteis</strong> (Estoque Nacional 🇧🇷)' : 'Prazo estimado de <strong>15 a 25 dias úteis</strong> (Envio Internacional 🇨🇳)' ?>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; padding-left: 10px;">
+                                    <span style="font-size: 12.5px; font-weight: 800; color: #00d284; text-transform: uppercase;">GRÁTIS</span>
+                                </div>
+                            </div>
+
+                            <!-- Opção 2: Envio Expresso Prioritário -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 12px;">
+                                <div>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">
+                                        <span>⚡</span> <span>Envio Expresso Prioritário (Sedex)</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                                        <?= $isNational ? 'Despacho prioritário no mesmo dia (<strong>2 a 4 dias úteis</strong>)' : 'Despacho urgente com prioridade aduaneira (<strong>10 a 15 dias úteis</strong>)' ?>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; padding-left: 10px;">
+                                    <span style="font-size: 12.5px; font-weight: 800; color: #45f3ff;">+ R$ 19,90</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Trust Badges -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; color: #94a3b8;">
                     <div style="background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px;">
@@ -652,6 +708,18 @@ function syncProductQuantity() {
         if (activeProductSku) {
             checkoutUrl += '&sku=' + encodeURIComponent(activeProductSku);
         }
+        var currentCep = '';
+        try {
+            var cepField = document.getElementById('shipping-cep-input');
+            if (cepField && cepField.value) {
+                currentCep = cepField.value.replace(/\D/g, '');
+            } else {
+                currentCep = localStorage.getItem('rachidd_user_shipping_cep') || '';
+            }
+        } catch(e) {}
+        if (currentCep && currentCep.length === 8) {
+            checkoutUrl += '&shipping_zip=' + encodeURIComponent(currentCep);
+        }
         buyBtn.href = checkoutUrl;
     }
     if (subtotalEl) {
@@ -730,5 +798,75 @@ function trackProductAction(actionType) {
 document.addEventListener('DOMContentLoaded', function() {
     initProductVariants();
     trackProductAction('view_details');
+
+    // Recupera CEP previamente consultado
+    try {
+        var cachedCep = localStorage.getItem('rachidd_user_shipping_cep');
+        var cepInput = document.getElementById('shipping-cep-input');
+        if (cachedCep && cachedCep.length === 8 && cepInput) {
+            cepInput.value = cachedCep.substring(0, 5) + '-' + cachedCep.substring(5);
+            calculateProductShipping(false);
+        }
+    } catch(e) {}
 });
+
+function formatShippingCep(input) {
+    var v = input.value.replace(/\D/g, '').substring(0, 8);
+    if (v.length > 5) {
+        input.value = v.substring(0, 5) + '-' + v.substring(5);
+    } else {
+        input.value = v;
+    }
+}
+
+function calculateProductShipping(shouldFocus) {
+    var input = document.getElementById('shipping-cep-input');
+    var btn = document.getElementById('btn-calc-shipping');
+    var resultBox = document.getElementById('shipping-result-box');
+    var locText = document.getElementById('shipping-location-text');
+    if (!input || !resultBox || !locText) return;
+
+    var cleanCep = input.value.replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+        input.style.borderColor = '#ef4444';
+        return;
+    }
+    input.style.borderColor = 'rgba(255,255,255,0.15)';
+
+    var originalBtnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Calculando...';
+
+    fetch('https://viacep.com.br/ws/' + cleanCep + '/json/')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnText;
+
+            if (data.erro) {
+                locText.innerHTML = '❌ CEP não encontrado. Verifique os dígitos informados.';
+                locText.style.color = '#f87171';
+                resultBox.style.display = 'block';
+                return;
+            }
+
+            var localStr = (data.bairro ? data.bairro + ' - ' : '') + data.localidade + '/' + data.uf;
+            locText.innerHTML = '📍 Entrega para: <strong>' + localStr + '</strong>';
+            locText.style.color = '#38bdf8';
+            resultBox.style.display = 'block';
+
+            try {
+                localStorage.setItem('rachidd_user_shipping_cep', cleanCep);
+            } catch(e) {}
+
+            syncProductQuantity();
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnText;
+            locText.innerHTML = '📍 Frete Padrão com Rastreio <strong>GRÁTIS</strong> disponível para todo o Brasil!';
+            locText.style.color = '#00d284';
+            resultBox.style.display = 'block';
+        });
+}
 </script>

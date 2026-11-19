@@ -179,7 +179,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
                             <span>Frete com Rastreamento Oficial</span>
-                            <span style="color: var(--accent-green); font-weight: 700;">GRÁTIS (Promoção)</span>
+                            <span id="checkout_shipping_line_val" style="color: var(--accent-green); font-weight: 700;">GRÁTIS (Padrão)</span>
                         </div>
                         <div class="ds-order-item" style="color: var(--text-muted); font-size: 0.84rem;">
                             <span>Curadoria &amp; Busca AliExpress Brasil</span>
@@ -324,10 +324,37 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                             </div>
                         </div>
                     </div>
+
+                    <!-- Opções de Envio / Frete -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                            <span>📦</span> 3. Opção de Envio
+                        </h3>
+                        <label id="label_shipping_standard" class="ds-shipping-choice" onclick="updateShippingMethod('standard')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid #00d284; border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: rgba(0,210,132,0.06); transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="radio" name="shipping_method_radio" value="standard" checked style="accent-color: #00d284; transform: scale(1.15);">
+                                <div>
+                                    <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">Frete Padrão com Rastreamento</div>
+                                    <div style="font-size: 0.76rem; color: #94a3b8;">Entrega em 3 a 7 dias úteis (Estoque Brasil) ou 15 a 25 dias (Internacional)</div>
+                                </div>
+                            </div>
+                            <span style="font-weight: 800; color: #00d284; font-size: 0.92rem;">GRÁTIS</span>
+                        </label>
+                        <label id="label_shipping_express" class="ds-shipping-choice" onclick="updateShippingMethod('express')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="radio" name="shipping_method_radio" value="express" style="accent-color: #00d284; transform: scale(1.15);">
+                                <div>
+                                    <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">⚡ Envio Expresso Prioritário (Sedex)</div>
+                                    <div style="font-size: 0.76rem; color: #94a3b8;">Despacho prioritário imediato + seguro de transporte</div>
+                                </div>
+                            </div>
+                            <span style="font-weight: 800; color: #45f3ff; font-size: 0.92rem;">+ R$ 19,90</span>
+                        </label>
+                    </div>
                     <?php endif; ?>
 
                     <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 16px 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                        <span>💳</span> <?= $isPhysicalOrDropship ? '3. Meio de Pagamento' : 'Escolha a Forma de Pagamento' ?>
+                        <span>💳</span> <?= $isPhysicalOrDropship ? '4. Meio de Pagamento' : 'Escolha a Forma de Pagamento' ?>
                     </h3>
                     <?php if (!$hasMercadoPago && !$hasStripe && !$hasPayPal): ?>
                         <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 14px 16px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 16px;">
@@ -420,13 +447,60 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
         var isItemRemoved = false;
         var hasAvailableGateway = <?= ($hasMercadoPago || $hasStripe || $hasPayPal) ? 'true' : 'false' ?>;
         var selectedMethod = 'pix';
+        var shippingExtraPrice = 0.0;
+        var selectedShippingMethod = 'standard';
+
+        function updateShippingMethod(method) {
+            selectedShippingMethod = method;
+            shippingExtraPrice = (method === 'express') ? 19.90 : 0.0;
+
+            var stdLabel = document.getElementById('label_shipping_standard');
+            var expLabel = document.getElementById('label_shipping_express');
+            var stdRadio = document.querySelector('input[name="shipping_method_radio"][value="standard"]');
+            var expRadio = document.querySelector('input[name="shipping_method_radio"][value="express"]');
+
+            if (method === 'express') {
+                if (expRadio) expRadio.checked = true;
+                if (expLabel) {
+                    expLabel.style.borderColor = '#45f3ff';
+                    expLabel.style.background = 'rgba(69,243,255,0.08)';
+                }
+                if (stdLabel) {
+                    stdLabel.style.borderColor = 'rgba(255,255,255,0.12)';
+                    stdLabel.style.background = 'rgba(255,255,255,0.02)';
+                }
+            } else {
+                if (stdRadio) stdRadio.checked = true;
+                if (stdLabel) {
+                    stdLabel.style.borderColor = '#00d284';
+                    stdLabel.style.background = 'rgba(0,210,132,0.06)';
+                }
+                if (expLabel) {
+                    expLabel.style.borderColor = 'rgba(255,255,255,0.12)';
+                    expLabel.style.background = 'rgba(255,255,255,0.02)';
+                }
+            }
+
+            var shippingLineVal = document.getElementById('checkout_shipping_line_val');
+            if (shippingLineVal) {
+                if (shippingExtraPrice > 0) {
+                    shippingLineVal.textContent = '+ R$ 19,90 (Sedex)';
+                    shippingLineVal.style.color = '#45f3ff';
+                } else {
+                    shippingLineVal.textContent = 'GRÁTIS (Padrão)';
+                    shippingLineVal.style.color = 'var(--accent-green)';
+                }
+            }
+
+            updateOrderTotalsUI();
+        }
 
         function formatBrlAmount(val) {
             return Number(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function getCurrentFormattedTotal() {
-            return formatBrlAmount(unitPrice * currentQty);
+            return formatBrlAmount((unitPrice * currentQty) + shippingExtraPrice);
         }
 
         function updateOrderTotalsUI() {
@@ -587,6 +661,19 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             if (phoneEl && phoneEl.value) {
                 formatPhoneInput(phoneEl);
             }
+
+            // Pré-carrega o CEP se foi passado na URL ou salvo no simulador da página do produto
+            var urlCep = <?= json_encode((string)($_GET['shipping_zip'] ?? '')) ?>;
+            try {
+                if (!urlCep) {
+                    urlCep = localStorage.getItem('rachidd_user_shipping_cep') || '';
+                }
+            } catch(e) {}
+            var zipInput = document.getElementById('shipping_zip');
+            if (zipInput && urlCep) {
+                zipInput.value = urlCep;
+                formatCepAndSearch(zipInput);
+            }
             <?php if ($hasPayPal && ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe))): ?>
             selectPaymentMethod('paypal', 'paypal');
             <?php elseif ($hasStripe && ($coursePlatform === 'stripe' || (!$hasMercadoPago && !$hasPayPal))): ?>
@@ -713,7 +800,9 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                 shipping_complement: shipCompEl ? shipCompEl.value.trim() : '',
                 shipping_neighborhood: shipNeighEl ? shipNeighEl.value.trim() : '',
                 shipping_city: shipCityEl ? shipCityEl.value.trim() : '',
-                shipping_state: shipStateEl ? shipStateEl.value.trim() : ''
+                shipping_state: shipStateEl ? shipStateEl.value.trim() : '',
+                shipping_method: selectedShippingMethod,
+                shipping_price: shippingExtraPrice
             };
 
             fetch(baseUrl + '/checkout/process', {

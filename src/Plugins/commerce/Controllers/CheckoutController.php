@@ -323,7 +323,9 @@ class CheckoutController
 
         $unitPrice = (float)($course['price'] ?? 0.0);
         $quantity = $isPhysicalOrDropship ? max(1, min(99, (int)$request->input('quantity', 1))) : 1;
-        $total = round($unitPrice * $quantity, 2);
+        $shippingMethod = trim((string)$request->input('shipping_method', 'standard'));
+        $shippingPrice = ($isPhysicalOrDropship && $shippingMethod === 'express') ? 19.90 : 0.0;
+        $total = round(($unitPrice * $quantity) + $shippingPrice, 2);
         $gatewayId = (string)($request->input('gateway') ?? 'mercadopago');
         $paymentMethod = (string)($request->input('payment_method') ?? 'pix');
         $payerCpf = preg_replace('/\D/', '', (string)(
@@ -403,6 +405,8 @@ class CheckoutController
                 'payment_method'    => $paymentMethod,
                 'status'            => 'pending',
                 'seller_info'       => $sellerInfo,
+                'shipping_method'   => $shippingMethod,
+                'shipping_price'    => $shippingPrice,
             ]);
         }
 
@@ -445,13 +449,15 @@ class CheckoutController
                     'customer_email'    => $studentEmail,
                     'customer_document' => $payerCpf,
                     'shipping_address'  => [
-                        'zip'          => $request->input('shipping_zip'),
-                        'street'       => $request->input('shipping_street') ?? $request->input('shipping_address'),
-                        'number'       => $request->input('shipping_number'),
-                        'complement'   => $request->input('shipping_complement'),
-                        'neighborhood' => $request->input('shipping_neighborhood'),
-                        'city'         => $request->input('shipping_city'),
-                        'state'        => $request->input('shipping_state'),
+                        'zip'             => $request->input('shipping_zip'),
+                        'street'          => $request->input('shipping_street') ?? $request->input('shipping_address'),
+                        'number'          => $request->input('shipping_number'),
+                        'complement'      => $request->input('shipping_complement'),
+                        'neighborhood'    => $request->input('shipping_neighborhood'),
+                        'city'            => $request->input('shipping_city'),
+                        'state'           => $request->input('shipping_state'),
+                        'shipping_method' => $shippingMethod,
+                        'shipping_price'  => $shippingPrice,
                     ],
                 ]);
             }
