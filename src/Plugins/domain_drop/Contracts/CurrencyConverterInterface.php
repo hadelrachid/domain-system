@@ -24,4 +24,14 @@ interface CurrencyConverterInterface
      * @return float Preço final sugerido de venda em Reais (BRL)
      */
     public function calculateSalePrice(float $costUsd, ?float $customMarkupPercent = null, ?float $minProfitBrl = null): float;
+
+    /**
+     * Calcula o preço final de venda em BRL aplicando margem de lucro (markup)
+     * diretamente sobre o preço líquido de oferta do produto em Reais (BRL).
+     * 
+     * @param float $costBrl Custo líquido do produto no fornecedor em Reais (sem frete)
+     * @param float|null $customMarkupPercent Percentual de margem (ex: 100.0 para 2x o valor)
+     * @return float Preço final de venda na loja em Reais (BRL)
+     */
+    public function calculateSalePriceFromBrl(float $costBrl, ?float $customMarkupPercent = 100.0): float;
 }

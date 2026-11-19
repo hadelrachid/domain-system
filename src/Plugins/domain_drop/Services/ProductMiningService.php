@@ -276,10 +276,9 @@ class ProductMiningService implements ProductMiningServiceInterface
                 // Precificação oficial em BRL e conversão limpa para USD de custo
                 $minPriceBrl = (float)($raw['prices']['salePrice']['minPrice'] ?? ($raw['prices']['originalPrice']['minPrice'] ?? 0.0));
                 $costPriceUsd = $minPriceBrl > 0.0 ? round($minPriceBrl / $usdRate, 2) : 12.00;
-                $salePriceBrl = $this->currencyConverter->calculateSalePrice($costPriceUsd);
-                if ($salePriceBrl <= $minPriceBrl) {
-                    $salePriceBrl = round($minPriceBrl * 1.45, 2);
-                }
+                $salePriceBrl = $minPriceBrl > 0.0
+                    ? $this->currencyConverter->calculateSalePriceFromBrl($minPriceBrl, 100.0)
+                    : $this->currencyConverter->calculateSalePrice($costPriceUsd, 100.0);
 
                 // Avaliações e Métricas reais de compra
                 $rating = (float)($raw['evaluation']['starRating'] ?? 4.8);
@@ -555,7 +554,10 @@ class ProductMiningService implements ProductMiningServiceInterface
         $category = $overrideCategory !== null ? self::normalizeCategory($overrideCategory) : self::normalizeCategory($scraped->category);
         $polishedTitle = $this->aiEnricher->polishTitle($scraped->rawTitle, $category);
         $slug = $this->slugify($polishedTitle . '-' . substr($scraped->sourceId, -4));
-        $salePriceBrl = $this->currencyConverter->calculateSalePrice($scraped->costPriceUsd);
+        $costBrl = !empty($scraped->attributes['cost_price_brl']) ? (float)$scraped->attributes['cost_price_brl'] : 0.0;
+        $salePriceBrl = $costBrl > 0.0
+            ? $this->currencyConverter->calculateSalePriceFromBrl($costBrl, 100.0)
+            : $this->currencyConverter->calculateSalePrice($scraped->costPriceUsd, 100.0);
         $salesCopy = $this->aiEnricher->generateSalesCopy(
             "Produto importado oficial de alta durabilidade com compatibilidade e acabamento premium.",
             $scraped->attributes
@@ -678,8 +680,14 @@ class ProductMiningService implements ProductMiningServiceInterface
         }
 
         // 3. Precificação em Dólar e Conversão em Reais
+        $costBrl = (float)($item['cost_price_brl'] ?? 0.0);
         $costPriceUsd = (float)($item['target_sale_price'] ?? ($item['sale_price'] ?? ($item['original_price'] ?? 10.0)));
-        $salePriceBrl = $this->currencyConverter->calculateSalePrice($costPriceUsd);
+        if ($costBrl > 0.0) {
+            $salePriceBrl = $this->currencyConverter->calculateSalePriceFromBrl($costBrl, 100.0);
+            $costPriceUsd = round($costBrl / 5.75, 2);
+        } else {
+            $salePriceBrl = $this->currencyConverter->calculateSalePrice($costPriceUsd, 100.0);
+        }
 
         // 4. Métricas e Atributos de Curadoria
         $rating = (float)($item['evaluate_rate'] ?? ($baseInfo['avg_evaluation_rating'] ?? 4.8));
@@ -711,7 +719,10 @@ class ProductMiningService implements ProductMiningServiceInterface
                 }
                 $skuId = (string)($sku['sku_id'] ?? ($sku['id'] ?? uniqid('sku_')));
                 $skuPriceUsd = (float)($sku['sku_price'] ?? ($sku['offer_sale_price'] ?? $costPriceUsd));
-                $skuPriceBrl = $this->currencyConverter->calculateSalePrice($skuPriceUsd);
+                $skuCostBrl = (float)($sku['cost_price_brl'] ?? 0.0);
+                $skuPriceBrl = $skuCostBrl > 0.0
+                    ? $this->currencyConverter->calculateSalePriceFromBrl($skuCostBrl, 100.0)
+                    : $this->currencyConverter->calculateSalePrice($skuPriceUsd, 100.0);
                 $skuImage = !empty($sku['sku_image_url']) ? $this->cleanImageUrl((string)$sku['sku_image_url']) : $mainImage;
                 $skuStock = (int)($sku['sku_available_stock'] ?? ($sku['sku_stock'] ?? 100));
                 $skuAttr = (string)($sku['sku_attr'] ?? ($sku['sku_code'] ?? ''));
@@ -1235,7 +1246,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_id' => '1005010179002980',
                     'product_title' => 'Alicate Crimpador e Decapador Universal Multifuncional Aço Forjado para Eletricistas',
                     'category_name' => 'Ferramentas & Utilidades',
-                    'target_sale_price' => '8.37',
+                    'cost_price_brl' => 29.09,
+                    'target_sale_price' => '5.06',
                     'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S94c8418536694e0db6a78043c458f7b6q.jpg',
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/S94c8418536694e0db6a78043c458f7b6q.jpg',
@@ -1249,7 +1261,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_id' => '1005006459530266',
                     'product_title' => 'Alicate Automático Decapador e Crimpador 5 em 1 Descascador de Fios de Alta Dureza',
                     'category_name' => 'Ferramentas & Utilidades',
-                    'target_sale_price' => '9.50',
+                    'cost_price_brl' => 44.77,
+                    'target_sale_price' => '7.78',
                     'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Af74ca0a2fa8f418082f4dad0f68bc3fdE.png',
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/Af74ca0a2fa8f418082f4dad0f68bc3fdE.png',
@@ -1263,7 +1276,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_id' => '1005008830668625',
                     'product_title' => 'Alicate de Bico Longo Aço Carbono para Manutenção Elétrica Descascamento e Corte',
                     'category_name' => 'Ferramentas & Utilidades',
-                    'target_sale_price' => '6.20',
+                    'cost_price_brl' => 29.09,
+                    'target_sale_price' => '5.06',
                     'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S5fecb65c164546f49227e27fea911acdk.jpg',
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/S5fecb65c164546f49227e27fea911acdk.jpg',

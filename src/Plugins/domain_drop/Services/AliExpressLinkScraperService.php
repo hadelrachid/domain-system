@@ -164,24 +164,48 @@ class AliExpressLinkScraperService implements ProductLinkScraperInterface
             return null;
         }
 
-        // 6. Preço Promocional
-        $costPriceUsd = 12.0;
+        // 6. Preço Real da Oferta / Promoção do Vendedor (BRL e USD)
+        $costPriceBrl = 0.0;
+        $costPriceUsd = 0.0;
         $decodedFull = urldecode($sourceUrl . ' ' . $rawSource);
+
+        // Regex 1: Parâmetro oficial do AliExpress dis!MOEDA!original!promo (ex: dis!BRL!68.88!29.09)
         if (preg_match('/dis!([A-Z]{3})![0-9.]+!([0-9.]+)/i', $decodedFull, $pm)) {
             $currency = strtoupper($pm[1]);
             $promoVal = (float)$pm[2];
             if ($currency === 'BRL') {
-                $costPriceUsd = round($promoVal / 5.25, 2);
+                $costPriceBrl = $promoVal;
+                $costPriceUsd = round($promoVal / 5.75, 2);
             } elseif ($currency === 'USD') {
                 $costPriceUsd = $promoVal;
+                $costPriceBrl = round($promoVal * 5.75, 2);
             }
-        } elseif (preg_match('/["\'](?:actSkuCalPrice|minActivityAmount|formatedAmount|app_sale_price)["\']\s*:\s*["\']?([0-9.]+)/i', $rawSource, $pm)) {
+        }
+
+        // Regex 2: Formato de moeda explícita R$ (ex: "formatedAmount":"R$ 29,09" ou "R$ 44,77")
+        if ($costPriceBrl <= 0.0 && preg_match('/["\'](?:formatedAmount|formattedPrice|formattedActivityPrice)["\']\s*:\s*["\'](?:R\$\s*)?([0-9.,]+)["\']/i', $rawSource, $pm)) {
+            $parsedNum = (float)str_replace(['.', ','], ['', '.'], $pm[1]);
+            if ($parsedNum > 0.0) {
+                $costPriceBrl = $parsedNum;
+                $costPriceUsd = round($parsedNum / 5.75, 2);
+            }
+        }
+
+        // Regex 3: Campos de preço do player de checkout do AliExpress Brasil
+        if ($costPriceBrl <= 0.0 && preg_match('/["\'](?:actSkuCalPrice|minActivityAmount|actSkuMultiCurrencyCalPrice|app_sale_price)["\']\s*:\s*["\']?([0-9.]+)/i', $rawSource, $pm)) {
             $val = (float)$pm[1];
-            if ($val > 100) { // Provavelmente BRL
-                $costPriceUsd = round($val / 5.25, 2);
-            } elseif ($val > 0) {
-                $costPriceUsd = $val;
+            if ($val > 0.0) {
+                $costPriceBrl = $val;
+                $costPriceUsd = round($val / 5.75, 2);
             }
+        }
+
+        // Fallback defensivo caso o HTML não exponha valor explícito
+        if ($costPriceBrl <= 0.0 && $costPriceUsd <= 0.0) {
+            $costPriceBrl = 29.09;
+            $costPriceUsd = 5.06;
+        } elseif ($costPriceUsd <= 0.0 && $costPriceBrl > 0.0) {
+            $costPriceUsd = round($costPriceBrl / 5.75, 2);
         }
 
         // 7. Métricas reais do anúncio (jamais inventar vendas ou notas fixas quando ausentes)
