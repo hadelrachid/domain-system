@@ -201,8 +201,8 @@ class ProductMiningService implements ProductMiningServiceInterface
 
         $termList = $searchTerms[$category] ?? ['smartwatch brasil', 'fone bluetooth'];
         $searchTerm = $termList[array_rand($termList)];
-        // Empurra para a vitrine e estoques do Brasil (Remessa Conforme e Envio Local)
-        $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html?country=BR&locale=pt_BR&currency=BRL&isrefine=y";
+        // Empurra para a vitrine e estoques do Brasil (Remessa Conforme e Envio Local com Estoque no Brasil)
+        $searchUrl = "https://pt.aliexpress.com/w/wholesale-" . urlencode($searchTerm) . ".html?country=BR&locale=pt_BR&currency=BRL&shipFrom=BR&isrefine=y";
 
         $html = $this->fetchLiveSearchHtml($searchUrl);
         if (!$html || !is_string($html)) {
