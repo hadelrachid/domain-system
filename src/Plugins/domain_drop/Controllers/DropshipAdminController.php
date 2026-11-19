@@ -603,11 +603,25 @@ class DropshipAdminController
 
             $this->session->setFlash('success', $msg);
         } catch (Throwable $e) {
-            $errMsg = 'Falha ao sincronizar imagens: ' . $e->getMessage();
-            if ($isAjax) {
-                return new JsonResponse(['success' => false, 'message' => $errMsg], 422);
+            // Regra de Integridade: Se o fornecedor/site não retornou nada ou não foi encontrado,
+            // o produto é imediatamente despublicado do site (status = 'draft'), ficando restrito ao admin
+            // e disponível para exclusão, impedindo que vá para a vitrine pública da loja.
+            $prodId = (int)$id;
+            if ($prodId > 0) {
+                $this->catalogRepo->updateStatus($prodId, 'draft');
             }
-            $this->session->setFlash('error', $errMsg);
+
+            $errMsg = "⚠️ Fornecedor não encontrado ou sem fotos reais: {$e->getMessage()}. O produto foi despublicado da loja e movido para Rascunho / Fila de Exclusão.";
+            if ($isAjax) {
+                return new JsonResponse([
+                    'success'      => false,
+                    'message'      => $errMsg,
+                    'unregistered' => true,
+                    'product_id'   => $prodId,
+                    'new_status'   => 'draft'
+                ], 422);
+            }
+            $this->session->setFlash('warning', $errMsg);
         }
 
         return Response::redirect($baseUrl . '/admin/dropship');

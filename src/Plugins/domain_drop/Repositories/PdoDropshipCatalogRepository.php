@@ -344,6 +344,17 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         return $stmt->execute([$salePriceBrl, $now, $id]);
     }
 
+    public function updateStatus(int $id, string $status): bool
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE domain_drop_catalog 
+            SET status = ?, updated_at = ? 
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([$status, date('Y-m-d H:i:s'), $id]);
+    }
+
     public function getCategories(): array
     {
         $canonicals = $this->taxonomy->getCanonicalCategories();

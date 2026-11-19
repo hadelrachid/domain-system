@@ -56,6 +56,11 @@ interface DropshipCatalogRepositoryInterface
     public function updatePrice(int $id, float $salePriceBrl, ?float $costPriceUsd = null): bool;
 
     /**
+     * Atualiza o status de publicação de um produto (ex: 'published', 'draft', 'quarantine').
+     */
+    public function updateStatus(int $id, string $status): bool;
+
+    /**
      * Retorna lista de categorias únicas disponíveis no catálogo.
      * @return array<int, string>
      */
