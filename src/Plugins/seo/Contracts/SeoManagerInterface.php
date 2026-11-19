@@ -40,4 +40,24 @@ interface SeoManagerInterface
      * Gera o bloco de HTML de todas as tags <meta> configuradas.
      */
     public function generateTags(): string;
+
+    /**
+     * Enfileira um arquivo CSS para minificação e bundle unificado pelo AssetPipeline.
+     */
+    public function enqueueCss(string $absolutePath): self;
+
+    /**
+     * Enfileira um arquivo JavaScript para minificação e bundle unificado com <script defer>.
+     */
+    public function enqueueJs(string $absolutePath): self;
+
+    /**
+     * Retorna a tag <link rel="stylesheet"> com o bundle minificado e hash de cache busting.
+     */
+    public function renderCssTags(): string;
+
+    /**
+     * Retorna a tag <script defer> com o bundle minificado e hash de cache busting.
+     */
+    public function renderJsTags(): string;
 }

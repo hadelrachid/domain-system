@@ -93,13 +93,6 @@ if (empty($catalogProducts)) {
             <img src="<?= $baseUrl ?>/assets/img/site-home/logo-lampada.svg" alt="Lâmpada Mágica de Aladim RachidD" style="height: 100px; width: auto; display: block;">
         </div>
 
-        <style>
-            @keyframes floatLamp {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-8px); }
-            }
-        </style>
-
         <div style="display: inline-block; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.35); padding: 6px 18px; border-radius: 50px; margin-bottom: 18px;">
             <span style="color: #F0D060; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">
                 🔎 Curadoria de Produtos Físicos Minerados • AliExpress Brasil
@@ -241,80 +234,6 @@ if (empty($catalogProducts)) {
                 });
             })();
         </script>
-
-        <style>
-            .home-products-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
-                gap: 20px;
-            }
-            .home-card-body {
-                padding: 16px;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-            }
-            .home-card-actions {
-                display: flex;
-                gap: 6px;
-                margin-top: 6px;
-            }
-            .home-btn-details {
-                flex: 1;
-                background: rgba(255,255,255,0.06);
-                border: 1.5px solid rgba(212,175,55,0.4);
-                color: #F0D060 !important;
-                text-decoration: none;
-                padding: 0 6px;
-                height: 36px;
-                border-radius: 6px;
-                font-size: 11.5px;
-                font-weight: 700;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 4px;
-                white-space: nowrap;
-                box-sizing: border-box;
-                transition: all 0.2s ease;
-            }
-            .home-btn-details:hover {
-                background: rgba(212,175,55,0.18);
-                border-color: #F0D060;
-            }
-            .home-btn-buy {
-                flex: 1;
-                background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%);
-                color: #0b0f17 !important;
-                text-decoration: none;
-                padding: 0 6px;
-                height: 36px;
-                border-radius: 6px;
-                font-size: 11.5px;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.4px;
-                box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 4px;
-                white-space: nowrap;
-                box-sizing: border-box;
-                transition: all 0.2s ease;
-            }
-            .home-btn-buy:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 18px rgba(212, 175, 55, 0.55);
-            }
-            @media (max-width: 580px) {
-                .home-products-grid {
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                }
-            }
-        </style>
 
         <!-- Product Grid -->
         <div class="home-products-grid">
@@ -485,88 +404,6 @@ try {
 } catch (\Throwable $e) {
 }
 ?>
-<style>
-.home-signup-section {
-    padding: 55px 0;
-    background: linear-gradient(135deg, rgba(16,23,36,0.98) 0%, rgba(11,15,23,1) 100%);
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
-}
-.home-signup-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    gap: 32px;
-    align-items: center;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(212,175,55,0.28);
-    border-radius: 18px;
-    padding: 32px;
-    box-sizing: border-box;
-    width: 100%;
-    overflow: hidden;
-}
-.home-signup-title {
-    font-size: 26px;
-    font-weight: 800;
-    color: #fff;
-    margin: 14px 0 10px 0;
-    line-height: 1.25;
-}
-.home-signup-form {
-    background: rgba(7, 10, 16, 0.85);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 14px;
-    padding: 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-}
-.home-signup-row-2 {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
-}
-.home-signup-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    margin-top: 4px;
-    align-items: stretch;
-}
-@media (max-width: 960px) {
-    .home-signup-section {
-        padding: 38px 0;
-    }
-    .home-signup-card {
-        grid-template-columns: 1fr;
-        gap: 22px;
-        padding: 24px 20px;
-    }
-}
-@media (max-width: 600px) {
-    .home-signup-section {
-        padding: 28px 0;
-    }
-    .home-signup-card {
-        padding: 18px 14px;
-        gap: 18px;
-        border-radius: 14px;
-    }
-    .home-signup-title {
-        font-size: 20px;
-    }
-    .home-signup-form {
-        padding: 15px 12px;
-        border-radius: 12px;
-    }
-    .home-signup-row-2,
-    .home-signup-actions {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
 <section id="cadastro-cliente" class="home-signup-section">
     <div class="container">
         <div class="home-signup-card">
@@ -611,23 +448,6 @@ try {
                         <input id="home-reg-pass" type="password" name="password" required minlength="6" placeholder="Crie uma Senha (mín. 6 dígitos) *" style="width: 100%; box-sizing: border-box; padding: 10px 38px 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
                         <button type="button" onclick="(function(b){var i=document.getElementById('home-reg-pass');if(!i)return;var s=i.type==='password';i.type=s?'text':'password';b.textContent=s?'🙈':'👁️';b.style.color=s?'#F0D060':'#94a3b8';})(this)" aria-label="Mostrar ou ocultar senha" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;" title="Mostrar/ocultar senha">👁️</button>
                     </div>
-                    <script>
-                    function homeMaskCpf(el) {
-                        var v = el.value.replace(/\D/g, '').slice(0, 11);
-                        if (v.length > 9) el.value = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-                        else if (v.length > 6) el.value = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-                        else if (v.length > 3) el.value = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-                        else el.value = v;
-                    }
-                    function homeMaskPhone(el) {
-                        var v = el.value.replace(/\D/g, '').slice(0, 11);
-                        if (v.length > 10) el.value = v.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
-                        else if (v.length > 6) el.value = v.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
-                        else if (v.length > 2) el.value = v.replace(/(\d{2})(\d{1,5})/, '($1) $2');
-                        else if (v.length > 0) el.value = '(' + v;
-                        else el.value = '';
-                    }
-                    </script>
                     <div class="home-signup-actions">
                         <button type="submit" style="width: 100%; padding: 12px 16px; border: none; border-radius: 9px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 14px; cursor: pointer;">
                             Criar Minha Conta Grátis ➔

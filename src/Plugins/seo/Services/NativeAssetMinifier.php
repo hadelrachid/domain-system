@@ -10,27 +10,31 @@ class NativeAssetMinifier implements AssetMinifierInterface
 {
     public function minifyCss(string $css): string
     {
-        // Remove comments
+        // 1. Remove comentários CSS /* ... */
         $css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
-        // Remove space after colons
-        $css = str_replace(': ', ':', $css);
-        // Remove whitespace
-        $css = str_replace(array("\r\n", "\r", "\n", "\t", '  ', '    ', '    '), '', $css);
-        return $css;
+        // 2. Remove espaços em branco redundantes ao redor de delimitadores e seletores
+        $css = preg_replace('/\s*([{}|:;,>+~])\s*/', '$1', $css);
+        // 3. Remove ponto e vírgula antes de fechar chaves
+        $css = str_replace(';}', '}', $css);
+        // 4. Colapsa espaços múltiplos em um único espaço
+        $css = preg_replace('/\s+/', ' ', $css);
+        return trim($css);
     }
 
     public function minifyJs(string $js): string
     {
-        // Simple JS minification (for demonstration, in real life we might use a better parser)
-        // Remove multi-line comments
+        // 1. Remove comentários multi-linhas /* ... */
         $js = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $js);
-        // Remove single line comments
-        // Note: this simple regex can break if there's a // inside a string.
-        $js = preg_replace('/(?:(?:\/\*(?:[^*]|(?:\*+[^*\/]))*\*+\/)|(?:(?<!\:|\\\|\')\/\/.*))/', '', $js);
-        // Remove whitespace
-        $js = str_replace(array("\r\n", "\r", "\n", "\t"), '', $js);
-        // Remove multiple spaces
-        $js = preg_replace('/\s+/', ' ', $js);
-        return trim($js);
+        // 2. Processa linha a linha de forma segura, removendo indentação e linhas vazias
+        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $js));
+        $cleaned = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed !== '' && !str_starts_with($trimmed, '//')) {
+                $trimmed = preg_replace('/(?<!:|\'|"|\/)\/\/.*$/', '', $trimmed);
+                $cleaned[] = trim($trimmed);
+            }
+        }
+        return implode("\n", $cleaned);
     }
 }

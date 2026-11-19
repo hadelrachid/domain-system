@@ -18,33 +18,37 @@ class AssetPipeline
     public function __construct(AssetMinifierInterface $minifier, string $cacheDir, string $publicUrlPath)
     {
         $this->minifier = $minifier;
-        $this->cacheDir = rtrim($cacheDir, '/');
-        $this->publicUrlPath = rtrim($publicUrlPath, '/');
+        $this->cacheDir = rtrim(str_replace('\\', '/', $cacheDir), '/');
+        $this->publicUrlPath = rtrim(str_replace('\\', '/', $publicUrlPath), '/');
         
         if (!is_dir($this->cacheDir)) {
-            mkdir($this->cacheDir, 0777, true);
+            @mkdir($this->cacheDir, 0777, true);
         }
     }
 
     public function enqueueCss(string $absolutePath): void
     {
-        if (file_exists($absolutePath)) {
-            $this->cssFiles[] = $absolutePath;
+        $normalized = str_replace('\\', '/', $absolutePath);
+        if (file_exists($normalized) && !in_array($normalized, $this->cssFiles, true)) {
+            $this->cssFiles[] = $normalized;
         }
     }
 
     public function enqueueJs(string $absolutePath): void
     {
-        if (file_exists($absolutePath)) {
-            $this->jsFiles[] = $absolutePath;
+        $normalized = str_replace('\\', '/', $absolutePath);
+        if (file_exists($normalized) && !in_array($normalized, $this->jsFiles, true)) {
+            $this->jsFiles[] = $normalized;
         }
     }
 
     public function renderCssTags(): string
     {
-        if (empty($this->cssFiles)) return '';
+        if (empty($this->cssFiles)) {
+            return '';
+        }
         
-        // Generate a hash based on file contents and modified times
+        // Gera um hash determinístico baseado no caminho e no timestamp de modificação
         $hash = $this->generateHash($this->cssFiles);
         $filename = "style_min_{$hash}.css";
         $cacheFile = $this->cacheDir . '/' . $filename;
@@ -63,7 +67,9 @@ class AssetPipeline
 
     public function renderJsTags(): string
     {
-        if (empty($this->jsFiles)) return '';
+        if (empty($this->jsFiles)) {
+            return '';
+        }
         
         $hash = $this->generateHash($this->jsFiles);
         $filename = "script_min_{$hash}.js";
@@ -81,11 +87,21 @@ class AssetPipeline
         return "<script src=\"{$this->publicUrlPath}/{$filename}\" defer></script>\n";
     }
 
+    public function getCssFiles(): array
+    {
+        return $this->cssFiles;
+    }
+
+    public function getJsFiles(): array
+    {
+        return $this->jsFiles;
+    }
+
     private function generateHash(array $files): string
     {
         $data = '';
         foreach ($files as $file) {
-            $data .= $file . filemtime($file);
+            $data .= $file . (file_exists($file) ? filemtime($file) : '0');
         }
         return substr(md5($data), 0, 10);
     }

@@ -13,6 +13,49 @@ class SeoManager implements SeoManagerInterface
     private string $canonical = '';
     private string $favicon = '';
     private array $metaTags = [];
+    private ?AssetPipeline $pipeline = null;
+
+    public function __construct(?AssetPipeline $pipeline = null)
+    {
+        $this->pipeline = $pipeline;
+    }
+
+    public function getAssetPipeline(): AssetPipeline
+    {
+        if ($this->pipeline === null) {
+            $baseDir = dirname(__DIR__, 4);
+            $cacheDir = $baseDir . '/public/assets/cache';
+            $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+            $this->pipeline = new AssetPipeline(
+                new NativeAssetMinifier(),
+                $cacheDir,
+                $baseUrl . '/assets/cache'
+            );
+        }
+        return $this->pipeline;
+    }
+
+    public function enqueueCss(string $absolutePath): self
+    {
+        $this->getAssetPipeline()->enqueueCss($absolutePath);
+        return $this;
+    }
+
+    public function enqueueJs(string $absolutePath): self
+    {
+        $this->getAssetPipeline()->enqueueJs($absolutePath);
+        return $this;
+    }
+
+    public function renderCssTags(): string
+    {
+        return $this->getAssetPipeline()->renderCssTags();
+    }
+
+    public function renderJsTags(): string
+    {
+        return $this->getAssetPipeline()->renderJsTags();
+    }
 
     public function setTitle(string $title): self
     {
@@ -58,7 +101,6 @@ class SeoManager implements SeoManagerInterface
         $html = "<title>" . htmlspecialchars($this->title) . "</title>\n";
         
         if (!empty($this->favicon)) {
-            // Se for svg, adiciona type image/svg+xml
             $type = str_ends_with(strtolower($this->favicon), '.svg') ? 'image/svg+xml' : 'image/x-icon';
             $html .= "<link rel=\"icon\" type=\"{$type}\" href=\"" . htmlspecialchars($this->favicon) . "\">\n";
         }

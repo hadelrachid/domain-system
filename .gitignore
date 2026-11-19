@@ -38,3 +38,5 @@ token/
 public/migrate_pages.php
 .kilo/
 config/plugins/
+public/assets/cache/*
+!public/assets/cache/.gitkeep
