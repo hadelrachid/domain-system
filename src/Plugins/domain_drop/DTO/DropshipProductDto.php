@@ -185,53 +185,6 @@ final class DropshipProductDto
     }
 
     /**
-     * Gera URL protegida e mascarada no domínio local da loja (/dropship/media/{id}/{hash}.jpg),
-     * impedindo a exposição do domínio de origem do fornecedor (alicdn.com).
-     */
-    public function getMaskedImageUrl(string $rawUrl, ?string $baseUrl = null): string
-    {
-        $rawUrl = trim($rawUrl);
-        if ($rawUrl === '') {
-            return '';
-        }
-
-        if (str_starts_with($rawUrl, '/') || str_starts_with($rawUrl, 'data:')) {
-            return $rawUrl;
-        }
-
-        $token = substr(md5($rawUrl), 0, 16);
-        $prodId = (int)($this->id ?? 0);
-        $base = ($baseUrl !== null) ? rtrim($baseUrl, '/') : (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '');
-
-        return ($base !== '' ? $base : '') . "/dropship/media/{$prodId}/{$token}.jpg";
-    }
-
-    /**
-     * Retorna a imagem principal protegida e mascarada no domínio local da loja.
-     */
-    public function getProtectedMainImageUrl(?string $baseUrl = null): string
-    {
-        return $this->getMaskedImageUrl($this->mainImageUrl, $baseUrl);
-    }
-
-    /**
-     * Retorna toda a galeria de imagens protegida e mascarada no domínio local da loja.
-     *
-     * @return array<int, string>
-     */
-    public function getProtectedImages(?string $baseUrl = null): array
-    {
-        $result = [];
-        foreach ($this->images as $img) {
-            $masked = $this->getMaskedImageUrl((string)$img, $baseUrl);
-            if ($masked !== '' && !in_array($masked, $result, true)) {
-                $result[] = $masked;
-            }
-        }
-        return $result;
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function toArray(): array

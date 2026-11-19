@@ -8,23 +8,16 @@
  */
 $refPrice = $product->salePriceBrl * 1.35;
 $sellerInfo = $product->getSellerInfo();
-$rawAllImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
+$allImages = !empty($product->images) ? array_values(array_filter($product->images)) : [];
 if ($product->hasVariants()) {
     foreach ($product->getVariants() as $v) {
-        if ($v->isAvailable() && !empty($v->imageUrl) && !in_array($v->imageUrl, $rawAllImages, true)) {
-            $rawAllImages[] = $v->imageUrl;
+        if ($v->isAvailable() && !empty($v->imageUrl) && !in_array($v->imageUrl, $allImages, true)) {
+            $allImages[] = $v->imageUrl;
         }
     }
 }
-if (empty($rawAllImages) && !empty($product->mainImageUrl)) {
-    $rawAllImages = [$product->mainImageUrl];
-}
-
-// Imagens protegidas e mascaradas no domínio da loja (sem expor alicdn.com)
-$protectedMainImage = $product->getProtectedMainImageUrl($baseUrl);
-$allImages = [];
-foreach ($rawAllImages as $rawImg) {
-    $allImages[] = $product->getMaskedImageUrl((string)$rawImg, $baseUrl);
+if (empty($allImages) && !empty($product->mainImageUrl)) {
+    $allImages = [$product->mainImageUrl];
 }
 $isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false;
 ?>
@@ -50,17 +43,11 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
         
         <!-- Gallery Column -->
         <div>
-            <!-- Main Image Stage with Zoom trigger & Anti-Copy Shield -->
-            <div id="main-product-stage" onclick="openVisualBookLightbox(currentActiveImageIndex)" class="main-stage-box" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; position: relative; cursor: zoom-in; box-shadow: 0 10px 30px rgba(0,0,0,0.4); user-select: none; -webkit-user-select: none;">
-                <?php if (!empty($protectedMainImage)): ?>
-                    <img id="main-product-img" src="<?= htmlspecialchars($protectedMainImage) ?>" alt="<?= htmlspecialchars($product->title) ?>" draggable="false" oncontextmenu="return false;" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.25s ease; -webkit-user-drag: none; pointer-events: none;">
-                    <!-- Shield Transparente Anti-Cópia / Clique Direito -->
-                    <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; cursor: zoom-in;"></div>
-                    <!-- Selo Oficial de Curadoria -->
-                    <div style="position: absolute; top: 12px; left: 12px; z-index: 3; background: rgba(11,15,23,0.88); color: #F0D060; border: 1px solid rgba(212,175,55,0.4); padding: 5px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; pointer-events: none; backdrop-filter: blur(6px); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                        <span>🛡️</span> <span>Curadoria RachidD • Vendedor Homologado</span>
-                    </div>
-                    <div style="position: absolute; bottom: 12px; right: 12px; z-index: 3; background: rgba(11,15,23,0.85); color: #F0D060; border: 1px solid rgba(212,175,55,0.4); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; pointer-events: none; backdrop-filter: blur(4px);">
+            <!-- Main Image Stage with Zoom trigger -->
+            <div id="main-product-stage" onclick="openVisualBookLightbox(currentActiveImageIndex)" class="main-stage-box" style="background: #0c0f12; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; height: 420px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; position: relative; cursor: zoom-in; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+                <?php if (!empty($product->mainImageUrl)): ?>
+                    <img id="main-product-img" src="<?= htmlspecialchars($product->mainImageUrl) ?>" alt="<?= htmlspecialchars($product->title) ?>" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80';" style="max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.25s ease;">
+                    <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(11,15,23,0.85); color: #F0D060; border: 1px solid rgba(212,175,55,0.4); padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; pointer-events: none; backdrop-filter: blur(4px);">
                         <span>🔍</span> <span>Toque para Ampliar</span>
                     </div>
                 <?php else: ?>
@@ -72,9 +59,8 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
             <?php if (count($allImages) > 1): ?>
                 <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;" class="custom-scroll">
                     <?php foreach ($allImages as $idx => $thumb): ?>
-                        <div class="product-thumb-item <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>" onclick="selectProductImage(<?= $idx ?>, '<?= htmlspecialchars($thumb, ENT_QUOTES) ?>')" style="position: relative; width: 72px; height: 72px; background: #0c0f12; border: 2px solid <?= $idx === 0 ? '#D4AF37' : 'rgba(255,255,255,0.12)' ?>; border-radius: 8px; overflow: hidden; cursor: pointer; flex-shrink: 0; transition: border-color 0.2s ease, transform 0.2s ease; user-select: none;">
-                            <img src="<?= htmlspecialchars($thumb) ?>" draggable="false" oncontextmenu="return false;" style="width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; pointer-events: none;">
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;" oncontextmenu="return false;"></div>
+                        <div class="product-thumb-item <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>" onclick="selectProductImage(<?= $idx ?>, '<?= htmlspecialchars($thumb, ENT_QUOTES) ?>')" style="width: 72px; height: 72px; background: #0c0f12; border: 2px solid <?= $idx === 0 ? '#D4AF37' : 'rgba(255,255,255,0.12)' ?>; border-radius: 8px; overflow: hidden; cursor: pointer; flex-shrink: 0; transition: border-color 0.2s ease, transform 0.2s ease;">
+                            <img src="<?= htmlspecialchars($thumb) ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -316,10 +302,9 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
         <!-- Visual Book Flex Container: 1 por linha no Mobile, 2 no Tablet, 4 no Desktop -->
         <div class="visual-book-flex">
             <?php foreach ($allImages as $idx => $imgUrl): ?>
-                <div class="visual-book-card" onclick="openVisualBookLightbox(<?= $idx ?>)" style="position: relative; user-select: none;">
-                    <img src="<?= htmlspecialchars($imgUrl) ?>" alt="Ângulo <?= $idx + 1 ?> - <?= htmlspecialchars($product->title) ?>" loading="lazy" draggable="false" oncontextmenu="return false;" style="-webkit-user-drag: none; pointer-events: none;">
-                    <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; inset: 0; z-index: 2; cursor: zoom-in;"></div>
-                    <div class="vb-card-overlay" style="z-index: 3; pointer-events: none;">
+                <div class="visual-book-card" onclick="openVisualBookLightbox(<?= $idx ?>)">
+                    <img src="<?= htmlspecialchars($imgUrl) ?>" alt="Ângulo <?= $idx + 1 ?> - <?= htmlspecialchars($product->title) ?>" loading="lazy">
+                    <div class="vb-card-overlay">
                         <span class="vb-card-badge">
                             🔍 Ampliar Ângulo #<?= $idx + 1 ?>
                         </span>
@@ -342,7 +327,7 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
 </div>
 
 <!-- LIGHTBOX MODAL FULLSCREEN FOR VISUAL BOOK -->
-<div id="visualBookLightbox" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(0, 0, 0, 0.94); backdrop-filter: blur(8px); align-items: center; justify-content: center; flex-direction: column; user-select: none;">
+<div id="visualBookLightbox" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(0, 0, 0, 0.94); backdrop-filter: blur(8px); align-items: center; justify-content: center; flex-direction: column;">
     <!-- Close button -->
     <button onclick="closeVisualBookLightbox()" aria-label="Fechar" style="position: absolute; top: 18px; right: 20px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 24px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; z-index: 10;">
         ✕
@@ -358,10 +343,9 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
         </button>
     <?php endif; ?>
 
-    <!-- Main Lightbox Image Container with Anti-Copy Shield -->
-    <div style="max-width: 92vw; max-height: 80vh; display: flex; align-items: center; justify-content: center; position: relative;">
-        <img id="lightboxActiveImg" src="" alt="Visual Book" draggable="false" oncontextmenu="return false;" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.85); -webkit-user-drag: none; pointer-events: none;">
-        <div class="product-image-shield" oncontextmenu="return false;" style="position: absolute; inset: 0; z-index: 2;"></div>
+    <!-- Main Lightbox Image Container -->
+    <div style="max-width: 92vw; max-height: 80vh; display: flex; align-items: center; justify-content: center;">
+        <img id="lightboxActiveImg" src="" alt="Visual Book" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.85);">
     </div>
 
     <!-- Image Counter & Title Info -->
@@ -561,13 +545,7 @@ var productUnitPriceBrl = <?= json_encode((float)$product->salePriceBrl) ?>;
 var productCheckoutBaseUrl = <?= json_encode($checkoutUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 // Matriz de Variações e SKUs (Padrão SKU Matrix / AliExpress SDK)
-var productVariants = <?= json_encode(array_map(function($v) use ($product, $baseUrl) {
-    $arr = $v->toArray();
-    if (!empty($arr['image_url'])) {
-        $arr['image_url'] = $product->getMaskedImageUrl($arr['image_url'], $baseUrl);
-    }
-    return $arr;
-}, $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+var productVariants = <?= json_encode(array_map(fn($v) => $v->toArray(), $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 var productVariationAxes = <?= json_encode($product->getVariationAxes(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 var selectedVariationOptions = {};
 var activeProductSku = null;
@@ -891,21 +869,4 @@ function calculateProductShipping(shouldFocus) {
             resultBox.style.display = 'block';
         });
 }
-
-// ════════════════════════════════════════════════════════════════════════════
-// Proteção de Mídia e Curadoria Anti-Cópia
-// ════════════════════════════════════════════════════════════════════════════
-document.addEventListener('contextmenu', function(e) {
-    if (e.target && (e.target.tagName === 'IMG' || e.target.classList.contains('product-image-shield') || e.target.closest('.main-stage-box') || e.target.closest('.visual-book-card') || e.target.closest('.product-thumb-item'))) {
-        e.preventDefault();
-        return false;
-    }
-}, false);
-
-document.addEventListener('dragstart', function(e) {
-    if (e.target && e.target.tagName === 'IMG') {
-        e.preventDefault();
-        return false;
-    }
-}, false);
 </script>

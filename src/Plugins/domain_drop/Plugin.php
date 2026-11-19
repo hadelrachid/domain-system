@@ -220,8 +220,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 scraper: $runtime->make(ProductLinkScraperInterface::class),
                 aiEnricher: $runtime->make(AiProductEnricherInterface::class),
-                currencyConverter: $runtime->make(CurrencyConverterInterface::class),
-                mediaProxy: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\ProductMediaProxyService::class)
+                currencyConverter: $runtime->make(CurrencyConverterInterface::class)
             );
         });
 
@@ -272,12 +271,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
-        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Services\ProductMediaProxyService::class, function () use ($runtime) {
-            return new \DomainSystem\Plugins\domain_drop\Services\ProductMediaProxyService(
-                catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class)
-            );
-        });
-
         $runtime->singleton(\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, function () use ($runtime) {
             $themeManager = null;
             try {
@@ -299,8 +292,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 demandTracker: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandTrackerInterface::class),
                 session: $session,
-                customerRepo: $runtime->make(DropshipCustomerRepositoryInterface::class),
-                mediaProxy: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\ProductMediaProxyService::class)
+                customerRepo: $runtime->make(DropshipCustomerRepositoryInterface::class)
             );
         });
 
@@ -369,7 +361,6 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 
             // 4. Rotas Públicas da Loja Virtual, Vitrine & Área do Cliente
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
-            $router->addRoute('GET', '/dropship/media/{productId}/{token}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'serveMedia'], 'domain_drop');
             $router->addRoute('POST', '/api/drop/track-demand', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackDemand'], 'domain_drop');
             $router->addRoute('POST', '/dropship/cron-tick', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'cronTick'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');

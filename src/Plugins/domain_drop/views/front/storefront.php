@@ -540,21 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     }
 });
-
-// Proteção Global de Imagens da Vitrine contra Cópia e Arrastar
-document.addEventListener('contextmenu', function(e) {
-    if (e.target && (e.target.tagName === 'IMG' || e.target.classList.contains('product-image-shield') || e.target.closest('.store-card-img-box'))) {
-        e.preventDefault();
-        return false;
-    }
-}, false);
-
-document.addEventListener('dragstart', function(e) {
-    if (e.target && e.target.tagName === 'IMG') {
-        e.preventDefault();
-        return false;
-    }
-}, false);
 </script>
 
 </div>

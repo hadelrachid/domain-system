@@ -25,8 +25,7 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         private readonly DropshipCatalogRepositoryInterface $repository,
         private readonly ProductLinkScraperInterface $scraper,
         private readonly AiProductEnricherInterface $aiEnricher,
-        private readonly CurrencyConverterInterface $currencyConverter,
-        private readonly ?ProductMediaProxyService $mediaProxy = null
+        private readonly CurrencyConverterInterface $currencyConverter
     ) {
     }
 
@@ -93,16 +92,7 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
 
         $this->repository->save($updatedDto);
 
-        $saved = $this->repository->findById($productId) ?? $updatedDto;
-        if ($this->mediaProxy !== null) {
-            try {
-                $this->mediaProxy->cacheProductMedia($saved);
-            } catch (Throwable $e) {
-                // Silencioso para não interromper sincronização caso a rede local esteja instável
-            }
-        }
-
-        return $saved;
+        return $this->repository->findById($productId) ?? $updatedDto;
     }
 
     public function syncAllCatalogMedia(bool $skipIfAlreadyMultiple = true): array
