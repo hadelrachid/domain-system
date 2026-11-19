@@ -47,7 +47,7 @@ body::before {
 }
 
 .container {
-    max-width: 1280px;
+    max-width: 1360px;
     margin: 0 auto;
     padding: 0 20px;
 }
@@ -275,22 +275,22 @@ img {
     border-top: 1px solid rgba(255,255,255,0.06);
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: nowrap;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .btn-toggle-hamburguer {
     background: linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(20,25,35,0.9) 100%);
     border: 1.5px solid rgba(212,175,55,0.5);
     color: #F0D060;
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.2s ease;
     outline: none;
     flex-shrink: 0;
@@ -305,7 +305,7 @@ img {
 }
 
 .btn-toggle-hamburguer .icon-bar {
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1;
 }
 
@@ -314,26 +314,17 @@ img {
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    white-space: nowrap;
-    padding-bottom: 2px;
-}
-
-.header-quick-chips::-webkit-scrollbar {
-    display: none;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .header-quick-chips a {
     color: #cbd5e1;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
     text-decoration: none;
-    padding: 5px 12px;
-    border-radius: 15px;
+    padding: 5px 10px;
+    border-radius: 14px;
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.08);
     transition: all 0.2s ease;
