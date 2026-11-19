@@ -185,6 +185,153 @@ final class DropshipProductDto
     }
 
     /**
+     * Extrai e calcula o peso estimado do produto em gramas (g).
+     * Analisa com prioridade:
+     * 1. Atributos diretos ('weight', 'peso', 'package_weight', etc.)
+     * 2. Especificações técnicas nas chaves ou valores de $attributes
+     * 3. Descrição textual/HTML do vendedor (regex inteligente para 'Peso: ...' ou '...g' / '...kg')
+     * 4. Categorização por segmento (tênis, casacos, mochilas, drones, etc.)
+     * 5. Padrão de 200g para itens leves (vestuário íntimo, lingeries, acessórios, pulseiras, cosméticos)
+     */
+    public function getEstimatedWeightInGrams(): int
+    {
+        // 1. Chaves prioritárias diretas em attributes
+        $directKeys = ['weight', 'peso', 'package_weight', 'net_weight', 'gross_weight', 'peso_embalagem', 'peso_liquido', 'peso_bruto'];
+        foreach ($directKeys as $key) {
+            if (isset($this->attributes[$key])) {
+                $parsed = $this->parseWeightStringToGrams((string)$this->attributes[$key]);
+                if ($parsed > 0) {
+                    return $parsed;
+                }
+            }
+        }
+
+        // 2. Chaves e valores de especificações dentro de attributes
+        if (!empty($this->attributes) && is_array($this->attributes)) {
+            foreach ($this->attributes as $key => $val) {
+                if (is_string($val) && preg_match('/(?:peso|weight)/i', (string)$key)) {
+                    $parsed = $this->parseWeightStringToGrams($val);
+                    if ($parsed > 0) {
+                        return $parsed;
+                    }
+                } elseif (is_array($val)) {
+                    foreach ($val as $subKey => $subVal) {
+                        if (is_string($subVal) && preg_match('/(?:peso|weight)/i', (string)$subKey)) {
+                            $parsed = $this->parseWeightStringToGrams($subVal);
+                            if ($parsed > 0) {
+                                return $parsed;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Descrição do vendedor (texto ou HTML)
+        if (!empty($this->description)) {
+            $textDesc = strip_tags(html_entity_decode($this->description, ENT_QUOTES, 'UTF-8'));
+
+            // Regex 1: Menção com rótulo de peso do fornecedor (ex: "Peso: 450g", "Peso do produto: 1.2 kg", "Package weight: 350 g")
+            if (preg_match('/(?:peso(?:\s+(?:l[ií]quido|bruto|embalagem|pacote|aproximado|do\s+produto))?|weight(?:\s+(?:net|gross|package|item))?)\s*[:=-]?\s*(\d+(?:[.,]\d+)?)\s*(kg|kilos?|quilos?|g|gr|gramas?)\b/iu', $textDesc, $m)) {
+                $val = (float)str_replace(',', '.', $m[1]);
+                $unit = strtolower($m[2]);
+                return (int)round(str_starts_with($unit, 'k') ? $val * 1000 : $val);
+            }
+
+            // Regex 2: Menção explícita de peso em especificações técnicas (ex: "Especificações: 350g")
+            if (preg_match('/\b(\d+(?:[.,]\d+)?)\s*(kg|kilos?|quilos?|g|gramas?)\b/iu', $textDesc, $m)) {
+                $val = (float)str_replace(',', '.', $m[1]);
+                $unit = strtolower($m[2]);
+                $grams = (int)round(str_starts_with($unit, 'k') ? $val * 1000 : $val);
+                if ($grams >= 20 && $grams <= 50000) {
+                    return $grams;
+                }
+            }
+        }
+
+        // 4. Categorias com perfis de peso conhecidos
+        $catLower = mb_strtolower($this->category, 'UTF-8');
+        if (str_contains($catLower, 'tênis') || str_contains($catLower, 'calçado') || str_contains($catLower, 'sapato') || str_contains($catLower, 'bota')) {
+            return 800;
+        }
+        if (str_contains($catLower, 'casaco') || str_contains($catLower, 'jaqueta') || str_contains($catLower, 'moletom')) {
+            return 650;
+        }
+        if (str_contains($catLower, 'mochila') || str_contains($catLower, 'bolsa')) {
+            return 500;
+        }
+        if (str_contains($catLower, 'drone') || str_contains($catLower, 'projetor') || str_contains($catLower, 'computador')) {
+            return 1200;
+        }
+
+        // 5. Padrão para itens leves (vestuário íntimo, lingerie, relógio de pulso, fone de ouvido, bijuterias)
+        return 200;
+    }
+
+    /**
+     * Calcula o valor do frete expresso (Sedex / Prioritário) com base no peso total da remessa.
+     * Regra oficial dos Correios:
+     * - Até 300g: R$ 19,90 (tarifa base expressa)
+     * - De 301g até 1.000g (1 kg): R$ 29,90
+     * - De 1.001g até 2.000g (2 kg): R$ 39,90
+     * - Acima de 2.000g: R$ 39,90 + R$ 10,00 por kg adicional (ou fração de 1kg)
+     */
+    public function calculateExpressShippingPrice(int $quantity = 1): float
+    {
+        $quantity = max(1, $quantity);
+        $totalWeight = $this->getEstimatedWeightInGrams() * $quantity;
+
+        if ($totalWeight <= 300) {
+            return 19.90;
+        }
+
+        if ($totalWeight <= 1000) {
+            return 29.90;
+        }
+
+        if ($totalWeight <= 2000) {
+            return 39.90;
+        }
+
+        $extraKg = (int)ceil(($totalWeight - 2000) / 1000);
+        return round(39.90 + ($extraKg * 10.00), 2);
+    }
+
+    /**
+     * Retorna o peso formatado para exibição legível (ex: "200g", "1,2 kg").
+     */
+    public function getFormattedWeight(int $quantity = 1): string
+    {
+        $quantity = max(1, $quantity);
+        $totalGrams = $this->getEstimatedWeightInGrams() * $quantity;
+        if ($totalGrams >= 1000) {
+            $kg = $totalGrams / 1000;
+            return number_format($kg, $totalGrams % 1000 === 0 ? 0 : 1, ',', '.') . ' kg';
+        }
+        return $totalGrams . 'g';
+    }
+
+    /**
+     * Converte string com número e unidade de peso para gramas inteiras.
+     */
+    private function parseWeightStringToGrams(string $weightStr): int
+    {
+        $weightStr = trim(strip_tags(html_entity_decode($weightStr, ENT_QUOTES, 'UTF-8')));
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(kg|kilos?|quilos?|g|gr|gramas?)?/iu', $weightStr, $matches)) {
+            $num = (float)str_replace(',', '.', $matches[1]);
+            $unit = strtolower($matches[2] ?? '');
+            if (str_starts_with($unit, 'k')) {
+                return (int)round($num * 1000);
+            }
+            if ($unit === '' && $num <= 10.0) {
+                return (int)round($num * 1000);
+            }
+            return (int)round($num);
+        }
+        return 0;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array

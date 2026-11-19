@@ -20,6 +20,9 @@ if (empty($allImages) && !empty($product->mainImageUrl)) {
     $allImages = [$product->mainImageUrl];
 }
 $isAdult = str_contains($product->category, '+18') || stripos($product->category, 'sex shop') !== false;
+$productWeightGrams = method_exists($product, 'getEstimatedWeightInGrams') ? $product->getEstimatedWeightInGrams() : 200;
+$productExpressPrice = method_exists($product, 'calculateExpressShippingPrice') ? $product->calculateExpressShippingPrice(1) : 19.90;
+$productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $product->getFormattedWeight(1) : '200g';
 ?>
 <div class="domain-drop-product-page" style="max-width: 1200px; margin: 0 auto; padding: 24px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1; box-sizing: border-box;">
 
@@ -245,13 +248,16 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
                                 <div>
                                     <div style="font-size: 12.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">
                                         <span>⚡</span> <span>Envio Expresso Prioritário (Sedex)</span>
+                                        <span style="font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(69,243,255,0.12); color: #45f3ff; font-weight: 600;">
+                                            <?= htmlspecialchars($productFormattedWeight) ?>
+                                        </span>
                                     </div>
                                     <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
                                         <?= $isNational ? 'Despacho prioritário no mesmo dia (<strong>2 a 4 dias úteis</strong>)' : 'Despacho urgente com prioridade aduaneira (<strong>10 a 15 dias úteis</strong>)' ?>
                                     </div>
                                 </div>
                                 <div style="text-align: right; padding-left: 10px;">
-                                    <span style="font-size: 12.5px; font-weight: 800; color: #45f3ff;">+ R$ 19,90</span>
+                                    <span style="font-size: 12.5px; font-weight: 800; color: #45f3ff;">+ R$ <?= number_format($productExpressPrice, 2, ',', '.') ?></span>
                                 </div>
                             </div>
                         </div>

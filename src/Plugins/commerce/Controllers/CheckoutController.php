@@ -80,6 +80,7 @@ class CheckoutController
 
         $course = null;
         $sellerInfo = null;
+        $resolvedItem = null;
         if ($this->courseRepo !== null) {
             $c = $this->courseRepo->findById($courseId);
             if ($c && ($c['status'] ?? '') === 'published') {
@@ -93,6 +94,7 @@ class CheckoutController
                  ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
                  ?? $this->itemResolver->resolve('product', $courseId, $resolveContext);
             if ($item && $item->isAvailable()) {
+                $resolvedItem = $item;
                 $course = [
                     'id'          => $item->getId(),
                     'title'       => $item->getTitle(),
@@ -251,24 +253,41 @@ class CheckoutController
         $quantity = $isPhysicalOrDropship ? max(1, min(99, (int)$request->input('qty', 1))) : 1;
         $total = round($unitPrice * $quantity, 2);
 
+        $productWeightInGrams = 200;
+        $expressShippingBasePrice = 19.90;
+        if ($resolvedItem !== null) {
+            if (method_exists($resolvedItem, 'getWeightInGrams')) {
+                $productWeightInGrams = $resolvedItem->getWeightInGrams();
+                $expressShippingBasePrice = $resolvedItem->getExpressShippingPrice($quantity);
+            } elseif (method_exists($resolvedItem, 'getProduct')) {
+                $innerProduct = $resolvedItem->getProduct();
+                if (is_object($innerProduct) && method_exists($innerProduct, 'getEstimatedWeightInGrams')) {
+                    $productWeightInGrams = $innerProduct->getEstimatedWeightInGrams();
+                    $expressShippingBasePrice = $innerProduct->calculateExpressShippingPrice($quantity);
+                }
+            }
+        }
+
         $html = $this->renderView('front/checkout', [
-            'baseUrl'              => $baseUrl,
-            'course'               => $course,
-            'courseImage'          => $courseImage,
-            'gateways'             => $gateways,
-            'coursePlatform'       => $coursePlatform,
-            'csrfToken'            => $csrfToken,
-            'userEmail'            => $userEmail,
-            'userName'             => $userName,
-            'userUsername'         => $userUsername,
-            'userCpf'              => $userCpf,
-            'userPhone'            => $userPhone,
-            'savedCustomerAddress' => $savedCustomerAddress,
-            'unitPrice'            => $unitPrice,
-            'quantity'             => $quantity,
-            'total'                => $total,
-            'sellerInfo'           => $sellerInfo,
-            'isPhysicalOrDropship' => $isPhysicalOrDropship,
+            'baseUrl'                  => $baseUrl,
+            'course'                   => $course,
+            'courseImage'              => $courseImage,
+            'gateways'                 => $gateways,
+            'coursePlatform'           => $coursePlatform,
+            'csrfToken'                => $csrfToken,
+            'userEmail'                => $userEmail,
+            'userName'                 => $userName,
+            'userUsername'             => $userUsername,
+            'userCpf'                  => $userCpf,
+            'userPhone'                => $userPhone,
+            'savedCustomerAddress'     => $savedCustomerAddress,
+            'unitPrice'                => $unitPrice,
+            'quantity'                 => $quantity,
+            'total'                    => $total,
+            'sellerInfo'               => $sellerInfo,
+            'isPhysicalOrDropship'     => $isPhysicalOrDropship,
+            'productWeightInGrams'     => $productWeightInGrams,
+            'expressShippingBasePrice' => $expressShippingBasePrice,
         ]);
 
         return new ViewResponse($html);
@@ -303,6 +322,7 @@ class CheckoutController
         $itemType = (string)($request->input('item_type') ?? '');
         $course = null;
         $sellerInfo = null;
+        $resolvedItem = null;
 
         if ($this->itemResolver !== null) {
             $resolvedType = $itemType !== '' ? $itemType : 'course';
@@ -311,6 +331,7 @@ class CheckoutController
                  ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
                  ?? $this->itemResolver->resolve('course', $courseId, $resolveContext);
             if ($item && $item->isAvailable()) {
+                $resolvedItem = $item;
                 $course = [
                     'id'    => $item->getId(),
                     'title' => $item->getTitle(),
@@ -369,7 +390,16 @@ class CheckoutController
         $unitPrice = (float)($course['price'] ?? 0.0);
         $quantity = $isPhysicalOrDropship ? max(1, min(99, (int)$request->input('quantity', 1))) : 1;
         $shippingMethod = trim((string)$request->input('shipping_method', 'standard'));
-        $shippingPrice = ($isPhysicalOrDropship && $shippingMethod === 'express') ? 19.90 : 0.0;
+        $shippingPrice = 0.0;
+        if ($isPhysicalOrDropship && $shippingMethod === 'express') {
+            if ($resolvedItem !== null && method_exists($resolvedItem, 'getExpressShippingPrice')) {
+                $shippingPrice = $resolvedItem->getExpressShippingPrice($quantity);
+            } elseif ($resolvedItem !== null && method_exists($resolvedItem, 'getProduct') && method_exists($resolvedItem->getProduct(), 'calculateExpressShippingPrice')) {
+                $shippingPrice = $resolvedItem->getProduct()->calculateExpressShippingPrice($quantity);
+            } else {
+                $shippingPrice = 19.90;
+            }
+        }
         $total = round(($unitPrice * $quantity) + $shippingPrice, 2);
         $gatewayId = (string)($request->input('gateway') ?? 'mercadopago');
         $paymentMethod = (string)($request->input('payment_method') ?? 'pix');

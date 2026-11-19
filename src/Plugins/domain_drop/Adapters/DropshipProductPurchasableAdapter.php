@@ -104,4 +104,28 @@ class DropshipProductPurchasableAdapter implements PurchasableItemInterface, Sel
     {
         return $this->variant;
     }
+
+    /**
+     * Retorna o peso unitário estimado em gramas para fins de cálculo de frete.
+     */
+    public function getWeightInGrams(): int
+    {
+        return $this->product->getEstimatedWeightInGrams();
+    }
+
+    /**
+     * Calcula o frete expresso conforme faixas de peso dos Correios e quantidade comprada.
+     */
+    public function getExpressShippingPrice(int $quantity = 1): float
+    {
+        return $this->product->calculateExpressShippingPrice($quantity);
+    }
+
+    /**
+     * Retorna o peso formatado (ex: "200g", "1,2 kg").
+     */
+    public function getFormattedWeight(int $quantity = 1): string
+    {
+        return $this->product->getFormattedWeight($quantity);
+    }
 }

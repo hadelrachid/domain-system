@@ -381,10 +381,15 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                                 <input type="radio" name="shipping_method_radio" value="express" style="accent-color: #00d284; transform: scale(1.15);">
                                 <div>
                                     <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">⚡ Envio Expresso Prioritário (Sedex)</div>
-                                    <div style="font-size: 0.76rem; color: #94a3b8;">Despacho prioritário imediato + seguro de transporte</div>
+                                    <div style="font-size: 0.76rem; color: #94a3b8;">
+                                        Despacho prioritário imediato + seguro de transporte
+                                        <span id="checkout_weight_badge" style="display: inline-block; padding: 1px 6px; border-radius: 4px; background: rgba(69,243,255,0.12); color: #45f3ff; font-weight: 600; font-size: 0.72rem; margin-left: 4px;">
+                                            <?= (int)($productWeightInGrams ?? 200) ?>g
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <span style="font-weight: 800; color: #45f3ff; font-size: 0.92rem;">+ R$ 19,90</span>
+                            <span id="checkout_express_price_badge" style="font-weight: 800; color: #45f3ff; font-size: 0.92rem;">+ R$ <?= number_format($expressShippingBasePrice ?? 19.90, 2, ',', '.') ?></span>
                         </label>
                     </div>
                     <?php endif; ?>
@@ -480,15 +485,35 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
         var courseId = <?= (int)$courseId ?>;
         var unitPrice = <?= json_encode((float)$unitPrice) ?>;
         var currentQty = <?= (int)$quantity ?>;
+        var unitWeightInGrams = <?= (int)($productWeightInGrams ?? 200) ?>;
         var isItemRemoved = false;
         var hasAvailableGateway = <?= ($hasMercadoPago || $hasStripe || $hasPayPal) ? 'true' : 'false' ?>;
         var selectedMethod = 'pix';
         var shippingExtraPrice = 0.0;
         var selectedShippingMethod = 'standard';
 
+        function calcExpressShippingForQty(qty) {
+            var totalWeight = unitWeightInGrams * Math.max(1, qty);
+            if (totalWeight <= 300) return 19.90;
+            if (totalWeight <= 1000) return 29.90;
+            if (totalWeight <= 2000) return 39.90;
+            var extraKg = Math.ceil((totalWeight - 2000) / 1000);
+            return Math.round((39.90 + (extraKg * 10.00)) * 100) / 100;
+        }
+
+        function getFormattedWeightForQty(qty) {
+            var totalGrams = unitWeightInGrams * Math.max(1, qty);
+            if (totalGrams >= 1000) {
+                var kg = totalGrams / 1000;
+                return (totalGrams % 1000 === 0 ? kg.toFixed(0) : kg.toFixed(1)).replace('.', ',') + ' kg';
+            }
+            return totalGrams + 'g';
+        }
+
         function updateShippingMethod(method) {
             selectedShippingMethod = method;
-            shippingExtraPrice = (method === 'express') ? 19.90 : 0.0;
+            var currentExpressPrice = calcExpressShippingForQty(currentQty);
+            shippingExtraPrice = (method === 'express') ? currentExpressPrice : 0.0;
 
             var stdLabel = document.getElementById('label_shipping_standard');
             var expLabel = document.getElementById('label_shipping_express');
@@ -520,12 +545,21 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             var shippingLineVal = document.getElementById('checkout_shipping_line_val');
             if (shippingLineVal) {
                 if (shippingExtraPrice > 0) {
-                    shippingLineVal.textContent = '+ R$ 19,90 (Sedex)';
+                    shippingLineVal.textContent = '+ R$ ' + formatBrlAmount(shippingExtraPrice) + ' (Sedex - ' + getFormattedWeightForQty(currentQty) + ')';
                     shippingLineVal.style.color = '#45f3ff';
                 } else {
                     shippingLineVal.textContent = 'GRÁTIS (Padrão)';
                     shippingLineVal.style.color = 'var(--accent-green)';
                 }
+            }
+
+            var expBadge = document.getElementById('checkout_express_price_badge');
+            if (expBadge) {
+                expBadge.textContent = '+ R$ ' + formatBrlAmount(currentExpressPrice);
+            }
+            var weightBadge = document.getElementById('checkout_weight_badge');
+            if (weightBadge) {
+                weightBadge.textContent = getFormattedWeightForQty(currentQty);
             }
 
             updateOrderTotalsUI();
@@ -559,7 +593,11 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             }
             if (nextQty > 99) nextQty = 99;
             currentQty = nextQty;
-            updateOrderTotalsUI();
+            if (selectedShippingMethod === 'express') {
+                updateShippingMethod('express');
+            } else {
+                updateShippingMethod('standard');
+            }
         }
 
         function removeCheckoutItem() {
