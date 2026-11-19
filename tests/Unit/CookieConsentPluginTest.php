@@ -86,6 +86,33 @@ class CookieConsentPluginTest extends TestCase
         $procReq = new Request([], [], ['REQUEST_URI' => '/checkout/process']);
         $procRes = $middleware->handle($procReq, fn () => new JsonResponse(['paid' => true]));
         $this->assertStringNotContainsString('rachidd_cookie_banner', (string)$procRes->getContent());
+
+        // 4. Tela de Login e Logout do Administrador (/login e /logout)
+        $loginReq = new Request([], [], ['REQUEST_URI' => '/login']);
+        $loginRes = $middleware->handle($loginReq, fn () => new Response('<!DOCTYPE html><html><body><div class="login-box"><form action="/login" method="post"><input type="password" name="password"/></form></div></body></html>'));
+        $this->assertStringNotContainsString('rachidd_cookie_banner', (string)$loginRes->getContent());
+
+        $logoutReq = new Request([], [], ['REQUEST_URI' => '/logout']);
+        $logoutRes = $middleware->handle($logoutReq, fn () => new Response('<html><body>Desconectado</body></html>'));
+        $this->assertStringNotContainsString('rachidd_cookie_banner', (string)$logoutRes->getContent());
+
+        // 5. Tela com título ou classe de autenticação Cockpit (caso acesse por rota alternativa)
+        $cockpitReq = new Request([], [], ['REQUEST_URI' => '/auth']);
+        $cockpitRes = $middleware->handle($cockpitReq, fn () => new Response('<!DOCTYPE html><html><head><title>Cockpit - Autenticação</title></head><body><div class="login-box">Form</div></body></html>'));
+        $this->assertStringNotContainsString('rachidd_cookie_banner', (string)$cockpitRes->getContent());
+    }
+
+    public function testCookieConsentMiddlewareIgnoresAuthenticatedAdminSession(): void
+    {
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('has')->with('user_id')->willReturn(true);
+        $session->method('get')->with('user_role', '')->willReturn('admin');
+
+        $middleware = new CookieConsentMiddleware(null, $session);
+        $request = new Request([], [], ['REQUEST_URI' => '/loja']);
+        $response = $middleware->handle($request, fn () => new Response('<html><body>Loja</body></html>'));
+
+        $this->assertStringNotContainsString('rachidd_cookie_banner', (string)$response->getContent());
     }
 
     public function testPluginLifecycleRegistration(): void
