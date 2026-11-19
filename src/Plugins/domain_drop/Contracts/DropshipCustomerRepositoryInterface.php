@@ -16,6 +16,37 @@ interface DropshipCustomerRepositoryInterface
     public function findByEmail(string $email): ?array;
 
     /**
+     * Atualiza o endereço padrão de entrega do cliente.
+     *
+     * @param array{
+     *     shipping_zip?: ?string,
+     *     shipping_address?: ?string,
+     *     shipping_number?: ?string,
+     *     shipping_complement?: ?string,
+     *     shipping_neighborhood?: ?string,
+     *     shipping_city?: ?string,
+     *     shipping_state?: ?string,
+     *     phone?: ?string,
+     *     cpf?: ?string
+     * } $addressData
+     */
+    public function updateAddress(int $id, array $addressData): bool;
+
+    /**
+     * Atualiza dados de perfil e contato do cliente.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function updateProfile(int $id, array $data): bool;
+
+    /**
+     * Atualiza ou vincula o endereço padrão do cliente localizado pelo e-mail.
+     *
+     * @param array<string, mixed> $addressData
+     */
+    public function saveAddressByEmail(string $email, array $addressData): bool;
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function listAll(int $limit = 100, int $offset = 0): array;

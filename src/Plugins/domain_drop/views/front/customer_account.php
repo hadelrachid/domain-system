@@ -9,6 +9,19 @@ $trackedCodeOnly = (string)($trackedCodeOnly ?? '');
 $sdkEvents = is_array($sdkEvents ?? null) ? $sdkEvents : [];
 $sdkOfficialUrl = (string)($sdkOfficialUrl ?? '');
 
+// Dados de Endereço e Contato Salvos do Cliente
+$shippingData = is_array($customer['parsed_shipping_address'] ?? null) ? $customer['parsed_shipping_address'] : [];
+$custZip = (string)($customer['shipping_zip'] ?? ($shippingData['zip'] ?? ''));
+$custStreet = (string)($customer['shipping_address'] ?? ($shippingData['street'] ?? ''));
+$custNumber = (string)($customer['shipping_number'] ?? ($shippingData['number'] ?? ''));
+$custComplement = (string)($customer['shipping_complement'] ?? ($shippingData['complement'] ?? ''));
+$custNeighborhood = (string)($customer['shipping_neighborhood'] ?? ($shippingData['neighborhood'] ?? ''));
+$custCity = (string)($customer['shipping_city'] ?? ($shippingData['city'] ?? ''));
+$custState = (string)($customer['shipping_state'] ?? ($shippingData['state'] ?? ''));
+$custPhone = (string)($customer['phone'] ?? ($shippingData['phone'] ?? ''));
+$custCpf = (string)($customer['cpf'] ?? ($shippingData['cpf'] ?? ''));
+$hasSavedAddress = ($custZip !== '' && $custStreet !== '');
+
 $statusStepsMap = [
     'pending'    => ['label' => 'Aguardando Pagamento / Processamento', 'step' => 1, 'color' => '#fbbf24'],
     'paid'       => ['label' => 'Pagamento Confirmado • Em Curadoria', 'step' => 2, 'color' => '#38bdf8'],
@@ -38,6 +51,7 @@ $reasonLabels = [
             <p style="margin: 0; font-size: 13px; color: #94a3b8;">E-mail: <?= $e($customerEmail) ?></p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="#meu-endereco" style="padding: 10px 16px; border-radius: 9px; background: rgba(0,210,132,0.12); border: 1px solid rgba(0,210,132,0.35); color: #6ee7b7; font-weight: 700; text-decoration: none; font-size: 13px;">📍 Meu Endereço</a>
             <a href="#rastreio-cliente" style="padding: 10px 16px; border-radius: 9px; background: rgba(69,243,255,0.12); border: 1px solid rgba(69,243,255,0.35); color: #45f3ff; font-weight: 700; text-decoration: none; font-size: 13px;">🛰️ Rastrear Encomenda</a>
             <a href="<?= $e($baseUrl) ?>/loja" style="padding: 10px 16px; border-radius: 9px; background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4); color: #F0D060; font-weight: 700; text-decoration: none; font-size: 13px;">🛍️ Continuar Comprando</a>
             <a href="<?= $e($baseUrl) ?>/sair" style="padding: 10px 16px; border-radius: 9px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; font-weight: 700; text-decoration: none; font-size: 13px;">Sair</a>
@@ -50,6 +64,142 @@ $reasonLabels = [
             <?= $e($flash['msg']) ?>
         </div>
     <?php endif; ?>
+
+    <!-- BLOCO: MEU ENDEREÇO DE ENTREGA & DADOS DE CONTATO (ESTILO E-COMMERCE PROFISSIONAL) -->
+    <div id="meu-endereco" style="background: linear-gradient(145deg, rgba(16, 23, 38, 0.96) 0%, rgba(10, 14, 24, 0.98) 100%); border: 1px solid rgba(0, 210, 132, 0.35); border-radius: 14px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;">
+            <div>
+                <span style="display: inline-block; padding: 3px 10px; border-radius: 99px; background: rgba(0,210,132,0.12); border: 1px solid rgba(0,210,132,0.35); color: #6ee7b7; font-size: 11px; font-weight: 700; margin-bottom: 6px;">
+                    📍 Cadastro de Endereço &amp; Contato Padrão
+                </span>
+                <h2 style="margin: 0; font-size: 19px; font-weight: 800; color: #fff;">Meu Endereço de Entrega &amp; Contato</h2>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;">
+                    Deixe seu endereço completo e telefone cadastrados. Em futuras compras na RachidD Store, esses dados serão autocompletados no checkout com 1 clique!
+                </p>
+            </div>
+            <?php if ($hasSavedAddress): ?>
+                <button type="button" onclick="toggleAddressEditForm()" id="btn_toggle_address_form" style="padding: 9px 15px; border-radius: 8px; background: rgba(0,210,132,0.15); border: 1px solid #00d284; color: #6ee7b7; font-weight: 700; font-size: 12.5px; cursor: pointer;">
+                    ✏️ Alterar Endereço
+                </button>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($hasSavedAddress): ?>
+            <!-- Card Resumo do Endereço Cadastrado -->
+            <div id="address_saved_card" style="background: rgba(0,0,0,0.38); border: 1px solid rgba(0,210,132,0.25); border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">🏠</span>
+                        <div>
+                            <strong style="color: #fff; font-size: 14.5px;">Endereço de Entrega Principal</strong>
+                            <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: rgba(0,210,132,0.15); border: 1px solid rgba(0,210,132,0.35); color: #00d284; font-size: 11px; font-weight: 700;">
+                                ● Salvo para Compras
+                            </span>
+                        </div>
+                    </div>
+                    <span style="font-size: 12px; color: #94a3b8;">CEP: <strong style="color: #45f3ff; font-family: monospace; font-size: 13px;"><?= $e($custZip) ?></strong></span>
+                </div>
+
+                <div style="font-size: 13.5px; color: #e2e8f0; line-height: 1.6;">
+                    <div>
+                        <strong style="color: #fff;"><?= $e($custStreet) ?>, Nº <?= $e($custNumber) ?></strong>
+                        <?php if ($custComplement !== ''): ?>
+                            <span style="color: #94a3b8;">(<?= $e($custComplement) ?>)</span>
+                        <?php endif; ?>
+                    </div>
+                    <div style="color: #cbd5e1;">
+                        Bairro <?= $e($custNeighborhood) ?> — <?= $e($custCity) ?> / <?= $e($custState) ?>
+                    </div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.08); font-size: 12.5px; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 16px;">
+                        <?php if ($custPhone !== ''): ?>
+                            <span>📞 WhatsApp / Telefone: <strong style="color: #cbd5e1;"><?= $e($custPhone) ?></strong></span>
+                        <?php endif; ?>
+                        <?php if ($custCpf !== ''): ?>
+                            <span>📄 CPF: <strong style="color: #cbd5e1;"><?= $e($custCpf) ?></strong></span>
+                        <?php endif; ?>
+                        <span>👤 Destinatário: <strong style="color: #cbd5e1;"><?= $e($customerName) ?></strong></span>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Formulário de Cadastro / Edição do Endereço -->
+        <div id="address_edit_container" style="<?= $hasSavedAddress ? 'display: none;' : '' ?>">
+            <form method="POST" action="<?= $e($baseUrl) ?>/minha-conta/endereco" style="display: flex; flex-direction: column; gap: 14px;">
+                <input type="hidden" name="csrf_token" value="<?= $e($csrfToken ?? '') ?>">
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                    <div>
+                        <label for="acc_name" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Nome Completo do Destinatário *</label>
+                        <input id="acc_name" type="text" name="name" value="<?= $e($customerName) ?>" required placeholder="Seu nome completo" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                    </div>
+                    <div>
+                        <label for="acc_phone" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Telefone / WhatsApp de Contato</label>
+                        <input id="acc_phone" type="tel" name="phone" value="<?= $e($custPhone) ?>" maxlength="15" oninput="formatAccountPhone(this)" placeholder="(11) 99999-9999" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                    </div>
+                    <div>
+                        <label for="acc_cpf" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">CPF (para emissão e desembaraço)</label>
+                        <input id="acc_cpf" type="text" name="cpf" value="<?= $e($custCpf) ?>" maxlength="14" oninput="formatAccountCpf(this)" placeholder="000.000.000-00" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                    </div>
+                </div>
+
+                <!-- Linha do CEP com busca automática ViaCEP -->
+                <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px;">
+                    <div style="display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 14px; align-items: end; margin-bottom: 12px;">
+                        <div>
+                            <label for="acc_shipping_zip" style="display: block; font-size: 12px; font-weight: 700; color: #45f3ff; margin-bottom: 5px;">CEP (Busca automática) *</label>
+                            <input id="acc_shipping_zip" type="text" name="shipping_zip" value="<?= $e($custZip) ?>" maxlength="9" oninput="formatAccountCepAndSearch(this)" placeholder="00000-000" required style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1.5px solid rgba(69,243,255,0.45); border-radius: 8px; color: #45f3ff; font-weight: 700; font-family: monospace; font-size: 14px;">
+                        </div>
+                        <div id="acc_cep_feedback" style="font-size: 12px; color: #94a3b8; padding-bottom: 8px;">
+                            Digite o CEP de 8 dígitos para preenchimento automático de Rua, Bairro e Cidade via ViaCEP.
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label for="acc_shipping_address" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Rua / Logradouro *</label>
+                        <input id="acc_shipping_address" type="text" name="shipping_address" value="<?= $e($custStreet) ?>" required placeholder="Av. / Rua / Travessa..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label for="acc_shipping_number" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Número *</label>
+                            <input id="acc_shipping_number" type="text" name="shipping_number" value="<?= $e($custNumber) ?>" required placeholder="123" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                        </div>
+                        <div>
+                            <label for="acc_shipping_complement" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Complemento (Opcional)</label>
+                            <input id="acc_shipping_complement" type="text" name="shipping_complement" value="<?= $e($custComplement) ?>" placeholder="Apto 102, Bloco B, Casa..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 12px;">
+                        <div>
+                            <label for="acc_shipping_neighborhood" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Bairro *</label>
+                            <input id="acc_shipping_neighborhood" type="text" name="shipping_neighborhood" value="<?= $e($custNeighborhood) ?>" required placeholder="Bairro" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                        </div>
+                        <div>
+                            <label for="acc_shipping_city" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Cidade *</label>
+                            <input id="acc_shipping_city" type="text" name="shipping_city" value="<?= $e($custCity) ?>" required placeholder="Cidade" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px;">
+                        </div>
+                        <div>
+                            <label for="acc_shipping_state" style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">UF *</label>
+                            <input id="acc_shipping_state" type="text" name="shipping_state" value="<?= $e($custState) ?>" maxlength="2" required placeholder="SP" style="width: 100%; box-sizing: border-box; padding: 10px 12px; background: #06090e; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: #fff; font-size: 13.5px; text-transform: uppercase; text-align: center;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="submit" style="padding: 12px 22px; border: none; border-radius: 9px; background: linear-gradient(135deg, #00d284 0%, #059669 100%); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;">
+                        💾 Salvar Endereço de Entrega
+                    </button>
+                    <?php if ($hasSavedAddress): ?>
+                        <button type="button" onclick="toggleAddressEditForm()" style="padding: 12px 18px; border-radius: 9px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-weight: 700; font-size: 13px; cursor: pointer;">
+                            Cancelar
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- BLOCO INTEGRADO: ACOMPANHAMENTO & RASTREIO DO PRODUTO DENTRO DA ÁREA DO CLIENTE -->
     <div id="rastreio-cliente" style="background: linear-gradient(145deg, rgba(15, 23, 36, 0.96) 0%, rgba(9, 13, 22, 0.98) 100%); border: 1px solid rgba(69, 243, 255, 0.3); border-radius: 14px; padding: 24px; margin-bottom: 24px;">
@@ -375,3 +525,89 @@ $reasonLabels = [
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+function toggleAddressEditForm() {
+    var c = document.getElementById('address_edit_container');
+    var btn = document.getElementById('btn_toggle_address_form');
+    if (!c) return;
+    if (c.style.display === 'none' || c.style.display === '') {
+        c.style.display = 'block';
+        if (btn) btn.innerText = '✕ Fechar Formulário';
+    } else {
+        c.style.display = 'none';
+        if (btn) btn.innerText = '✏️ Alterar Endereço';
+    }
+}
+
+function formatAccountCepAndSearch(input) {
+    var v = input.value.replace(/\D/g, '');
+    if (v.length > 8) v = v.slice(0, 8);
+    if (v.length > 5) {
+        input.value = v.slice(0, 5) + '-' + v.slice(5);
+    } else {
+        input.value = v;
+    }
+
+    var fb = document.getElementById('acc_cep_feedback');
+    if (v.length === 8) {
+        if (fb) fb.innerHTML = '<span style="color: #45f3ff;">🔍 Buscando endereço nos Correios (ViaCEP)...</span>';
+        fetch('https://viacep.com.br/ws/' + v + '/json/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.erro) {
+                    if (fb) fb.innerHTML = '<span style="color: #f87171;">⚠️ CEP não encontrado na base dos Correios. Digite o endereço manualmente.</span>';
+                    return;
+                }
+                var addrEl = document.getElementById('acc_shipping_address');
+                var neighEl = document.getElementById('acc_shipping_neighborhood');
+                var cityEl = document.getElementById('acc_shipping_city');
+                var ufEl = document.getElementById('acc_shipping_state');
+                var numEl = document.getElementById('acc_shipping_number');
+
+                if (addrEl && data.logradouro) addrEl.value = data.logradouro;
+                if (neighEl && data.bairro) neighEl.value = data.bairro;
+                if (cityEl && data.localidade) cityEl.value = data.localidade;
+                if (ufEl && data.uf) ufEl.value = data.uf;
+
+                if (fb) fb.innerHTML = '<span style="color: #00d284;">✅ Endereço localizado: ' + (data.logradouro || '') + ' - ' + data.localidade + '/' + data.uf + '</span>';
+                if (numEl) numEl.focus();
+            })
+            .catch(function() {
+                if (fb) fb.innerHTML = '<span style="color: #fbbf24;">⚠️ Não foi possível consultar o CEP automaticamente. Digite seu endereço abaixo.</span>';
+            });
+    } else if (fb) {
+        fb.innerHTML = 'Digite o CEP de 8 dígitos para preenchimento automático de Rua, Bairro e Cidade via ViaCEP.';
+    }
+}
+
+function formatAccountPhone(input) {
+    var v = input.value.replace(/\D/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 10) {
+        input.value = '(' + v.slice(0, 2) + ') ' + v.slice(2, 7) + '-' + v.slice(7);
+    } else if (v.length > 6) {
+        input.value = '(' + v.slice(0, 2) + ') ' + v.slice(2, 6) + '-' + v.slice(6);
+    } else if (v.length > 2) {
+        input.value = '(' + v.slice(0, 2) + ') ' + v.slice(2);
+    } else if (v.length > 0) {
+        input.value = '(' + v;
+    } else {
+        input.value = '';
+    }
+}
+
+function formatAccountCpf(input) {
+    var v = input.value.replace(/\D/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 9) {
+        input.value = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6, 9) + '-' + v.slice(9);
+    } else if (v.length > 6) {
+        input.value = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6);
+    } else if (v.length > 3) {
+        input.value = v.slice(0, 3) + '.' + v.slice(3);
+    } else {
+        input.value = v;
+    }
+}
+</script>

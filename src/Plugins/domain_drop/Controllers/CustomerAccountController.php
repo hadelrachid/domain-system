@@ -194,6 +194,7 @@ class CustomerAccountController
         $this->session->remove('customer_name');
         $this->session->remove('customer_email');
         $this->session->remove('customer_cpf');
+        $this->session->remove('customer_phone');
 
         $this->session->setFlash('success', 'Você saiu da sua conta com segurança.');
         return Response::redirect($baseUrl . '/');
@@ -288,6 +289,65 @@ class CustomerAccountController
         $content = (string)ob_get_clean();
 
         return $this->wrapWithThemeOrRaw($content, 'Minha Conta, Rastreio e Atendimento - RachidD.com');
+    }
+
+    public function updateAddress(Request $request): ResponseInterface
+    {
+        $baseUrl = $this->baseUrl();
+        if (!$this->isLoggedIn()) {
+            $this->session->setFlash('error', 'Faça login para gerenciar seu endereço.');
+            return Response::redirect($baseUrl . '/entrar');
+        }
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado. Tente novamente.');
+            return Response::redirect($baseUrl . '/minha-conta#meu-endereco');
+        }
+
+        $customerId = (int)$this->session->get('customer_id', 0);
+        $shippingZip = trim((string)$request->input('shipping_zip', ''));
+        $shippingAddress = trim((string)$request->input('shipping_address', ''));
+        $shippingNumber = trim((string)$request->input('shipping_number', ''));
+        $shippingComplement = trim((string)$request->input('shipping_complement', ''));
+        $shippingNeighborhood = trim((string)$request->input('shipping_neighborhood', ''));
+        $shippingCity = trim((string)$request->input('shipping_city', ''));
+        $shippingState = strtoupper(trim((string)$request->input('shipping_state', '')));
+        $phone = trim((string)$request->input('phone', ''));
+        $cpf = trim((string)$request->input('cpf', ''));
+        $name = trim((string)$request->input('name', ''));
+
+        if ($shippingZip === '' || $shippingAddress === '' || $shippingNumber === '' || $shippingNeighborhood === '' || $shippingCity === '' || $shippingState === '') {
+            $this->session->setFlash('error', 'Por favor, preencha todos os campos obrigatórios do endereço (CEP, Rua, Número, Bairro, Cidade e UF).');
+            return Response::redirect($baseUrl . '/minha-conta#meu-endereco');
+        }
+
+        $addressData = [
+            'shipping_zip'          => $shippingZip,
+            'shipping_address'      => $shippingAddress,
+            'shipping_number'       => $shippingNumber,
+            'shipping_complement'   => $shippingComplement,
+            'shipping_neighborhood' => $shippingNeighborhood,
+            'shipping_city'         => $shippingCity,
+            'shipping_state'        => $shippingState,
+            'phone'                 => $phone,
+            'cpf'                   => $cpf,
+        ];
+
+        $this->customerRepo->updateAddress($customerId, $addressData);
+
+        if ($name !== '' && mb_strlen($name) >= 2) {
+            $this->customerRepo->updateProfile($customerId, ['name' => $name]);
+            $this->session->set('customer_name', $name);
+        }
+        if ($phone !== '') {
+            $this->session->set('customer_phone', $phone);
+        }
+        if ($cpf !== '') {
+            $this->session->set('customer_cpf', $cpf);
+        }
+
+        $this->session->setFlash('success', '📍 Endereço de entrega salvo com sucesso! Em suas próximas compras, os dados serão autocompletados automaticamente no checkout.');
+        return Response::redirect($baseUrl . '/minha-conta#meu-endereco');
     }
 
     public function submitComplaint(Request $request): ResponseInterface
@@ -485,6 +545,7 @@ class CustomerAccountController
         $this->session->set('customer_name', (string)($customer['name'] ?? 'Cliente'));
         $this->session->set('customer_email', strtolower(trim((string)($customer['email'] ?? ''))));
         $this->session->set('customer_cpf', (string)($customer['cpf'] ?? ''));
+        $this->session->set('customer_phone', (string)($customer['phone'] ?? ''));
 
         $newSessionId = session_id() ?: '';
         if ($newSessionId === '' && method_exists($this->session, 'getId')) {

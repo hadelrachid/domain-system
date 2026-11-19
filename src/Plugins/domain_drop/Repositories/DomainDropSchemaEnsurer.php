@@ -9,7 +9,7 @@ use Throwable;
 
 /**
  * Garante de forma idempotente e segura que as tabelas do DomainDrop
- * (incluindo clientes, reclamações e colunas de SLA) existam mesmo antes
+ * (incluindo clientes, endereços, reclamações e colunas de SLA) existam mesmo antes
  * de uma execução manual do CLI bin/migrate.php.
  */
 final class DomainDropSchemaEnsurer
@@ -39,6 +39,7 @@ final class DomainDropSchemaEnsurer
                 '2026_11_12_000001_create_customer_disputes_and_mediation.php',
                 '2026_11_16_000001_create_domain_drop_demand_table.php',
                 '2026_11_16_000002_create_domain_drop_demand_activity_logs_table.php',
+                '2026_11_18_000001_add_shipping_address_to_customers.php',
             ] as $file) {
                 $path = $migrationsDir . '/' . $file;
                 if (is_file($path)) {
@@ -71,11 +72,13 @@ final class DomainDropSchemaEnsurer
                 $c3 = $pdo->query("SHOW TABLES LIKE 'domain_drop_product_demand'");
                 $c4 = $pdo->query("SHOW TABLES LIKE 'domain_drop_demand_activity_logs'");
                 $cols = $pdo->query("SHOW COLUMNS FROM domain_drop_orders LIKE 'seller_origin'");
+                $cAddr = $pdo->query("SHOW COLUMNS FROM domain_drop_customers LIKE 'shipping_zip'");
                 return $c1 !== false && $c1->fetchColumn() !== false
                     && $c2 !== false && $c2->fetchColumn() !== false
                     && $c3 !== false && $c3->fetchColumn() !== false
                     && $c4 !== false && $c4->fetchColumn() !== false
-                    && $cols !== false && $cols->fetchColumn() !== false;
+                    && $cols !== false && $cols->fetchColumn() !== false
+                    && $cAddr !== false && $cAddr->fetchColumn() !== false;
             }
 
             $c1 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_customers'");
@@ -85,11 +88,15 @@ final class DomainDropSchemaEnsurer
             $cols = $pdo->query("PRAGMA table_info(domain_drop_orders)");
             $colNames = $cols ? array_column($cols->fetchAll(PDO::FETCH_ASSOC), 'name') : [];
 
+            $custCols = $pdo->query("PRAGMA table_info(domain_drop_customers)");
+            $custColNames = $custCols ? array_column($custCols->fetchAll(PDO::FETCH_ASSOC), 'name') : [];
+
             return $c1 !== false && $c1->fetchColumn() !== false
                 && $c2 !== false && $c2->fetchColumn() !== false
                 && $c3 !== false && $c3->fetchColumn() !== false
                 && $c4 !== false && $c4->fetchColumn() !== false
-                && in_array('seller_origin', $colNames, true);
+                && in_array('seller_origin', $colNames, true)
+                && in_array('shipping_zip', $custColNames, true);
         } catch (Throwable $e) {
             return false;
         }

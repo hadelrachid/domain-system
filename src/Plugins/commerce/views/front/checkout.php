@@ -18,6 +18,17 @@ $csrfToken = htmlspecialchars((string)($csrfToken ?? ''), ENT_QUOTES, 'UTF-8');
 $userName = htmlspecialchars((string)($userName ?? 'Aluno'), ENT_QUOTES, 'UTF-8');
 $userEmail = htmlspecialchars((string)($userEmail ?? ''), ENT_QUOTES, 'UTF-8');
 $userCpf = htmlspecialchars((string)($userCpf ?? ''), ENT_QUOTES, 'UTF-8');
+$userPhone = htmlspecialchars((string)($userPhone ?? ''), ENT_QUOTES, 'UTF-8');
+$savedCustomerAddress = is_array($savedCustomerAddress ?? null) ? $savedCustomerAddress : [];
+$savedZip = htmlspecialchars((string)($savedCustomerAddress['zip'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedStreet = htmlspecialchars((string)($savedCustomerAddress['street'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedNumber = htmlspecialchars((string)($savedCustomerAddress['number'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedComplement = htmlspecialchars((string)($savedCustomerAddress['complement'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedNeighborhood = htmlspecialchars((string)($savedCustomerAddress['neighborhood'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedCity = htmlspecialchars((string)($savedCustomerAddress['city'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedState = htmlspecialchars((string)($savedCustomerAddress['state'] ?? ''), ENT_QUOTES, 'UTF-8');
+$savedPhone = htmlspecialchars((string)($savedCustomerAddress['phone'] ?? $userPhone), ENT_QUOTES, 'UTF-8');
+$hasSavedAddr = ($savedZip !== '' || $savedStreet !== '');
 $courseTitle = htmlspecialchars((string)($course['title'] ?? 'Curso Academy'), ENT_QUOTES, 'UTF-8');
 $courseId = (int)($course['id'] ?? 0);
 $courseImage = $courseImage ?? '';
@@ -281,47 +292,72 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                             </div>
                             <div>
                                 <label for="payer_phone" class="ds-field-label">WhatsApp / Telefone</label>
-                                <input type="tel" id="payer_phone" name="payer_phone" inputmode="tel" maxlength="15" placeholder="(11) 99999-9999" oninput="formatPhoneInput(this)" class="ds-field-input">
+                                <input type="tel" id="payer_phone" name="payer_phone" value="<?= !empty($savedPhone) ? $savedPhone : $userPhone ?>" inputmode="tel" maxlength="15" placeholder="(11) 99999-9999" oninput="formatPhoneInput(this)" class="ds-field-input">
                             </div>
                         </div>
                     </div>
 
                     <!-- Endereço de Entrega com ViaCEP -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                            <span>🚚</span> 2. Endereço de Entrega
-                        </h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                            <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                <span>🚚</span> 2. Endereço de Entrega
+                            </h3>
+                            <?php if ($hasSavedAddr): ?>
+                                <span style="font-size: 0.72rem; color: #6ee7b7; background: rgba(0,210,132,0.15); border: 1px solid rgba(0,210,132,0.35); padding: 2px 8px; border-radius: 99px; font-weight: 700;">
+                                    ● Endereço Salvo na Conta
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($hasSavedAddr): ?>
+                            <div style="background: rgba(0,210,132,0.08); border: 1px solid rgba(0,210,132,0.28); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.45;">
+                                <strong style="color: #6ee7b7;">📍 Dados preenchidos da sua conta:</strong>
+                                <div style="color: #fff; margin-top: 2px;">
+                                    <?= $savedStreet . ($savedNumber !== '' ? ', Nº ' . $savedNumber : '') . ($savedComplement !== '' ? ' (' . $savedComplement . ')' : '') ?> — <?= $savedNeighborhood ?>, <?= $savedCity ?>/<?= $savedState ?> (CEP: <?= $savedZip ?>)
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="ds-field-group">
                             <label for="shipping_zip" class="ds-field-label">CEP (Busca automática)</label>
-                            <input type="text" id="shipping_zip" name="shipping_zip" placeholder="00000-000" maxlength="9" oninput="formatCepAndSearch(this)" class="ds-field-input ds-field-input-cep" required>
+                            <input type="text" id="shipping_zip" name="shipping_zip" value="<?= $savedZip ?>" placeholder="00000-000" maxlength="9" oninput="formatCepAndSearch(this)" class="ds-field-input ds-field-input-cep" required>
                         </div>
                         <div class="ds-field-group">
                             <label for="shipping_address" class="ds-field-label">Rua / Logradouro</label>
-                            <input type="text" id="shipping_address" name="shipping_address" placeholder="Av. / Rua..." class="ds-field-input" required>
+                            <input type="text" id="shipping_address" name="shipping_address" value="<?= $savedStreet ?>" placeholder="Av. / Rua..." class="ds-field-input" required>
                         </div>
                         <div class="ds-field-row ds-field-row-num">
                             <div>
                                 <label for="shipping_number" class="ds-field-label">Número</label>
-                                <input type="text" id="shipping_number" name="shipping_number" placeholder="123" class="ds-field-input" required>
+                                <input type="text" id="shipping_number" name="shipping_number" value="<?= $savedNumber ?>" placeholder="123" class="ds-field-input" required>
                             </div>
                             <div>
                                 <label for="shipping_complement" class="ds-field-label">Complemento</label>
-                                <input type="text" id="shipping_complement" name="shipping_complement" placeholder="Apto, Bloco..." class="ds-field-input">
+                                <input type="text" id="shipping_complement" name="shipping_complement" value="<?= $savedComplement ?>" placeholder="Apto, Bloco..." class="ds-field-input">
                             </div>
                         </div>
                         <div class="ds-field-group">
                             <label for="shipping_neighborhood" class="ds-field-label">Bairro</label>
-                            <input type="text" id="shipping_neighborhood" name="shipping_neighborhood" placeholder="Bairro" class="ds-field-input" required>
+                            <input type="text" id="shipping_neighborhood" name="shipping_neighborhood" value="<?= $savedNeighborhood ?>" placeholder="Bairro" class="ds-field-input" required>
                         </div>
                         <div class="ds-field-row ds-field-row-city">
                             <div>
                                 <label for="shipping_city" class="ds-field-label">Cidade</label>
-                                <input type="text" id="shipping_city" name="shipping_city" placeholder="Cidade" class="ds-field-input" required>
+                                <input type="text" id="shipping_city" name="shipping_city" value="<?= $savedCity ?>" placeholder="Cidade" class="ds-field-input" required>
                             </div>
                             <div>
                                 <label for="shipping_state" class="ds-field-label">UF</label>
-                                <input type="text" id="shipping_state" name="shipping_state" placeholder="SP" maxlength="2" class="ds-field-input" style="text-transform: uppercase; text-align: center;" required>
+                                <input type="text" id="shipping_state" name="shipping_state" value="<?= $savedState ?>" placeholder="SP" maxlength="2" class="ds-field-input" style="text-transform: uppercase; text-align: center;" required>
                             </div>
+                        </div>
+
+                        <!-- Checkbox para Salvar Endereço na Conta -->
+                        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.08); display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="save_address_to_account" name="save_address_to_account" value="1" checked style="width: 16px; height: 16px; cursor: pointer; accent-color: #00d284;">
+                            <label for="save_address_to_account" style="font-size: 0.8rem; color: #cbd5e1; cursor: pointer; user-select: none;">
+                                💾 Salvar/atualizar este endereço na minha conta para compras futuras
+                            </label>
                         </div>
                     </div>
 
@@ -662,15 +698,15 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                 formatPhoneInput(phoneEl);
             }
 
-            // Pré-carrega o CEP se foi passado na URL ou salvo no simulador da página do produto
+            // Pré-carrega o CEP se foi passado na URL ou salvo no simulador da página do produto (caso o campo ainda esteja vazio)
+            var zipInput = document.getElementById('shipping_zip');
             var urlCep = <?= json_encode((string)($_GET['shipping_zip'] ?? '')) ?>;
             try {
                 if (!urlCep) {
                     urlCep = localStorage.getItem('rachidd_user_shipping_cep') || '';
                 }
             } catch(e) {}
-            var zipInput = document.getElementById('shipping_zip');
-            if (zipInput && urlCep) {
+            if (zipInput && (!zipInput.value.trim() || <?= json_encode(!empty($_GET['shipping_zip'])) ?>) && urlCep) {
                 zipInput.value = urlCep;
                 formatCepAndSearch(zipInput);
             }
@@ -802,7 +838,8 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                 shipping_city: shipCityEl ? shipCityEl.value.trim() : '',
                 shipping_state: shipStateEl ? shipStateEl.value.trim() : '',
                 shipping_method: selectedShippingMethod,
-                shipping_price: shippingExtraPrice
+                shipping_price: shippingExtraPrice,
+                save_address_to_account: document.getElementById('save_address_to_account') ? document.getElementById('save_address_to_account').checked : true
             };
 
             fetch(baseUrl + '/checkout/process', {

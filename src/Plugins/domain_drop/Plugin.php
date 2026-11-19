@@ -375,6 +375,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/sair', [CustomerAccountController::class, 'logout'], 'domain_drop');
             $router->addRoute('POST', '/sair', [CustomerAccountController::class, 'logout'], 'domain_drop');
             $router->addRoute('GET', '/minha-conta', [CustomerAccountController::class, 'account'], 'domain_drop');
+            $router->addRoute('POST', '/minha-conta/endereco', [CustomerAccountController::class, 'updateAddress'], 'domain_drop');
             $router->addRoute('POST', '/minha-conta/reclamar', [CustomerAccountController::class, 'submitComplaint'], 'domain_drop');
             $router->addRoute('GET', '/dropship/disputes/attachment/{id}/{file}', [CustomerAccountController::class, 'serveAttachment'], 'domain_drop');
         });
@@ -463,6 +464,22 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                             'aliexpress_product_id'  => $aeProductId,
                         ];
                         $orderRepo->create($newDropOrder);
+
+                        // Se houver endereço e cliente cadastrado, atualiza endereço no cliente caso ainda não tenha
+                        try {
+                            /** @var DropshipCustomerRepositoryInterface $customerRepo */
+                            $customerRepo = $runtime->make(DropshipCustomerRepositoryInterface::class);
+                            $shipAddr = $payload['shipping_address'] ?? null;
+                            $cEmail = (string)($payload['customer_email'] ?? '');
+                            if (is_array($shipAddr) && !empty($shipAddr['zip']) && $cEmail !== '') {
+                                $existingCustomer = $customerRepo->findByEmail($cEmail);
+                                if ($existingCustomer !== null && (empty($existingCustomer['shipping_zip']) || empty($existingCustomer['shipping_address']))) {
+                                    $customerRepo->updateAddress((int)$existingCustomer['id'], $shipAddr);
+                                }
+                            }
+                        } catch (Throwable $e) {
+                            // Isolamento gracioso
+                        }
 
                         // Dispara e-mail de confirmação de pagamento para o cliente
                         try {

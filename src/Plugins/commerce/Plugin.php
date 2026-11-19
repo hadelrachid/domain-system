@@ -119,6 +119,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             }
 
             $dropshipOrderFinder = null;
+            $dropshipCustomerFinder = null;
+            $dropshipCustomerAddressSaver = null;
+
             if (interface_exists(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
                 && $runtime->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipOrderRepositoryInterface::class)
             ) {
@@ -134,6 +137,42 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 };
             }
 
+            if (interface_exists(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface::class)
+                && $runtime->has(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface::class)
+            ) {
+                $dropshipCustomerFinder = static function (int $id, string $email = '') use ($c): ?array {
+                    try {
+                        if (is_object($c) && method_exists($c, 'make')) {
+                            $repo = $c->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface::class);
+                            if ($id > 0) {
+                                return $repo->findById($id);
+                            }
+                            if ($email !== '') {
+                                return $repo->findByEmail($email);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                    }
+                    return null;
+                };
+
+                $dropshipCustomerAddressSaver = static function (int $id, string $email, array $addressData) use ($c): bool {
+                    try {
+                        if (is_object($c) && method_exists($c, 'make')) {
+                            $repo = $c->make(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCustomerRepositoryInterface::class);
+                            if ($id > 0) {
+                                return $repo->updateAddress($id, $addressData);
+                            }
+                            if ($email !== '') {
+                                return $repo->saveAddressByEmail($email, $addressData);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                    }
+                    return false;
+                };
+            }
+
             return new CheckoutController(
                 session: $runtime->getLink('core.session'),
                 orderRepo: $runtime->make(OrderRepositoryInterface::class),
@@ -142,7 +181,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 dispatcher: $dispatcher,
                 itemResolver: $runtime->make(PurchasableItemResolverInterface::class),
                 settings: $runtime->make(CommerceSettingsInterface::class),
-                dropshipOrderFinder: $dropshipOrderFinder
+                dropshipOrderFinder: $dropshipOrderFinder,
+                dropshipCustomerFinder: $dropshipCustomerFinder,
+                dropshipCustomerAddressSaver: $dropshipCustomerAddressSaver
             );
         });
 

@@ -32,6 +32,10 @@ class CheckoutController
     private ?CommerceSettingsInterface $settings;
     /** @var callable|null */
     private $dropshipOrderFinder;
+    /** @var callable|null */
+    private $dropshipCustomerFinder;
+    /** @var callable|null */
+    private $dropshipCustomerAddressSaver;
 
     public function __construct(
         SessionManagerInterface $session,
@@ -41,7 +45,9 @@ class CheckoutController
         ?EventDispatcherInterface $dispatcher = null,
         ?PurchasableItemResolverInterface $itemResolver = null,
         ?CommerceSettingsInterface $settings = null,
-        ?callable $dropshipOrderFinder = null
+        ?callable $dropshipOrderFinder = null,
+        ?callable $dropshipCustomerFinder = null,
+        ?callable $dropshipCustomerAddressSaver = null
     ) {
         $this->session = $session;
         $this->orderRepo = $orderRepo;
@@ -51,6 +57,8 @@ class CheckoutController
         $this->itemResolver = $itemResolver;
         $this->settings = $settings;
         $this->dropshipOrderFinder = $dropshipOrderFinder;
+        $this->dropshipCustomerFinder = $dropshipCustomerFinder;
+        $this->dropshipCustomerAddressSaver = $dropshipCustomerAddressSaver;
     }
 
     private function isDemoModeEnabled(): bool
@@ -191,6 +199,41 @@ class CheckoutController
         $userName = trim((string)($this->session->get('academy_student_name') ?: $this->session->get('customer_name') ?: $this->session->get('user_name') ?: ($isPhysicalOrDropship ? '' : 'Aluno')));
         $userUsername = trim((string)($this->session->get('academy_student_username') ?: ''));
         $userCpf = trim((string)($this->session->get('academy_student_cpf') ?: $this->session->get('customer_cpf') ?: $this->session->get('user_cpf') ?: ''));
+        $userPhone = trim((string)($this->session->get('customer_phone') ?: ''));
+        $savedCustomerAddress = null;
+
+        if ($this->dropshipCustomerFinder !== null) {
+            $savedCustomer = ($this->dropshipCustomerFinder)($customerId, $userEmail);
+            if (is_array($savedCustomer)) {
+                if ($userName === '' || $userName === 'Aluno') {
+                    if (!empty($savedCustomer['name'])) {
+                        $userName = (string)$savedCustomer['name'];
+                    }
+                }
+                if ($userCpf === '' && !empty($savedCustomer['cpf'])) {
+                    $userCpf = (string)$savedCustomer['cpf'];
+                }
+                if ($userPhone === '' && !empty($savedCustomer['phone'])) {
+                    $userPhone = (string)$savedCustomer['phone'];
+                }
+                $parsed = is_array($savedCustomer['parsed_shipping_address'] ?? null) ? $savedCustomer['parsed_shipping_address'] : [];
+                $zip = (string)($savedCustomer['shipping_zip'] ?? ($parsed['zip'] ?? ''));
+                $street = (string)($savedCustomer['shipping_address'] ?? ($parsed['street'] ?? ''));
+                if ($zip !== '' || $street !== '') {
+                    $savedCustomerAddress = [
+                        'zip'          => $zip,
+                        'street'       => $street,
+                        'number'       => (string)($savedCustomer['shipping_number'] ?? ($parsed['number'] ?? '')),
+                        'complement'   => (string)($savedCustomer['shipping_complement'] ?? ($parsed['complement'] ?? '')),
+                        'neighborhood' => (string)($savedCustomer['shipping_neighborhood'] ?? ($parsed['neighborhood'] ?? '')),
+                        'city'         => (string)($savedCustomer['shipping_city'] ?? ($parsed['city'] ?? '')),
+                        'state'        => (string)($savedCustomer['shipping_state'] ?? ($parsed['state'] ?? '')),
+                        'phone'        => (string)($savedCustomer['phone'] ?? ($parsed['phone'] ?? $userPhone)),
+                        'cpf'          => (string)($savedCustomer['cpf'] ?? ($parsed['cpf'] ?? $userCpf)),
+                    ];
+                }
+            }
+        }
 
         $courseImage = '';
         if (!empty($course['image'])) {
@@ -219,6 +262,8 @@ class CheckoutController
             'userName'             => $userName,
             'userUsername'         => $userUsername,
             'userCpf'              => $userCpf,
+            'userPhone'            => $userPhone,
+            'savedCustomerAddress' => $savedCustomerAddress,
             'unitPrice'            => $unitPrice,
             'quantity'             => $quantity,
             'total'                => $total,
@@ -342,6 +387,16 @@ class CheckoutController
             $this->session->set('academy_student_cpf', $payerCpf);
         }
 
+        $payerPhone = trim((string)(
+            $request->input('payer_phone')
+            ?: $request->input('customer_phone')
+            ?: $this->session->get('customer_phone')
+            ?: ''
+        ));
+        if ($payerPhone !== '') {
+            $this->session->set('customer_phone', $payerPhone);
+        }
+
         $gateway = $this->gatewayRegistry->get($gatewayId);
         if (!$gateway) {
             return new JsonResponse(['success' => false, 'message' => 'Meio de pagamento inválido.'], 422);
@@ -400,6 +455,7 @@ class CheckoutController
                 'total'             => $total,
                 'customer_name'     => $studentName,
                 'customer_email'    => $studentEmail,
+                'customer_phone'    => $payerPhone,
                 'customer_document' => $payerCpf,
                 'gateway'           => $gateway->getId(),
                 'payment_method'    => $paymentMethod,
@@ -408,6 +464,27 @@ class CheckoutController
                 'shipping_method'   => $shippingMethod,
                 'shipping_price'    => $shippingPrice,
             ]);
+        }
+
+        // Salva endereço e contato no perfil do cliente para compras futuras se solicitado
+        $saveAddressToAccount = (bool)$request->input('save_address_to_account', true);
+        if ($isPhysicalOrDropship && $saveAddressToAccount && $this->dropshipCustomerAddressSaver !== null) {
+            $shipZipVal = trim((string)$request->input('shipping_zip', ''));
+            $shipStreetVal = trim((string)($request->input('shipping_street') ?? $request->input('shipping_address') ?? ''));
+            if ($shipZipVal !== '' && $shipStreetVal !== '') {
+                $customerIdToSave = (int)$this->session->get('customer_id', 0);
+                ($this->dropshipCustomerAddressSaver)($customerIdToSave, $studentEmail, [
+                    'shipping_zip'          => $shipZipVal,
+                    'shipping_address'      => $shipStreetVal,
+                    'shipping_number'       => trim((string)$request->input('shipping_number', '')),
+                    'shipping_complement'   => trim((string)$request->input('shipping_complement', '')),
+                    'shipping_neighborhood' => trim((string)$request->input('shipping_neighborhood', '')),
+                    'shipping_city'         => trim((string)$request->input('shipping_city', '')),
+                    'shipping_state'        => strtoupper(trim((string)$request->input('shipping_state', ''))),
+                    'phone'                 => $payerPhone,
+                    'cpf'                   => $payerCpf,
+                ]);
+            }
         }
 
         $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
@@ -447,6 +524,7 @@ class CheckoutController
                     'seller_info'       => $sellerInfo,
                     'customer_name'     => $studentName,
                     'customer_email'    => $studentEmail,
+                    'customer_phone'    => $payerPhone,
                     'customer_document' => $payerCpf,
                     'shipping_address'  => [
                         'zip'             => $request->input('shipping_zip'),
@@ -456,6 +534,7 @@ class CheckoutController
                         'neighborhood'    => $request->input('shipping_neighborhood'),
                         'city'            => $request->input('shipping_city'),
                         'state'           => $request->input('shipping_state'),
+                        'phone'           => $payerPhone,
                         'shipping_method' => $shippingMethod,
                         'shipping_price'  => $shippingPrice,
                     ],
