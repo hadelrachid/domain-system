@@ -27,6 +27,7 @@
                     <li><a href="<?= $baseUrl ?>/rastrear" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Rastrear Meu Pedido</a></li>
                     <li><a href="<?= $baseUrl ?>/termos" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Termos de Uso &amp; Compra</a></li>
                     <li><a href="<?= $baseUrl ?>/privacidade" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Privacidade</a></li>
+                    <li><a href="javascript:void(0)" onclick="window.RachidDCookieConsent &amp;&amp; window.RachidDCookieConsent.open()" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Preferências de Cookies</a></li>
                     <li><a href="<?= $baseUrl ?>/politica-de-envio" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Política de Envio &amp; Prazos</a></li>
                     <li><a href="<?= $baseUrl ?>/sobre" style="color: #94a3b8; text-decoration: none;" onmouseover="this.style.color='#F0D060'" onmouseout="this.style.color='#94a3b8'">Sobre a RachidD.com</a></li>
                 </ul>

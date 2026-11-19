@@ -20,5 +20,6 @@
     "commerce": false,
     "DomainCommerce": true,
     "domain_drop": true,
-    "DomainDrop": true
+    "DomainDrop": true,
+    "cookie_consent": true
 }
