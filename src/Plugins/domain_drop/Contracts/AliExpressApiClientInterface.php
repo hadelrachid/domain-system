@@ -54,4 +54,14 @@ interface AliExpressApiClientInterface
         string $serviceName = 'CAINIAO',
         string $toArea = 'BR'
     ): array;
+
+    /**
+     * Consulta a lista e árvore oficial de categorias diretamente da AliExpress Open Platform.
+     *
+     * @param int|string $categoryId ID da categoria pai (0 para todas as categorias raiz e árvore completa)
+     * @param string $language Idioma oficial retornado pelo AliExpress (padrão 'pt')
+     * @param bool $forceRefresh Se verdadeiro, ignora o cache local e busca na API remota
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array;
 }

@@ -158,6 +158,53 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         ];
     }
 
+    public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array
+    {
+        $langKey = strtolower(trim($language)) ?: 'pt';
+        $cacheFile = dirname(__DIR__, 4) . '/storage/cache/aliexpress_categories_' . $langKey . '.json';
+
+        if (!$forceRefresh && file_exists($cacheFile)) {
+            $mtime = filemtime($cacheFile);
+            // Cache oficial de 7 dias (categorias de e-commerce global são altamente estáveis)
+            if ((time() - $mtime) < 604800) {
+                $cached = json_decode((string)file_get_contents($cacheFile), true);
+                if (is_array($cached) && !empty($cached)) {
+                    return $cached;
+                }
+            }
+        }
+
+        try {
+            $response = $this->execute('aliexpress.ds.category.get', [
+                'category_id' => (string)$categoryId,
+                'language'    => $langKey,
+            ]);
+
+            $categories = $response['resp_result']['result']['categories']
+                ?? ($response['result']['categories']
+                ?? ($response['aliexpress_ds_category_get_response']['resp_result']['result']['categories'] ?? []));
+
+            if (is_array($categories) && !empty($categories)) {
+                $dir = dirname($cacheFile);
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0777, true);
+                }
+                file_put_contents($cacheFile, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                return $categories;
+            }
+        } catch (Throwable $e) {
+            // Em caso de instabilidade na conexão, utiliza cache em disco se existir
+            if (file_exists($cacheFile)) {
+                $cached = json_decode((string)file_get_contents($cacheFile), true);
+                if (is_array($cached) && !empty($cached)) {
+                    return $cached;
+                }
+            }
+        }
+
+        return [];
+    }
+
     /**
      * Algoritmo Oficial de Assinatura IOP da AliExpress Open Platform.
      * 1. Ordena parâmetros alfabeticamente por chave (ksort).
