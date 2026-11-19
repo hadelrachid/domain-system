@@ -448,7 +448,11 @@ class MercadoPagoGateway implements PaymentGatewayInterface
             'auto_return'          => 'approved',
             'external_reference'   => $orderRef,
             'notification_url'     => $baseUrl . '/webhook/payment/mercadopago',
-            'statement_descriptor' => 'ACADEMY',
+            'statement_descriptor' => 'RACHIDD',
+            'payment_methods'      => [
+                'installments'         => 12,
+                'default_installments' => 1,
+            ],
         ];
 
         try {
