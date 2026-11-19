@@ -637,8 +637,8 @@
                         <i class="fas fa-sync-alt" id="batchSyncHeaderIcon"></i>
                     </div>
                     <div>
-                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Sincronização de Imagens em Fila</h3>
-                        <div style="font-size: 12px; color: #94a3b8;">Atualização produto por produto com o AliExpress sem travar o navegador</div>
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #fff;">Sincronização de Imagens &amp; Ofertas do Dia (Black Friday)</h3>
+                        <div style="font-size: 12px; color: #94a3b8;">Varredura completa com o AliExpress: fotos em alta definição e preços atualizados pela regra oficial 2x</div>
                     </div>
                 </div>
                 <button type="button" onclick="closeBatchSyncModal()" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 4px; line-height: 1;">&times;</button>
@@ -1329,7 +1329,8 @@
                         batchSyncedCount++;
                         item.images_count = data.count || (Array.isArray(data.images) ? data.images.length : 1);
                         document.getElementById('batchStatSynced').textContent = batchSyncedCount;
-                        appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} atualizado com sucesso! ${item.images_count} imagens em Full HD.`, 'success');
+                        const priceLog = data.sale_formatted ? ` • Preço Venda: ${data.sale_formatted}` : '';
+                        appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} atualizado com sucesso! ${item.images_count} fotos${priceLog}`, 'success');
                         updateCardImagesUi(item.id, data.main_image_url || '', data.images || []);
                     } else {
                         batchFailedCount++;

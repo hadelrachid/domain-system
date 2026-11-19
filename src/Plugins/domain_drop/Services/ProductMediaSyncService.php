@@ -50,9 +50,24 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         $polishedTitle = $this->aiEnricher->polishTitle($scraped->rawTitle, $scraped->category);
         $slug = $existing->slug ?: $this->slugify($polishedTitle . '-' . substr($sourceId, -4));
 
-        // Conversão de preço caso o scraper tenha pego cotação atualizada
+        // Conversão e atualização de preço com base na oferta ativa do fornecedor (Black Friday / Promoção do Dia)
+        // Regra Oficial do Lojista: 2x o produto (Custo + Custo / 100% markup sem embutir frete)
+        $costBrl = (float)($scraped->attributes['cost_price_brl'] ?? 0.0);
         $costUsd = $scraped->costPriceUsd > 0 ? $scraped->costPriceUsd : $existing->costPriceUsd;
-        $saleBrl = $this->currencyConverter->calculateSalePrice($costUsd);
+
+        if ($costBrl <= 0.0 && $costUsd > 0.0) {
+            $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
+            $costBrl = $costUsd * ($rate > 0 ? $rate : 5.75);
+        }
+        if ($costBrl <= 0.0) {
+            $costBrl = (float)($existing->attributes['cost_price_brl'] ?? 0.0);
+        }
+
+        if ($costBrl > 0.0 && method_exists($this->currencyConverter, 'calculateSalePriceFromBrl')) {
+            $saleBrl = $this->currencyConverter->calculateSalePriceFromBrl($costBrl, 100.0);
+        } else {
+            $saleBrl = $this->currencyConverter->calculateSalePrice($costUsd);
+        }
 
         // Galeria com todas as imagens reais raspadas
         $allImages = $scraped->getAllImages();
