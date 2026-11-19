@@ -932,7 +932,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_id' => '1005013507767839',
                     'product_title' => 'Relógio Inteligente Esportivo Militar AMOLED Pro Display GPS IP68',
                     'category_name' => 'Eletrônicos & Gadget',
-                    'target_sale_price' => '22.00',
+                    'cost_price_brl' => 52.59,
+                    'target_sale_price' => '9.15',
                     'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S7401a0230b174d39906c9426dedb874eS.jpg',
                     'images' => [
                         'https://ae-pic-a1.aliexpress-media.com/kf/S7401a0230b174d39906c9426dedb874eS.jpg',
