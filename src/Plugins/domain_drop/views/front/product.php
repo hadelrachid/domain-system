@@ -248,7 +248,7 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
                                 <div>
                                     <div style="font-size: 12.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">
                                         <span>⚡</span> <span>Envio Expresso Prioritário (Sedex)</span>
-                                        <span style="font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(69,243,255,0.12); color: #45f3ff; font-weight: 600;">
+                                        <span id="product-shipping-weight-badge" style="font-size: 11px; padding: 1px 6px; border-radius: 4px; background: rgba(69,243,255,0.12); color: #45f3ff; font-weight: 600;">
                                             <?= htmlspecialchars($productFormattedWeight) ?>
                                         </span>
                                     </div>
@@ -257,7 +257,7 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
                                     </div>
                                 </div>
                                 <div style="text-align: right; padding-left: 10px;">
-                                    <span style="font-size: 12.5px; font-weight: 800; color: #45f3ff;">+ R$ <?= number_format($productExpressPrice, 2, ',', '.') ?></span>
+                                    <span id="product-shipping-express-badge" style="font-size: 12.5px; font-weight: 800; color: #45f3ff;">+ R$ <?= number_format($productExpressPrice, 2, ',', '.') ?></span>
                                 </div>
                             </div>
                         </div>
@@ -548,7 +548,26 @@ function updateLightbox() {
 
 // Controle de Quantidade na página de detalhes do produto
 var productUnitPriceBrl = <?= json_encode((float)$product->salePriceBrl) ?>;
+var productUnitWeightInGrams = <?= (int)$productWeightGrams ?>;
 var productCheckoutBaseUrl = <?= json_encode($checkoutUrl, JSON_UNESCAPED_SLASHES) ?>;
+
+function calcProductExpressShipping(qty) {
+    var totalWeight = productUnitWeightInGrams * Math.max(1, qty);
+    if (totalWeight <= 300) return 19.90;
+    if (totalWeight <= 1000) return 29.90;
+    if (totalWeight <= 2000) return 39.90;
+    var extraKg = Math.ceil((totalWeight - 2000) / 1000);
+    return Math.round((39.90 + (extraKg * 10.00)) * 100) / 100;
+}
+
+function getProductFormattedWeight(qty) {
+    var totalGrams = productUnitWeightInGrams * Math.max(1, qty);
+    if (totalGrams >= 1000) {
+        var kg = totalGrams / 1000;
+        return (totalGrams % 1000 === 0 ? kg.toFixed(0) : kg.toFixed(1)).replace('.', ',') + ' kg';
+    }
+    return totalGrams + 'g';
+}
 
 // Matriz de Variações e SKUs (Padrão SKU Matrix / AliExpress SDK)
 var productVariants = <?= json_encode(array_map(fn($v) => $v->toArray(), $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
@@ -736,6 +755,31 @@ function syncProductQuantity() {
         } else {
             subtotalEl.style.display = 'none';
         }
+    }
+
+    // Atualiza dinamicamente o badge de peso e preço do frete Sedex para a quantidade selecionada
+    var weightBadge = document.getElementById('product-shipping-weight-badge');
+    var expressBadge = document.getElementById('product-shipping-express-badge');
+    if (weightBadge) {
+        var formattedWeight = getProductFormattedWeight(qty);
+        var totalGrams = productUnitWeightInGrams * qty;
+        if (qty > 1) {
+            weightBadge.textContent = qty + 'x ' + productUnitWeightInGrams + 'g (' + formattedWeight + ')';
+        } else {
+            weightBadge.textContent = formattedWeight;
+        }
+    }
+    if (expressBadge) {
+        var dynamicExpressPrice = calcProductExpressShipping(qty);
+        var totalGrams = productUnitWeightInGrams * qty;
+        var extraNote = '';
+        if (totalGrams > 2000) {
+            var extraKg = Math.ceil((totalGrams - 2000) / 1000);
+            extraNote = ' (+' + extraKg + 'kg extra)';
+        } else if (totalGrams > 300 && productUnitWeightInGrams <= 300) {
+            extraNote = ' (peso acumulado)';
+        }
+        expressBadge.textContent = '+ R$ ' + dynamicExpressPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + extraNote;
     }
 }
 

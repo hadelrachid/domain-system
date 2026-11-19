@@ -200,7 +200,7 @@ $baseUrl = $baseUrl ?? '';
         </div>
 
         <p style="font-size: 0.82rem; color: #94a3b8; margin: 10px 0 0 0; line-height: 1.5;">
-            💡 <em>Nota de Transparência:</em> Se nas especificações do vendedor do produto não constar peso explícito, aplica-se o padrão seguro de produto leve (até 300g), mantendo a tarifa inicial base de <strong>R$ 19,90</strong>. Tanto a página do produto quanto o checkout exibem o peso estimado e recalculam o valor em tempo real se você alterar a quantidade de itens.
+            💡 <em>Regra de Acúmulo por Quantidade e Peso Excedente:</em> O cálculo do frete considera o <strong>peso total acumulado da remessa</strong> (peso unitário &times; quantidade comprada). Por exemplo: ao comprar 3 unidades de um conjunto de chaves de 220g (total de <strong>660g</strong>), o frete Sedex enquadra-se automaticamente na faixa de 301g a 1.000g (R$ 29,90). Caso a soma total ultrapasse os 2.000g (2 kg), cada quilo adicional ou fração acrescenta <strong>+ R$ 10,00</strong> ao Sedex. O cliente visualiza o peso somado e o valor exato tanto na página do produto quanto no checkout.
         </p>
     </div>
 

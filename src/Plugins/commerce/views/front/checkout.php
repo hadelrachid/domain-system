@@ -554,12 +554,22 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             }
 
             var expBadge = document.getElementById('checkout_express_price_badge');
+            var totalGrams = unitWeightInGrams * currentQty;
+            var extraNote = '';
+            if (totalGrams > 2000) {
+                var extraKg = Math.ceil((totalGrams - 2000) / 1000);
+                extraNote = ' (+' + extraKg + 'kg extra)';
+            }
             if (expBadge) {
-                expBadge.textContent = '+ R$ ' + formatBrlAmount(currentExpressPrice);
+                expBadge.textContent = '+ R$ ' + formatBrlAmount(currentExpressPrice) + extraNote;
             }
             var weightBadge = document.getElementById('checkout_weight_badge');
             if (weightBadge) {
-                weightBadge.textContent = getFormattedWeightForQty(currentQty);
+                if (currentQty > 1) {
+                    weightBadge.textContent = currentQty + 'x ' + unitWeightInGrams + 'g (' + getFormattedWeightForQty(currentQty) + ')';
+                } else {
+                    weightBadge.textContent = getFormattedWeightForQty(currentQty);
+                }
             }
 
             updateOrderTotalsUI();

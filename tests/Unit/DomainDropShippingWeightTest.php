@@ -123,6 +123,44 @@ final class DomainDropShippingWeightTest extends TestCase
         $this->assertSame(39.90, $adapter->getExpressShippingPrice(6));
     }
 
+    public function testQuantityScaleWithItemWeighing220gExceedingWeightLimits(): void
+    {
+        $dto = new DropshipProductDto(
+            aliexpressId: '1005013345247302',
+            title: 'Conjunto De Chaves De Fenda Com Catraca 66 Em 1',
+            slug: 'conjunto-chaves-fenda-catraca-66-em-1',
+            costPriceUsd: 12.00,
+            salePriceBrl: 119.80,
+            mainImageUrl: 'https://example.com/chaves.jpg',
+            category: 'Ferramentas & Acessórios',
+            description: '<p>Kit completo com 66 ponteiras e catraca reversível.</p>',
+            attributes: ['peso' => '220g']
+        );
+
+        $adapter = new DropshipProductPurchasableAdapter($dto);
+
+        // 1 unidade: 220g <= 300g -> Faixa 1 (R$ 19,90)
+        $this->assertSame(220, $adapter->getWeightInGrams());
+        $this->assertSame('220g', $adapter->getFormattedWeight(1));
+        $this->assertSame(19.90, $adapter->getExpressShippingPrice(1));
+
+        // 2 unidades: 220g + 220g = 440g (> 300g e <= 1000g) -> Faixa 2 (R$ 29,90)
+        $this->assertSame('440g', $adapter->getFormattedWeight(2));
+        $this->assertSame(29.90, $adapter->getExpressShippingPrice(2));
+
+        // 3 unidades: 220g * 3 = 660g (> 300g e <= 1000g) -> Faixa 2 (R$ 29,90)
+        $this->assertSame('660g', $adapter->getFormattedWeight(3));
+        $this->assertSame(29.90, $adapter->getExpressShippingPrice(3));
+
+        // 5 unidades: 220g * 5 = 1100g (1,1 kg - > 1000g e <= 2000g) -> Faixa 3 (R$ 39,90)
+        $this->assertSame('1,1 kg', $adapter->getFormattedWeight(5));
+        $this->assertSame(39.90, $adapter->getExpressShippingPrice(5));
+
+        // 10 unidades: 220g * 10 = 2200g (2,2 kg - ultrapassa 2kg em 200g) -> Faixa 4 (R$ 39,90 + 10,00 = R$ 49,90)
+        $this->assertSame('2,2 kg', $adapter->getFormattedWeight(10));
+        $this->assertSame(49.90, $adapter->getExpressShippingPrice(10));
+    }
+
     public function testEnrichedDescriptionInjectsEstimatedWeightAndCleansInternalKeys(): void
     {
         $rawDesc = '<div class="domain-drop-product-description">'
