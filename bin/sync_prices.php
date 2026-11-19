@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/bootstrap.php';
+$app = require_once dirname(__DIR__) . '/bootstrap.php';
+$app->boot();
 
 use DomainSystem\Plugins\domain_drop\Repositories\PdoDropshipCatalogRepository;
 use DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService;
 use DomainSystem\Plugins\domain_drop\Services\CurrencyConverterService;
+use DomainSystem\Core\Contracts\DatabaseConnectionInterface;
 
 /**
  * Script CLI de Sincronização Periódica de Preços e Ofertas do Vendedor (Black Friday / Super Deals).
@@ -21,7 +23,7 @@ echo "  Rastreamento de Ofertas do Vendedor & Promoções Ativas" . PHP_EOL;
 echo "========================================================" . PHP_EOL;
 
 try {
-    $db = \DomainSystem\Core\Database::getInstance()->getPdo();
+    $db = $app->getContainer()->make(DatabaseConnectionInterface::class)->getPdo();
 } catch (\Throwable $e) {
     echo "Erro ao conectar ao banco de dados: " . $e->getMessage() . PHP_EOL;
     exit(1);
@@ -31,7 +33,7 @@ $repo = new PdoDropshipCatalogRepository($db);
 $scraper = new AliExpressLinkScraperService();
 $currency = new CurrencyConverterService();
 
-$products = $repo->findAll(100);
+$products = $repo->list([], 100);
 echo "Total de produtos no catálogo para monitorar: " . count($products) . PHP_EOL . PHP_EOL;
 
 $updatedCount = 0;
