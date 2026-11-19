@@ -585,11 +585,12 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
 
         function updateOrderTotalsUI() {
             var formatted = getCurrentFormattedTotal();
+            var subtotalFormatted = formatBrlAmount(unitPrice * currentQty);
             var qtyEl = document.getElementById('checkout_qty_display');
             var subEl = document.getElementById('checkout_subtotal_val');
             var totEl = document.getElementById('checkout_total_val');
             if (qtyEl) qtyEl.textContent = String(currentQty);
-            if (subEl) subEl.textContent = 'R$ ' + formatted;
+            if (subEl) subEl.textContent = 'R$ ' + subtotalFormatted;
             if (totEl) totEl.textContent = 'R$ ' + formatted;
             selectPaymentMethod(selectedMethod, selectedGateway);
         }
