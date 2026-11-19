@@ -312,6 +312,63 @@ final class DropshipProductDto
     }
 
     /**
+     * Retorna a descrição do produto enriquecida para exibição na loja.
+     * Insere o Peso Estimado nas Especificações Técnicas e limpa termos de controle interno do sistema.
+     */
+    public function getEnrichedDescription(): string
+    {
+        $desc = $this->description;
+        $weightInGrams = $this->getEstimatedWeightInGrams();
+        $formattedWeight = $this->getFormattedWeight(1);
+
+        $weightLabel = $weightInGrams <= 300
+            ? "{$formattedWeight} (Envio Leve até 300g)"
+            : "{$formattedWeight}";
+
+        $weightLi = '<li><strong>Peso Estimado:</strong> ' . htmlspecialchars($weightLabel) . '</li>';
+
+        $isNational = !empty($this->attributes['origem_brasil']) || (($this->attributes['ship_from'] ?? '') === 'BR');
+        $origemLi = $isNational
+            ? '<li><strong>Origem do Envio:</strong> Estoque Nacional (Brasil) 🇧🇷</li>'
+            : '<li><strong>Origem do Envio:</strong> Importação Oficial com Rastreio 🌐</li>';
+
+        // 1. Se já contém bloco de Especificações Técnicas no HTML:
+        if (str_contains($desc, 'Especificações Técnicas') && preg_match('/<ul[^>]*>(.*?)<\/ul>/is', $desc, $ulMatch)) {
+            $ulContent = $ulMatch[1];
+
+            // Remove chaves de controle interno que não devem aparecer cruas para o comprador
+            $cleanUl = preg_replace('/<li><strong>(?:curadoria_nota|termometro_demanda|ship_from|origem_brasil|vendas_informadas)\s*:?<\/strong>.*?<\/li>\s*/iu', '', $ulContent);
+
+            // Se ainda não tiver Peso / Weight na lista, insere o Peso Estimado
+            if (!preg_match('/(?:peso|weight)/iu', $cleanUl)) {
+                $cleanUl = rtrim($cleanUl) . "\n" . $weightLi;
+            }
+
+            // Se ainda não tiver Origem do Envio na lista, insere
+            if (!preg_match('/Origem do Envio/iu', $cleanUl)) {
+                $cleanUl = rtrim($cleanUl) . "\n" . $origemLi;
+            }
+
+            return str_replace($ulMatch[0], '<ul style="margin:0; padding-left:20px; font-size:13px; color:#cbd5e1; line-height:1.7;">' . $cleanUl . '</ul>', $desc);
+        }
+
+        // 2. Se não contém bloco de especificações mas tem descrição
+        if (!empty($desc)) {
+            $specsBlock = '
+    <div style="margin: 20px 0; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="margin-top:0; color:#45f3ff; font-size:14px; text-transform:uppercase;">📐 Especificações Técnicas</h4>
+        <ul style="margin:0; padding-left:20px; font-size:13px; color:#cbd5e1; line-height:1.7;">
+            ' . $weightLi . '
+            ' . $origemLi . '
+        </ul>
+    </div>';
+            return $desc . $specsBlock;
+        }
+
+        return $desc;
+    }
+
+    /**
      * Converte string com número e unidade de peso para gramas inteiras.
      */
     private function parseWeightStringToGrams(string $weightStr): int

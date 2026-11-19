@@ -66,15 +66,49 @@ class AiProductEnricherService implements AiProductEnricherInterface
 
         $specsHtml = '';
         if (!empty($attributes)) {
-            $specsHtml .= '<div style="margin: 20px 0; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">';
-            $specsHtml .= '<h4 style="margin-top:0; color:#45f3ff; font-size:14px; text-transform:uppercase;">📐 Especificações Técnicas</h4>';
-            $specsHtml .= '<ul style="margin:0; padding-left:20px; font-size:13px; color:#cbd5e1; line-height:1.7;">';
+            $ignoredKeys = [
+                'curadoria_nota', 'termometro_demanda', 'ship_from', 'origem_brasil',
+                'vendas_informadas', 'variants', 'variation_axes', 'properties', 'seller_id',
+                'shop_id', 'seller_name', 'store_name'
+            ];
+
+            $lis = [];
+            $hasWeight = false;
+
             foreach ($attributes as $k => $v) {
+                $kStr = trim((string)$k);
+                $kLower = strtolower($kStr);
+                if (in_array($kLower, $ignoredKeys, true)) {
+                    continue;
+                }
                 if (is_scalar($v) && trim((string)$v) !== '') {
-                    $specsHtml .= '<li><strong>' . htmlspecialchars((string)$k) . ':</strong> ' . htmlspecialchars((string)$v) . '</li>';
+                    if (preg_match('/(?:peso|weight)/i', $kStr)) {
+                        $hasWeight = true;
+                    }
+                    $lis[] = '<li><strong>' . htmlspecialchars($kStr) . ':</strong> ' . htmlspecialchars((string)$v) . '</li>';
                 }
             }
-            $specsHtml .= '</ul></div>';
+
+            if (!$hasWeight) {
+                $rawWeight = (string)($attributes['weight'] ?? ($attributes['peso'] ?? ''));
+                if ($rawWeight === '') {
+                    $rawWeight = '200g (Envio Leve até 300g)';
+                }
+                $lis[] = '<li><strong>Peso Estimado:</strong> ' . htmlspecialchars($rawWeight) . '</li>';
+            }
+
+            $isNational = !empty($attributes['origem_brasil']) || (($attributes['ship_from'] ?? '') === 'BR');
+            $lis[] = $isNational
+                ? '<li><strong>Origem do Envio:</strong> Estoque Nacional (Brasil) 🇧🇷</li>'
+                : '<li><strong>Origem do Envio:</strong> Importação Oficial com Rastreio 🌐</li>';
+
+            if (!empty($lis)) {
+                $specsHtml .= '<div style="margin: 20px 0; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">';
+                $specsHtml .= '<h4 style="margin-top:0; color:#45f3ff; font-size:14px; text-transform:uppercase;">📐 Especificações Técnicas</h4>';
+                $specsHtml .= '<ul style="margin:0; padding-left:20px; font-size:13px; color:#cbd5e1; line-height:1.7;">';
+                $specsHtml .= implode("\n", $lis);
+                $specsHtml .= '</ul></div>';
+            }
         }
 
         return <<<HTML

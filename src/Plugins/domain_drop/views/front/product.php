@@ -326,7 +326,7 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
             Descrição do Produto
         </h2>
         <div style="font-size: 15px; line-height: 1.8; color: #cbd5e1;">
-            <?= $product->description ?>
+            <?= method_exists($product, 'getEnrichedDescription') ? $product->getEnrichedDescription() : $product->description ?>
         </div>
     </div>
 

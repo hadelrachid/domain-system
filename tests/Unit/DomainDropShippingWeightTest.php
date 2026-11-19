@@ -122,4 +122,46 @@ final class DomainDropShippingWeightTest extends TestCase
         $this->assertSame('1,2 kg', $adapter->getFormattedWeight(6));
         $this->assertSame(39.90, $adapter->getExpressShippingPrice(6));
     }
+
+    public function testEnrichedDescriptionInjectsEstimatedWeightAndCleansInternalKeys(): void
+    {
+        $rawDesc = '<div class="domain-drop-product-description">'
+            . '<div style="margin:20px 0;"><h4>📐 Especificações Técnicas</h4><ul>'
+            . '<li><strong>Classificação:</strong> 🔞 Adulto (+18)</li>'
+            . '<li><strong>Material:</strong> Silicone Clínico Macio</li>'
+            . '<li><strong>curadoria_nota:</strong> 4.9 ★</li>'
+            . '<li><strong>ship_from:</strong> BR</li>'
+            . '<li><strong>origem_brasil:</strong> 1</li>'
+            . '</ul></div></div>';
+
+        $dto = new DropshipProductDto(
+            aliexpressId: '1005011988220011',
+            title: 'Bola Vibratória Elétrica De Amendoim Silicone Clínico',
+            slug: 'bola-vibratoria-silicone-clinico',
+            costPriceUsd: 11.00,
+            salePriceBrl: 119.90,
+            mainImageUrl: 'https://example.com/silicone.jpg',
+            category: 'Sex Shop & Produtos Adultos (+18)',
+            description: $rawDesc,
+            attributes: [
+                'Classificação' => '🔞 Adulto (+18)',
+                'Material' => 'Silicone Clínico Macio',
+                'origem_brasil' => 1
+            ]
+        );
+
+        $enriched = $dto->getEnrichedDescription();
+
+        // Deve conter o Peso Estimado
+        $this->assertStringContainsString('<strong>Peso Estimado:</strong>', $enriched);
+        $this->assertStringContainsString('200g (Envio Leve até 300g)', $enriched);
+
+        // Deve conter Origem do Envio legível
+        $this->assertStringContainsString('<strong>Origem do Envio:</strong> Estoque Nacional (Brasil) 🇧🇷', $enriched);
+
+        // Deve ter removido termos técnicos crus
+        $this->assertStringNotContainsString('curadoria_nota', $enriched);
+        $this->assertStringNotContainsString('ship_from', $enriched);
+        $this->assertStringNotContainsString('origem_brasil:</strong> 1', $enriched);
+    }
 }
