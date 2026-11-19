@@ -61,6 +61,41 @@ $baseUrl = $baseUrl ?? '';
             font-weight: 700;
             margin-bottom: 10px;
         }
+        .ds-shipping-table-wrap {
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+        }
+        .ds-shipping-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+        .ds-shipping-table th {
+            background: rgba(240, 208, 96, 0.12);
+            color: #F0D060;
+            padding: 12px 14px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.86rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ds-shipping-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: #cbd5e1;
+            font-size: 0.88rem;
+        }
+        .ds-shipping-table tr:last-child td {
+            border-bottom: none;
+        }
+        .ds-shipping-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
     </style>
 
     <div class="ds-policy-hero">
@@ -95,6 +130,78 @@ $baseUrl = $baseUrl ?? '';
                 <li><strong>Compras acima de US$ 50:</strong> recolhimento antecipado na origem para desembaraço prioritário na Receita Federal, evitando retenções prolongadas.</li>
             </ul>
         </div>
+    </div>
+
+    <div class="ds-policy-card" style="margin-bottom: 24px; border-color: rgba(69,243,255,0.3);">
+        <span class="ds-policy-badge" style="background:rgba(69,243,255,0.12); color:#45f3ff;">TRANSPARÊNCIA LOGÍSTICA</span>
+        <h2>⚡ Modalidades de Frete &amp; Tabela de Cálculo por Peso (Sedex)</h2>
+        <p>
+            No momento de finalizar a compra, oferecemos duas opções oficiais de envio para garantir total flexibilidade, rapidez e economia:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 16px 0 20px;">
+            <div style="background: rgba(0,210,132,0.06); border: 1px solid rgba(0,210,132,0.3); border-radius: 8px; padding: 14px;">
+                <div style="font-weight: 700; color: #00d284; font-size: 0.95rem; margin-bottom: 6px;">
+                    📦 Frete Padrão com Rastreamento — GRÁTIS
+                </div>
+                <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+                    Disponível para todo o Brasil em 100% dos produtos minerados, com código oficial rastreável nos Correios e transportadoras.
+                </div>
+            </div>
+            <div style="background: rgba(69,243,255,0.06); border: 1px solid rgba(69,243,255,0.3); border-radius: 8px; padding: 14px;">
+                <div style="font-weight: 700; color: #45f3ff; font-size: 0.95rem; margin-bottom: 6px;">
+                    ⚡ Envio Expresso Prioritário (Sedex)
+                </div>
+                <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+                    Despacho no mesmo dia útil com fila prioritária de triagem, prioridade aduaneira e seguro integral de transporte.
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 0.95rem; color: #fff; margin: 18px 0 8px 0; font-weight: 700;">
+            📐 Como o Frete Expresso é calculado com base no Vendedor e nos Correios:
+        </h3>
+        <p style="font-size: 0.88rem; margin-bottom: 12px;">
+            O valor do frete expresso é determinado de forma <strong>dinâmica e justa</strong> através do <strong>peso real do produto</strong> informado nas especificações técnicas e descrições do vendedor do AliExpress, multiplicado pela quantidade de unidades da remessa:
+        </p>
+
+        <div class="ds-shipping-table-wrap">
+            <table class="ds-shipping-table">
+                <thead>
+                    <tr>
+                        <th style="min-width: 170px;">Faixa de Peso Total</th>
+                        <th style="min-width: 150px; text-align: center;">Valor do Frete Expresso</th>
+                        <th style="min-width: 260px;">Exemplos de Produtos / Volume</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong style="color: #fff;">Até 300g</strong></td>
+                        <td style="text-align: center;"><span style="color: #45f3ff; font-weight: 800; font-size: 0.95rem;">R$ 19,90</span></td>
+                        <td>Lingeries (1 un), fones de ouvido, bijuterias, cases, pulseiras</td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color: #fff;">301g até 1.000g (1 kg)</strong></td>
+                        <td style="text-align: center;"><span style="color: #45f3ff; font-weight: 800; font-size: 0.95rem;">R$ 29,90</span></td>
+                        <td>Moletons, calçados leves, ou 2 unidades de lingerie (400g)</td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color: #fff;">1.001g até 2.000g (2 kg)</strong></td>
+                        <td style="text-align: center;"><span style="color: #45f3ff; font-weight: 800; font-size: 0.95rem;">R$ 39,90</span></td>
+                        <td>Mini projetores, drones com controle, múltiplos itens no pedido</td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color: #fff;">Acima de 2.000g (2 kg)</strong></td>
+                        <td style="text-align: center;"><span style="color: #45f3ff; font-weight: 800; font-size: 0.95rem;">R$ 39,90 + R$ 10,00/kg extra</span></td>
+                        <td>Maletas de ferramentas, equipamentos pesados (ex: 3,5 kg = R$ 59,90)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: 10px 0 0 0; line-height: 1.5;">
+            💡 <em>Nota de Transparência:</em> Se nas especificações do vendedor do produto não constar peso explícito, aplica-se o padrão seguro de produto leve (até 300g), mantendo a tarifa inicial base de <strong>R$ 19,90</strong>. Tanto a página do produto quanto o checkout exibem o peso estimado e recalculam o valor em tempo real se você alterar a quantidade de itens.
+        </p>
     </div>
 
     <div class="ds-policy-card" style="margin-bottom: 18px;">
