@@ -98,7 +98,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         $t = mb_strtolower(trim($title), 'UTF-8');
 
         // 1. Moda Íntima e Lingeries (Precedência alta sobre Moda geral para evitar falso-positivo)
-        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy)\b/iu', $t)) {
+        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy|meia-calça|meia calça|meia calca|meia-calca|meia arrastão|meia arrastao|cueca|cuecas|boxer|slip|corpete|cinta modeladora|peças íntimas|pecas intimas)\b/iu', $t)) {
             return self::CAT_LINGERIE;
         }
 
@@ -108,7 +108,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         }
 
         // 3. Moda, Roupas & Vestuário (Geral)
-        if (preg_match('/\b(casaco|casacos|jaqueta|jaquetas|corta-vento|corta vento|ciclismo|corrida secagem|impermeável masculino|capuz capa|moletom|calça|calca|camisa|camiseta|vestido|saia|bermuda|roupa|roupas|vestuário|vestuario)\b/iu', $t)) {
+        if (preg_match('/\b(casaco|casacos|jaqueta|jaquetas|corta-vento|corta vento|ciclismo|corrida secagem|impermeável masculino|capuz capa|moletom|calça|calca|camisa|camiseta|vestido|saia|bermuda|roupa|roupas|vestuário|vestuario|mochila|mochilas|bolsa|bolsas|carteira|carteiras|pochete|tênis|tenis|sapato|sapatos|sandália|sandalia|chinelo|chinelos|bota|botas|mocassim|calçado|calçados|calcado|calcados|meia|meias|invisível|invisivel|chaveiro|chaveiros|cinto|cintos|boné|bone|óculos|oculos)\b/iu', $t)) {
             return self::CAT_FASHION;
         }
 
@@ -128,12 +128,12 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         }
 
         // 7. Smartwatches & Áudio
-        if (preg_match('/\b(smartwatch|smartwatches|relógio inteligente|relogio inteligente|apple watch|amazfit|aurafit|pulseira homem de ferro|fone|fones|tws|headphone|earphone|microfone lapela|bluetooth anc)\b/iu', $t)) {
+        if (preg_match('/\b(smartwatch|smartwatches|relógio inteligente|relogio inteligente|apple watch|amazfit|aurafit|pulseira homem de ferro|fone|fones|tws|headphone|headphones|headset|headsets|earphone|microfone lapela|bluetooth anc|condução óssea|conducao ossea|over-ear|over ear|gamer)\b/iu', $t)) {
             return self::CAT_SMARTWATCH;
         }
 
         // 8. Beleza, Cuidados & Estilo
-        if (preg_match('/\b(secador|escova secadora|escova alisadora|alisador|modelador de cabelo|cabelo|curling|barbeador|barba|depilador|maquiagem|facial|pele)\b/iu', $t)) {
+        if (preg_match('/\b(secador|escova secadora|escova alisadora|alisador|modelador de cabelo|cabelo|curling|barbeador|barba|depilador|maquiagem|facial|pele|batom|batons|gloss|rímel|rimel|delineador|base líquida|base liquida|corretivo|pó compacto|po compacto|paleta de sombras|paleta sombras|blush|pincel|pincéis|pinceis|esponja maquiagem|lip tint)\b/iu', $t)) {
             return self::CAT_BEAUTY;
         }
 
@@ -157,7 +157,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         $clean = preg_replace('/[^\p{L}\p{N}\s&]/u', ' ', $lower) ?? $lower;
 
         // 1. Moda Íntima, Lingeries & Pijamas
-        if (str_contains($clean, 'lingerie') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã')) {
+        if (str_contains($clean, 'lingerie') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'meia calca') || str_contains($clean, 'meia calça') || str_contains($clean, 'cueca')) {
             return "(
                 category IN ('Moda Íntima, Lingeries & Pijamas', 'Moda Íntima', 'Lingeries', 'Lingerie')
                 OR category LIKE '%Lingerie%'
@@ -172,6 +172,13 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
                 OR title LIKE '%Pijama%'
                 OR title LIKE '%Baby Doll%'
                 OR title LIKE '%Renda Natalina%'
+                OR title LIKE '%Meia-Calça%'
+                OR title LIKE '%Meia Calça%'
+                OR title LIKE '%Meia Calca%'
+                OR title LIKE '%Arrastão%'
+                OR title LIKE '%Arrastao%'
+                OR title LIKE '%Cueca%'
+                OR title LIKE '%Boxer%'
             )";
         }
 
@@ -204,7 +211,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         }
 
         // 3. Moda, Roupas & Vestuário (exclui Lingerie para não canibalizar)
-        if (str_contains($clean, 'roupa') || str_contains($clean, 'vestuario') || str_contains($clean, 'vestuário') || str_contains($clean, 'moda') || str_contains($clean, 'casaco') || str_contains($clean, 'jaqueta')) {
+        if (str_contains($clean, 'roupa') || str_contains($clean, 'vestuario') || str_contains($clean, 'vestuário') || str_contains($clean, 'moda') || str_contains($clean, 'casaco') || str_contains($clean, 'jaqueta') || str_contains($clean, 'mochila') || str_contains($clean, 'bolsa') || str_contains($clean, 'carteira') || str_contains($clean, 'tenis') || str_contains($clean, 'tênis') || str_contains($clean, 'sapato') || str_contains($clean, 'calcado') || str_contains($clean, 'calçado')) {
             return "(
                 (
                     category IN ('Moda, Roupas & Vestuário', 'Roupas', 'Vestuário', 'Moda')
@@ -219,10 +226,21 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
                     OR title LIKE '%Moletom%'
                     OR title LIKE '%Camisa%'
                     OR title LIKE '%Calça%'
+                    OR title LIKE '%Mochila%'
+                    OR title LIKE '%Bolsa%'
+                    OR title LIKE '%Carteira%'
+                    OR title LIKE '%Tênis%'
+                    OR title LIKE '%Tenis%'
+                    OR title LIKE '%Sapato%'
+                    OR title LIKE '%Meia%'
+                    OR title LIKE '%Chaveiro%'
                 )
                 AND title NOT LIKE '%Lingerie%'
                 AND title NOT LIKE '%Sutiã%'
                 AND title NOT LIKE '%Calcinha%'
+                AND title NOT LIKE '%Meia-Calça%'
+                AND title NOT LIKE '%Meia Calça%'
+                AND title NOT LIKE '%Cueca%'
             )";
         }
 
@@ -336,7 +354,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         }
 
         // 8. Beleza, Cuidados & Estilo
-        if (str_contains($clean, 'beleza') || str_contains($clean, 'cabelo') || str_contains($clean, 'secador') || str_contains($clean, 'escova') || str_contains($clean, 'saude') || str_contains($clean, 'saúde') || str_contains($clean, 'cuidado')) {
+        if (str_contains($clean, 'beleza') || str_contains($clean, 'cabelo') || str_contains($clean, 'secador') || str_contains($clean, 'escova') || str_contains($clean, 'saude') || str_contains($clean, 'saúde') || str_contains($clean, 'cuidado') || str_contains($clean, 'maquiagem') || str_contains($clean, 'batom')) {
             return "(
                 category IN ('Beleza, Cuidados & Estilo', 'Beleza & Estilo', 'Saúde & Cuidados')
                 OR category LIKE '%Beleza%'
@@ -348,6 +366,14 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
                 OR title LIKE '%Cabelo%'
                 OR title LIKE '%Modelador%'
                 OR title LIKE '%Barbeador%'
+                OR title LIKE '%Maquiagem%'
+                OR title LIKE '%Batom%'
+                OR title LIKE '%Gloss%'
+                OR title LIKE '%Rímel%'
+                OR title LIKE '%Rimel%'
+                OR title LIKE '%Paleta%'
+                OR title LIKE '%Pincel%'
+                OR title LIKE '%Pincéis%'
             )";
         }
 
