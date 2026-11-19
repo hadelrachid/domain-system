@@ -29,6 +29,10 @@
         <div style="font-size: 0.9rem;">
             &copy; <?= date('Y') ?> Domain System. Todos os direitos reservados.
         </div>
+        <div style="font-size: 0.75rem; color: #64748b; margin-top: 8px; line-height: 1.5;">
+            67.761.709 MAURA PEREIRA DE AZEVEDO &bull; CNPJ: 67.761.709/0001-80<br>
+            Rua Antonio Vaz Santoro, 84, Casa - Residencial Altos do Bosque - São José dos Campos/SP - CEP 12239-853
+        </div>
     </div>
 </footer>
 

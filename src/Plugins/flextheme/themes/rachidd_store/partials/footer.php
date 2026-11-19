@@ -70,8 +70,16 @@
         </div>
 
         <!-- Bottom Line -->
-        <div class="footer-bottom-line" style="padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 12px; color: #64748b; line-height: 1.6;">
-            &copy; <?= date('Y') ?> RachidD.com. Todos os direitos reservados. Operado com ultraperformance pelo Domain System OS.
+        <div class="footer-bottom-line" style="padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 11px; color: #64748b; line-height: 1.6;">
+            <div style="margin-bottom: 5px; color: #94a3b8; font-size: 11px;">
+                <strong>67.761.709 MAURA PEREIRA DE AZEVEDO</strong> &bull; CNPJ: <strong>67.761.709/0001-80</strong>
+            </div>
+            <div style="margin-bottom: 8px; color: #64748b; font-size: 11px;">
+                Rua Antonio Vaz Santoro, 84, Casa &bull; Residencial Altos do Bosque &bull; São José dos Campos - SP &bull; CEP 12239-853 &bull; Atendimento: <a href="mailto:contato@rachidd.com" style="color: #F0D060; text-decoration: none;">contato@rachidd.com</a>
+            </div>
+            <div style="font-size: 10px; color: #475569;">
+                &copy; <?= date('Y') ?> RachidD.com. Todos os direitos reservados. Operado com ultraperformance pelo Domain System OS.
+            </div>
         </div>
     </div>
 </footer>
