@@ -11,126 +11,16 @@
  */
 ?>
 <style>
-    .domain-drop-store {
-        max-width: 1360px;
-        margin: 0 auto;
-        padding: 24px 15px 50px;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .store-hero-banner {
-        background: linear-gradient(135deg, rgba(212,175,55,0.12) 0%, rgba(20,24,30,0.85) 100%);
-        border: 1px solid rgba(212,175,55,0.3);
-        border-radius: 16px;
-        padding: 35px 20px;
-        margin-bottom: 28px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
-    .store-combobox-toolbar {
-        background: rgba(18,24,34,0.9);
-        border: 1px solid rgba(212,175,55,0.35);
-        border-radius: 12px;
-        padding: 14px 18px;
-        margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        flex-wrap: wrap;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-    }
-    .store-combobox-select {
-        background: #090d14;
-        border: 2px solid rgba(212,175,55,0.45);
-        color: #fff;
-        padding: 11px 16px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        outline: none;
-        transition: all 0.2s ease;
-        min-width: 260px;
-    }
-    .store-combobox-select:focus {
-        border-color: #F0D060;
-        box-shadow: 0 0 12px rgba(212,175,55,0.3);
-    }
-    .store-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 20px;
-    }
-    .store-card {
-        background: #111722;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-    }
-    .store-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 16px 32px rgba(0,0,0,0.6);
-        border-color: rgba(212,175,55,0.45);
-    }
-
-    /* 100% Responsividade para Mobile (1 coluna) e Tablet (2 colunas) */
     @media (max-width: 900px) {
         .store-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
     }
-    @media (max-width: 768px) {
-        .store-combobox-toolbar {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 12px;
-            gap: 10px;
-        }
-        .store-combobox-select {
-            width: 100%;
-            min-width: 0 !important;
-            font-size: 14px;
-        }
-    }
     @media (max-width: 640px) {
         .store-grid {
             grid-template-columns: 1fr;
             gap: 16px;
-        }
-        .store-card h3 {
-            font-size: 15px !important;
-            line-height: 1.4 !important;
-        }
-        .store-card-price {
-            font-size: 21px !important;
-        }
-        .store-card-body {
-            padding: 16px !important;
-        }
-        .store-card-img-box {
-            height: 220px !important;
-        }
-        .store-card-actions a {
-            height: 40px !important;
-            font-size: 12.5px !important;
-        }
-        .store-hero-banner {
-            padding: 22px 14px;
-        }
-    }
-    @media (max-width: 340px) {
-        .store-card-actions {
-            flex-direction: column;
-            gap: 8px !important;
-        }
-        .store-card-actions a {
-            width: 100%;
         }
     }
 </style>
@@ -213,67 +103,15 @@
     </div>
 
     <script>
-    (function() {
-        var remainingSeconds = <?= (int)($remSeconds ?? 0) ?>;
-        var hElem = document.getElementById('dropTimerH');
-        var mElem = document.getElementById('dropTimerM');
-        var sElem = document.getElementById('dropTimerS');
-        var countdownInterval = null;
-        var storeAutoTickFired = false;
-
-        function triggerStoreAutoCycle() {
-            if (storeAutoTickFired) return;
-            storeAutoTickFired = true;
-            fetch('<?= $baseUrl ?>/dropship/cron-tick', {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
-                    remainingSeconds = data.seconds_remaining;
-                    if (data.rotated) {
-                        window.location.reload();
-                        return;
-                    }
-                    if (countdownInterval === null) {
-                        countdownInterval = setInterval(updateCountdown, 1000);
-                    }
-                }
-            })
-            .catch(function() {});
-        }
-
-        function updateCountdown() {
-            if (remainingSeconds <= 0) {
-                if (hElem) hElem.textContent = '00';
-                if (mElem) mElem.textContent = '00';
-                if (sElem) sElem.textContent = '00';
-                if (countdownInterval !== null) {
-                    clearInterval(countdownInterval);
-                    countdownInterval = null;
-                }
-                triggerStoreAutoCycle();
-                return;
-            }
-
-            remainingSeconds--;
-
-            var h = Math.floor(remainingSeconds / 3600);
-            var m = Math.floor((remainingSeconds % 3600) / 60);
-            var s = remainingSeconds % 60;
-
-            if (hElem) hElem.textContent = String(h).padStart(2, '0');
-            if (mElem) mElem.textContent = String(m).padStart(2, '0');
-            if (sElem) sElem.textContent = String(s).padStart(2, '0');
-        }
-
-        if (remainingSeconds <= 0) {
-            updateCountdown();
-        } else {
-            countdownInterval = setInterval(updateCountdown, 1000);
-        }
-    })();
+    if (window.initRachidDCycleCountdown) {
+        window.initRachidDCycleCountdown({
+            remainingSeconds: <?= (int)($remSeconds ?? 0) ?>,
+            hElementId: 'dropTimerH',
+            mElementId: 'dropTimerM',
+            sElementId: 'dropTimerS',
+            cronUrl: '<?= $baseUrl ?>/dropship/cron-tick'
+        });
+    }
     </script>
 
     <!-- Toolbar Responsivo de Seleção via COMBOBOX (Substitui barra de rolagem horizontal!) -->
@@ -495,41 +333,6 @@ window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
 window.addEventListener('popstate', function() {
     filterCatalogDynamically(window.location.href, false);
 });
-
-window.trackDropAction = function(productId, title, category, actionType) {
-    if (!productId) return;
-    var payload = JSON.stringify({
-        product_id: String(productId),
-        title: String(title || ''),
-        category: String(category || 'geral'),
-        action: String(actionType || 'view_details'),
-        timestamp: Math.floor(Date.now() / 1000)
-    });
-    var base = '<?= $baseUrl ?>';
-    var endpoint = (base ? base.replace(/\/+$/, '') : '') + '/api/drop/track-demand';
-    try {
-        if (navigator.sendBeacon) {
-            var blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon(endpoint, blob);
-        } else {
-            fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload,
-                keepalive: true
-            }).catch(function() {});
-        }
-    } catch(e) {
-        try {
-            fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload,
-                keepalive: true
-            }).catch(function() {});
-        } catch(err) {}
-    }
-};
 
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash === '#produtos' || (window.location.search && window.location.search.indexOf('cat=') !== -1)) {

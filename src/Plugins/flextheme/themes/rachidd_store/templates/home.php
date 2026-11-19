@@ -29,53 +29,8 @@ try {
 }
 
 // 2. Fallback de produtos minerados virais caso o catálogo ainda esteja iniciando
-if (empty($catalogProducts)) {
-    $fallbackItems = [
-        [
-            'id' => 1,
-            'slug' => 'smartwatch-ultra-series-9-titanium',
-            'title' => 'Smartwatch Ultra Series 9 Titanium AMOLED NFC Monitor Cardíaco',
-            'category' => 'Smartwatches & Áudio',
-            'image' => 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&auto=format&fit=crop&q=80',
-            'price' => 189.90,
-            'ref_price' => 289.90,
-            'rating' => 4.9,
-            'sales' => 1420
-        ],
-        [
-            'id' => 2,
-            'slug' => 'fone-tws-pro-noise-cancelling-bluetooth-53',
-            'title' => 'Fone TWS Pro ANC Cancelamento Ativo de Ruído Bluetooth 5.3',
-            'category' => 'Smartwatches & Áudio',
-            'image' => 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop&q=80',
-            'price' => 129.50,
-            'ref_price' => 210.00,
-            'rating' => 4.8,
-            'sales' => 980
-        ],
-        [
-            'id' => 3,
-            'slug' => 'mini-projetor-portatil-4k-smart-cinema-wifi',
-            'title' => 'Mini Projetor Portátil 4K Smart Cinema Android 11 Wi-Fi 6',
-            'category' => 'Tecnologia & Gadgets',
-            'image' => 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80',
-            'price' => 379.00,
-            'ref_price' => 599.00,
-            'rating' => 4.9,
-            'sales' => 640
-        ],
-        [
-            'id' => 4,
-            'slug' => 'luminaria-lua-mistica-aladim-led-rgb-touch',
-            'title' => 'Luminária Lua Mística Led 3D Touch 16 Cores com Controle Remoto',
-            'category' => 'Casa Inteligente',
-            'image' => 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600&auto=format&fit=crop&q=80',
-            'price' => 89.90,
-            'ref_price' => 149.90,
-            'rating' => 4.7,
-            'sales' => 850
-        ],
-    ];
+if (empty($catalogProducts) && isset($miningSvc)) {
+    $catalogProducts = $miningSvc->getCuratedTrendingFallback();
 }
 ?>
 
@@ -174,65 +129,13 @@ if (empty($catalogProducts)) {
         </div>
 
         <script>
-            (function() {
-                var homeCycleSeconds = <?= $homeRemSeconds ?>;
-                var el = document.getElementById('flash-timer');
-                var homeTimerInt = null;
-                var autoTickFired = false;
-
-                function triggerAutoCycleTick() {
-                    if (autoTickFired) return;
-                    autoTickFired = true;
-                    fetch('<?= $baseUrl ?>/dropship/cron-tick', {
-                        method: 'POST',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
-                            homeCycleSeconds = data.seconds_remaining;
-                            if (data.rotated) {
-                                window.location.reload();
-                                return;
-                            }
-                            if (homeTimerInt === null) {
-                                homeTimerInt = setInterval(updateHomeCycleTimer, 1000);
-                            }
-                        }
-                    })
-                    .catch(function() {});
-                }
-
-                function updateHomeCycleTimer() {
-                    if (!el) return;
-                    if (homeCycleSeconds <= 0) {
-                        el.textContent = '00:00:00';
-                        if (homeTimerInt !== null) {
-                            clearInterval(homeTimerInt);
-                            homeTimerInt = null;
-                        }
-                        triggerAutoCycleTick();
-                        return;
-                    }
-                    homeCycleSeconds--;
-                    var h = String(Math.floor(homeCycleSeconds / 3600)).padStart(2, '0');
-                    var m = String(Math.floor((homeCycleSeconds % 3600) / 60)).padStart(2, '0');
-                    var s = String(homeCycleSeconds % 60).padStart(2, '0');
-                    el.textContent = h + ':' + m + ':' + s;
-                }
-
-                if (homeCycleSeconds > 0) {
-                    homeTimerInt = setInterval(updateHomeCycleTimer, 1000);
-                } else {
-                    triggerAutoCycleTick();
-                }
-
-                window.addEventListener('pageshow', function (evt) {
-                    if (evt && evt.persisted) {
-                        window.location.reload();
-                    }
+            if (window.initRachidDCycleCountdown) {
+                window.initRachidDCycleCountdown({
+                    remainingSeconds: <?= $homeRemSeconds ?>,
+                    singleElementId: 'flash-timer',
+                    cronUrl: '<?= $baseUrl ?>/dropship/cron-tick'
                 });
-            })();
+            }
         </script>
 
         <!-- Product Grid -->
@@ -319,62 +222,12 @@ if (empty($catalogProducts)) {
                     </article>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Fallback de demonstração caso ainda não tenha minerado itens -->
-                <?php foreach ($fallbackItems as $item): ?>
-                    <?php
-                    $fRating = (float)($item['rating'] ?? 5.0);
-                    $fStarsCount = (int)max(1, min(5, round($fRating)));
-                    $fStarsEmoji = str_repeat('⭐', $fStarsCount);
-                    ?>
-                    <article class="store-card">
-                        <div style="position: relative; width: 100%; height: 230px; background: #070a0e; overflow: hidden;">
-                            <a href="<?= $baseUrl ?>/loja">
-                                <img src="<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
-                            </a>
-                            <span style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 10px; padding: 3px 7px; border-radius: 4px;">
-                                DESTAQUE
-                            </span>
-                            <span style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 5px;">
-                                <?= $item['category'] ?>
-                            </span>
-                            <span style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.85); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);">
-                                <span><?= $fStarsEmoji ?></span>
-                                <span style="color: #fff; font-family: monospace;"><?= number_format($fRating, 1) ?></span>
-                            </span>
-                        </div>
-                        <div class="home-card-body">
-                            <div>
-                                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                    <a href="<?= $baseUrl ?>/loja" style="color: #fff; text-decoration: none;">
-                                        <?= htmlspecialchars($item['title']) ?>
-                                    </a>
-                                </h3>
-                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; font-size: 11.5px;">
-                                    <span style="letter-spacing: 1px; font-size: 12px;"><?= $fStarsEmoji ?></span>
-                                    <strong style="color: #fbbf24; font-family: monospace; font-size: 12px;"><?= number_format($fRating, 1) ?></strong>
-                                    <span style="color: #94a3b8; font-size: 11px;">• <strong style="color: #e2e8f0;"><?= $item['sales'] ?></strong> vendidos</span>
-                                </div>
-                                <div style="margin-bottom: 14px;">
-                                    <div style="font-size: 11px; color: #94a3b8; text-decoration: line-through;">
-                                        R$ <?= number_format($item['ref_price'], 2, ',', '.') ?>
-                                    </div>
-                                    <div style="font-size: 20px; font-weight: 700; color: #5cd67d; font-family: monospace;">
-                                        R$ <?= number_format($item['price'], 2, ',', '.') ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="home-card-actions">
-                                <a href="<?= $baseUrl ?>/loja" class="home-btn-details">
-                                    <span>🔍</span>
-                                    <span>Ver Detalhes</span>
-                                </a>
-                                <a href="<?= $baseUrl ?>/loja" class="home-btn-buy">
-                                    Ver Oferta ➔
-                                </a>
-                            </div>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(212,175,55,0.25); border-radius: 14px;">
+                    <span style="font-size: 32px; display: block; margin-bottom: 10px;">✨</span>
+                    <h3 style="color: #fff; margin: 0 0 6px 0; font-size: 18px;">Curadoria em Atualização Diária</h3>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0 0 16px 0;">Nosso robô autônomo está minerando novas oportunidades para o ciclo de 24 horas.</p>
+                    <a href="<?= $baseUrl ?>/loja" class="gold-button" style="padding: 10px 22px; font-size: 13px;">Explorar Loja Completa ➔</a>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -446,7 +299,7 @@ try {
                     </div>
                     <div style="position: relative;">
                         <input id="home-reg-pass" type="password" name="password" required minlength="6" placeholder="Crie uma Senha (mín. 6 dígitos) *" style="width: 100%; box-sizing: border-box; padding: 10px 38px 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; color: #fff; font-size: 13px;">
-                        <button type="button" onclick="(function(b){var i=document.getElementById('home-reg-pass');if(!i)return;var s=i.type==='password';i.type=s?'text':'password';b.textContent=s?'🙈':'👁️';b.style.color=s?'#F0D060':'#94a3b8';})(this)" aria-label="Mostrar ou ocultar senha" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;" title="Mostrar/ocultar senha">👁️</button>
+                        <button type="button" onclick="togglePasswordVisibility(this, 'home-reg-pass')" aria-label="Mostrar ou ocultar senha" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: inline-flex; align-items: center;" title="Mostrar/ocultar senha">👁️</button>
                     </div>
                     <div class="home-signup-actions">
                         <button type="submit" style="width: 100%; padding: 12px 16px; border: none; border-radius: 9px; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; font-weight: 800; font-size: 14px; cursor: pointer;">

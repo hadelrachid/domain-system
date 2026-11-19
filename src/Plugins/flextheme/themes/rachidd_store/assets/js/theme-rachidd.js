@@ -193,7 +193,7 @@
     });
 
     /* ==========================================================================
-       4. MÁSCARAS DE ENTRADA (CPF & TELEFONE)
+       4. MÁSCARAS DE ENTRADA (CPF & TELEFONE) & UTILITÁRIOS DE FORMULÁRIO
        ========================================================================== */
     window.homeMaskCpf = function(el) {
         if (!el) return;
@@ -212,6 +212,120 @@
         else if (v.length > 2) el.value = v.replace(/(\d{2})(\d{1,5})/, '($1) $2');
         else if (v.length > 0) el.value = '(' + v;
         else el.value = '';
+    };
+
+    window.togglePasswordVisibility = function(buttonEl, inputId) {
+        var input = document.getElementById(inputId);
+        if (!input) return;
+        var isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        if (buttonEl) {
+            buttonEl.textContent = isPass ? '🙈' : '👁️';
+            buttonEl.style.color = isPass ? '#F0D060' : '#94a3b8';
+        }
+    };
+
+    /* ==========================================================================
+       5. TELEMETRIA DE DEMANDA & CRONÔMETRO DE CICLO 24H (CONSOLIDADO)
+       ========================================================================== */
+    window.trackDropAction = function(productId, title, category, actionType) {
+        if (!productId) return;
+        var payload = JSON.stringify({
+            product_id: String(productId),
+            title: String(title || ''),
+            category: String(category || 'geral'),
+            action: String(actionType || 'view_details'),
+            timestamp: Math.floor(Date.now() / 1000)
+        });
+        var base = (window.RACHIDD_BASE_URL || '').replace(/\/+$/, '');
+        var endpoint = base + '/api/drop/track-demand';
+        try {
+            if (navigator.sendBeacon) {
+                var blob = new Blob([payload], { type: 'application/json' });
+                navigator.sendBeacon(endpoint, blob);
+            } else {
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(function() {});
+            }
+        } catch (e) {
+            try {
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(function() {});
+            } catch (err) {}
+        }
+    };
+
+    window.initRachidDCycleCountdown = function(cfg) {
+        if (!cfg) return;
+        var remSeconds = Math.max(0, parseInt(cfg.remainingSeconds, 10) || 0);
+        var singleElem = cfg.singleElementId ? document.getElementById(cfg.singleElementId) : null;
+        var hElem = cfg.hElementId ? document.getElementById(cfg.hElementId) : null;
+        var mElem = cfg.mElementId ? document.getElementById(cfg.mElementId) : null;
+        var sElem = cfg.sElementId ? document.getElementById(cfg.sElementId) : null;
+        var cronUrl = cfg.cronUrl || '/dropship/cron-tick';
+        var autoTickFired = false;
+        var intervalId = null;
+
+        function triggerTick() {
+            if (autoTickFired) return;
+            autoTickFired = true;
+            fetch(cronUrl, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
+                    remSeconds = data.seconds_remaining;
+                    if (data.rotated) {
+                        window.location.reload();
+                        return;
+                    }
+                    if (intervalId === null) {
+                        intervalId = setInterval(update, 1000);
+                    }
+                }
+            })
+            .catch(function() {});
+        }
+
+        function update() {
+            if (remSeconds <= 0) {
+                if (singleElem) singleElem.textContent = '00:00:00';
+                if (hElem) hElem.textContent = '00';
+                if (mElem) mElem.textContent = '00';
+                if (sElem) sElem.textContent = '00';
+                if (intervalId !== null) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+                triggerTick();
+                return;
+            }
+            remSeconds--;
+            var h = String(Math.floor(remSeconds / 3600)).padStart(2, '0');
+            var m = String(Math.floor((remSeconds % 3600) / 60)).padStart(2, '0');
+            var s = String(remSeconds % 60).padStart(2, '0');
+
+            if (singleElem) singleElem.textContent = h + ':' + m + ':' + s;
+            if (hElem) hElem.textContent = h;
+            if (mElem) mElem.textContent = m;
+            if (sElem) sElem.textContent = s;
+        }
+
+        if (remSeconds > 0) {
+            intervalId = setInterval(update, 1000);
+        } else {
+            triggerTick();
+        }
     };
 
 })();

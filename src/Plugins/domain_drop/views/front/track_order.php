@@ -262,4 +262,3 @@ $statusMap = [
         </ul>
     </div>
 </section>
-<script>document.title = 'Rastrear Meu Pedido — RachidD.com';</script>

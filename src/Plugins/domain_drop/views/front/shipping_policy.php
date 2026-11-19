@@ -231,4 +231,3 @@ $baseUrl = $baseUrl ?? '';
         </a>
     </div>
 </section>
-<script>document.title = 'Política de Envio & Prazos — RachidD.com';</script>
