@@ -212,7 +212,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
      *
      * @param array<int, mixed> $params
      */
-    public function buildSearchClause(string $search, array &$params): string
+    private function buildSearchClause(string $search, array &$params): string
     {
         $search = trim($search);
         if ($search === '') {

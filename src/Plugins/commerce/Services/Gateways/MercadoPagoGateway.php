@@ -589,7 +589,7 @@ class MercadoPagoGateway implements PaymentGatewayInterface
     /**
      * Constrói a payload EMV BR Code padrão Banco Central do Brasil.
      */
-    public function buildPixEmvPayload(
+    private function buildPixEmvPayload(
         string $pixKey,
         float $amount,
         string $orderRef,
