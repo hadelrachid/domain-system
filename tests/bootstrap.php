@@ -12,3 +12,11 @@ spl_autoload_register(function ($class) {
 });
 
 define('DOMAIN_SYSTEM_ROOT', dirname(__DIR__));
+
+if (!defined('DS_VERSION')) {
+    $composerData = json_decode((string)file_get_contents(dirname(__DIR__) . '/composer.json'), true);
+    define('DS_VERSION', (string)($composerData['version'] ?? '2.7.1'));
+}
+if (!defined('DS_OS_VERSION')) {
+    define('DS_OS_VERSION', '2.7');
+}
