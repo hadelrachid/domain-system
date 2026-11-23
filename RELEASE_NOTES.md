@@ -1,3 +1,22 @@
+## 🚀 Domain-System OS v2.7.4 — Resiliência OAuth2 AliExpress & SameSite Cookie Lax
+
+Esta versão **v2.7.4** resolve a preservação de sessão e o fluxo de redirecionamento no retorno da autorização OAuth 2.0 do AliExpress em ambientes de produção (como Hostinger), aplicando rigorosamente os princípios **SOLID** e a **Inversão de Dependência (DIP)**.
+
+### 📦 Correções & Melhorias no DomainDrop & Core
+- **Padronização de Cookie de Sessão com `SameSite=Lax`:**
+  - Em `src/Core/Security/SessionManager.php`, o cookie de sessão `DS_SESS_*` foi padronizado para `'samesite' => 'Lax'`. Isso permite que o navegador envie o cookie de sessão durante o redirecionamento top-level GET do AliExpress (`https://api-sg.aliexpress.com` -> `https://rachidd.com/admin/dropship/callback`), mantendo o usuário autenticado no painel.
+- **Allowlist nos Hooks de Segurança e Middlewares:**
+  - Atualizados `auth/Plugin.php`, `SystemAdmin/Plugin.php` e `AuthMiddleware.php` para incluir `/admin/dropship/callback` e `/admin/dropship/oauth/callback` na allowlist de rotas de callback de autenticação, evitando o descarte prematuro do código de autorização `?code=...` com redirecionamento antecipado para `/login`.
+- **Contrato Oficial do AliExpress Client (`AliExpressApiClientInterface`):**
+  - Declarados os métodos `getOAuthAuthorizeUrl()`, `createAccessToken()` e `refreshAccessToken()` na interface `AliExpressApiClientInterface`, permitindo injeção de dependência pura e substituição por mocks na suíte de testes.
+- **Tratamento Resiliente no Controlador (`DropshipAdminController`):**
+  - Implementado método atômico de persistência `saveConfig()` e injeção do `AliExpressApiClientInterface`.
+  - Tratamento inteligente: se a sessão estiver ativa, o usuário é redirecionado para `/admin/dropship/settings` com mensagem de sucesso; se houver isolamento temporário de sessão, o token é salvo com sucesso e o usuário é guiado ao `/login` preservando a mensagem de confirmação.
+- **Suíte de Testes:**
+  - Adicionados testes unitários específicos em `DomainDropHubTest` para validar a rejeição de `state` incorreto, a troca do código pelo token de acesso e a consistência da configuração gravada.
+
+---
+
 ## 🚀 Domain-System OS v2.7.3 — OAuth2 AliExpress, Estoque ao Vivo & Blindagem de Segurança
 
 Esta versão **v2.7.3** consolida o fluxo oficial **OAuth 2.0 Server-side** com o AliExpress, verificação de disponibilidade/estoque em tempo real, páginas dedicadas de moda íntima e sexshop, correções de variações de SKU e um ciclo completo de endurecimento de segurança nos três plugins (`DomainCommerce`, `Academy` e `DomainDrop`).

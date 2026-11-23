@@ -8,6 +8,13 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.7.4] - 2026-11-23
+### Fixed
+- **DomainDrop & Core — Resiliência OAuth2 AliExpress & SameSite Cookie Lax:**
+  - Padronização do cookie de sessão `DS_SESS_*` para `SameSite=Lax` no `SessionManager`, garantindo o envio do cookie de sessão em redirecionamentos cross-site top-level GET após autorização no AliExpress.
+  - Inclusão de `/admin/dropship/callback` e `/admin/dropship/oauth/callback` na allowlist de rotas em `auth/Plugin.php`, `SystemAdmin/Plugin.php` e `AuthMiddleware.php`, evitando interceptação precoce para a tela de login.
+  - Atualização do contrato `AliExpressApiClientInterface` (DIP / SOLID) e do `DropshipAdminController` com injeção de dependência e persistência atômica `saveConfig()`.
+
 ## [2.7.3] - 2026-11-23
 ### Added
 - **DomainDrop — OAuth 2.0 Server-side & Renovação Automática (`src/Plugins/domain_drop`):**

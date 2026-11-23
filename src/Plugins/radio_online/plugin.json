@@ -1,6 +1,6 @@
 {
     "name": "radio_online",
-    "version": "2.7.3",
+    "version": "2.7.4",
     "description": "Widget de rádio online com player interativo no Dashboard",
     "author": "Domain System",
     "core": false,
