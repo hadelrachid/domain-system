@@ -18,7 +18,7 @@ class SessionManagerTest extends TestCase
         $params = session_get_cookie_params();
         
         $this->assertTrue($params['httponly'], 'A sessão deve ter a flag HttpOnly habilitada');
-        $this->assertEquals('Strict', $params['samesite'], 'A sessão deve ter o SameSite=Strict');
+        $this->assertEquals('Lax', $params['samesite'], 'A sessão deve ter o SameSite=Lax');
         
         // Verifica se a flag strict_mode foi setada no INI
         $this->assertEquals('1', ini_get('session.use_strict_mode'), 'O session.use_strict_mode deve estar ativado');

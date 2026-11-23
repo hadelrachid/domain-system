@@ -762,6 +762,9 @@ class DomainDropHubTest extends TestCase
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
             public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array { return []; }
+            public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
+            public function createAccessToken(string $code): array { return []; }
+            public function refreshAccessToken(string $refreshToken): array { return []; }
         };
 
         $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
@@ -829,6 +832,9 @@ class DomainDropHubTest extends TestCase
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
             public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array { return []; }
+            public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
+            public function createAccessToken(string $code): array { return []; }
+            public function refreshAccessToken(string $refreshToken): array { return []; }
         };
 
         $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
@@ -1776,5 +1782,93 @@ class DomainDropHubTest extends TestCase
         $this->assertStringContainsString('response_type=code', $url);
         $this->assertStringContainsString('state=st_abc', $url);
         $this->assertStringContainsString(urlencode('https://meusite.com/admin/dropship/oauth/callback'), $url);
+    }
+
+    public function testOAuthCallbackRejectsMismatchedState(): void
+    {
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('get')->with('dropship_oauth_state', '')->willReturn('expected_state_123');
+        $session->expects($this->once())->method('remove')->with('dropship_oauth_state');
+        $session->expects($this->once())->method('setFlash')->with('error', $this->stringContains('state inválido'));
+
+        $tempDir = sys_get_temp_dir() . '/ds_oauth_test_' . uniqid();
+        @mkdir($tempDir . '/config/plugins', 0777, true);
+        file_put_contents($tempDir . '/config/plugins/domain_drop.json', json_encode([
+            'app_key' => 'test_key',
+            'app_secret' => 'test_sec'
+        ]));
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class),
+            miningService: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class),
+            currencyConverter: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            session: $session,
+            basePath: $tempDir
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(
+            query: ['code' => 'valid_code', 'state' => 'wrong_state'],
+            request: [],
+            server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/dropship/callback']
+        );
+
+        $response = $controller->oauthCallback($request);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $response);
+        $this->assertSame(302, $response->getStatusCode());
+    }
+
+    public function testOAuthCallbackExchangesCodeAndSavesTokenWhenSessionActive(): void
+    {
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('get')->with('dropship_oauth_state', '')->willReturn('valid_state');
+        $session->method('has')->with('user_id')->willReturn(true);
+        $session->expects($this->once())->method('setFlash')->with('success', $this->stringContains('Access Token salvo com sucesso'));
+
+        $tempDir = sys_get_temp_dir() . '/ds_oauth_test_' . uniqid();
+        @mkdir($tempDir . '/config/plugins', 0777, true);
+        $configFile = $tempDir . '/config/plugins/domain_drop.json';
+        file_put_contents($configFile, json_encode([
+            'app_key' => 'test_app_key',
+            'app_secret' => 'test_app_sec'
+        ]));
+
+        $mockClient = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $mockClient->method('createAccessToken')->with('oauth_code_123')->willReturn([
+            'access_token' => 'mocked_ae_access_token_xyz',
+            'refresh_token' => 'mocked_ae_refresh_token_abc',
+            'expires_in' => 2592000,
+            'account' => 'contato@rachidd.com'
+        ]);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class),
+            miningService: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class),
+            currencyConverter: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            session: $session,
+            basePath: $tempDir,
+            apiClient: $mockClient
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(
+            query: ['code' => 'oauth_code_123', 'state' => 'valid_state'],
+            request: [],
+            server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/dropship/callback']
+        );
+
+        $response = $controller->oauthCallback($request);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $response);
+        $this->assertSame(302, $response->getStatusCode());
+
+        // Verifica se o JSON foi devidamente atualizado com o token
+        $saved = json_decode((string)file_get_contents($configFile), true);
+        $this->assertSame('mocked_ae_access_token_xyz', $saved['access_token']);
+        $this->assertSame('mocked_ae_refresh_token_abc', $saved['refresh_token']);
+        $this->assertSame('contato@rachidd.com', $saved['oauth_account']);
+
+        // Limpa arquivo temporário
+        @unlink($configFile);
+        @rmdir($tempDir . '/config/plugins');
+        @rmdir($tempDir . '/config');
+        @rmdir($tempDir);
     }
 }

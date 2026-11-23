@@ -122,9 +122,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             return $menu;
         });
 
-        // 2.3. Blindagem de Segurança Global
+        // 2.3. Blindagem de Segurança Global (reserva exceções para OAuth callbacks e emergência)
         $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
-            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
+            $isOAuthCallback = str_starts_with($uri, '/admin/dropship/callback') || str_starts_with($uri, '/admin/dropship/oauth/callback');
+            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency') && !$isOAuthCallback) {
                 if (!$sessionManager->has('user_id')) {
                     $base = defined('BASE_URL') ? BASE_URL : '';
                     throw new \DomainSystem\Core\Exceptions\HttpResponseException(

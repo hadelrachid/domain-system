@@ -396,15 +396,20 @@ class DropshipAdminController
         $expectedState = (string)$this->session->get('dropship_oauth_state', '');
         $this->session->remove('dropship_oauth_state');
 
+        $isLoggedIn = $this->session->has('user_id');
+        $fallbackRedirect = $isLoggedIn
+            ? Response::redirect($baseUrl . '/admin/dropship/settings')
+            : Response::redirect($baseUrl . '/login?redirect=' . urlencode('/admin/dropship/settings'));
+
         if ($expectedState !== '' && ($state === '' || !hash_equals($expectedState, $state))) {
             $this->session->setFlash('error', 'Falha de segurança OAuth2 (state inválido). Tente conectar novamente.');
-            return Response::redirect($baseUrl . '/admin/dropship/settings');
+            return $fallbackRedirect;
         }
 
         if ($code === '') {
             $errDesc = trim((string)($request->input('error_description', '') ?: $request->input('error', 'Autorização cancelada ou código ausente.')));
             $this->session->setFlash('error', 'AliExpress OAuth2 não retornou o código de autorização: ' . $errDesc);
-            return Response::redirect($baseUrl . '/admin/dropship/settings');
+            return $fallbackRedirect;
         }
 
         $config = $this->loadConfig();
@@ -412,11 +417,11 @@ class DropshipAdminController
         $appSecret = trim((string)($config['app_secret'] ?? ''));
         if ($appKey === '' || $appSecret === '') {
             $this->session->setFlash('error', 'AppKey/AppSecret não configurados para concluir o OAuth2.');
-            return Response::redirect($baseUrl . '/admin/dropship/settings');
+            return $fallbackRedirect;
         }
 
         try {
-            $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+            $client = $this->apiClient ?? new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
                 appKey: $appKey,
                 appSecret: $appSecret,
                 gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
@@ -444,16 +449,23 @@ class DropshipAdminController
             }
             $this->saveConfig($config);
 
-            $this->session->setFlash('success', '✔️ Conta AliExpress autorizada via OAuth2! Access Token salvo com sucesso.');
+            $successMsg = '✔️ Conta AliExpress autorizada via OAuth2! Access Token salvo com sucesso.';
+            $this->session->setFlash('success', $successMsg);
         } catch (Throwable $e) {
             $this->session->setFlash('error', 'Falha ao trocar o código OAuth2 pelo Access Token: ' . $e->getMessage());
         }
 
-        return Response::redirect($baseUrl . '/admin/dropship/settings');
+        return $fallbackRedirect;
     }
 
     private function resolveOAuthCallbackUrl(string $baseUrl): string
     {
+        $config = $this->loadConfig();
+        $configuredUri = trim((string)($config['oauth_redirect_uri'] ?? ''));
+        if ($configuredUri !== '') {
+            return $configuredUri;
+        }
+
         if (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://')) {
             return rtrim($baseUrl, '/') . '/admin/dropship/callback';
         }
@@ -1306,5 +1318,14 @@ class DropshipAdminController
             'default_markup_percent' => 100.0,
             'min_profit_margin_brl' => 30.0,
         ];
+    }
+
+    private function saveConfig(array $config): void
+    {
+        $dir = dirname($this->configFile);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 }

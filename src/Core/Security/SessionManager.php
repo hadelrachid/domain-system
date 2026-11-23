@@ -46,7 +46,7 @@ class SessionManager implements SessionManagerInterface
                 'domain'   => '',         // Domínio atual
                 'secure'   => $isSecure,  // Apenas HTTPS
                 'httponly' => true,       // Inacessível via JavaScript (previne XSS)
-                'samesite' => 'Strict'    // Previne CSRF (não envia em requisições cross-site)
+                'samesite' => 'Lax'       // Padrão OWASP/RFC para suportar redirects OAuth2/SSO sem perder sessão
             ]);
 
             ini_set('session.use_strict_mode', 1);

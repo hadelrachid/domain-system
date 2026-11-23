@@ -48,8 +48,9 @@ class AuthMiddleware implements MiddlewareInterface
         $uri = strtok((string)$request->uri(), '?') ?: '/';
         $isAdminRoute = str_starts_with($uri, '/admin');
 
-        // Allowlist estrita de rotas públicas de infraestrutura de emergência
-        if ($uri === '/admin/emergency') {
+        // Allowlist estrita de rotas públicas de infraestrutura de emergência e callbacks de autenticação de provedores externos
+        $isOAuthCallback = str_starts_with($uri, '/admin/dropship/callback') || str_starts_with($uri, '/admin/dropship/oauth/callback');
+        if ($uri === '/admin/emergency' || $isOAuthCallback) {
             return $next($request);
         }
 

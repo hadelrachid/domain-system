@@ -400,8 +400,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/test-connection', [DropshipAdminController::class, 'testConnection'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/oauth/authorize', [DropshipAdminController::class, 'oauthAuthorize'], 'domain_drop', ['admin']);
-            $router->addRoute('GET', '/admin/dropship/oauth/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop', ['admin']);
-            $router->addRoute('GET', '/admin/dropship/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop', ['admin']);
+            $router->addRoute('GET', '/admin/dropship/oauth/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop');
+            $router->addRoute('GET', '/admin/dropship/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop');
+            $router->addRoute('GET', '/dropship/oauth/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop');
+            $router->addRoute('GET', '/dropship/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop');
             $router->addRoute('POST', '/admin/dropship/product/{id}/sync-images', [DropshipAdminController::class, 'syncImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/images', [DropshipAdminController::class, 'updateImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);

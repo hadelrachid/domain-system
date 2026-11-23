@@ -64,4 +64,23 @@ interface AliExpressApiClientInterface
      * @return array<int, array<string, mixed>>
      */
     public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array;
+
+    /**
+     * Gera a URL de autorização OAuth2 oficial do AliExpress.
+     */
+    public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string;
+
+    /**
+     * Troca o código de autorização OAuth2 por access_token e refresh_token.
+     *
+     * @return array<string, mixed>
+     */
+    public function createAccessToken(string $code): array;
+
+    /**
+     * Renova o access_token utilizando o refresh_token via OAuth2.
+     *
+     * @return array<string, mixed>
+     */
+    public function refreshAccessToken(string $refreshToken): array;
 }

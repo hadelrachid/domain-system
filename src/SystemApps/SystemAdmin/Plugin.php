@@ -80,7 +80,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // Prioridade 999 garante que executa DEPOIS de todos os outros plugins.
         // Se o plugin Auth estivesse vivo, ele já teria redirecionado via HttpResponseException.
         $runtime->onHook('router.before_dispatch', function(string $uri) use ($sessionManager) {
-            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency')) {
+            $isOAuthCallback = str_starts_with($uri, '/admin/dropship/callback') || str_starts_with($uri, '/admin/dropship/oauth/callback');
+            if (str_starts_with($uri, '/admin') && !str_starts_with($uri, '/admin/emergency') && !$isOAuthCallback) {
                 if (!$sessionManager->has('user_id')) {
                     $base = defined('BASE_URL') ? BASE_URL : '';
                     throw new \DomainSystem\Core\Exceptions\HttpResponseException(
