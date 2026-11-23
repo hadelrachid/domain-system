@@ -455,7 +455,7 @@ class DropshipAdminController
     private function resolveOAuthCallbackUrl(string $baseUrl): string
     {
         if (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://')) {
-            return rtrim($baseUrl, '/') . '/admin/dropship/oauth/callback';
+            return rtrim($baseUrl, '/') . '/admin/dropship/callback';
         }
         $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
@@ -463,7 +463,7 @@ class DropshipAdminController
         $scheme = $isHttps ? 'https' : 'http';
         $rawHost = (string)($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
         $host = preg_match('/^[a-zA-Z0-9.-]+(?::\d{1,5})?$/', $rawHost) ? $rawHost : 'localhost';
-        return $scheme . '://' . $host . $baseUrl . '/admin/dropship/oauth/callback';
+        return $scheme . '://' . $host . $baseUrl . '/admin/dropship/callback';
     }
 
     public function orders(Request $request): ResponseInterface

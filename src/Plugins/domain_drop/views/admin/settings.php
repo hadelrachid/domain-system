@@ -127,8 +127,8 @@
             $oauthScheme = $oauthIsHttps ? 'https' : 'http';
             $oauthHost = (string)($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
             $oauthCallbackDisplay = (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://'))
-                ? rtrim($baseUrl, '/') . '/admin/dropship/oauth/callback'
-                : ($oauthScheme . '://' . $oauthHost . $baseUrl . '/admin/dropship/oauth/callback');
+                ? rtrim($baseUrl, '/') . '/admin/dropship/callback'
+                : ($oauthScheme . '://' . $oauthHost . $baseUrl . '/admin/dropship/callback');
             ?>
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 6px; line-height: 1.5;">
                 Cadastre no App Console do AliExpress (<strong>Callback URL</strong>): <code style="color: #45f3ff; user-select: all;"><?= htmlspecialchars($oauthCallbackDisplay, ENT_QUOTES, 'UTF-8') ?></code>
