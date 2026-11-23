@@ -1788,6 +1788,7 @@ class DomainDropHubTest extends TestCase
     {
         $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
         $session->method('get')->with('dropship_oauth_state', '')->willReturn('expected_state_123');
+        $session->method('has')->with('user_id')->willReturn(true);
         $session->expects($this->once())->method('remove')->with('dropship_oauth_state');
         $session->expects($this->once())->method('setFlash')->with('error', $this->stringContains('state inválido'));
 
@@ -1864,6 +1865,55 @@ class DomainDropHubTest extends TestCase
         $this->assertSame('mocked_ae_access_token_xyz', $saved['access_token']);
         $this->assertSame('mocked_ae_refresh_token_abc', $saved['refresh_token']);
         $this->assertSame('contato@rachidd.com', $saved['oauth_account']);
+
+        // Limpa arquivo temporário
+        @unlink($configFile);
+        @rmdir($tempDir . '/config/plugins');
+        @rmdir($tempDir . '/config');
+        @rmdir($tempDir);
+    }
+
+    public function testOAuthCallbackRendersStatusViewWhenAnonymousSession(): void
+    {
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('get')->with('dropship_oauth_state', '')->willReturn('');
+        $session->method('has')->with('user_id')->willReturn(false);
+
+        $tempDir = sys_get_temp_dir() . '/ds_oauth_anon_' . uniqid();
+        @mkdir($tempDir . '/config/plugins', 0777, true);
+        $configFile = $tempDir . '/config/plugins/domain_drop.json';
+        file_put_contents($configFile, json_encode([
+            'app_key' => 'test_app_key',
+            'app_secret' => 'test_app_sec'
+        ]));
+
+        $mockClient = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $mockClient->method('createAccessToken')->with('oauth_code_anon')->willReturn([
+            'access_token' => 'anon_access_token_123',
+            'refresh_token' => 'anon_refresh_token_456',
+            'expires_in' => 2592000,
+            'account' => 'seller@rachidd.com'
+        ]);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class),
+            miningService: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class),
+            currencyConverter: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            session: $session,
+            basePath: $tempDir,
+            apiClient: $mockClient
+        );
+
+        $request = new \DomainSystem\Core\Http\Request(
+            query: ['code' => 'oauth_code_anon', 'state' => 'any_state'],
+            request: [],
+            server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/dropship/callback']
+        );
+
+        $response = $controller->oauthCallback($request);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\ViewResponse::class, $response);
+        $this->assertStringContainsString('AliExpress Conectado!', (string)$response->getContent());
+        $this->assertStringContainsString('seller@rachidd.com', (string)$response->getContent());
 
         // Limpa arquivo temporário
         @unlink($configFile);

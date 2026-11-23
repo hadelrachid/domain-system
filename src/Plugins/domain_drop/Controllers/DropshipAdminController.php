@@ -397,65 +397,100 @@ class DropshipAdminController
         $this->session->remove('dropship_oauth_state');
 
         $isLoggedIn = $this->session->has('user_id');
-        $fallbackRedirect = $isLoggedIn
-            ? Response::redirect($baseUrl . '/admin/dropship/settings')
-            : Response::redirect($baseUrl . '/login?redirect=' . urlencode('/admin/dropship/settings'));
+        $isSuccess = false;
+        $errorMessage = null;
+        $account = null;
+        $expiresInDays = 30;
 
         if ($expectedState !== '' && ($state === '' || !hash_equals($expectedState, $state))) {
-            $this->session->setFlash('error', 'Falha de segurança OAuth2 (state inválido). Tente conectar novamente.');
-            return $fallbackRedirect;
-        }
-
-        if ($code === '') {
+            $errorMessage = 'Falha de segurança OAuth2 (state inválido ou expirado). Tente conectar novamente.';
+        } elseif ($code === '') {
             $errDesc = trim((string)($request->input('error_description', '') ?: $request->input('error', 'Autorização cancelada ou código ausente.')));
-            $this->session->setFlash('error', 'AliExpress OAuth2 não retornou o código de autorização: ' . $errDesc);
-            return $fallbackRedirect;
+            $errorMessage = 'AliExpress OAuth2 não retornou o código de autorização: ' . $errDesc;
+        } else {
+            $config = $this->loadConfig();
+            $appKey = trim((string)($config['app_key'] ?? ''));
+            $appSecret = trim((string)($config['app_secret'] ?? ''));
+
+            if ($appKey === '' || $appSecret === '') {
+                $errorMessage = 'AppKey ou AppSecret não configurados para concluir a troca de token OAuth2.';
+            } else {
+                try {
+                    $client = $this->apiClient ?? new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                        appKey: $appKey,
+                        appSecret: $appSecret,
+                        gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+                    );
+                    $tokenData = $client->createAccessToken($code);
+                    $accessToken = trim((string)($tokenData['access_token'] ?? ''));
+                    if ($accessToken === '') {
+                        throw new \RuntimeException('Resposta do AliExpress não trouxe access_token válido.');
+                    }
+
+                    $config['access_token'] = $accessToken;
+                    if (!empty($tokenData['refresh_token'])) {
+                        $config['refresh_token'] = (string)$tokenData['refresh_token'];
+                    }
+                    $expiresIn = (int)($tokenData['expire_time'] ?? ($tokenData['expires_in'] ?? 2592000));
+                    $config['access_token_expires_at'] = $expiresIn > 1000000000 ? (int)($expiresIn / 1000) : (time() + max(60, $expiresIn));
+                    $expiresInDays = max(1, (int)round(($expiresIn > 1000000000 ? ($expiresIn / 1000 - time()) : $expiresIn) / 86400));
+
+                    if (!empty($tokenData['refresh_token_valid_time'])) {
+                        $rVal = (int)$tokenData['refresh_token_valid_time'];
+                        $config['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
+                    } elseif (!empty($tokenData['refresh_expires_in'])) {
+                        $config['refresh_token_expires_at'] = time() + max(0, (int)$tokenData['refresh_expires_in']);
+                    }
+                    if (!empty($tokenData['user_nick']) || !empty($tokenData['account'])) {
+                        $account = (string)($tokenData['account'] ?? $tokenData['user_nick']);
+                        $config['oauth_account'] = $account;
+                    }
+                    $this->saveConfig($config);
+                    $isSuccess = true;
+                } catch (Throwable $e) {
+                    $errorMessage = 'Falha ao trocar o código OAuth2 pelo Access Token: ' . $e->getMessage();
+                }
+            }
         }
 
-        $config = $this->loadConfig();
-        $appKey = trim((string)($config['app_key'] ?? ''));
-        $appSecret = trim((string)($config['app_secret'] ?? ''));
-        if ($appKey === '' || $appSecret === '') {
-            $this->session->setFlash('error', 'AppKey/AppSecret não configurados para concluir o OAuth2.');
-            return $fallbackRedirect;
-        }
-
+        // Auditoria em arquivo de log
         try {
-            $client = $this->apiClient ?? new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
-                appKey: $appKey,
-                appSecret: $appSecret,
-                gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+            $logDir = dirname($this->configFile, 3) . '/storage/logs';
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0755, true);
+            }
+            $logLine = sprintf(
+                "[%s] IP: %s | Code: %s | State: %s | Status: %s | Msg: %s\n",
+                date('Y-m-d H:i:s'),
+                (string)($request->server['REMOTE_ADDR'] ?? 'unknown'),
+                $code !== '' ? (substr($code, 0, 10) . '...') : 'empty',
+                $state,
+                $isSuccess ? 'SUCCESS' : 'ERROR',
+                $errorMessage ?? 'Access token exchanged and saved successfully'
             );
-            $tokenData = $client->createAccessToken($code);
-            $accessToken = trim((string)($tokenData['access_token'] ?? ''));
-            if ($accessToken === '') {
-                throw new \RuntimeException('Resposta do AliExpress não trouxe access_token.');
-            }
-
-            $config['access_token'] = $accessToken;
-            if (!empty($tokenData['refresh_token'])) {
-                $config['refresh_token'] = (string)$tokenData['refresh_token'];
-            }
-            $expiresIn = (int)($tokenData['expire_time'] ?? ($tokenData['expires_in'] ?? 2592000));
-            $config['access_token_expires_at'] = $expiresIn > 1000000000 ? (int)($expiresIn / 1000) : (time() + max(60, $expiresIn));
-            if (!empty($tokenData['refresh_token_valid_time'])) {
-                $rVal = (int)$tokenData['refresh_token_valid_time'];
-                $config['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
-            } elseif (!empty($tokenData['refresh_expires_in'])) {
-                $config['refresh_token_expires_at'] = time() + max(0, (int)$tokenData['refresh_expires_in']);
-            }
-            if (!empty($tokenData['user_nick']) || !empty($tokenData['account'])) {
-                $config['oauth_account'] = (string)($tokenData['account'] ?? $tokenData['user_nick']);
-            }
-            $this->saveConfig($config);
-
-            $successMsg = '✔️ Conta AliExpress autorizada via OAuth2! Access Token salvo com sucesso.';
-            $this->session->setFlash('success', $successMsg);
+            @file_put_contents($logDir . '/aliexpress_oauth.log', $logLine, FILE_APPEND);
         } catch (Throwable $e) {
-            $this->session->setFlash('error', 'Falha ao trocar o código OAuth2 pelo Access Token: ' . $e->getMessage());
         }
 
-        return $fallbackRedirect;
+        if ($isSuccess) {
+            $this->session->setFlash('success', '✔️ Conta AliExpress autorizada via OAuth2! Access Token salvo com sucesso.');
+        } else {
+            $this->session->setFlash('error', $errorMessage ?: 'Erro desconhecido na autorização OAuth2.');
+        }
+
+        if ($isLoggedIn) {
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        // Se a sessão interativa não estiver aberta no contexto cross-site, renderiza a tela visual informativa
+        ob_start();
+        $success = $isSuccess;
+        $error = $errorMessage;
+        $codeSnippet = $code !== '' ? (substr($code, 0, 12) . '...') : null;
+        include dirname(__DIR__) . '/views/admin/oauth_status.php';
+        $content = ob_get_clean();
+
+        return new ViewResponse($content ?: '', wrapLayout: false);
     }
 
     private function resolveOAuthCallbackUrl(string $baseUrl): string
@@ -1326,6 +1361,15 @@ class DropshipAdminController
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
-        @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $written = @file_put_contents($this->configFile, $json);
+        if ($written === false) {
+            @chmod($dir, 0775);
+            @chmod($this->configFile, 0664);
+            $written = @file_put_contents($this->configFile, $json);
+        }
+        if ($written === false) {
+            throw new \RuntimeException("Permissão negada ao gravar '{$this->configFile}'. Verifique as permissões de escrita na pasta 'config/plugins/'.");
+        }
     }
 }
