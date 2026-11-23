@@ -56,6 +56,7 @@ class AliExpressApiClient implements AliExpressApiClientInterface
 
         if ($token !== null && $token !== '') {
             $sysParams['session'] = $token;
+            $sysParams['access_token'] = $token;
         }
 
         // Combina parâmetros de sistema e de API para cálculo da assinatura
