@@ -765,6 +765,7 @@ class DomainDropHubTest extends TestCase
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }
+            public function getLastError(): ?string { return null; }
         };
 
         $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);
@@ -835,6 +836,7 @@ class DomainDropHubTest extends TestCase
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }
+            public function getLastError(): ?string { return null; }
         };
 
         $converter = new CurrencyConverterService(defaultMarkupPercent: 100.0, minProfitBrl: 30.0);

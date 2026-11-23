@@ -65,4 +65,31 @@ interface DropshipCatalogRepositoryInterface
      * @return array<int, string>
      */
     public function getCategories(): array;
+
+    /**
+     * Limpa o catálogo de produtos de forma segura.
+     * Se $preserveOrdered for true, preserva produtos vinculados a pedidos de clientes.
+     * Retorna o número de produtos removidos.
+     */
+    public function clearAll(bool $preserveOrdered = true): int;
+
+    /**
+     * Exclui apenas produtos que estão em rascunho / despublicados (status != 'published').
+     * Retorna o número de produtos removidos.
+     */
+    public function purgeDrafts(): int;
+
+    /**
+     * Publica todos os produtos em rascunho, tornando-os disponíveis para venda.
+     * Retorna o número de produtos atualizados.
+     */
+    public function publishAll(): int;
+
+    /**
+     * Localiza ofertas similares / outros vendedores para o mesmo tipo de produto ou categoria,
+     * ordenados pelo preço mais acessível (ascendente) para exibição comparativa.
+     * 
+     * @return array<int, DropshipProductDto>
+     */
+    public function findSimilarOffers(int $excludeId, string $category, string $title = '', int $limit = 4): array;
 }

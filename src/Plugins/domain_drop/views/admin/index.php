@@ -34,7 +34,19 @@
             </p>
         </div>
 
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="document.getElementById('modalClearCatalog').style.display='flex'" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease;">
+                <i class="fas fa-trash-alt"></i> Limpar Tudo
+            </button>
+            <form action="<?= $baseUrl ?>/admin/dropship/publish-drafts" method="POST" id="formPublishDrafts" style="margin: 0; display: inline;">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <button type="submit" style="background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #86efac; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease;">
+                    <i class="fas fa-bullhorn"></i> Publicar Todos (Ativar em Venda)
+                </button>
+            </form>
+            <button type="button" onclick="document.getElementById('modalAcquireNew').style.display='flex'" style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; border: none; padding: 9px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(212,175,55,0.3); transition: transform 0.2s ease;">
+                <i class="fas fa-bolt"></i> Adquirir Novos (24h)
+            </button>
             <a href="<?= $baseUrl ?>/admin/dropship/settings" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fas fa-sliders-h"></i> Configurações & API
             </a>
@@ -1550,5 +1562,96 @@
         function finishAndReload() {
             window.location.reload();
         }
+    </script>
+
+    <!-- Modal Limpar Catálogo -->
+    <div id="modalClearCatalog" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #1d2327; border: 1px solid rgba(239,68,68,0.4); border-radius: 12px; width: 100%; max-width: 520px; padding: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #ff6b6b; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-trash-alt"></i> Limpar Catálogo DomainDrop
+                </h3>
+                <button type="button" onclick="document.getElementById('modalClearCatalog').style.display='none'" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
+                Escolha a forma de limpeza do catálogo. <strong>Pedidos reais de clientes são sempre preservados</strong> por segurança e rastreabilidade fiscal.
+            </p>
+            <form action="<?= $baseUrl ?>/admin/dropship/clear-catalog" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; cursor: pointer;">
+                        <input type="radio" name="action" value="clear_all" checked style="margin-top: 3px;">
+                        <div>
+                            <strong style="color: #fff; font-size: 14px;">Zerar Catálogo Completo (Recomendado)</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">Limpa todos os itens não vinculados a pedidos, deixando o catálogo limpinho para a próxima aquisição de 100 itens.</div>
+                        </div>
+                    </label>
+                    <label style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; cursor: pointer;">
+                        <input type="radio" name="action" value="purge_drafts" style="margin-top: 3px;">
+                        <div>
+                            <strong style="color: #fff; font-size: 14px;">Purgar Apenas Rascunhos / Despublicados</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">Remove somente itens que não estão ativos para venda na loja, mantendo os produtos já publicados.</div>
+                        </div>
+                    </label>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('modalClearCatalog').style.display='none'" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                    <button type="submit" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; color: #fff; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-trash-alt"></i> Confirmar e Limpar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Adquirir Novos Itens (24h) -->
+    <div id="modalAcquireNew" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #1d2327; border: 1px solid rgba(212,175,55,0.4); border-radius: 12px; width: 100%; max-width: 520px; padding: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #FFE082; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-bolt"></i> Adquirir Novos Produtos (Ciclo 24 Horas)
+                </h3>
+                <button type="button" onclick="document.getElementById('modalAcquireNew').style.display='none'" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer;">✕</button>
+            </div>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
+                O motor autônomo irá buscar os produtos com maior reputação, volume de vendas e menor taxa de disputa nas 10 categorias oficiais do AliExpress. Todos os produtos entrarão <strong>100% como Publicados (Em Venda)</strong>.
+            </p>
+            <form action="<?= $baseUrl ?>/admin/dropship/acquire-new" method="POST" id="formAcquireNew">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; color: #94a3b8; font-size: 13px; margin-bottom: 6px;">Produtos por Categoria Oficial:</label>
+                    <select name="items_per_category" style="width: 100%; background: #0c0f12; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 14px;">
+                        <option value="10" selected>10 itens / categoria (100 produtos no total - Recomendado)</option>
+                        <option value="5">5 itens / categoria (50 produtos no total)</option>
+                        <option value="15">15 itens / categoria (150 produtos no total)</option>
+                        <option value="20">20 itens / categoria (200 produtos no total)</option>
+                    </select>
+                </div>
+                <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 14px; margin-bottom: 24px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="replace_catalog" value="1" checked style="width: 16px; height: 16px;">
+                        <span style="color: #FFE082; font-size: 13px; font-weight: 600;">
+                            Zerar catálogo anterior antes de minerar (mantém catálogo 100% limpo)
+                        </span>
+                    </label>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('modalAcquireNew').style.display='none'" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                    <button type="submit" id="btnSubmitAcquireNew" style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); border: none; color: #0b0f17; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(212,175,55,0.3);">
+                        <i class="fas fa-play"></i> Iniciar Mineração Limpa para 24h
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+    document.getElementById('formAcquireNew')?.addEventListener('submit', function() {
+        var b = document.getElementById('btnSubmitAcquireNew');
+        if (b) {
+            b.disabled = true;
+            b.style.opacity = '0.7';
+            b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adquirindo Novos Itens Limpos...';
+        }
+    });
     </script>
 </div>

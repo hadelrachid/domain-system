@@ -452,6 +452,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/product/{id}/images', [DropshipAdminController::class, 'updateImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/run-daily-cycle', [DropshipAdminController::class, 'runDailyCycle'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/clear-catalog', [DropshipAdminController::class, 'clearCatalog'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/publish-drafts', [DropshipAdminController::class, 'publishDrafts'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/acquire-new', [DropshipAdminController::class, 'acquireNew'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/save-pricing', [DropshipAdminController::class, 'savePricing'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/sync-queue', [DropshipAdminController::class, 'syncQueue'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);

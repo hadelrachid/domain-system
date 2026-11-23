@@ -391,6 +391,80 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         return array_values(array_unique(array_merge($canonicals, $dbCats)));
     }
 
+    public function clearAll(bool $preserveOrdered = true): int
+    {
+        if ($preserveOrdered) {
+            try {
+                // Preserva produtos vinculados a pedidos de clientes
+                $sql = "
+                    DELETE FROM domain_drop_catalog
+                    WHERE aliexpress_id NOT IN (
+                        SELECT aliexpress_product_id 
+                        FROM domain_drop_orders 
+                        WHERE aliexpress_product_id IS NOT NULL AND aliexpress_product_id != ''
+                    )
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute();
+                return $stmt->rowCount();
+            } catch (\Throwable $e) {
+                // Fallback se a tabela de pedidos ainda não tiver sido criada
+            }
+        }
+
+        $stmt = $this->pdo->prepare("DELETE FROM domain_drop_catalog");
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    public function purgeDrafts(): int
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM domain_drop_catalog WHERE status != 'published'");
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    public function publishAll(): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $stmt = $this->pdo->prepare("UPDATE domain_drop_catalog SET status = 'published', updated_at = ? WHERE status != 'published'");
+        $stmt->execute([$now]);
+        return $stmt->rowCount();
+    }
+
+    public function findSimilarOffers(int $excludeId, string $category, string $title = '', int $limit = 4): array
+    {
+        $limit = max(1, min(20, $limit));
+        $params = [$excludeId];
+
+        $where = ["status = 'published'", "id != ?"];
+
+        // 1. Prioriza filtro por categoria oficial
+        if ($category !== '') {
+            $catClause = $this->buildCategoryListClause($category, $params);
+            $where[] = $catClause;
+        }
+
+        $sql = "SELECT * FROM domain_drop_catalog WHERE " . implode(' AND ', $where) . " ORDER BY sale_price_brl ASC, orders_count DESC LIMIT {$limit}";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        // 2. Se a categoria tiver poucos itens, busca ofertas de produtos com alta reputação geral
+        if (count($rows) < $limit) {
+            $needed = $limit - count($rows);
+            $existingIds = array_merge([$excludeId], array_column($rows, 'id'));
+            $placeholders = implode(',', array_fill(0, count($existingIds), '?'));
+            $fallbackSql = "SELECT * FROM domain_drop_catalog WHERE status = 'published' AND id NOT IN ({$placeholders}) ORDER BY sale_price_brl ASC, rating DESC LIMIT {$needed}";
+            $fbStmt = $this->pdo->prepare($fallbackSql);
+            $fbStmt->execute($existingIds);
+            $fbRows = $fbStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $rows = array_merge($rows, $fbRows);
+        }
+
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
     /**
      * @param array<string, mixed> $row
      */

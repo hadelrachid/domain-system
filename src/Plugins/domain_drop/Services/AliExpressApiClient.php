@@ -22,6 +22,7 @@ class AliExpressApiClient implements AliExpressApiClientInterface
     private string $gatewayUrl;
     private int $timeout;
     private string $sdkVersion = 'iop-sdk-php-20220608';
+    private ?string $lastError = null;
 
     public function __construct(
         string $appKey,
@@ -34,6 +35,11 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         $this->appSecret = trim($appSecret);
         $this->gatewayUrl = rtrim($gatewayUrl, '/');
         $this->timeout = $timeout;
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array
@@ -52,21 +58,29 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'partner_id'  => $this->sdkVersion,
             'format'      => 'json',
             'simplify'    => 'true',
+            'v'           => '2.0',
         ];
 
         if ($token !== null && $token !== '') {
             $sysParams['session'] = $token;
-            $sysParams['access_token'] = $token;
+        }
+
+        // Filtra parâmetros nulos ou de string vazia para manter paridade exata com o cálculo de assinatura IOP
+        $cleanParams = [];
+        foreach ($params as $k => $v) {
+            if ($v !== null && $v !== '') {
+                $cleanParams[$k] = (string)$v;
+            }
         }
 
         // Combina parâmetros de sistema e de API para cálculo da assinatura
-        $allParams = array_merge($params, $sysParams);
+        $allParams = array_merge($cleanParams, $sysParams);
         $sysParams['sign'] = $this->generateSignature($apiMethod, $allParams);
 
         // Monta a Query String dos parâmetros de sistema
         $requestUrl = $this->gatewayUrl . '?' . http_build_query($sysParams);
 
-        return $this->sendHttpRequest($requestUrl, $params);
+        return $this->sendHttpRequest($requestUrl, $cleanParams);
     }
 
     public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string
@@ -188,27 +202,32 @@ class AliExpressApiClient implements AliExpressApiClientInterface
     {
         $sort = (string)($filters['sort'] ?? 'volume_desc');
         $mappedSort = match ($sort) {
-            'evaluate_rate_desc' => 'LAST_VOLUME_DESC',
-            'choice_desc'        => 'SALE_PRICE_ASC',
-            default              => 'LAST_VOLUME_DESC',
+            'evaluate_rate_desc', 'rating' => 'DSRratingDesc',
+            'price_asc'                    => 'priceAsc',
+            'price_desc'                   => 'priceDesc',
+            default                        => 'volumeDesc',
         };
 
         $params = [
-            'category_id'       => (string)($filters['category_id'] ?? ''),
-            'keywords'          => (string)($filters['keywords'] ?? 'trending'),
-            'page_size'         => (string)($filters['page_size'] ?? '20'),
-            'page_no'           => (string)($filters['page_no'] ?? '1'),
-            'sort'              => $mappedSort,
-            'feed_name'         => (string)($filters['feed_name'] ?? 'DS bestseller'),
-            'target_language'   => 'pt',
-            'target_currency'   => 'USD',
-            'ship_to_country'   => (string)($filters['ship_to_country'] ?? 'BR'),
-            'ship_from_country' => (string)($filters['ship_from_country'] ?? 'BR'),
+            'feed_name'       => (string)($filters['feed_name'] ?? 'DS bestseller'),
+            'target_language' => 'pt',
+            'target_currency' => 'USD',
+            'country'         => (string)($filters['country'] ?? ($filters['ship_to_country'] ?? 'BR')),
+            'page_size'       => (string)($filters['page_size'] ?? '20'),
+            'page_no'         => (string)($filters['page_no'] ?? '1'),
+            'sort'            => $mappedSort,
         ];
+
+        if (!empty($filters['category_id'])) {
+            $params['category_id'] = (string)$filters['category_id'];
+        }
 
         try {
             $response = $this->execute('aliexpress.ds.recommend.feed.get', $params, $this->accessToken);
+            $this->lastError = null;
         } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] searchProducts falhou: " . $e->getMessage());
             return [];
         }
 

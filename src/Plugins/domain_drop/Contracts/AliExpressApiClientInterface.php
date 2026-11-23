@@ -20,6 +20,11 @@ interface AliExpressApiClientInterface
     public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array;
 
     /**
+     * Retorna o último erro ocorrido em chamadas à API, se houver.
+     */
+    public function getLastError(): ?string;
+
+    /**
      * Consulta detalhes completos de um produto pelo ID do AliExpress.
      * 
      * @param string|int $productId ID numérico do produto no AliExpress

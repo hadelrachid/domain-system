@@ -1,7 +1,7 @@
 {
     "name": "Temas Visuais (Visual Themes)",
     "description": "Respons\u00e1vel por gerenciar o motor de temas escuros e paletas de cores do sistema.",
-    "version": "2.7.8",
+    "version": "2.7.9",
     "author": "Antigravity",
     "require": {
         "core": ">=1.0.0"

@@ -32,6 +32,33 @@ final class DomainDropSchemaEnsurer
         }
 
         try {
+            // Garante coluna period_year_month na tabela de demanda se a tabela já existir previamente
+            $driver = (string)$pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'sqlite') {
+                $checkDemand = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_product_demand'");
+                if ($checkDemand && $checkDemand->fetchColumn() !== false) {
+                    $dCols = $pdo->query("PRAGMA table_info(domain_drop_product_demand)");
+                    $dColNames = $dCols ? array_column($dCols->fetchAll(PDO::FETCH_ASSOC), 'name') : [];
+                    if (!in_array('period_year_month', $dColNames, true)) {
+                        $pdo->exec("ALTER TABLE domain_drop_product_demand ADD COLUMN period_year_month TEXT NOT NULL DEFAULT ''");
+                    }
+                    if (!in_array('demand_score', $dColNames, true)) {
+                        $pdo->exec("ALTER TABLE domain_drop_product_demand ADD COLUMN demand_score INTEGER NOT NULL DEFAULT 0");
+                    }
+                    if (!in_array('category_slug', $dColNames, true)) {
+                        $pdo->exec("ALTER TABLE domain_drop_product_demand ADD COLUMN category_slug TEXT NOT NULL DEFAULT 'geral'");
+                    }
+                }
+            } elseif ($driver === 'mysql') {
+                $checkDemand = $pdo->query("SHOW TABLES LIKE 'domain_drop_product_demand'");
+                if ($checkDemand && $checkDemand->fetchColumn() !== false) {
+                    $dCols = $pdo->query("SHOW COLUMNS FROM domain_drop_product_demand LIKE 'period_year_month'");
+                    if ($dCols && $dCols->fetchColumn() === false) {
+                        $pdo->exec("ALTER TABLE domain_drop_product_demand ADD COLUMN `period_year_month` VARCHAR(7) NOT NULL DEFAULT ''");
+                    }
+                }
+            }
+
             $migrationsDir = dirname(__DIR__) . '/migrations';
             foreach ([
                 '2026_11_10_000001_create_domain_drop_tables.php',

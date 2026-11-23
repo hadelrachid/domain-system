@@ -382,6 +382,14 @@ class DropshipFrontController
 
         $checkoutUrl = $baseUrl . '/checkout/produto/' . (int)$product->id;
 
+        // Busca ofertas alternativas / outros vendedores (estilo AliExpress, Amazon, Shopee)
+        $similarOffers = $this->catalogRepo->findSimilarOffers(
+            excludeId: (int)$product->id,
+            category: (string)$product->category,
+            title: (string)$product->title,
+            limit: 4
+        );
+
         ob_start();
         include dirname(__DIR__) . '/views/front/product.php';
         $content = (string)ob_get_clean();

@@ -337,6 +337,84 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
         </div>
     </div>
 
+    <!-- Other Sellers & Similar Offers Section (Amazon / AliExpress / Shopee comparison style) -->
+    <?php if (!empty($similarOffers) && is_array($similarOffers)): ?>
+        <div class="other-sellers-container" style="background: #171d22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 28px; margin-bottom: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px;">
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+                        <span>🏬</span> Outros Vendedores & Ofertas Mais Acessíveis
+                    </h2>
+                    <p style="margin: 0; font-size: 13px; color: #94a3b8;">
+                        Compare preços e condições de diferentes fornecedores parceiros para itens similares desta categoria.
+                    </p>
+                </div>
+                <span style="background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                    <?= count($similarOffers) ?> opções disponíveis
+                </span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <?php foreach ($similarOffers as $offer): ?>
+                    <?php
+                    $offerSeller = $offer->getSellerInfo();
+                    $isCheaper = $offer->salePriceBrl < $product->salePriceBrl;
+                    $diffAmount = abs($product->salePriceBrl - $offer->salePriceBrl);
+                    $offerImg = $offer->mainImageUrl ?: ($offer->images[0] ?? '');
+                    $offerUrl = $baseUrl . '/produto/' . htmlspecialchars($offer->slug);
+                    $offerCheckoutUrl = $baseUrl . '/checkout/produto/' . (int)$offer->id;
+                    ?>
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #0e1317; border: 1px solid <?= $isCheaper ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.06)' ?>; border-radius: 10px; padding: 14px 18px; gap: 16px; flex-wrap: wrap; transition: transform 0.2s ease, border-color 0.2s ease;">
+                        <!-- Thumbnail & Title -->
+                        <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 250px;">
+                            <div style="width: 56px; height: 56px; border-radius: 8px; overflow: hidden; background: #1a2228; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);">
+                                <img src="<?= htmlspecialchars($offerImg) ?>" alt="<?= htmlspecialchars($offer->title) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div>
+                                <a href="<?= $offerUrl ?>" style="color: #f1f5f9; text-decoration: none; font-size: 14px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                                    <?= htmlspecialchars($offer->title) ?>
+                                </a>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 12px; color: #94a3b8; flex-wrap: wrap;">
+                                    <span>Vendedor: <strong style="color: #cbd5e1;"><?= htmlspecialchars((string)($offerSeller['name'] ?? 'Fornecedor Oficial AliExpress')) ?></strong></span>
+                                    <span>•</span>
+                                    <span style="color: #F0D060;">★ <?= number_format($offer->rating, 1) ?></span>
+                                    <span>•</span>
+                                    <span><?= number_format($offer->ordersCount, 0, ',', '.') ?> vendas</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price & Badge -->
+                        <div style="text-align: right; min-width: 140px;">
+                            <div style="font-size: 18px; font-weight: 800; color: <?= $isCheaper ? '#4ade80' : '#fff' ?>;">
+                                R$ <?= number_format($offer->salePriceBrl, 2, ',', '.') ?>
+                            </div>
+                            <?php if ($isCheaper): ?>
+                                <div style="font-size: 11px; color: #4ade80; font-weight: 700; margin-top: 2px;">
+                                    Economize R$ <?= number_format($diffAmount, 2, ',', '.') ?>
+                                </div>
+                            <?php else: ?>
+                                <div style="font-size: 11px; color: #94a3b8;">
+                                    Envio Oficial Rastreado
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- CTA Actions -->
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <a href="<?= $offerUrl ?>" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap;">
+                                Ver Oferta
+                            </a>
+                            <a href="<?= $offerCheckoutUrl ?>" style="background: <?= $isCheaper ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ff4747 0%, #e03232 100%)' ?>; color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                Comprar
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
 </div>
 
 <!-- LIGHTBOX MODAL FULLSCREEN FOR VISUAL BOOK -->

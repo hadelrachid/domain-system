@@ -108,11 +108,16 @@ class DropshipAdminController
         $category = (string)$request->input('category', 'Eletrônicos');
         $limit = max(1, min(100, (int)$request->input('limit', 10)));
         $sort = (string)$request->input('sort', 'volume_desc');
+        $replaceCatalog = (bool)$request->input('replace_catalog', false);
 
         try {
+            if ($replaceCatalog) {
+                $this->catalogRepo->clearAll(preserveOrdered: true);
+            }
             $mined = $this->miningService->mineTrendingProducts($category, $limit, true, $sort);
+            $this->catalogRepo->publishAll();
             $count = count($mined);
-            $this->session->setFlash('success', "🚀 Mineração concluída com sucesso! {$count} produtos com alta reputação minerados e adicionados ao catálogo.");
+            $this->session->setFlash('success', "🚀 Mineração concluída com sucesso! {$count} produtos com alta reputação minerados e ativos para venda.");
         } catch (Throwable $e) {
             $this->session->setFlash('error', "Falha ao minerar produtos: " . $e->getMessage());
         }
@@ -1173,6 +1178,86 @@ class DropshipAdminController
         }
 
         return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);
+    }
+
+    public function clearCatalog(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $action = (string)$request->input('action', 'clear_all');
+        try {
+            if ($action === 'purge_drafts') {
+                $count = $this->catalogRepo->purgeDrafts();
+                $this->session->setFlash('success', "🗑️ {$count} produtos em rascunho / despublicados foram removidos do catálogo.");
+            } else {
+                $count = $this->catalogRepo->clearAll(preserveOrdered: true);
+                $this->session->setFlash('success', "✔️ Catálogo limpo com sucesso! {$count} produtos foram removidos. (Produtos com pedidos ativos foram preservados).");
+            }
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha ao limpar catálogo: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    public function publishDrafts(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        try {
+            $count = $this->catalogRepo->publishAll();
+            $this->session->setFlash('success', "📢 {$count} produtos foram publicados e ativados para venda na loja!");
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha ao publicar rascunhos: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
+    }
+
+    public function acquireNew(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $replaceCatalog = (bool)$request->input('replace_catalog', true);
+        $itemsPerCategory = max(1, min(20, (int)$request->input('items_per_category', 10)));
+
+        try {
+            $purgedCount = 0;
+            if ($replaceCatalog) {
+                $purgedCount = $this->catalogRepo->clearAll(preserveOrdered: true);
+            }
+
+            $result = $this->miningService->runDailyAutomatedRotation($itemsPerCategory);
+
+            // Garante que todos os produtos minerados estejam 100% ativos para venda
+            $this->catalogRepo->publishAll();
+
+            $totalMined = (int)($result['total_mined'] ?? 0);
+            $msg = "🚀 Aquisição concluída com sucesso! {$totalMined} novos produtos oficiais ativos em venda para as próximas 24 horas.";
+            if ($purgedCount > 0) {
+                $msg .= " ({$purgedCount} produtos antigos foram limpos previamente).";
+            }
+            $this->session->setFlash('success', $msg);
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', "Falha ao adquirir novos produtos: " . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship');
     }
 
     /**
