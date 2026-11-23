@@ -72,4 +72,5 @@ jobs:
             domain-system-core.zip
             radio_online.zip
             clock_widget.zip
+          body_path: RELEASE_NOTES.md
           generate_release_notes: true

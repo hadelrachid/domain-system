@@ -8,6 +8,26 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.7.2] - 2026-11-22
+### Added
+- **DomainDrop — Mineração 100 Itens, Paginação & Sentinela de Volatilidade (`src/Plugins/domain_drop`):**
+  - **Mineração Expandida & Brasil 🇧🇷:** Limite de mineração ampliado de 20 para 80–100 produtos por categoria com segmentação nacional (`ship_from_country: BR`, `ship_to_country: BR`).
+  - **Paginação Admin (50/pág) & Vitrine SEO (48/pág):** Paginação completa no painel `/admin/dropship` e na loja `/loja` com `<link rel="canonical">`, `prev` e `next`.
+  - **Índice de Volatilidade ($\mathcal{I}_v = 12\%$) & Sentinela de Preços:** Cálculo automático de proteção de margem e varredura periódica configurável (**3h, 4h, 6h ou 12h**).
+  - **UX Centralizada:** Painel de margens, volatilidade e Sentinela movido de *Configurações da API* para a tela principal de **Catálogo & Mineração**.
+- **DomainCommerce — Menu Administrativo (`src/Plugins/commerce`):** Submenu com atalhos diretos para *Painel & Vendas* (`/admin/commerce`) e *Gateways & Configs* (`/admin/commerce/settings`).
+
+### Fixed
+- **Segurança Financeira no DomainCommerce (`src/Plugins/commerce`):**
+  - Webhooks dos gateways de afiliados (`Hotmart`, `Eduzz`, `Monetizze`, `ClickBank`) convertidos para **Fail-Closed** (rejeitam chamadas se o segredo não estiver configurado).
+  - `PayPalGateway::handleWebhook()` passou a validar assinatura oficial e confirmar status/valor na API do PayPal; `StripeGateway` passou a retornar `total`, tratar `charge.refunded` e validar `payment_status`.
+  - Bloqueio de replay entre pedidos em `stripeSuccess`/`paypalSuccess`, bloqueio de modo demo em produção (`APP_ENV=production`), proteção contra CSV Formula Injection e DOM XSS nas views, correção de `getSalesTimeline()` (12 meses mais recentes) e cache estático `WeakMap` no `PdoOrderRepository`.
+- **Isolamento Cross-Plugin (`DomainCommerce` ↔ `DomainDrop` ↔ `Academy`):**
+  - Listeners `payment.approved` e `payment.refunded` do `Academy` agora filtram por `item_type`; `DomainDrop` passa a sincronizar reembolsos (`payment.refunded`); `/checkout/produto/{id}` não colide mais com IDs de cursos; `canAccessOrder()` isola escopos de aluno e comprador.
+- **Segurança no Academy (`src/Plugins/academy`):** Autorização de matrícula e status da conta em `StudentDashboardController`, correção de XSS em `students/index.php`, verificação de `academy_logged_out` e `academy_student_role` em `CourseFrontController::showLesson()`, e preservação completa de campos em `CoursePackageService`.
+- **Correções Gerais no DomainDrop:** Proteção de `saveSettings()`, ordem de parâmetros em `setFlash()`, detecção de rastreio Correios (`BR$`), leitura de `price_sync_enabled`, remoção de `</div>` extra em `storefront.php`, Age Gate (+18) em AJAX, mitigação de XSS e transação atômica em `PdoDemandMetricsRepository`.
+- **Roteamento & Modo Seguro (`Core` / `SystemAdmin`):** Normalização de barra final em `Router::dispatch()` (`/admin/` → `/admin`) e blindagem completa da rota `/admin/emergency` (CSRF, rate-limit de 5 tentativas/15 min, `EMERGENCY_KEY >= 16` chars, regeneração de sessão e ocultação do link em 404 públicos).
+
 ## [2.7.0] - 2026-11-12
 ### Added
 - **DomainDrop — Motor Autônomo de Dropshipping com SDK Oficial do AliExpress (`src/Plugins/domain_drop`):**
