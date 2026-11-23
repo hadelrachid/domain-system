@@ -90,7 +90,21 @@ class AliExpressApiClient implements AliExpressApiClientInterface
      */
     public function createAccessToken(string $code): array
     {
-        return $this->executeRest('/auth/token/create', ['code' => trim($code)]);
+        $raw = $this->executeRest('/auth/token/create', ['code' => trim($code)]);
+
+        if (!isset($raw['access_token'])) {
+            if (isset($raw['data']) && is_array($raw['data']) && isset($raw['data']['access_token'])) {
+                return array_merge($raw, $raw['data']);
+            }
+            if (isset($raw['resp_result']) && is_array($raw['resp_result']) && isset($raw['resp_result']['access_token'])) {
+                return array_merge($raw, $raw['resp_result']);
+            }
+            if (isset($raw['result']) && is_array($raw['result']) && isset($raw['result']['access_token'])) {
+                return array_merge($raw, $raw['result']);
+            }
+        }
+
+        return $raw;
     }
 
     /**
@@ -100,11 +114,26 @@ class AliExpressApiClient implements AliExpressApiClientInterface
      */
     public function refreshAccessToken(string $refreshToken): array
     {
-        return $this->executeRest('/auth/token/refresh', ['refresh_token' => trim($refreshToken)]);
+        $raw = $this->executeRest('/auth/token/refresh', ['refresh_token' => trim($refreshToken)]);
+
+        if (!isset($raw['access_token'])) {
+            if (isset($raw['data']) && is_array($raw['data']) && isset($raw['data']['access_token'])) {
+                return array_merge($raw, $raw['data']);
+            }
+            if (isset($raw['resp_result']) && is_array($raw['resp_result']) && isset($raw['resp_result']['access_token'])) {
+                return array_merge($raw, $raw['resp_result']);
+            }
+            if (isset($raw['result']) && is_array($raw['result']) && isset($raw['result']['access_token'])) {
+                return array_merge($raw, $raw['result']);
+            }
+        }
+
+        return $raw;
     }
 
     /**
      * Executa chamada IOP System/Auth (`/rest/...`), onde o caminho da API é incluído no cálculo HMAC-SHA256.
+     * Segue estritamente a especificação oficial do AliExpress IOP SDK (IopClient).
      *
      * @param array<string, mixed> $params
      * @return array<string, mixed>
@@ -120,7 +149,10 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'app_key'     => $this->appKey,
             'sign_method' => 'sha256',
             'timestamp'   => $this->getMillisecondTimestamp(),
+            'method'      => $cleanPath,
             'partner_id'  => $this->sdkVersion,
+            'format'      => 'json',
+            'simplify'    => 'false',
         ];
 
         $allParams = array_merge($params, $sysParams);
@@ -128,9 +160,9 @@ class AliExpressApiClient implements AliExpressApiClientInterface
 
         $restBase = str_ends_with($this->gatewayUrl, '/sync')
             ? substr($this->gatewayUrl, 0, -5) . '/rest'
-            : 'https://api-sg.aliexpress.com/rest';
+            : (str_ends_with($this->gatewayUrl, '/rest') ? $this->gatewayUrl : 'https://api-sg.aliexpress.com/rest');
 
-        $requestUrl = rtrim($restBase, '/') . $cleanPath . '?' . http_build_query($sysParams);
+        $requestUrl = rtrim($restBase, '/') . '?' . http_build_query($sysParams);
         return $this->sendHttpRequest($requestUrl, $params);
     }
 
@@ -335,6 +367,12 @@ class AliExpressApiClient implements AliExpressApiClientInterface
 
         // 1. Validar Status HTTP primeiro (HTTP 2xx é sucesso HTTP)
         if ($httpCode < 200 || $httpCode >= 300) {
+            $decodedErr = json_decode((string)$rawResponse, true);
+            if (is_array($decodedErr)) {
+                $errCode = (string)($decodedErr['code'] ?? ($decodedErr['error_response']['code'] ?? "HTTP_{$httpCode}"));
+                $errMsg = (string)($decodedErr['message'] ?? ($decodedErr['error_response']['msg'] ?? 'Falha de resposta HTTP do gateway AliExpress.'));
+                throw new AliExpressApiException("[AliExpress Gateway HTTP {$httpCode} - {$errCode}] {$errMsg}", $httpCode, $errCode);
+            }
             throw new AliExpressApiException(
                 "[AliExpress Gateway HTTP {$httpCode}] Falha de resposta HTTP do gateway AliExpress.",
                 $httpCode,
@@ -361,9 +399,11 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             throw new AliExpressApiException("[AliExpress Gateway Error: {$errCode}] {$msg}", 0, $errCode);
         }
 
-        if (isset($decoded['code']) && (int)$decoded['code'] !== 0 && !isset($decoded['result'])) {
-            $msg = $decoded['message'] ?? ($decoded['sub_msg'] ?? 'Erro desconhecido da AliExpress API');
-            throw new AliExpressApiException("[AliExpress Gateway Error: {$decoded['code']}] {$msg}", (int)$decoded['code'], 'API_ERROR');
+        if (isset($decoded['code']) && (string)$decoded['code'] !== '0' && (string)$decoded['code'] !== '200') {
+            $codeStr = (string)$decoded['code'];
+            $msg = (string)($decoded['message'] ?? ($decoded['msg'] ?? ($decoded['sub_msg'] ?? 'Erro retornado pela AliExpress API')));
+            $subCode = (string)($decoded['sub_code'] ?? $codeStr);
+            throw new AliExpressApiException("[AliExpress Gateway Error: {$codeStr}] {$msg}", 0, $subCode);
         }
 
         return $decoded;

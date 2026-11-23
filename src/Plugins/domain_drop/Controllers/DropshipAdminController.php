@@ -416,15 +416,18 @@ class DropshipAdminController
                 $errorMessage = 'AppKey ou AppSecret não configurados para concluir a troca de token OAuth2.';
             } else {
                 try {
-                    $client = $this->apiClient ?? new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
-                        appKey: $appKey,
-                        appSecret: $appSecret,
-                        gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
-                    );
+                    $client = ($this->apiClient !== null && !$this->apiClient instanceof \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient)
+                        ? $this->apiClient
+                        : new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                            appKey: $appKey,
+                            appSecret: $appSecret,
+                            gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+                        );
                     $tokenData = $client->createAccessToken($code);
                     $accessToken = trim((string)($tokenData['access_token'] ?? ''));
                     if ($accessToken === '') {
-                        throw new \RuntimeException('Resposta do AliExpress não trouxe access_token válido.');
+                        $rawDump = json_encode($tokenData, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+                        throw new \RuntimeException("Resposta do AliExpress não trouxe access_token válido. Retorno bruto: {$rawDump}");
                     }
 
                     $config['access_token'] = $accessToken;

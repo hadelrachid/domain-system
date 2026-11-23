@@ -1,7 +1,7 @@
 {
     "name": "database",
-    "version": "2.7.4",
-    "description": "Fornece a conexão segura (PDO) e o construtor fluente de Queries.",
+    "version": "2.7.5",
+    "description": "Fornece a conex\u00e3o segura (PDO) e o construtor fluente de Queries.",
     "author": "Kernel",
     "core": true,
     "os_version": "2.7"
