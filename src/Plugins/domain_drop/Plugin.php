@@ -141,17 +141,38 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     $refreshed = $client->refreshAccessToken($refreshToken);
                     if (!empty($refreshed['access_token'])) {
                         $newToken = (string)$refreshed['access_token'];
-                        $data['access_token'] = $newToken;
-                        if (!empty($refreshed['refresh_token'])) {
-                            $data['refresh_token'] = (string)$refreshed['refresh_token'];
+                        $newRefreshToken = !empty($refreshed['refresh_token']) ? (string)$refreshed['refresh_token'] : null;
+
+                        // Normalização rigorosa de expiração (Claude Audit Item 4)
+                        if (isset($refreshed['expires_in']) && (int)$refreshed['expires_in'] > 0) {
+                            $newAccessExpiresAt = time() + (int)$refreshed['expires_in'];
+                        } elseif (isset($refreshed['expire_time'])) {
+                            $rawExpires = (int)$refreshed['expire_time'];
+                            $newAccessExpiresAt = $rawExpires > 100000000000 ? (int)round($rawExpires / 1000) : $rawExpires;
+                        } else {
+                            $newAccessExpiresAt = time() + 2592000;
                         }
-                        $expIn = (int)($refreshed['expire_time'] ?? ($refreshed['expires_in'] ?? 2592000));
-                        $data['access_token_expires_at'] = $expIn > 1000000000 ? (int)($expIn / 1000) : (time() + max(60, $expIn));
-                        if (!empty($refreshed['refresh_token_valid_time'])) {
+
+                        $newRefreshExpiresAt = null;
+                        if (isset($refreshed['refresh_expires_in']) && (int)$refreshed['refresh_expires_in'] > 0) {
+                            $newRefreshExpiresAt = time() + (int)$refreshed['refresh_expires_in'];
+                        } elseif (isset($refreshed['refresh_token_valid_time'])) {
                             $rVal = (int)$refreshed['refresh_token_valid_time'];
-                            $data['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
+                            $newRefreshExpiresAt = $rVal > 100000000000 ? (int)round($rVal / 1000) : $rVal;
                         }
-                        @file_put_contents($configFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+                        \DomainSystem\Plugins\domain_drop\Services\AtomicConfigStorage::update($configFile, function (array $cfg) use ($newToken, $newRefreshToken, $newAccessExpiresAt, $newRefreshExpiresAt): array {
+                            $cfg['access_token'] = $newToken;
+                            if ($newRefreshToken !== null) {
+                                $cfg['refresh_token'] = $newRefreshToken;
+                            }
+                            $cfg['access_token_expires_at'] = $newAccessExpiresAt;
+                            if ($newRefreshExpiresAt !== null) {
+                                $cfg['refresh_token_expires_at'] = $newRefreshExpiresAt;
+                            }
+                            return $cfg;
+                        });
+
                         return new AliExpressApiClient(
                             appKey: $appKey,
                             appSecret: $appSecret,
@@ -161,7 +182,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                         );
                     }
                 } catch (Throwable $e) {
-                    // Mantém o token atual em caso de falha transitória de rede
+                    error_log("[DomainDrop Token Refresh] Falha na renovação automática do access_token: " . $e->getMessage());
                 }
             }
 

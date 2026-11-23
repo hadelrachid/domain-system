@@ -105,20 +105,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
     public function createAccessToken(string $code): array
     {
         $raw = $this->executeRest('/auth/token/create', ['code' => trim($code)]);
-
-        if (!isset($raw['access_token'])) {
-            if (isset($raw['data']) && is_array($raw['data']) && isset($raw['data']['access_token'])) {
-                return array_merge($raw, $raw['data']);
-            }
-            if (isset($raw['resp_result']) && is_array($raw['resp_result']) && isset($raw['resp_result']['access_token'])) {
-                return array_merge($raw, $raw['resp_result']);
-            }
-            if (isset($raw['result']) && is_array($raw['result']) && isset($raw['result']['access_token'])) {
-                return array_merge($raw, $raw['result']);
-            }
-        }
-
-        return $raw;
+        $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($raw);
+        return array_merge($raw, $unwrapped);
     }
 
     /**
@@ -129,20 +117,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
     public function refreshAccessToken(string $refreshToken): array
     {
         $raw = $this->executeRest('/auth/token/refresh', ['refresh_token' => trim($refreshToken)]);
-
-        if (!isset($raw['access_token'])) {
-            if (isset($raw['data']) && is_array($raw['data']) && isset($raw['data']['access_token'])) {
-                return array_merge($raw, $raw['data']);
-            }
-            if (isset($raw['resp_result']) && is_array($raw['resp_result']) && isset($raw['resp_result']['access_token'])) {
-                return array_merge($raw, $raw['resp_result']);
-            }
-            if (isset($raw['result']) && is_array($raw['result']) && isset($raw['result']['access_token'])) {
-                return array_merge($raw, $raw['result']);
-            }
-        }
-
-        return $raw;
+        $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($raw);
+        return array_merge($raw, $unwrapped);
     }
 
     /**
@@ -159,6 +135,13 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         }
 
         $cleanPath = '/' . ltrim($apiPath, '/');
+        $cleanParams = [];
+        foreach ($params as $k => $v) {
+            if ($v !== null && $v !== '') {
+                $cleanParams[$k] = (string)$v;
+            }
+        }
+
         $sysParams = [
             'app_key'     => $this->appKey,
             'sign_method' => 'sha256',
@@ -169,7 +152,7 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             'simplify'    => 'false',
         ];
 
-        $allParams = array_merge($params, $sysParams);
+        $allParams = array_merge($cleanParams, $sysParams);
         $sysParams['sign'] = $this->generateSignature($cleanPath, $allParams);
 
         $restBase = str_ends_with($this->gatewayUrl, '/sync')
@@ -177,7 +160,7 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             : (str_ends_with($this->gatewayUrl, '/rest') ? $this->gatewayUrl : 'https://api-sg.aliexpress.com/rest');
 
         $requestUrl = rtrim($restBase, '/') . '?' . http_build_query($sysParams);
-        return $this->sendHttpRequest($requestUrl, $params);
+        return $this->sendHttpRequest($requestUrl, $cleanParams);
     }
 
     public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array
@@ -198,8 +181,67 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         return $this->execute('aliexpress.ds.product.get', $params, $this->accessToken);
     }
 
+    /**
+     * Realiza busca textual dropshipping oficial via aliexpress.ds.text.search (dropshiper.pdf páginas 39-41).
+     * Não exige session token obrigatório.
+     *
+     * @param array<string, mixed> $filters
+     * @return array<string, mixed>
+     */
+    public function textSearch(array $filters = []): array
+    {
+        $sort = (string)($filters['sort_by'] ?? ($filters['sort'] ?? 'orders,desc'));
+        $mappedSort = match ($sort) {
+            'min_price,asc', 'price_asc'   => 'min_price,asc',
+            'min_price,desc', 'price_desc' => 'min_price,desc',
+            'comments,desc', 'rating'      => 'comments,desc',
+            default                        => 'orders,desc',
+        };
+
+        $params = [
+            'local'       => (string)($filters['local'] ?? 'pt_BR'),
+            'countryCode' => (string)($filters['country_code'] ?? ($filters['countryCode'] ?? ($filters['country'] ?? 'BR'))),
+            'sortBy'      => $mappedSort,
+            'pageSize'    => (string)($filters['page_size'] ?? ($filters['pageSize'] ?? '20')),
+            'pageIndex'   => (string)($filters['page_index'] ?? ($filters['pageIndex'] ?? ($filters['page_no'] ?? '1'))),
+            'currency'    => (string)($filters['currency'] ?? 'USD'),
+        ];
+
+        $keyword = trim((string)($filters['keyWord'] ?? ($filters['keyword'] ?? ($filters['query'] ?? ($filters['key_word'] ?? '')))));
+        if ($keyword !== '') {
+            $params['keyWord'] = $keyword;
+        }
+
+        $categoryId = $filters['categoryId'] ?? ($filters['category_id'] ?? ($filters['cate_id'] ?? null));
+        if (!empty($categoryId)) {
+            $params['categoryId'] = (string)$categoryId;
+        }
+
+        try {
+            $response = $this->execute('aliexpress.ds.text.search', $params, $this->accessToken);
+            $this->lastError = null;
+            return $response;
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] textSearch falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function searchProducts(array $filters = []): array
     {
+        $hasTextQuery = !empty($filters['query']) || !empty($filters['keyword']) || !empty($filters['keyWord']) || !empty($filters['search']);
+        if ($hasTextQuery) {
+            $textRes = $this->textSearch($filters);
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($textRes);
+            $products = $unwrapped['products']['traffic_product_d_t_o']
+                ?? ($unwrapped['products']['product']
+                ?? ($unwrapped['products'] ?? []));
+            if (is_array($products) && !empty($products)) {
+                return $products;
+            }
+        }
+
         $sort = (string)($filters['sort'] ?? 'volume_desc');
         $mappedSort = match ($sort) {
             'evaluate_rate_desc', 'rating' => 'DSRratingDesc',

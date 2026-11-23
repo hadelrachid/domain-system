@@ -758,6 +758,7 @@ class DomainDropHubTest extends TestCase
         $apiClient = new class implements AliExpressApiClientInterface {
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
+            public function textSearch(array $filters = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
@@ -829,6 +830,7 @@ class DomainDropHubTest extends TestCase
         $apiClient = new class implements AliExpressApiClientInterface {
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
+            public function textSearch(array $filters = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
@@ -1906,8 +1908,9 @@ class DomainDropHubTest extends TestCase
             apiClient: $mockClient
         );
 
+        $validSignedState = $controller->generateSignedState('test_app_sec');
         $request = new \DomainSystem\Core\Http\Request(
-            query: ['code' => 'oauth_code_anon', 'state' => 'any_state'],
+            query: ['code' => 'oauth_code_anon', 'state' => $validSignedState],
             request: [],
             server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/dropship/callback']
         );

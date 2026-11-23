@@ -43,6 +43,15 @@ interface AliExpressApiClientInterface
     public function searchProducts(array $filters = []): array;
 
     /**
+     * Realiza busca textual dropshipping oficial via aliexpress.ds.text.search (dropshiper.pdf páginas 39-41).
+     * Não exige session token obrigatório.
+     *
+     * @param array<string, mixed> $filters
+     * @return array<string, mixed>
+     */
+    public function textSearch(array $filters = []): array;
+
+    /**
      * Consulta eventos logísticos e rastreamento oficial de um envio no SDK AliExpress.
      *
      * @param string $logisticsNo Código de rastreio da transportadora (Correios/Cainiao)

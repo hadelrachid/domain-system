@@ -24,35 +24,95 @@ final class AliExpressToken
     ) {}
 
     /**
+     * Desembrulha respostas com envelopes arbitrários (IOP SDK, simplify=false, gateways rest).
+     *
+     * @param array<string, mixed> $r
+     * @return array<string, mixed>
+     */
+    public static function unwrapPayload(array $r): array
+    {
+        $current = $r;
+        $knownKeys = [
+            'data',
+            'resp_result',
+            'result',
+            'aliexpress_open_token_create_response',
+            '/auth/token/create_response',
+            '/auth/token/refresh_response',
+            '/wl/gray/first_response',
+            'aliexpress_ds_text_search_response',
+        ];
+
+        for ($i = 0; $i < 4; $i++) {
+            $unwrapped = false;
+            foreach ($knownKeys as $k) {
+                if (isset($current[$k]) && is_array($current[$k])) {
+                    $current = array_merge($current, $current[$k]);
+                    $unwrapped = true;
+                    break;
+                }
+            }
+            if (!$unwrapped && count($current) === 1) {
+                $firstKey = (string)array_key_first($current);
+                if ((str_ends_with($firstKey, '_response') || str_starts_with($firstKey, '/')) && is_array($current[$firstKey])) {
+                    $current = array_merge($current, $current[$firstKey]);
+                    $unwrapped = true;
+                }
+            }
+            if (!$unwrapped) {
+                break;
+            }
+        }
+
+        return $current;
+    }
+
+    /**
      * Constrói o objeto a partir da resposta decodificada da API AliExpress.
      *
      * @param array<string, mixed> $r
      */
     public static function fromApiResponse(array $r): self
     {
-        $data = $r;
-        if (!isset($data['access_token'])) {
-            $data = $r['data'] ?? ($r['resp_result'] ?? ($r['result'] ?? $r));
-        }
+        $data = self::unwrapPayload($r);
 
         $accessToken = trim((string)($data['access_token'] ?? ''));
         if ($accessToken === '') {
             $raw = json_encode($r, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
-            throw new RuntimeException("Resposta do AliExpress não trouxe access_token válido. Retorno bruto: {$raw}");
+            error_log("[AliExpressToken] Resposta do AliExpress sem access_token válido: {$raw}");
+            throw new RuntimeException("Resposta do AliExpress não trouxe access_token válido.");
         }
 
-        $rawExpires = (int)($data['expire_time'] ?? ($data['expires_in'] ?? 2592000));
-        if ($rawExpires > 100000000000) {
-            $expiresInSeconds = max(60, (int)round(($rawExpires / 1000) - time()));
+        // Normalização de expiração: prioriza expires_in (segundos relativos)
+        if (isset($data['expires_in']) && (int)$data['expires_in'] > 0) {
+            $expiresInSeconds = (int)$data['expires_in'];
+        } elseif (isset($data['expire_time'])) {
+            $rawExpires = (int)$data['expire_time'];
+            if ($rawExpires > 100000000000) {
+                $expiresInSeconds = max(60, (int)round(($rawExpires / 1000) - time()));
+            } elseif ($rawExpires > 1000000000) {
+                $expiresInSeconds = max(60, $rawExpires - time());
+            } else {
+                $expiresInSeconds = max(60, $rawExpires);
+            }
         } else {
-            $expiresInSeconds = $rawExpires > 0 ? $rawExpires : 2592000;
+            $expiresInSeconds = 2592000;
         }
 
-        $rVal = (int)($data['refresh_token_valid_time'] ?? ($data['refresh_expires_in'] ?? 0));
-        if ($rVal > 100000000000) {
-            $refreshSeconds = max(0, (int)round(($rVal / 1000) - time()));
+        // Normalização de expiração do refresh token
+        if (isset($data['refresh_expires_in']) && (int)$data['refresh_expires_in'] > 0) {
+            $refreshSeconds = (int)$data['refresh_expires_in'];
+        } elseif (isset($data['refresh_token_valid_time'])) {
+            $rVal = (int)$data['refresh_token_valid_time'];
+            if ($rVal > 100000000000) {
+                $refreshSeconds = max(0, (int)round(($rVal / 1000) - time()));
+            } elseif ($rVal > 1000000000) {
+                $refreshSeconds = max(0, $rVal - time());
+            } else {
+                $refreshSeconds = max(0, $rVal);
+            }
         } else {
-            $refreshSeconds = $rVal;
+            $refreshSeconds = 0;
         }
 
         $account = (string)($data['account'] ?? ($data['user_nick'] ?? ''));

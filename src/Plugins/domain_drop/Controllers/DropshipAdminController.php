@@ -211,18 +211,18 @@ class DropshipAdminController
         $config = $this->loadConfig();
         $config['app_key'] = trim((string)$request->input('app_key', $config['app_key'] ?? ''));
         $newSecret = trim((string)$request->input('app_secret', ''));
-        if ($newSecret !== '' && !str_starts_with($newSecret, '***')) {
+        if ($newSecret !== '' && !str_starts_with($newSecret, '***') && !str_starts_with($newSecret, '•••')) {
             $config['app_secret'] = $newSecret;
         }
         $newAccessToken = trim((string)$request->input('access_token', ''));
-        if ($newAccessToken !== '' && !str_starts_with($newAccessToken, '***')) {
+        if ($newAccessToken !== '' && !str_starts_with($newAccessToken, '***') && !str_starts_with($newAccessToken, '•••')) {
             $config['access_token'] = $newAccessToken;
         }
 
         $updater = $this->pricingUpdater ?? new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
         $config = $updater->updateFromRequest($config, $request);
 
-        @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
+        $this->saveConfig($config);
         $this->session->setFlash('success', 'Configurações da API salvas com sucesso!');
 
         return Response::redirect($baseUrl . '/admin/dropship/settings');
@@ -241,7 +241,7 @@ class DropshipAdminController
         $updater = $this->pricingUpdater ?? new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
         $config = $updater->updateFromRequest($config, $request);
 
-        @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
+        $this->saveConfig($config);
         $this->session->setFlash('success', 'Estratégia de precificação e Sentinela de Volatilidade salvas com sucesso!');
 
         return Response::redirect($baseUrl . '/admin/dropship');
@@ -262,11 +262,11 @@ class DropshipAdminController
         $config = $this->loadConfig();
         $appKey = trim((string)$request->input('app_key', $config['app_key'] ?? ''));
         $appSecret = trim((string)$request->input('app_secret', ''));
-        if ($appSecret === '' || str_starts_with($appSecret, '***')) {
+        if ($appSecret === '' || str_starts_with($appSecret, '***') || str_starts_with($appSecret, '•••')) {
             $appSecret = (string)($config['app_secret'] ?? '');
         }
         $accessToken = trim((string)$request->input('access_token', ''));
-        if ($accessToken === '' || str_starts_with($accessToken, '***')) {
+        if ($accessToken === '' || str_starts_with($accessToken, '***') || str_starts_with($accessToken, '•••')) {
             $accessToken = (string)($config['access_token'] ?? '');
         }
         $gatewayUrl = (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync');
@@ -358,7 +358,7 @@ class DropshipAdminController
             return Response::redirect($baseUrl . '/admin/dropship/settings');
         }
 
-        $state = bin2hex(random_bytes(16));
+        $state = $this->generateSignedState($appSecret);
         $this->session->set('dropship_oauth_state', $state);
 
         $callbackUrl = $this->resolveOAuthCallbackUrl($baseUrl);
@@ -378,14 +378,29 @@ class DropshipAdminController
         $expectedState = (string)$this->session->get('dropship_oauth_state', '');
         $this->session->remove('dropship_oauth_state');
 
+        $config = $this->loadConfig();
+        $appKey = trim((string)($config['app_key'] ?? ''));
+        $appSecret = trim((string)($config['app_secret'] ?? ''));
+
         $isLoggedIn = $this->session->has('user_id');
         $isSuccess = false;
         $errorMessage = null;
         $account = null;
         $expiresInDays = 30;
 
-        if ($expectedState !== '' && ($state === '' || !hash_equals($expectedState, $state))) {
-            $errorMessage = 'Falha de segurança OAuth2 (state inválido ou expirado). Tente conectar novamente.';
+        // Validação estrita do State OAuth2 (Claude Audit Item 1)
+        // Rejeita categoricamente requisições sem state, state forjado ou expirado.
+        $isStateValid = false;
+        if ($state !== '') {
+            if ($expectedState !== '' && hash_equals($expectedState, $state)) {
+                $isStateValid = true;
+            } elseif ($appSecret !== '' && $this->verifySignedState($state, $appSecret)) {
+                $isStateValid = true;
+            }
+        }
+
+        if (!$isStateValid) {
+            $errorMessage = 'Falha de segurança OAuth2 (state inválido, expirado ou ausente). Tente conectar novamente.';
         } elseif ($code === '') {
             $errDesc = trim((string)($request->input('error_description', '') ?: $request->input('error', 'Autorização cancelada ou código ausente.')));
             $errorMessage = 'AliExpress OAuth2 não retornou o código de autorização: ' . $errDesc;
@@ -1393,13 +1408,57 @@ class DropshipAdminController
         return $token !== '' && hash_equals($expected, $token);
     }
 
+    /**
+     * Gera um state OAuth2 assinado criptograficamente com HMAC-SHA256 e timestamp (Claude Audit Item 1).
+     * Imune à perda de sessão decorrente de redirecionamentos cross-site (SameSite Lax/Strict).
+     */
+    public function generateSignedState(string $appSecret): string
+    {
+        $nonce = bin2hex(random_bytes(16));
+        $timestamp = (string)time();
+        $payload = $nonce . '.' . $timestamp;
+        $sig = hash_hmac('sha256', $payload, $appSecret);
+        return $payload . '.' . $sig;
+    }
+
+    /**
+     * Valida um state assinado com checagem de assinatura HMAC-SHA256 e TTL (padrão 600 segundos / 10 minutos).
+     */
+    public function verifySignedState(string $state, string $appSecret, int $ttl = 600): bool
+    {
+        if ($state === '' || $appSecret === '') {
+            return false;
+        }
+
+        $parts = explode('.', $state);
+        if (count($parts) !== 3) {
+            return false;
+        }
+
+        $nonce = (string)$parts[0];
+        $timestampStr = (string)$parts[1];
+        $sig = (string)$parts[2];
+        if (!ctype_digit($timestampStr)) {
+            return false;
+        }
+
+        $timestamp = (int)$timestampStr;
+        $now = time();
+        if ($timestamp < ($now - $ttl) || $timestamp > ($now + 60)) {
+            return false;
+        }
+
+        $payload = $nonce . '.' . $timestampStr;
+        $expectedSig = hash_hmac('sha256', $payload, $appSecret);
+
+        return hash_equals($expectedSig, $sig);
+    }
+
     private function loadConfig(): array
     {
-        if (file_exists($this->configFile)) {
-            $json = @file_get_contents($this->configFile);
-            if ($json !== false) {
-                return json_decode($json, true) ?: [];
-            }
+        $config = \DomainSystem\Plugins\domain_drop\Services\AtomicConfigStorage::read($this->configFile);
+        if (!empty($config)) {
+            return $config;
         }
         return [
             'app_key' => '558628',
@@ -1409,20 +1468,16 @@ class DropshipAdminController
         ];
     }
 
-    private function saveConfig(array $config): void
+    public function saveConfig(array $config): void
     {
-        $dir = dirname($this->configFile);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-        $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $written = @file_put_contents($this->configFile, $json);
-        if ($written === false) {
+        $saved = \DomainSystem\Plugins\domain_drop\Services\AtomicConfigStorage::write($this->configFile, $config);
+        if (!$saved) {
+            $dir = dirname($this->configFile);
             @chmod($dir, 0775);
             @chmod($this->configFile, 0664);
-            $written = @file_put_contents($this->configFile, $json);
+            $saved = \DomainSystem\Plugins\domain_drop\Services\AtomicConfigStorage::write($this->configFile, $config);
         }
-        if ($written === false) {
+        if (!$saved) {
             throw new \RuntimeException("Permissão negada ao gravar '{$this->configFile}'. Verifique as permissões de escrita na pasta 'config/plugins/'.");
         }
     }

@@ -2496,27 +2496,103 @@ class ProductMiningService implements ProductMiningServiceInterface
     public static function classifyApiExceptionAvailability(Throwable $e): string
     {
         $msg = strtolower($e->getMessage());
-        if (str_contains($msg, 'access_token') || str_contains($msg, 'missingparameter') || str_contains($msg, 'invalidsession') || str_contains($msg, 'session')) {
-            return 'sdk_auth_required';
+        $type = '';
+        if ($e instanceof \DomainSystem\Plugins\domain_drop\Exceptions\AliExpressApiException) {
+            $type = strtolower($e->type);
         }
-        $notFoundMarkers = [
-            'not found',
-            'not exist',
-            'does not exist',
-            'item-not-exist',
+
+        // 1. Erros de Autenticação / Permissão / Token / Chaves / Assinatura (NUNCA exclui produtos)
+        $authMarkers = [
+            'access_token',
+            'missingparameter',
+            'invalidsession',
+            'illegalaccesstoken',
+            'invalidappkey',
+            'incompletesignature',
+            'signature',
+            'unauthorized',
+            'forbidden',
+            'auth_required',
+            'needs_reauth',
+            'session_expired',
+            'session',
+            'invalidcode',
+            'illegalrefreshtoken',
+            'invalid_token',
+        ];
+        foreach ($authMarkers as $marker) {
+            if (str_contains($msg, $marker) || ($type !== '' && str_contains($type, $marker))) {
+                return 'sdk_auth_required';
+            }
+        }
+
+        // 2. Erros de Quota / Limite de Requisições / Rate Limiting (NUNCA exclui produtos)
+        $rateLimitMarkers = [
+            'appcallquotaexceeded',
+            'quota_exceeded',
+            'quota',
+            'ratelimit',
+            'rate limit',
+            'too many requests',
+            'throttle',
+            'busy',
+            'concurrent',
+        ];
+        foreach ($rateLimitMarkers as $marker) {
+            if (str_contains($msg, $marker) || ($type !== '' && str_contains($type, $marker))) {
+                return 'rate_limited';
+            }
+        }
+
+        // 3. Erros de Rede, Conexão, DNS, Timeout, Gateway HTTP (NUNCA exclui produtos)
+        $networkMarkers = [
+            'timeout',
+            'timed out',
+            'connection refused',
+            'curl',
+            'resolve',
+            'dns',
+            'gateway',
+            'serviceunavailable',
+            'service unavailable',
+            'maintenance',
+            'internal error',
+            'system error',
+            'connection_error',
+            'http_500',
+            'http_502',
+            'http_503',
+            'http_504',
+            'ssl',
+        ];
+        foreach ($networkMarkers as $marker) {
+            if (str_contains($msg, $marker) || ($type !== '' && str_contains($type, $marker))) {
+                return 'network_or_system_error';
+            }
+        }
+
+        // 4. Somente marcadores específicos de PRODUTO/ITEM inexistente ou despublicado pelo fornecedor
+        $specificNotFoundMarkers = [
             'item_not_found',
+            'item_not_exist',
             'product_not_found',
-            'invalid product',
+            'product_not_exist',
+            'item does not exist',
+            'product does not exist',
+            'invalid item id',
+            'invalid product id',
+            'item_id_not_found',
+            'item-not-exist',
+            'all sku unsaleable',
             'product offline',
             'item offline',
-            'no longer available',
-            'removed',
         ];
-        foreach ($notFoundMarkers as $marker) {
-            if (str_contains($msg, $marker)) {
+        foreach ($specificNotFoundMarkers as $marker) {
+            if (str_contains($msg, $marker) || ($type !== '' && str_contains($type, $marker))) {
                 return 'not_found';
             }
         }
+
         return 'unknown';
     }
 
