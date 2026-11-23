@@ -136,8 +136,9 @@ class StripeGateway implements PaymentGatewayInterface
             }
         }
 
-        // Modo Simulação / Sandbox (somente com commerce_demo_mode=true)
-        if (!(bool)($this->settings?->get('commerce_demo_mode', false))) {
+        // Modo Simulação / Sandbox (somente com commerce_demo_mode=true e fora de produção)
+        $env = strtolower((string)(getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'local')));
+        if ($env === 'production' || !(bool)($this->settings?->get('commerce_demo_mode', false))) {
             return PaymentResult::failure($orderRef, 'Gateway Stripe não configurado.', 'stripe');
         }
 
@@ -241,11 +242,15 @@ class StripeGateway implements PaymentGatewayInterface
         $payload = $request->json();
         $eventType = (string)($payload['type'] ?? '');
 
-        if (!in_array($eventType, ['checkout.session.completed', 'payment_intent.succeeded'], true)) {
+        if (!in_array($eventType, ['checkout.session.completed', 'payment_intent.succeeded', 'charge.refunded'], true)) {
             return null;
         }
 
         $dataObj = $payload['data']['object'] ?? [];
+        if ($eventType === 'checkout.session.completed' && isset($dataObj['payment_status']) && $dataObj['payment_status'] !== 'paid') {
+            return null;
+        }
+
         $orderRef = (string)($dataObj['client_reference_id'] ?? ($dataObj['metadata']['order_ref'] ?? ''));
         $txId = (string)($dataObj['id'] ?? '');
 
@@ -253,10 +258,14 @@ class StripeGateway implements PaymentGatewayInterface
             return null;
         }
 
+        $amountCents = $dataObj['amount_total'] ?? ($dataObj['amount_received'] ?? ($dataObj['amount'] ?? 0));
+        $total = is_numeric($amountCents) ? ((float)$amountCents / 100.0) : 0.0;
+
         return [
             'order_ref'      => $orderRef,
-            'status'         => 'approved',
+            'status'         => $eventType === 'charge.refunded' ? 'refunded' : 'approved',
             'transaction_id' => $txId,
+            'total'          => $total,
             'gateway'        => 'stripe',
         ];
     }

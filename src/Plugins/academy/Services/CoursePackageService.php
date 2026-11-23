@@ -117,13 +117,19 @@ class CoursePackageService implements CoursePackageServiceInterface
             'generator'      => 'DomainSystem Academy LMS',
             'exported_at'    => date('c'),
             'course'         => [
-                'title'       => (string)$course['title'],
-                'slug'        => (string)$course['slug'],
-                'description' => (string)($course['description'] ?? ''),
-                'price'       => (float)($course['price'] ?? 0.00),
-                'access_type' => (string)($course['access_type'] ?? 'free'),
-                'category'    => (string)($course['category'] ?? ''),
-                'status'      => (string)($course['status'] ?? 'published'),
+                'title'                 => (string)$course['title'],
+                'slug'                  => (string)$course['slug'],
+                'description'           => (string)($course['description'] ?? ''),
+                'price'                 => (float)($course['price'] ?? 0.00),
+                'is_free'               => !empty($course['is_free']) ? 1 : 0,
+                'max_installments'      => (int)($course['max_installments'] ?? 12),
+                'link'                  => (string)($course['link'] ?? ''),
+                'external_platform'     => (string)($course['external_platform'] ?? ''),
+                'external_product_id'   => (string)($course['external_product_id'] ?? ''),
+                'external_checkout_url' => (string)($course['external_checkout_url'] ?? ''),
+                'access_type'           => (string)($course['access_type'] ?? 'free'),
+                'category'              => (string)($course['category'] ?? ''),
+                'status'                => (string)($course['status'] ?? 'published'),
             ],
             'structure'      => $structure,
         ];
@@ -296,13 +302,19 @@ class CoursePackageService implements CoursePackageServiceInterface
 
         // Cria o curso no banco/repositório
         $newCourseId = $this->courseRepo->create([
-            'title'       => $courseTitle,
-            'slug'        => $uniqueSlug,
-            'description' => (string)($courseData['description'] ?? ''),
-            'price'       => (float)($courseData['price'] ?? 0.00),
-            'access_type' => (string)($courseData['access_type'] ?? 'free'),
-            'category'    => (string)($courseData['category'] ?? ''),
-            'status'      => (string)($courseData['status'] ?? 'published'),
+            'title'                 => $courseTitle,
+            'slug'                  => $uniqueSlug,
+            'description'           => (string)($courseData['description'] ?? ''),
+            'price'                 => (float)($courseData['price'] ?? 0.00),
+            'is_free'               => !empty($courseData['is_free']) ? 1 : 0,
+            'max_installments'      => (int)($courseData['max_installments'] ?? 12),
+            'link'                  => (string)($courseData['link'] ?? ''),
+            'external_platform'     => (string)($courseData['external_platform'] ?? ''),
+            'external_product_id'   => (string)($courseData['external_product_id'] ?? ''),
+            'external_checkout_url' => (string)($courseData['external_checkout_url'] ?? ''),
+            'access_type'           => (string)($courseData['access_type'] ?? 'free'),
+            'category'              => (string)($courseData['category'] ?? ''),
+            'status'                => (string)($courseData['status'] ?? 'published'),
         ]);
 
         // Restaura estrutura de módulos e aulas

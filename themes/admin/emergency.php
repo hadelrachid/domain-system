@@ -109,6 +109,7 @@
         <?php endif; ?>
 
         <form action="<?= BASE_URL ?>/admin/emergency" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string)($csrfToken ?? ''), ENT_QUOTES, 'UTF-8') ?>">
             <div>
                 <label>> INPUT MASTER_KEY (APP_KEY):</label>
                 <input type="password" name="app_key" autofocus autocomplete="off" required>

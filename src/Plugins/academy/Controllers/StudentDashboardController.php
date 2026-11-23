@@ -212,6 +212,11 @@ class StudentDashboardController
             return new JsonResponse(['success' => false, 'message' => 'Aula não encontrada.'], 404);
         }
 
+        $denied = $this->authorizeLessonAccess($studentId, $lesson);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         $courseId = (int)$lesson['course_id'];
         $isCompleted = $this->progressService->isLessonCompleted($studentId, $lessonId);
 
@@ -255,6 +260,11 @@ class StudentDashboardController
             return new JsonResponse(['success' => false, 'message' => 'Aula não encontrada.'], 404);
         }
 
+        $denied = $this->authorizeLessonAccess($studentId, $lesson);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         $content = (string)($request->input('content') ?? '');
         $saved = $this->studentStorage->saveStudentNote($studentId, (int)$lesson['course_id'], $lessonId, $content);
 
@@ -280,11 +290,44 @@ class StudentDashboardController
             return new JsonResponse(['success' => false, 'message' => 'Aula não encontrada.'], 404);
         }
 
+        $denied = $this->authorizeLessonAccess($studentId, $lesson);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         $note = $this->studentStorage->getStudentNote($studentId, (int)$lesson['course_id'], $lessonId);
 
         return new JsonResponse([
             'success' => true,
             'content' => $note,
         ]);
+    }
+
+    private function authorizeLessonAccess(int $studentId, array $lesson): ?JsonResponse
+    {
+        if ($this->accountStatus !== null && $this->accountStatus->statusOf($studentId) !== 'active') {
+            return new JsonResponse(['success' => false, 'message' => 'Conta suspensa ou inativa.'], 403);
+        }
+
+        $courseId = (int)($lesson['course_id'] ?? 0);
+        $course = $this->courseRepo->findById($courseId);
+        $userRole = (string)($this->session->get('academy_student_role') ?: $this->session->get('user_role', ''));
+        $isStaff = in_array($userRole, ['admin', 'manager', 'instructor'], true);
+
+        if (!$isStaff) {
+            if ($course !== null && ($course['status'] ?? 'published') !== 'published') {
+                return new JsonResponse(['success' => false, 'message' => 'Curso não disponível.'], 403);
+            }
+            if (($lesson['status'] ?? 'published') !== 'published') {
+                return new JsonResponse(['success' => false, 'message' => 'Aula não disponível.'], 403);
+            }
+            $isPaidCourse = $course !== null && (float)($course['price'] ?? 0.0) > 0.0;
+            $isFreePreview = !empty($lesson['is_free']) || !empty($lesson['is_preview']);
+            if ($isPaidCourse && !$isFreePreview && !$this->enrollmentService->hasActiveEnrollment($studentId, $courseId)) {
+                return new JsonResponse(['success' => false, 'message' => 'Matrícula ativa necessária para acessar esta aula.'], 403);
+            }
+        }
+
+        return null;
     }
 }

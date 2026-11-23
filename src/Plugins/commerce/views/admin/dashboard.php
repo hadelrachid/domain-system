@@ -705,7 +705,7 @@ foreach ($gateways as $gw) {
 
                                 <td style="padding: 16px; text-align: right; white-space: nowrap;">
                                     <?php if ($status === 'pending'): ?>
-                                        <button type="button" onclick="window.dsConfirmApproval(<?= (int)$order['id'] ?>, '<?= htmlspecialchars((string)$order['order_ref'], ENT_QUOTES, 'UTF-8') ?>')" style="background: rgba(0, 210, 132, 0.15); color: #00d284; border: 1px solid rgba(0, 210, 132, 0.45); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='#00d284'; this.style.color='#000';" onmouseout="this.style.background='rgba(0, 210, 132, 0.15)'; this.style.color='#00d284';">
+                                        <button type="button" onclick="window.dsConfirmApproval(<?= (int)$order['id'] ?>, <?= htmlspecialchars((string)json_encode((string)$order['order_ref'], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>)" style="background: rgba(0, 210, 132, 0.15); color: #00d284; border: 1px solid rgba(0, 210, 132, 0.45); padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='#00d284'; this.style.color='#000';" onmouseout="this.style.background='rgba(0, 210, 132, 0.15)'; this.style.color='#00d284';">
                                             ✓ Aprovar
                                         </button>
                                     <?php else: ?>

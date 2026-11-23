@@ -24,10 +24,10 @@
             </div>
             <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px;">
                 <i class="fas fa-sliders-h" style="color: #ff4747;"></i>
-                Configurações da API & Margens de Lucro
+                Configurações da API &amp; Conexão AliExpress
             </h1>
             <p style="margin: 6px 0 0 0; color: var(--text-muted, #94a3b8); font-size: 13px;">
-                Gerenciamento de credenciais oficiais do AliExpress Open Platform e parâmetros da precificação dinâmica.
+                Gerenciamento de credenciais oficiais do AliExpress Open Platform e conectividade do Gateway.
             </p>
         </div>
 
@@ -122,44 +122,33 @@
 
         <div style="margin-bottom: 24px;">
             <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
-                Callback URL Cadastrada
+                Gateway Oficial da API (AliExpress IOP)
             </label>
-            <input type="text" readonly value="<?= $baseUrl ?>/admin/dropship/callback" style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border, rgba(255,255,255,0.1)); color: #94a3b8; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+            <input type="text" readonly value="https://api-sg.aliexpress.com/sync" style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border, rgba(255,255,255,0.1)); color: #94a3b8; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
             <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
-                URL de redirecionamento configurada no AliExpress Console.
+                Endpoint global HMAC-SHA256 utilizado para sincronização de catálogo, rastreio e pedidos.
             </span>
         </div>
 
-        <h3 style="margin: 28px 0 18px 0; font-size: 16px; font-weight: 600; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
-            <i class="fas fa-calculator" style="color: #45f3ff; margin-right: 6px;"></i> Motor de Precificação Dinâmica & Margens
-        </h3>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-            <div>
-                <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
-                    Markup Padrão (%)
-                </label>
-                <div style="position: relative;">
-                    <input type="number" step="1" min="10" name="default_markup_percent" value="<?= (float)($config['default_markup_percent'] ?? 100.0) ?>" required style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
-                    <span style="position: absolute; right: 12px; top: 10px; color: #94a3b8; font-size: 13px;">%</span>
+        <!-- Card de Redirecionamento da Estratégia de Precificação -->
+        <div style="margin: 28px 0 20px 0; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 78, 59, 0.15) 100%); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 8px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 14px; max-width: 580px;">
+                <div style="width: 44px; height: 44px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 20px; flex-shrink: 0;">
+                    <i class="fas fa-coins"></i>
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
-                    Ex: 100% significa dobrar o valor de custo convertido (2x).
-                </span>
-            </div>
-
-            <div>
-                <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
-                    Lucro Mínimo por Item (R$)
-                </label>
-                <div style="position: relative;">
-                    <input type="number" step="0.5" min="0" name="min_profit_margin_brl" value="<?= (float)($config['min_profit_margin_brl'] ?? 30.0) ?>" required style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
-                    <span style="position: absolute; right: 12px; top: 10px; color: #94a3b8; font-size: 13px;">R$</span>
+                <div>
+                    <h4 style="margin: 0 0 4px 0; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        Margens de Lucro &amp; Sentinela de Volatilidade
+                        <span style="font-size: 11px; background: rgba(16, 185, 129, 0.2); color: #5cd67d; padding: 2px 8px; border-radius: 10px; font-weight: 600;">Centralizado no Catálogo</span>
+                    </h4>
+                    <p style="margin: 0; color: #cbd5e1; font-size: 12.5px; line-height: 1.5;">
+                        Os controles comerciais de <strong>Markup %</strong>, <strong>Lucro Mínimo (Piso)</strong>, <strong>Índice de Volatilidade (12%)</strong> e o combobox de <strong>Varredura da Sentinela (3h, 4h, 6h, 12h)</strong> foram centralizados diretamente na tela de <strong>Catálogo &amp; Mineração</strong> para operação rápida do dropshipper.
+                    </p>
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
-                    Margem mínima de segurança para cobrir taxas de gateway e tráfego pago.
-                </span>
             </div>
+            <a href="<?= $baseUrl ?>/admin/dropship" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; text-decoration: none; padding: 11px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;">
+                <i class="fas fa-calculator"></i> Ajustar Margens no Catálogo &rarr;
+            </a>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px;">
@@ -236,7 +225,7 @@
                     resultBox.style.background = 'rgba(40,167,69,0.12)';
                     resultBox.style.border = '1px solid #28a745';
                     resultBox.style.color = '#5cd67d';
-                    resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">✔️ Sucesso: Sincronização Estabelecida!</div>' + data.message;
+                    resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">✔️ Sucesso: Sincronização Estabelecida!</div>' + ddEscHtml(data.message);
                 } else if (data.status === 'warning') {
                     // ⚠️ Modo Test / Access Token
                     badge.textContent = '⚠️ Modo Test / Requer Token';
@@ -253,7 +242,7 @@
                     resultBox.style.border = '1px solid #eab308';
                     resultBox.style.color = '#fef08a';
                     resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">⚠️ Servidor Alcançado — Ação Requerida</div>' + 
-                        data.message + 
+                        ddEscHtml(data.message) + 
                         '<div style="margin-top: 10px; font-size: 12px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; border-left: 3px solid #eab308;">' +
                         '<strong>Dica:</strong> Se sua aplicação já foi aprovada em <em>Apply Online</em>, gere o <em>Access Token</em> permanente no console do AliExpress e cole-o no campo de token abaixo antes de salvar.' +
                         '</div>';
@@ -273,7 +262,7 @@
                     resultBox.style.border = '1px solid #dc3232';
                     resultBox.style.color = '#fca5a5';
                     resultBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 4px; font-size: 14px;">❌ Erro de Ligação com o Servidor</div>' + 
-                        (data.message || 'Falha ao validar credenciais com o servidor do AliExpress.') +
+                        ddEscHtml(data.message || 'Falha ao validar credenciais com o servidor do AliExpress.') +
                         '<div style="margin-top: 10px; font-size: 12px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 4px; border-left: 3px solid #dc3232;">' +
                         '<strong>Solução:</strong> Verifique se digitou o <em>AppKey</em> e o <em>App Secret</em> corretamente sem espaços ou acesse seu painel em <strong>openservice.aliexpress.com</strong> para redefinir as credenciais.' +
                         '</div>';
@@ -291,10 +280,16 @@
                 resultBox.style.background = 'rgba(220,50,50,0.12)';
                 resultBox.style.border = '1px solid #dc3232';
                 resultBox.style.color = '#fca5a5';
-                resultBox.innerHTML = '❌ Falha de comunicação de rede: ' + err.message;
+                resultBox.innerHTML = '❌ Falha de comunicação de rede: ' + ddEscHtml(err && err.message ? err.message : 'Erro desconhecido');
             });
         });
     });
+
+    function ddEscHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = String(str || '');
+        return div.innerHTML;
+    }
 
     function ddToggleSecret(id, btn) {
         var input = document.getElementById(id);

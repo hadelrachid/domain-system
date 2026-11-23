@@ -14,21 +14,20 @@ use Throwable;
  */
 final class DomainDropSchemaEnsurer
 {
-    /** @var array<int, bool> */
-    private static array $ensuredConnections = [];
+    /** @var \WeakMap<PDO, bool>|null */
+    private static ?\WeakMap $ensuredConnections = null;
 
     public static function ensure(PDO $pdo): void
     {
-        $connId = spl_object_id($pdo);
-        if (isset(self::$ensuredConnections[$connId])) {
-            if (self::schemaAlreadyPresent($pdo)) {
-                return;
-            }
-            unset(self::$ensuredConnections[$connId]);
+        if (self::$ensuredConnections === null) {
+            self::$ensuredConnections = new \WeakMap();
+        }
+        if (isset(self::$ensuredConnections[$pdo])) {
+            return;
         }
 
         if (self::schemaAlreadyPresent($pdo)) {
-            self::$ensuredConnections[$connId] = true;
+            self::$ensuredConnections[$pdo] = true;
             return;
         }
 
@@ -50,16 +49,16 @@ final class DomainDropSchemaEnsurer
                 }
             }
             if (self::schemaAlreadyPresent($pdo)) {
-                self::$ensuredConnections[$connId] = true;
+                self::$ensuredConnections[$pdo] = true;
             }
         } catch (Throwable $e) {
-            // Não mascara erro real se o banco estiver indisponível; o caller tratará.
+            error_log('[DomainDropSchemaEnsurer] Falha ao garantir schema: ' . $e->getMessage());
         }
     }
 
     public static function resetCache(): void
     {
-        self::$ensuredConnections = [];
+        self::$ensuredConnections = null;
     }
 
     private static function schemaAlreadyPresent(PDO $pdo): bool
@@ -67,13 +66,15 @@ final class DomainDropSchemaEnsurer
         try {
             $driver = (string)$pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
             if ($driver === 'mysql') {
+                $c0 = $pdo->query("SHOW TABLES LIKE 'domain_drop_catalog'");
                 $c1 = $pdo->query("SHOW TABLES LIKE 'domain_drop_customers'");
                 $c2 = $pdo->query("SHOW TABLES LIKE 'domain_drop_disputes'");
                 $c3 = $pdo->query("SHOW TABLES LIKE 'domain_drop_product_demand'");
                 $c4 = $pdo->query("SHOW TABLES LIKE 'domain_drop_demand_activity_logs'");
                 $cols = $pdo->query("SHOW COLUMNS FROM domain_drop_orders LIKE 'seller_origin'");
                 $cAddr = $pdo->query("SHOW COLUMNS FROM domain_drop_customers LIKE 'shipping_zip'");
-                return $c1 !== false && $c1->fetchColumn() !== false
+                return $c0 !== false && $c0->fetchColumn() !== false
+                    && $c1 !== false && $c1->fetchColumn() !== false
                     && $c2 !== false && $c2->fetchColumn() !== false
                     && $c3 !== false && $c3->fetchColumn() !== false
                     && $c4 !== false && $c4->fetchColumn() !== false
@@ -81,6 +82,7 @@ final class DomainDropSchemaEnsurer
                     && $cAddr !== false && $cAddr->fetchColumn() !== false;
             }
 
+            $c0 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_catalog'");
             $c1 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_customers'");
             $c2 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_disputes'");
             $c3 = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='domain_drop_product_demand'");
@@ -91,7 +93,8 @@ final class DomainDropSchemaEnsurer
             $custCols = $pdo->query("PRAGMA table_info(domain_drop_customers)");
             $custColNames = $custCols ? array_column($custCols->fetchAll(PDO::FETCH_ASSOC), 'name') : [];
 
-            return $c1 !== false && $c1->fetchColumn() !== false
+            return $c0 !== false && $c0->fetchColumn() !== false
+                && $c1 !== false && $c1->fetchColumn() !== false
                 && $c2 !== false && $c2->fetchColumn() !== false
                 && $c3 !== false && $c3->fetchColumn() !== false
                 && $c4 !== false && $c4->fetchColumn() !== false

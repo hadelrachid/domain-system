@@ -190,9 +190,12 @@
                             <?php else: ?>
                                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                     <?php foreach ($s['enrolled_courses'] as $c): ?>
+                                        <?php
+                                        $revokePrompt = htmlspecialchars((string)json_encode('Revogar matrícula de ' . (string)$s['name'] . ' no curso ' . (string)$c['title'] . '?', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+                                        ?>
                                         <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; padding: 3px 8px; font-size: 11px; color: #e0f2fe;">
                                             <span>🎓 <?= htmlspecialchars((string)$c['title']) ?></span>
-                                            <form method="POST" action="<?= $baseUrl ?>/admin/academy/students/<?= (int)$s['id'] ?>/revoke" style="margin: 0; display: inline;" onsubmit="event.preventDefault(); const f = this; OS.confirm('Revogar matrícula de <?= htmlspecialchars(addslashes((string)$s['name'])) ?> no curso <?= htmlspecialchars(addslashes((string)$c['title'])) ?>?', () => f.submit());">
+                                            <form method="POST" action="<?= $baseUrl ?>/admin/academy/students/<?= (int)$s['id'] ?>/revoke" style="margin: 0; display: inline;" onsubmit="event.preventDefault(); const f = this; OS.confirm(<?= $revokePrompt ?>, () => f.submit());">
                                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                                                 <input type="hidden" name="course_id" value="<?= (int)$c['course_id'] ?>">
                                                 <button type="submit" title="Revogar Matrícula" style="background: none; border: none; color: #f87171; cursor: pointer; padding: 0; font-size: 10px; margin-left: 2px;">&times;</button>
@@ -204,20 +207,24 @@
                         </td>
 
                         <!-- Ações Rápidas -->
+                        <?php
+                        $jsStudentName = htmlspecialchars((string)json_encode((string)$s['name'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+                        $jsStudentStatus = htmlspecialchars((string)json_encode((string)$sStatus, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+                        ?>
                         <td style="padding: 16px 18px; vertical-align: middle; text-align: right;">
                             <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: flex-end;">
                                 <!-- Botão Matricular -->
-                                <button type="button" onclick="openEnrollModal(<?= (int)$s['id'] ?>, '<?= htmlspecialchars(addslashes((string)$s['name'])) ?>')" class="btn" style="background: rgba(69, 243, 255, 0.12); border: 1px solid var(--accent-blue, #45f3ff); color: var(--accent-blue, #45f3ff); padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
+                                <button type="button" onclick="openEnrollModal(<?= (int)$s['id'] ?>, <?= $jsStudentName ?>)" class="btn" style="background: rgba(69, 243, 255, 0.12); border: 1px solid var(--accent-blue, #45f3ff); color: var(--accent-blue, #45f3ff); padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
                                     <i class="fas fa-plus-circle"></i> Matricular
                                 </button>
 
                                 <!-- Botão Moderar / Status -->
-                                <button type="button" onclick="openStatusModal(<?= (int)$s['id'] ?>, '<?= htmlspecialchars(addslashes((string)$s['name'])) ?>', '<?= htmlspecialchars($sStatus) ?>')" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
+                                <button type="button" onclick="openStatusModal(<?= (int)$s['id'] ?>, <?= $jsStudentName ?>, <?= $jsStudentStatus ?>)" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
                                     <i class="fas fa-shield-alt"></i> Moderar
                                 </button>
 
                                 <!-- Botão Redefinir Senha -->
-                                <button type="button" onclick="openPasswordModal(<?= (int)$s['id'] ?>, '<?= htmlspecialchars(addslashes((string)$s['name'])) ?>')" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
+                                <button type="button" onclick="openPasswordModal(<?= (int)$s['id'] ?>, <?= $jsStudentName ?>)" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 5px; cursor: pointer;">
                                     <i class="fas fa-key"></i> Senha
                                 </button>
                             </div>

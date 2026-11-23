@@ -481,6 +481,61 @@ class DomainDropHubTest extends TestCase
         @rmdir($tmpDir);
     }
 
+    public function testDropshipAdminControllerPaginationWith50ItemsPerPage(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        // Popula 60 produtos para testar paginação (Página 1: 50 itens, Página 2: 10 itens)
+        for ($i = 1; $i <= 60; $i++) {
+            $repo->save(new DropshipProductDto(
+                aliexpressId: 'ae_page_test_' . $i,
+                title: 'Produto Teste Paginacao ' . $i,
+                slug: 'produto-teste-paginacao-' . $i,
+                costPriceUsd: 10.00 + $i,
+                salePriceBrl: 100.00 + $i,
+                mainImageUrl: 'https://ae01.alicdn.com/img_' . $i . '.jpg',
+                images: [],
+                category: 'Eletrônicos & Gadget',
+                description: 'Desc ' . $i,
+                rating: 4.9,
+                ordersCount: 1000 + $i,
+                attributes: [],
+                status: 'published'
+            ));
+        }
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService();
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('csrf_token_test');
+        $session->method('getFlash')->willReturn(null);
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $miningService,
+            currencyConverter: $converter,
+            session: $session
+        );
+
+        // Página 1: Deve conter 50 produtos e indicar Página 1 de 2
+        $reqP1 = new \DomainSystem\Core\Http\Request(['page' => '1']);
+        $respP1 = $controller->index($reqP1);
+        $htmlP1 = $respP1->getContent();
+        $this->assertSame(200, $respP1->getStatusCode());
+        $this->assertStringContainsString('Página 1 de 2', $htmlP1);
+        $this->assertStringContainsString('50 por página', $htmlP1);
+
+        // Página 2: Deve conter os 10 restantes e indicar Página 2 de 2
+        $reqP2 = new \DomainSystem\Core\Http\Request(['page' => '2']);
+        $respP2 = $controller->index($reqP2);
+        $htmlP2 = $respP2->getContent();
+        $this->assertSame(200, $respP2->getStatusCode());
+        $this->assertStringContainsString('Página 2 de 2', $htmlP2);
+    }
+
     public function testDropshipAdminControllerMiningActionPopulatesCatalog(): void
     {
         $repo = new PdoDropshipCatalogRepository($this->pdo);
@@ -562,12 +617,15 @@ class DomainDropHubTest extends TestCase
 
         // 2. Save settings
         $saveReq = new \DomainSystem\Core\Http\Request([], [
-            'csrf_token'             => 'valid_csrf',
-            'app_key'                => '558628_test',
-            'app_secret'             => 'secret_12345',
-            'access_token'           => 'token_oauth_xyz',
-            'default_markup_percent' => '120.0',
-            'min_profit_margin_brl'  => '45.0',
+            'csrf_token'                 => 'valid_csrf',
+            'app_key'                    => '558628_test',
+            'app_secret'                 => 'secret_12345',
+            'access_token'               => 'token_oauth_xyz',
+            'default_markup_percent'     => '120.0',
+            'min_profit_margin_brl'      => '45.0',
+            'price_sync_interval_hours'  => '4',
+            'volatility_index_percent'   => '15.0',
+            'price_sync_enabled'         => '1',
         ]);
         $saveResp = $controller->saveSettings($saveReq);
         $this->assertSame(302, $saveResp->getStatusCode());
@@ -578,6 +636,9 @@ class DomainDropHubTest extends TestCase
         $this->assertSame('token_oauth_xyz', $savedConfig['access_token']);
         $this->assertEqualsWithDelta(120.0, (float)$savedConfig['default_markup_percent'], 0.01);
         $this->assertEqualsWithDelta(45.0, (float)$savedConfig['min_profit_margin_brl'], 0.01);
+        $this->assertSame(4, (int)$savedConfig['price_sync_interval_hours']);
+        $this->assertSame(14400, (int)$savedConfig['price_sync_interval_seconds']);
+        $this->assertEqualsWithDelta(15.0, (float)$savedConfig['volatility_index_percent'], 0.01);
 
         // 3. Orders view
         $ordersResp = $controller->orders(new \DomainSystem\Core\Http\Request());
@@ -1323,5 +1384,115 @@ class DomainDropHubTest extends TestCase
         $this->assertGreaterThanOrEqual(2, count($ordered));
         $this->assertSame($olderId, $ordered[0]->id);
         $this->assertSame($newerId, $ordered[1]->id);
+    }
+
+    public function testCurrencyConverterApplies12PercentVolatilityBuffer(): void
+    {
+        $converter = new CurrencyConverterService();
+        $this->assertSame(12.0, $converter->getDefaultVolatilityPercent());
+
+        // Custo R$ 50,00 com 12% de volatilidade -> R$ 56,00
+        $bufferCost = $converter->applyVolatilityBuffer(50.00, 12.0);
+        $this->assertSame(56.00, $bufferCost);
+
+        // Preço de venda com 100% de markup sobre o custo corrigido (56.00 * 2 = 112.00)
+        $salePrice = $converter->calculateSalePriceFromBrl(50.00, 100.0, 12.0);
+        $this->assertSame(112.00, $salePrice);
+    }
+
+    public function testProductMiningServicePriceSyncSentinelEvery6Hours(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $product = new DropshipProductDto(
+            aliexpressId: '1005089999999',
+            title: 'Produto Teste Sentinela de Preco 6h',
+            slug: 'produto-teste-sentinela-6h',
+            costPriceUsd: 10.0,
+            salePriceBrl: 116.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/watch.jpg',
+            category: 'Eletrônicos & Gadget',
+            status: 'published'
+        );
+        $pId = $repo->save($product);
+
+        $tmpConfig = sys_get_temp_dir() . '/test_drop_config_' . uniqid() . '.json';
+        file_put_contents($tmpConfig, json_encode([
+            'enabled' => true,
+            'auto_sync_enabled' => true,
+            'price_sync_interval_seconds' => 21600,
+            'volatility_index_percent' => 12.0,
+            'last_price_sync_at' => 0
+        ]));
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService();
+        $enricher = new AiProductEnricherService();
+        $miningService = new ProductMiningService($mockApi, $converter, $enricher, $repo, configFilePath: $tmpConfig);
+
+        $syncInfo = $miningService->getPriceSyncInfo();
+        $this->assertSame(21600, $syncInfo['interval_seconds']);
+        $this->assertTrue($syncInfo['is_due']);
+        $this->assertSame(12.0, $syncInfo['volatility_percent']);
+
+        // Executa varredura
+        $res = $miningService->runPriceAndStockSync(10);
+        $this->assertTrue($res['success']);
+        $this->assertGreaterThanOrEqual(1, $res['products_checked']);
+        $this->assertSame(12.0, $res['volatility_applied']);
+
+        // Após execução, não deve estar vencido (is_due === false)
+        $updatedInfo = $miningService->getPriceSyncInfo();
+        $this->assertFalse($updatedInfo['is_due']);
+        $this->assertGreaterThan(0, $updatedInfo['last_sync_at']);
+
+        @unlink($tmpConfig);
+    }
+
+    public function testStorefrontPaginationAndSeoTags(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        // Popula 50 produtos para vitrine (Página 1: 48 itens, Página 2: 2 itens)
+        for ($i = 1; $i <= 50; $i++) {
+            $repo->save(new DropshipProductDto(
+                aliexpressId: 'ae_front_test_' . $i,
+                title: 'Produto Vitrine Teste ' . $i,
+                slug: 'produto-vitrine-teste-' . $i,
+                costPriceUsd: 10.0,
+                salePriceBrl: 99.90,
+                mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/img_' . $i . '.jpg',
+                category: 'Eletrônicos & Gadget',
+                status: 'published'
+            ));
+        }
+
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService();
+        $enricher = new AiProductEnricherService();
+        $mining = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        $front = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $repo,
+            miningService: $mining
+        );
+
+        // Página 1: Exibe Página 1 de 2, 48 produtos e link para próxima página
+        $reqP1 = new \DomainSystem\Core\Http\Request(['page' => '1']);
+        $respP1 = $front->storefront($reqP1);
+        $htmlP1 = $respP1->getContent();
+        $this->assertSame(200, $respP1->getStatusCode());
+        $this->assertStringContainsString('rel="canonical"', $htmlP1);
+        $this->assertStringContainsString('rel="next"', $htmlP1);
+        $this->assertStringContainsString('Página 1 de 2', $htmlP1);
+
+        // Resposta AJAX do Palco
+        $reqAjax = new \DomainSystem\Core\Http\Request(['ajax' => '1', 'page' => '2']);
+        $respAjax = $front->storefront($reqAjax);
+        $this->assertSame(200, $respAjax->getStatusCode());
+        $json = json_decode($respAjax->getContent(), true);
+        $this->assertTrue($json['success']);
+        $this->assertSame(2, $json['page']);
+        $this->assertSame(2, $json['totalPages']);
     }
 }

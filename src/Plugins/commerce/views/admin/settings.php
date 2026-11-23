@@ -407,12 +407,12 @@
                         tokenBox.style.background = 'rgba(0, 210, 132, 0.12)';
                         tokenBox.style.color = '#00d284';
                         tokenBox.style.border = '1px solid rgba(0, 210, 132, 0.35)';
-                        tokenBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🟢</span><strong>OK:</strong> ' + data.access_token.message;
+                        tokenBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🟢</span><strong>OK:</strong> ' + commEscHtml(data.access_token.message);
                     } else {
                         tokenBox.style.background = 'rgba(239, 68, 68, 0.12)';
                         tokenBox.style.color = '#ef4444';
                         tokenBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
-                        tokenBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🔴</span><strong>Erro:</strong> ' + data.access_token.message;
+                        tokenBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🔴</span><strong>Erro:</strong> ' + commEscHtml(data.access_token.message);
                     }
                 }
 
@@ -423,12 +423,12 @@
                         pubkeyBox.style.background = 'rgba(0, 210, 132, 0.12)';
                         pubkeyBox.style.color = '#00d284';
                         pubkeyBox.style.border = '1px solid rgba(0, 210, 132, 0.35)';
-                        pubkeyBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🟢</span><strong>OK:</strong> ' + data.public_key.message;
+                        pubkeyBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🟢</span><strong>OK:</strong> ' + commEscHtml(data.public_key.message);
                     } else {
                         pubkeyBox.style.background = 'rgba(239, 68, 68, 0.12)';
                         pubkeyBox.style.color = '#ef4444';
                         pubkeyBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
-                        pubkeyBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🔴</span><strong>Erro:</strong> ' + data.public_key.message;
+                        pubkeyBox.innerHTML = '<span style="font-size: 1.1rem; margin-right: 6px;">🔴</span><strong>Erro:</strong> ' + commEscHtml(data.public_key.message);
                     }
                 }
             })
@@ -473,13 +473,13 @@
                         box.style.background = 'rgba(0, 210, 132, 0.12)';
                         box.style.color = '#00d284';
                         box.style.border = '1px solid rgba(0, 210, 132, 0.35)';
-                        box.innerHTML = '🟢 <strong>OK:</strong> ' + data.result.message;
+                        box.innerHTML = '🟢 <strong>OK:</strong> ' + commEscHtml(data.result.message);
                         notify('Conexão com PayPal validada com sucesso!', 'success');
                     } else {
                         box.style.background = 'rgba(239, 68, 68, 0.12)';
                         box.style.color = '#ef4444';
                         box.style.border = '1px solid rgba(239, 68, 68, 0.35)';
-                        box.innerHTML = '🔴 <strong>Erro:</strong> ' + data.result.message;
+                        box.innerHTML = '🔴 <strong>Erro:</strong> ' + commEscHtml(data.result.message);
                         notify(data.result.message, 'error');
                     }
                 } else {
@@ -525,13 +525,13 @@
                         box.style.background = 'rgba(0, 210, 132, 0.12)';
                         box.style.color = '#00d284';
                         box.style.border = '1px solid rgba(0, 210, 132, 0.35)';
-                        box.innerHTML = '🟢 <strong>OK:</strong> ' + data.result.message;
+                        box.innerHTML = '🟢 <strong>OK:</strong> ' + commEscHtml(data.result.message);
                         notify('Conexão com Stripe validada com sucesso!', 'success');
                     } else {
                         box.style.background = 'rgba(239, 68, 68, 0.12)';
                         box.style.color = '#ef4444';
                         box.style.border = '1px solid rgba(239, 68, 68, 0.35)';
-                        box.innerHTML = '🔴 <strong>Erro:</strong> ' + data.result.message;
+                        box.innerHTML = '🔴 <strong>Erro:</strong> ' + commEscHtml(data.result.message);
                         notify(data.result.message, 'error');
                     }
                 } else {
@@ -543,6 +543,12 @@
                 btn.textContent = '⚡ Testar Chave Secreta do Stripe';
                 notify('Erro de conexão ao testar Stripe: ' + err, 'error');
             });
+        }
+
+        function commEscHtml(str) {
+            var d = document.createElement('div');
+            d.textContent = String(str || '');
+            return d.innerHTML;
         }
 
         function commTogglePass(id, btn) {

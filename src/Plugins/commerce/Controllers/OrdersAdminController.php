@@ -259,8 +259,12 @@ class OrdersAdminController
     public function updateOrderStatus(Request $request, $id): ResponseInterface
     {
         $orderId = (int)$id;
-        $status = (string)$request->input('status', 'paid');
-        $token = (string)$request->input('csrf_token');
+        $status = strtolower(trim((string)$request->input('status', 'paid')));
+        if (!in_array($status, ['pending', 'paid', 'refunded', 'cancelled'], true)) {
+            return new JsonResponse(['success' => false, 'message' => 'Status inválido.'], 422);
+        }
+
+        $token = (string)$request->input('csrf_token', (string)($request->server['HTTP_X_CSRF_TOKEN'] ?? ''));
         $expectedToken = (string)$this->session->getCsrfToken();
 
         if ($token === '' || !hash_equals($expectedToken, $token)) {
@@ -272,19 +276,32 @@ class OrdersAdminController
             return new JsonResponse(['success' => false, 'message' => 'Pedido não encontrado.'], 404);
         }
 
+        $previousStatus = (string)($order['status'] ?? 'pending');
         $updated = $this->orderRepo->updateStatus($orderId, $status);
-        if ($updated && $status === 'paid' && $this->dispatcher !== null) {
-            $this->dispatcher->dispatch('payment.approved', [
+        $orderItemType = (string)($order['item_type'] ?? 'course');
+        if ($updated && $previousStatus !== $status && $status === 'paid' && $this->dispatcher !== null) {
+            $eventPayload = [
                 'user_id'   => (int)$order['user_id'],
                 'course_id' => (int)$order['item_id'],
                 'order_ref' => (string)$order['order_ref'],
-            ]);
-        } elseif ($updated && $status === 'refunded' && $this->dispatcher !== null) {
-            $this->dispatcher->dispatch('payment.refunded', [
+            ];
+            if ($orderItemType !== 'course') {
+                $eventPayload['item_id'] = (int)$order['item_id'];
+                $eventPayload['item_type'] = $orderItemType;
+                $eventPayload['total'] = (float)($order['total'] ?? 0.0);
+            }
+            $this->dispatcher->dispatch('payment.approved', $eventPayload);
+        } elseif ($updated && $previousStatus !== $status && $status === 'refunded' && $this->dispatcher !== null) {
+            $eventPayload = [
                 'user_id'   => (int)$order['user_id'],
                 'course_id' => (int)$order['item_id'],
                 'order_ref' => (string)$order['order_ref'],
-            ]);
+            ];
+            if ($orderItemType !== 'course') {
+                $eventPayload['item_id'] = (int)$order['item_id'];
+                $eventPayload['item_type'] = $orderItemType;
+            }
+            $this->dispatcher->dispatch('payment.refunded', $eventPayload);
         }
 
         return new JsonResponse([
@@ -356,18 +373,18 @@ class OrdersAdminController
             
             fputcsv($handle, [
                 (int)$o['id'],
-                (string)$o['order_ref'],
-                (string)$o['created_at'],
+                $this->sanitizeCsvCell((string)$o['order_ref']),
+                $this->sanitizeCsvCell((string)$o['created_at']),
                 (int)$o['user_id'],
-                (string)($o['user_name'] ?? ('Aluno #' . $o['user_id'])),
-                (string)($o['user_email'] ?? ''),
-                ucfirst((string)$o['item_type']) . ' #' . (int)$o['item_id'],
+                $this->sanitizeCsvCell((string)($o['user_name'] ?? ('Aluno #' . $o['user_id']))),
+                $this->sanitizeCsvCell((string)($o['user_email'] ?? '')),
+                $this->sanitizeCsvCell(ucfirst((string)$o['item_type']) . ' #' . (int)$o['item_id']),
                 number_format((float)$o['total'], 2, ',', '.'),
-                ucfirst((string)$o['gateway']),
-                $methodLabels[$pm] ?? ucfirst($pm),
-                $statusLabels[$st] ?? ucfirst($st),
-                (string)($o['transaction_id'] ?? ''),
-                (string)($o['updated_at'] ?? ''),
+                $this->sanitizeCsvCell(ucfirst((string)$o['gateway'])),
+                $this->sanitizeCsvCell($methodLabels[$pm] ?? ucfirst($pm)),
+                $this->sanitizeCsvCell($statusLabels[$st] ?? ucfirst($st)),
+                $this->sanitizeCsvCell((string)($o['transaction_id'] ?? '')),
+                $this->sanitizeCsvCell((string)($o['updated_at'] ?? '')),
             ], ';');
         }
 
@@ -388,6 +405,14 @@ class OrdersAdminController
                 'Expires'             => '0',
             ]
         );
+    }
+
+    private function sanitizeCsvCell(string $value): string
+    {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'" . $value;
+        }
+        return $value;
     }
 
     private function renderView(string $viewName, array $data = []): string

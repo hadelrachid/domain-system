@@ -19,12 +19,14 @@ class CurrencyConverterService implements CurrencyConverterInterface
     private float $defaultMarkupPercent;
     private float $minProfitBrl;
     private float $fallbackUsdRate = 5.80;
+    private float $defaultVolatilityPercent;
 
     public function __construct(
         ?string $cacheDirOrFile = null,
         float $defaultMarkupPercent = 100.0,
         float $minProfitBrl = 30.0,
-        float $fallbackUsdRate = 5.80
+        float $fallbackUsdRate = 5.80,
+        float $defaultVolatilityPercent = 12.0
     ) {
         if ($cacheDirOrFile !== null && str_ends_with(strtolower($cacheDirOrFile), '.json')) {
             $this->cacheFile = $cacheDirOrFile;
@@ -42,6 +44,28 @@ class CurrencyConverterService implements CurrencyConverterInterface
         $this->defaultMarkupPercent = $defaultMarkupPercent;
         $this->minProfitBrl = $minProfitBrl;
         $this->fallbackUsdRate = $fallbackUsdRate;
+        $this->defaultVolatilityPercent = $defaultVolatilityPercent;
+    }
+
+    public function getDefaultVolatilityPercent(): float
+    {
+        return $this->defaultVolatilityPercent;
+    }
+
+    public function setDefaultVolatilityPercent(float $percent): void
+    {
+        $this->defaultVolatilityPercent = max(0.0, min(50.0, $percent));
+    }
+
+    /**
+     * Aplica o amortecedor do Índice de Volatilidade (ex: 12% sobre o custo base).
+     */
+    public function applyVolatilityBuffer(float $baseCost, float $volatilityPercent = 12.0): float
+    {
+        if ($baseCost <= 0.0) {
+            return 0.0;
+        }
+        return round($baseCost * (1 + ($volatilityPercent / 100.0)), 2);
     }
 
     public function getExchangeRate(string $from = 'USD', string $to = 'BRL'): float
@@ -86,48 +110,54 @@ class CurrencyConverterService implements CurrencyConverterInterface
         return $this->fallbackUsdRate;
     }
 
-    public function calculateSalePrice(float $costUsd, ?float $customMarkupPercent = null, ?float $minProfitBrl = null): float
+    public function calculateSalePrice(float $costUsd, ?float $customMarkupPercent = null, ?float $minProfitBrl = null, float $volatilityPercent = 0.0): float
     {
         if ($costUsd <= 0.0) {
             return 0.0;
         }
 
         $rate = $this->getExchangeRate('USD', 'BRL');
-        $costBrl = $costUsd * $rate;
+        $rawCostBrl = $costUsd * $rate;
+        $effectiveCostBrl = $volatilityPercent > 0.0 ? $this->applyVolatilityBuffer($rawCostBrl, $volatilityPercent) : $rawCostBrl;
 
         $markup = $customMarkupPercent ?? $this->defaultMarkupPercent;
         $minProfit = $minProfitBrl ?? $this->minProfitBrl;
 
-        // Calcula com o markup (ex: 100% de markup dobra o custo original)
-        $calculatedSalePrice = $costBrl * (1 + ($markup / 100.0));
+        // Calcula com o markup sobre o custo corrigido pela volatilidade
+        $calculatedSalePrice = $effectiveCostBrl * (1 + ($markup / 100.0));
 
         // Assegura que o lucro líquido em Reais seja no mínimo o configurado
-        $profit = $calculatedSalePrice - $costBrl;
+        $profit = $calculatedSalePrice - $rawCostBrl;
         if ($profit < $minProfit) {
-            $calculatedSalePrice = $costBrl + $minProfit;
+            $calculatedSalePrice = $rawCostBrl + $minProfit;
         }
 
-        // Arredondamento comercial atraente (ex: termina em .90 ou .00)
+        // Arredondamento comercial atraente
         return round($calculatedSalePrice, 2);
     }
 
     /**
      * Calcula o preço final de venda em BRL aplicando margem de lucro (markup)
-     * diretamente sobre o preço líquido de oferta do produto em Reais (BRL).
-     * 
-     * Regra oficial escolhida pelo lojista:
-     * - 100% de markup (duas vezes o produto / Custo + Custo):
-     *   Ex: Custo R$ 29,09 -> Venda R$ 58,18 (29,09 + 29,09)
-     *   Ex: Custo R$ 44,77 -> Venda R$ 89,54 (44,77 + 44,77)
+     * diretamente sobre o preço líquido de oferta do produto em Reais (BRL),
+     * com suporte a índice de correção de volatilidade cambial/fornecedor.
      */
-    public function calculateSalePriceFromBrl(float $costBrl, ?float $customMarkupPercent = 100.0): float
+    public function calculateSalePriceFromBrl(float $costBrl, ?float $customMarkupPercent = 100.0, float $volatilityPercent = 0.0): float
     {
         if ($costBrl <= 0.0) {
             return 0.0;
         }
 
         $markup = $customMarkupPercent ?? $this->defaultMarkupPercent;
-        return round($costBrl * (1 + ($markup / 100.0)), 2);
+        $effectiveCostBrl = $volatilityPercent > 0.0 ? $this->applyVolatilityBuffer($costBrl, $volatilityPercent) : $costBrl;
+        $calculatedSalePrice = $effectiveCostBrl * (1 + ($markup / 100.0));
+
+        // Assegura piso mínimo
+        $profit = $calculatedSalePrice - $costBrl;
+        if ($profit < $this->minProfitBrl) {
+            $calculatedSalePrice = $costBrl + $this->minProfitBrl;
+        }
+
+        return round($calculatedSalePrice, 2);
     }
 
     private function loadCachedRate(string $from, string $to): ?float

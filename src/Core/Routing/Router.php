@@ -49,7 +49,11 @@ class Router implements RouterInterface
     {
         $method = strtoupper($request->method());
         // Remove query string
-        $uri = strtok($request->uri(), '?');
+        // Remove query string e barra final redundante (ex: /admin/ -> /admin)
+        $uri = strtok($request->uri(), '?') ?: '/';
+        if ($uri !== '/' && str_ends_with($uri, '/')) {
+            $uri = rtrim($uri, '/') ?: '/';
+        }
 
         try {
             // Dispara o listener

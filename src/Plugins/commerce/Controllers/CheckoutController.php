@@ -73,15 +73,17 @@ class CheckoutController
     /**
      * Tela de Checkout: GET /checkout/curso/{id}
      */
-    public function showCheckout(Request $request, $id): ResponseInterface
+    public function showCheckout(Request $request, $id, ?string $forcedItemType = null): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $courseId = (int)$id;
+        $isProductRoute = ($forcedItemType === 'dropship_product')
+            || str_contains((string)($request->server['REQUEST_URI'] ?? ''), '/checkout/produto/');
 
         $course = null;
         $sellerInfo = null;
         $resolvedItem = null;
-        if ($this->courseRepo !== null) {
+        if (!$isProductRoute && $this->courseRepo !== null) {
             $c = $this->courseRepo->findById($courseId);
             if ($c && ($c['status'] ?? '') === 'published') {
                 $course = $c;
@@ -90,9 +92,14 @@ class CheckoutController
 
         if ($course === null && $this->itemResolver !== null) {
             $resolveContext = ['sku' => (string)($request->input('sku') ?? '')];
-            $item = $this->itemResolver->resolve('course', $courseId, $resolveContext)
-                 ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
-                 ?? $this->itemResolver->resolve('product', $courseId, $resolveContext);
+            if ($isProductRoute) {
+                $item = $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
+                     ?? $this->itemResolver->resolve('product', $courseId, $resolveContext);
+            } else {
+                $item = $this->itemResolver->resolve('course', $courseId, $resolveContext)
+                     ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
+                     ?? $this->itemResolver->resolve('product', $courseId, $resolveContext);
+            }
             if ($item && $item->isAvailable()) {
                 $resolvedItem = $item;
                 $course = [
@@ -298,7 +305,7 @@ class CheckoutController
      */
     public function showProductCheckout(Request $request, $id): ResponseInterface
     {
-        return $this->showCheckout($request, $id);
+        return $this->showCheckout($request, $id, 'dropship_product');
     }
 
     /**
@@ -312,12 +319,6 @@ class CheckoutController
             return new JsonResponse(['success' => false, 'message' => 'Token CSRF inválido.'], 403);
         }
 
-        $requestedSku = trim((string)$request->input('sku', ''));
-        if ($requestedSku !== '') {
-            $GLOBALS['_GET']['sku'] = $requestedSku;
-            $GLOBALS['_POST']['sku'] = $requestedSku;
-        }
-
         $courseId = (int)($request->input('item_id') ?? $request->input('course_id'));
         $itemType = (string)($request->input('item_type') ?? '');
         $course = null;
@@ -325,11 +326,13 @@ class CheckoutController
         $resolvedItem = null;
 
         if ($this->itemResolver !== null) {
-            $resolvedType = $itemType !== '' ? $itemType : 'course';
             $resolveContext = ['sku' => (string)($request->input('sku') ?? '')];
-            $item = $this->itemResolver->resolve($resolvedType, $courseId, $resolveContext)
-                 ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext)
-                 ?? $this->itemResolver->resolve('course', $courseId, $resolveContext);
+            if ($itemType !== '') {
+                $item = $this->itemResolver->resolve($itemType, $courseId, $resolveContext);
+            } else {
+                $item = $this->itemResolver->resolve('course', $courseId, $resolveContext)
+                     ?? $this->itemResolver->resolve('dropship_product', $courseId, $resolveContext);
+            }
             if ($item && $item->isAvailable()) {
                 $resolvedItem = $item;
                 $course = [
@@ -352,7 +355,7 @@ class CheckoutController
 
         if ($course === null && $this->courseRepo !== null) {
             $c = $this->courseRepo->findById($courseId);
-            if ($c) {
+            if ($c && ($c['status'] ?? 'published') === 'published') {
                 $course = $c;
                 $itemType = 'course';
             }
@@ -401,7 +404,7 @@ class CheckoutController
             }
         }
         $total = round(($unitPrice * $quantity) + $shippingPrice, 2);
-        $gatewayId = (string)($request->input('gateway') ?? 'mercadopago');
+        $gatewayId = strtolower(trim((string)($request->input('gateway') ?? 'mercadopago')));
         $paymentMethod = (string)($request->input('payment_method') ?? 'pix');
         $payerCpf = preg_replace('/\D/', '', (string)(
             $request->input('payer_cpf')
@@ -428,13 +431,21 @@ class CheckoutController
         }
 
         $gateway = $this->gatewayRegistry->get($gatewayId);
-        if (!$gateway) {
+        if (!$gateway || in_array($gateway->getId(), ['hotmart', 'eduzz', 'monetizze', 'clickbank'], true)) {
             return new JsonResponse(['success' => false, 'message' => 'Meio de pagamento inválido.'], 422);
         }
 
         // Só cobra por gateway com credenciais reais. Modo demonstração exige flag explícita.
         if (!$gateway->isConfigured() && !$this->isDemoModeEnabled()) {
             return new JsonResponse(['success' => false, 'message' => 'Este meio de pagamento não está disponível no momento.'], 409);
+        }
+
+        if ($this->settings !== null) {
+            $allSettings = $this->settings->all();
+            $enabledKey = $gateway->getId() . '_enabled';
+            if (is_array($allSettings) && array_key_exists($enabledKey, $allSettings) && !$allSettings[$enabledKey]) {
+                return new JsonResponse(['success' => false, 'message' => 'Este gateway de pagamento está desativado.'], 409);
+            }
         }
 
         // Para Pix e Boleto em ambiente real do Mercado Pago, CPF com 11 dígitos é obrigatório
@@ -520,6 +531,8 @@ class CheckoutController
         $qtySuffix = ($isPhysicalOrDropship && $quantity > 1) ? " ({$quantity}x)" : '';
         $orderData = [
             'order_ref'     => $orderRef,
+            'item_id'       => $courseId,
+            'item_type'     => $itemType,
             'total'         => $total,
             'description'   => $isPhysicalOrDropship ? ("Compra{$qtySuffix}: " . $course['title']) : ("Matrícula no Curso: " . $course['title']),
             'student_name'  => $studentName,
@@ -623,6 +636,10 @@ class CheckoutController
             return new JsonResponse(['success' => false, 'paid' => false, 'message' => 'Pedido não encontrado.'], 404);
         }
 
+        if (!$this->canAccessOrder($order)) {
+            return new JsonResponse(['success' => false, 'paid' => false, 'message' => 'Acesso negado ao pedido.'], 403);
+        }
+
         $status = (string)($order['status'] ?? 'pending');
         $isPaid = $status === 'paid';
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
@@ -653,10 +670,23 @@ class CheckoutController
             return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Pedido não localizado.'));
         }
 
+        $isPhysical = in_array((string)($order['item_type'] ?? ''), ['dropship_product', 'dropship', 'product'], true);
+        $approvedRedirect = $isPhysical
+            ? ($baseUrl . '/checkout/sucesso/' . urlencode($orderRef) . '?payment_status=approved&gateway=stripe')
+            : ($baseUrl . '/aluno/painel?payment_status=approved&gateway=stripe&order_ref=' . urlencode($orderRef));
+
+        if (($order['status'] ?? '') === 'paid') {
+            return Response::redirect($approvedRedirect);
+        }
+
         $gateway = $this->gatewayRegistry->get('stripe');
-        if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\StripeGateway && !empty($sessionId)) {
+        if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\StripeGateway && !empty($sessionId) && $gateway->isConfigured()) {
             $verified = $gateway->verifySession($sessionId);
             if ($verified && ($verified['status'] ?? '') === 'approved') {
+                if (!empty($verified['order_ref']) && (string)$verified['order_ref'] !== $orderRef) {
+                    return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Sessão de pagamento não pertence a este pedido.'));
+                }
+
                 $expectedTotal = (float)($order['total'] ?? 0.0);
                 $paidTotal = (float)($verified['total'] ?? 0.0);
                 if ($expectedTotal > 0.0 && abs($paidTotal - $expectedTotal) > 0.01) {
@@ -678,14 +708,15 @@ class CheckoutController
                         'item_id'   => (int)$order['item_id'],
                         'item_type' => (string)($order['item_type'] ?? 'course'),
                         'order_ref' => $orderRef,
+                        'total'     => $expectedTotal,
                     ]);
                 }
 
-                return Response::redirect($baseUrl . '/aluno/painel?payment_status=approved&gateway=stripe&order_ref=' . urlencode($orderRef));
+                return Response::redirect($approvedRedirect);
             }
         }
 
-        if ($this->isDemoModeEnabled()) {
+        if ((!$gateway || !$gateway->isConfigured()) && !empty($sessionId) && $this->isDemoModeEnabled()) {
             $this->orderRepo->updateStatus((int)$order['id'], 'paid', 'STRIPE_DEMO_' . time());
             if ($this->dispatcher !== null) {
                 $this->dispatcher->dispatch('payment.approved', [
@@ -694,9 +725,10 @@ class CheckoutController
                     'item_id'   => (int)$order['item_id'],
                     'item_type' => (string)($order['item_type'] ?? 'course'),
                     'order_ref' => $orderRef,
+                    'total'     => (float)($order['total'] ?? 0.0),
                 ]);
             }
-            return Response::redirect($baseUrl . '/aluno/painel?payment_status=approved&gateway=stripe&order_ref=' . urlencode($orderRef));
+            return Response::redirect($approvedRedirect);
         }
 
         return Response::redirect($baseUrl . '/aluno/painel?payment_status=pending&gateway=stripe&order_ref=' . urlencode($orderRef));
@@ -716,10 +748,23 @@ class CheckoutController
             return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Pedido não localizado.'));
         }
 
+        $isPhysical = in_array((string)($order['item_type'] ?? ''), ['dropship_product', 'dropship', 'product'], true);
+        $approvedRedirect = $isPhysical
+            ? ($baseUrl . '/checkout/sucesso/' . urlencode($orderRef) . '?payment_status=approved&gateway=paypal')
+            : ($baseUrl . '/aluno/painel?payment_status=approved&gateway=paypal&order_ref=' . urlencode($orderRef));
+
+        if (($order['status'] ?? '') === 'paid') {
+            return Response::redirect($approvedRedirect);
+        }
+
         $gateway = $this->gatewayRegistry->get('paypal');
-        if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\PayPalGateway && !empty($token)) {
+        if ($gateway instanceof \DomainSystem\Plugins\commerce\Services\Gateways\PayPalGateway && !empty($token) && $gateway->isConfigured()) {
             $captured = $gateway->captureOrder($token);
             if ($captured && ($captured['status'] ?? '') === 'approved') {
+                if (!empty($captured['order_ref']) && (string)$captured['order_ref'] !== $orderRef) {
+                    return Response::redirect($baseUrl . '/aluno/painel?payment_status=error&message=' . urlencode('Transação PayPal não pertence a este pedido.'));
+                }
+
                 $expectedTotal = (float)($order['total'] ?? 0.0);
                 $paidTotal = (float)($captured['total'] ?? 0.0);
                 if ($expectedTotal > 0.0 && abs($paidTotal - $expectedTotal) > 0.01) {
@@ -741,14 +786,15 @@ class CheckoutController
                         'item_id'   => (int)$order['item_id'],
                         'item_type' => (string)($order['item_type'] ?? 'course'),
                         'order_ref' => $orderRef,
+                        'total'     => $expectedTotal,
                     ]);
                 }
 
-                return Response::redirect($baseUrl . '/aluno/painel?payment_status=approved&gateway=paypal&order_ref=' . urlencode($orderRef));
+                return Response::redirect($approvedRedirect);
             }
         }
 
-        if ($this->isDemoModeEnabled()) {
+        if ((!$gateway || !$gateway->isConfigured()) && !empty($token) && $this->isDemoModeEnabled()) {
             $this->orderRepo->updateStatus((int)$order['id'], 'paid', 'PAYPAL_DEMO_' . time());
             if ($this->dispatcher !== null) {
                 $this->dispatcher->dispatch('payment.approved', [
@@ -757,12 +803,37 @@ class CheckoutController
                     'item_id'   => (int)$order['item_id'],
                     'item_type' => (string)($order['item_type'] ?? 'course'),
                     'order_ref' => $orderRef,
+                    'total'     => (float)($order['total'] ?? 0.0),
                 ]);
             }
-            return Response::redirect($baseUrl . '/aluno/painel?payment_status=approved&gateway=paypal&order_ref=' . urlencode($orderRef));
+            return Response::redirect($approvedRedirect);
         }
 
         return Response::redirect($baseUrl . '/aluno/painel?payment_status=pending&gateway=paypal&order_ref=' . urlencode($orderRef));
+    }
+
+    private function canAccessOrder(array $order): bool
+    {
+        $role = (string)$this->session->get('user_role', '');
+        if (in_array($role, ['admin', 'manager'], true)) {
+            return true;
+        }
+        $orderUserId = (int)($order['user_id'] ?? 0);
+        $isPhysical = in_array((string)($order['item_type'] ?? ''), ['dropship_product', 'dropship', 'product'], true);
+        $scopedIds = $isPhysical
+            ? array_filter([
+                (int)$this->session->get('customer_id', 0),
+                (int)$this->session->get('academy_student_id', 0),
+                (int)$this->session->get('user_id', 0),
+            ])
+            : array_filter([
+                (int)$this->session->get('academy_student_id', 0),
+                (int)$this->session->get('user_id', 0),
+            ]);
+        if (empty($scopedIds) || $orderUserId <= 0) {
+            return true;
+        }
+        return in_array($orderUserId, $scopedIds, true);
     }
 
     /**
@@ -773,7 +844,7 @@ class CheckoutController
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $order = $this->orderRepo->findByOrderRef($orderRef);
 
-        if (!$order) {
+        if (!$order || !$this->canAccessOrder($order)) {
             return Response::redirect($baseUrl . '/');
         }
 

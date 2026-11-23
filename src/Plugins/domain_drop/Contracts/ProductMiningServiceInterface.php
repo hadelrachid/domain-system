@@ -57,10 +57,10 @@ interface ProductMiningServiceInterface
      * 
      * Atualiza o catálogo, registra a data/hora de conclusão e retorna o resumo estatístico.
      * 
-     * @param int $itemsPerCategory Quantidade de produtos frescos minerados por categoria
+     * @param int $itemsPerCategory Quantidade de produtos frescos minerados por categoria (padrão 10 = ~90 a 100 produtos no ciclo diário de 24h)
      * @return array<string, mixed> Resumo da rodada executada
      */
-    public function runDailyAutomatedRotation(int $itemsPerCategory = 4): array;
+    public function runDailyAutomatedRotation(int $itemsPerCategory = 10): array;
 
     /**
      * Retorna os metadados do ciclo diário de 24 horas:
@@ -70,4 +70,22 @@ interface ProductMiningServiceInterface
      * @return array<string, mixed>
      */
     public function getDailyCycleInfo(): array;
+
+    /**
+     * Retorna os metadados da Sentinela de Preços e Estoque de 6 Horas:
+     * timestamp da última verificação, próxima execução, segundos restantes e status (is_due).
+     *
+     * @return array<string, mixed>
+     */
+    public function getPriceSyncInfo(): array;
+
+    /**
+     * Executa a varredura da Sentinela de Preços e Estoque a cada 6 horas:
+     * Consulta o fornecedor no AliExpress, aplica o Índice de Correção de Volatilidade (12%)
+     * e ajusta preços de venda em R$ ou pausa produtos esgotados.
+     *
+     * @param int $batchLimit Quantidade máxima de produtos verificados por rodada
+     * @return array<string, mixed> Relatório estatístico da varredura
+     */
+    public function runPriceAndStockSync(int $batchLimit = 50): array;
 }

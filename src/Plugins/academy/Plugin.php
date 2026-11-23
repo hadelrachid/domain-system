@@ -358,6 +358,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             if (!is_array($payload)) {
                 return;
             }
+            $itemType = (string)($payload['item_type'] ?? 'course');
+            if (!in_array($itemType, ['', 'course'], true)) {
+                return;
+            }
             $userId = (int)($payload['user_id'] ?? 0);
             $courseId = (int)($payload['course_id'] ?? ($payload['item_id'] ?? 0));
             $orderRef = isset($payload['order_ref']) ? (string)$payload['order_ref'] : null;
@@ -379,6 +383,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         // 5b. Revogação de Matrícula por Reembolso (T13):
         $runtime->onHook('payment.refunded', function ($payload) use ($runtime) {
             if (!is_array($payload)) {
+                return;
+            }
+            $itemType = (string)($payload['item_type'] ?? 'course');
+            if (!in_array($itemType, ['', 'course'], true)) {
                 return;
             }
             $userId = (int)($payload['user_id'] ?? 0);

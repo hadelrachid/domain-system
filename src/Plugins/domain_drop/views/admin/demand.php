@@ -377,7 +377,7 @@ $monthsNames = [
                                                 <span style="color: #38bdf8; font-weight: 800; font-family: monospace; font-size: 0.92rem; text-decoration: underline; letter-spacing: 0.2px;">
                                                     <?= htmlspecialchars($act['customer_email']) ?>
                                                 </span>
-                                                <button type="button" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($act['customer_email'], ENT_QUOTES) ?>'); this.innerText='Copiado!'; setTimeout(()=>this.innerText='Copiar', 1500);" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #fff; font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; cursor: pointer; font-weight: 700; margin-left: 2px;" title="Copiar e-mail para área de transferência">
+                                                <button type="button" onclick="navigator.clipboard.writeText(<?= htmlspecialchars((string)json_encode((string)$act['customer_email'], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>); this.innerText='Copiado!'; setTimeout(()=>this.innerText='Copiar', 1500);" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #fff; font-size: 0.68rem; padding: 2px 7px; border-radius: 4px; cursor: pointer; font-weight: 700; margin-left: 2px;" title="Copiar e-mail para área de transferência">
                                                     Copiar
                                                 </button>
                                             </div>

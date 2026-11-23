@@ -12,7 +12,10 @@
 <!-- Informações e Contagem de Produtos do Palco -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px; color: #94a3b8; flex-wrap: wrap; gap: 8px;">
     <div>
-        Exibindo <strong style="color: #5cd67d; font-size: 15px;"><?= count($products) ?></strong> de <?= $totalCount ?> produtos
+        Exibindo <strong style="color: #5cd67d; font-size: 15px;"><?= empty($products) ? 0 : (($page - 1) * 48 + 1) ?>-<?= min(($page - 1) * 48 + count($products), $totalCount) ?></strong> de <strong style="color: #fff;"><?= $totalCount ?></strong> produtos
+        <?php if (isset($totalPages) && $totalPages > 1): ?>
+            <span style="color: #45f3ff; margin-left: 6px;">(Página <?= $page ?> de <?= $totalPages ?>)</span>
+        <?php endif; ?>
         <?php if (!empty($selectedCategory)): ?>
             na categoria <span style="color: #F0D060; font-weight: 700;">"<?= htmlspecialchars($selectedCategory) ?>"</span>
         <?php endif; ?>
@@ -123,12 +126,17 @@
                     </div>
 
                     <!-- Action Buttons: Ver Detalhes e Comprar Explícitos -->
+                    <?php
+                    $jsProdId = htmlspecialchars((string)json_encode((string)($p->aliexpressId ?: (string)$p->id)), ENT_QUOTES, 'UTF-8');
+                    $jsProdTitle = htmlspecialchars((string)json_encode((string)$p->title), ENT_QUOTES, 'UTF-8');
+                    $jsProdCat = htmlspecialchars((string)json_encode((string)$p->category), ENT_QUOTES, 'UTF-8');
+                    ?>
                     <div class="store-card-actions" style="display: flex; gap: 6px;">
-                        <a href="<?= htmlspecialchars($productUrl) ?>" onclick="if(window.trackDropAction) window.trackDropAction(<?= json_encode((string)($p->aliProductId ?: (string)$p->id)) ?>, <?= json_encode((string)$p->title) ?>, <?= json_encode((string)$p->category) ?>, 'view_details');" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s ease; box-sizing: border-box; white-space: nowrap; line-height: 1.2;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
+                        <a href="<?= htmlspecialchars($productUrl) ?>" onclick="if(window.trackDropAction) window.trackDropAction(<?= $jsProdId ?>, <?= $jsProdTitle ?>, <?= $jsProdCat ?>, 'view_details');" style="flex: 1; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(212,175,55,0.4); color: #F0D060; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s ease; box-sizing: border-box; white-space: nowrap; line-height: 1.2;" onmouseover="this.style.background='rgba(212,175,55,0.18)'; this.style.borderColor='#F0D060';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.borderColor='rgba(212,175,55,0.4)';">
                             <span>🔍</span>
                             <span>Ver Detalhes</span>
                         </a>
-                        <a href="<?= htmlspecialchars($checkoutUrl) ?>" onclick="if(window.trackDropAction) window.trackDropAction(<?= json_encode((string)($p->aliProductId ?: (string)$p->id)) ?>, <?= json_encode((string)$p->title) ?>, <?= json_encode((string)$p->category) ?>, 'buy_click');" style="flex: 1; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35); transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; white-space: nowrap; line-height: 1.2;">
+                        <a href="<?= htmlspecialchars($checkoutUrl) ?>" onclick="if(window.trackDropAction) window.trackDropAction(<?= $jsProdId ?>, <?= $jsProdTitle ?>, <?= $jsProdCat ?>, 'buy_click');" style="flex: 1; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 0 6px; height: 36px; border-radius: 6px; font-size: 11.5px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35); transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; white-space: nowrap; line-height: 1.2;">
                             Comprar ➔
                         </a>
                     </div>
@@ -136,6 +144,73 @@
             </article>
         <?php endforeach; ?>
     </div>
+
+    <!-- Paginação SEO da Vitrine Pública (48 itens por página) -->
+    <?php if (isset($totalPages) && $totalPages > 1): ?>
+        <?php
+        $frontQuery = $_GET;
+        unset($frontQuery['page'], $frontQuery['ajax']);
+        $buildFrontPageUrl = function(int $p) use ($baseUrl, $frontQuery): string {
+            $params = array_merge($frontQuery, ['page' => $p]);
+            return $baseUrl . '/loja?' . http_build_query($params);
+        };
+        ?>
+        <nav aria-label="Navegação da Loja" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 20px; margin-top: 32px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+            <div style="font-size: 13px; color: #94a3b8;">
+                Página <strong style="color: #fff;"><?= $page ?></strong> de <strong style="color: #fff;"><?= $totalPages ?></strong> &bull; Total: <strong style="color: #F0D060;"><?= $totalCount ?></strong> produtos
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <?php if ($page > 1): ?>
+                    <a href="<?= htmlspecialchars($buildFrontPageUrl(1)) ?>" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;" title="Primeira Página">
+                        &laquo; Primeira
+                    </a>
+                    <a href="<?= htmlspecialchars($buildFrontPageUrl($page - 1)) ?>" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;">
+                        &lsaquo; Anterior
+                    </a>
+                <?php else: ?>
+                    <span style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); color: #555; padding: 7px 12px; border-radius: 6px; font-size: 12px; cursor: not-allowed;">
+                        &lsaquo; Anterior
+                    </span>
+                <?php endif; ?>
+
+                <?php
+                $frontStartP = max(1, $page - 3);
+                $frontEndP = min($totalPages, $page + 3);
+                if ($frontStartP > 1) {
+                    echo '<span style="color: #666; padding: 0 4px;">...</span>';
+                }
+                for ($p = $frontStartP; $p <= $frontEndP; $p++):
+                ?>
+                    <?php if ($p === $page): ?>
+                        <span style="background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 800; box-shadow: 0 2px 10px rgba(212,175,55,0.35);">
+                            <?= $p ?>
+                        </span>
+                    <?php else: ?>
+                        <a href="<?= htmlspecialchars($buildFrontPageUrl($p)) ?>" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;">
+                            <?= $p ?>
+                        </a>
+                    <?php endif; ?>
+                <?php endfor; ?>
+                <?php if ($frontEndP < $totalPages): ?>
+                    <span style="color: #666; padding: 0 4px;">...</span>
+                <?php endif; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="<?= htmlspecialchars($buildFrontPageUrl($page + 1)) ?>" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;">
+                        Próxima &rsaquo;
+                    </a>
+                    <a href="<?= htmlspecialchars($buildFrontPageUrl($totalPages)) ?>" onclick="event.preventDefault(); filterCatalogDynamically(this.href);" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px; text-decoration: none; font-weight: 600;" title="Última Página">
+                        Última &raquo;
+                    </a>
+                <?php else: ?>
+                    <span style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); color: #555; padding: 7px 12px; border-radius: 6px; font-size: 12px; cursor: not-allowed;">
+                        Próxima &rsaquo;
+                    </span>
+                <?php endif; ?>
+            </div>
+        </nav>
+    <?php endif; ?>
 <?php endif; ?>
 
 <!-- Age Verification Modal for Adult (+18) / Sex Shop Categories -->

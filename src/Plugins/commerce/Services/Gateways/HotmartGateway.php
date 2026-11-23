@@ -69,10 +69,11 @@ class HotmartGateway implements PaymentGatewayInterface
             ?? ($request->header('x-hotmart-hottok') ?? '')))
         );
 
-        if ($this->isConfigured()) {
-            if ($receivedHottok === '' || !hash_equals((string)$this->hottok, $receivedHottok)) {
-                return null;
-            }
+        if (!$this->isConfigured()) {
+            return null;
+        }
+        if ($receivedHottok === '' || !hash_equals((string)$this->hottok, $receivedHottok)) {
+            return null;
         }
 
         // Suporte aos formatos v2 e v1 da Hotmart

@@ -63,10 +63,14 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
             $costBrl = (float)($existing->attributes['cost_price_brl'] ?? 0.0);
         }
 
+        $volatility = method_exists($this->currencyConverter, 'getDefaultVolatilityPercent')
+            ? $this->currencyConverter->getDefaultVolatilityPercent()
+            : 12.0;
+
         if ($costBrl > 0.0 && method_exists($this->currencyConverter, 'calculateSalePriceFromBrl')) {
-            $saleBrl = $this->currencyConverter->calculateSalePriceFromBrl($costBrl, 100.0);
+            $saleBrl = $this->currencyConverter->calculateSalePriceFromBrl($costBrl, null, $volatility);
         } else {
-            $saleBrl = $this->currencyConverter->calculateSalePrice($costUsd);
+            $saleBrl = $this->currencyConverter->calculateSalePrice($costUsd, null, null, $volatility);
         }
 
         // Galeria com todas as imagens reais raspadas

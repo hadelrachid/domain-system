@@ -161,6 +161,8 @@ class DropshipFrontController
         ];
 
         $sort = trim((string)$request->input('sort', ''));
+        $page = max(1, (int)$request->input('page', 1));
+        $perPage = 48; // 48 produtos por página (grade equilibrada para 2, 3 e 4 colunas)
 
         $criteria = ['status' => 'published'];
         if ($selectedCategory !== '') {
@@ -173,21 +175,27 @@ class DropshipFrontController
             $criteria['sort'] = $sort;
         }
 
-        $products = $this->catalogRepo->list($criteria, 48, 0);
         $totalCount = $this->catalogRepo->count($criteria);
 
         // Se uma busca com categoria restrita não encontrou nada, expande para busca global na loja
         if ($totalCount === 0 && $selectedCategory !== '' && $search !== '') {
             $fallbackCriteria = $criteria;
             unset($fallbackCriteria['category']);
-            $fallbackProducts = $this->catalogRepo->list($fallbackCriteria, 48, 0);
-            if (!empty($fallbackProducts)) {
-                $products = $fallbackProducts;
-                $totalCount = $this->catalogRepo->count($fallbackCriteria);
+            $fallbackCount = $this->catalogRepo->count($fallbackCriteria);
+            if ($fallbackCount > 0) {
+                $criteria = $fallbackCriteria;
+                $totalCount = $fallbackCount;
                 $selectedCategory = ''; // Expande visualmente para exibir o resultado global
             }
         }
 
+        $totalPages = max(1, (int)ceil($totalCount / $perPage));
+        if ($page > $totalPages && $totalCount > 0) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $products = $this->catalogRepo->list($criteria, $perPage, $offset);
         $categories = $this->catalogRepo->getCategories();
 
         // Resposta ultra-rápida de AJAX para o Palco Dinâmico (Sem recarregar página nem pular para cima!)
@@ -200,6 +208,8 @@ class DropshipFrontController
                 'success'          => true,
                 'totalCount'       => $totalCount,
                 'count'            => count($products),
+                'page'             => $page,
+                'totalPages'       => $totalPages,
                 'selectedCategory' => $selectedCategory,
                 'search'           => $search,
                 'sort'             => $sort,
@@ -327,7 +337,7 @@ class DropshipFrontController
         $rotated = false;
         if (!empty($info['auto_sync_enabled']) && !empty($info['is_due'])) {
             try {
-                $res = $this->miningService->runDailyAutomatedRotation(3);
+                $res = $this->miningService->runDailyAutomatedRotation(10);
                 $rotated = !empty($res['success']);
             } catch (Throwable $e) {
                 $rotated = false;
@@ -335,12 +345,30 @@ class DropshipFrontController
             $info = $this->miningService->getDailyCycleInfo();
         }
 
+        // 2. Sentinela de Preços, Estoque & Volatilidade de 6h
+        $priceInfo = method_exists($this->miningService, 'getPriceSyncInfo') ? $this->miningService->getPriceSyncInfo() : null;
+        $pricesSynced = false;
+        if ($priceInfo !== null && !empty($priceInfo['auto_sync_enabled']) && !empty($priceInfo['is_due'])) {
+            try {
+                $syncRes = $this->miningService->runPriceAndStockSync(50);
+                $pricesSynced = !empty($syncRes['success']);
+            } catch (Throwable $e) {
+                $pricesSynced = false;
+            }
+            $priceInfo = $this->miningService->getPriceSyncInfo();
+        }
+
         return new Response(json_encode([
-            'success'             => true,
-            'rotated'             => $rotated,
-            'seconds_remaining'   => (int)($info['seconds_remaining'] ?? 86400),
-            'formatted_remaining' => (string)($info['formatted_remaining'] ?? '24:00:00'),
-            'last_cycle_date'     => (string)($info['last_cycle_date'] ?? ''),
+            'success'               => true,
+            'rotated'               => $rotated,
+            'seconds_remaining'     => (int)($info['seconds_remaining'] ?? 86400),
+            'formatted_remaining'   => (string)($info['formatted_remaining'] ?? '24:00:00'),
+            'last_cycle_date'       => (string)($info['last_cycle_date'] ?? ''),
+            'prices_synced'         => $pricesSynced,
+            'price_sync_remaining'  => (int)($priceInfo['seconds_remaining'] ?? 21600),
+            'price_sync_formatted'  => (string)($priceInfo['formatted_remaining'] ?? '06:00:00'),
+            'last_price_sync_date'  => (string)($priceInfo['last_sync_date'] ?? ''),
+            'volatility_applied'    => (float)($priceInfo['volatility_percent'] ?? 12.0),
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 200, [
             'Content-Type'  => 'application/json',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',

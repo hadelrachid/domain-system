@@ -7,9 +7,23 @@
  * @var string $selectedCategory
  * @var string $search
  * @var int $totalCount
+ * @var int $page
+ * @var int $totalPages
+ * @var int $perPage
  * @var string $baseUrl
  */
+$page = isset($page) ? max(1, (int)$page) : 1;
+$totalPages = isset($totalPages) ? max(1, (int)$totalPages) : 1;
+$canonicalUrl = $baseUrl . '/loja' . ($page > 1 ? '?page=' . $page : '');
 ?>
+<!-- SEO Meta Tags & Rel Links para Indexação Google -->
+<link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
+<?php if ($page > 1): ?>
+<link rel="prev" href="<?= htmlspecialchars($baseUrl . '/loja' . ($page === 2 ? '' : '?page=' . ($page - 1))) ?>">
+<?php endif; ?>
+<?php if ($page < $totalPages): ?>
+<link rel="next" href="<?= htmlspecialchars($baseUrl . '/loja?page=' . ($page + 1)) ?>">
+<?php endif; ?>
 <style>
     @media (max-width: 900px) {
         .store-grid {
@@ -318,6 +332,10 @@ window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
             if (shouldScroll && window.smoothScrollToProducts) {
                 setTimeout(window.smoothScrollToProducts, 100);
             }
+
+            if (window.initAgeGateModal) {
+                window.initAgeGateModal();
+            }
         }
     })
     .catch(function(err) {
@@ -330,11 +348,27 @@ window.filterCatalogDynamically = function(url, updateUrl, shouldScroll) {
     });
 };
 
+window.initAgeGateModal = function() {
+    var modal = document.getElementById('ageGateModal');
+    var btnConfirm = document.getElementById('btnConfirmAge18');
+    if (modal && !localStorage.getItem('age_verified_18')) {
+        modal.style.display = 'flex';
+        if (btnConfirm && !btnConfirm.dataset.boundAgeGate) {
+            btnConfirm.dataset.boundAgeGate = '1';
+            btnConfirm.addEventListener('click', function() {
+                localStorage.setItem('age_verified_18', 'true');
+                modal.style.display = 'none';
+            });
+        }
+    }
+};
+
 window.addEventListener('popstate', function() {
     filterCatalogDynamically(window.location.href, false);
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+    window.initAgeGateModal();
     if (window.location.hash === '#produtos' || (window.location.search && window.location.search.indexOf('cat=') !== -1)) {
         setTimeout(function() {
             if (window.smoothScrollToProducts) {
@@ -344,5 +378,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-</div>

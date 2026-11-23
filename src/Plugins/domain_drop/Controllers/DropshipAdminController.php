@@ -55,6 +55,8 @@ class DropshipAdminController
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $category = (string)$request->input('category', '');
         $search = (string)$request->input('q', '');
+        $page = max(1, (int)$request->input('page', 1));
+        $perPage = 50;
 
         $criteria = [];
         if ($category !== '') {
@@ -64,8 +66,14 @@ class DropshipAdminController
             $criteria['search'] = $search;
         }
 
-        $products = $this->catalogRepo->list($criteria, 50, 0);
         $totalCount = $this->catalogRepo->count($criteria);
+        $totalPages = max(1, (int)ceil($totalCount / $perPage));
+        if ($page > $totalPages && $totalCount > 0) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $products = $this->catalogRepo->list($criteria, $perPage, $offset);
         $categories = $this->catalogRepo->getCategories();
         $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
         $config = $this->loadConfig();
@@ -93,7 +101,7 @@ class DropshipAdminController
         }
 
         $category = (string)$request->input('category', 'Eletrônicos');
-        $limit = max(1, min(30, (int)$request->input('limit', 10)));
+        $limit = max(1, min(100, (int)$request->input('limit', 10)));
         $sort = (string)$request->input('sort', 'volume_desc');
 
         try {
@@ -197,13 +205,62 @@ class DropshipAdminController
         if ($newAccessToken !== '' && !str_starts_with($newAccessToken, '***')) {
             $config['access_token'] = $newAccessToken;
         }
-        $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
-        $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
+        if ($request->input('default_markup_percent') !== null) {
+            $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
+        }
+        if ($request->input('min_profit_margin_brl') !== null) {
+            $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
+        }
+        if ($request->input('price_sync_interval_hours') !== null) {
+            $intervalHours = max(1, min(24, (int)$request->input('price_sync_interval_hours', 6)));
+            $config['price_sync_interval_hours'] = $intervalHours;
+            $config['price_sync_interval_seconds'] = $intervalHours * 3600;
+        }
+        if ($request->input('volatility_index_percent') !== null) {
+            $config['volatility_index_percent'] = max(0.0, min(50.0, (float)$request->input('volatility_index_percent', 12.0)));
+        }
+        if ($request->input('price_sync_enabled') !== null) {
+            $config['price_sync_enabled'] = (bool)$request->input('price_sync_enabled', 1);
+        }
 
         @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
-        $this->session->setFlash('success', 'Configurações do DomainDrop salvas com sucesso!');
+        $this->session->setFlash('success', 'Configurações da API salvas com sucesso!');
 
         return Response::redirect($baseUrl . '/admin/dropship/settings');
+    }
+
+    public function savePricing(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+
+        if (!$this->verifyCsrf($request)) {
+            $this->session->setFlash('error', 'Token de segurança expirado.');
+            return Response::redirect($baseUrl . '/admin/dropship');
+        }
+
+        $config = $this->loadConfig();
+        if ($request->input('default_markup_percent') !== null) {
+            $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
+        }
+        if ($request->input('min_profit_margin_brl') !== null) {
+            $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
+        }
+        if ($request->input('price_sync_interval_hours') !== null) {
+            $intervalHours = max(1, min(24, (int)$request->input('price_sync_interval_hours', 6)));
+            $config['price_sync_interval_hours'] = $intervalHours;
+            $config['price_sync_interval_seconds'] = $intervalHours * 3600;
+        }
+        if ($request->input('volatility_index_percent') !== null) {
+            $config['volatility_index_percent'] = max(0.0, min(50.0, (float)$request->input('volatility_index_percent', 12.0)));
+        }
+        if ($request->input('price_sync_enabled') !== null) {
+            $config['price_sync_enabled'] = (bool)$request->input('price_sync_enabled', 1);
+        }
+
+        @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
+        $this->session->setFlash('success', 'Estratégia de precificação e Sentinela de Volatilidade salvas com sucesso!');
+
+        return Response::redirect($baseUrl . '/admin/dropship');
     }
 
     public function testConnection(Request $request): ResponseInterface
@@ -448,7 +505,7 @@ class DropshipAdminController
                 logisticsNo: $trackingCode,
                 origin: 'ESCROW',
                 outRef: $aeOrderId,
-                serviceName: str_starts_with(strtoupper($trackingCode), 'BR') ? 'CORREIOS' : 'CAINIAO',
+                serviceName: preg_match('/BR$/i', $trackingCode) ? 'CORREIOS' : 'CAINIAO',
                 toArea: 'BR'
             );
 
@@ -924,12 +981,12 @@ class DropshipAdminController
             if ($this->isAjaxOrJson($request)) {
                 return new Response(json_encode(['success' => false, 'error' => 'Token CSRF inválido']), 403, ['Content-Type' => 'application/json']);
             }
-            $this->session->setFlash('Token de segurança expirado. Tente novamente.', 'error');
+            $this->session->setFlash('error', 'Token de segurança expirado. Tente novamente.');
             return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);
         }
 
         try {
-            $itemsPerCategory = max(1, min(10, (int)$request->input('items_per_category', 3)));
+            $itemsPerCategory = max(1, min(20, (int)$request->input('items_per_category', 10)));
             $result = $this->miningService->runDailyAutomatedRotation($itemsPerCategory);
             $cycleInfo = $this->miningService->getDailyCycleInfo();
 
@@ -942,12 +999,12 @@ class DropshipAdminController
                 ]), 200, ['Content-Type' => 'application/json']);
             }
 
-            $this->session->setFlash("Ciclo diário 24h concluído com sucesso! {$result['total_mined']} novos produtos minerados nas 9 categorias oficiais.", 'success');
+            $this->session->setFlash('success', "Ciclo diário 24h concluído com sucesso! {$result['total_mined']} novos produtos minerados nas 9 categorias oficiais.");
         } catch (Throwable $e) {
             if ($this->isAjaxOrJson($request)) {
                 return new Response(json_encode(['success' => false, 'error' => $e->getMessage()]), 500, ['Content-Type' => 'application/json']);
             }
-            $this->session->setFlash("Falha ao executar ciclo diário: " . $e->getMessage(), 'error');
+            $this->session->setFlash('error', "Falha ao executar ciclo diário: " . $e->getMessage());
         }
 
         return new Response('', 302, ['Location' => $baseUrl . '/admin/dropship']);

@@ -47,7 +47,11 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
         $convInc = ($actionType === 'conversion') ? 1 : 0;
         $scoreInc = ($convInc * 10) + ($buyInc * 4) + ($detailInc * 1);
 
+        $startedTx = false;
         try {
+            if (!$this->pdo->inTransaction()) {
+                $startedTx = $this->pdo->beginTransaction();
+            }
             if ($driver === 'mysql') {
                 $sql = "
                     INSERT INTO domain_drop_product_demand 
@@ -132,7 +136,13 @@ final class PdoDemandMetricsRepository implements DemandMetricsRepositoryInterfa
                 ':ip'      => $ip,
                 ':created' => $now,
             ]);
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->commit();
+            }
         } catch (Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             error_log('[PdoDemandMetricsRepository] Falha ao incrementar métrica: ' . $e->getMessage());
         }
     }

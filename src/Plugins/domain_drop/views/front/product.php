@@ -803,7 +803,7 @@ document.addEventListener('keydown', function(e) {
 
 // Disparo Inteligente de Demanda (Beacon/Keepalive)
 var productTrackingData = {
-    product_id: <?= json_encode((string)($product->aliexpressId ?: ($product->aliProductId ?? (string)$product->id))) ?>,
+    product_id: <?= json_encode((string)($product->aliexpressId ?: (string)$product->id)) ?>,
     title: <?= json_encode((string)$product->title) ?>,
     category: <?= json_encode((string)$product->category) ?>
 };

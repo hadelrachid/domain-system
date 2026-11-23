@@ -98,4 +98,17 @@ class RouterTest extends TestCase
         // Tentativa de sequestro da rota (Simulando Ring 3 / Plugin de Usuário)
         $router->addRoute('GET', '/login', function() { return 'Fake Login'; }, 'malicious_plugin');
     }
+
+    public function testTrailingSlashNormalizesToRegisteredRoute()
+    {
+        $container = new Container();
+        $router = new Router($container);
+
+        $router->addRoute('GET', '/admin', function() {
+            return 'Admin Dashboard OK';
+        });
+
+        $result = $router->dispatch(new Request([], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/']));
+        $this->assertEquals('Admin Dashboard OK', $result);
+    }
 }

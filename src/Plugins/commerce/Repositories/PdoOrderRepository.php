@@ -15,13 +15,16 @@ use Throwable;
 class PdoOrderRepository implements OrderRepositoryInterface
 {
     private PDO $pdo;
-    private bool $tableEnsured = false;
+    /** @var \WeakMap<PDO, bool>|null */
+    private static ?\WeakMap $ensuredConnections = null;
+    private bool $autoEnsureSchema;
 
     public function __construct(DatabaseConnectionInterface|PDO $connection, bool $autoEnsureSchema = true)
     {
         $this->pdo = $connection instanceof DatabaseConnectionInterface
             ? $connection->getPdo()
             : $connection;
+        $this->autoEnsureSchema = $autoEnsureSchema;
 
         if ($autoEnsureSchema) {
             $this->ensureTable();
@@ -30,7 +33,10 @@ class PdoOrderRepository implements OrderRepositoryInterface
 
     public function ensureTable(): void
     {
-        if ($this->tableEnsured) {
+        if (self::$ensuredConnections === null) {
+            self::$ensuredConnections = new \WeakMap();
+        }
+        if (isset(self::$ensuredConnections[$this->pdo])) {
             return;
         }
 
@@ -82,9 +88,9 @@ class PdoOrderRepository implements OrderRepositoryInterface
                 $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_commerce_status ON commerce_orders(status)");
                 $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_commerce_created ON commerce_orders(created_at)");
             }
-            $this->tableEnsured = true;
+            self::$ensuredConnections[$this->pdo] = true;
         } catch (Throwable $e) {
-            // Silencia falha se já existir
+            error_log('[PdoOrderRepository] Falha ao garantir tabela commerce_orders: ' . $e->getMessage());
         }
     }
 
@@ -328,15 +334,18 @@ class PdoOrderRepository implements OrderRepositoryInterface
 
         try {
             $stmt = $this->pdo->query("
-                SELECT 
-                    SUBSTR(created_at, 1, 7) as month_key,
-                    SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) as month_total,
-                    COUNT(CASE WHEN status = 'paid' THEN 1 END) as month_count
-                FROM commerce_orders
-                WHERE created_at IS NOT NULL AND created_at != ''
-                GROUP BY month_key
+                SELECT * FROM (
+                    SELECT 
+                        SUBSTR(created_at, 1, 7) as month_key,
+                        SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END) as month_total,
+                        COUNT(CASE WHEN status = 'paid' THEN 1 END) as month_count
+                    FROM commerce_orders
+                    WHERE created_at IS NOT NULL AND created_at != ''
+                    GROUP BY month_key
+                    ORDER BY month_key DESC
+                    LIMIT 12
+                ) sub
                 ORDER BY month_key ASC
-                LIMIT 12
             ");
             if ($stmt) {
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

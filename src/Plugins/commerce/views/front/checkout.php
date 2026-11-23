@@ -366,9 +366,9 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                         <h3 style="font-size: 0.92rem; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
                             <span>📦</span> 3. Opção de Envio
                         </h3>
-                        <label id="label_shipping_standard" class="ds-shipping-choice" onclick="updateShippingMethod('standard')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid #00d284; border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: rgba(0,210,132,0.06); transition: all 0.2s;">
+                        <label id="label_shipping_standard" class="ds-shipping-choice" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid #00d284; border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: rgba(0,210,132,0.06); transition: all 0.2s;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="radio" name="shipping_method_radio" value="standard" checked style="accent-color: #00d284; transform: scale(1.15);">
+                                <input type="radio" name="shipping_method_radio" value="standard" checked onchange="if(this.checked) updateShippingMethod('standard')" style="accent-color: #00d284; transform: scale(1.15);">
                                 <div>
                                     <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">Frete Padrão com Rastreamento</div>
                                     <div style="font-size: 0.76rem; color: #94a3b8;">Entrega em 3 a 7 dias úteis (Estoque Brasil) ou 15 a 25 dias (Internacional)</div>
@@ -376,9 +376,9 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                             </div>
                             <span style="font-weight: 800; color: #00d284; font-size: 0.92rem;">GRÁTIS</span>
                         </label>
-                        <label id="label_shipping_express" class="ds-shipping-choice" onclick="updateShippingMethod('express')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                        <label id="label_shipping_express" class="ds-shipping-choice" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.02); transition: all 0.2s;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="radio" name="shipping_method_radio" value="express" style="accent-color: #00d284; transform: scale(1.15);">
+                                <input type="radio" name="shipping_method_radio" value="express" onchange="if(this.checked) updateShippingMethod('express')" style="accent-color: #00d284; transform: scale(1.15);">
                                 <div>
                                     <div style="font-weight: 700; color: #fff; font-size: 0.88rem;">⚡ Envio Expresso Prioritário (Sedex)</div>
                                     <div style="font-size: 0.76rem; color: #94a3b8;">
@@ -404,8 +404,8 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                     <?php endif; ?>
 
                     <?php if ($hasPayPal): ?>
-                    <label class="ds-method-option <?= ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe)) ? 'active' : '' ?>" onclick="selectPaymentMethod('paypal', 'paypal')">
-                        <input type="radio" name="payment_method" value="paypal" <?= ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe)) ? 'checked' : '' ?>>
+                    <label class="ds-method-option <?= ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe)) ? 'active' : '' ?>">
+                        <input type="radio" name="payment_method" value="paypal" onchange="if(this.checked) selectPaymentMethod('paypal', 'paypal')" <?= ($coursePlatform === 'paypal' || (!$hasMercadoPago && !$hasStripe)) ? 'checked' : '' ?>>
                         <div style="flex:1;">
                             <strong style="color: #fff; display: block; font-size: 0.95rem;">🅿️ PayPal (Saldo PayPal &amp; Cartão Internacional)</strong>
                             <span style="font-size: 0.8rem; color: #38bdf8;">Ambiente oficial global do PayPal com conversão de moeda e proteção ao comprador</span>
@@ -414,16 +414,16 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                     <?php endif; ?>
 
                     <?php if ($hasMercadoPago): ?>
-                    <label class="ds-method-option <?= ($hasMercadoPago && $coursePlatform !== 'paypal' && $coursePlatform !== 'stripe') ? 'active' : '' ?>" onclick="selectPaymentMethod('pix', 'mercadopago')">
-                        <input type="radio" name="payment_method" value="pix" <?= ($hasMercadoPago && $coursePlatform !== 'paypal' && $coursePlatform !== 'stripe') ? 'checked' : '' ?>>
+                    <label class="ds-method-option <?= ($hasMercadoPago && $coursePlatform !== 'paypal' && $coursePlatform !== 'stripe') ? 'active' : '' ?>">
+                        <input type="radio" name="payment_method" value="pix" onchange="if(this.checked) selectPaymentMethod('pix', 'mercadopago')" <?= ($hasMercadoPago && $coursePlatform !== 'paypal' && $coursePlatform !== 'stripe') ? 'checked' : '' ?>>
                         <div style="flex:1;">
                             <strong style="color: #fff; display: block; font-size: 0.95rem;">⚡ Pix Instantâneo (QR Code na Tela)</strong>
                             <span style="font-size: 0.8rem; color: var(--accent-cyan);">Aprovação em segundos e liberação imediata no seu painel</span>
                         </div>
                     </label>
 
-                    <label class="ds-method-option" onclick="selectPaymentMethod('checkout_pro', 'mercadopago')">
-                        <input type="radio" name="payment_method" value="checkout_pro">
+                    <label class="ds-method-option">
+                        <input type="radio" name="payment_method" value="checkout_pro" onchange="if(this.checked) selectPaymentMethod('checkout_pro', 'mercadopago')">
                         <div style="flex:1;">
                             <strong style="color: #fff; display: block; font-size: 0.95rem;">💳 Cartão até 12x, Dois Cartões, Boleto ou Saldo</strong>
                             <span style="font-size: 0.8rem; color: var(--text-muted);">Pague no ambiente seguro oficial do Mercado Pago com todas as opções liberadas</span>
@@ -432,8 +432,8 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                     <?php endif; ?>
 
                     <?php if ($hasStripe): ?>
-                    <label class="ds-method-option <?= ($coursePlatform === 'stripe' || (!$hasMercadoPago && !$hasPayPal)) ? 'active' : '' ?>" onclick="selectPaymentMethod('stripe', 'stripe')">
-                        <input type="radio" name="payment_method" value="stripe" <?= ($coursePlatform === 'stripe' || (!$hasMercadoPago && !$hasPayPal)) ? 'checked' : '' ?>>
+                    <label class="ds-method-option <?= ($coursePlatform === 'stripe' || (!$hasMercadoPago && !$hasPayPal)) ? 'active' : '' ?>">
+                        <input type="radio" name="payment_method" value="stripe" onchange="if(this.checked) selectPaymentMethod('stripe', 'stripe')" <?= ($coursePlatform === 'stripe' || (!$hasMercadoPago && !$hasPayPal)) ? 'checked' : '' ?>>
                         <div style="flex:1;">
                             <strong style="color: #fff; display: block; font-size: 0.95rem;">🌐 Cartão de Crédito Global / Apple Pay (Stripe)</strong>
                             <span style="font-size: 0.8rem; color: #c084fc;">Checkout seguro oficial do Stripe para cartões nacionais e internacionais</span>
@@ -871,6 +871,7 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
             var payload = {
                 csrf_token: csrfToken,
                 course_id: courseId,
+                item_type: <?= json_encode((string)($course['type'] ?? ($isPhysicalOrDropship ? 'dropship_product' : 'course'))) ?>,
                 sku: document.getElementById('item_sku') ? document.getElementById('item_sku').value : '',
                 quantity: currentQty,
                 gateway: gateway,
@@ -928,7 +929,13 @@ $effectiveThumb = !empty($courseImage) ? $courseImage : $fallbackThumb;
                         document.getElementById('pix_copia_cola_text').value = data.pix_copia_e_cola;
                         
                         var qrImgUrl = data.pix_qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(data.pix_copia_e_cola));
-                        document.getElementById('pix_qr_image_wrap').innerHTML = '<img src="' + qrImgUrl + '" alt="QR Code Pix" style="max-width:210px; border-radius:10px; border:2px solid rgba(69,243,255,0.4); padding:8px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.5); display:inline-block;">';
+                        var qrWrap = document.getElementById('pix_qr_image_wrap');
+                        qrWrap.innerHTML = '';
+                        var qrImg = document.createElement('img');
+                        qrImg.src = qrImgUrl;
+                        qrImg.alt = 'QR Code Pix';
+                        qrImg.style.cssText = 'max-width:210px; border-radius:10px; border:2px solid rgba(69,243,255,0.4); padding:8px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.5); display:inline-block;';
+                        qrWrap.appendChild(qrImg);
                         
                         box.scrollIntoView({ behavior: 'smooth' });
                         if (data.order_ref) {

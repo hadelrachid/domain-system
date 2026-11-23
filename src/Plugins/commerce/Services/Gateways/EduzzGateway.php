@@ -69,10 +69,11 @@ class EduzzGateway implements PaymentGatewayInterface
             ?? ($request->header('X-Eduzz-Token') ?? '')))
         );
 
-        if ($this->isConfigured()) {
-            if ($receivedToken === '' || !hash_equals((string)$this->token, $receivedToken)) {
-                return null;
-            }
+        if (!$this->isConfigured()) {
+            return null;
+        }
+        if ($receivedToken === '' || !hash_equals((string)$this->token, $receivedToken)) {
+            return null;
         }
 
         // Eduzz: trans_status = 3 (Paga) ou 4 (Disponível) ou 'pago' / 'approved'

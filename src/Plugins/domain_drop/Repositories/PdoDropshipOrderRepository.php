@@ -234,7 +234,9 @@ class PdoDropshipOrderRepository implements DropshipOrderRepositoryInterface
         if (!empty($where)) {
             $sql .= " WHERE " . implode(' AND ', $where);
         }
-        $sql .= " ORDER BY created_at DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+        $limit = max(1, (int)$limit);
+        $offset = max(0, (int)$offset);
+        $sql .= " ORDER BY created_at DESC LIMIT {$limit} OFFSET {$offset}";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);

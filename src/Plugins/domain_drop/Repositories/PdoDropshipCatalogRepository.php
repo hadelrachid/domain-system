@@ -27,6 +27,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             ? $connection->getPdo()
             : $connection;
         $this->taxonomy = $taxonomy ?? new CategoryTaxonomyService();
+        DomainDropSchemaEnsurer::ensure($this->pdo);
     }
 
     public function save(DropshipProductDto $product): int
@@ -163,6 +164,8 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
             }
         }
 
+        $limit = max(1, $limit);
+        $offset = max(0, $offset);
         $sql .= " ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}";
 
         $stmt = $this->pdo->prepare($sql);

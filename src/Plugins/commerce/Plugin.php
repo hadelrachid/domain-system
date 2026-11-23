@@ -191,9 +191,21 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->onHook('admin.menu', function ($menus, $role = 'guest') {
             if ($role === 'admin') {
                 $menus[] = [
-                    'title' => 'DomainCommerce',
-                    'url'   => '/admin/commerce',
-                    'icon'  => '🛒',
+                    'title'   => 'DomainCommerce',
+                    'url'     => '#',
+                    'icon'    => '🛒',
+                    'submenu' => [
+                        [
+                            'title' => 'Painel & Vendas',
+                            'url'   => '/admin/commerce',
+                            'icon'  => '📊',
+                        ],
+                        [
+                            'title' => 'Gateways & Configs',
+                            'url'   => '/admin/commerce/settings',
+                            'icon'  => '⚙️',
+                        ],
+                    ],
                 ];
             }
             return $menus;

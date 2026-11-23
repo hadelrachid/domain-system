@@ -68,10 +68,11 @@ class MonetizzeGateway implements PaymentGatewayInterface
             ?? ($request->header('X-Monetizze-Token') ?? ''))
         );
 
-        if ($this->isConfigured()) {
-            if ($receivedChave === '' || !hash_equals((string)$this->chaveUnica, $receivedChave)) {
-                return null;
-            }
+        if (!$this->isConfigured()) {
+            return null;
+        }
+        if ($receivedChave === '' || !hash_equals((string)$this->chaveUnica, $receivedChave)) {
+            return null;
         }
 
         // Monetizze: tipoEvento ou status = 'Finalizada' ou 'Completa'
@@ -119,7 +120,7 @@ class MonetizzeGateway implements PaymentGatewayInterface
         $txId = (string)(
             $transacao['codigo']
             ?? ($payload['cod_transacao']
-            ?? ($payload['chave_unica'] ?? uniqid('MNZ_', true)))
+            ?? ($payload['transaction'] ?? uniqid('MNZ_', true)))
         );
 
         $total = (float)(

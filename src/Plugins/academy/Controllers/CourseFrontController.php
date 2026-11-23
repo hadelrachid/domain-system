@@ -249,7 +249,7 @@ class CourseFrontController
         $adjacent = $this->navService->getAdjacentLessons($courseSlug, $lessonSlug);
 
         $studentId = 0;
-        if ($this->session !== null) {
+        if ($this->session !== null && !(bool)$this->session->get('academy_logged_out', false)) {
             $studentId = (int)$this->session->get('academy_student_id', 0);
             if ($studentId <= 0) {
                 $studentId = (int)$this->session->get('user_id', 0);
@@ -270,7 +270,9 @@ class CourseFrontController
         $isLessonFreePreview = !empty($lesson['is_free']) || !empty($lesson['is_preview']);
 
         if ($this->enrollment !== null && $isCoursePaid && !$isLessonFreePreview) {
-            $userRole = $this->session !== null ? (string)$this->session->get('user_role', '') : '';
+            $userRole = $this->session !== null
+                ? (string)($this->session->get('academy_student_role') ?: $this->session->get('user_role', ''))
+                : '';
             $isAdmin = in_array($userRole, ['admin', 'manager', 'instructor'], true);
 
             if (!$isAdmin && !$this->enrollment->hasActiveEnrollment($studentId, (int)$course['id'])) {
@@ -348,7 +350,7 @@ class CourseFrontController
         $mobileProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
 
         $studentId = 0;
-        if ($this->session !== null) {
+        if ($this->session !== null && !(bool)$this->session->get('academy_logged_out', false)) {
             $studentId = (int)$this->session->get('academy_student_id', 0);
             if ($studentId <= 0) {
                 $studentId = (int)$this->session->get('user_id', 0);

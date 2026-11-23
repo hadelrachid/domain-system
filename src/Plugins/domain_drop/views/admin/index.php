@@ -130,7 +130,11 @@
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
                     Último ciclo: <strong style="color: #fff;"><?= htmlspecialchars((string)($cycleInfo['last_cycle_date'] ?? 'Pendente')) ?></strong>
                     &nbsp;•&nbsp; 
-                    9 Categorias: <span style="color: #F0D060;">Eletrônicos, Casa, Beleza, Ferramentas, Pet Shop, Veículos, Moda/Roupas, Lingerie/Íntima, Sex Shop (+18)</span>
+                    9 Categorias Oficiais: <span style="color: #F0D060;">Eletrônicos, Casa, Beleza, Ferramentas, Pet Shop, Veículos, Moda, Lingerie, Sex Shop</span>
+                    &nbsp;•&nbsp;
+                    Capacidade: <span style="color: #10b981; font-weight: 600;">80 a 100 itens / 24h</span>
+                    &nbsp;•&nbsp;
+                    Destino: <span style="color: #60a5fa; font-weight: 600;">🇧🇷 Brasil (Preços em R$ BRL)</span>
                 </div>
             </div>
         </div>
@@ -255,6 +259,10 @@
                             <option value="5">5 itens</option>
                             <option value="10" selected>10 itens</option>
                             <option value="20">20 itens</option>
+                            <option value="30">30 itens</option>
+                            <option value="50">50 itens</option>
+                            <option value="80">80 itens</option>
+                            <option value="100">100 itens</option>
                         </select>
                     </div>
                     <div>
@@ -336,6 +344,94 @@
 
     </div>
 
+    <!-- Painel de Estratégia Comercial: Precificação Dinâmica, Margens & Sentinela de Volatilidade -->
+    <div style="background: var(--bg-panel, #1d2327); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 8px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #fff;">Estratégia de Precificação, Margens &amp; Sentinela de Volatilidade</h3>
+                    <div style="font-size: 12px; color: var(--text-muted, #94a3b8); margin-top: 2px;">
+                        Define a margem de lucro com que os produtos entram na loja e o ritmo da Sentinela que blinda seu negócio contra aumentos do AliExpress.
+                    </div>
+                </div>
+            </div>
+            <!-- Badge de Cotação Atual -->
+            <div style="background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); color: #45f3ff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-exchange-alt"></i> USD 1,00 = R$ <?= number_format($rate, 2, ',', '.') ?>
+            </div>
+        </div>
+
+        <!-- Fórmula Oficial de Correção -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #cbd5e1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <span style="color: #10b981; font-weight: 700;">📐 Fórmula de Proteção:</span>
+                <code style="color: #fff; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; margin-left: 6px;">Custo Protegido = Custo Fornecedor &times; (1 + &Iota;<sub>v</sub>)</code>
+                <span style="color: #94a3b8; margin: 0 4px;">&bull;</span>
+                <code style="color: #5cd67d; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">Preço de Venda = Custo Protegido &times; (1 + Markup %)</code>
+            </div>
+            <div style="color: #94a3b8; font-size: 11.5px;">
+                Cobre IOF (4,38%) + Spread bancário de cartão PJ + oscilações do fornecedor chinês.
+            </div>
+        </div>
+
+        <form action="<?= $baseUrl ?>/admin/dropship/save-pricing" method="POST" style="margin: 0;">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 4px;">
+                        Markup Padrão (Margem)
+                    </label>
+                    <div style="position: relative;">
+                        <input type="number" step="1" min="10" name="default_markup_percent" value="<?= (float)($config['default_markup_percent'] ?? 100.0) ?>" required style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                        <span style="position: absolute; right: 10px; top: 9px; color: #94a3b8; font-size: 12px;">% (100% = 2x)</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 4px;">
+                        Lucro Mínimo por Item (Piso)
+                    </label>
+                    <div style="position: relative;">
+                        <input type="number" step="0.5" min="0" name="min_profit_margin_brl" value="<?= (float)($config['min_profit_margin_brl'] ?? 30.0) ?>" required style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                        <span style="position: absolute; right: 10px; top: 9px; color: #94a3b8; font-size: 12px;">R$</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 4px;">
+                        Índice de Volatilidade (<span style="color: #fbbf24;">&Iota;<sub>v</sub></span>)
+                    </label>
+                    <div style="position: relative;">
+                        <input type="number" step="0.5" min="0" max="50" name="volatility_index_percent" value="<?= (float)($config['volatility_index_percent'] ?? 12.0) ?>" required style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+                        <span style="position: absolute; right: 10px; top: 9px; color: #94a3b8; font-size: 12px;">%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 4px;">
+                        Varredura da Sentinela
+                    </label>
+                    <select name="price_sync_interval_hours" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 12px; box-sizing: border-box;">
+                        <option value="3" <?= ((int)($config['price_sync_interval_hours'] ?? 6) === 3) ? 'selected' : '' ?>>A cada 3 horas (8x/dia)</option>
+                        <option value="4" <?= ((int)($config['price_sync_interval_hours'] ?? 6) === 4) ? 'selected' : '' ?>>A cada 4 horas (6x/dia)</option>
+                        <option value="6" <?= ((int)($config['price_sync_interval_hours'] ?? 6) === 6) ? 'selected' : '' ?>>A cada 6 horas (Recomendado - 4x/dia)</option>
+                        <option value="12" <?= ((int)($config['price_sync_interval_hours'] ?? 6) === 12) ? 'selected' : '' ?>>A cada 12 horas (2x/dia)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit" style="width: 100%; background: linear-gradient(135deg, #059669 0%, #10b981 100%); border: none; color: #fff; padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;">
+                        <i class="fas fa-check"></i> Salvar Estratégia de Margens
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <!-- Catalog Filter Bar -->
     <div style="background: var(--bg-panel, #1d2327); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <form action="<?= $baseUrl ?>/admin/dropship" method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex: 1;">
@@ -368,7 +464,11 @@
                 <i class="fas fa-sync-alt"></i> Atualizar Todas as Imagens (Fila & Status)
             </button>
             <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">
-                Mostrando <strong style="color: #fff;"><?= count($products) ?></strong> de <?= $totalCount ?> produtos
+                <?php
+                $fromItem = $totalCount > 0 ? ((($page - 1) * 50) + 1) : 0;
+                $toItem = min((($page - 1) * 50) + count($products), $totalCount);
+                ?>
+                Mostrando <strong style="color: #fff;"><?= $fromItem ?>-<?= $toItem ?></strong> de <strong style="color: #fff;"><?= $totalCount ?></strong> produtos (Página <?= $page ?> de <?= $totalPages ?> • 50 por página)
             </div>
         </div>
     </div>
@@ -468,6 +568,48 @@
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <?php if ($totalPages > 1): ?>
+            <?php
+            $adminQueryParams = $_GET;
+            $buildAdminPageUrl = function(int $p) use ($baseUrl, $adminQueryParams): string {
+                $params = $adminQueryParams;
+                $params['page'] = $p;
+                return $baseUrl . '/admin/dropship?' . http_build_query($params);
+            };
+            ?>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 32px; margin-bottom: 24px; flex-wrap: wrap;">
+                <?php if ($page > 1): ?>
+                    <a href="<?= htmlspecialchars($buildAdminPageUrl($page - 1)) ?>" style="padding: 9px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-radius: 6px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </a>
+                <?php endif; ?>
+
+                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                    <?php if ($p === 1 || $p === $totalPages || abs($p - $page) <= 2): ?>
+                        <?php if ($p === $page): ?>
+                            <span style="padding: 9px 16px; background: linear-gradient(135deg, #ff4747 0%, #dc2626 100%); border: 1px solid #ff4747; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 12px rgba(255, 71, 71, 0.3);">
+                                <?= $p ?>
+                            </span>
+                        <?php else: ?>
+                            <a href="<?= htmlspecialchars($buildAdminPageUrl($p)) ?>" style="padding: 9px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-radius: 6px; color: #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 600;">
+                                <?= $p ?>
+                            </a>
+                        <?php endif; ?>
+                    <?php elseif ($p === 2 && $page > 4): ?>
+                        <span style="color: #64748b; padding: 0 4px;">...</span>
+                    <?php elseif ($p === $totalPages - 1 && $page < $totalPages - 3): ?>
+                        <span style="color: #64748b; padding: 0 4px;">...</span>
+                    <?php endif; ?>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="<?= htmlspecialchars($buildAdminPageUrl($page + 1)) ?>" style="padding: 9px 16px; background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-radius: 6px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        Próxima <i class="fas fa-chevron-right"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <!-- Modal de Edição de Preço (Clean / Responsivo / Tempo Real) -->

@@ -68,10 +68,11 @@ class ClickBankGateway implements PaymentGatewayInterface
             ?? ($request->header('X-ClickBank-Verification') ?? ''))
         );
 
-        if ($this->isConfigured()) {
-            if ($receivedSecret === '' || !hash_equals((string)$this->secretKey, $receivedSecret)) {
-                return null;
-            }
+        if (!$this->isConfigured()) {
+            return null;
+        }
+        if ($receivedSecret === '' || !hash_equals((string)$this->secretKey, $receivedSecret)) {
+            return null;
         }
 
         // ClickBank INS: transactionType = 'SALE' ou 'TEST_SALE'

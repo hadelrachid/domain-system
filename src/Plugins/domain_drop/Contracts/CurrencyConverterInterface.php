@@ -16,22 +16,25 @@ interface CurrencyConverterInterface
 
     /**
      * Converte o custo original em USD para BRL e calcula o preço final de venda
-     * aplicando o markup percentual e margem mínima de segurança.
+     * aplicando o markup percentual, índice de volatilidade cambial/fornecedor e margem mínima.
      * 
      * @param float $costUsd Custo original do fornecedor em Dólar
      * @param float|null $customMarkupPercent Percentual de margem (ex: 100.0 para 2x)
      * @param float|null $minProfitBrl Margem mínima em reais de lucro garantido
+     * @param float $volatilityPercent Índice de correção de volatilidade (ex: 12.0 para 12%)
      * @return float Preço final sugerido de venda em Reais (BRL)
      */
-    public function calculateSalePrice(float $costUsd, ?float $customMarkupPercent = null, ?float $minProfitBrl = null): float;
+    public function calculateSalePrice(float $costUsd, ?float $customMarkupPercent = null, ?float $minProfitBrl = null, float $volatilityPercent = 0.0): float;
 
     /**
      * Calcula o preço final de venda em BRL aplicando margem de lucro (markup)
-     * diretamente sobre o preço líquido de oferta do produto em Reais (BRL).
+     * diretamente sobre o preço líquido de oferta do produto em Reais (BRL),
+     * com opção de índice de correção de volatilidade de fornecedor.
      * 
      * @param float $costBrl Custo líquido do produto no fornecedor em Reais (sem frete)
      * @param float|null $customMarkupPercent Percentual de margem (ex: 100.0 para 2x o valor)
+     * @param float $volatilityPercent Índice de correção de volatilidade (ex: 12.0 para 12%)
      * @return float Preço final de venda na loja em Reais (BRL)
      */
-    public function calculateSalePriceFromBrl(float $costBrl, ?float $customMarkupPercent = 100.0): float;
+    public function calculateSalePriceFromBrl(float $costBrl, ?float $customMarkupPercent = 100.0, float $volatilityPercent = 0.0): float;
 }

@@ -68,6 +68,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $os->listenHook('router.register');
         $os->listenHook('commerce.register_item_resolvers');
         $os->listenHook('payment.approved');
+        $os->listenHook('payment.refunded');
         $os->listenHook('dropship.order_created');
         $os->listenHook('theme.blocks.register');
         $os->listenHook('flexbuilder.register_blocks');
@@ -83,18 +84,21 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
         $runtime->singleton(CurrencyConverterInterface::class, function () use ($root, $configFile) {
             $markup = 100.0;
             $minMargin = 30.0;
+            $volatility = 12.0;
             if (file_exists($configFile)) {
                 $data = @json_decode((string)file_get_contents($configFile), true);
                 if (is_array($data)) {
                     $markup = (float)($data['default_markup_percent'] ?? $markup);
                     $minMargin = (float)($data['min_profit_margin_brl'] ?? $minMargin);
+                    $volatility = (float)($data['volatility_index_percent'] ?? $volatility);
                 }
             }
 
             return new CurrencyConverterService(
                 cacheDirOrFile: $root . '/storage/cache/exchange_rates.json',
                 defaultMarkupPercent: $markup,
-                minProfitBrl: $minMargin
+                minProfitBrl: $minMargin,
+                defaultVolatilityPercent: $volatility
             );
         });
 
@@ -355,6 +359,7 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/product/{id}/images', [DropshipAdminController::class, 'updateImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/run-daily-cycle', [DropshipAdminController::class, 'runDailyCycle'], 'domain_drop', ['admin']);
+            $router->addRoute('POST', '/admin/dropship/save-pricing', [DropshipAdminController::class, 'savePricing'], 'domain_drop', ['admin']);
             $router->addRoute('GET', '/admin/dropship/sync-queue', [DropshipAdminController::class, 'syncQueue'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
@@ -516,6 +521,27 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                     } catch (Throwable $e) {}
                 } catch (Throwable $e) {
                     error_log('[DomainDrop] Falha ao registrar pedido em payment.approved: ' . $e->getMessage());
+                }
+            }
+        });
+
+        // 5.0.1 Sincronização de Reembolso do Commerce -> DomainDrop
+        $runtime->onHook('payment.refunded', function ($payload) use ($runtime) {
+            if (!is_array($payload)) {
+                return;
+            }
+            $itemType = (string)($payload['item_type'] ?? '');
+            $orderRef = (string)($payload['order_ref'] ?? '');
+            if ($orderRef !== '' && ($itemType === '' || in_array($itemType, ['dropship_product', 'dropship', 'product'], true))) {
+                try {
+                    /** @var DropshipOrderRepositoryInterface $orderRepo */
+                    $orderRepo = $runtime->make(DropshipOrderRepositoryInterface::class);
+                    $existing = $orderRepo->findByOrderRef($orderRef);
+                    if ($existing !== null) {
+                        $orderRepo->updateFulfillment($orderRef, 'refunded');
+                    }
+                } catch (Throwable $e) {
+                    error_log('[DomainDrop] Falha ao atualizar reembolso em payment.refunded: ' . $e->getMessage());
                 }
             }
         });
