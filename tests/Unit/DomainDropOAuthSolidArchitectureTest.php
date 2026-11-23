@@ -155,4 +155,30 @@ final class DomainDropOAuthSolidArchitectureTest extends TestCase
         $this->assertSame(15.0, $updated['volatility_index_percent']);
         $this->assertTrue($updated['price_sync_enabled']);
     }
+
+    public function testApiUsageTrackerRecordsAndReportsAccurately(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/ds_usage_' . uniqid();
+        @mkdir($tempDir . '/storage/cache', 0777, true);
+
+        $tracker = new \DomainSystem\Plugins\domain_drop\Services\ApiUsageTracker($tempDir, 1000);
+        $initial = $tracker->getUsageStats();
+        $this->assertSame(0, $initial['requests_this_month']);
+        $this->assertSame(100.0, $initial['percentage_available']);
+
+        $tracker->recordRequest();
+        $tracker->recordRequest();
+        $tracker->recordRequest();
+
+        $stats = $tracker->getUsageStats();
+        $this->assertSame(3, $stats['requests_this_month']);
+        $this->assertSame(3, $stats['requests_total']);
+        $this->assertSame(0.3, $stats['percentage_used']);
+        $this->assertSame(99.7, $stats['percentage_available']);
+
+        @unlink($tempDir . '/storage/cache/aliexpress_api_usage.json');
+        @rmdir($tempDir . '/storage/cache');
+        @rmdir($tempDir . '/storage');
+        @rmdir($tempDir);
+    }
 }

@@ -361,6 +361,8 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         $error = curl_error($ch);
         curl_close($ch);
 
+        (new ApiUsageTracker())->recordRequest();
+
         if ($rawResponse === false) {
             throw new AliExpressApiException("[AliExpressApiClient] Falha na conexão com o gateway do AliExpress: {$error}", 0, 'CONNECTION_ERROR');
         }

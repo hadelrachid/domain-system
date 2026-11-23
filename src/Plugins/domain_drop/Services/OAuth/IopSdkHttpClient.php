@@ -90,6 +90,8 @@ final class IopSdkHttpClient implements IopHttpClientInterface
         $curlError = curl_error($ch);
         curl_close($ch);
 
+        (new \DomainSystem\Plugins\domain_drop\Services\ApiUsageTracker())->recordRequest();
+
         if ($rawResponse === false) {
             throw new AliExpressApiException("[IopSdkHttpClient] Falha de conexão com gateway do AliExpress: {$curlError}", 0, 'CONNECTION_ERROR');
         }

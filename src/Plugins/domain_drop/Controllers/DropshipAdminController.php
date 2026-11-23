@@ -180,6 +180,9 @@ class DropshipAdminController
         $csrfToken = (string)$this->session->getCsrfToken();
         $rate = $this->currencyConverter->getExchangeRate('USD', 'BRL');
 
+        $usageTracker = new \DomainSystem\Plugins\domain_drop\Services\ApiUsageTracker($this->basePathRoot);
+        $apiUsage = $usageTracker->getUsageStats();
+
         $flash = $this->session->getFlash();
         $flashMsg = $flash['msg'] ?? null;
         $flashType = $flash['type'] ?? null;
