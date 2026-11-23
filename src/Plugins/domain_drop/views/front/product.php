@@ -199,11 +199,12 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
                         <button type="button" onclick="changeProductQuantity(1)" aria-label="Aumentar quantidade" style="width: 42px; height: 100%; background: rgba(255,255,255,0.04); border: none; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;">+</button>
                     </div>
 
-                    <a id="btn-buy-now" href="<?= htmlspecialchars($checkoutUrl) ?>?qty=1" onclick="trackProductAction('buy_click')" style="flex: 1; min-width: 210px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); transition: transform 0.2s ease;">
+                    <a id="btn-buy-now" href="<?= htmlspecialchars($checkoutUrl) ?>?qty=1" onclick="return handleBuyNowClick(event, this)" style="flex: 1; min-width: 210px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; background: linear-gradient(135deg, #F0D060 0%, #D4AF37 100%); color: #0b0f17; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); transition: transform 0.2s ease;">
                         <span>Comprar Agora</span>
                         <span>➔</span>
                     </a>
                 </div>
+                <div id="buy-availability-feedback" style="display: none; margin: -14px 0 20px; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;"></div>
 
                 <!-- Simulador de Frete & Prazos por CEP -->
                 <div class="product-shipping-calc-box" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 16px; margin-bottom: 22px;">
@@ -326,7 +327,13 @@ $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $produ
             Descrição do Produto
         </h2>
         <div style="font-size: 15px; line-height: 1.8; color: #cbd5e1;">
-            <?= method_exists($product, 'getEnrichedDescription') ? $product->getEnrichedDescription() : $product->description ?>
+            <?php
+            $rawProductDesc = method_exists($product, 'getEnrichedDescription') ? (string)$product->getEnrichedDescription() : (string)$product->description;
+            $safeProductDesc = strip_tags($rawProductDesc, '<p><br><ul><ol><li><strong><b><em><i><h3><h4><h5><h6><span><div>');
+            $safeProductDesc = preg_replace('/\s+on[a-z]+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $safeProductDesc) ?? '';
+            $safeProductDesc = preg_replace('/(?:javascript|vbscript|data):/i', '', $safeProductDesc) ?? '';
+            echo $safeProductDesc;
+            ?>
         </div>
     </div>
 
@@ -570,8 +577,8 @@ function getProductFormattedWeight(qty) {
 }
 
 // Matriz de Variações e SKUs (Padrão SKU Matrix / AliExpress SDK)
-var productVariants = <?= json_encode(array_map(fn($v) => $v->toArray(), $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-var productVariationAxes = <?= json_encode($product->getVariationAxes(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+var productVariants = <?= json_encode(array_map(fn($v) => $v->toArray(), $product->getVariants()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var productVariationAxes = <?= json_encode($product->getVariationAxes(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var selectedVariationOptions = {};
 var activeProductSku = null;
 
@@ -900,8 +907,11 @@ function calculateProductShipping(shouldFocus) {
                 return;
             }
 
-            var localStr = (data.bairro ? data.bairro + ' - ' : '') + data.localidade + '/' + data.uf;
-            locText.innerHTML = '📍 Entrega para: <strong>' + localStr + '</strong>';
+            var localStr = (data.bairro ? data.bairro + ' - ' : '') + (data.localidade || '') + '/' + (data.uf || '');
+            locText.textContent = '📍 Entrega para: ';
+            var strongEl = document.createElement('strong');
+            strongEl.textContent = localStr;
+            locText.appendChild(strongEl);
             locText.style.color = '#38bdf8';
             resultBox.style.display = 'block';
 
@@ -918,5 +928,74 @@ function calculateProductShipping(shouldFocus) {
             locText.style.color = '#00d284';
             resultBox.style.display = 'block';
         });
+}
+
+var _buyCheckInProgress = false;
+function handleBuyNowClick(event, btn) {
+    if (event) event.preventDefault();
+    if (!btn || btn.getAttribute('data-sold-out') === '1' || _buyCheckInProgress) {
+        return false;
+    }
+
+    _buyCheckInProgress = true;
+    var targetHref = btn.href;
+    var origHtml = btn.innerHTML;
+    var fbBox = document.getElementById('buy-availability-feedback');
+    btn.style.opacity = '0.8';
+    btn.innerHTML = '<span>⏳ Verificando estoque...</span>';
+
+    var payload = {
+        product_id: <?= (int)($product->id ?? 0) ?>,
+        slug: <?= json_encode((string)($product->slug ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+        sku: activeProductSku || ''
+    };
+
+    fetch(<?= json_encode($baseUrl . '/api/drop/check-availability', JSON_UNESCAPED_SLASHES) ?>, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        _buyCheckInProgress = false;
+        if (data && data.available === false) {
+            btn.setAttribute('data-sold-out', '1');
+            btn.style.opacity = '0.55';
+            btn.style.cursor = 'not-allowed';
+            btn.style.background = '#334155';
+            btn.style.color = '#cbd5e1';
+            btn.innerHTML = '<span>Estoque Esgotado</span>';
+            if (fbBox) {
+                fbBox.style.display = 'block';
+                fbBox.style.background = 'rgba(239, 68, 68, 0.14)';
+                fbBox.style.border = '1px solid rgba(239, 68, 68, 0.45)';
+                fbBox.style.color = '#fca5a5';
+                fbBox.textContent = '⚠️ ' + (data.message || 'O estoque deste produto já acabou no momento.');
+            }
+            return;
+        }
+
+        if (fbBox && data && typeof data.stock === 'number' && data.stock > 0) {
+            fbBox.style.display = 'block';
+            fbBox.style.background = 'rgba(16, 185, 129, 0.12)';
+            fbBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+            fbBox.style.color = '#6ee7b7';
+            fbBox.textContent = '✅ Estoque atual confirmado: ' + data.stock + ' unidade(s) disponíveis.';
+        }
+
+        btn.style.opacity = '1';
+        btn.innerHTML = origHtml;
+        trackProductAction('buy_click');
+        window.location.href = targetHref;
+    })
+    .catch(function() {
+        _buyCheckInProgress = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = origHtml;
+        trackProductAction('buy_click');
+        window.location.href = targetHref;
+    });
+
+    return false;
 }
 </script>

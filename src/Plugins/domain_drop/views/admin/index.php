@@ -465,10 +465,11 @@
             </button>
             <div style="font-size: 13px; color: var(--text-muted, #94a3b8);">
                 <?php
-                $fromItem = $totalCount > 0 ? ((($page - 1) * 50) + 1) : 0;
-                $toItem = min((($page - 1) * 50) + count($products), $totalCount);
+                $perPageAdmin = 48;
+                $fromItem = $totalCount > 0 ? ((($page - 1) * $perPageAdmin) + 1) : 0;
+                $toItem = min((($page - 1) * $perPageAdmin) + count($products), $totalCount);
                 ?>
-                Mostrando <strong style="color: #fff;"><?= $fromItem ?>-<?= $toItem ?></strong> de <strong style="color: #fff;"><?= $totalCount ?></strong> produtos (Página <?= $page ?> de <?= $totalPages ?> • 50 por página)
+                Mostrando <strong style="color: #fff;"><?= $fromItem ?>-<?= $toItem ?></strong> de <strong style="color: #fff;"><?= $totalCount ?></strong> produtos (Página <?= $page ?> de <?= $totalPages ?> • <?= $perPageAdmin ?> por página)
             </div>
         </div>
     </div>
@@ -1430,12 +1431,31 @@
                 const stepNum = i + 1;
                 const percent = Math.round((stepNum / total) * 100);
 
-                // Se o modo for apenas incompletos e o produto já tem mais de 1 imagem, pula!
+                // Se o modo for apenas incompletos e o produto já tem mais de 1 imagem, verifica disponibilidade antes de preservar!
                 if (mode === 'incomplete' && item.images_count > 1) {
-                    batchSkippedCount++;
-                    document.getElementById('batchStatSkipped').textContent = batchSkippedCount;
-                    appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} (${item.title}): Já possui ${item.images_count} fotos. Preservado!`, 'skip');
-                    updateBatchProgress(stepNum, total, percent, `Preservado: #${item.id} (${item.images_count} fotos)`);
+                    let wasDeleted = false;
+                    if (item.aliexpress_id && /^\d{10,20}$/.test(item.aliexpress_id)) {
+                        try {
+                            const chkRes = await fetch(<?= json_encode($baseUrl . '/api/drop/check-availability', JSON_UNESCAPED_SLASHES) ?>, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                body: JSON.stringify({ product_id: item.id })
+                            });
+                            const chkData = await chkRes.json();
+                            if (chkData && chkData.available === false && chkData.reason === 'not_found') {
+                                wasDeleted = true;
+                                appendBatchLog(`[${stepNum}/${total}] 🗑️ Produto #${item.id} (${item.title}): Página Não Encontrada no fornecedor — excluído automaticamente!`, 'warning');
+                                const cardEl = document.querySelector(`[data-product-id="${item.id}"]`);
+                                if (cardEl) cardEl.remove();
+                            }
+                        } catch (e) {}
+                    }
+                    if (!wasDeleted) {
+                        batchSkippedCount++;
+                        document.getElementById('batchStatSkipped').textContent = batchSkippedCount;
+                        appendBatchLog(`[${stepNum}/${total}] Produto #${item.id} (${item.title}): Já possui ${item.images_count} fotos. Preservado!`, 'skip');
+                        updateBatchProgress(stepNum, total, percent, `Preservado: #${item.id} (${item.images_count} fotos)`);
+                    }
                     continue;
                 }
 
@@ -1467,7 +1487,15 @@
                     });
 
                     const data = await res.json();
-                    if (res.ok && data.success) {
+                    if (data && data.deleted) {
+                        appendBatchLog(`[${stepNum}/${total}] 🗑️ Produto #${item.id}: ${data.message || 'Página Não Encontrada — excluído automaticamente.'}`, 'warning');
+                        const cardEl = document.querySelector(`[data-product-id="${item.id}"]`);
+                        if (cardEl) cardEl.remove();
+                    } else if (data && data.temporary_block) {
+                        batchSkippedCount++;
+                        document.getElementById('batchStatSkipped').textContent = batchSkippedCount;
+                        appendBatchLog(`[${stepNum}/${total}] ${data.message || 'Captcha temporário do AliExpress — produto preservado.'}`, 'skip');
+                    } else if (res.ok && data.success) {
                         batchSyncedCount++;
                         item.images_count = data.count || (Array.isArray(data.images) ? data.images.length : 1);
                         document.getElementById('batchStatSynced').textContent = batchSyncedCount;

@@ -29,8 +29,16 @@ class EmergencyController
 
     public function login(Request $request)
     {
-        $emergencyKey = getenv('EMERGENCY_KEY');
-        $inputKey = (string)$request->input('app_key', '');
+        $rawEmergencyKey = getenv('EMERGENCY_KEY');
+        if (!is_string($rawEmergencyKey) || trim($rawEmergencyKey) === '') {
+            $rawEmergencyKey = (string)($_ENV['EMERGENCY_KEY'] ?? '');
+        }
+        $rawAppKey = getenv('APP_KEY');
+        if (!is_string($rawAppKey) || trim($rawAppKey) === '') {
+            $rawAppKey = (string)($_ENV['APP_KEY'] ?? '');
+        }
+        $emergencyKey = trim($rawEmergencyKey) !== '' ? trim($rawEmergencyKey) : trim($rawAppKey);
+        $inputKey = trim((string)$request->input('app_key', ''));
         $csrfToken = (string)$request->input('csrf_token', '');
         $expectedCsrf = (string)$this->session->getCsrfToken();
 
@@ -66,8 +74,8 @@ class EmergencyController
         }
 
         // 3. Impede uso se a chave de emergência não estiver configurada ou for fraca (< 16 chars)
-        if (!is_string($emergencyKey) || strlen(trim($emergencyKey)) < 16) {
-            @file_put_contents($logFile, "[$timestamp] [BLOCKED] IP: $ip tentou acesso de emergencia, mas EMERGENCY_KEY nao configurada ou fraca no servidor.\n", FILE_APPEND);
+        if (strlen($emergencyKey) < 16) {
+            @file_put_contents($logFile, "[$timestamp] [BLOCKED] IP: $ip tentou acesso de emergencia, mas EMERGENCY_KEY/APP_KEY nao configurada ou fraca no servidor.\n", FILE_APPEND);
             return new ViewResponse($this->theme->render('emergency', [
                 'error'     => 'Acesso de Emergência Desativado no Servidor.',
                 'csrfToken' => $expectedCsrf,

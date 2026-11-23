@@ -150,9 +150,10 @@
         <?php
         $frontQuery = $_GET;
         unset($frontQuery['page'], $frontQuery['ajax']);
-        $buildFrontPageUrl = function(int $p) use ($baseUrl, $frontQuery): string {
+        $stageRoute = isset($pageBaseRoute) && $pageBaseRoute !== '' ? (string)$pageBaseRoute : '/loja';
+        $buildFrontPageUrl = function(int $p) use ($baseUrl, $frontQuery, $stageRoute): string {
             $params = array_merge($frontQuery, ['page' => $p]);
-            return $baseUrl . '/loja?' . http_build_query($params);
+            return $baseUrl . $stageRoute . '?' . http_build_query($params);
         };
         ?>
         <nav aria-label="Navegação da Loja" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 20px; margin-top: 32px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
@@ -214,7 +215,16 @@
 <?php endif; ?>
 
 <!-- Age Verification Modal for Adult (+18) / Sex Shop Categories -->
-<?php $isAdultCategory = !empty($selectedCategory) && (str_contains($selectedCategory, '+18') || stripos($selectedCategory, 'sex shop') !== false); ?>
+<?php
+$isAdultCategory = ($dedicatedSection ?? '') === 'sexshop'
+    || (!empty($selectedCategory) && (
+        str_contains($selectedCategory, '+18')
+        || stripos($selectedCategory, 'sex shop') !== false
+        || stripos($selectedCategory, 'sexshop') !== false
+        || stripos($selectedCategory, 'uso especial') !== false
+        || stripos($selectedCategory, 'novidades') !== false
+    ));
+?>
 <?php if ($isAdultCategory): ?>
     <div id="ageGateModal" style="display: none; position: fixed; inset: 0; background: rgba(5,7,10,0.92); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
         <div style="background: #171d22; border: 1px solid rgba(239,68,68,0.5); border-radius: 14px; max-width: 480px; width: 100%; padding: 32px 28px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); animation: fadeIn 0.3s ease;">

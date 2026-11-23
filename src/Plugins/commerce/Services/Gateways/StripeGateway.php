@@ -66,13 +66,19 @@ class StripeGateway implements PaymentGatewayInterface
             return $path;
         }
 
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
         if (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://')) {
             return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
         }
+
+        if (defined('APP_URL') && (str_starts_with(APP_URL, 'http://') || str_starts_with(APP_URL, 'https://'))) {
+            return rtrim(APP_URL, '/') . $baseUrl . '/' . ltrim($path, '/');
+        }
+
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $rawHost = (string)($_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $host = preg_match('/^[a-zA-Z0-9.-]+(?::\d{1,5})?$/', $rawHost) ? $rawHost : 'localhost';
 
         return $scheme . '://' . $host . $baseUrl . '/' . ltrim($path, '/');
     }

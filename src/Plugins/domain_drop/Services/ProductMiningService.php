@@ -729,9 +729,31 @@ class ProductMiningService implements ProductMiningServiceInterface
             $extractedVariants = $item['variants'];
             if (!empty($item['variation_axes']) && is_array($item['variation_axes'])) {
                 $variationAxes = $item['variation_axes'];
+            } else {
+                foreach ($extractedVariants as $ev) {
+                    if (!is_array($ev) || empty($ev['options']) || !is_array($ev['options'])) {
+                        continue;
+                    }
+                    foreach ($ev['options'] as $axisName => $axisVal) {
+                        $axisName = trim((string)$axisName);
+                        $axisVal = trim((string)$axisVal);
+                        if ($axisName !== '' && $axisVal !== '') {
+                            if (!isset($variationAxes[$axisName])) {
+                                $variationAxes[$axisName] = [];
+                            }
+                            if (!in_array($axisVal, $variationAxes[$axisName], true)) {
+                                $variationAxes[$axisName][] = $axisVal;
+                            }
+                        }
+                    }
+                }
             }
         } elseif (is_array($skuDtos) && !empty($skuDtos)) {
-            foreach ($skuDtos as $sku) {
+            $normalizedSkus = (isset($skuDtos['sku_id']) || isset($skuDtos['id']) || isset($skuDtos['ae_sku_property_dtos']) || isset($skuDtos['sku_properties']))
+                ? [$skuDtos]
+                : $skuDtos;
+
+            foreach ($normalizedSkus as $sku) {
                 if (!is_array($sku)) {
                     continue;
                 }
@@ -749,11 +771,20 @@ class ProductMiningService implements ProductMiningServiceInterface
                 $rawProps = $sku['ae_sku_property_dtos']['ae_sku_property_d_t_o']
                     ?? ($sku['ae_sku_property_dtos'] ?? ($sku['sku_properties'] ?? []));
                 if (is_array($rawProps)) {
+                    if (isset($rawProps['sku_property_name']) || isset($rawProps['property_name'])) {
+                        $rawProps = [$rawProps];
+                    }
                     foreach ($rawProps as $rp) {
                         if (!is_array($rp)) {
                             continue;
                         }
                         $propName = trim((string)($rp['sku_property_name'] ?? ($rp['property_name'] ?? '')));
+                        $lowerProp = mb_strtolower($propName, 'UTF-8');
+                        if ($lowerProp === 'color' || $lowerProp === 'colour') {
+                            $propName = 'Cor';
+                        } elseif ($lowerProp === 'size') {
+                            $propName = 'Tamanho';
+                        }
                         $propVal = trim((string)($rp['property_value_definition_name'] ?? ($rp['sku_property_value'] ?? ($rp['property_value'] ?? ''))));
                         if ($propName !== '' && $propVal !== '') {
                             $options[$propName] = $propVal;
@@ -1403,7 +1434,30 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'evaluate_rate' => '4.9',
                     'volume' => 19300,
                     'product_description' => 'Alicate profissional de precisão para eletricistas com decapagem rápida de fios AWG 24-10 e corpo reforçado em aço forjado.',
-                    'properties' => ['Capacidade' => 'AWG 24-10 (0.2 - 6.0mm²)', 'Aço' => 'Aço Carbono Forjado', 'Empunhadura' => 'Ergonômica Antiderrapante'],
+                    'properties' => ['Capacidade' => 'AWG 24-10 (0.2 - 6.0mm²)', 'Aço' => 'Aço Carbono Forjado', 'Empunhadura' => 'Ergonômica Antiderrapante', 'Cores' => 'Amarelo, Vermelho'],
+                    'variation_axes' => [
+                        'Cor' => ['Amarelo', 'Vermelho'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005010179002980-AMARELO',
+                            'sku_attr' => '14:200000181',
+                            'options' => ['Cor' => 'Amarelo'],
+                            'price_brl' => 58.18,
+                            'cost_price_usd' => 5.06,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S94c8418536694e0db6a78043c458f7b6q.jpg',
+                            'stock' => 65,
+                        ],
+                        [
+                            'sku_id' => '1005010179002980-VERMELHO',
+                            'sku_attr' => '14:200000183',
+                            'options' => ['Cor' => 'Vermelho'],
+                            'price_brl' => 58.18,
+                            'cost_price_usd' => 5.06,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S94c8418536694e0db6a78043c458f7b6q.jpg',
+                            'stock' => 50,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005006459530266',
@@ -1418,7 +1472,30 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'evaluate_rate' => '4.8',
                     'volume' => 14200,
                     'product_description' => 'Alicate automático para descascar e crimpar fios com regulagem de pressão e limitador de comprimento em aço temperado.',
-                    'properties' => ['Ação' => 'Automática 1-Click', 'Bitola' => '0.5mm² a 6.0mm²', 'Crimpagem' => 'Terminais Ilhós e Pré-isolados'],
+                    'properties' => ['Ação' => 'Automática 1-Click', 'Bitola' => '0.5mm² a 6.0mm²', 'Crimpagem' => 'Terminais Ilhós e Pré-isolados', 'Cores' => 'Amarelo, Vermelho'],
+                    'variation_axes' => [
+                        'Cor' => ['Amarelo', 'Vermelho'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005006459530266-AMARELO',
+                            'sku_attr' => '14:200000181',
+                            'options' => ['Cor' => 'Amarelo'],
+                            'price_brl' => 89.54,
+                            'cost_price_usd' => 7.78,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Af74ca0a2fa8f418082f4dad0f68bc3fdE.png',
+                            'stock' => 45,
+                        ],
+                        [
+                            'sku_id' => '1005006459530266-VERMELHO',
+                            'sku_attr' => '14:200000183',
+                            'options' => ['Cor' => 'Vermelho'],
+                            'price_brl' => 89.54,
+                            'cost_price_usd' => 7.78,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Af74ca0a2fa8f418082f4dad0f68bc3fdE.png',
+                            'stock' => 40,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005008830668625',
@@ -1447,7 +1524,30 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'evaluate_rate' => '4.9',
                     'volume' => 8800,
                     'product_description' => 'Decapador profissional modelo D3N com lâminas de liga especial que removem capas plásticas sem romper os filamentos de cobre.',
-                    'properties' => ['Modelo' => 'D3N Auto-Adjusting', 'Material' => 'Liga Especial HRC 55', 'Garantia' => 'Uso Contínuo'],
+                    'properties' => ['Modelo' => 'D3N Auto-Adjusting', 'Material' => 'Liga Especial HRC 55', 'Garantia' => 'Uso Contínuo', 'Cores' => 'Amarelo, Vermelho'],
+                    'variation_axes' => [
+                        'Cor' => ['Amarelo', 'Vermelho'],
+                    ],
+                    'variants' => [
+                        [
+                            'sku_id' => '1005013591449434-AMARELO',
+                            'sku_attr' => '14:200000181',
+                            'options' => ['Cor' => 'Amarelo'],
+                            'price_brl' => 157.50,
+                            'cost_price_usd' => 15.00,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Sb12c9a65cb064973a3f420ae65a2f1e4G.jpg',
+                            'stock' => 42,
+                        ],
+                        [
+                            'sku_id' => '1005013591449434-VERMELHO',
+                            'sku_attr' => '14:200000183',
+                            'options' => ['Cor' => 'Vermelho'],
+                            'price_brl' => 157.50,
+                            'cost_price_usd' => 15.00,
+                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Sb12c9a65cb064973a3f420ae65a2f1e4G.jpg',
+                            'stock' => 38,
+                        ],
+                    ],
                 ],
                 [
                     'product_id' => '1005006727505916',
@@ -1658,50 +1758,20 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'Detalhes'   => 'Renda Floral Trançada e Detalhes em Laço',
                         'Estrutura'  => 'Sem aros rígidos / Conforto anatômico noturno',
                         'Tamanhos'   => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
-                        'Cores'      => 'Vermelho Natalino',
+                        'Cores'      => 'Vermelho Natalino, Preto Noir, Vinho Bordô',
                     ],
                     'variation_axes' => [
-                        'Cor'     => ['Vermelho Natalino'],
+                        'Cor'     => ['Vermelho Natalino', 'Preto Noir', 'Vinho Bordô'],
                         'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
                     ],
-                    'variants' => [
-                        [
-                            'sku_id' => '1005013303040786-VERMELHO-S',
-                            'sku_attr' => '14:200000183;5:100014064',
-                            'options' => ['Cor' => 'Vermelho Natalino', 'Tamanho' => 'S (BR P)'],
-                            'price_brl' => 64.90,
-                            'cost_price_usd' => 6.10,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
-                            'stock' => 45,
-                        ],
-                        [
-                            'sku_id' => '1005013303040786-VERMELHO-M',
-                            'sku_attr' => '14:200000183;5:100014065',
-                            'options' => ['Cor' => 'Vermelho Natalino', 'Tamanho' => 'M (BR M)'],
-                            'price_brl' => 69.90,
-                            'cost_price_usd' => 6.80,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
-                            'stock' => 60,
-                        ],
-                        [
-                            'sku_id' => '1005013303040786-VERMELHO-L',
-                            'sku_attr' => '14:200000183;5:100014066',
-                            'options' => ['Cor' => 'Vermelho Natalino', 'Tamanho' => 'L (BR G)'],
-                            'price_brl' => 74.90,
-                            'cost_price_usd' => 7.40,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
-                            'stock' => 38,
-                        ],
-                        [
-                            'sku_id' => '1005013303040786-VERMELHO-XL',
-                            'sku_attr' => '14:200000183;5:100014067',
-                            'options' => ['Cor' => 'Vermelho Natalino', 'Tamanho' => 'XL (BR GG)'],
-                            'price_brl' => 79.90,
-                            'cost_price_usd' => 7.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg',
-                            'stock' => 20,
-                        ],
-                    ],
+                    'variants' => self::buildColorSizeVariants(
+                        '1005013303040786',
+                        ['Vermelho Natalino', 'Preto Noir', 'Vinho Bordô'],
+                        ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                        64.90,
+                        6.10,
+                        'https://ae-pic-a1.aliexpress-media.com/kf/Seac388b674504c8c8e01ffc74db92072x.jpg'
+                    ),
                 ],
                 [
                     'product_id' => '1005006996593220',
@@ -1720,50 +1790,20 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'Alças'     => 'Reguláveis Duplas',
                         'Estilo'    => 'Bralette Rendado',
                         'Tamanhos'  => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
-                        'Cores'     => 'Preto Noir',
+                        'Cores'     => 'Preto Noir, Branco Pérola, Rosa Nude',
                     ],
                     'variation_axes' => [
-                        'Cor'     => ['Preto Noir'],
+                        'Cor'     => ['Preto Noir', 'Branco Pérola', 'Rosa Nude'],
                         'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
                     ],
-                    'variants' => [
-                        [
-                            'sku_id' => '1005006996593220-BLK-S',
-                            'sku_attr' => '14:200000182;5:100014064',
-                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'S (BR P)'],
-                            'price_brl' => 69.90,
-                            'cost_price_usd' => 7.20,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 50,
-                        ],
-                        [
-                            'sku_id' => '1005006996593220-BLK-M',
-                            'sku_attr' => '14:200000182;5:100014065',
-                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'M (BR M)'],
-                            'price_brl' => 74.90,
-                            'cost_price_usd' => 7.80,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 70,
-                        ],
-                        [
-                            'sku_id' => '1005006996593220-BLK-L',
-                            'sku_attr' => '14:200000182;5:100014066',
-                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'L (BR G)'],
-                            'price_brl' => 79.90,
-                            'cost_price_usd' => 8.40,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 40,
-                        ],
-                        [
-                            'sku_id' => '1005006996593220-BLK-XL',
-                            'sku_attr' => '14:200000182;5:100014067',
-                            'options' => ['Cor' => 'Preto Noir', 'Tamanho' => 'XL (BR GG)'],
-                            'price_brl' => 84.90,
-                            'cost_price_usd' => 8.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg',
-                            'stock' => 30,
-                        ],
-                    ],
+                    'variants' => self::buildColorSizeVariants(
+                        '1005006996593220',
+                        ['Preto Noir', 'Branco Pérola', 'Rosa Nude'],
+                        ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                        69.90,
+                        7.20,
+                        'https://ae-pic-a1.aliexpress-media.com/kf/S70b1538ac3494d0ea1a11a943eb8792c9.jpg'
+                    ),
                 ],
                 [
                     'product_id' => '1005013529453545',
@@ -1782,50 +1822,20 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'Tecido'   => 'Tule Ilusion Bordado',
                         'Ajuste'   => 'Amarração Flexível',
                         'Tamanhos' => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
-                        'Cores'    => 'Vinho & Preto',
+                        'Cores'    => 'Vinho & Preto, Preto Clássico, Azul Marinho',
                     ],
                     'variation_axes' => [
-                        'Cor'     => ['Vinho & Preto'],
+                        'Cor'     => ['Vinho & Preto', 'Preto Clássico', 'Azul Marinho'],
                         'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
                     ],
-                    'variants' => [
-                        [
-                            'sku_id' => '1005013529453545-VINHO-S',
-                            'sku_attr' => '14:200000183;5:100014064',
-                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'S (BR P)'],
-                            'price_brl' => 59.90,
-                            'cost_price_usd' => 5.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 45,
-                        ],
-                        [
-                            'sku_id' => '1005013529453545-VINHO-M',
-                            'sku_attr' => '14:200000183;5:100014065',
-                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'M (BR M)'],
-                            'price_brl' => 64.90,
-                            'cost_price_usd' => 6.50,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 60,
-                        ],
-                        [
-                            'sku_id' => '1005013529453545-VINHO-L',
-                            'sku_attr' => '14:200000183;5:100014066',
-                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'L (BR G)'],
-                            'price_brl' => 69.90,
-                            'cost_price_usd' => 7.10,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 35,
-                        ],
-                        [
-                            'sku_id' => '1005013529453545-VINHO-XL',
-                            'sku_attr' => '14:200000183;5:100014067',
-                            'options' => ['Cor' => 'Vinho & Preto', 'Tamanho' => 'XL (BR GG)'],
-                            'price_brl' => 74.90,
-                            'cost_price_usd' => 7.70,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png',
-                            'stock' => 20,
-                        ],
-                    ],
+                    'variants' => self::buildColorSizeVariants(
+                        '1005013529453545',
+                        ['Vinho & Preto', 'Preto Clássico', 'Azul Marinho'],
+                        ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                        59.90,
+                        5.90,
+                        'https://ae-pic-a1.aliexpress-media.com/kf/S51db7b9432c64b6db8cade757321c6e9j.png'
+                    ),
                 ],
                 [
                     'product_id' => '1005006982221921',
@@ -1849,50 +1859,20 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'Fecho'      => 'Costas Triplo Ajuste Reforçado',
                         'Renda'      => 'Guipir Floral Relevo Macio',
                         'Tamanhos'   => 'S (BR P), M (BR M), L (BR G) e XL (BR GG)',
-                        'Cores'      => 'Preto',
+                        'Cores'      => 'Preto, Vermelho Rubi, Branco',
                     ],
                     'variation_axes' => [
-                        'Cor'     => ['Preto'],
+                        'Cor'     => ['Preto', 'Vermelho Rubi', 'Branco'],
                         'Tamanho' => ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
                     ],
-                    'variants' => [
-                        [
-                            'sku_id' => '1005006982221921-PRETO-S',
-                            'sku_attr' => '14:200000182;5:100014064',
-                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'S (BR P)'],
-                            'price_brl' => 79.90,
-                            'cost_price_usd' => 8.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
-                            'stock' => 45,
-                        ],
-                        [
-                            'sku_id' => '1005006982221921-PRETO-M',
-                            'sku_attr' => '14:200000182;5:100014065',
-                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'M (BR M)'],
-                            'price_brl' => 84.90,
-                            'cost_price_usd' => 9.40,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
-                            'stock' => 60,
-                        ],
-                        [
-                            'sku_id' => '1005006982221921-PRETO-L',
-                            'sku_attr' => '14:200000182;5:100014066',
-                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'L (BR G)'],
-                            'price_brl' => 89.90,
-                            'cost_price_usd' => 9.90,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
-                            'stock' => 38,
-                        ],
-                        [
-                            'sku_id' => '1005006982221921-PRETO-XL',
-                            'sku_attr' => '14:200000182;5:100014067',
-                            'options' => ['Cor' => 'Preto', 'Tamanho' => 'XL (BR GG)'],
-                            'price_brl' => 94.90,
-                            'cost_price_usd' => 10.40,
-                            'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg',
-                            'stock' => 25,
-                        ],
-                    ],
+                    'variants' => self::buildColorSizeVariants(
+                        '1005006982221921',
+                        ['Preto', 'Vermelho Rubi', 'Branco'],
+                        ['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'],
+                        79.90,
+                        8.90,
+                        'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg'
+                    ),
                 ],
             ],
             'Sex Shop & Produtos Adultos (+18)' => [
@@ -1940,6 +1920,41 @@ class ProductMiningService implements ProductMiningServiceInterface
                 ],
             ],
         ];
+    }
+
+    /**
+     * Gera a matriz completa de variantes (Cor x Tamanho) para itens curados/teste.
+     *
+     * @param array<int, string> $colors
+     * @param array<int, string> $sizes
+     * @return array<int, array<string, mixed>>
+     */
+    private static function buildColorSizeVariants(
+        string $productId,
+        array $colors,
+        array $sizes,
+        float $basePriceBrl,
+        float $baseCostUsd,
+        string $imageUrl
+    ): array {
+        $variants = [];
+        foreach ($colors as $cIdx => $color) {
+            $colorSlug = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', $color) ?: (string)$cIdx);
+            foreach ($sizes as $sIdx => $size) {
+                $sizeCode = strtok($size, ' ') ?: (string)$sIdx;
+                $variants[] = [
+                    'sku_id'         => "{$productId}-{$colorSlug}-{$sizeCode}",
+                    'sku_attr'       => '14:' . (200000180 + $cIdx) . ';5:' . (100014064 + $sIdx),
+                    'options'        => ['Cor' => $color, 'Tamanho' => $size],
+                    'price_brl'      => round($basePriceBrl + ($sIdx * 5.0), 2),
+                    'cost_price_usd' => round($baseCostUsd + ($sIdx * 0.6), 2),
+                    'image_url'      => $imageUrl,
+                    'stock'          => max(15, 60 - ($sIdx * 10) - ($cIdx * 5)),
+                ];
+            }
+        }
+
+        return $variants;
     }
 
     /**
@@ -2166,17 +2181,21 @@ class ProductMiningService implements ProductMiningServiceInterface
                 }
             }
 
+            // 3. Limpeza automática de anúncios cuja página no AliExpress retornou 404 / "Página não encontrada" (ciclo de 24h)
+            $removedDeadLinks = $this->purgeNotFoundProducts(50);
+
             // Registra a conclusão do ciclo de 24 horas
             $now = time();
             $this->updateConfigField('last_daily_cycle_at', $now);
 
             return [
-                'success'         => true,
-                'skipped'         => false,
-                'executed_at'     => $now,
-                'executed_date'   => date('d/m/Y H:i:s', $now),
-                'total_mined'     => $totalProducts,
-                'category_counts' => $results,
+                'success'            => true,
+                'skipped'            => false,
+                'executed_at'        => $now,
+                'executed_date'      => date('d/m/Y H:i:s', $now),
+                'total_mined'        => $totalProducts,
+                'deleted_not_found'  => $removedDeadLinks,
+                'category_counts'    => $results,
                 'priority_preserved' => $priorityTermsPreserved,
             ];
         } finally {
@@ -2333,6 +2352,7 @@ class ProductMiningService implements ProductMiningServiceInterface
             $checked = 0;
             $adjusted = 0;
             $paused = 0;
+            $deletedNotFound = 0;
             $unchanged = 0;
 
             foreach ($products as $prod) {
@@ -2340,6 +2360,16 @@ class ProductMiningService implements ProductMiningServiceInterface
                 try {
                     $aeId = (string)$prod->aliexpressId;
                     if ($aeId === '') {
+                        continue;
+                    }
+
+                    // 0. Verifica disponibilidade real do link (mesmo em modo teste e mesmo com imagem já indexada)
+                    // Se o anúncio no fornecedor retornou 404 / "Página não encontrada" (ex: promo relâmpago encerrada), exclui o card automaticamente.
+                    if ($this->isProductLinkConfirmedNotFound($aeId)) {
+                        if ($prod->id !== null && $prod->id > 0) {
+                            $this->repository->delete((int)$prod->id);
+                            $deletedNotFound++;
+                        }
                         continue;
                     }
 
@@ -2434,12 +2464,259 @@ class ProductMiningService implements ProductMiningServiceInterface
                 'prices_adjusted'     => $adjusted,
                 'unchanged_prices'    => $unchanged,
                 'paused_out_of_stock' => $paused,
+                'deleted_not_found'   => $deletedNotFound,
                 'volatility_applied'  => $volatility,
             ];
         } finally {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
         }
+    }
+
+    /**
+     * Consulta o SDK oficial do AliExpress (`aliexpress.ds.product.get`) para saber se o produto
+     * existe ('alive'), foi removido/não encontrado ('not_found') ou está sem credenciais/indeterminado ('unknown').
+     */
+    public static function checkAvailabilityViaApiClient(AliExpressApiClientInterface $apiClient, string $aliexpressId): string
+    {
+        $aeId = trim($aliexpressId);
+        if ($aeId === '') {
+            return 'unknown';
+        }
+
+        try {
+            $remote = $apiClient->getProductDetails($aeId);
+        } catch (Throwable $e) {
+            return self::classifyApiExceptionAvailability($e);
+        }
+
+        return self::classifyApiDetailsAvailability($remote);
+    }
+
+    public static function classifyApiExceptionAvailability(Throwable $e): string
+    {
+        $msg = strtolower($e->getMessage());
+        if (str_contains($msg, 'access_token') || str_contains($msg, 'missingparameter') || str_contains($msg, 'invalidsession') || str_contains($msg, 'session')) {
+            return 'sdk_auth_required';
+        }
+        $notFoundMarkers = [
+            'not found',
+            'not exist',
+            'does not exist',
+            'item-not-exist',
+            'item_not_found',
+            'product_not_found',
+            'invalid product',
+            'product offline',
+            'item offline',
+            'no longer available',
+            'removed',
+        ];
+        foreach ($notFoundMarkers as $marker) {
+            if (str_contains($msg, $marker)) {
+                return 'not_found';
+            }
+        }
+        return 'unknown';
+    }
+
+    /**
+     * @param mixed $remote
+     */
+    public static function classifyApiDetailsAvailability(mixed $remote): string
+    {
+        if (!is_array($remote) || empty($remote)) {
+            return 'unknown';
+        }
+
+        $baseInfo = $remote['ae_item_base_info_dto']
+            ?? ($remote['result']['ae_item_base_info_dto']
+            ?? ($remote['aliexpress_ds_product_get_response']['result']['ae_item_base_info_dto'] ?? null));
+        if (is_array($baseInfo)) {
+            $statusType = strtolower(trim((string)($baseInfo['product_status_type'] ?? '')));
+            if (in_array($statusType, ['offline', 'deleted', 'auditing_failed'], true)) {
+                return 'not_found';
+            }
+            if (!empty($baseInfo['subject']) || !empty($baseInfo['product_id'])) {
+                return 'alive';
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Verifica se a página do produto no fornecedor foi confirmada como inexistente (404 / "Página não encontrada").
+     * Prioriza o SDK oficial do AliExpress (sem captcha) e usa o scraper apenas como fallback quando o SDK estiver indisponível.
+     */
+    private function isProductLinkConfirmedNotFound(string $aliexpressId): bool
+    {
+        $sdkStatus = self::checkAvailabilityViaApiClient($this->apiClient, $aliexpressId);
+        if ($sdkStatus === 'not_found') {
+            return true;
+        }
+        if ($sdkStatus === 'alive') {
+            return false;
+        }
+
+        if (method_exists($this->linkScraper, 'checkAvailability')) {
+            return $this->linkScraper->checkAvailability($aliexpressId) === 'not_found';
+        }
+        return false;
+    }
+
+    /**
+     * Varre anúncios publicados e exclui automaticamente cards cujo link no AliExpress
+     * retornou "Página não encontrada" / 404 (ex.: promoção relâmpago encerrada).
+     */
+    public function purgeNotFoundProducts(int $batchLimit = 50): int
+    {
+        $deleted = 0;
+        $products = $this->repository->list(['status' => 'published'], $batchLimit, 0);
+        foreach ($products as $prod) {
+            $aeId = (string)$prod->aliexpressId;
+            if ($aeId === '' || $prod->id === null || $prod->id <= 0) {
+                continue;
+            }
+            try {
+                if ($this->isProductLinkConfirmedNotFound($aeId)) {
+                    if ($this->repository->delete((int)$prod->id)) {
+                        $deleted++;
+                    }
+                }
+            } catch (Throwable $e) {
+                // Isolamento de falha por item
+            }
+        }
+        return $deleted;
+    }
+
+    /**
+     * Verifica ao vivo (no clique do botão Comprar) se o anúncio ainda existe no fornecedor
+     * e consulta o estoque atual via SDK do AliExpress quando disponível.
+     *
+     * @return array{available: bool, reason: string, message: string, stock: ?int, stock_source: string}
+     */
+    public function checkLiveProductAvailability(DropshipProductDto $product, string $skuId = ''): array
+    {
+        $aeId = trim((string)$product->aliexpressId);
+
+        // 1. Consulta o SDK oficial do AliExpress uma única vez (disponibilidade + estoque)
+        $remote = null;
+        $sdkStatus = 'unknown';
+        if ($aeId !== '') {
+            try {
+                $remote = $this->apiClient->getProductDetails($aeId);
+                $sdkStatus = self::classifyApiDetailsAvailability($remote);
+            } catch (Throwable $e) {
+                $sdkStatus = self::classifyApiExceptionAvailability($e);
+            }
+        }
+
+        if ($sdkStatus === 'not_found'
+            || ($sdkStatus === 'unknown' && $aeId !== '' && method_exists($this->linkScraper, 'checkAvailability') && $this->linkScraper->checkAvailability($aeId) === 'not_found')
+        ) {
+            if ($product->id !== null && $product->id > 0) {
+                $this->repository->delete((int)$product->id);
+            }
+            return [
+                'available'    => false,
+                'reason'       => 'not_found',
+                'message'      => 'O estoque deste produto já acabou e o anúncio não está mais disponível no fornecedor.',
+                'stock'        => 0,
+                'stock_source' => $sdkStatus === 'not_found' ? 'aliexpress_sdk' : 'supplier_page',
+            ];
+        }
+
+        // 2. Extrai estoque atual real a partir da mesma resposta do SDK do AliExpress
+        $sdkStock = null;
+        if (is_array($remote) && !empty($remote)) {
+                    $sdkNode = $remote['ae_item_sku_info_dtos']['ae_item_sku_info_d_t_o']
+                        ?? ($remote['result']['ae_item_sku_info_dtos']['ae_item_sku_info_d_t_o'] ?? null);
+                    if (is_array($sdkNode) && !empty($sdkNode)) {
+                        $skuList = isset($sdkNode['sku_id']) || isset($sdkNode['id']) ? [$sdkNode] : $sdkNode;
+                        $matchedStock = null;
+                        $totalStock = 0;
+                        $hasNumericStock = false;
+                        foreach ($skuList as $sku) {
+                            if (!is_array($sku)) {
+                                continue;
+                            }
+                            if (isset($sku['sku_available_stock']) || isset($sku['sku_stock'])) {
+                                $sVal = max(0, (int)($sku['sku_available_stock'] ?? $sku['sku_stock']));
+                                $hasNumericStock = true;
+                                $totalStock += $sVal;
+                                $curSkuId = (string)($sku['sku_id'] ?? ($sku['id'] ?? ''));
+                                if ($skuId !== '' && $curSkuId === $skuId) {
+                                    $matchedStock = $sVal;
+                                }
+                            }
+                        }
+                        if ($matchedStock !== null) {
+                            $sdkStock = $matchedStock;
+                        } elseif ($hasNumericStock) {
+                            $sdkStock = $totalStock;
+                        }
+                    }
+
+                    if ($sdkStock === null) {
+                        $baseInfo = $remote['ae_item_base_info_dto'] ?? ($remote['result']['ae_item_base_info_dto'] ?? []);
+                        if (is_array($baseInfo) && (isset($baseInfo['total_available_stock']) || isset($baseInfo['stock']))) {
+                            $sdkStock = max(0, (int)($baseInfo['total_available_stock'] ?? $baseInfo['stock']));
+                        }
+                    }
+        }
+
+        if ($sdkStock !== null) {
+            if ($sdkStock <= 0) {
+                return [
+                    'available'    => false,
+                    'reason'       => 'out_of_stock',
+                    'message'      => 'O estoque deste produto já acabou no momento.',
+                    'stock'        => 0,
+                    'stock_source' => 'aliexpress_sdk',
+                ];
+            }
+
+            return [
+                'available'    => true,
+                'reason'       => 'in_stock',
+                'message'      => "Estoque atual confirmado: {$sdkStock} unidade(s) disponíveis.",
+                'stock'        => $sdkStock,
+                'stock_source' => 'aliexpress_sdk',
+            ];
+        }
+
+        // 3. Fallback para estoque local da variante selecionada (caso SDK não retorne contagem)
+        if ($skuId !== '') {
+            $variant = $product->findVariantBySku($skuId);
+            if ($variant !== null) {
+                if ($variant->stock <= 0) {
+                    return [
+                        'available'    => false,
+                        'reason'       => 'out_of_stock',
+                        'message'      => 'O estoque da variação selecionada já acabou.',
+                        'stock'        => 0,
+                        'stock_source' => 'catalog_variant',
+                    ];
+                }
+                return [
+                    'available'    => true,
+                    'reason'       => 'in_stock',
+                    'message'      => "Estoque disponível: {$variant->stock} unidade(s).",
+                    'stock'        => $variant->stock,
+                    'stock_source' => 'catalog_variant',
+                ];
+            }
+        }
+
+        return [
+            'available'    => true,
+            'reason'       => 'available',
+            'message'      => 'Produto disponível para compra.',
+            'stock'        => null,
+            'stock_source' => 'catalog',
+        ];
     }
 
     private function getConfigFilePath(): string

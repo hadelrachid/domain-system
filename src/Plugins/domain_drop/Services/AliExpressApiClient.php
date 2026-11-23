@@ -68,6 +68,71 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         return $this->sendHttpRequest($requestUrl, $params);
     }
 
+    public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string
+    {
+        $query = [
+            'response_type' => 'code',
+            'force_auth'    => 'true',
+            'redirect_uri'  => $redirectUri,
+            'client_id'     => $this->appKey,
+        ];
+        if ($state !== '') {
+            $query['state'] = $state;
+        }
+        return 'https://api-sg.aliexpress.com/oauth/authorize?' . http_build_query($query);
+    }
+
+    /**
+     * Troca o código OAuth (`code`) pelo `access_token` e `refresh_token` via `/rest/auth/token/create`.
+     *
+     * @return array<string, mixed>
+     */
+    public function createAccessToken(string $code): array
+    {
+        return $this->executeRest('/auth/token/create', ['code' => trim($code)]);
+    }
+
+    /**
+     * Renova o `access_token` usando o `refresh_token` via `/rest/auth/token/refresh`.
+     *
+     * @return array<string, mixed>
+     */
+    public function refreshAccessToken(string $refreshToken): array
+    {
+        return $this->executeRest('/auth/token/refresh', ['refresh_token' => trim($refreshToken)]);
+    }
+
+    /**
+     * Executa chamada IOP System/Auth (`/rest/...`), onde o caminho da API é incluído no cálculo HMAC-SHA256.
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    public function executeRest(string $apiPath, array $params = []): array
+    {
+        if ($this->appKey === '' || $this->appSecret === '') {
+            throw new RuntimeException('[AliExpressApiClient] AppKey ou AppSecret não configurados no DomainDrop.');
+        }
+
+        $cleanPath = '/' . ltrim($apiPath, '/');
+        $sysParams = [
+            'app_key'     => $this->appKey,
+            'sign_method' => 'sha256',
+            'timestamp'   => $this->getMillisecondTimestamp(),
+            'partner_id'  => $this->sdkVersion,
+        ];
+
+        $allParams = array_merge($params, $sysParams);
+        $sysParams['sign'] = $this->generateSignature($cleanPath, $allParams);
+
+        $restBase = str_ends_with($this->gatewayUrl, '/sync')
+            ? substr($this->gatewayUrl, 0, -5) . '/rest'
+            : 'https://api-sg.aliexpress.com/rest';
+
+        $requestUrl = rtrim($restBase, '/') . $cleanPath . '?' . http_build_query($sysParams);
+        return $this->sendHttpRequest($requestUrl, $params);
+    }
+
     public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array
     {
         $numericId = (string)$productId;
@@ -287,7 +352,14 @@ class AliExpressApiClient implements AliExpressApiClientInterface
             ];
         }
 
-        // 3. Se o AliExpress retornar erro formal na resposta
+        // 3. Se o AliExpress retornar erro formal na resposta (formato TOP error_response ou IOP code)
+        if (isset($decoded['error_response']) && is_array($decoded['error_response'])) {
+            $err = $decoded['error_response'];
+            $errCode = (string)($err['sub_code'] ?? ($err['code'] ?? 'API_ERROR'));
+            $msg = (string)($err['sub_msg'] ?? ($err['msg'] ?? 'Erro desconhecido da AliExpress API'));
+            throw new AliExpressApiException("[AliExpress Gateway Error: {$errCode}] {$msg}", 0, $errCode);
+        }
+
         if (isset($decoded['code']) && (int)$decoded['code'] !== 0 && !isset($decoded['result'])) {
             $msg = $decoded['message'] ?? ($decoded['sub_msg'] ?? 'Erro desconhecido da AliExpress API');
             throw new AliExpressApiException("[AliExpress Gateway Error: {$decoded['code']}] {$msg}", (int)$decoded['code'], 'API_ERROR');

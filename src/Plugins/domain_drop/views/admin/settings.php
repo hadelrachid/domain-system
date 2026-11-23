@@ -108,15 +108,30 @@
         </div>
 
         <div style="margin-bottom: 18px;">
-            <label style="display: block; font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 6px;">
-                Access Token OAuth2 (Sessão do Dropshipper)
-            </label>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
+                <label style="font-size: 13px; font-weight: 500; color: #fff; margin: 0;">
+                    Access Token OAuth2 (Sessão do Dropshipper)
+                </label>
+                <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/admin/dropship/oauth/authorize" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);">
+                    🔗 Conectar Conta AliExpress (OAuth2)
+                </a>
+            </div>
             <div style="display: flex; align-items: stretch;">
-                <input type="password" id="input_access_token" name="access_token" value="<?= htmlspecialchars((string)($config['access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole o Access Token de autorização OAuth (opcional)" style="flex: 1; min-width: 0; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; color: #fff; padding: 10px 14px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
+                <input type="password" id="input_access_token" name="access_token" value="<?= htmlspecialchars((string)($config['access_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Cole o Access Token ou clique em Conectar Conta AliExpress (OAuth2)" style="flex: 1; min-width: 0; background: rgba(0,0,0,0.25); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-right: none; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-top-right-radius: 0; border-bottom-right-radius: 0; color: #fff; padding: 10px 14px; font-size: 13px; box-sizing: border-box; font-family: monospace;">
                 <button type="button" onclick="ddToggleSecret('input_access_token', this)" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border, rgba(255,255,255,0.15)); border-left: 1px solid rgba(255,255,255,0.08); border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 14px; cursor: pointer; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" title="Revelar ou ocultar Access Token" aria-label="Mostrar ou ocultar token">👁️</button>
             </div>
-            <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 4px;">
-                Token de sessão concedido pelo AliExpress para chamadas autenticadas de produtos e pedidos dropshipping. Caso não possua, o motor utilizará a base inteligente curada.
+            <?php
+            $oauthIsHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+                || (int)($_SERVER['SERVER_PORT'] ?? 80) === 443;
+            $oauthScheme = $oauthIsHttps ? 'https' : 'http';
+            $oauthHost = (string)($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+            $oauthCallbackDisplay = (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://'))
+                ? rtrim($baseUrl, '/') . '/admin/dropship/oauth/callback'
+                : ($oauthScheme . '://' . $oauthHost . $baseUrl . '/admin/dropship/oauth/callback');
+            ?>
+            <span style="font-size: 11px; color: var(--text-muted, #94a3b8); display: block; margin-top: 6px; line-height: 1.5;">
+                Cadastre no App Console do AliExpress (<strong>Callback URL</strong>): <code style="color: #45f3ff; user-select: all;"><?= htmlspecialchars($oauthCallbackDisplay, ENT_QUOTES, 'UTF-8') ?></code>
             </span>
         </div>
 

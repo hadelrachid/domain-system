@@ -85,8 +85,8 @@ class CustomerAccountController
             $this->session->setFlash('error', 'Informe um endereço de e-mail válido.');
             return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
-        if (strlen($password) < 6) {
-            $this->session->setFlash('error', 'A senha deve conter no mínimo 6 caracteres.');
+        if (strlen($password) < 8) {
+            $this->session->setFlash('error', 'A senha deve conter no mínimo 8 caracteres.');
             return Response::redirect($baseUrl . '/cadastro' . $redirectQuery);
         }
         if ($confirm !== '' && $password !== $confirm) {
@@ -160,15 +160,26 @@ class CustomerAccountController
             return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
-        $customer = $this->customerRepo->findByEmail($email);
-        if ($customer === null || !password_verify($password, (string)($customer['password_hash'] ?? ''))) {
-            $this->session->setFlash('error', 'E-mail ou senha inválidos.');
-            $sep = $redirectQuery !== '' ? '&' : '?';
-            return Response::redirect($baseUrl . '/entrar' . $redirectQuery . $sep . 'email=' . rawurlencode($email));
+        $rateKey = 'drop_login_attempts';
+        $attempts = $this->session->get($rateKey, ['count' => 0, 'locked_until' => 0]);
+        if (is_array($attempts) && (int)($attempts['locked_until'] ?? 0) > time()) {
+            $this->session->setFlash('error', 'Muitas tentativas de login. Aguarde alguns instantes e tente novamente.');
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
+        $customer = $this->customerRepo->findByEmail($email);
+        if ($customer === null || !password_verify($password, (string)($customer['password_hash'] ?? ''))) {
+            $failCount = (int)($attempts['count'] ?? 0) + 1;
+            $lockedUntil = $failCount >= 5 ? (time() + 120) : 0;
+            $this->session->set($rateKey, ['count' => $failCount >= 5 ? 0 : $failCount, 'locked_until' => $lockedUntil]);
+            $this->session->setFlash('error', 'E-mail ou senha inválidos.');
+            return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
+        }
+
+        $this->session->remove($rateKey);
+
         if (($customer['status'] ?? 'active') !== 'active') {
-            $this->session->setFlash('error', 'Conta temporariamente suspensa. Entre em contato com o suporte.');
+            $this->session->setFlash('error', 'E-mail ou senha inválidos.');
             return Response::redirect($baseUrl . '/entrar' . $redirectQuery);
         }
 
@@ -404,7 +415,11 @@ class CustomerAccountController
             $cleanManualRef = substr(strtoupper($cleanManualRef), 0, 60);
             if ($cleanManualRef !== '') {
                 $orderRef = $cleanManualRef;
-                $order = $this->orderRepo->findByOrderRef($cleanManualRef);
+                $candidateOrder = $this->orderRepo->findByOrderRef($cleanManualRef);
+                // Garante que o cliente só vincule metadados/produto de pedidos que pertencem a ele (evita IDOR)
+                if ($candidateOrder !== null && strtolower(trim((string)($candidateOrder['customer_email'] ?? ''))) === strtolower(trim($customerEmail))) {
+                    $order = $candidateOrder;
+                }
             } else {
                 $orderRef = 'GERAL';
             }

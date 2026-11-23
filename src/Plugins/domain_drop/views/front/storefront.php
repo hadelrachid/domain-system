@@ -14,15 +14,18 @@
  */
 $page = isset($page) ? max(1, (int)$page) : 1;
 $totalPages = isset($totalPages) ? max(1, (int)$totalPages) : 1;
-$canonicalUrl = $baseUrl . '/loja' . ($page > 1 ? '?page=' . $page : '');
+$dedicatedSection = isset($dedicatedSection) ? (string)$dedicatedSection : '';
+$dedicatedSub = isset($dedicatedSub) ? (string)$dedicatedSub : '';
+$pageBaseRoute = isset($pageBaseRoute) && $pageBaseRoute !== '' ? (string)$pageBaseRoute : '/loja';
+$canonicalUrl = $baseUrl . $pageBaseRoute . ($page > 1 ? '?page=' . $page : '');
 ?>
 <!-- SEO Meta Tags & Rel Links para Indexação Google -->
 <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
 <?php if ($page > 1): ?>
-<link rel="prev" href="<?= htmlspecialchars($baseUrl . '/loja' . ($page === 2 ? '' : '?page=' . ($page - 1))) ?>">
+<link rel="prev" href="<?= htmlspecialchars($baseUrl . $pageBaseRoute . ($page === 2 ? '' : '?page=' . ($page - 1))) ?>">
 <?php endif; ?>
 <?php if ($page < $totalPages): ?>
-<link rel="next" href="<?= htmlspecialchars($baseUrl . '/loja?page=' . ($page + 1)) ?>">
+<link rel="next" href="<?= htmlspecialchars($baseUrl . $pageBaseRoute . '?page=' . ($page + 1)) ?>">
 <?php endif; ?>
 <style>
     @media (max-width: 900px) {
@@ -130,6 +133,43 @@ $canonicalUrl = $baseUrl . '/loja' . ($page > 1 ? '?page=' . $page : '');
 
     <!-- Toolbar Responsivo de Seleção via COMBOBOX (Substitui barra de rolagem horizontal!) -->
     <div id="produtos" class="store-combobox-toolbar">
+        <?php if ($dedicatedSection === 'fashion'): ?>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(236,72,153,0.16); border: 1px solid rgba(236,72,153,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                        👗
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: #f472b6; text-transform: uppercase; letter-spacing: 0.8px;">Seção Dedicada AliExpress SDK</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff;">Moda, Roupas, Lingeries, Meias-Calça, Espartilhos &amp; Íntima Masculina</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; <?= $dedicatedSub === '' ? 'background: #ec4899; color: #fff;' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);' ?>">Tudo (Moda &amp; Íntima)</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima?sub=roupas" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; <?= $dedicatedSub === 'roupas' ? 'background: #ec4899; color: #fff;' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);' ?>">Roupas &amp; Calçados</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima?sub=intima" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; <?= $dedicatedSub === 'intima' ? 'background: #ec4899; color: #fff;' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);' ?>">Lingeries, Meias-Calça &amp; Espartilhos</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima?sub=meias" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; <?= $dedicatedSub === 'meias' ? 'background: #ec4899; color: #fff;' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);' ?>">Pacotes de Meias</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima?sub=masculina" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; <?= $dedicatedSub === 'masculina' ? 'background: #ec4899; color: #fff;' : 'background: rgba(255,255,255,0.06); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12);' ?>">Íntima Masculina</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/loja" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-decoration: none; background: rgba(212,175,55,0.12); color: #F0D060; border: 1px solid rgba(212,175,55,0.35);">← Catálogo Geral</a>
+                </div>
+            </div>
+        <?php elseif ($dedicatedSection === 'sexshop'): ?>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(239,68,68,0.16); border: 1px solid rgba(239,68,68,0.45); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                        🔞
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.8px;">Seção Restrita +18 • AliExpress SDK (ID 200000532)</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff;">Sex Shop, Bem-Estar Íntimo &amp; Uso Especial (Embalagem Discreta)</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; background: rgba(236,72,153,0.14); color: #f472b6; border: 1px solid rgba(236,72,153,0.35);">👗 Moda &amp; Lingeries</a>
+                    <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/loja" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-decoration: none; background: rgba(212,175,55,0.12); color: #F0D060; border: 1px solid rgba(212,175,55,0.35);">← Catálogo Geral</a>
+                </div>
+            </div>
+        <?php else: ?>
         <div style="display: flex; align-items: center; gap: 10px;">
             <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">
                 📂
@@ -141,6 +181,8 @@ $canonicalUrl = $baseUrl . '/loja' . ($page > 1 ? '?page=' . $page : '');
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; justify-content: flex-end;">
+            <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/moda-intima" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; background: rgba(236,72,153,0.14); color: #f472b6; border: 1px solid rgba(236,72,153,0.35); white-space: nowrap;">👗 Moda &amp; Íntima</a>
+            <a href="<?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?>/sexshop" style="padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; background: rgba(239,68,68,0.14); color: #f87171; border: 1px solid rgba(239,68,68,0.35); white-space: nowrap;">🔞 Sex Shop (+18)</a>
             <!-- Combobox Principal de Categorias (Atualiza o Palco Dinâmico sem recarregar a página!) -->
             <select id="storeCategoryCombobox" class="store-combobox-select" onchange="if(this.value) filterCatalogDynamically(this.value);">
                 <option value="<?= $baseUrl ?>/loja" <?= empty($selectedCategory) ? 'selected' : '' ?>>
@@ -202,6 +244,7 @@ $canonicalUrl = $baseUrl . '/loja' . ($page > 1 ? '?page=' . $page : '');
                 ✕ Limpar
             </a>
         </div>
+        <?php endif; ?>
     </div>
 
     <!-- PALCO DINÂMICO DE PRODUTOS (Sem recarregar página nem pular para cima!) -->

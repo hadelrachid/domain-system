@@ -432,4 +432,108 @@ class DomainDropMediaSyncTest extends TestCase
         $this->assertTrue($itemsByAli['1005022222222222']['needs_sync']);
         $this->assertSame(1, $itemsByAli['1005022222222222']['images_count']);
     }
+
+    public function testSyncAllCatalogMediaDeletesNotFoundEvenWhenMultipleImagesIndexed(): void
+    {
+        $deadDrone = new DropshipProductDto(
+            aliexpressId: '10050999888777',
+            title: 'Drone Dobrável 4K Dual Câmera Estabilização Gps Retorno Automático',
+            slug: 'drone-dobravel-4k-dual-camera',
+            costPriceUsd: 35.0,
+            salePriceBrl: 399.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/drone1.jpg',
+            images: [
+                'https://ae-pic-a1.aliexpress-media.com/kf/drone1.jpg',
+                'https://ae-pic-a1.aliexpress-media.com/kf/drone2.jpg',
+            ],
+            category: 'Eletrônicos & Gadget',
+            description: 'Drone',
+            id: 777,
+            status: 'published'
+        );
+
+        $deleted = [];
+        $repoMock = $this->createMock(DropshipCatalogRepositoryInterface::class);
+        $repoMock->method('list')->willReturn([$deadDrone]);
+        $repoMock->method('delete')->willReturnCallback(function (int $id) use (&$deleted): bool {
+            $deleted[] = $id;
+            return true;
+        });
+
+        $scraperMock = $this->getMockBuilder(\DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['checkAvailability', 'scrape'])
+            ->getMock();
+        $scraperMock->method('checkAvailability')->with('10050999888777')->willReturn('not_found');
+
+        $service = new ProductMediaSyncService(
+            $repoMock,
+            $scraperMock,
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class),
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class)
+        );
+
+        $res = $service->syncAllCatalogMedia(true);
+
+        $this->assertSame(1, $res['deleted_not_found']);
+        $this->assertSame(0, $res['skipped_already_multiple']);
+        $this->assertSame([777], $deleted);
+    }
+
+    public function testSyncProductMediaUsesSdkWithoutCallingScraper(): void
+    {
+        $existing = new DropshipProductDto(
+            aliexpressId: '10050123456789',
+            title: 'Produto Antigo',
+            slug: 'produto-antigo',
+            costPriceUsd: 10.0,
+            salePriceBrl: 110.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/old.jpg',
+            images: ['https://ae-pic-a1.aliexpress-media.com/kf/old.jpg'],
+            category: 'Eletrônicos & Gadget',
+            description: 'Desc',
+            id: 131,
+            status: 'published'
+        );
+
+        $savedDto = null;
+        $repoMock = $this->createMock(DropshipCatalogRepositoryInterface::class);
+        $repoMock->method('findById')->willReturnCallback(function (int $id) use ($existing, &$savedDto): ?DropshipProductDto {
+            return $savedDto ?? $existing;
+        });
+        $repoMock->method('save')->willReturnCallback(function (DropshipProductDto $dto) use (&$savedDto): int {
+            $savedDto = $dto;
+            return 131;
+        });
+
+        // Garante que o scraper NUNCA seja chamado quando o SDK retornar dados válidos
+        $scraperMock = $this->createMock(ProductLinkScraperInterface::class);
+        $scraperMock->expects($this->never())->method('scrape');
+
+        $apiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $apiMock->method('getProductDetails')->with('10050123456789')->willReturn([
+            'ae_item_base_info_dto' => [
+                'product_id'          => '10050123456789',
+                'subject'             => 'Produto Atualizado Via SDK',
+                'product_status_type' => 'onSelling',
+                'target_sale_price'   => '12.50',
+            ],
+            'ae_multimedia_info_dto' => [
+                'image_urls' => 'https://ae-pic-a1.aliexpress-media.com/kf/sdk1.jpg;https://ae-pic-a1.aliexpress-media.com/kf/sdk2.jpg',
+            ],
+        ]);
+
+        $aiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $aiMock->method('polishTitle')->willReturnCallback(fn(string $t): string => $t);
+        $currencyMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $currencyMock->method('getExchangeRate')->willReturn(5.75);
+        $currencyMock->method('calculateSalePriceFromBrl')->willReturn(145.00);
+
+        $service = new ProductMediaSyncService($repoMock, $scraperMock, $aiMock, $currencyMock, $apiMock);
+        $updated = $service->syncProductMedia(131);
+
+        $this->assertSame('Produto Atualizado Via SDK', $updated->title);
+        $this->assertSame('https://ae-pic-a1.aliexpress-media.com/kf/sdk1.jpg', $updated->mainImageUrl);
+        $this->assertCount(2, $updated->images);
+    }
 }

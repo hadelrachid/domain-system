@@ -164,9 +164,11 @@ class CourseService
         }
 
         if (!empty($data['link'])) {
-            $link = (string)$data['link'];
-            if (!filter_var($link, FILTER_VALIDATE_URL) && !str_starts_with($link, '/') && !str_starts_with($link, '#')) {
-                throw new InvalidArgumentException("O link informado deve ser uma URL válida ou um caminho relativo.");
+            $link = trim((string)$data['link']);
+            $isHttpUrl = filter_var($link, FILTER_VALIDATE_URL) !== false
+                && in_array(strtolower((string)parse_url($link, PHP_URL_SCHEME)), ['http', 'https'], true);
+            if (!$isHttpUrl && !str_starts_with($link, '/') && !str_starts_with($link, '#')) {
+                throw new InvalidArgumentException("O link informado deve ser uma URL HTTP/HTTPS válida ou um caminho relativo.");
             }
         }
     }

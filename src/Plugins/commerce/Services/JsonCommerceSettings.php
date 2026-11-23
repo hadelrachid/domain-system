@@ -91,7 +91,12 @@ class JsonCommerceSettings implements CommerceSettingsInterface
 
         $tmpFile = $this->filePath . '.tmp.' . bin2hex(random_bytes(4));
         if (@file_put_contents($tmpFile, $json) !== false) {
-            return @rename($tmpFile, $this->filePath);
+            @chmod($tmpFile, 0600);
+            $renamed = @rename($tmpFile, $this->filePath);
+            if ($renamed) {
+                @chmod($this->filePath, 0600);
+            }
+            return $renamed;
         }
 
         return false;

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace DomainSystem\Plugins\domain_drop\Services;
 
 use DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface;
+use DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductLinkScraperInterface;
 use DomainSystem\Plugins\domain_drop\Contracts\ProductMediaSyncInterface;
 use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
+use DomainSystem\Plugins\domain_drop\DTO\ScrapedProductDto;
 use RuntimeException;
 use Throwable;
 
@@ -25,7 +27,8 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         private readonly DropshipCatalogRepositoryInterface $repository,
         private readonly ProductLinkScraperInterface $scraper,
         private readonly AiProductEnricherInterface $aiEnricher,
-        private readonly CurrencyConverterInterface $currencyConverter
+        private readonly CurrencyConverterInterface $currencyConverter,
+        private readonly ?AliExpressApiClientInterface $apiClient = null
     ) {
     }
 
@@ -41,9 +44,55 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
             throw new RuntimeException("O produto ID {$productId} não possui identificador de origem do fornecedor.");
         }
 
-        $scraped = $this->scraper->scrape($sourceId);
+        $scraped = null;
+        $availability = 'unknown';
+
+        // 1. Prioriza o SDK oficial do AliExpress (sem scraping e sem captcha)
+        if ($this->apiClient !== null) {
+            try {
+                $remote = $this->apiClient->getProductDetails($sourceId);
+                $availability = ProductMiningService::classifyApiDetailsAvailability($remote);
+                if ($availability === 'not_found') {
+                    throw new RuntimeException("PAGINA_NAO_ENCONTRADA: O SDK oficial do AliExpress informou que o produto ({$sourceId}) não foi encontrado ou está offline.");
+                }
+                if ($availability === 'alive' && is_array($remote)) {
+                    $scraped = $this->buildScrapedDtoFromSdkPayload($sourceId, $remote, $existing);
+                }
+            } catch (RuntimeException $e) {
+                if (str_starts_with($e->getMessage(), 'PAGINA_NAO_ENCONTRADA:')) {
+                    throw $e;
+                }
+                $errAvail = ProductMiningService::classifyApiExceptionAvailability($e);
+                if ($errAvail === 'not_found') {
+                    throw new RuntimeException("PAGINA_NAO_ENCONTRADA: O SDK oficial do AliExpress informou que o produto ({$sourceId}) não foi encontrado ou está offline.");
+                }
+                // Se o app ainda está em status Test (sem access_token OAuth), permite fallback para o scraper
+                $availability = 'unknown';
+            } catch (Throwable $e) {
+                $errAvail = ProductMiningService::classifyApiExceptionAvailability($e);
+                if ($errAvail === 'not_found') {
+                    throw new RuntimeException("PAGINA_NAO_ENCONTRADA: O SDK oficial do AliExpress informou que o produto ({$sourceId}) não foi encontrado ou está offline.");
+                }
+                $availability = 'unknown';
+            }
+        }
+
+        // 2. Fallback para scraper apenas quando o SDK não retornou dados (ex: sem credenciais)
         if ($scraped === null) {
-            throw new RuntimeException("Não foi possível acessar a página oficial do produto {$sourceId} para sincronização.");
+            if ($availability === 'unknown' && method_exists($this->scraper, 'checkAvailability')) {
+                $availability = $this->scraper->checkAvailability($sourceId);
+                if ($availability === 'not_found') {
+                    throw new RuntimeException("PAGINA_NAO_ENCONTRADA: A página do fornecedor ({$sourceId}) retornou Página Não Encontrada.");
+                }
+            }
+
+            $scraped = $this->scraper->scrape($sourceId);
+            if ($scraped === null) {
+                if ($availability === 'unknown') {
+                    throw new RuntimeException("BLOQUEIO_TEMPORARIO_FORNECEDOR: O AliExpress solicitou verificação anti-robô temporária (captcha) ou houve instabilidade de rede para o produto {$sourceId}.");
+                }
+                throw new RuntimeException("Não foi possível acessar a página oficial do produto {$sourceId} para sincronização.");
+            }
         }
 
         // Título polido a partir do título oficial raspado do link
@@ -121,6 +170,7 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         $checked = 0;
         $skippedAlreadyMultiple = 0;
         $synced = 0;
+        $deletedNotFound = 0;
         $failed = 0;
         $errors = [];
 
@@ -131,6 +181,21 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
 
             $checked++;
             $images = !empty($prod->images) ? array_values(array_filter($prod->images)) : [];
+
+            // Mesmo que já possua mais de 1 imagem indexada, verifica via SDK oficial (e fallback) se o anúncio morreu
+            if (preg_match('/^\d{10,20}$/', $prod->aliexpressId)) {
+                $avail = $this->apiClient !== null
+                    ? ProductMiningService::checkAvailabilityViaApiClient($this->apiClient, $prod->aliexpressId)
+                    : 'unknown';
+                if ($avail === 'unknown' && method_exists($this->scraper, 'checkAvailability')) {
+                    $avail = $this->scraper->checkAvailability($prod->aliexpressId);
+                }
+                if ($avail === 'not_found') {
+                    $this->repository->delete((int)$prod->id);
+                    $deletedNotFound++;
+                    continue;
+                }
+            }
 
             // REGRA INTELIGENTE: Se o produto já possui mais de 1 imagem, NÃO precisa re-sincronizar!
             if ($skipIfAlreadyMultiple && count($images) > 1) {
@@ -157,6 +222,7 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
             'checked'                  => $checked,
             'skipped_already_multiple' => $skippedAlreadyMultiple,
             'synced'                   => $synced,
+            'deleted_not_found'        => $deletedNotFound,
             'failed'                   => $failed,
             'errors'                   => $errors,
         ];
@@ -222,5 +288,75 @@ class ProductMediaSyncService implements ProductMediaSyncInterface
         $str = (string)preg_replace('/[^a-z0-9]+/i', '-', $str);
 
         return trim($str, '-') ?: 'produto-dropship';
+    }
+
+    /**
+     * Constrói um ScrapedProductDto diretamente a partir do payload oficial do SDK (`aliexpress.ds.product.get`).
+     *
+     * @param array<string, mixed> $remote
+     */
+    private function buildScrapedDtoFromSdkPayload(string $sourceId, array $remote, DropshipProductDto $existing): ?ScrapedProductDto
+    {
+        $root = $remote['result'] ?? $remote;
+        if (!is_array($root)) {
+            return null;
+        }
+
+        $baseInfo = is_array($root['ae_item_base_info_dto'] ?? null) ? $root['ae_item_base_info_dto'] : [];
+        $multiMedia = is_array($root['ae_multimedia_info_dto'] ?? null) ? $root['ae_multimedia_info_dto'] : [];
+
+        $rawTitle = trim((string)($baseInfo['subject'] ?? $existing->title));
+        if ($rawTitle === '') {
+            $rawTitle = $existing->title;
+        }
+
+        $images = [];
+        if (!empty($multiMedia['image_urls'])) {
+            $rawList = is_array($multiMedia['image_urls'])
+                ? $multiMedia['image_urls']
+                : explode(';', (string)$multiMedia['image_urls']);
+            foreach ($rawList as $imgUrl) {
+                $clean = trim((string)$imgUrl);
+                if ($clean !== '' && !in_array($clean, $images, true)) {
+                    $images[] = $clean;
+                }
+            }
+        }
+
+        $skuDtos = $root['ae_item_sku_info_dtos']['ae_item_sku_info_d_t_o'] ?? [];
+        if (is_array($skuDtos)) {
+            $skuList = isset($skuDtos['sku_id']) || isset($skuDtos['id']) ? [$skuDtos] : $skuDtos;
+            foreach ($skuList as $sku) {
+                if (!is_array($sku)) {
+                    continue;
+                }
+                $skuImg = trim((string)($sku['sku_image_url'] ?? ''));
+                if ($skuImg !== '' && !in_array($skuImg, $images, true)) {
+                    $images[] = $skuImg;
+                }
+            }
+        }
+
+        $mainImage = $images[0] ?? $existing->mainImageUrl;
+        $costUsd = (float)($baseInfo['target_sale_price'] ?? ($baseInfo['offer_sale_price'] ?? $existing->costPriceUsd));
+        if ($costUsd <= 0.0 && is_array($skuDtos)) {
+            $firstSku = isset($skuDtos['sku_id']) ? $skuDtos : ($skuDtos[0] ?? []);
+            if (is_array($firstSku)) {
+                $costUsd = (float)($firstSku['sku_price'] ?? ($firstSku['offer_sale_price'] ?? 0.0));
+            }
+        }
+
+        return new ScrapedProductDto(
+            sourceId: $sourceId,
+            sourceUrl: "https://pt.aliexpress.com/item/{$sourceId}.html",
+            rawTitle: $rawTitle,
+            mainImageUrl: $mainImage,
+            galleryImages: $images,
+            costPriceUsd: $costUsd > 0.0 ? $costUsd : $existing->costPriceUsd,
+            category: $existing->category,
+            rating: (float)($baseInfo['avg_evaluation_rating'] ?? $existing->rating),
+            ordersCount: (int)($baseInfo['sales_count'] ?? $existing->ordersCount),
+            attributes: ['sdk_synced_at' => time()]
+        );
     }
 }

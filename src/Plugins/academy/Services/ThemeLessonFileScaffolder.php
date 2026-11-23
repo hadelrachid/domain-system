@@ -177,6 +177,10 @@ class ThemeLessonFileScaffolder implements LessonFileScaffolderInterface
     ): string {
         $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
         $safeProfile = in_array($mobileProfile, ['drawer', 'bottom_bar', 'cinema'], true) ? $mobileProfile : 'drawer';
+        $stripDocblockBreakout = static fn(string $v): string => str_replace(['*/', '/*', '<?', '?>'], ['* /', '/ *', '&lt;?', '?&gt;'], $v);
+        $docTitle = $stripDocblockBreakout($safeTitle);
+        $docSlug = $stripDocblockBreakout($slug);
+        $docPath = $stripDocblockBreakout($relativePath);
 
         if ($blocksJson === null || trim($blocksJson) === '') {
             $defaultBlocks = [
@@ -206,9 +210,9 @@ class ThemeLessonFileScaffolder implements LessonFileScaffolderInterface
  * ============================================================================
  * ARQUIVO GERADO PELA FÁBRICA DE AULAS DO ACADEMY (Domain-System v2.4)
  * ============================================================================
- * Título: {$safeTitle}
- * Slug: {$slug}
- * Caminho: {$relativePath}
+ * Título: {$docTitle}
+ * Slug: {$docSlug}
+ * Caminho: {$docPath}
  * Perfil Mobile: {$safeProfile}
  * DS_BLOCKS_B64: {$encodedJsonComment}
  * ============================================================================
@@ -288,12 +292,14 @@ PHP;
         }
 
         $pagesRoot = $this->resolvePagesDirectory();
+        $realPagesRoot = realpath($pagesRoot);
         $fullPath = $pagesRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanRel);
-        if (!is_file($fullPath)) {
+        $realFull = realpath($fullPath);
+        if ($realPagesRoot === false || $realFull === false || !str_starts_with($realFull, rtrim($realPagesRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) || !is_file($realFull)) {
             return null;
         }
 
-        $content = (string)@file_get_contents($fullPath);
+        $content = (string)@file_get_contents($realFull);
         if (preg_match('/DS_BLOCKS_B64:\s*([A-Za-z0-9+\/=]+)/', $content, $matches)) {
             $decoded = base64_decode($matches[1], true);
             return $decoded !== false ? $decoded : null;
@@ -310,12 +316,14 @@ PHP;
         }
 
         $pagesRoot = $this->resolvePagesDirectory();
+        $realPagesRoot = realpath($pagesRoot);
         $fullPath = $pagesRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanRel);
+        $realFull = realpath($fullPath);
 
         $fileName = basename($cleanRel);
         $fallbackTitle = ucwords(str_replace(['-', '_'], ' ', preg_replace('/\.(php|html)$/i', '', $fileName)));
 
-        if (!is_file($fullPath)) {
+        if ($realPagesRoot === false || $realFull === false || !str_starts_with($realFull, rtrim($realPagesRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) || !is_file($realFull)) {
             return [
                 'title'          => $fallbackTitle,
                 'slug'           => $this->slugify($fallbackTitle),

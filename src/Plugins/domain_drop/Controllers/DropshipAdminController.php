@@ -56,7 +56,7 @@ class DropshipAdminController
         $category = (string)$request->input('category', '');
         $search = (string)$request->input('q', '');
         $page = max(1, (int)$request->input('page', 1));
-        $perPage = 50;
+        $perPage = 48; // 48 produtos por página (grade equilibrada para 2, 3 e 4 colunas, sem sobrar itens órfãos)
 
         $criteria = [];
         if ($category !== '') {
@@ -308,35 +308,6 @@ class DropshipAdminController
             // Testa endpoint de detalhes de produto no gateway oficial do AliExpress
             $res = $client->getProductDetails('1005006093867086');
 
-            if (isset($res['error_response'])) {
-                $err = $res['error_response'];
-                $errCode = (string)($err['code'] ?? '');
-                $errMsg = (string)($err['msg'] ?? '');
-
-                if (str_contains(strtolower($errMsg), 'access_token') || str_contains($errCode, 'MissingParameter') || str_contains($errCode, 'IllegalAccessToken') || str_contains($errCode, 'InvalidAccessToken')) {
-                    $status = 'warning';
-                    $msg = "⚠️ Conexão física OK com o servidor do AliExpress (api-sg.aliexpress.com), mas a aplicação está em modo TEST ou o Access Token não foi fornecido. Clique no botão 'Apply Online' no portal do AliExpress para ir para Produção e cole o Access Token gerado.";
-                } elseif (str_contains($errCode, 'InvalidAppKey') || str_contains($errMsg, 'AppKey') || str_contains($errCode, 'IncompleteSignature') || str_contains($errCode, 'Signature')) {
-                    $status = 'error';
-                    $msg = "❌ Credenciais inválidas. O servidor do AliExpress rejeitou o AppKey ou AppSecret informados. Verifique se foram digitados corretamente ou gere novas credenciais no portal openservice.aliexpress.com.";
-                } else {
-                    $status = 'warning';
-                    $msg = "⚠️ Resposta do Servidor AliExpress: [{$errCode}] {$errMsg}. Verifique as permissões da aplicação no painel de desenvolvedores.";
-                }
-
-                if ($this->isAjaxOrJson($request)) {
-                    return new JsonResponse([
-                        'success' => false,
-                        'status'  => $status,
-                        'message' => $msg,
-                        'code'    => $errCode,
-                    ]);
-                }
-
-                $this->session->setFlash($status === 'warning' ? 'warning' : 'error', $msg);
-                return Response::redirect($baseUrl . '/admin/dropship/settings');
-            }
-
             // Sucesso Total
             $msg = "✔️ Conexão e sincronização 100% estabelecidas com o servidor do AliExpress! Protocolo HMAC-SHA256 validado e credenciais operantes.";
             if ($this->isAjaxOrJson($request)) {
@@ -350,6 +321,32 @@ class DropshipAdminController
             $this->session->setFlash('success', $msg);
             return Response::redirect($baseUrl . '/admin/dropship/settings');
 
+        } catch (\DomainSystem\Plugins\domain_drop\Exceptions\AliExpressApiException $e) {
+            $errCode = (string)$e->type;
+            $errMsg = $e->getMessage();
+
+            if (str_contains(strtolower($errMsg), 'access_token') || str_contains($errCode, 'MissingParameter') || str_contains($errCode, 'IllegalAccessToken') || str_contains($errCode, 'InvalidAccessToken') || str_contains($errCode, 'InvalidSession')) {
+                $status = 'warning';
+                $msg = "⚠️ Conexão física OK com o servidor do AliExpress (api-sg.aliexpress.com), mas a aplicação está em modo TEST ou o Access Token OAuth ainda não foi fornecido. Gere/cole o Access Token no campo abaixo ou clique em 'Apply Online' no portal openservice.aliexpress.com.";
+            } elseif (str_contains($errCode, 'InvalidAppKey') || str_contains($errMsg, 'AppKey') || str_contains($errCode, 'IncompleteSignature') || str_contains($errCode, 'Signature')) {
+                $status = 'error';
+                $msg = "❌ Credenciais inválidas. O servidor do AliExpress rejeitou o AppKey ou AppSecret informados. Verifique se foram digitados corretamente ou gere novas credenciais no portal openservice.aliexpress.com.";
+            } else {
+                $status = 'warning';
+                $msg = "⚠️ Resposta do Servidor AliExpress: {$errMsg}. Verifique as permissões da aplicação no painel de desenvolvedores.";
+            }
+
+            if ($this->isAjaxOrJson($request)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'status'  => $status,
+                    'message' => $msg,
+                    'code'    => $errCode,
+                ]);
+            }
+
+            $this->session->setFlash($status === 'warning' ? 'warning' : 'error', $msg);
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
         } catch (Throwable $e) {
             $msg = "❌ Falha de rede ao conectar com o servidor do AliExpress: " . $e->getMessage() . ". Verifique se o servidor possui saída HTTPS para api-sg.aliexpress.com.";
             if ($this->isAjaxOrJson($request)) {
@@ -358,6 +355,115 @@ class DropshipAdminController
             $this->session->setFlash('error', $msg);
             return Response::redirect($baseUrl . '/admin/dropship/settings');
         }
+    }
+
+    /**
+     * Inicia o fluxo OAuth2 Server-side oficial do AliExpress Open Platform.
+     */
+    public function oauthAuthorize(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $config = $this->loadConfig();
+        $appKey = trim((string)($config['app_key'] ?? ''));
+        $appSecret = trim((string)($config['app_secret'] ?? ''));
+
+        if ($appKey === '' || $appSecret === '') {
+            $this->session->setFlash('error', 'Informe e salve o AppKey e AppSecret antes de autorizar via OAuth2.');
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        $state = bin2hex(random_bytes(16));
+        $this->session->set('dropship_oauth_state', $state);
+
+        $callbackUrl = $this->resolveOAuthCallbackUrl($baseUrl);
+        $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+            appKey: $appKey,
+            appSecret: $appSecret,
+            gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+        );
+
+        return Response::redirect($client->getOAuthAuthorizeUrl($callbackUrl, $state));
+    }
+
+    /**
+     * Recebe o retorno OAuth2 (?code=...) do AliExpress e troca por access_token + refresh_token.
+     */
+    public function oauthCallback(Request $request): ResponseInterface
+    {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $code = trim((string)$request->input('code', ''));
+        $state = trim((string)$request->input('state', ''));
+        $expectedState = (string)$this->session->get('dropship_oauth_state', '');
+        $this->session->remove('dropship_oauth_state');
+
+        if ($expectedState !== '' && ($state === '' || !hash_equals($expectedState, $state))) {
+            $this->session->setFlash('error', 'Falha de segurança OAuth2 (state inválido). Tente conectar novamente.');
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        if ($code === '') {
+            $errDesc = trim((string)($request->input('error_description', '') ?: $request->input('error', 'Autorização cancelada ou código ausente.')));
+            $this->session->setFlash('error', 'AliExpress OAuth2 não retornou o código de autorização: ' . $errDesc);
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        $config = $this->loadConfig();
+        $appKey = trim((string)($config['app_key'] ?? ''));
+        $appSecret = trim((string)($config['app_secret'] ?? ''));
+        if ($appKey === '' || $appSecret === '') {
+            $this->session->setFlash('error', 'AppKey/AppSecret não configurados para concluir o OAuth2.');
+            return Response::redirect($baseUrl . '/admin/dropship/settings');
+        }
+
+        try {
+            $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                appKey: $appKey,
+                appSecret: $appSecret,
+                gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+            );
+            $tokenData = $client->createAccessToken($code);
+            $accessToken = trim((string)($tokenData['access_token'] ?? ''));
+            if ($accessToken === '') {
+                throw new \RuntimeException('Resposta do AliExpress não trouxe access_token.');
+            }
+
+            $config['access_token'] = $accessToken;
+            if (!empty($tokenData['refresh_token'])) {
+                $config['refresh_token'] = (string)$tokenData['refresh_token'];
+            }
+            $expiresIn = (int)($tokenData['expire_time'] ?? ($tokenData['expires_in'] ?? 2592000));
+            $config['access_token_expires_at'] = $expiresIn > 1000000000 ? (int)($expiresIn / 1000) : (time() + max(60, $expiresIn));
+            if (!empty($tokenData['refresh_token_valid_time'])) {
+                $rVal = (int)$tokenData['refresh_token_valid_time'];
+                $config['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
+            } elseif (!empty($tokenData['refresh_expires_in'])) {
+                $config['refresh_token_expires_at'] = time() + max(0, (int)$tokenData['refresh_expires_in']);
+            }
+            if (!empty($tokenData['user_nick']) || !empty($tokenData['account'])) {
+                $config['oauth_account'] = (string)($tokenData['account'] ?? $tokenData['user_nick']);
+            }
+            $this->saveConfig($config);
+
+            $this->session->setFlash('success', '✔️ Conta AliExpress autorizada via OAuth2! Access Token salvo com sucesso.');
+        } catch (Throwable $e) {
+            $this->session->setFlash('error', 'Falha ao trocar o código OAuth2 pelo Access Token: ' . $e->getMessage());
+        }
+
+        return Response::redirect($baseUrl . '/admin/dropship/settings');
+    }
+
+    private function resolveOAuthCallbackUrl(string $baseUrl): string
+    {
+        if (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://')) {
+            return rtrim($baseUrl, '/') . '/admin/dropship/oauth/callback';
+        }
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+            || (int)($_SERVER['SERVER_PORT'] ?? 80) === 443;
+        $scheme = $isHttps ? 'https' : 'http';
+        $rawHost = (string)($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+        $host = preg_match('/^[a-zA-Z0-9.-]+(?::\d{1,5})?$/', $rawHost) ? $rawHost : 'localhost';
+        return $scheme . '://' . $host . $baseUrl . '/admin/dropship/oauth/callback';
     }
 
     public function orders(Request $request): ResponseInterface
@@ -660,10 +766,53 @@ class DropshipAdminController
 
             $this->session->setFlash('success', $msg);
         } catch (Throwable $e) {
-            // Regra de Integridade: Se o fornecedor/site não retornou nada ou não foi encontrado,
-            // o produto é imediatamente despublicado do site (status = 'draft'), ficando restrito ao admin
-            // e disponível para exclusão, impedindo que vá para a vitrine pública da loja.
             $prodId = (int)$id;
+            $isNotFoundOnSupplier = str_starts_with($e->getMessage(), 'PAGINA_NAO_ENCONTRADA:');
+            if ($isNotFoundOnSupplier && $prodId > 0) {
+                $this->catalogRepo->delete($prodId);
+                $delMsg = "🗑️ Página Não Encontrada no fornecedor: o produto #{$prodId} foi excluído automaticamente (mesmo com imagem indexada).";
+                if ($isAjax) {
+                    return new JsonResponse([
+                        'success'    => false,
+                        'deleted'    => true,
+                        'reason'     => 'not_found',
+                        'product_id' => $prodId,
+                        'message'    => $delMsg,
+                    ], 200);
+                }
+                $this->session->setFlash('success', $delMsg);
+                return Response::redirect($baseUrl . '/admin/dropship');
+            }
+
+            if (str_starts_with($e->getMessage(), 'SDK_NAO_AUTORIZADO:')) {
+                $authMsg = "🔑 Access Token OAuth do AliExpress não autorizado em Configurações & API: o produto #{$prodId} foi preservado publicado sem recorrer a scraping.";
+                if ($isAjax) {
+                    return new JsonResponse([
+                        'success'         => false,
+                        'temporary_block' => true,
+                        'product_id'      => $prodId,
+                        'message'         => $authMsg,
+                    ], 200);
+                }
+                $this->session->setFlash('warning', $authMsg);
+                return Response::redirect($baseUrl . '/admin/dropship');
+            }
+
+            if (str_starts_with($e->getMessage(), 'BLOQUEIO_TEMPORARIO_FORNECEDOR:')) {
+                $tempMsg = "⏳ Verificação anti-robô temporária (captcha) do AliExpress: o produto #{$prodId} foi preservado publicado sem alterações.";
+                if ($isAjax) {
+                    return new JsonResponse([
+                        'success'         => false,
+                        'temporary_block' => true,
+                        'product_id'      => $prodId,
+                        'message'         => $tempMsg,
+                    ], 200);
+                }
+                $this->session->setFlash('warning', $tempMsg);
+                return Response::redirect($baseUrl . '/admin/dropship');
+            }
+
+            // Regra de Integridade: Se houve erro de conteúdo sem fotos, move para Rascunho
             if ($prodId > 0) {
                 $this->catalogRepo->updateStatus($prodId, 'draft');
             }

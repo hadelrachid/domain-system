@@ -106,23 +106,66 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $appKey = '558628';
             $appSecret = '';
             $accessToken = null;
+            $refreshToken = null;
+            $expiresAt = 0;
+            $refreshExpiresAt = 0;
+            $data = [];
 
             if (file_exists($configFile)) {
-                $data = @json_decode((string)file_get_contents($configFile), true);
-                if (is_array($data)) {
+                $decoded = @json_decode((string)file_get_contents($configFile), true);
+                if (is_array($decoded)) {
+                    $data = $decoded;
                     $appKey = (string)($data['app_key'] ?? $appKey);
                     $appSecret = (string)($data['app_secret'] ?? '');
                     $accessToken = !empty($data['access_token']) ? (string)$data['access_token'] : null;
+                    $refreshToken = !empty($data['refresh_token']) ? (string)$data['refresh_token'] : null;
+                    $expiresAt = (int)($data['access_token_expires_at'] ?? 0);
+                    $refreshExpiresAt = (int)($data['refresh_token_expires_at'] ?? 0);
                 }
             }
 
-            return new AliExpressApiClient(
+            $client = new AliExpressApiClient(
                 appKey: $appKey,
                 appSecret: $appSecret,
                 gatewayUrl: 'https://api-sg.aliexpress.com/sync',
                 timeout: 15,
                 accessToken: $accessToken
             );
+
+            // Renovação automática 30 minutos antes do vencimento (conforme documentação oficial AliExpress)
+            if ($appKey !== '' && $appSecret !== '' && $accessToken !== null && $refreshToken !== null
+                && $expiresAt > 0 && time() >= ($expiresAt - 1800)
+                && ($refreshExpiresAt === 0 || time() < $refreshExpiresAt)
+            ) {
+                try {
+                    $refreshed = $client->refreshAccessToken($refreshToken);
+                    if (!empty($refreshed['access_token'])) {
+                        $newToken = (string)$refreshed['access_token'];
+                        $data['access_token'] = $newToken;
+                        if (!empty($refreshed['refresh_token'])) {
+                            $data['refresh_token'] = (string)$refreshed['refresh_token'];
+                        }
+                        $expIn = (int)($refreshed['expire_time'] ?? ($refreshed['expires_in'] ?? 2592000));
+                        $data['access_token_expires_at'] = $expIn > 1000000000 ? (int)($expIn / 1000) : (time() + max(60, $expIn));
+                        if (!empty($refreshed['refresh_token_valid_time'])) {
+                            $rVal = (int)$refreshed['refresh_token_valid_time'];
+                            $data['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
+                        }
+                        @file_put_contents($configFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+                        return new AliExpressApiClient(
+                            appKey: $appKey,
+                            appSecret: $appSecret,
+                            gatewayUrl: 'https://api-sg.aliexpress.com/sync',
+                            timeout: 15,
+                            accessToken: $newToken
+                        );
+                    }
+                } catch (Throwable $e) {
+                    // Mantém o token atual em caso de falha transitória de rede
+                }
+            }
+
+            return $client;
         });
 
         $runtime->singleton(AiProductEnricherInterface::class, function () {
@@ -224,7 +267,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 repository: $runtime->make(DropshipCatalogRepositoryInterface::class),
                 scraper: $runtime->make(ProductLinkScraperInterface::class),
                 aiEnricher: $runtime->make(AiProductEnricherInterface::class),
-                currencyConverter: $runtime->make(CurrencyConverterInterface::class)
+                currencyConverter: $runtime->make(CurrencyConverterInterface::class),
+                apiClient: $runtime->make(AliExpressApiClientInterface::class)
             );
         });
 
@@ -355,6 +399,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('GET', '/admin/dropship/settings', [DropshipAdminController::class, 'settings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/settings', [DropshipAdminController::class, 'saveSettings'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/test-connection', [DropshipAdminController::class, 'testConnection'], 'domain_drop', ['admin']);
+            $router->addRoute('GET', '/admin/dropship/oauth/authorize', [DropshipAdminController::class, 'oauthAuthorize'], 'domain_drop', ['admin']);
+            $router->addRoute('GET', '/admin/dropship/oauth/callback', [DropshipAdminController::class, 'oauthCallback'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/sync-images', [DropshipAdminController::class, 'syncImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/images', [DropshipAdminController::class, 'updateImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/product/{id}/price', [DropshipAdminController::class, 'updatePrice'], 'domain_drop', ['admin']);
@@ -364,9 +410,13 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/dropship/sync-all-images', [DropshipAdminController::class, 'syncAllImages'], 'domain_drop', ['admin']);
             $router->addRoute('POST', '/admin/dropship/delete/{id}', [DropshipAdminController::class, 'delete'], 'domain_drop', ['admin']);
 
-            // 4. Rotas Públicas da Loja Virtual, Vitrine & Área do Cliente
+            // 4. Rotas Públicas da Loja Virtual, Páginas Dedicadas & Área do Cliente
             $router->addRoute('GET', '/loja', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'storefront'], 'domain_drop');
+            $router->addRoute('GET', '/moda-intima', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'fashionAndLingerie'], 'domain_drop');
+            $router->addRoute('GET', '/roupas', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'fashionAndLingerie'], 'domain_drop');
+            $router->addRoute('GET', '/sexshop', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'sexShop'], 'domain_drop');
             $router->addRoute('POST', '/api/drop/track-demand', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackDemand'], 'domain_drop');
+            $router->addRoute('POST', '/api/drop/check-availability', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'checkAvailability'], 'domain_drop');
             $router->addRoute('POST', '/dropship/cron-tick', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'cronTick'], 'domain_drop');
             $router->addRoute('GET', '/produto/{slug}', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'singleProduct'], 'domain_drop');
             $router->addRoute('GET', '/rastrear', [\DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController::class, 'trackOrder'], 'domain_drop');

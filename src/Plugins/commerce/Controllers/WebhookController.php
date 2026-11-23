@@ -51,6 +51,14 @@ class WebhookController
             return new JsonResponse(['received' => false, 'error' => "Gateway '{$gatewayId}' desconhecido."], 404);
         }
 
+        if ($this->settings !== null) {
+            $allSettings = $this->settings->all();
+            $enabledKey = $gatewayId . '_enabled';
+            if (is_array($allSettings) && array_key_exists($enabledKey, $allSettings) && !$allSettings[$enabledKey]) {
+                return new JsonResponse(['received' => false, 'action' => 'gateway_disabled'], 409);
+            }
+        }
+
         $result = $paymentGateway->handleWebhook($request);
         if (!$result || empty($result['order_ref'])) {
             return new JsonResponse(['received' => true, 'action' => 'ignored'], 200);
@@ -95,7 +103,7 @@ class WebhookController
         if ($order && ($order['status'] ?? '') === 'pending' && ($result['status'] ?? '') === 'approved') {
             $paid = round((float)($result['total'] ?? 0.0), 2);
             $expected = round((float)($order['total'] ?? 0.0), 2);
-            if ($paid > 0.0 && $paid + 0.01 < $expected) {
+            if (array_key_exists('total', $result) && $expected > 0.0 && ($paid <= 0.0 || $paid + 0.01 < $expected)) {
                 error_log("[commerce] Valor divergente order={$orderRef} pago={$paid} esperado={$expected}");
                 return new JsonResponse(['received' => true, 'action' => 'amount_mismatch'], 200);
             }

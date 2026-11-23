@@ -119,13 +119,21 @@ class DropshipFrontController
 
         if ($this->demandTracker !== null && !empty($payload)) {
             $identity = $this->resolveSessionIdentity();
+            // Remove campos de identidade/conversão forjáveis do payload público
+            unset($payload['customer_id'], $payload['customer_name'], $payload['customer_email'], $payload['ip_address']);
+            $rawAct = strtolower(trim((string)($payload['action'] ?? ($payload['event_type'] ?? 'view_details'))));
+            if (in_array($rawAct, ['conversion', 'purchase'], true)) {
+                $payload['action'] = 'view_details';
+                $payload['event_type'] = 'view_details';
+            }
 
             $event = \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::fromArray(
                 payload: $payload,
                 sessionId: $identity['sess_id'],
                 customerId: $identity['id'],
                 customerName: $identity['name'],
-                customerEmail: $identity['email']
+                customerEmail: $identity['email'],
+                ipAddress: \DomainSystem\Plugins\domain_drop\DTO\DemandEvent::resolveClientIp()
             );
             $tracked = $this->demandTracker->recordInteraction($event);
             return Response::json([
@@ -144,13 +152,137 @@ class DropshipFrontController
     }
 
     /**
+     * Endpoint de Verificação ao Vivo no Clique de Compra: POST /api/drop/check-availability
+     */
+    public function checkAvailability(Request $request): ResponseInterface
+    {
+        $payload = $request->json();
+        if (empty($payload) || !is_array($payload)) {
+            $payload = $request->all();
+        }
+
+        $productId = (int)($payload['product_id'] ?? 0);
+        $slug = trim((string)($payload['slug'] ?? ''));
+        $skuId = trim((string)($payload['sku'] ?? ''));
+
+        $product = null;
+        if ($productId > 0) {
+            $product = $this->catalogRepo->findById($productId);
+        } elseif ($slug !== '') {
+            $product = $this->catalogRepo->findBySlug($slug);
+        }
+
+        if ($product === null || $product->status !== 'published') {
+            return Response::json([
+                'success'      => true,
+                'available'    => false,
+                'reason'       => 'not_found',
+                'message'      => 'O estoque deste produto já acabou e ele não está mais disponível.',
+                'stock'        => 0,
+                'stock_source' => 'catalog',
+            ]);
+        }
+
+        if ($this->miningService !== null && method_exists($this->miningService, 'checkLiveProductAvailability')) {
+            $check = $this->miningService->checkLiveProductAvailability($product, $skuId);
+            return Response::json(array_merge(['success' => true], $check));
+        }
+
+        return Response::json([
+            'success'      => true,
+            'available'    => true,
+            'reason'       => 'available',
+            'message'      => 'Produto disponível para compra.',
+            'stock'        => null,
+            'stock_source' => 'catalog',
+        ]);
+    }
+
+    /**
      * Vitrine Completa da Loja: GET /loja
      */
     public function storefront(Request $request): ResponseInterface
     {
+        return $this->renderCatalogPage($request, [
+            'dedicatedSection' => '',
+            'pageBaseRoute'    => '/loja',
+            'pageTitle'        => 'Loja Oficial - Produtos Selecionados',
+        ]);
+    }
+
+    /**
+     * Página Dedicada: Moda, Roupas, Lingeries, Meias-Calça, Espartilhos & Íntima Masculina:
+     * GET /moda-intima (e alias GET /roupas)
+     */
+    public function fashionAndLingerie(Request $request): ResponseInterface
+    {
+        $sub = strtolower(trim((string)$request->input('sub', '')));
+        $forcedCategory = match ($sub) {
+            'roupas'    => 'Roupas, Bolsas & Calçados',
+            'intima'    => 'Roupa Íntima & Pijamas',
+            'masculina' => 'Roupa Íntima & Pijamas',
+            default     => ['Roupas, Bolsas & Calçados', 'Roupa Íntima & Pijamas'],
+        };
+
+        $forcedSearch = '';
+        if ($sub === 'masculina') {
+            $forcedSearch = 'cueca';
+        } elseif ($sub === 'meias') {
+            $forcedSearch = 'meia';
+        }
+
+        $displayCategory = is_array($forcedCategory)
+            ? 'Roupas, Bolsas & Calçados + Roupa Íntima & Pijamas'
+            : $forcedCategory;
+
+        return $this->renderCatalogPage($request, [
+            'dedicatedSection' => 'fashion',
+            'dedicatedSub'     => $sub,
+            'pageBaseRoute'    => '/moda-intima',
+            'pageTitle'        => 'Moda, Roupas & Moda Íntima - Loja Oficial',
+            'forcedCategory'   => $forcedCategory,
+            'displayCategory'  => $displayCategory,
+            'forcedSearch'     => $forcedSearch,
+        ]);
+    }
+
+    /**
+     * Página Dedicada: Sex Shop & Bem-Estar Íntimo (+18):
+     * GET /sexshop
+     */
+    public function sexShop(Request $request): ResponseInterface
+    {
+        return $this->renderCatalogPage($request, [
+            'dedicatedSection' => 'sexshop',
+            'dedicatedSub'     => '',
+            'pageBaseRoute'    => '/sexshop',
+            'pageTitle'        => 'Sex Shop & Bem-Estar Íntimo (+18) - Loja Oficial',
+            'forcedCategory'   => 'Novidades & Uso Especial',
+            'displayCategory'  => 'Novidades & Uso Especial',
+            'forcedSearch'     => '',
+        ]);
+    }
+
+    /**
+     * Renderizador compartilhado da vitrine principal e das páginas dedicadas (SRP / DRY).
+     *
+     * @param array<string, mixed> $options
+     */
+    private function renderCatalogPage(Request $request, array $options): ResponseInterface
+    {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
-        $selectedCategory = trim((string)$request->input('cat', ''));
+        $dedicatedSection = (string)($options['dedicatedSection'] ?? '');
+        $dedicatedSub = (string)($options['dedicatedSub'] ?? '');
+        $pageBaseRoute = (string)($options['pageBaseRoute'] ?? '/loja');
+        $pageTitle = (string)($options['pageTitle'] ?? 'Loja Oficial - Produtos Selecionados');
+
+        $selectedCategory = isset($options['displayCategory'])
+            ? (string)$options['displayCategory']
+            : trim((string)$request->input('cat', ''));
         $search = trim((string)$request->input('q', ''));
+        if ($search === '' && !empty($options['forcedSearch'])) {
+            $search = (string)$options['forcedSearch'];
+        }
 
         // Metadados do Ciclo Diário de 24 Horas (somente leitura na vitrine; execução via CLI dropship:cycle ou Admin)
         $cycleInfo = $this->miningService ? $this->miningService->getDailyCycleInfo() : [
@@ -165,7 +297,9 @@ class DropshipFrontController
         $perPage = 48; // 48 produtos por página (grade equilibrada para 2, 3 e 4 colunas)
 
         $criteria = ['status' => 'published'];
-        if ($selectedCategory !== '') {
+        if (isset($options['forcedCategory'])) {
+            $criteria['category'] = $options['forcedCategory'];
+        } elseif ($selectedCategory !== '') {
             $criteria['category'] = $selectedCategory;
         }
         if ($search !== '') {
@@ -177,8 +311,8 @@ class DropshipFrontController
 
         $totalCount = $this->catalogRepo->count($criteria);
 
-        // Se uma busca com categoria restrita não encontrou nada, expande para busca global na loja
-        if ($totalCount === 0 && $selectedCategory !== '' && $search !== '') {
+        // Se uma busca na vitrine geral com categoria restrita não encontrou nada, expande para busca global na loja
+        if ($totalCount === 0 && $dedicatedSection === '' && $selectedCategory !== '' && $search !== '') {
             $fallbackCriteria = $criteria;
             unset($fallbackCriteria['category']);
             $fallbackCount = $this->catalogRepo->count($fallbackCriteria);
@@ -221,7 +355,7 @@ class DropshipFrontController
         include dirname(__DIR__) . '/views/front/storefront.php';
         $content = (string)ob_get_clean();
 
-        return $this->wrapWithThemeOrRaw($content, 'Loja Oficial - Produtos Selecionados');
+        return $this->wrapWithThemeOrRaw($content, $pageTitle);
     }
 
     /**
@@ -269,16 +403,20 @@ class DropshipFrontController
         $sdkOfficialUrl = '';
 
         if ($searchCode !== '' && $this->orderRepo !== null) {
+            // Apenas busca exata por referência do pedido (impede enumeração pública via LIKE)
             $exact = $this->orderRepo->findByOrderRef($searchCode);
             if ($exact !== null) {
                 $matchedOrders[] = $exact;
-            } else {
-                $matchedOrders = $this->orderRepo->list(['search' => $searchCode], 10, 0);
             }
 
             foreach ($matchedOrders as &$ord) {
                 if (!empty($ord['customer_email'])) {
                     $ord['customer_email_masked'] = $this->maskEmail((string)$ord['customer_email']);
+                    unset($ord['customer_email']);
+                }
+                if (!empty($ord['customer_name'])) {
+                    $parts = preg_split('/\s+/', trim((string)$ord['customer_name'])) ?: [];
+                    $ord['customer_name'] = ($parts[0] ?? 'Cliente') . (count($parts) > 1 ? ' ***' : '');
                 }
                 if ($trackingCodeToInspect === '' && !empty($ord['tracking_code'])) {
                     $trackingCodeToInspect = trim((string)$ord['tracking_code']);

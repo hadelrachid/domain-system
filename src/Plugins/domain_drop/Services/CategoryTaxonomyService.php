@@ -57,7 +57,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         }
 
         // 1. Roupa Íntima & Pijamas (ID 200574005)
-        if (str_contains($clean, 'lingerie') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'calcinha') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'cueca') || str_contains($clean, 'boxer')) {
+        if (str_contains($clean, 'lingerie') || str_contains($clean, 'sutia') || str_contains($clean, 'sutiã') || str_contains($clean, 'calcinha') || str_contains($clean, 'intima') || str_contains($clean, 'íntima') || str_contains($clean, 'pijama') || str_contains($clean, 'cueca') || str_contains($clean, 'boxer') || str_contains($clean, 'espartilho') || str_contains($clean, 'corset')) {
             return self::CAT_LINGERIE;
         }
 
@@ -110,7 +110,7 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         $t = mb_strtolower(trim($title), 'UTF-8');
 
         // 1. Roupa Íntima & Pijamas (Precedência alta sobre Moda geral para evitar falso-positivo)
-        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy|meia-calça|meia calça|meia calca|meia-calca|meia arrastão|meia arrastao|cueca|cuecas|boxer|slip|corpete|cinta modeladora|peças íntimas|pecas intimas|roupa íntima)\b/iu', $t)) {
+        if (preg_match('/\b(lingerie|sutiã|sutia|calcinha|calcinhas|bojo|push up|push-up|guipir|bralette|camisola|baby doll|pijama|pijamas|renda sexy|natalina sexy|meia-calça|meias-calça|meia calça|meias calça|meia calca|meia-calca|meia arrastão|meia arrastao|cueca|cuecas|boxer|slip|corpete|espartilho|espartilhos|corset|cinta modeladora|peças íntimas|pecas intimas|roupa íntima)\b/iu', $t)) {
             return self::CAT_LINGERIE;
         }
 

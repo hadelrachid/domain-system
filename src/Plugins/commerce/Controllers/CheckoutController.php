@@ -470,6 +470,14 @@ class CheckoutController
             'order_ref'      => $orderRef,
         ]);
 
+        // Registra o order_ref como pertencente à sessão atual (permite acompanhamento seguro para guest checkout)
+        $ownedRefs = $this->session->get('checkout_owned_order_refs', []);
+        if (!is_array($ownedRefs)) {
+            $ownedRefs = [];
+        }
+        $ownedRefs[] = $orderRef;
+        $this->session->set('checkout_owned_order_refs', array_slice(array_values(array_unique($ownedRefs)), -20));
+
         $studentName = trim((string)(
             $request->input('customer_name')
             ?: $request->input('payer_name')
@@ -507,13 +515,13 @@ class CheckoutController
             ]);
         }
 
-        // Salva endereço e contato no perfil do cliente para compras futuras se solicitado
+        // Salva endereço e contato apenas para cliente autenticado (evita sobrescrita por e-mail de terceiros)
         $saveAddressToAccount = (bool)$request->input('save_address_to_account', true);
-        if ($isPhysicalOrDropship && $saveAddressToAccount && $this->dropshipCustomerAddressSaver !== null) {
+        $customerIdToSave = (int)$this->session->get('customer_id', 0);
+        if ($isPhysicalOrDropship && $saveAddressToAccount && $customerIdToSave > 0 && $this->dropshipCustomerAddressSaver !== null) {
             $shipZipVal = trim((string)$request->input('shipping_zip', ''));
             $shipStreetVal = trim((string)($request->input('shipping_street') ?? $request->input('shipping_address') ?? ''));
             if ($shipZipVal !== '' && $shipStreetVal !== '') {
-                $customerIdToSave = (int)$this->session->get('customer_id', 0);
                 ($this->dropshipCustomerAddressSaver)($customerIdToSave, $studentEmail, [
                     'shipping_zip'          => $shipZipVal,
                     'shipping_address'      => $shipStreetVal,
@@ -818,20 +826,35 @@ class CheckoutController
         if (in_array($role, ['admin', 'manager'], true)) {
             return true;
         }
+
+        $orderRef = (string)($order['order_ref'] ?? '');
+        $ownedRefs = $this->session->get('checkout_owned_order_refs', []);
+        if ($orderRef !== '' && is_array($ownedRefs) && in_array($orderRef, $ownedRefs, true)) {
+            return true;
+        }
+
         $orderUserId = (int)($order['user_id'] ?? 0);
+        if ($orderUserId <= 0) {
+            return false;
+        }
+
+        $academyStudentId = $this->session->get('academy_logged_out')
+            ? 0
+            : (int)$this->session->get('academy_student_id', 0);
+
         $isPhysical = in_array((string)($order['item_type'] ?? ''), ['dropship_product', 'dropship', 'product'], true);
         $scopedIds = $isPhysical
             ? array_filter([
                 (int)$this->session->get('customer_id', 0),
-                (int)$this->session->get('academy_student_id', 0),
+                $academyStudentId,
                 (int)$this->session->get('user_id', 0),
             ])
             : array_filter([
-                (int)$this->session->get('academy_student_id', 0),
+                $academyStudentId,
                 (int)$this->session->get('user_id', 0),
             ]);
-        if (empty($scopedIds) || $orderUserId <= 0) {
-            return true;
+        if (empty($scopedIds)) {
+            return false;
         }
         return in_array($orderUserId, $scopedIds, true);
     }

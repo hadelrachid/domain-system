@@ -119,17 +119,6 @@ class CourseFrontController
                 }
             }
 
-            $candidateThemeFile = 'pages/' . ltrim($courseSlug, '/\\') . '.php';
-            if ($this->themeFileExists($candidateThemeFile)) {
-                $renderedFile = $this->renderThemeFile($candidateThemeFile, [
-                    'course'   => ['title' => 'Academy', 'slug' => 'cursos'],
-                    'lesson'   => ['title' => ucwords(str_replace('-', ' ', $courseSlug)), 'slug' => $courseSlug],
-                    'adjacent' => ['prev' => null, 'next' => null],
-                    'navHtml'  => '',
-                ]);
-                return new Response($renderedFile);
-            }
-
             return new Response("<h1>404 - Curso não encontrado</h1><p>Não encontramos o curso solicitado: [" . htmlspecialchars($courseSlug, ENT_QUOTES, 'UTF-8') . "]</p>", 404);
         }
 
@@ -184,7 +173,7 @@ class CourseFrontController
             }
         } else {
             // Curso pago: direciona para checkout externo ou DomainCommerce interno (/checkout/curso/{id} verifica se o aluno está logado; se não estiver, abre Login/Cadastro lado a lado e redireciona de volta para a venda)
-            if ($externalCheckout !== '') {
+            if ($externalCheckout !== '' && (str_starts_with($externalCheckout, 'http://') || str_starts_with($externalCheckout, 'https://'))) {
                 $checkoutUrl = htmlspecialchars($externalCheckout, ENT_QUOTES, 'UTF-8');
                 $ctaButton = "<a href='{$checkoutUrl}' target='_blank' class='btn btn-primary' style='display:inline-block; margin-top:20px; padding:12px 24px; border-radius:6px; background:#00d284; color:#0b0c10; font-weight:700; text-decoration:none;'>🛒 Comprar / Matricular-se &rarr;</a>";
             } elseif ($externalLink !== '' && (str_starts_with($externalLink, 'http://') || str_starts_with($externalLink, 'https://'))) {
@@ -421,13 +410,13 @@ class CourseFrontController
         if ($themePath === '') {
             return false;
         }
-        $target = $themePath . '/' . ltrim($themeFile, '/\\');
+        $target = $themePath . '/pages/' . ltrim(preg_replace('/^pages[\/\\\\]/i', '', ltrim($themeFile, '/\\')), '/\\');
         $realTarget = realpath($target);
-        $realTheme = realpath($themePath);
-        if ($realTarget === false || $realTheme === false) {
+        $realPages = realpath($themePath . '/pages');
+        if ($realTarget === false || $realPages === false) {
             return false;
         }
-        $prefix = rtrim($realTheme, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = rtrim($realPages, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         return str_starts_with($realTarget, $prefix) && is_file($realTarget);
     }
 
@@ -438,12 +427,12 @@ class CourseFrontController
             return "<div class='alert alert-warning' style='padding:20px; color:#ffb703; background:rgba(255, 183, 3, 0.1); border-radius:8px;'>Arquivo do tema não encontrado ou inacessível: " . htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . "</div>";
         }
 
-        $target = $themePath . '/' . ltrim($themeFile, '/\\');
+        $target = $themePath . '/pages/' . ltrim(preg_replace('/^pages[\/\\\\]/i', '', ltrim($themeFile, '/\\')), '/\\');
         $realTarget = realpath($target);
-        $realTheme = realpath($themePath);
-        $realThemePrefix = $realTheme !== false ? rtrim($realTheme, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
+        $realPages = realpath($themePath . '/pages');
+        $realPagesPrefix = $realPages !== false ? rtrim($realPages, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
 
-        if ($realTarget === false || $realTheme === false || !str_starts_with($realTarget, $realThemePrefix) || !is_file($realTarget)) {
+        if ($realTarget === false || $realPages === false || !str_starts_with($realTarget, $realPagesPrefix) || !is_file($realTarget)) {
             return "<div class='alert alert-warning' style='padding:20px; color:#ffb703; background:rgba(255, 183, 3, 0.1); border-radius:8px;'>Arquivo do tema não encontrado ou inacessível: " . htmlspecialchars($themeFile, ENT_QUOTES, 'UTF-8') . "</div>";
         }
 

@@ -68,13 +68,19 @@ class PayPalGateway implements PaymentGatewayInterface
             return $path;
         }
 
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 
         if (str_starts_with($baseUrl, 'http://') || str_starts_with($baseUrl, 'https://')) {
             return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
         }
+
+        if (defined('APP_URL') && (str_starts_with(APP_URL, 'http://') || str_starts_with(APP_URL, 'https://'))) {
+            return rtrim(APP_URL, '/') . $baseUrl . '/' . ltrim($path, '/');
+        }
+
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $rawHost = (string)($_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $host = preg_match('/^[a-zA-Z0-9.-]+(?::\d{1,5})?$/', $rawHost) ? $rawHost : 'localhost';
 
         return $scheme . '://' . $host . $baseUrl . '/' . ltrim($path, '/');
     }
@@ -305,7 +311,10 @@ class PayPalGateway implements PaymentGatewayInterface
             return null;
         }
 
-        if ($webhookId !== '' && $transmissionSig !== '') {
+        if ($webhookId !== '') {
+            if ($transmissionSig === '' || $transmissionId === '' || $certUrl === '' || $authAlgo === '') {
+                return null;
+            }
             $verifyRes = $this->sendHttpRequest('POST', '/v1/notifications/verify-webhook-signature', [
                 'auth_algo'         => $authAlgo,
                 'cert_url'          => $certUrl,
@@ -319,6 +328,9 @@ class PayPalGateway implements PaymentGatewayInterface
             if (($verifyRes['verification_status'] ?? '') !== 'SUCCESS') {
                 return null;
             }
+        } elseif (!$this->isSandbox()) {
+            // Fail-closed em produção quando paypal_webhook_id não está configurado
+            return null;
         }
 
         $resource = $payload['resource'] ?? [];
@@ -327,7 +339,7 @@ class PayPalGateway implements PaymentGatewayInterface
             return null;
         }
 
-        // Confirma o pagamento e valor diretamente na API do PayPal
+        // Confirma o pagamento e valor diretamente na API do PayPal (nunca confia em campos do payload sem validação)
         $endpoint = $eventType === 'PAYMENT.CAPTURE.COMPLETED'
             ? '/v2/payments/captures/' . urlencode($txId)
             : '/v2/checkout/orders/' . urlencode($txId);
@@ -339,15 +351,13 @@ class PayPalGateway implements PaymentGatewayInterface
 
         $orderRef = (string)($verified['custom_id']
             ?? ($verified['purchase_units'][0]['reference_id']
-            ?? ($resource['purchase_units'][0]['reference_id']
-            ?? ($resource['custom_id'] ?? ''))));
+            ?? ($verified['purchase_units'][0]['custom_id'] ?? '')));
         if ($orderRef === '') {
             return null;
         }
 
         $total = (float)($verified['amount']['value']
-            ?? ($verified['purchase_units'][0]['amount']['value']
-            ?? ($resource['amount']['value'] ?? 0.0)));
+            ?? ($verified['purchase_units'][0]['amount']['value'] ?? 0.0));
 
         return [
             'order_ref'      => $orderRef,

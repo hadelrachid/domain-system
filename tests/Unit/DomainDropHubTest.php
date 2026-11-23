@@ -520,13 +520,13 @@ class DomainDropHubTest extends TestCase
             session: $session
         );
 
-        // Página 1: Deve conter 50 produtos e indicar Página 1 de 2
+        // Página 1: Deve conter 48 produtos e indicar Página 1 de 2
         $reqP1 = new \DomainSystem\Core\Http\Request(['page' => '1']);
         $respP1 = $controller->index($reqP1);
         $htmlP1 = $respP1->getContent();
         $this->assertSame(200, $respP1->getStatusCode());
         $this->assertStringContainsString('Página 1 de 2', $htmlP1);
-        $this->assertStringContainsString('50 por página', $htmlP1);
+        $this->assertStringContainsString('48 por página', $htmlP1);
 
         // Página 2: Deve conter os 10 restantes e indicar Página 2 de 2
         $reqP2 = new \DomainSystem\Core\Http\Request(['page' => '2']);
@@ -1494,5 +1494,287 @@ class DomainDropHubTest extends TestCase
         $this->assertTrue($json['success']);
         $this->assertSame(2, $json['page']);
         $this->assertSame(2, $json['totalPages']);
+    }
+
+    public function testDedicatedFashionAndSexShopPagesUseOfficialSdkCategories(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $repo->save(new DropshipProductDto(
+            aliexpressId: 'AE_MODA_1',
+            title: 'Espartilho Lingerie Renda Preta',
+            slug: 'espartilho-lingerie-renda-preta',
+            costPriceUsd: 12.0,
+            salePriceBrl: 149.90,
+            mainImageUrl: 'https://ae01.alicdn.com/kf/lingerie.jpg',
+            images: ['https://ae01.alicdn.com/kf/lingerie.jpg'],
+            category: 'Roupa Íntima & Pijamas',
+            status: 'published'
+        ));
+
+        $repo->save(new DropshipProductDto(
+            aliexpressId: 'AE_MODA_2',
+            title: 'Pacote 10 Pares Meias Masculinas Algodão',
+            slug: 'pacote-10-pares-meias',
+            costPriceUsd: 8.0,
+            salePriceBrl: 89.90,
+            mainImageUrl: 'https://ae01.alicdn.com/kf/meias.jpg',
+            images: ['https://ae01.alicdn.com/kf/meias.jpg'],
+            category: 'Roupas, Bolsas & Calçados',
+            status: 'published'
+        ));
+
+        $repo->save(new DropshipProductDto(
+            aliexpressId: 'AE_MODA_3',
+            title: 'Kit 5 Cuecas Boxer Masculina Microfibra',
+            slug: 'kit-5-cuecas-boxer',
+            costPriceUsd: 10.0,
+            salePriceBrl: 119.90,
+            mainImageUrl: 'https://ae01.alicdn.com/kf/cuecas.jpg',
+            images: ['https://ae01.alicdn.com/kf/cuecas.jpg'],
+            category: 'Roupa Íntima & Pijamas',
+            status: 'published'
+        ));
+
+        $repo->save(new DropshipProductDto(
+            aliexpressId: 'AE_ADULT_1',
+            title: 'Massageador Íntimo Recarregável Uso Especial',
+            slug: 'massageador-intimo-uso-especial',
+            costPriceUsd: 15.0,
+            salePriceBrl: 179.90,
+            mainImageUrl: 'https://ae01.alicdn.com/kf/adult.jpg',
+            images: ['https://ae01.alicdn.com/kf/adult.jpg'],
+            category: 'Novidades & Uso Especial',
+            status: 'published'
+        ));
+
+        $front = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipFrontController(
+            catalogRepo: $repo
+        );
+
+        // 1. Página dedicada /moda-intima (exibe roupas, meias, lingeries, espartilhos e cuecas; NÃO exibe +18)
+        $resFashion = $front->fashionAndLingerie(new \DomainSystem\Core\Http\Request());
+        $htmlFashion = $resFashion->getContent();
+        $this->assertSame(200, $resFashion->getStatusCode());
+        $this->assertStringContainsString('/moda-intima', $htmlFashion);
+        $this->assertStringContainsString('Espartilho Lingerie Renda Preta', $htmlFashion);
+        $this->assertStringContainsString('Pacote 10 Pares Meias', $htmlFashion);
+        $this->assertStringContainsString('Kit 5 Cuecas Boxer', $htmlFashion);
+        $this->assertStringNotContainsString('Massageador Íntimo', $htmlFashion);
+
+        // 2. Sub-aba Íntima Masculina (?sub=masculina)
+        $resMasc = $front->fashionAndLingerie(new \DomainSystem\Core\Http\Request(['sub' => 'masculina']));
+        $htmlMasc = $resMasc->getContent();
+        $this->assertSame(200, $resMasc->getStatusCode());
+        $this->assertStringContainsString('Kit 5 Cuecas Boxer', $htmlMasc);
+        $this->assertStringNotContainsString('Espartilho Lingerie', $htmlMasc);
+
+        // 3. Página dedicada /sexshop (+18 com Age Gate)
+        $resSex = $front->sexShop(new \DomainSystem\Core\Http\Request());
+        $htmlSex = $resSex->getContent();
+        $this->assertSame(200, $resSex->getStatusCode());
+        $this->assertStringContainsString('/sexshop', $htmlSex);
+        $this->assertStringContainsString('Massageador Íntimo', $htmlSex);
+        $this->assertStringContainsString('id="ageGateModal"', $htmlSex);
+        $this->assertStringNotContainsString('Kit 5 Cuecas Boxer', $htmlSex);
+    }
+
+    public function testScraperClassifyHtmlAvailabilityDetectsNotFoundVsUnknownVsAlive(): void
+    {
+        $scraper = new \DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService(
+            new \DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService()
+        );
+
+        $this->assertSame('not_found', $scraper->classifyHtmlAvailability('', 404));
+        $this->assertSame('not_found', $scraper->classifyHtmlAvailability('', 410));
+        $this->assertSame('not_found', $scraper->classifyHtmlAvailability('<html></html>', 200, 'https://www.aliexpress.com/p/error/notfound.html'));
+        $this->assertSame('not_found', $scraper->classifyHtmlAvailability('<h1>Página não encontrada</h1>', 200));
+        $this->assertSame('not_found', $scraper->classifyHtmlAvailability('<div>Sorry, this item is no longer available</div>', 200));
+
+        // Captcha ou falha temporária de rede retorna 'unknown' (evita exclusão acidental)
+        $this->assertSame('unknown', $scraper->classifyHtmlAvailability('', 0));
+        $this->assertSame('unknown', $scraper->classifyHtmlAvailability('<div>Arraste o controle deslizante para verificar</div>', 200));
+
+        // Página normal 200 retorna 'alive'
+        $this->assertSame('alive', $scraper->classifyHtmlAvailability('<html><title>Produto Ativo</title></html>', 200));
+    }
+
+    public function testSentinelDeletesNotFoundProductEvenWithIndexedImageAndPreservesUnknown(): void
+    {
+        $deadProduct = new \DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto(
+            aliexpressId: '10050999000111',
+            title: 'Promoção Relâmpago Encerrada',
+            slug: 'promo-encerrada',
+            costPriceUsd: 10.0,
+            salePriceBrl: 115.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/indexed-image.jpg',
+            images: ['https://ae-pic-a1.aliexpress-media.com/kf/indexed-image.jpg'],
+            category: 'Eletrônicos & Gadget',
+            description: 'Desc',
+            id: 101,
+            status: 'published'
+        );
+
+        $captchaProduct = new \DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto(
+            aliexpressId: '10050999000222',
+            title: 'Produto Protegido por Captcha Temporário',
+            slug: 'produto-captcha',
+            costPriceUsd: 10.0,
+            salePriceBrl: 115.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/valid-image.jpg',
+            images: ['https://ae-pic-a1.aliexpress-media.com/kf/valid-image.jpg'],
+            category: 'Eletrônicos & Gadget',
+            description: 'Desc',
+            id: 102,
+            status: 'published'
+        );
+
+        $deletedIds = [];
+        $repoMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $repoMock->method('list')->willReturn([$deadProduct, $captchaProduct]);
+        $repoMock->method('delete')->willReturnCallback(function (int $id) use (&$deletedIds): bool {
+            $deletedIds[] = $id;
+            return true;
+        });
+
+        $scraperMock = $this->getMockBuilder(\DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['checkAvailability', 'scrape'])
+            ->getMock();
+        $scraperMock->method('checkAvailability')->willReturnCallback(fn(string $id): string => match ($id) {
+            '10050999000111' => 'not_found',
+            default => 'unknown',
+        });
+
+        $apiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $currencyMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $currencyMock->method('calculateSalePrice')->willReturn(115.0);
+        $aiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+
+        $tmpConfig = sys_get_temp_dir() . '/drop_sentinel_test_' . uniqid() . '.json';
+        @file_put_contents($tmpConfig, json_encode(['volatility_index_percent' => 12.0, 'default_markup_percent' => 100.0]));
+
+        $service = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $apiMock,
+            $currencyMock,
+            $aiMock,
+            $repoMock,
+            $scraperMock,
+            $tmpConfig
+        );
+
+        $result = $service->runPriceAndStockSync(50);
+        @unlink($tmpConfig);
+        @unlink($tmpConfig . '.price_sync.lock');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(1, $result['deleted_not_found']);
+        $this->assertSame([101], $deletedIds);
+
+        // Valida também a limpeza dedicada do ciclo de 24h
+        $deletedIds = [];
+        $purged = $service->purgeNotFoundProducts(50);
+        $this->assertSame(1, $purged);
+        $this->assertSame([101], $deletedIds);
+    }
+
+    public function testCheckLiveProductAvailabilityDetectsNotFoundAndSdkStock(): void
+    {
+        $product = new \DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto(
+            aliexpressId: '10050888777666',
+            title: 'Produto Teste Compra',
+            slug: 'produto-teste-compra',
+            costPriceUsd: 10.0,
+            salePriceBrl: 115.0,
+            mainImageUrl: 'https://ae-pic-a1.aliexpress-media.com/kf/img.jpg',
+            images: [],
+            category: 'Eletrônicos & Gadget',
+            description: 'Desc',
+            id: 205,
+            status: 'published'
+        );
+
+        $deleted = [];
+        $repoMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+        $repoMock->method('delete')->willReturnCallback(function (int $id) use (&$deleted): bool {
+            $deleted[] = $id;
+            return true;
+        });
+
+        $scraperMock = $this->getMockBuilder(\DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['checkAvailability'])
+            ->getMock();
+        $scraperMock->method('checkAvailability')->willReturnOnConsecutiveCalls('alive', 'alive', 'not_found');
+
+        $apiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $apiMock->method('getProductDetails')->willReturnOnConsecutiveCalls(
+            [
+                'ae_item_sku_info_dtos' => [
+                    'ae_item_sku_info_d_t_o' => [
+                        ['sku_id' => 'SKU-1', 'sku_available_stock' => 18],
+                    ],
+                ],
+            ],
+            [
+                'ae_item_sku_info_dtos' => [
+                    'ae_item_sku_info_d_t_o' => [
+                        ['sku_id' => 'SKU-1', 'sku_available_stock' => 0],
+                    ],
+                ],
+            ]
+        );
+
+        $service = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $apiMock,
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class),
+            $repoMock,
+            $scraperMock
+        );
+
+        // 1. SDK reporta 18 unidades em estoque
+        $resInStock = $service->checkLiveProductAvailability($product, 'SKU-1');
+        $this->assertTrue($resInStock['available']);
+        $this->assertSame(18, $resInStock['stock']);
+        $this->assertSame('aliexpress_sdk', $resInStock['stock_source']);
+
+        // 2. SDK reporta 0 unidades -> bloqueia compra
+        $resOutStock = $service->checkLiveProductAvailability($product, 'SKU-1');
+        $this->assertFalse($resOutStock['available']);
+        $this->assertSame('out_of_stock', $resOutStock['reason']);
+        $this->assertSame(0, $resOutStock['stock']);
+
+        // 3. Página do fornecedor retorna not_found -> bloqueia compra e exclui card
+        $resNotFound = $service->checkLiveProductAvailability($product, 'SKU-1');
+        $this->assertFalse($resNotFound['available']);
+        $this->assertSame('not_found', $resNotFound['reason']);
+        $this->assertSame([205], $deleted);
+    }
+
+    public function testSdkFirstAvailabilityDetectionWithoutScraping(): void
+    {
+        $apiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $apiMock->method('getProductDetails')->willReturnOnConsecutiveCalls(
+            ['ae_item_base_info_dto' => ['product_id' => '100501', 'subject' => 'Produto Ativo', 'product_status_type' => 'onSelling']],
+            ['ae_item_base_info_dto' => ['product_id' => '100502', 'subject' => 'Produto Offline', 'product_status_type' => 'offline']],
+            $this->throwException(new \DomainSystem\Plugins\domain_drop\Exceptions\AliExpressApiException('isv.item-not-exist', 40, 'API_ERROR'))
+        );
+
+        $this->assertSame('alive', \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::checkAvailabilityViaApiClient($apiMock, '100501'));
+        $this->assertSame('not_found', \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::checkAvailabilityViaApiClient($apiMock, '100502'));
+        $this->assertSame('not_found', \DomainSystem\Plugins\domain_drop\Services\ProductMiningService::checkAvailabilityViaApiClient($apiMock, '100503'));
+    }
+
+    public function testAliExpressOAuthAuthorizeUrlGeneration(): void
+    {
+        $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient('560750', 'secret_test');
+        $url = $client->getOAuthAuthorizeUrl('https://meusite.com/admin/dropship/oauth/callback', 'st_abc');
+
+        $this->assertStringStartsWith('https://api-sg.aliexpress.com/oauth/authorize?', $url);
+        $this->assertStringContainsString('client_id=560750', $url);
+        $this->assertStringContainsString('response_type=code', $url);
+        $this->assertStringContainsString('state=st_abc', $url);
+        $this->assertStringContainsString(urlencode('https://meusite.com/admin/dropship/oauth/callback'), $url);
     }
 }

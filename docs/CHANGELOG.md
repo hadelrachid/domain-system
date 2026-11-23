@@ -8,6 +8,24 @@ e este projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/
 ---
 [ 🇺🇸 Read in English ](CHANGELOG-en.md)
 
+## [2.7.3] - 2026-11-23
+### Added
+- **DomainDrop — OAuth 2.0 Server-side & Renovação Automática (`src/Plugins/domain_drop`):**
+  - Fluxo completo `/admin/dropship/oauth/authorize` e `/admin/dropship/oauth/callback` com validação de `state`, troca `code -> access_token/refresh_token` (`/rest/auth/token/create`) e renovação automática (`/rest/auth/token/refresh`) 30 minutos antes do vencimento.
+- **DomainDrop — Verificação ao Vivo & Exclusão Automática de Links Mortos:**
+  - Endpoint `POST /api/drop/check-availability` acionado no botão **"Comprar Agora"** para confirmar existência do anúncio e estoque real via SDK antes do checkout.
+  - Exclusão automática de cards `404` / `"Página Não Encontrada"` (mesmo com imagens indexadas) na Sentinela de Volatilidade, ciclo de 24h e fila **"Atualizar Todas as Imagens"**.
+- **DomainDrop — Páginas Dedicadas & Variações SKU:**
+  - Rotas dedicadas `/moda-intima` (`/roupas`) e `/sexshop` (com Age Gate +18).
+  - Normalização de propriedades únicas do SDK (`Color`→`Cor`, `Size`→`Tamanho`), extração de `skuPropertyList` e matriz multi-cores em lingeries e ferramentas no catálogo curado.
+
+### Fixed
+- **Paginação do DomainDrop Hub:** Ajustada de `50` para `48` itens por página para preencher linhas completas em grids de 2, 3 e 4 colunas.
+- **Hardening de Segurança (`DomainCommerce`, `Academy`, `DomainDrop` & `SystemAdmin`):**
+  - Correção de IDOR em `CheckoutController::canAccessOrder()`, proteção de endereço, assinatura PayPal fail-closed, anti-Host Header Injection e bloqueio de pagamento `0.0` no `WebhookController`.
+  - Proteção contra docblock breakout RCE (`ThemeLessonFileScaffolder`), bypass de aula paga/rascunho (`CourseFrontController`), Zip-Slip/ZIP bomb (`CoursePackageService`), Stored XSS (`CourseService`/`LessonBlockRenderer`/`editor.php`) e mascaramento de segredos nas views admin.
+  - Remoção de enumeração pública em `/rastrear`, anti-IDOR em `submitComplaint()`, anti-SSRF em `AliExpressLinkScraperService`, anti-spoofing em `trackDemand()`, mitigação de XSS nas views do `DomainDrop`, `.htaccess` em `config/` e suporte a `APP_KEY` como fallback no `EmergencyController`.
+
 ## [2.7.2] - 2026-11-22
 ### Added
 - **DomainDrop — Mineração 100 Itens, Paginação & Sentinela de Volatilidade (`src/Plugins/domain_drop`):**

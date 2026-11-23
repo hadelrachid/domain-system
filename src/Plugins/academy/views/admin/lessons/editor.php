@@ -681,10 +681,10 @@ $currentMobileLayoutProfile = (string)($lesson['mobile_profile'] ?? 'drawer');
                                     '</div>' +
                                     '<div style="display:flex; align-items:center; gap:6px; font-size:10px; color:#94a3b8;">' +
                                         '<span style="padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.06);">' + escapeHtml(modeLabel) + '</span>' +
-                                        (allowDl ? '<a href="' + escapeHtml(pdfUrl) + '" target="_blank" style="color:#45f3ff; text-decoration:none; font-weight:700;">⬇ Abrir/Baixar</a>' : '<span style="color:#f5a623;">🔒 Download Bloqueado</span>') +
+                                        (allowDl && /^(\/|https?:\/\/)/i.test(pdfUrl) ? '<a href="' + escapeHtml(pdfUrl) + '" target="_blank" style="color:#45f3ff; text-decoration:none; font-weight:700;">⬇ Abrir/Baixar</a>' : '<span style="color:#f5a623;">🔒 Download Bloqueado</span>') +
                                     '</div>' +
                                 '</div>' +
-                                (pdfMode === 'card_modal'
+                                (pdfMode === 'card_modal' || !/^(\/|https?:\/\/)/i.test(previewFrameUrl)
                                     ? '<div style="padding:22px; text-align:center; background:#12161f; color:#94a3b8; font-size:12px;">🗂️ Modo Cartão Compacto: o aluno verá o botão <strong>"📖 Abrir Leitor Online"</strong> para expandir o PDF sob demanda.</div>'
                                     : '<div style="width:100%; height:' + escapeHtml(pdfHeight) + '; background:#161922;"><iframe src="' + escapeHtml(previewFrameUrl) + '" style="width:100%; height:100%; border:0; display:block;" loading="lazy"></iframe></div>'
                                 ) +

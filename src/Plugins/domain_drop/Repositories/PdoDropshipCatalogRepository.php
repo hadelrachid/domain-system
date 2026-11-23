@@ -126,7 +126,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $params = [];
 
         if (!empty($criteria['category'])) {
-            $where[] = $this->buildCategoryClause((string)$criteria['category'], $params);
+            $where[] = $this->buildCategoryListClause($criteria['category'], $params);
         }
 
         if (!empty($criteria['slug'])) {
@@ -181,7 +181,7 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         $params = [];
 
         if (!empty($criteria['category'])) {
-            $where[] = $this->buildCategoryClause((string)$criteria['category'], $params);
+            $where[] = $this->buildCategoryListClause($criteria['category'], $params);
         }
 
         if (!empty($criteria['slug'])) {
@@ -309,6 +309,31 @@ class PdoDropshipCatalogRepository implements DropshipCatalogRepositoryInterface
         }
 
         return '(' . implode(' AND ', $tokenClauses) . ')';
+    }
+
+    /**
+     * Suporta uma única categoria ou lista de categorias oficiais combinadas com OR.
+     *
+     * @param string|array<int, string> $category
+     * @param array<int, mixed> $params
+     */
+    private function buildCategoryListClause(string|array $category, array &$params): string
+    {
+        if (is_array($category)) {
+            $parts = [];
+            foreach ($category as $catItem) {
+                $catStr = trim((string)$catItem);
+                if ($catStr !== '') {
+                    $parts[] = $this->buildCategoryClause($catStr, $params);
+                }
+            }
+            if (!empty($parts)) {
+                return '(' . implode(' OR ', $parts) . ')';
+            }
+            return '1=1';
+        }
+
+        return $this->buildCategoryClause($category, $params);
     }
 
     /**

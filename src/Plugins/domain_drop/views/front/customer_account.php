@@ -570,7 +570,13 @@ function formatAccountCepAndSearch(input) {
                 if (cityEl && data.localidade) cityEl.value = data.localidade;
                 if (ufEl && data.uf) ufEl.value = data.uf;
 
-                if (fb) fb.innerHTML = '<span style="color: #00d284;">✅ Endereço localizado: ' + (data.logradouro || '') + ' - ' + data.localidade + '/' + data.uf + '</span>';
+                if (fb) {
+                    fb.textContent = '';
+                    var okSpan = document.createElement('span');
+                    okSpan.style.color = '#00d284';
+                    okSpan.textContent = '✅ Endereço localizado: ' + (data.logradouro || '') + ' - ' + (data.localidade || '') + '/' + (data.uf || '');
+                    fb.appendChild(okSpan);
+                }
                 if (numEl) numEl.focus();
             })
             .catch(function() {

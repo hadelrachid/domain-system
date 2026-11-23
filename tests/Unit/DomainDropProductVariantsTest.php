@@ -253,15 +253,128 @@ class DomainDropProductVariantsTest extends TestCase
         $this->assertArrayHasKey('Cor', $axes);
         $this->assertArrayHasKey('Tamanho', $axes);
         $this->assertContains('Preto', $axes['Cor']);
+        $this->assertGreaterThanOrEqual(2, count($axes['Cor']));
         $this->assertEquals(['S (BR P)', 'M (BR M)', 'L (BR G)', 'XL (BR GG)'], $axes['Tamanho']);
 
         $variants = $curated['variants'];
-        $this->assertCount(4, $variants);
+        $this->assertCount(12, $variants);
         foreach ($variants as $v) {
             $this->assertGreaterThan(0, $v['stock']);
             $this->assertNotEmpty($v['image_url']);
             $this->assertArrayHasKey('Tamanho', $v['options']);
             $this->assertArrayHasKey('Cor', $v['options']);
         }
+    }
+
+    public function testTransformRawItemExtractsSinglePropertyAssocSkusForTools(): void
+    {
+        $apiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $currencyMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $currencyMock->method('calculateSalePrice')->willReturn(95.00);
+        $currencyMock->method('calculateSalePriceFromBrl')->willReturn(95.00);
+        $aiMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $aiMock->method('polishTitle')->willReturnCallback(fn(string $t): string => $t);
+        $aiMock->method('generateSalesCopy')->willReturn('Descrição teste');
+        $repoMock = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+
+        $service = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $apiMock,
+            $currencyMock,
+            $aiMock,
+            $repoMock
+        );
+
+        $rawItem = [
+            'product_id'             => '10050999990001',
+            'product_title'          => 'Alicate Desencapador de Fios Profissional',
+            'category_name'          => 'Ferramentas & Utilidades',
+            'target_sale_price'      => '8.50',
+            'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/tool-main.jpg',
+            'ae_item_sku_info_dtos'  => [
+                'ae_item_sku_info_d_t_o' => [
+                    [
+                        'sku_id'                => 'SKU-YLW',
+                        'sku_price'             => '8.50',
+                        'sku_available_stock'   => 30,
+                        'sku_image_url'         => 'https://ae-pic-a1.aliexpress-media.com/kf/tool-yellow.jpg',
+                        'ae_sku_property_dtos'  => [
+                            // Single associative property (not a list!) as returned by TOP/IOP XML->JSON
+                            'ae_sku_property_d_t_o' => [
+                                'sku_property_name'              => 'Color',
+                                'property_value_definition_name' => 'Amarelo',
+                            ],
+                        ],
+                    ],
+                    [
+                        'sku_id'                => 'SKU-RED',
+                        'sku_price'             => '8.50',
+                        'sku_available_stock'   => 25,
+                        'sku_image_url'         => 'https://ae-pic-a1.aliexpress-media.com/kf/tool-red.jpg',
+                        'ae_sku_property_dtos'  => [
+                            'ae_sku_property_d_t_o' => [
+                                'sku_property_name'              => 'Color',
+                                'property_value_definition_name' => 'Vermelho',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $method = new \ReflectionMethod(\DomainSystem\Plugins\domain_drop\Services\ProductMiningService::class, 'transformRawItemToDto');
+        $method->setAccessible(true);
+        /** @var DropshipProductDto $dto */
+        $dto = $method->invoke($service, $rawItem);
+
+        $axes = $dto->getVariationAxes();
+        $this->assertArrayHasKey('Cor', $axes);
+        $this->assertSame(['Amarelo', 'Vermelho'], $axes['Cor']);
+        $this->assertCount(2, $dto->getVariants());
+        $this->assertSame('Amarelo', $dto->getVariants()[0]->options['Cor']);
+        $this->assertSame('Vermelho', $dto->getVariants()[1]->options['Cor']);
+    }
+
+    public function testCuratedToolsIncludeColorVariantsForWireStripper(): void
+    {
+        $service = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class),
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class),
+            $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class)
+        );
+        $method = new \ReflectionMethod(\DomainSystem\Plugins\domain_drop\Services\ProductMiningService::class, 'getCuratedTrendingFallback');
+        $method->setAccessible(true);
+        $items = $method->invoke($service, 'Ferramentas & Utilidades', 10);
+
+        $alicate = null;
+        foreach ($items as $item) {
+            if (($item['product_id'] ?? '') === '1005010179002980') {
+                $alicate = $item;
+                break;
+            }
+        }
+
+        $this->assertNotNull($alicate);
+        $this->assertArrayHasKey('variation_axes', $alicate);
+        $this->assertSame(['Amarelo', 'Vermelho'], $alicate['variation_axes']['Cor']);
+        $this->assertCount(2, $alicate['variants']);
+    }
+
+    public function testScraperExtractsSkuPropertyListColorsAndSizes(): void
+    {
+        $scraper = new \DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService(
+            new \DomainSystem\Plugins\domain_drop\Services\CategoryTaxonomyService()
+        );
+
+        $html = '<script>window.runParams = {"skuPropertyList":[{"skuPropertyId":14,"skuPropertyName":"Color","skuPropertyValues":[{"propertyValueId":1,"propertyValueDisplayName":"Amarelo","skuPropertyImagePath":"//ae01.alicdn.com/kf/yellow_50x50.jpg"},{"propertyValueId":2,"propertyValueDisplayName":"Vermelho","skuPropertyImagePath":"//ae01.alicdn.com/kf/red_50x50.jpg"}]},{"skuPropertyId":5,"skuPropertyName":"Size","skuPropertyValues":[{"propertyValueId":10,"propertyValueDisplayName":"M"},{"propertyValueId":11,"propertyValueDisplayName":"G"}]}]};</script>';
+
+        $method = new \ReflectionMethod(\DomainSystem\Plugins\domain_drop\Services\AliExpressLinkScraperService::class, 'extractSkuVariantsFromSource');
+        $method->setAccessible(true);
+        $result = $method->invoke($scraper, $html, '1005010179002980', 10.0, 'https://ae01.alicdn.com/kf/main.jpg');
+
+        $this->assertSame(['Amarelo', 'Vermelho'], $result['variation_axes']['Cor']);
+        $this->assertSame(['M', 'G'], $result['variation_axes']['Tamanho']);
+        $this->assertCount(4, $result['variants']);
+        $this->assertSame('https://ae01.alicdn.com/kf/yellow', $result['variants'][0]['image_url']);
     }
 }

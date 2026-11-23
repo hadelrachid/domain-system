@@ -176,14 +176,22 @@ class CoursePackageService implements CoursePackageServiceInterface
                 continue;
             }
 
-            // Converte "pages/solid/aula.php" para o arquivo físico no tema
+            // Converte "pages/solid/aula.php" para o arquivo físico no tema e valida estritamente dentro de pages/
             $cleanSource = ltrim(str_replace('\\', '/', $source), '/');
+            if (str_contains($cleanSource, '..')) {
+                continue;
+            }
+            $realPagesRoot = realpath($themePath . '/pages');
             $fullPath = $themePath . '/' . $cleanSource;
+            $realFullPath = realpath($fullPath);
 
-            if (is_file($fullPath)) {
+            if ($realPagesRoot !== false && $realFullPath !== false
+                && str_starts_with($realFullPath, rtrim($realPagesRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)
+                && is_file($realFullPath)
+            ) {
                 $zipEntryName = $cleanSource;
                 if (!isset($filesAdded[$zipEntryName])) {
-                    $zip->addFile($fullPath, $zipEntryName);
+                    $zip->addFile($realFullPath, $zipEntryName);
                     $filesAdded[$zipEntryName] = true;
                 }
             }
@@ -242,9 +250,24 @@ class CoursePackageService implements CoursePackageServiceInterface
             throw new RuntimeException("Falha ao resolver caminho real de pages do tema ativo.");
         }
 
-        // Extrai arquivos de forma segura com proteção Anti-ZipSlip
+        // Extrai arquivos de forma segura com proteção Anti-ZipSlip e anti-ZIP bomb
+        if ($zip->numFiles > 500) {
+            $zip->close();
+            throw new RuntimeException("O pacote ZIP excede o limite máximo de 500 arquivos.");
+        }
+        $totalUncompressed = 0;
+        $maxTotalBytes = 50 * 1024 * 1024;
+        $realTargetPagesPrefix = rtrim($realTargetPagesDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
         $extractedFiles = [];
         for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            $entrySize = is_array($stat) ? (int)($stat['size'] ?? 0) : 0;
+            $totalUncompressed += max(0, $entrySize);
+            if ($totalUncompressed > $maxTotalBytes) {
+                $zip->close();
+                throw new RuntimeException("O pacote ZIP excede o limite máximo de 50MB descompactados.");
+            }
             $entryName = (string)$zip->getNameIndex($i);
 
             // Ignora arquivos do sistema operacional e o próprio manifesto
@@ -277,9 +300,9 @@ class CoursePackageService implements CoursePackageServiceInterface
                 @mkdir($destDir, 0755, true);
             }
 
-            // Valida se o destino final permanece estritamente dentro de $realTargetPagesDir
+            // Valida se o destino final permanece estritamente dentro de $realTargetPagesDir (com separador de diretório)
             $realDestDir = realpath($destDir);
-            if ($realDestDir === false || !str_starts_with($realDestDir, $realTargetPagesDir)) {
+            if ($realDestDir === false || ($realDestDir !== $realTargetPagesDir && !str_starts_with($realDestDir, $realTargetPagesPrefix))) {
                 continue; // Violação de escopo ignorada com segurança
             }
 

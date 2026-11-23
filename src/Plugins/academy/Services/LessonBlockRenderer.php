@@ -244,9 +244,10 @@ class LessonBlockRenderer implements LessonBlockRendererInterface
         ];
 
         $current = $styles[$type] ?? $styles['info'];
+        $safeType = array_key_exists($type, $styles) ? $type : 'info';
 
         return "
-        <div class=\"ds-block-callout ds-callout-{$type}\" style=\"margin: 20px 0; padding: 16px 20px; border-radius: 6px; border-left: 4px solid {$current['border']}; background: {$current['bg']}; display: flex; gap: 14px; align-items: flex-start;\">
+        <div class=\"ds-block-callout ds-callout-{$safeType}\" style=\"margin: 20px 0; padding: 16px 20px; border-radius: 6px; border-left: 4px solid {$current['border']}; background: {$current['bg']}; display: flex; gap: 14px; align-items: flex-start;\">
             <div style=\"font-size: 1.4rem; line-height: 1;\">{$current['icon']}</div>
             <div style=\"flex: 1; font-size: 0.98rem; line-height: 1.7; color: var(--text-main, #fff);\">
                 {$safeHtml}
@@ -320,8 +321,13 @@ class LessonBlockRenderer implements LessonBlockRendererInterface
             $rawUrl = html_entity_decode(trim($iframeSrcMatch[1]), ENT_QUOTES, 'UTF-8');
         }
 
-        // Bloqueia esquemas maliciosos
-        if (preg_match('/^\s*(?:javascript|data|vbscript|file):/i', $rawUrl)) {
+        // Remove caracteres de controle (evita bypass com \t, \n, \r) e bloqueia esquemas não permitidos
+        $rawUrl = preg_replace('/[\x00-\x1F\x7F]+/', '', $rawUrl) ?? '';
+        if ($rawUrl === '' || preg_match('/^\s*(?:javascript|data|vbscript|file):/i', $rawUrl)) {
+            return '';
+        }
+        $scheme = strtolower((string)parse_url($rawUrl, PHP_URL_SCHEME));
+        if ($scheme !== '' && !in_array($scheme, ['http', 'https'], true)) {
             return '';
         }
 

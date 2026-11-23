@@ -403,6 +403,10 @@ final class CommercePaymentGatewayTest extends TestCase
         ]);
 
         $session = $this->createMock(SessionManagerInterface::class);
+        $session->method('get')->willReturnCallback(fn(string $k, mixed $d = null): mixed => match ($k) {
+            'academy_student_id', 'user_id' => 55,
+            default => $d,
+        });
         $courseRepo = $this->createMock(CourseRepositoryInterface::class);
         $registry = new PaymentGatewayRegistry();
         $controller = new CheckoutController($session, $this->orderRepo, $registry, $courseRepo);

@@ -164,7 +164,7 @@
                     </div>
                     <div>
                         <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Client Secret (Token de Autorização)</label>
-                        <input type="password" name="paypal_client_secret" value="<?= htmlspecialchars((string)($commerceSettings['paypal_client_secret'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="E..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                        <input type="password" name="paypal_client_secret" value="" placeholder="<?= !empty($commerceSettings['paypal_client_secret']) ? '•••••••• (configurada — deixe vazio para manter)' : 'E...' ?>" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
                     </div>
                 </div>
                 <label style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:#cbd5e1; cursor:pointer;">
@@ -185,7 +185,7 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
                     <div>
                         <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Secret Key (sk_test_... ou sk_live_...)</label>
-                        <input type="password" name="stripe_secret_key" value="<?= htmlspecialchars((string)($commerceSettings['stripe_secret_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="sk_test_..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
+                        <input type="password" name="stripe_secret_key" value="" placeholder="<?= !empty($commerceSettings['stripe_secret_key']) ? '•••••••• (configurada — deixe vazio para manter)' : 'sk_test_...' ?>" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a545a; background:#14191c; color:#fff; font-family:monospace; font-size:12px; box-sizing:border-box;">
                     </div>
                     <div>
                         <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:4px;">Publishable Key (pk_test_... ou pk_live_...)</label>
