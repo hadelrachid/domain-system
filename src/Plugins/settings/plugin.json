@@ -1,6 +1,6 @@
 {
     "name": "settings",
-    "version": "2.7.6",
+    "version": "2.7.7",
     "namespace": "DomainSystem\\Plugins\\settings\\",
     "entrypoint": "Plugin",
     "description": "M\u00f3dulo de Configura\u00e7\u00f5es do Sistema. Gerencia par\u00e2metros vitais, URLs e chaves globais da plataforma.",

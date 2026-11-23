@@ -1,7 +1,7 @@
 {
     "slug": "seo",
     "name": "SEO & Theme Engine",
-    "version": "2.7.6",
+    "version": "2.7.7",
     "description": "Middleware Global respons\u00e1vel por injetar o Tema Ativo, minificar os assets (HTML/CSS) e gerenciar as Meta Tags em todas as respostas de frontend.",
     "author": "Rachid",
     "os_version": "2.7"

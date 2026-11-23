@@ -129,4 +129,30 @@ final class DomainDropOAuthSolidArchitectureTest extends TestCase
         $this->assertSame('at_fresh', $token->accessToken);
         $this->assertSame('seller_account', $token->account);
     }
+
+    public function testPricingConfigUpdaterExtractsAndSanitizesParameters(): void
+    {
+        $updater = new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
+        $request = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'default_markup_percent' => '150',
+                'min_profit_margin_brl' => '45.5',
+                'price_sync_interval_hours' => '12',
+                'volatility_index_percent' => '15',
+                'price_sync_enabled' => '1',
+            ],
+            server: ['REQUEST_METHOD' => 'POST']
+        );
+
+        $initialConfig = ['enabled' => true];
+        $updated = $updater->updateFromRequest($initialConfig, $request);
+
+        $this->assertSame(150.0, $updated['default_markup_percent']);
+        $this->assertSame(45.5, $updated['min_profit_margin_brl']);
+        $this->assertSame(12, $updated['price_sync_interval_hours']);
+        $this->assertSame(43200, $updated['price_sync_interval_seconds']);
+        $this->assertSame(15.0, $updated['volatility_index_percent']);
+        $this->assertTrue($updated['price_sync_enabled']);
+    }
 }

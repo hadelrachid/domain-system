@@ -47,7 +47,8 @@ class DropshipAdminController
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService $notificationService = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\AliExpressAuthorizationUrlBuilderInterface $authUrlBuilder = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface $tokenExchangeService = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface $tokenExchangeService = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater $pricingUpdater = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
         $this->basePathRoot = $root;
@@ -209,23 +210,9 @@ class DropshipAdminController
         if ($newAccessToken !== '' && !str_starts_with($newAccessToken, '***')) {
             $config['access_token'] = $newAccessToken;
         }
-        if ($request->input('default_markup_percent') !== null) {
-            $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
-        }
-        if ($request->input('min_profit_margin_brl') !== null) {
-            $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
-        }
-        if ($request->input('price_sync_interval_hours') !== null) {
-            $intervalHours = max(1, min(24, (int)$request->input('price_sync_interval_hours', 6)));
-            $config['price_sync_interval_hours'] = $intervalHours;
-            $config['price_sync_interval_seconds'] = $intervalHours * 3600;
-        }
-        if ($request->input('volatility_index_percent') !== null) {
-            $config['volatility_index_percent'] = max(0.0, min(50.0, (float)$request->input('volatility_index_percent', 12.0)));
-        }
-        if ($request->input('price_sync_enabled') !== null) {
-            $config['price_sync_enabled'] = (bool)$request->input('price_sync_enabled', 1);
-        }
+
+        $updater = $this->pricingUpdater ?? new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
+        $config = $updater->updateFromRequest($config, $request);
 
         @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
         $this->session->setFlash('success', 'Configurações da API salvas com sucesso!');
@@ -243,23 +230,8 @@ class DropshipAdminController
         }
 
         $config = $this->loadConfig();
-        if ($request->input('default_markup_percent') !== null) {
-            $config['default_markup_percent'] = max(10.0, (float)$request->input('default_markup_percent', 100.0));
-        }
-        if ($request->input('min_profit_margin_brl') !== null) {
-            $config['min_profit_margin_brl'] = max(0.0, (float)$request->input('min_profit_margin_brl', 30.0));
-        }
-        if ($request->input('price_sync_interval_hours') !== null) {
-            $intervalHours = max(1, min(24, (int)$request->input('price_sync_interval_hours', 6)));
-            $config['price_sync_interval_hours'] = $intervalHours;
-            $config['price_sync_interval_seconds'] = $intervalHours * 3600;
-        }
-        if ($request->input('volatility_index_percent') !== null) {
-            $config['volatility_index_percent'] = max(0.0, min(50.0, (float)$request->input('volatility_index_percent', 12.0)));
-        }
-        if ($request->input('price_sync_enabled') !== null) {
-            $config['price_sync_enabled'] = (bool)$request->input('price_sync_enabled', 1);
-        }
+        $updater = $this->pricingUpdater ?? new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
+        $config = $updater->updateFromRequest($config, $request);
 
         @file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
         $this->session->setFlash('success', 'Estratégia de precificação e Sentinela de Volatilidade salvas com sucesso!');
@@ -301,13 +273,15 @@ class DropshipAdminController
         }
 
         try {
-            $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
-                appKey: $appKey,
-                appSecret: $appSecret,
-                gatewayUrl: $gatewayUrl,
-                timeout: 10,
-                accessToken: $accessToken !== '' ? $accessToken : null
-            );
+            $client = ($this->apiClient !== null && !$this->apiClient instanceof \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient)
+                ? $this->apiClient
+                : new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                    appKey: $appKey,
+                    appSecret: $appSecret,
+                    gatewayUrl: $gatewayUrl,
+                    timeout: 10,
+                    accessToken: $accessToken !== '' ? $accessToken : null
+                );
 
             // Testa endpoint de detalhes de produto no gateway oficial do AliExpress
             $res = $client->getProductDetails('1005006093867086');

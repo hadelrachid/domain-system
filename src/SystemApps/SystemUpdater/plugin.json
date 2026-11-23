@@ -1,6 +1,6 @@
 {
     "name": "SystemUpdater",
-    "version": "2.7.6",
+    "version": "2.7.7",
     "description": "Gerenciador de Atualiza\u00e7\u00f5es do N\u00facleo por Contrato (Modelo A).",
     "core": true,
     "entrypoint": "Plugin",

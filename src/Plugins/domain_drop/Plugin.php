@@ -336,6 +336,10 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater::class, function () {
+            return new \DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater();
+        });
+
         $runtime->singleton(DropshipAdminController::class, function () use ($runtime, $root) {
             return new DropshipAdminController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
@@ -354,7 +358,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class),
                 notificationService: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class),
                 authUrlBuilder: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressAuthorizationUrlBuilderInterface::class),
-                tokenExchangeService: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface::class)
+                tokenExchangeService: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface::class),
+                pricingUpdater: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\PricingConfigUpdater::class)
             );
         });
 

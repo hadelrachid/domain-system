@@ -1,6 +1,6 @@
 {
     "name": "clock_widget",
-    "version": "2.7.6",
+    "version": "2.7.7",
     "description": "Um widget de rel\u00f3gio simples para provar a inje\u00e7\u00e3o de Capabilities no Web OS.",
     "author": "Antigravity",
     "core": false,
