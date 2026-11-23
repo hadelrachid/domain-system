@@ -28,6 +28,7 @@ use Throwable;
 class DropshipAdminController
 {
     private string $configFile;
+    private ?string $basePathRoot = null;
 
     public function __construct(
         private readonly DropshipCatalogRepositoryInterface $catalogRepo,
@@ -44,9 +45,12 @@ class DropshipAdminController
         private readonly ?AliExpressApiClientInterface $apiClient = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface $metricsRepo = null,
         private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface $logStorage = null,
-        private readonly ?\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService $notificationService = null
+        private readonly ?\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService $notificationService = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\AliExpressAuthorizationUrlBuilderInterface $authUrlBuilder = null,
+        private readonly ?\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface $tokenExchangeService = null
     ) {
         $root = $basePath ?? (defined('DOMAIN_SYSTEM_ROOT') ? DOMAIN_SYSTEM_ROOT : dirname(__DIR__, 4));
+        $this->basePathRoot = $root;
         $this->configFile = $root . '/config/plugins/domain_drop.json';
     }
 
@@ -376,13 +380,9 @@ class DropshipAdminController
         $this->session->set('dropship_oauth_state', $state);
 
         $callbackUrl = $this->resolveOAuthCallbackUrl($baseUrl);
-        $client = new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
-            appKey: $appKey,
-            appSecret: $appSecret,
-            gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
-        );
+        $urlBuilder = $this->authUrlBuilder ?? new \DomainSystem\Plugins\domain_drop\Services\OAuth\AliExpressAuthorizationUrlBuilder($appKey);
 
-        return Response::redirect($client->getOAuthAuthorizeUrl($callbackUrl, $state));
+        return Response::redirect($urlBuilder->build($callbackUrl, $state));
     }
 
     /**
@@ -416,39 +416,28 @@ class DropshipAdminController
                 $errorMessage = 'AppKey ou AppSecret não configurados para concluir a troca de token OAuth2.';
             } else {
                 try {
-                    $client = ($this->apiClient !== null && !$this->apiClient instanceof \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient)
-                        ? $this->apiClient
-                        : new \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient(
+                    if ($this->tokenExchangeService !== null) {
+                        $token = $this->tokenExchangeService->exchangeCode($code);
+                    } elseif ($this->apiClient !== null && !$this->apiClient instanceof \DomainSystem\Plugins\domain_drop\Services\AliExpressApiClient) {
+                        // Compatibilidade com Mocks de testes que injetam AliExpressApiClientInterface
+                        $tokenData = $this->apiClient->createAccessToken($code);
+                        $token = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::fromApiResponse($tokenData);
+                        $tokenRepo = new \DomainSystem\Plugins\domain_drop\Services\OAuth\ConfigOAuthTokenRepository($this->basePathRoot);
+                        $tokenRepo->store($token);
+                    } else {
+                        // Resiliente com IoP SDK oficial e injeção de dependências
+                        $httpClient = new \DomainSystem\Plugins\domain_drop\Services\OAuth\IopSdkHttpClient(
                             appKey: $appKey,
                             appSecret: $appSecret,
-                            gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/sync')
+                            gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/rest')
                         );
-                    $tokenData = $client->createAccessToken($code);
-                    $accessToken = trim((string)($tokenData['access_token'] ?? ''));
-                    if ($accessToken === '') {
-                        $rawDump = json_encode($tokenData, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
-                        throw new \RuntimeException("Resposta do AliExpress não trouxe access_token válido. Retorno bruto: {$rawDump}");
+                        $tokenRepo = new \DomainSystem\Plugins\domain_drop\Services\OAuth\ConfigOAuthTokenRepository($this->basePathRoot);
+                        $service = new \DomainSystem\Plugins\domain_drop\Services\OAuth\TokenExchangeService($httpClient, $tokenRepo);
+                        $token = $service->exchangeCode($code);
                     }
 
-                    $config['access_token'] = $accessToken;
-                    if (!empty($tokenData['refresh_token'])) {
-                        $config['refresh_token'] = (string)$tokenData['refresh_token'];
-                    }
-                    $expiresIn = (int)($tokenData['expire_time'] ?? ($tokenData['expires_in'] ?? 2592000));
-                    $config['access_token_expires_at'] = $expiresIn > 1000000000 ? (int)($expiresIn / 1000) : (time() + max(60, $expiresIn));
-                    $expiresInDays = max(1, (int)round(($expiresIn > 1000000000 ? ($expiresIn / 1000 - time()) : $expiresIn) / 86400));
-
-                    if (!empty($tokenData['refresh_token_valid_time'])) {
-                        $rVal = (int)$tokenData['refresh_token_valid_time'];
-                        $config['refresh_token_expires_at'] = $rVal > 1000000000 ? (int)($rVal / 1000) : (time() + $rVal);
-                    } elseif (!empty($tokenData['refresh_expires_in'])) {
-                        $config['refresh_token_expires_at'] = time() + max(0, (int)$tokenData['refresh_expires_in']);
-                    }
-                    if (!empty($tokenData['user_nick']) || !empty($tokenData['account'])) {
-                        $account = (string)($tokenData['account'] ?? $tokenData['user_nick']);
-                        $config['oauth_account'] = $account;
-                    }
-                    $this->saveConfig($config);
+                    $account = $token->account;
+                    $expiresInDays = max(1, (int)round($token->expiresIn / 86400));
                     $isSuccess = true;
                 } catch (Throwable $e) {
                     $errorMessage = 'Falha ao trocar o código OAuth2 pelo Access Token: ' . $e->getMessage();

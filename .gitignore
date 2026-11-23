@@ -29,6 +29,7 @@ config/*.lock
 config/active_theme.json
 /storage/
 src/Plugins/academy/academy.txt
+src/Plugins/domain_drop/*.txt
 
 # Temas Privados
 src/Plugins/flextheme/themes/rachidd

@@ -299,6 +299,43 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             );
         });
 
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\OAuthTokenRepositoryInterface::class, function () use ($root) {
+            return new \DomainSystem\Plugins\domain_drop\Services\OAuth\ConfigOAuthTokenRepository($root);
+        });
+
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\IopHttpClientInterface::class, function () use ($root) {
+            $configFile = $root . '/config/plugins/domain_drop.json';
+            $config = [];
+            if (file_exists($configFile)) {
+                $raw = file_get_contents($configFile);
+                $config = is_string($raw) ? (json_decode($raw, true) ?? []) : [];
+            }
+            return new \DomainSystem\Plugins\domain_drop\Services\OAuth\IopSdkHttpClient(
+                appKey: (string)($config['app_key'] ?? ''),
+                appSecret: (string)($config['app_secret'] ?? ''),
+                gatewayUrl: (string)($config['gateway_url'] ?? 'https://api-sg.aliexpress.com/rest')
+            );
+        });
+
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressAuthorizationUrlBuilderInterface::class, function () use ($root) {
+            $configFile = $root . '/config/plugins/domain_drop.json';
+            $config = [];
+            if (file_exists($configFile)) {
+                $raw = file_get_contents($configFile);
+                $config = is_string($raw) ? (json_decode($raw, true) ?? []) : [];
+            }
+            return new \DomainSystem\Plugins\domain_drop\Services\OAuth\AliExpressAuthorizationUrlBuilder(
+                appKey: (string)($config['app_key'] ?? '')
+            );
+        });
+
+        $runtime->singleton(\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface::class, function () use ($runtime) {
+            return new \DomainSystem\Plugins\domain_drop\Services\OAuth\TokenExchangeService(
+                httpClient: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\IopHttpClientInterface::class),
+                repository: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\OAuthTokenRepositoryInterface::class)
+            );
+        });
+
         $runtime->singleton(DropshipAdminController::class, function () use ($runtime, $root) {
             return new DropshipAdminController(
                 catalogRepo: $runtime->make(DropshipCatalogRepositoryInterface::class),
@@ -315,7 +352,9 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
                 apiClient: $runtime->make(AliExpressApiClientInterface::class),
                 metricsRepo: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandMetricsRepositoryInterface::class),
                 logStorage: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\DemandLogStorageInterface::class),
-                notificationService: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class)
+                notificationService: $runtime->make(\DomainSystem\Plugins\domain_drop\Services\DropshipCustomerNotificationService::class),
+                authUrlBuilder: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressAuthorizationUrlBuilderInterface::class),
+                tokenExchangeService: $runtime->make(\DomainSystem\Plugins\domain_drop\Contracts\TokenExchangeServiceInterface::class)
             );
         });
 
