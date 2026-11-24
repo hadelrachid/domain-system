@@ -43,16 +43,17 @@ class AuthController
 
     public function showLoginForm(\DomainSystem\Core\Http\Request $request)
     {
+        $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         if ($this->session->has('user_id')) {
             $userRole = (string)$this->session->get('user_role', 'admin');
-            if (in_array($userRole, ['user', 'student'], true)) {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/aluno/painel");
-            }
             $provider = $this->cockpitRegistry->getProviderForRole($userRole);
             if ($provider) {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . $provider->getDashboardRoute());
+                return \DomainSystem\Core\Http\Response::redirect($baseUrl . $provider->getDashboardRoute());
             }
-            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
+            if (in_array(strtolower($userRole), ['admin', 'manager', 'superadmin'], true)) {
+                return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin");
+            }
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl !== '' ? $baseUrl : "/");
         }
 
         if ($this->session->has('pending_2fa_email')) {
@@ -163,21 +164,24 @@ class AuthController
             if ($redirectParam !== '') {
                 $safeTarget = $this->redirectValidator->sanitize($redirectParam, '');
                 if ($safeTarget !== '') {
-                    return \DomainSystem\Core\Http\Response::redirect($safeTarget);
+                    $targetUrl = (str_starts_with($safeTarget, 'http://') || str_starts_with($safeTarget, 'https://'))
+                        ? $safeTarget
+                        : ($baseUrl !== '' && !str_starts_with($safeTarget, $baseUrl) ? $baseUrl . $safeTarget : $safeTarget);
+                    return \DomainSystem\Core\Http\Response::redirect($targetUrl);
                 }
             }
 
             $userRole = (string)$this->session->get('user_role', 'admin');
-            if (in_array($userRole, ['user', 'student'], true)) {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/aluno/painel");
-            }
-
             $provider = $this->cockpitRegistry->getProviderForRole($userRole);
             if ($provider) {
-                return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . $provider->getDashboardRoute());
+                return \DomainSystem\Core\Http\Response::redirect($baseUrl . $provider->getDashboardRoute());
             }
 
-            return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin");
+            if (in_array(strtolower($userRole), ['admin', 'manager', 'superadmin'], true)) {
+                return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin");
+            }
+
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl !== '' ? $baseUrl : "/");
         }
 
         $this->throttle?->hit($throttleKey);

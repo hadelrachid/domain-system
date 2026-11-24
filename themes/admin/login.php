@@ -33,6 +33,7 @@
         
         <?php
             $tenantQuery = isset($_GET['tenant']) ? '?tenant=' . urlencode($_GET['tenant']) : '';
+            $redirectVal = isset($_GET['redirect']) ? (string)$_GET['redirect'] : '';
         ?>
         <form method='POST' action='<?= BASE_URL ?>/login<?= $tenantQuery ?>'>
     <?php
@@ -42,6 +43,9 @@
         }
     ?>
     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+    <?php if ($redirectVal !== ''): ?>
+        <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirectVal, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
 
             
             <?php if (isset($_SESSION['pending_2fa_email'])): ?>
