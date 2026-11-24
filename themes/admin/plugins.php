@@ -1,6 +1,13 @@
 <h1>
     Plugins
     <button type="button" class="page-title-action" onclick="document.getElementById('upload-form').style.display='block'">Adicionar Novo</button>
+    <form method="POST" action="admin/plugins/check-updates" style="display: inline-block; margin-left: 10px;">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+        <button type="submit" class="page-title-action" style="background: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            Verificar Atualizações
+        </button>
+    </form>
 </h1>
 
 <?php if (isset($_SESSION['flash_message'])): ?>
@@ -63,6 +70,15 @@
     $corePlugins = array_filter($plugins, fn($p) => $p['is_core']);
 ?>
 
+<?php if (!empty($pendingUpdatesCount) && $pendingUpdatesCount > 0): ?>
+    <div style="padding: 14px 18px; margin-bottom: 25px; border-radius: 6px; border-left: 4px solid var(--accent-blue); background: rgba(88, 166, 255, 0.08); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px; color: var(--text-main);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span><strong><?= $pendingUpdatesCount ?> atualização(ões) de extensão disponível(is)!</strong> Você pode atualizar cada plugin individualmente com um clique abaixo diretamente do repositório oficial.</span>
+        </div>
+    </div>
+<?php endif; ?>
+
 <h2 style="color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;">Aplicativos e Extensões</h2>
 <p style="color: var(--text-muted); margin-bottom: 20px;">Plugins públicos e integrações de terceiros.</p>
 
@@ -91,6 +107,12 @@
             </td>
             <td style="color: var(--text-main); line-height: 1.5;">
                 <?= htmlspecialchars($plugin['description']) ?>
+
+                <?php if (!empty($plugin['has_update'])): ?>
+                <div style="margin-top: 10px; padding: 10px 14px; background: rgba(88, 166, 255, 0.08); border-left: 3px solid var(--accent-blue); border-radius: 0 4px 4px 0; font-size: 13px; color: var(--text-main);">
+                    <strong>🚀 Nova versão disponível:</strong> A versão <span class="badge" style="background: rgba(88,166,255,0.2); border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 2px 6px; font-weight: bold;">v<?= htmlspecialchars($plugin['remote_version']) ?></span> está disponível para atualização.
+                </div>
+                <?php endif; ?>
                 
                 <?php if (!empty($plugin['subplugins'])): ?>
                 <div style="margin-top: 15px;">
@@ -144,6 +166,17 @@
                             <button type="submit" class="btn btn-activate">Ativar</button>
                         <?php endif; ?>
                     </form>
+
+                    <?php if (!empty($plugin['has_update'])): ?>
+                    <form method="POST" action="admin/plugins/update-remote" style="margin:0;" onsubmit="return confirm('Deseja atualizar o plugin <?= htmlspecialchars($plugin['name']) ?> para a versão <?= htmlspecialchars($plugin['remote_version']) ?> agora? O pacote oficial será baixado e aplicado com segurança.');">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
+                        <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Atualizar Agora
+                        </button>
+                    </form>
+                    <?php endif; ?>
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
                     <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
@@ -204,6 +237,8 @@
             </td>
             <td style="color: var(--text-main); line-height: 1.5;">
                 <?= htmlspecialchars($plugin['description']) ?>
+
+
                 
                 <?php if (!empty($plugin['subplugins'])): ?>
                 <div style="margin-top: 15px;">
@@ -257,6 +292,8 @@
                             <button type="submit" class="btn btn-activate">Ativar</button>
                         <?php endif; ?>
                     </form>
+
+
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
                     <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">

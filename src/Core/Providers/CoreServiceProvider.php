@@ -139,6 +139,17 @@ class CoreServiceProvider
             return new \DomainSystem\Core\Plugin\Services\PluginInstaller($basePath, $c->make(\DomainSystem\Core\Plugin\Services\PluginStateManager::class));
         });
 
+        // Plugin Update Checker (WordPress-like updates for aggregated plugins)
+        $container->singleton(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class, function($c) use ($basePath) {
+            $notifManager = $c->has(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)
+                ? $c->make(\DomainSystem\Core\Contracts\NotificationManagerInterface::class)
+                : null;
+            return new \DomainSystem\Core\Plugin\Services\PluginUpdateChecker($basePath, $notifManager);
+        });
+        $container->singleton(\DomainSystem\Core\Plugin\Services\PluginUpdateChecker::class, function($c) {
+            return $c->make(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
+        });
+
         $container->singleton(\DomainSystem\Core\Plugin\PluginManager::class, function($c) {
             return new \DomainSystem\Core\Plugin\PluginManager(
                 $c,

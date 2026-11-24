@@ -62,6 +62,80 @@ class AdminControllerTest extends TestCase
         $this->assertStringContainsString('<html>', $html);
     }
 
+    public function testUpdatePluginRemoteSuccessSetsFlashAndRedirects(): void
+    {
+        $themeManager = new \DomainSystem\Core\Theme\ThemeManager($this->tempThemesPath . '/admin');
+        $pluginManagerMock = $this->createMock(\DomainSystem\Core\Plugin\PluginManager::class);
+        $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+
+        $checkerMock = $this->createMock(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
+        $checkerMock->expects($this->once())
+            ->method('updatePluginFromRemote')
+            ->with('domain_drop')
+            ->willReturn(['success' => true, 'version' => '2.8.3']);
+
+        $sessionMock->expects($this->once())
+            ->method('setFlash')
+            ->with('success', $this->stringContains('domain_drop'));
+
+        $request = new \DomainSystem\Core\Http\Request([], ['plugin_slug' => 'domain_drop'], ['REQUEST_METHOD' => 'POST']);
+
+        $controller = new AdminController(
+            $pluginManagerMock,
+            $themeManager,
+            $shortcodesMock,
+            $dispatcherMock,
+            $sessionMock,
+            null,
+            null,
+            $checkerMock
+        );
+
+        $response = $controller->updatePluginRemote($request);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $response);
+        $this->assertSame(302, $response->getStatusCode());
     }
+
+    public function testCheckPluginUpdatesSetsFlashAndRedirects(): void
+    {
+        $themeManager = new \DomainSystem\Core\Theme\ThemeManager($this->tempThemesPath . '/admin');
+        $pluginManagerMock = $this->createMock(\DomainSystem\Core\Plugin\PluginManager::class);
+        $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+
+        $checkerMock = $this->createMock(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
+        $checkerMock->expects($this->once())
+            ->method('checkForUpdates')
+            ->with(true)
+            ->willReturn(['commerce' => ['has_update' => true]]);
+        $checkerMock->expects($this->once())
+            ->method('notifyIfUpdatesAvailable')
+            ->with(true);
+
+        $sessionMock->expects($this->once())
+            ->method('setFlash')
+            ->with('success', $this->stringContains('1 atualização(ões)'));
+
+        $request = new \DomainSystem\Core\Http\Request([], [], ['REQUEST_METHOD' => 'POST']);
+
+        $controller = new AdminController(
+            $pluginManagerMock,
+            $themeManager,
+            $shortcodesMock,
+            $dispatcherMock,
+            $sessionMock,
+            null,
+            null,
+            $checkerMock
+        );
+
+        $response = $controller->checkPluginUpdates($request);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $response);
+        $this->assertSame(302, $response->getStatusCode());
+    }
+}
 
 

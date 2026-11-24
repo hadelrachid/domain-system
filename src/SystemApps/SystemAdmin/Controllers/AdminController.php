@@ -22,6 +22,7 @@ class AdminController
     private \DomainSystem\Core\Contracts\SessionManagerInterface $session;
     private ThemeActivatorInterface $themeActivator;
     private ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor;
+    private \DomainSystem\Core\Contracts\PluginUpdateCheckerInterface $updateChecker;
 
     public function __construct(
         PluginManager $manager,
@@ -30,7 +31,8 @@ class AdminController
         \DomainSystem\Core\Contracts\EventDispatcherInterface $dispatcher,
         \DomainSystem\Core\Contracts\SessionManagerInterface $session,
         ?ThemeActivatorInterface $themeActivator = null,
-        ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor = null
+        ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor = null,
+        ?\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface $updateChecker = null
     ) {
         $this->manager = $manager;
         $this->theme = $theme;
@@ -40,6 +42,7 @@ class AdminController
         $basePath = dirname(__DIR__, 4);
         $this->themeActivator = $themeActivator ?? new ThemeActivator($basePath, null, $dispatcher);
         $this->schemaDoctor = $schemaDoctor;
+        $this->updateChecker = $updateChecker ?? new \DomainSystem\Core\Plugin\Services\PluginUpdateChecker($basePath);
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
@@ -114,6 +117,31 @@ class AdminController
 
         $allPlugins = $this->dispatcher->applyFilters('admin.plugins.list', $allPlugins);
 
+        // Check for remote plugin updates (cached for 12 hours)
+        $updates = [];
+        try {
+            $updates = $this->updateChecker->checkForUpdates(false);
+            $this->updateChecker->notifyIfUpdatesAvailable(false);
+        } catch (\Throwable $e) {
+            // Silently ignore remote network failures
+        }
+
+        $pendingUpdatesCount = 0;
+        foreach ($allPlugins as &$plugin) {
+            $slug = $plugin['folder'];
+            if (!$plugin['is_core'] && isset($updates[$slug])) {
+                $plugin['has_update'] = true;
+                $plugin['remote_version'] = $updates[$slug]['new_version'] ?? '';
+                $plugin['download_url'] = $updates[$slug]['download_url'] ?? '';
+                $pendingUpdatesCount++;
+            } else {
+                $plugin['has_update'] = false;
+                $plugin['remote_version'] = null;
+                $plugin['download_url'] = null;
+            }
+        }
+        unset($plugin);
+
 
 
 
@@ -131,7 +159,8 @@ class AdminController
             return $this->theme->render('plugins', [
                 'plugins' => $allPlugins,
                 'crashes' => $crashes,
-                'isDevMode' => $isDevMode
+                'isDevMode' => $isDevMode,
+                'pendingUpdatesCount' => $pendingUpdatesCount
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar painel administrativo: " . $e->getMessage();
@@ -229,6 +258,60 @@ class AdminController
         }
 
         return \DomainSystem\Core\Http\Response::redirect(\BASE_URL . "/admin/plugins");
+    }
+
+    public function updatePluginRemote(\DomainSystem\Core\Http\Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $slug = $request->input('plugin_slug') ?? $request->input('plugin_folder');
+        if (empty($slug) || !is_string($slug)) {
+            $this->session->setFlash('error', '❌ Identificador do plugin não informado.');
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/plugins");
+        }
+
+        try {
+            $result = $this->updateChecker->updatePluginFromRemote($slug);
+            if (!empty($result['success'])) {
+                if ($this->schemaDoctor !== null) {
+                    try {
+                        $this->schemaDoctor->healAll();
+                    } catch (\Throwable $e) {}
+                }
+                $version = htmlspecialchars($result['version'] ?? '');
+                $this->session->setFlash('success', "🎉 Plugin [{$slug}] atualizado com sucesso para a versão {$version} diretamente do repositório oficial!");
+            } else {
+                $msg = htmlspecialchars($result['message'] ?? 'Erro desconhecido');
+                $this->session->setFlash('error', "❌ Falha ao atualizar o plugin [{$slug}]: {$msg}");
+            }
+        } catch (\Throwable $e) {
+            if ($e instanceof \PHPUnit\Framework\Throwable) {
+                throw $e;
+            }
+            $this->session->setFlash('error', "❌ Erro durante a atualização do plugin: " . $e->getMessage());
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/plugins");
+    }
+
+    public function checkPluginUpdates(\DomainSystem\Core\Http\Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        try {
+            // Força a verificação ao vivo (bypass cache)
+            $updates = $this->updateChecker->checkForUpdates(true);
+            $this->updateChecker->notifyIfUpdatesAvailable(true);
+            $count = count($updates);
+
+            if ($count > 0) {
+                $this->session->setFlash('success', "🔎 Verificação concluída: {$count} atualização(ões) de plugin disponível(is) no repositório oficial!");
+            } else {
+                $this->session->setFlash('success', "✅ Todos os plugins instalados já estão nas versões mais recentes!");
+            }
+        } catch (\Throwable $e) {
+            $this->session->setFlash('error', "❌ Não foi possível verificar atualizações remotas: " . $e->getMessage());
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/plugins");
     }
 
     public function listThemes(\DomainSystem\Core\Http\Request $request)

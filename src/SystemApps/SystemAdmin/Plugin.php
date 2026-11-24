@@ -132,6 +132,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/plugins/update-remote', [AdminController::class, 'updatePluginRemote'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/plugins/check-updates', [AdminController::class, 'checkPluginUpdates'], 'system-admin', ['admin']);
 
             // ACL Panel
             $router->addRoute('GET', '/admin/acl', [\DomainSystem\SystemApps\SystemAdmin\Controllers\AclController::class, 'index'], 'system-admin', ['admin']);
