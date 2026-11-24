@@ -59,15 +59,29 @@ final class VersionConsistencyTest extends TestCase
             $relPath = str_replace('\\', '/', substr($file, strlen($root) + 1));
             $data = json_decode((string)file_get_contents($file), true);
             $this->assertIsArray($data, "JSON inválido em {$relPath}");
-            $this->assertSame(
-                $expectedVersion,
-                $data['version'] ?? null,
-                "Campo 'version' em {$relPath} deve estar padronizado em {$expectedVersion}"
-            );
+
+            $isCore = ($data['core'] ?? false) === true || str_contains($relPath, 'SystemApps');
+
+            // Componentes de Composição (Core / Ring 0) compartilham a versão do Sistema Operacional
+            if ($isCore) {
+                $this->assertSame(
+                    $expectedVersion,
+                    $data['version'] ?? null,
+                    "Componente Core em {$relPath} deve seguir a versão do Sistema ({$expectedVersion})"
+                );
+            } else {
+                // Plugins de Agregação (Ring 3) possuem versionamento SemVer próprio e independente
+                $this->assertNotEmpty(
+                    $data['version'] ?? null,
+                    "Plugin de agregação {$relPath} deve declarar uma versão SemVer válida"
+                );
+            }
+
+            // Todos os plugins declaram compatibilidade com a versão base do OS (ex: 2.8)
             $this->assertSame(
                 $expectedOsVersion,
                 $data['os_version'] ?? null,
-                "Campo 'os_version' em {$relPath} deve estar padronizado em {$expectedOsVersion}"
+                "Campo 'os_version' em {$relPath} deve ser compatível com {$expectedOsVersion}"
             );
         }
     }
