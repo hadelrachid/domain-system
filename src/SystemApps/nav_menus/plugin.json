@@ -2,7 +2,7 @@
     "name": "nav_menus",
     "title": "Nav Menus (Builder)",
     "description": "Construtor dinâmico de menus arrastar-e-soltar para o Frontend.",
-    "version": "2.8.3",
+    "version": "2.8.4",
     "author": "Domain System",
     "dependencies": [
         "database"

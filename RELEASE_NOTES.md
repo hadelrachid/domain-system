@@ -1,42 +1,73 @@
-## 🚀 Domain-System OS v2.8.3 — Arquitetura dos Três Pilares, Atualizador em 1 Clique & Alinhamento Oficial AliExpress
+## 🚀 Domain-System OS v2.8.4 — Catraca de Segurança no Cockpit, Desacoplamento Total do Core & Sincronização em Tempo Real
 
-A versão **v2.8.3** representa um marco importante na maturidade do Domain System: organizamos a casa em **três pilares independentes**, adicionamos um sistema de atualização de plugins no painel estilo WordPress e alinhamos a mineração do dropshipping com os manuais oficiais da AliExpress Open Platform.
-
----
-
-### 🏛️ 1. Arquitetura em Três Pilares (Repositório do Core Ultra Leve)
-- **Desacoplamento de Aplicações Pesadas:**  
-  O repositório principal (`domain-system`) agora foca exclusivamente no que é vital: o Cockpit OS, a segurança do sistema e extensões leves de demonstração.
-- **Repositório de Extensões Dedicado:**  
-  Módulos como `DomainDrop`, `DomainCommerce` e `Academy LMS` foram migrados para o repositório oficial [domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins), permitindo que cada um tenha suas próprias versões e evolua sem inchar o núcleo.
-- **Repositório de Temas Oficial:**  
-  Criação do repositório [domain-system-themes](https://github.com/hadelrachid/domain-system-themes), estreando o tema oficial de e-commerce **RachidD Store** na versão inicial `v1.0.0` com licença MIT.
+A versão **v2.8.4** fecha o ciclo de isolamento e blindagem do **Domain-System Core OS**, garantindo que o núcleo seja 100% agnóstico em relação a qualquer plugin de aplicação ou tema visual.
 
 ---
 
-### 🔄 2. Atualizador de Plugins com 1 Clique (Estilo WordPress)
-- **Central de Notificações no Sininho:**  
-  O ícone de sino no topo do painel avisa automaticamente quando houver novas versões de extensões disponíveis no GitHub.
-- **Botão "Atualizar Agora":**  
-  Dentro da tela de plugins, você atualiza qualquer extensão com um simples clique. O sistema baixa o arquivo ZIP assinado, confere a impressão digital SHA-256 e instala com segurança.
-- **Verificação Manual:**  
-  Botão "Verificar Atualizações" para checagem em tempo real das novidades no GitHub.
+### 🛡️ 1. Catraca de Segurança no Login Administrativo (Boundary Protection)
+- **Bloqueio Imediato de Contas Comuns no Cockpit:**  
+  A tela de login do sistema (`/login`) agora atua como uma catraca estrita do ambiente administrativo. Contas comuns (clientes da loja, alunos ou membros do site) que tentarem autenticar por esta rota são imediatamente barradas.
+- **Mensagem Amigável e Anti-Enumeração:**  
+  Em caso de tentativa de login não administrativo, o formulário responde com o erro padrão seguro: *"Credenciais inválidas. Verifique seu e-mail e senha."*, sem vazar informações sobre a existência da conta.
+- **Limpeza Automática de Sessões:**  
+  Ao acessar a tela de login do Cockpit, qualquer resquício de sessão não-administrativa anterior é destruído de forma limpa, evitando travamentos em loops de redirecionamento.
 
 ---
 
-### 📦 3. Alinhamento Oficial do Dropshipping (DomainDrop)
-- **Consultas Padronizadas pela API Oficial:**  
-  Uso dos métodos recomendados pela AliExpress Open Platform (`dropshiper.pdf` e `categoria-e-atributos.pdf`), eliminando identificadores sintéticos e trabalhando com os IDs e URLs numéricos reais do catálogo.
-- **Fim das Imagens Incompatíveis:**  
-  Correção nas fotos da vitrine, garantindo que produtos importados exibam suas imagens corretas de alta definição.
-- **Fim das Páginas 404:**  
-  Garantia de persistência automática ao acessar produtos em vitrines temporárias e redirecionamento amigável para evitar que o visitante caia em links quebrados.
+### 🔄 2. Preservação de Rotas e Suporte Agnóstico a Subpastas (XAMPP / Apache)
+- **Preservação de `redirect` no Login:**  
+  Ao tentar acessar `/admin` deslogado, o destino original é transportado e mantido no formulário de login, garantindo que o gestor caia diretamente na página solicitada após autenticar.
+- **Resolução de `BASE_URL` Confiável:**  
+  Caminhos relativos são combinados dinamicamente com o subdiretório da aplicação (como `/domain-system/admin`), eliminando redirecionamentos quebrados fora da raiz do servidor.
 
 ---
 
-### 🧪 4. Suíte de Testes Automatizados
+### ⚡ 3. Sincronização de Papéis e Permissões em Tempo Real
+- **Atualização Instantânea de Papéis:**  
+  Se um usuário for promovido a administrador no banco de dados, o `AuthMiddleware` detecta a nova permissão no primeiro acesso e atualiza a sessão ativa na hora, sem exigir que o gestor limpe cookies manualmente.
+- **Fallback Robusto no ACL (`IdentityManager`):**  
+  O validador de papéis agora confere de forma resiliente tanto a tabela relacional `user_roles` quanto o campo direto `role` da tabela de usuários.
+
+---
+
+### 🏛️ 4. Desacoplamento Estrito do Core OS
+- **Núcleo 100% Neutro:**  
+  Remoção de referências rígidas a regras de negócio de plugins específicos dentro das telas administrativas e controladores do Core.
+- **Botão de Troca de Conta:**  
+  Inclusão do botão *"Sair / Trocar de Conta"* em telas de restrição de acesso para facilitar a troca direta entre diferentes credenciais.
+
+---
+
+### 🧪 5. Bateria de Testes do Core
+- **764 testes automatizados** e **4.605 asserções** validados no PHPUnit com 100% de sucesso.
+- Novos testes unitários específicos para catraca de login, preservação de rotas e isolamento de privilégios.
+
+---
+
+## 🚀 Domain-System OS v2.8.3 — Arquitetura dos Três Pilares & Atualizador em 1 Clique
+
+A versão **v2.8.3** estabeleceu a divisão definitiva da plataforma em três pilares independentes e introduziu o motor nativo de atualização de extensões estilo WordPress.
+
+---
+
+### 🏛️ 1. Arquitetura em Três Pilares (Core OS Ultra Leve)
+- **Desacoplamento do Repositório Central:**  
+  O repositório principal (`domain-system`) foca unicamente no essencial: o Sistema Operacional Web, barramento de eventos, injeção de dependências e segurança do Cockpit.
+- **Ciclo de Vida Independente:**  
+  Plugins e Temas passam a ter seus próprios repositórios e versionamento SemVer autônomo.
+
+---
+
+### 🔄 2. Motor de Atualização de Plugins em 1 Clique
+- **Notificação Visual no Painel:**  
+  Alerta no topo do painel administrativo indicando quando existem versões atualizadas de extensões disponíveis.
+- **Instalação Segura com 1 Clique:**  
+  Download direto de arquivos ZIP assinados, conferência de integridade por hash SHA-256 e extração automatizada sem necessidade de intervenção manual no servidor.
+
+---
+
+### 🧪 3. Suíte de Testes Automatizados
 - **760 testes automatizados** e **4.593 asserções** validados no PHPUnit com 100% de sucesso.
-- Blindagem com testes no GitHub Actions para garantir estabilidade em qualquer ambiente.
 
 ---
 

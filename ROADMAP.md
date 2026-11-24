@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.8.3)
+# Roteiro de Desenvolvimento — Domain System (v2.8.4)
 
 Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso objetivo é simples: manter o sistema leve, modular, fácil de entender e coberto por testes automatizados em PHP 8.2+.
 
@@ -58,16 +58,17 @@ Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso
 - [x] **Alinhamento com Manuais Oficiais do AliExpress:** Consultas padronizadas seguindo as especificações da plataforma (`dropshiper.pdf` e `categoria-e-atributos.pdf`).
 - [x] **Fotos Corretas e Sem Erros 404:** Fim de imagens trocadas na vitrine e garantia de links sempre válidos.
 - [x] **OAuth 2.0 Estável:** Conexão persistente no painel, inclusive em servidores compartilhados com proxies HTTPS.
-- [x] **Suíte com 760 Testes Automatizados:** Mais de 4.590 asserções validadas pelo PHPUnit no GitHub Actions.
+- [x] **Suíte com 764 Testes Automatizados:** Mais de 4.600 asserções validadas pelo PHPUnit no GitHub Actions.
 
 ---
 
-## 🟢 Etapa 6: A Arquitetura dos Três Pilares & Atualizador em 1 Clique (Concluída na v2.8.3)
+## 🟢 Etapa 6: A Arquitetura dos Três Pilares & Catraca do Cockpit (Concluída na v2.8.4)
 
 - [x] **Núcleo Super Leve:** O repositório central (`domain-system`) focado apenas no Cockpit OS e infraestrutura vital.
-- [x] **Repositório de Extensões ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):** Módulos de negócio (`domain_drop`, `commerce`, `academy`) com versionamento próprio.
+- [x] **Repositório de Extensões ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):** Módulos de negócio com versionamento próprio.
 - [x] **Repositório de Temas ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):** Temas desacoplados, começando pelo `rachidd_store` v1.0.0.
 - [x] **Atualizador Estilo WordPress:** Notificações no sininho e botão "Atualizar Agora" para cada extensão direto pelo painel de controle.
+- [x] **Catraca Estrita no Cockpit (v2.8.4):** Bloqueio imediato de contas não-administrativas no login do admin, preservação de rotas e sincronização de permissões em tempo real.
 
 ---
 
