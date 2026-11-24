@@ -733,39 +733,58 @@
     <script>
         window.OS = window.OS || {};
         
-        window.OS.confirm = function(message, onConfirm) {
+        window.OS.confirm = function(message, onConfirm, options = {}) {
             const overlay = document.createElement('div');
-            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 999999; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s;';
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); backdrop-filter: blur(5px); z-index: 999999; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease;';
             
             const box = document.createElement('div');
-            box.style = 'background: #1e1e2d; border: 1px solid #323248; border-radius: 8px; padding: 25px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
+            box.style = 'background: #181924; border: 1px solid #323248; border-radius: 10px; padding: 25px 28px; max-width: 440px; width: 90%; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.6); transform: scale(0.92); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
             
+            if (options.title) {
+                const titleEl = document.createElement('h3');
+                titleEl.style = 'color: #fff; font-size: 17px; margin: 0 0 12px 0; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;';
+                titleEl.innerHTML = options.title;
+                box.appendChild(titleEl);
+            }
+
             const text = document.createElement('p');
-            text.style = 'color: #fff; font-size: 16px; margin-bottom: 25px; line-height: 1.5;';
+            text.style = 'color: #c9d1d9; font-size: 14px; margin-bottom: 25px; line-height: 1.6;';
             text.innerText = message;
             
             const btnGroup = document.createElement('div');
-            btnGroup.style = 'display: flex; justify-content: center; gap: 15px;';
+            btnGroup.style = 'display: flex; justify-content: center; gap: 12px;';
             
             const btnCancel = document.createElement('button');
-            btnCancel.innerText = 'Cancelar';
-            btnCancel.style = 'background: transparent; border: 1px solid #4a4a6a; color: #a1a1b5; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;';
+            btnCancel.innerText = options.cancelText || 'Cancelar';
+            btnCancel.style = 'background: transparent; border: 1px solid #4a4a6a; color: #a1a1b5; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s;';
+            btnCancel.onmouseover = () => { btnCancel.style.borderColor = '#888'; btnCancel.style.color = '#fff'; };
+            btnCancel.onmouseout = () => { btnCancel.style.borderColor = '#4a4a6a'; btnCancel.style.color = '#a1a1b5'; };
             btnCancel.onclick = function() {
                 overlay.style.opacity = '0';
-                box.style.transform = 'scale(0.9)';
+                box.style.transform = 'scale(0.92)';
                 setTimeout(() => overlay.remove(), 200);
             };
             
             const btnConfirm = document.createElement('button');
-            btnConfirm.innerText = 'Confirmar';
-            btnConfirm.style = 'background: #45f3ff; border: none; color: #0b0c10; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;';
+            btnConfirm.innerText = options.confirmText || 'Confirmar';
+            const confirmBg = options.confirmBg || '#45f3ff';
+            const confirmColor = options.confirmColor || (confirmBg === '#45f3ff' ? '#0b0c10' : '#fff');
+            btnConfirm.style = `background: ${confirmBg}; border: 1px solid ${confirmBg}; color: ${confirmColor}; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;`;
+            btnConfirm.onmouseover = () => btnConfirm.style.filter = 'brightness(1.15)';
+            btnConfirm.onmouseout = () => btnConfirm.style.filter = 'brightness(1)';
             btnConfirm.onclick = function() {
-                overlay.style.opacity = '0';
-                box.style.transform = 'scale(0.9)';
+                btnConfirm.disabled = true;
+                btnCancel.disabled = true;
+                btnConfirm.style.opacity = '0.8';
+                btnConfirm.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">↻</span> Processando...';
                 setTimeout(() => {
-                    overlay.remove();
-                    if(onConfirm) onConfirm();
-                }, 200);
+                    overlay.style.opacity = '0';
+                    box.style.transform = 'scale(0.92)';
+                    setTimeout(() => {
+                        overlay.remove();
+                        if(onConfirm) onConfirm();
+                    }, 200);
+                }, 100);
             };
             
             btnGroup.appendChild(btnCancel);

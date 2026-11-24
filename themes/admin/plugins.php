@@ -169,10 +169,10 @@
 
                     <?php if (!$plugin['is_core']): ?>
                         <?php if (!empty($plugin['has_update'])): ?>
-                        <form method="POST" action="admin/plugins/update-remote" style="margin:0;" onsubmit="return confirm('Deseja atualizar o plugin <?= htmlspecialchars($plugin['name']) ?> para a versão <?= htmlspecialchars($plugin['remote_version']) ?> agora? O pacote oficial será baixado e aplicado com segurança.');">
+                        <form id="form-update-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="admin/plugins/update-remote" style="margin:0;">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                             <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                            <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;" title="Nova versão disponível no repositório">
+                            <button type="button" onclick="confirmPluginAction('update', 'form-update-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;" title="Nova versão disponível no repositório">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 Atualizar para v<?= htmlspecialchars($plugin['remote_version']) ?>
                             </button>
@@ -186,11 +186,11 @@
                     <?php endif; ?>
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                    <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                    <form id="form-delete-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="admin/plugins/delete" style="margin:0;">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                        <button type="submit" class="btn btn-deactivate">Excluir</button>
+                        <button type="button" onclick="confirmPluginAction('delete', 'form-delete-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate">Excluir</button>
                     </form>
                     <?php endif; ?>
                     
@@ -303,11 +303,11 @@
 
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                    <form method="POST" action="admin/plugins/delete" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir o plugin <?= htmlspecialchars($plugin['name']) ?>? Isso apagará a pasta dele.');">
+                    <form id="form-delete-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="admin/plugins/delete" style="margin:0;">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                        <button type="submit" class="btn btn-deactivate">Excluir</button>
+                        <button type="button" onclick="confirmPluginAction('delete', 'form-delete-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate">Excluir</button>
                     </form>
                     <?php endif; ?>
                     

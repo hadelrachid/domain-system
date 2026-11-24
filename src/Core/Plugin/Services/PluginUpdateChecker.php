@@ -206,6 +206,29 @@ class PluginUpdateChecker implements PluginUpdateCheckerInterface
             $extractor = ExtractorFactory::create();
             $extractedFolder = $extractor->extract($tmpZip, $pluginsPath);
 
+            // Normalização de Pasta Alvo: garante que o pacote descompactado fique exatamente em $slug
+            $extractedPath = $pluginsPath . '/' . $extractedFolder;
+            $targetPath = $pluginsPath . '/' . $slug;
+
+            if ($extractedFolder !== $slug && is_dir($extractedPath)) {
+                if (is_dir($targetPath)) {
+                    $this->deleteDirectory($targetPath);
+                }
+                @rename($extractedPath, $targetPath);
+                $extractedFolder = $slug;
+            }
+
+            // Expurgo preventivo de pastas duplicadas legadas conhecidas
+            $legacyVariants = [
+                $pluginsPath . '/domaincommerce',
+                $pluginsPath . '/DomainCommerce',
+            ];
+            foreach ($legacyVariants as $legacyFolder) {
+                if ($legacyFolder !== $targetPath && is_dir($legacyFolder)) {
+                    $this->deleteDirectory($legacyFolder);
+                }
+            }
+
             // 4. Limpa caches locais
             $this->clearCache();
 
@@ -234,6 +257,32 @@ class PluginUpdateChecker implements PluginUpdateCheckerInterface
                 @unlink($tmpZip);
             }
         }
+    }
+
+    private function deleteDirectory(string $dir): bool
+    {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        if (!is_dir($dir)) {
+            return @unlink($dir);
+        }
+
+        $items = scandir($dir);
+        if ($items === false) {
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+
+        return @rmdir($dir);
     }
 
     public function clearCache(): void

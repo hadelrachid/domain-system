@@ -70,9 +70,10 @@ class ZipArchiveExtractor implements ExtractorInterface
                 if ($idx !== false) {
                     $json = $zip->getFromIndex($idx);
                     $data = is_string($json) ? json_decode($json, true) : null;
-                    if (is_array($data) && isset($data['name']) && is_string($data['name'])) {
+                    if (is_array($data) && (!empty($data['name']) || !empty($data['slug']))) {
                         $hasDescriptor = true;
-                        $componentDirName = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($data['name'])) ?: '';
+                        $rawName = !empty($data['slug']) ? (string)$data['slug'] : (!empty($data['folder']) ? (string)$data['folder'] : (string)$data['name']);
+                        $componentDirName = preg_replace('/[^a-zA-Z0-9_-]+/', '-', strtolower($rawName)) ?: '';
                         $componentDirName = trim($componentDirName, '-');
 
                         if ($componentDirName === '') {
