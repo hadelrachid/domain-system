@@ -32,7 +32,7 @@ class ErrorRenderer
 
         $baseUrl = defined("BASE_URL") ? BASE_URL : (dirname($_SERVER["SCRIPT_NAME"] === "/" ? "" : dirname($_SERVER["SCRIPT_NAME"])));
         $baseUrl = rtrim(str_replace("\\", "/", $baseUrl), "/");
-        if (empty($baseUrl)) $baseUrl = "/";
+        $adminUrl = ($baseUrl === "/" || $baseUrl === "") ? "/admin" : ($baseUrl . "/admin");
 
         $disarmedHtml = "";
         if ($disarmedPlugin) {
@@ -79,7 +79,7 @@ class ErrorRenderer
                     <div><span class="highlight">Linha:</span> {$line}</div>
                 </div>
                 
-                <a href="{$baseUrl}/admin" class="btn btn-success">🔄 Recarregar Sistema Seguro</a>
+                <a href="{$adminUrl}" class="btn btn-success">🔄 Recarregar Sistema Seguro</a>
                 
                 <div class="footer">
                     Apenas desenvolvedores ou administradores podem visualizar o diagnóstico completo no Painel Admin.

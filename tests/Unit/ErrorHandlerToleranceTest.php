@@ -12,6 +12,33 @@ use DomainSystem\Core\Error\ErrorRenderer;
 
 class ErrorHandlerToleranceTest extends TestCase
 {
+    private string $tempDir;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->tempDir = sys_get_temp_dir() . '/ds_cb_test_' . uniqid();
+        @mkdir($this->tempDir . '/config', 0777, true);
+        @mkdir($this->tempDir . '/temp', 0777, true);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->removeDirectory($this->tempDir);
+        parent::tearDown();
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) return;
+        $files = array_diff(scandir($dir) ?: [], ['.', '..']);
+        foreach ($files as $file) {
+            $p = $dir . '/' . $file;
+            is_dir($p) ? $this->removeDirectory($p) : @unlink($p);
+        }
+        @rmdir($dir);
+    }
+
     public function testNonFatalWarningDoesNotRenderErrorInProduction(): void
     {
         $logger = $this->createMock(ErrorLogger::class);
@@ -35,5 +62,35 @@ class ErrorHandlerToleranceTest extends TestCase
         } finally {
             error_reporting($previousReporting);
         }
+    }
+
+    public function testCircuitBreakerDisarmsPluginAndWritesToDisarmedJsonEvenIfNotActive(): void
+    {
+        $configPath = $this->tempDir . '/config/plugins.json';
+        $disarmedPath = $this->tempDir . '/config/disarmed.json';
+        file_put_contents($configPath, json_encode(['other_plugin' => true]));
+        file_put_contents($disarmedPath, json_encode([]));
+
+        $store = new \DomainSystem\Core\Storage\AtomicJsonStore();
+        $cb = new CircuitBreaker($configPath, $disarmedPath, $store);
+
+        $fakeException = new \Exception(
+            "Cannot declare class DomainSystem\\Plugins\\commerce\\Plugin, because the name is already in use",
+            0
+        );
+        // Reflect exception file to point to src/Plugins/domaincommerce/Plugin.php
+        $prop = new \ReflectionProperty(\Exception::class, 'file');
+        $prop->setValue($fakeException, '/var/www/src/Plugins/domaincommerce/Plugin.php');
+
+        $culprit = $cb->analyzeAndDisarm($fakeException);
+
+        $this->assertSame('domaincommerce', $culprit);
+
+        $states = json_decode((string)file_get_contents($configPath), true);
+        $this->assertArrayHasKey('domaincommerce', $states);
+        $this->assertFalse($states['domaincommerce']);
+
+        $disarmed = json_decode((string)file_get_contents($disarmedPath), true);
+        $this->assertArrayHasKey('domaincommerce', $disarmed);
     }
 }

@@ -67,6 +67,27 @@ class PluginDiscoverer
                 || (!empty($activeStates[$folderName]));
             $isCore = isset($metadata['core']) && $metadata['core'] === true;
 
+            // Checa se o plugin foi desarmado pelo Circuit Breaker
+            $baseDir = dirname($pluginsPath, 2);
+            $disarmedConfig = $baseDir . "/config/disarmed.json";
+            $disarmedTemp = $baseDir . "/temp/disarmed.json";
+            $isDisarmed = false;
+            if (file_exists($disarmedConfig)) {
+                $disarmed = json_decode((string)file_get_contents($disarmedConfig), true) ?: [];
+                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName])) {
+                    $isDisarmed = true;
+                }
+            }
+            if (!$isDisarmed && file_exists($disarmedTemp)) {
+                $disarmed = json_decode((string)file_get_contents($disarmedTemp), true) ?: [];
+                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName])) {
+                    $isDisarmed = true;
+                }
+            }
+            if ($isDisarmed) {
+                continue;
+            }
+
             if ($isActive || $isCore) {
                 $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
 
@@ -76,6 +97,9 @@ class PluginDiscoverer
                         $fileContent = file_get_contents($pluginFile);
                         if (preg_match('/namespace\s+([^;]+);/', $fileContent, $matches)) {
                             $inferredClass = $matches[1] . '\\Plugin';
+                            if (class_exists($inferredClass, false)) {
+                                continue;
+                            }
                             require_once $pluginFile;
                             $pluginClass = $inferredClass;
                         } else {

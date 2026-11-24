@@ -67,9 +67,13 @@ class AdminController
 
         // Get Disarmed states
         $disarmedStates = [];
-        $disarmedPath = $basePath . '/temp/disarmed.json';
-        if (file_exists($disarmedPath)) {
-            $disarmedStates = json_decode(file_get_contents($disarmedPath), true) ?? [];
+        foreach ([$basePath . '/config/disarmed.json', $basePath . '/temp/disarmed.json'] as $dPath) {
+            if (file_exists($dPath)) {
+                $loaded = json_decode((string)file_get_contents($dPath), true);
+                if (is_array($loaded)) {
+                    $disarmedStates = array_merge($disarmedStates, $loaded);
+                }
+            }
         }
 
         // Discover all plugins
@@ -194,12 +198,14 @@ class AdminController
                 $this->manager->enable($pluginName);
                 
                 // Remove from disarmed if exists
-                $disarmedPath = dirname(__DIR__, 4) . '/temp/disarmed.json';
-                if (file_exists($disarmedPath)) {
-                    $disarmed = json_decode(file_get_contents($disarmedPath), true) ?: [];
-                    if (isset($disarmed[$pluginName])) {
-                        unset($disarmed[$pluginName]);
-                        file_put_contents($disarmedPath, json_encode($disarmed));
+                $rootPath = dirname(__DIR__, 4);
+                foreach ([$rootPath . '/config/disarmed.json', $rootPath . '/temp/disarmed.json'] as $dPath) {
+                    if (file_exists($dPath)) {
+                        $disarmed = json_decode((string)file_get_contents($dPath), true) ?: [];
+                        if (isset($disarmed[$pluginName])) {
+                            unset($disarmed[$pluginName]);
+                            file_put_contents($dPath, json_encode($disarmed));
+                        }
                     }
                 }
 

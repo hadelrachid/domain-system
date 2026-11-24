@@ -132,9 +132,11 @@ class MonitorController
             @unlink($this->logPath);
         }
 
-        $disarmedPath = rtrim($this->basePath, '/\\') . '/temp/disarmed.json';
-        if (file_exists($disarmedPath)) {
-            @unlink($disarmedPath);
+        $cleanBase = rtrim($this->basePath, '/\\');
+        foreach ([$cleanBase . '/config/disarmed.json', $cleanBase . '/temp/disarmed.json'] as $dPath) {
+            if (file_exists($dPath)) {
+                @unlink($dPath);
+            }
         }
 
         $this->metricsRecorder->clear();

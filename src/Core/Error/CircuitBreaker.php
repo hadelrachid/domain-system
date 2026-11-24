@@ -86,27 +86,30 @@ class CircuitBreaker
 
     private function disarmPlugin(string $pluginName): ?string
     {
-        if (!file_exists($this->configPath)) {
-            return null;
+        if (file_exists($this->configPath)) {
+            $this->jsonStore->update($this->configPath, static function (array $states) use ($pluginName): array {
+                $states[$pluginName] = false;
+                foreach ($states as $key => $val) {
+                    if (strcasecmp((string)$key, $pluginName) === 0) {
+                        $states[$key] = false;
+                    }
+                }
+                return $states;
+            });
         }
 
-        $wasDisarmed = false;
-        $this->jsonStore->update($this->configPath, static function (array $states) use ($pluginName, &$wasDisarmed): array {
-            if (isset($states[$pluginName]) && $states[$pluginName] === true) {
-                $states[$pluginName] = false;
-                $wasDisarmed = true;
-            }
-            return $states;
+        $this->jsonStore->update($this->disarmedPath, static function (array $disarmed) use ($pluginName): array {
+            $disarmed[$pluginName] = date('Y-m-d H:i:s');
+            return $disarmed;
         });
 
-        if ($wasDisarmed) {
-            $this->jsonStore->update($this->disarmedPath, static function (array $disarmed) use ($pluginName): array {
-                $disarmed[$pluginName] = date('Y-m-d H:i:s');
-                return $disarmed;
-            });
-            return $pluginName;
+        $altDisarmedPath = dirname($this->disarmedPath, 2) . '/temp/disarmed.json';
+        if (is_dir(dirname($altDisarmedPath))) {
+            $altData = file_exists($altDisarmedPath) ? (json_decode((string)file_get_contents($altDisarmedPath), true) ?: []) : [];
+            $altData[$pluginName] = date('Y-m-d H:i:s');
+            @file_put_contents($altDisarmedPath, json_encode($altData));
         }
 
-        return null;
+        return $pluginName;
     }
 }
