@@ -43,6 +43,29 @@ interface ProductMiningServiceInterface
     public function importFromBrowserSource(string $rawSource, ?string $category = null): DropshipProductDto;
 
     /**
+     * Localiza um produto do catálogo curado oficial pelo ID numérico.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function findCuratedProductById(string $productId): ?array;
+
+    /**
+     * Localiza um produto do catálogo curado oficial pelo slug amigável.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function findCuratedProductBySlug(string $slug): ?array;
+
+    /**
+     * Converte um array de dados brutos (API ou catálogo curado) para DTO formatado.
+     * 
+     * @param array<string, mixed> $item
+     * @param string|null $category
+     * @return DropshipProductDto
+     */
+    public function transformRawItemToDto(array $item, ?string $category = null): DropshipProductDto;
+
+    /**
      * Executa o ciclo de rotação diária automatizada de 24 horas.
      * Minera produtos virais aleatórios para todas as 9 categorias oficiais:
      * - Eletrônicos & Gadget

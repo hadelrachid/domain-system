@@ -492,6 +492,46 @@ class ProductMiningService implements ProductMiningServiceInterface
         foreach ($catalog as $catName => $items) {
             foreach ($items as $item) {
                 if ((string)($item['product_id'] ?? '') === $productId) {
+                    $item['category_name'] = $item['category_name'] ?? $catName;
+                    return $item;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Localiza um produto no catálogo curado oficial ou nos padrões de mineração pelo slug amigável da URL.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function findCuratedProductBySlug(string $slug): ?array
+    {
+        $normalizedSlug = mb_strtolower(trim(urldecode($slug)));
+        if ($normalizedSlug === '') {
+            return null;
+        }
+
+        $catalog = $this->getCuratedCatalog();
+        foreach ($catalog as $catName => $items) {
+            foreach ($items as $item) {
+                $title = (string)($item['product_title'] ?? '');
+                $itemSlug = self::slugify($title);
+                if ($itemSlug === $normalizedSlug || str_contains($itemSlug, $normalizedSlug) || str_contains($normalizedSlug, $itemSlug)) {
+                    $item['category_name'] = $item['category_name'] ?? $catName;
+                    return $item;
+                }
+            }
+        }
+
+        foreach (self::OFFICIAL_CATEGORIES as $cat) {
+            $pool = $this->expandCategoryPoolToLimit([], $cat, 15);
+            foreach ($pool as $item) {
+                $title = (string)($item['product_title'] ?? '');
+                $itemSlug = self::slugify($title);
+                if ($itemSlug === $normalizedSlug || str_contains($itemSlug, $normalizedSlug) || str_contains($normalizedSlug, $itemSlug)) {
+                    $item['category_name'] = $item['category_name'] ?? $cat;
                     return $item;
                 }
             }
@@ -609,8 +649,9 @@ class ProductMiningService implements ProductMiningServiceInterface
      * 
      * @param array<string, mixed> $item
      */
-    private function transformRawItemToDto(array $item, string $defaultCategory = 'Eletrônicos & Gadget'): DropshipProductDto
+    public function transformRawItemToDto(array $item, ?string $category = null): DropshipProductDto
     {
+        $defaultCategory = $category ?: 'Eletrônicos & Gadget';
         $baseInfo = $item['ae_item_base_info_dto'] ?? [];
         $multiMedia = $item['ae_multimedia_info_dto'] ?? [];
         $skuDtos = $item['ae_item_sku_info_dtos']['ae_item_sku_info_d_t_o'] ?? ($item['ae_item_sku_info_dtos'] ?? []);
@@ -942,64 +983,64 @@ class ProductMiningService implements ProductMiningServiceInterface
         $catalogPatterns = [
             'Eletrônicos & Gadget' => [
                 ['Smartwatch Series 9 Ultra AMOLED 49mm GPS Titânio', 28.50, 'https://ae-pic-a1.aliexpress-media.com/kf/A6528ac8364bb4be08857064c2e00cf33v.jpg', '4.9', 9200, ['Resistência' => 'IP68', 'Bateria' => '7 dias', 'Bluetooth' => '5.3']],
-                ['Fone de Ouvido TWS Bluetooth 5.4 Gamer Baixa Latência LED RGB', 11.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.8', 14200, ['ANC' => '35dB', 'Bateria' => '30h', 'Bluetooth' => '5.4']],
-                ['Caixa de Som Bluetooth Potente Portátil À Prova D\'água Graves Extra', 26.90, 'https://ae-pic-a1.aliexpress-media.com/kf/S60c6fb8ba48d46449f6d4ec5876dced6J.jpg', '4.9', 7800, ['Potência' => '30W RMS', 'Bateria' => '12h', 'Resistência' => 'IPX7']],
-                ['Headphone Bluetooth Over-Ear Cancelamento de Ruído ANC Bateria 60h', 36.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.9', 5400, ['ANC' => '40dB', 'Autonomia' => '60h', 'Conexão' => 'Bluetooth 5.3 + P2']],
-                ['Carregador GaN Turbo 65W 3 Portas USB-C PD para Notebook e Celular', 15.20, 'https://ae-pic-a1.aliexpress-media.com/kf/Sf6380de1f6bf4459bdd1a5d9dc480a91T.jpg', '5.0', 16100, ['Potência' => '65W Max', 'Tecnologia' => 'GaN III Fast', 'Bivolt' => '100-240V']],
-                ['Mini Câmera de Segurança Wi-Fi 360 Graus Visão Noturna Infravermelho Full HD', 18.90, 'https://ae-pic-a1.aliexpress-media.com/kf/S60c6fb8ba48d46449f6d4ec5876dced6J.jpg', '4.8', 8900, ['Resolução' => '1080p FHD', 'Áudio' => 'Bidirecional', 'App' => 'iOS/Android']],
-                ['Power Bank Magnético MagSafe 10000mAh Carregamento Sem Fio por Indução', 21.50, 'https://ae-pic-a1.aliexpress-media.com/kf/Sf6380de1f6bf4459bdd1a5d9dc480a91T.jpg', '4.9', 11400, ['Capacidade' => '10000mAh', 'Indução' => '15W Fast', 'Cabo' => 'USB-C 20W']],
-                ['Adaptador Hub USB-C 8 em 1 HDMI 4K Gigabit Ethernet Leitor SD PD 100W', 22.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S0017270e193e4e7594e0468f9960dc696.jpg', '4.9', 6200, ['Saída' => 'HDMI 4K@60Hz', 'Rede' => 'RJ45 1000Mbps', 'Portas' => '3x USB 3.0']],
-                ['Fone Condução Óssea Esportivo À Prova de Suor Corrida Academia', 16.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.8', 7900, ['Tecnologia' => 'Condução Óssea', 'Resistência' => 'IP67', 'Bateria' => '8h']],
-                ['Microfone de Lapela Sem Fio Duplo Plug and Play para Celular Vídeos e Lives', 17.00, 'https://ae-pic-a1.aliexpress-media.com/kf/S387b9d2b15a542a496db933f64972442v.jpg', '4.9', 9300, ['Alcance' => '20m sem barreiras', 'Latência' => '0.009s', 'Conector' => 'Type-C/Lightning']],
-                ['Luminária Barra de LED para Monitor Computador RGB Controle Touch Screen', 23.50, 'https://ae-pic-a1.aliexpress-media.com/kf/Sbfb68a625ec14695b84bdf1700855711Z.jpg', '5.0', 6500, ['Iluminação' => 'RGB + Luz Quente/Fria', 'Fixação' => 'Gravação Anti-Reflexo', 'Alimentação' => 'USB 5V']],
-                ['Mouse Sem Fio Ergonômico Vertical Recarregável 6 Botões Silencioso', 13.90, 'https://ae-pic-a1.aliexpress-media.com/kf/Sbfb68a625ec14695b84bdf1700855711Z.jpg', '4.9', 8100, ['DPI' => '800-1600-2400', 'Ergonomia' => 'Postural Anti-LER', 'Conexão' => '2.4GHz + BT 5.0']],
+                ['Fone de Ouvido TWS Bluetooth 5.4 Gamer Baixa Latência LED RGB', 11.80, 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80', '4.8', 14200, ['ANC' => '35dB', 'Bateria' => '30h', 'Bluetooth' => '5.4']],
+                ['Caixa de Som Bluetooth Potente Portátil À Prova D\'água Graves Extra', 26.90, 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&auto=format&fit=crop&q=80', '4.9', 7800, ['Potência' => '30W RMS', 'Bateria' => '12h', 'Resistência' => 'IPX7']],
+                ['Headphone Bluetooth Over-Ear Cancelamento de Ruído ANC Bateria 60h', 36.50, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80', '4.9', 5400, ['ANC' => '40dB', 'Autonomia' => '60h', 'Conexão' => 'Bluetooth 5.3 + P2']],
+                ['Carregador GaN Turbo 65W 3 Portas USB-C PD para Notebook e Celular', 15.20, 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80', '5.0', 16100, ['Potência' => '65W Max', 'Tecnologia' => 'GaN III Fast', 'Bivolt' => '100-240V']],
+                ['Mini Câmera de Segurança Wi-Fi 360 Graus Visão Noturna Infravermelho Full HD', 18.90, 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80', '4.8', 8900, ['Resolução' => '1080p FHD', 'Áudio' => 'Bidirecional', 'App' => 'iOS/Android']],
+                ['Power Bank Magnético MagSafe 10000mAh Carregamento Sem Fio por Indução', 21.50, 'https://images.unsplash.com/photo-1609592424109-dd9892f1b177?w=800&auto=format&fit=crop&q=80', '4.9', 11400, ['Capacidade' => '10000mAh', 'Indução' => '15W Fast', 'Cabo' => 'USB-C 20W']],
+                ['Adaptador Hub USB-C 8 em 1 HDMI 4K Gigabit Ethernet Leitor SD PD 100W', 22.80, 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80', '4.9', 6200, ['Saída' => 'HDMI 4K@60Hz', 'Rede' => 'RJ45 1000Mbps', 'Portas' => '3x USB 3.0']],
+                ['Fone Condução Óssea Esportivo À Prova de Suor Corrida Academia', 16.50, 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&auto=format&fit=crop&q=80', '4.8', 7900, ['Tecnologia' => 'Condução Óssea', 'Resistência' => 'IP67', 'Bateria' => '8h']],
+                ['Microfone de Lapela Sem Fio Duplo Plug and Play para Celular Vídeos e Lives', 17.00, 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80', '4.9', 9300, ['Alcance' => '20m sem barreiras', 'Latência' => '0.009s', 'Conector' => 'Type-C/Lightning']],
+                ['Luminária Barra de LED para Monitor Computador RGB Controle Touch Screen', 23.50, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80', '5.0', 6500, ['Iluminação' => 'RGB + Luz Quente/Fria', 'Fixação' => 'Gravação Anti-Reflexo', 'Alimentação' => 'USB 5V']],
+                ['Mouse Sem Fio Ergonômico Vertical Recarregável 6 Botões Silencioso', 13.90, 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=80', '4.9', 8100, ['DPI' => '800-1600-2400', 'Ergonomia' => 'Postural Anti-LER', 'Conexão' => '2.4GHz + BT 5.0']],
             ],
             'Casa Inteligente & Organização' => [
-                ['Lâmpada LED Inteligente Wi-Fi RGB 15W Bivolt Compatível Alexa Google', 6.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '4.9', 15400, ['Potência' => '15W Bivolt', 'Conexão' => 'Wi-Fi 2.4GHz', 'Cores' => '16 Milhões RGB']],
-                ['Tomada Inteligente Wi-Fi 16A com Monitoramento de Consumo de Energia', 7.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '4.8', 13200, ['Corrente' => '16A Máx', 'App' => 'Smart Life / Tuya', 'Controle' => 'Voz Alexa/Google']],
-                ['Fita LED Inteligente RGB 5m Wi-Fi Sincronização Musical App Celular', 11.20, 'https://ae-pic-a1.aliexpress-media.com/kf/S33b97dc904274cb18329b6fc528ef26eM.jpg', '4.9', 11500, ['Comprimento' => '5 Metros', 'Controle' => 'App + Controle Remoto', 'Efeitos' => 'Sincronia com Música']],
-                ['Dispensador Automático de Sabonete Líquido Espuma Sensor Infravermelho', 12.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '4.8', 8400, ['Capacidade' => '350ml', 'Sensor' => 'Infravermelho 0.25s', 'Alimentação' => 'Bateria Recarregável USB']],
-                ['Aspirador de Pó Robô Inteligente Varre Aspira e Passa Pano Sensor Anti-Queda', 42.00, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '4.9', 4600, ['Funções' => '3 em 1 (Varre, Aspira, Pano)', 'Sensores' => 'Anti-colisão e Anti-queda', 'Bateria' => '90min contínuos']],
-                ['Organizador Giratório 360 Graus para Temperos Cosméticos e Despensa', 13.90, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '4.9', 7300, ['Material' => 'Acrílico Reforçado', 'Rotação' => '360 Graus Suave', 'Bordas' => 'Anti-queda']],
-                ['Termômetro e Higrômetro Digital Bluetooth com Tela LCD Ambientes', 5.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S8f906e5792ae46e9be1e2f75d314811cR.jpg', '5.0', 16500, ['Display' => 'LCD Alta Precisão', 'Conexão' => 'Bluetooth Low Energy', 'Histórico' => 'App Tuya']],
+                ['Lâmpada LED Inteligente Wi-Fi RGB 15W Bivolt Compatível Alexa Google', 6.50, 'https://images.unsplash.com/photo-1550985616-10810253b84d?w=800&auto=format&fit=crop&q=80', '4.9', 15400, ['Potência' => '15W Bivolt', 'Conexão' => 'Wi-Fi 2.4GHz', 'Cores' => '16 Milhões RGB']],
+                ['Tomada Inteligente Wi-Fi 16A com Monitoramento de Consumo de Energia', 7.80, 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80', '4.8', 13200, ['Corrente' => '16A Máx', 'App' => 'Smart Life / Tuya', 'Controle' => 'Voz Alexa/Google']],
+                ['Fita LED Inteligente RGB 5m Wi-Fi Sincronização Musical App Celular', 11.20, 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80', '4.9', 11500, ['Comprimento' => '5 Metros', 'Controle' => 'App + Controle Remoto', 'Efeitos' => 'Sincronia com Música']],
+                ['Dispensador Automático de Sabonete Líquido Espuma Sensor Infravermelho', 12.50, 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=80', '4.8', 8400, ['Capacidade' => '350ml', 'Sensor' => 'Infravermelho 0.25s', 'Alimentação' => 'Bateria Recarregável USB']],
+                ['Aspirador de Pó Robô Inteligente Varre Aspira e Passa Pano Sensor Anti-Queda', 42.00, 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80', '4.9', 4600, ['Funções' => '3 em 1 (Varre, Aspira, Pano)', 'Sensores' => 'Anti-colisão e Anti-queda', 'Bateria' => '90min contínuos']],
+                ['Organizador Giratório 360 Graus para Temperos Cosméticos e Despensa', 13.90, 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=800&auto=format&fit=crop&q=80', '4.9', 7300, ['Material' => 'Acrílico Reforçado', 'Rotação' => '360 Graus Suave', 'Bordas' => 'Anti-queda']],
+                ['Termômetro e Higrômetro Digital Bluetooth com Tela LCD Ambientes', 5.80, 'https://images.unsplash.com/photo-1563770660941-20978e870e26?w=800&auto=format&fit=crop&q=80', '5.0', 16500, ['Display' => 'LCD Alta Precisão', 'Conexão' => 'Bluetooth Low Energy', 'Histórico' => 'App Tuya']],
             ],
             'Beleza, Cuidados & Estilo' => [
                 ['Escova Secadora Modeladora Alisadora Multifuncional 3 em 1 Bivolt', 19.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.9', 14800, ['Potência' => '1200W', 'Revestimento' => 'Cerâmica e Turmalina', 'Temperaturas' => '3 Níveis']],
-                ['Depilador a Laser Luz Pulsada IPL Indolor com 999.000 Disparos', 38.00, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.9', 6100, ['Disparos' => '999.000 Flashes', 'Tecnologia' => 'IPL Rejuvenescimento', 'Ajustes' => '5 Intensidades']],
-                ['Modelador de Cachos Automático Sem Fio Cerâmica Display Digital LCD', 24.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.8', 8200, ['Bateria' => 'Recarregável 5200mAh', 'Câmara' => 'Isolamento Térmico Anti-Queimadura', 'Sentido' => 'Esquerda/Direita']],
-                ['Kit Pincéis de Maquiagem Profissional 14 Peças Cerdas Macias Estojo Couro', 11.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.9', 12300, ['Peças' => '14 Pincéis Profissionais', 'Cerdas' => 'Sintéticas Ultra Macias', 'Estojo' => 'Couro Sintético']],
-                ['Massageador Facial Elétrico Gua Sha Lifting Microcorrentes e LED Terapia', 16.90, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '5.0', 7900, ['Tecnologia' => 'Microcorrentes EMS', 'LED' => 'Luz Vermelha e Azul', 'Modos' => 'Aquecimento 45°C']],
+                ['Depilador a Laser Luz Pulsada IPL Indolor com 999.000 Disparos', 38.00, 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80', '4.9', 6100, ['Disparos' => '999.000 Flashes', 'Tecnologia' => 'IPL Rejuvenescimento', 'Ajustes' => '5 Intensidades']],
+                ['Modelador de Cachos Automático Sem Fio Cerâmica Display Digital LCD', 24.50, 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&auto=format&fit=crop&q=80', '4.8', 8200, ['Bateria' => 'Recarregável 5200mAh', 'Câmara' => 'Isolamento Térmico Anti-Queimadura', 'Sentido' => 'Esquerda/Direita']],
+                ['Kit Pincéis de Maquiagem Profissional 14 Peças Cerdas Macias Estojo Couro', 11.50, 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&auto=format&fit=crop&q=80', '4.9', 12300, ['Peças' => '14 Pincéis Profissionais', 'Cerdas' => 'Sintéticas Ultra Macias', 'Estojo' => 'Couro Sintético']],
+                ['Massageador Facial Elétrico Gua Sha Lifting Microcorrentes e LED Terapia', 16.90, 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&auto=format&fit=crop&q=80', '5.0', 7900, ['Tecnologia' => 'Microcorrentes EMS', 'LED' => 'Luz Vermelha e Azul', 'Modos' => 'Aquecimento 45°C']],
             ],
             'Ferramentas & Utilidades' => [
-                ['Parafusadeira Furadeira Sem Fio Bateria 12V com Kit 24 Peças Maleta', 29.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.9', 8500, ['Voltagem' => '12V Íon-Lítio', 'Mandril' => 'Aperto Rápido 10mm', 'Acessórios' => 'Bits, Brocas e Maleta']],
-                ['Alicate Desencapador de Fios Automático Multifuncional Ajuste de Pressão', 12.00, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.9', 11200, ['Capacidade' => 'Cabos 0.2 a 6.0mm²', 'Corte' => 'Lâmina de Alta Dureza', 'Crimpador' => 'Terminais Isolados']],
-                ['Trena Laser Digital Medidor de Distância 40m com Nível Eletrônico', 16.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '5.0', 9800, ['Alcance' => '40 Metros', 'Precisão' => '±2mm', 'Funções' => 'Área, Volume e Pitágoras']],
-                ['Lanterna Tática Militar LED P90 Super Potente Zoom Recarregável USB', 14.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg', '4.8', 13400, ['Lúmens' => '5000 Lumens', 'Bateria' => '26650 Recarregável', 'Corpo' => 'Alumínio Aeronáutico']],
+                ['Parafusadeira Furadeira Sem Fio Bateria 12V com Kit 24 Peças Maleta', 29.50, 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80', '4.9', 8500, ['Voltagem' => '12V Íon-Lítio', 'Mandril' => 'Aperto Rápido 10mm', 'Acessórios' => 'Bits, Brocas e Maleta']],
+                ['Alicate Desencapador de Fios Automático Multifuncional Ajuste de Pressão', 12.00, 'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?w=800&auto=format&fit=crop&q=80', '4.9', 11200, ['Capacidade' => 'Cabos 0.2 a 6.0mm²', 'Corte' => 'Lâmina de Alta Dureza', 'Crimpador' => 'Terminais Isolados']],
+                ['Trena Laser Digital Medidor de Distância 40m com Nível Eletrônico', 16.50, 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80', '5.0', 9800, ['Alcance' => '40 Metros', 'Precisão' => '±2mm', 'Funções' => 'Área, Volume e Pitágoras']],
+                ['Lanterna Tática Militar LED P90 Super Potente Zoom Recarregável USB', 14.80, 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80', '4.8', 13400, ['Lúmens' => '5000 Lumens', 'Bateria' => '26650 Recarregável', 'Corpo' => 'Alumínio Aeronáutico']],
             ],
             'Pet Shop & Pets Virais' => [
-                ['Bebedouro Fonte Automática para Gatos e Cães com Filtro Carvão Ativado', 16.20, 'https://ae-pic-a1.aliexpress-media.com/kf/S60c6fb8ba48d46449f6d4ec5876dced6J.jpg', '4.9', 12800, ['Capacidade' => '2.5 Litros', 'Bomba' => 'Silenciosa USB', 'Filtragem' => 'Tripla Camada']],
-                ['Escova a Vapor para Gatos e Cães Removedora de Pelos Mortos com Massagem', 9.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S60c6fb8ba48d46449f6d4ec5876dced6J.jpg', '4.8', 15100, ['Tecnologia' => 'Spray de Vapor Suave', 'Cerdas' => 'Silicone Macio', 'Alimentação' => 'USB Recarregável']],
-                ['Coleira LED Luminosa para Cachorro Recarregável Noturna Ajustável', 6.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S60c6fb8ba48d46449f6d4ec5876dced6J.jpg', '4.9', 9700, ['Modos' => 'Pisca Rápido, Lento e Contínuo', 'Bateria' => 'USB Recarregável', 'Resistência' => 'Resistente à Chuva']],
+                ['Bebedouro Fonte Automática para Gatos e Cães com Filtro Carvão Ativado', 16.20, 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80', '4.9', 12800, ['Capacidade' => '2.5 Litros', 'Bomba' => 'Silenciosa USB', 'Filtragem' => 'Tripla Camada']],
+                ['Escova a Vapor para Gatos e Cães Removedora de Pelos Mortos com Massagem', 9.50, 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&auto=format&fit=crop&q=80', '4.8', 15100, ['Tecnologia' => 'Spray de Vapor Suave', 'Cerdas' => 'Silicone Macio', 'Alimentação' => 'USB Recarregável']],
+                ['Coleira LED Luminosa para Cachorro Recarregável Noturna Ajustável', 6.80, 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800&auto=format&fit=crop&q=80', '4.9', 9700, ['Modos' => 'Pisca Rápido, Lento e Contínuo', 'Bateria' => 'USB Recarregável', 'Resistência' => 'Resistente à Chuva']],
             ],
             'Acessórios para Veículos' => [
-                ['Suporte de Celular Veicular com Carregador por Indução 15W Sensor Automático', 17.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S6f9914b5837a49c4bd84c7c2f657bb55Q.jpg', '4.9', 13900, ['Indução' => '15W Fast Charge', 'Abertura' => 'Sensor Infravermelho Elétrico', 'Fixação' => 'Saída de Ar Reforçada']],
-                ['Compressor de Ar Portátil Elétrico Digital para Pneus de Carro e Moto', 28.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S4b18efe7dfed457cbf5f1654e8cffa9fu.jpg', '5.0', 8800, ['Pressão' => '150 PSI Máx', 'Display' => 'Digital LED com Auto Desligamento', 'Bateria' => 'Recarregável 6000mAh']],
-                ['Aspirador Portátil Sem Fio Automotivo Potente Sucção para Carro e Casa', 18.20, 'https://ae-pic-a1.aliexpress-media.com/kf/S6f9914b5837a49c4bd84c7c2f657bb55Q.jpg', '4.8', 11400, ['Potência' => '120W 9000Pa', 'Filtro' => 'HEPA Lavável', 'Acessórios' => 'Bicos de Canto e Escova']],
+                ['Suporte de Celular Veicular com Carregador por Indução 15W Sensor Automático', 17.80, 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800&auto=format&fit=crop&q=80', '4.9', 13900, ['Indução' => '15W Fast Charge', 'Abertura' => 'Sensor Infravermelho Elétrico', 'Fixação' => 'Saída de Ar Reforçada']],
+                ['Compressor de Ar Portátil Elétrico Digital para Pneus de Carro e Moto', 28.50, 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=800&auto=format&fit=crop&q=80', '5.0', 8800, ['Pressão' => '150 PSI Máx', 'Display' => 'Digital LED com Auto Desligamento', 'Bateria' => 'Recarregável 6000mAh']],
+                ['Aspirador Portátil Sem Fio Automotivo Potente Sucção para Carro e Casa', 18.20, 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=800&auto=format&fit=crop&q=80', '4.8', 11400, ['Potência' => '120W 9000Pa', 'Filtro' => 'HEPA Lavável', 'Acessórios' => 'Bicos de Canto e Escova']],
             ],
             'Moda, Roupas & Vestuário' => [
-                ['Mochila Executiva Impermeável Antifurto com Trava TSA e Saída USB', 27.90, 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg', '4.9', 9800, ['Material' => 'Oxford Impermeável', 'Segurança' => 'Trava de Segredo TSA', 'Compartimento' => 'Notebook até 15.6 polegadas']],
-                ['Tênis Esportivo Masculino Respirável Leve Amortecimento Corrida e Caminhada', 21.50, 'https://ae-pic-a1.aliexpress-media.com/kf/Sc43b545078314ac0bb425938c4aed2c4d.jpg', '4.8', 14500, ['Solado' => 'EVA com Gel de Amortecimento', 'Cabedal' => 'Mesh Tecido Respirável', 'Uso' => 'Corrida, Caminhada e Treino']],
-                ['Carteira Masculina de Couro Genuíno Slim com Bloqueio RFID Antifurto', 9.80, 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg', '4.9', 16700, ['Proteção' => 'RFID Anti-clonagem', 'Capacidade' => '8 Cartões + Cédulas', 'Design' => 'Ultra Fina de Bolso']],
+                ['Mochila Executiva Impermeável Antifurto com Trava TSA e Saída USB', 27.90, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80', '4.9', 9800, ['Material' => 'Oxford Impermeável', 'Segurança' => 'Trava de Segredo TSA', 'Compartimento' => 'Notebook até 15.6 polegadas']],
+                ['Tênis Esportivo Masculino Respirável Leve Amortecimento Corrida e Caminhada', 21.50, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80', '4.8', 14500, ['Solado' => 'EVA com Gel de Amortecimento', 'Cabedal' => 'Mesh Tecido Respirável', 'Uso' => 'Corrida, Caminhada e Treino']],
+                ['Carteira Masculina de Couro Genuíno Slim com Bloqueio RFID Antifurto', 9.80, 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&auto=format&fit=crop&q=80', '4.9', 16700, ['Proteção' => 'RFID Anti-clonagem', 'Capacidade' => '8 Cartões + Cédulas', 'Design' => 'Ultra Fina de Bolso']],
             ],
             'Moda Íntima, Lingeries & Pijamas' => [
-                ['Meia-Calça Térmica Feminina Forrada Translúcida Efeito Invisível Inverno', 11.90, 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg', '4.9', 18200, ['Forro' => 'Pelúcia Térmica Macia', 'Efeito' => 'Translúcido Fio 15 Natural', 'Cintura' => 'Alta Modeladora Sem Costura']],
-                ['Kit 5 Cuecas Boxer Masculinas Modal Sem Costura Conforto Térmico Antibacteriano', 14.50, 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg', '4.8', 15600, ['Tecido' => 'Fibra de Modal e Elastano', 'Design' => 'Sem Costura Anatômica', 'Pacote' => 'Kit com 5 Cores Neutras']],
-                ['Conjunto de Lingerie Renda Floral Sexy Sutiã com Sustentação e Calcinha', 13.80, 'https://ae-pic-a1.aliexpress-media.com/kf/Se68992bea5cd4a508b0576ef287f351eq.jpg', '4.9', 9400, ['Renda' => 'Guipir Macia Antialérgica', 'Sutiã' => 'Com Aro Sustentação Push Up', 'Acabamento' => 'Detalhes em Cetim']],
+                ['Meia-Calça Térmica Feminina Forrada Translúcida Efeito Invisível Inverno', 11.90, 'https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?w=800&auto=format&fit=crop&q=80', '4.9', 18200, ['Forro' => 'Pelúcia Térmica Macia', 'Efeito' => 'Translúcido Fio 15 Natural', 'Cintura' => 'Alta Modeladora Sem Costura']],
+                ['Kit 5 Cuecas Boxer Masculinas Modal Sem Costura Conforto Térmico Antibacteriano', 14.50, 'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=800&auto=format&fit=crop&q=80', '4.8', 15600, ['Tecido' => 'Fibra de Modal e Elastano', 'Design' => 'Sem Costura Anatômica', 'Pacote' => 'Kit com 5 Cores Neutras']],
+                ['Conjunto de Lingerie Renda Floral Sexy Sutiã com Sustentação e Calcinha', 13.80, 'https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4?w=800&auto=format&fit=crop&q=80', '4.9', 9400, ['Renda' => 'Guipir Macia Antialérgica', 'Sutiã' => 'Com Aro Sustentação Push Up', 'Acabamento' => 'Detalhes em Cetim']],
             ],
             'Sex Shop & Produtos Adultos (+18)' => [
-                ['Vibrador Líquido Estimulador Clitoriano Silencioso Silicone Médico', 16.50, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.9', 8700, ['Material' => 'Silicone Cirúrgico Hipoalergênico', 'Ruído' => 'Silencioso < 40dB', 'Carga' => 'Magnética USB À Prova D\'água']],
-                ['Varinha Mágica Massageador Corporal Elétrico Potente Recarregável', 23.90, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '4.8', 10200, ['Vibração' => '20 Modos e 8 Velocidades', 'Cabeça' => 'Silicone Flexível 360 Graus', 'Bateria' => 'Longo Alcance 2 horas']],
-                ['Estimulador de Sucção de Ar Clitoriano Pulsações e Ondas de Pressão', 19.80, 'https://ae-pic-a1.aliexpress-media.com/kf/S1b35ffbb765b4c10a16c4e03bc1fc9b1m.jpg', '5.0', 12300, ['Tecnologia' => 'Ondas Sonoras Sem Contato', 'Intensidades' => '10 Níveis Progressivos', 'Resistência' => '100% À Prova D\'água IPX7']],
+                ['Vibrador Líquido Estimulador Clitoriano Silencioso Silicone Médico', 16.50, 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=80', '4.9', 8700, ['Material' => 'Silicone Cirúrgico Hipoalergênico', 'Ruído' => 'Silencioso < 40dB', 'Carga' => 'Magnética USB À Prova D\'água']],
+                ['Varinha Mágica Massageador Corporal Elétrico Potente Recarregável', 23.90, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80', '4.8', 10200, ['Vibração' => '20 Modos e 8 Velocidades', 'Cabeça' => 'Silicone Flexível 360 Graus', 'Bateria' => 'Longo Alcance 2 horas']],
+                ['Estimulador de Sucção de Ar Clitoriano Pulsações e Ondas de Pressão', 19.80, 'https://images.unsplash.com/photo-1512290900672-1f81d117e3f8?w=800&auto=format&fit=crop&q=80', '5.0', 12300, ['Tecnologia' => 'Ondas Sonoras Sem Contato', 'Intensidades' => '10 Níveis Progressivos', 'Resistência' => '100% À Prova D\'água IPX7']],
             ],
         ];
 
@@ -1085,9 +1126,9 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_title' => 'Fone de Ouvido Lenovo TWS Pro Cancelamento de Ruído ANC Microfone HD',
                     'category_name' => 'Eletrônicos & Gadget',
                     'target_sale_price' => '12.80',
-                    'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80',
                     'images' => [
-                        'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg',
+                        'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80',
                         'https://ae-pic-a1.aliexpress-media.com/kf/Saf56a139d0034b62b7e6ecac7f3f90fao.jpg',
                     ],
                     'evaluate_rate' => '4.8',
@@ -1400,9 +1441,9 @@ class ProductMiningService implements ProductMiningServiceInterface
                     'product_title' => 'Modelador de Cabelo Automático Auto Curling Sem Fio Display LED',
                     'category_name' => 'Beleza, Cuidados & Estilo',
                     'target_sale_price' => '17.20',
-                    'product_main_image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg',
+                    'product_main_image_url' => 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&auto=format&fit=crop&q=80',
                     'images' => [
-                        'https://ae-pic-a1.aliexpress-media.com/kf/S19d1c7dace654de7918987ecffe76d2fh.jpg',
+                        'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&auto=format&fit=crop&q=80',
                     ],
                     'evaluate_rate' => '4.8',
                     'volume' => 8400,

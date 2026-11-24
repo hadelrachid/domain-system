@@ -28,9 +28,13 @@ try {
     $catalogProducts = [];
 }
 
-// 2. Fallback de produtos minerados virais caso o catálogo ainda esteja iniciando
+// 2. Se o catálogo estiver vazio, adquire e persiste os produtos campeões de vendas
 if (empty($catalogProducts) && isset($miningSvc)) {
-    $catalogProducts = $miningSvc->getCuratedTrendingFallback();
+    try {
+        $catalogProducts = $miningSvc->mineTrendingProducts('Eletrônicos & Gadget', 12, true, 'volume_desc');
+    } catch (\Throwable $e) {
+        $catalogProducts = [];
+    }
 }
 ?>
 

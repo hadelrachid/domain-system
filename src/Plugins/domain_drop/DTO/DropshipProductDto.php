@@ -407,6 +407,26 @@ final class DropshipProductDto
         return 0;
     }
 
+    public function withSlug(string $slug): self
+    {
+        return new self(
+            aliexpressId: $this->aliexpressId,
+            title: $this->title,
+            slug: $slug,
+            costPriceUsd: $this->costPriceUsd,
+            salePriceBrl: $this->salePriceBrl,
+            mainImageUrl: $this->mainImageUrl,
+            images: $this->images,
+            category: $this->category,
+            description: $this->description,
+            rating: $this->rating,
+            ordersCount: $this->ordersCount,
+            attributes: $this->attributes,
+            status: $this->status,
+            id: $this->id
+        );
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -364,17 +364,32 @@ class DropshipFrontController
     public function singleProduct(Request $request, string $slug): ResponseInterface
     {
         $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        $rawSlug = trim($slug);
+        $cleanSlug = trim(urldecode($slug));
 
-        // Tenta buscar por ID numérico ou pelo slug amigável do produto
+        // 1. Tenta buscar por ID numérico ou pelo slug amigável do produto
         $product = null;
-        if (is_numeric($slug)) {
-            $product = $this->catalogRepo->findById((int)$slug);
+        if (is_numeric($cleanSlug)) {
+            $product = $this->catalogRepo->findById((int)$cleanSlug);
         } else {
-            $product = $this->catalogRepo->findBySlug($slug);
+            $product = $this->catalogRepo->findBySlug($cleanSlug);
+            if (!$product && $rawSlug !== $cleanSlug) {
+                $product = $this->catalogRepo->findBySlug($rawSlug);
+            }
+        }
+
+        // 2. Tenta por ID original do AliExpress se fornecido na URL
+        if (!$product && strlen($cleanSlug) >= 10) {
+            $product = $this->catalogRepo->findByAliExpressId($cleanSlug);
+        }
+
+        // 3. Se ainda não encontrado no banco (ex: produto minerado dinâmico ou do catálogo curado), busca e auto-persiste
+        if (!$product) {
+            $product = $this->resolveAndPersistMinedProduct($cleanSlug);
         }
 
         if (!$product) {
-            return new Response("<h1>404 - Produto não encontrado na loja</h1>", 404);
+            return $this->render404ProductNotFound($baseUrl);
         }
 
         // Rastreamento Server-Side Garantido de 'Ver Detalhes'
@@ -535,7 +550,7 @@ class DropshipFrontController
         return $this->wrapWithThemeOrRaw($content, 'Política de Envio & Prazos - RachidD.com');
     }
 
-    private function wrapWithThemeOrRaw(string $content, string $title): ResponseInterface
+    private function wrapWithThemeOrRaw(string $content, string $title, int $statusCode = 200): ResponseInterface
     {
         $headers = [
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
@@ -550,13 +565,73 @@ class DropshipFrontController
                     'title'   => $title,
                     'content' => $content,
                 ]);
-                return new Response($wrapped, 200, $headers);
+                return new Response($wrapped, $statusCode, $headers);
             } catch (Throwable $e) {
-                // Fallback para SeoMiddleware ou entrega direta
+                // Fallback para entrega direta
             }
         }
 
-        return new Response($content ?: '', 200, $headers);
+        return new Response($content ?: '', $statusCode, $headers);
+    }
+
+    /**
+     * Resolve um produto do catálogo curado / padrões de mineração e auto-persiste no repositório.
+     */
+    private function resolveAndPersistMinedProduct(string $slug): ?\DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto
+    {
+        if ($this->miningService === null) {
+            return null;
+        }
+
+        try {
+            $rawItem = null;
+            if (is_numeric($slug)) {
+                $rawItem = $this->miningService->findCuratedProductById($slug);
+            }
+            if ($rawItem === null) {
+                $rawItem = $this->miningService->findCuratedProductBySlug($slug);
+            }
+
+            if ($rawItem !== null && is_array($rawItem)) {
+                $dto = $this->miningService->transformRawItemToDto($rawItem, (string)($rawItem['category_name'] ?? 'Eletrônicos & Gadget'));
+                if (!empty($slug) && !is_numeric($slug)) {
+                    $dto = $dto->withSlug($slug);
+                }
+                $savedId = $this->catalogRepo->save($dto);
+                return $this->catalogRepo->findById($savedId) ?? $dto;
+            }
+        } catch (\Throwable $e) {
+            // Isolamento gracioso
+        }
+
+        return null;
+    }
+
+    /**
+     * Renderiza página amigável integrada ao tema quando o produto não existe.
+     */
+    private function render404ProductNotFound(string $baseUrl): ResponseInterface
+    {
+        ob_start();
+        ?>
+        <div class="container" style="max-width: 850px; margin: 60px auto; padding: 45px 25px; text-align: center; background: rgba(18,24,38,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; backdrop-filter: blur(12px);">
+            <div style="font-size: 56px; margin-bottom: 16px;">🛍️</div>
+            <h1 style="color: #fff; font-size: 26px; font-weight: 800; margin: 0 0 12px 0;">Produto Indisponível no Momento</h1>
+            <p style="color: #94a3b8; font-size: 15px; max-width: 550px; margin: 0 auto 28px; line-height: 1.6;">
+                O produto que você procura pode ter esgotado o estoque no lote de 24h ou foi atualizado pelo fornecedor. Explore centenas de outras ofertas ativas com frete grátis na nossa vitrine!
+            </p>
+            <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+                <a href="<?= htmlspecialchars($baseUrl) ?>/loja" class="gold-button" style="padding: 12px 28px; font-size: 14px; text-decoration: none;">
+                    Ver Todas as Ofertas ➔
+                </a>
+                <a href="<?= htmlspecialchars($baseUrl) ?>/" style="padding: 12px 24px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none;">
+                    Ir para a Página Inicial
+                </a>
+            </div>
+        </div>
+        <?php
+        $content = (string)ob_get_clean();
+        return $this->wrapWithThemeOrRaw($content, 'Produto Indisponível - Loja Oficial', 404);
     }
 
     /**

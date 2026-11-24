@@ -555,7 +555,13 @@
                                 <a href="<?= $baseUrl ?>/produto/<?= urlencode($prod->slug) ?>" target="_blank" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #45f3ff; background: rgba(69, 243, 255, 0.08); border: 1px solid rgba(69, 243, 255, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; box-sizing: border-box; line-height: 1;" title="Visualizar na loja">
                                     <i class="fas fa-eye"></i> Loja
                                 </a>
-                                <a href="https://www.aliexpress.com/item/<?= htmlspecialchars($prod->aliexpressId) ?>.html" target="_blank" rel="noopener noreferrer" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #ff6b6b; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; box-sizing: border-box; line-height: 1;" title="Abrir link original no AliExpress">
+                                <?php
+                                $isRealAeId = !empty($prod->aliexpressId) && is_numeric($prod->aliexpressId) && strlen($prod->aliexpressId) >= 12 && !str_starts_with($prod->aliexpressId, '100508');
+                                $aeLink = $isRealAeId
+                                    ? 'https://www.aliexpress.com/item/' . htmlspecialchars($prod->aliexpressId) . '.html'
+                                    : 'https://www.aliexpress.com/wholesale?SearchText=' . urlencode($prod->title);
+                                ?>
+                                <a href="<?= $aeLink ?>" target="_blank" rel="noopener noreferrer" style="height: 26px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #ff6b6b; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.25); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; box-sizing: border-box; line-height: 1;" title="<?= $isRealAeId ? 'Abrir anúncio original no AliExpress' : 'Buscar fornecedores deste item no AliExpress' ?>">
                                     <i class="fas fa-external-link-alt"></i> Link
                                 </a>
                                 <?php if ($prod->id !== null): ?>
@@ -1094,7 +1100,10 @@
 
             document.getElementById('imagesModalTitle').textContent = activeImagesState.title;
             document.getElementById('imagesModalTitle').title = activeImagesState.title;
-            document.getElementById('imagesModalAeLink').href = 'https://www.aliexpress.com/item/' + encodeURIComponent(activeImagesState.aliexpressId) + '.html';
+            var isRealId = activeImagesState.aliexpressId && /^\d{12,}$/.test(activeImagesState.aliexpressId) && !String(activeImagesState.aliexpressId).startsWith('100508');
+            document.getElementById('imagesModalAeLink').href = isRealId
+                ? 'https://www.aliexpress.com/item/' + encodeURIComponent(activeImagesState.aliexpressId) + '.html'
+                : 'https://www.aliexpress.com/wholesale?SearchText=' + encodeURIComponent(activeImagesState.title);
             document.getElementById('imagesModalNewUrl').value = '';
             setImagesModalStatus('', 'info');
             renderImagesModalGrid();
