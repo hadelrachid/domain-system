@@ -124,5 +124,5 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
 ---
 
 ## 📚 Veja Também
-- [Como Criar um Tema Visual](Criando-Temas.md)
-- [Voltar para a Página Principal da Wiki](Home.md)
+- [Como Criar um Tema Visual](Criando-Temas)
+- [Voltar para a Página Principal da Wiki](Home)

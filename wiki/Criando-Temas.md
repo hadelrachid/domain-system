@@ -170,5 +170,5 @@ require $themeDir . '/layouts/main.php';
 ---
 
 ## 📚 Veja Também
-- [Como Criar um Plugin do Zero](Criando-Plugins.md)
-- [Voltar para a Página Principal da Wiki](Home.md)
+- [Como Criar um Plugin do Zero](Criando-Plugins)
+- [Voltar para a Página Principal da Wiki](Home)

@@ -44,15 +44,25 @@ Esta Wiki e o código estão de portas abertas para você:
 
 ## 🚀 Guias Passo a Passo
 
-* 🧩 **[Como Criar um Plugin do Zero](Criando-Plugins.md)** — Crie sua primeira extensão em minutos com rotas, menu no admin e banco de dados.
-* 🎨 **[Como Criar um Tema Visual](Criando-Temas.md)** — Construa layouts rápidos e responsivos usando PHP puro e HTML.
-* 🔄 **[Atualizações com 1 Clique](Atualizacoes.md)** — Como funciona a atualização do Core e o atualizador de plugins estilo WordPress.
-* 📐 **[Política de Versionamento SemVer](Versionamento.md)** — Como funciona a numeração de versões (MAJOR.MINOR.PATCH) nos 3 pilares.
-* ⚡ **[Disjuntor de Segurança (Circuit Breaker)](Disjuntor-Circuit-Breaker.md)** — Como o sistema desliga plugins com erro para nunca derrubar seu site em produção.
-* 📦 **[DomainDrop (Dropshipping)](DomainDrop.md)** — Entenda o motor de importação, mineração de ofertas 24h e rastreio.
-* 🏗️ **[Flex Builder (Construtor Visual)](Flex-Builder.md)** — Como montar páginas arrastando blocos em uma grade de 12 colunas.
-* 🛡️ **[Controle de Acessos e Permissões](Global-Gatekeeper.md)** — Segurança por cargos, permissões e 2FA.
-* 🚨 **[Modo de Emergência](Emergency-Hatch.md)** — Procedimento seguro para recuperar acesso ao painel caso perca a senha.
+* 🧩 **[Como Criar um Plugin do Zero](Criando-Plugins)** — Crie sua primeira extensão em minutos com rotas, menu no admin e banco de dados.
+* 🎨 **[Como Criar um Tema Visual](Criando-Temas)** — Construa layouts rápidos e responsivos usando PHP puro e HTML.
+* 🔄 **[Atualizações com 1 Clique](Atualizacoes)** — Como funciona a atualização do Core e o atualizador de plugins estilo WordPress.
+* 📐 **[Política de Versionamento SemVer](Versionamento)** — Como funciona a numeração de versões (MAJOR.MINOR.PATCH) nos 3 pilares.
+* ⚡ **[Disjuntor de Segurança (Circuit Breaker)](Disjuntor-Circuit-Breaker)** — Como o sistema desliga plugins com erro para nunca derrubar seu site em produção.
+* 📦 **[DomainDrop (Dropshipping)](DomainDrop)** — Entenda o motor de importação, mineração de ofertas 24h e rastreio.
+* 🏗️ **[Flex Builder (Construtor Visual)](Flex-Builder)** — Como montar páginas arrastando blocos em uma grade de 12 colunas.
+* 🛡️ **[Controle de Acessos e Permissões](Global-Gatekeeper)** — Segurança por cargos, permissões e 2FA.
+* 🚨 **[Modo de Emergência](Emergency-Hatch)** — Procedimento seguro para recuperar acesso ao painel caso perca a senha.
+
+---
+
+## 📖 Documentação Interativa & Arquitetura Oficial
+
+Além dos guias desta Wiki, você pode explorar a documentação técnica interativa oficial:
+
+* 🚀 **[Guia Interativo de Extensões (Temas e Plugins)](https://hadelrachid.github.io/domain-system/tutorial-dev.html)** — Guia visual com injeção de dependências e exemplos práticos.
+* 📜 **[Manifesto do Contrato do Sistema](https://hadelrachid.github.io/domain-system/01-o-contrato-do-sistema.html)** — A arquitetura de desacoplamento e governança de contratos.
+* 🤖 **[O Ciclo de Confiança Verificável (IA)](https://hadelrachid.github.io/domain-system/architecture/01-ciclo-de-confianca-verificavel.html)** — Como a arquitetura foi desenhada para validação contínua e testes automatizados.
 
 ---
 
