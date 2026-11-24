@@ -24,16 +24,16 @@ class AuthControllerRedirectTest extends TestCase
         $cockpit = $this->createMock(CockpitRegistryInterface::class);
         $cockpit->method('getProviderForRole')->willReturn(null);
 
-        $sessionStorage = $sessionData;
+        $sessionStorage = new \ArrayObject($sessionData);
         $session = $this->createMock(SessionManager::class);
-        $session->method('has')->willReturnCallback(function ($key) use (&$sessionStorage) {
-            return isset($sessionStorage[$key]);
+        $session->method('has')->willReturnCallback(function ($key) use ($sessionStorage) {
+            return $sessionStorage->offsetExists($key);
         });
-        $session->method('get')->willReturnCallback(function ($key, $default = null) use (&$sessionStorage) {
-            return $sessionStorage[$key] ?? $default;
+        $session->method('get')->willReturnCallback(function ($key, $default = null) use ($sessionStorage) {
+            return $sessionStorage->offsetExists($key) ? $sessionStorage->offsetGet($key) : $default;
         });
-        $session->method('set')->willReturnCallback(function ($key, $val) use (&$sessionStorage) {
-            $sessionStorage[$key] = $val;
+        $session->method('set')->willReturnCallback(function ($key, $val) use ($sessionStorage) {
+            $sessionStorage->offsetSet($key, $val);
         });
 
         if ($userRecord !== null) {
@@ -49,7 +49,7 @@ class AuthControllerRedirectTest extends TestCase
             new SafeRedirectValidator()
         );
 
-        return [$controller, &$sessionStorage];
+        return [$controller, $sessionStorage];
     }
 
     public function testAdminLoginWithRedirectParamRedirectsToAdminDashboard(): void
@@ -109,7 +109,7 @@ class AuthControllerRedirectTest extends TestCase
         $this->assertStringNotContainsString('aluno', $location);
     }
 
-    public function testRegularUserLoginDoesNotRedirectToAlunoPainelWithoutProvider(): void
+    public function testRegularUserLoginIsRejectedOnAdminLoginGate(): void
     {
         $passwordHash = password_hash('UserPass123!', PASSWORD_DEFAULT);
         $userRecord = [
@@ -133,8 +133,9 @@ class AuthControllerRedirectTest extends TestCase
 
         $this->assertSame(302, $response->getStatusCode());
         $location = $response->getHeader('Location') ?? '';
-        // Never bounce regular users to decoupled /aluno/painel
-        $this->assertStringNotContainsString('aluno', $location);
+        // Usuário comum é rejeitado na porta de entrada do Admin e permanece no /login com erro amigável
+        $this->assertStringEndsWith('/login', $location);
+        $this->assertSame('Credenciais inválidas. Verifique seu e-mail e senha.', $sessionStorage['auth_error'] ?? '');
     }
 
     public function testShowLoginFormForLoggedInAdminRedirectsToAdmin(): void
