@@ -9,6 +9,12 @@ use PHPUnit\Framework\TestCase;
 
 final class StripeSignatureVerifierTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/commerce')) { $this->markTestSkipped('Plugin agregado externo [commerce] não está presente no checkout.'); return; }
+    }
+
     private function sign(string $body, string $secret, int $ts): string
     {
         return 't=' . $ts . ',v1=' . hash_hmac('sha256', $ts . '.' . $body, $secret);

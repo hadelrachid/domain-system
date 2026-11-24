@@ -10,6 +10,12 @@ use PHPUnit\Framework\TestCase;
 
 class StudentAuthIsolationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
+    }
+
     public function testStudentLogoutDoesNotPurgeAdminGlobalSession(): void
     {
         $sessionData = [

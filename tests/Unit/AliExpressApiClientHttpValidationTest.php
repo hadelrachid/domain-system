@@ -13,6 +13,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class AliExpressApiClientHttpValidationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/commerce')) { $this->markTestSkipped('Plugin agregado externo [commerce] não está presente no checkout.'); return; }
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) { $this->markTestSkipped('Plugin agregado externo [domain_drop] não está presente no checkout.'); return; }
+    }
+
     public function testAliExpressApiExceptionCarriesTypeAndCode(): void
     {
         $ex = new AliExpressApiException('Falha de conexão', 500, 'HTTP_ERROR');

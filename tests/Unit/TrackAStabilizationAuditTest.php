@@ -38,6 +38,7 @@ class TrackAStabilizationAuditTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
         parent::setUp();
         $this->tempDir = sys_get_temp_dir() . '/ds_track_a_' . bin2hex(random_bytes(4));
         if (!is_dir($this->tempDir)) {

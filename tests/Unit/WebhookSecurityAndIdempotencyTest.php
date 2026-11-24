@@ -21,6 +21,7 @@ final class WebhookSecurityAndIdempotencyTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/commerce')) { $this->markTestSkipped('Plugin agregado externo [commerce] não está presente no checkout.'); return; }
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->orderRepo = new PdoOrderRepository($this->pdo);

@@ -71,6 +71,7 @@ final class DomainDropClaudeAuditSecurityTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) { $this->markTestSkipped('Plugin agregado externo [domain_drop] não está presente no checkout.'); return; }
         $this->tempDir = sys_get_temp_dir() . '/domain_drop_test_' . bin2hex(random_bytes(6));
         mkdir($this->tempDir . '/config/plugins', 0777, true);
         $this->tempConfigFile = $this->tempDir . '/config/plugins/domain_drop.json';

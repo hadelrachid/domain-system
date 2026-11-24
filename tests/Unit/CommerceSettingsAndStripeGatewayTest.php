@@ -25,6 +25,7 @@ final class CommerceSettingsAndStripeGatewayTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/commerce')) { $this->markTestSkipped('Plugin agregado externo [commerce] não está presente no checkout.'); return; }
         $this->tempSettingsFile = sys_get_temp_dir() . '/ds_test_settings_' . bin2hex(random_bytes(4)) . '.json';
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

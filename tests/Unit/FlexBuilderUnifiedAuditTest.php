@@ -54,6 +54,7 @@ class FlexBuilderUnifiedAuditTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
         parent::setUp();
         $this->tempDir = sys_get_temp_dir() . '/ds_audit_test_' . uniqid('', true);
         @mkdir($this->tempDir, 0777, true);

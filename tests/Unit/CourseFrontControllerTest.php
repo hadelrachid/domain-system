@@ -28,6 +28,7 @@ class CourseFrontControllerTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
         parent::setUp();
 
         $this->pdo = new PDO('sqlite::memory:');

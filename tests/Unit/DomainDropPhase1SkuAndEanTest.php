@@ -16,6 +16,12 @@ use PHPUnit\Framework\TestCase;
 
 final class DomainDropPhase1SkuAndEanTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) { $this->markTestSkipped('Plugin agregado externo [domain_drop] não está presente no checkout.'); return; }
+    }
+
     public function testAliExpressApiClientPhase1Endpoints(): void
     {
         $client = new class('test_app_key', 'test_app_secret', 'https://api-sg.aliexpress.com/sync') extends AliExpressApiClient {

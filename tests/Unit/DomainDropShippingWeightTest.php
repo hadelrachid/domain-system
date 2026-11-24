@@ -13,6 +13,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class DomainDropShippingWeightTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) { $this->markTestSkipped('Plugin agregado externo [domain_drop] não está presente no checkout.'); return; }
+    }
+
     public function testLightProductUnder300gChargesStandardExpressPrice(): void
     {
         $dto = new DropshipProductDto(

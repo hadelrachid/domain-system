@@ -39,5 +39,10 @@ token/
 public/migrate_pages.php
 .kilo/
 config/plugins/
+# Plugins Agregados Externos (mantidos e versionados no repositório domain-system-plugins)
+/src/Plugins/academy/
+/src/Plugins/commerce/
+/src/Plugins/domain_drop/
+
 public/assets/cache/*
 !public/assets/cache/.gitkeep

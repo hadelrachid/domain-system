@@ -21,6 +21,7 @@ final class AcademyPdfViewerBlockTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
         $this->tempDir = sys_get_temp_dir() . '/ds_pdf_test_' . uniqid('', true);
         @mkdir($this->tempDir . '/public', 0755, true);
     }

@@ -32,6 +32,12 @@ use PHPUnit\Framework\TestCase;
 
 class StudentManagementAndModerationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/academy')) { $this->markTestSkipped('Plugin agregado externo [academy] não está presente no checkout.'); return; }
+    }
+
     private function createInMemoryUserRepository(): UserRepository
     {
         $pdo = new PDO('sqlite::memory:');
