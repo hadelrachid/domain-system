@@ -1,68 +1,47 @@
-# 🔄 Sistema de Atualizações Automáticas (GitHub Releases — Modelo A)
+# 🔄 Sistema de Atualizações com 1 Clique
 
-O **Domain System** possui um subsistema nativo de verificação e atualização do núcleo (`SystemUpdater`), projetado para operar com segurança em servidores dedicados e ambientes de hospedagem compartilhada (como a Hostinger).
-
----
-
-## 🏛️ Arquitetura Orientada a Contratos
-
-O fluxo de atualização é regido pelos **25 contratos** definidos em `src/Core/Contracts/Update/`:
-- **Isolamento de Infraestrutura:** Os serviços de domínio (`src/Core/Update/Service/`) e o aplicativo de sistema (`src/SystemApps/SystemUpdater/`) não contêm chamadas diretas a superglobais (`$_GET`, `$_POST`, `$_SESSION`) ou rotinas não desacopladas de `PDO`, `curl_*` e `ZipArchive`, sendo validados por testes automatizados em `UpdateArchitectureTest`.
-- **Modelo A (Monorepo):** O núcleo e as extensões oficiais acompanham o mesmo versionamento (`2.7.0`) e são distribuídos em pacotes assinados por SHA-256 (`domain-system-X.Y.Z.zip` + `domain-system-X.Y.Z.zip.sha256`).
+O **Domain System** vem de fábrica com um sistema de atualizações seguro e automático. Você não precisa conectar via FTP ou mexer em código no servidor para manter o sistema e os plugins em dia.
 
 ---
 
-## 🔐 Segurança e Integridade
+## 🏛️ Duas Camadas de Atualização
 
-1. **Lista de Hosts Autorizados (`HostAllowlist` + `CurlHttpClient`):** Apenas os domínios `api.github.com`, `github.com`, `objects.githubusercontent.com` e `codeload.github.com` são aceitos, com conexões HTTPS e verificação TLS ativa.
-2. **Dupla Validação SHA-256 (`Sha256PackageVerifier`):** Valida a integridade do arquivo `.zip` contra o hash publicado na Release e inspeciona individualmente cada arquivo listado no `manifest.json` em um diretório temporário de quarentena, prevenindo Zip-Slip e links simbólicos maliciosos.
-3. **Preservação de Dados Locais (`CoreProtectedPaths`):** Arquivos essenciais da instalação local (`.env`, `.maintenance`, `config/`, `database.sqlite`, `storage/`, `temp/`, `uploads/`, `public/uploads/` e temas customizados) **nunca** são sobrescritos. Arquivos padrão de configuração novos utilizam o modo `default_if_missing`.
-4. **Backup Preventivo e Rollback Automático:** Antes de iniciar a substituição de arquivos ou migrações de banco, o sistema gera uma cópia de segurança em `storage/backups/core/<id>/code.zip` e realiza o backup do banco (`SqliteDatabaseBackup` ou `MysqlDatabaseBackup`). Em caso de interrupção ou falha, o rollback é acionado automaticamente.
+### 1. Atualização do Núcleo do Sistema (Core)
+* Onde fica: Acesse **Configurações → Atualizações** (`/admin/settings/updates`) ou clique no número da versão no rodapé do painel.
+* Como funciona: O sistema consulta as versões oficiais no GitHub Releases.
+* Segurança antes de tudo: Antes de tocar em qualquer arquivo, o sistema cria um **backup completo** dos seus arquivos e do banco de dados na pasta `storage/backups/`. Se faltar luz ou a conexão cair no meio do caminho, o sistema desfaz as alterações automaticamente (rollback).
+* Proteção dos seus dados: Arquivos vitais como suas configurações (`.env`, `config/`), banco de dados (`database.sqlite`), fotos e mídias de clientes **nunca são substituídos**.
 
----
-
-## 🖥️ Atualização pelo Painel Administrativo
-
-1. Acesse **Configurações Globais → aba Atualizações** (`/admin/settings/updates`) ou selecione o indicador **Versão do Sistema** no Painel (`/admin`).
-2. Clique em **🔍 Verificar agora** para consultar a última versão estável disponibilizada no GitHub Releases.
-3. Havendo versão disponível, revise o changelog e os itens de pré-verificação antes de confirmar.
-4. O progresso é exibido etapa por etapa:
-   `Checked → Downloaded → Verified → Preflighted → BackedUp → MaintenanceOn → Applied → Migrated → SchemaVerified → HealthChecked → Concluído`.
+### 2. Atualização de Plugins com 1 Clique (Estilo WordPress)
+* Onde fica: Acesse **Plugins** (`/admin/plugins`).
+* Alertas automáticos: O sininho no topo do painel (`#os-notif-bell`) acende e avisa sempre que houver novidades no repositório oficial de extensões.
+* Atualização seletiva: Cada plugin instalado exibe um box informando quando há uma versão superior disponível.
+* Instalação segura: Ao clicar em **"Atualizar Agora"**, o sistema faz o download do pacote oficial (.zip) diretamente do GitHub Releases, confere a impressão digital SHA-256 para garantir que o arquivo não foi corrompido, e substitui a pasta do plugin sem afetar o resto do site.
 
 ---
 
-## 💻 Atualização via Linha de Comando (CLI)
+## 🔐 Como Garantimos que Nada Vai Quebrar
 
-O utilitário `os-cli.php` na raiz do projeto permite executar todas as rotinas pelo terminal:
+1. **Conexões Apenas com Hosts Seguros:** O sistema só baixa arquivos de servidores oficiais da infraestrutura do GitHub com certificado SSL/TLS ativo.
+2. **Dupla Conferência Criptográfica (SHA-256):** O pacote baixado só é descompactado se o código hash bater perfeitamente com o registro oficial publicado no manifesto `marketplace.json`.
+3. **Disjuntor de Segurança (Circuit Breaker):** Se um plugin atualizado tiver qualquer erro inesperado em código de terceiros, o sistema desarma apenas aquele plugin e mantém o painel e as outras páginas funcionando normalmente.
+
+---
+
+## 💻 Atualizações pelo Terminal (Para Desenvolvedores e Servidores)
+
+Se você preferir gerenciar atualizações via terminal no seu servidor, use o comando:
 
 ```bash
-# Verificar se há nova versão disponível
+# Conferir se há nova versão disponível para o sistema
 php os-cli.php system:check
 
-# Exibir status do sistema de atualização
+# Ver o status atual
 php os-cli.php system:status
 
-# Executar a atualização completa com confirmação automática
+# Aplicar a atualização com confirmação
 php os-cli.php system:update --yes
 
-# Reverter a última atualização ou restaurar um backup específico
+# Desfazer a última atualização e restaurar o backup
 php os-cli.php system:rollback
-php os-cli.php system:rollback <backup-id>
-
-# Executar verificação de saúde da aplicação e integridade do banco
-php os-cli.php system:health
 ```
-
----
-
-## 📦 Empacotamento de Releases
-
-Para gerar o pacote compactado de uma nova versão:
-
-```bash
-php tools/build-release.php
-```
-
-O script lê a versão definida em `bootstrap.php` (`DS_VERSION`), aplica as regras de exclusão de `release/exclude.txt`, inclui a definição de esquema de `release/schema-expects.json` e gera os artefatos na pasta `dist/`:
-- `dist/domain-system-X.Y.Z.zip`
-- `dist/domain-system-X.Y.Z.zip.sha256`

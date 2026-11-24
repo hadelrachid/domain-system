@@ -1,118 +1,116 @@
-# Domain System (v2.7.0)
+# Domain System (v2.8.3)
 
-> **A full-featured, ultra-lightweight (~30 MB), and fast web operating platform built with clean, modern PHP 8.2 — no heavy frameworks, no bloated plugin mazes.**
+> **A lean, fast, and complete web operating platform written in clean modern PHP 8.2 — no bulky frameworks, no endless plugin bloat.**
 
-Hi! My name is Hadel, and I am a self-taught developer. I started building **Domain System** around a simple question: can we build a full CMS with international dropshipping/e-commerce and an online school that runs blazing fast, uses only **~5 MB of RAM** per request, and takes up just **~30 MB on disk** — running smoothly even on inexpensive shared hosting or a cheap VPS?
+Hi! My name is Hadel, and I am a self-taught software creator. I started building **Domain System** around a straightforward conviction: you can build an online school, an e-commerce store, and a full content management system that runs smoothly on just **~5 MB of RAM** and takes up barely **~30 MB on disk**. It spins up quickly on any standard shared hosting account or a simple $5 virtual machine.
 
-No bloat. No massive framework lock-in. No fragile house-of-cards of 50 third-party plugins.
+No bloated vendor folders. No fragile house of cards made of 50 conflicting libraries.
 
 ---
 
-[🇧🇷 Versão em Português](README.md) | [🌱 My Story](ABOUT-en.md) | [🔍 Inside the System (Step-by-Step Guide)](docs/documentacao-sistema/en/README.md) | [📚 Official Wiki](https://github.com/hadelrachid/domain-system/wiki) | [📖 Online Docs](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md) | [🤝 Community](#-i-need-your-help-join-the-project)
+[🇧🇷 Versão em Português](README.md) | [🌱 My Story](ABOUT-en.md) | [🔍 Inside the System](docs/documentacao-sistema/en/README.md) | [📚 Official Wiki](https://github.com/hadelrachid/domain-system/wiki) | [📖 Online Docs](https://hadelrachid.github.io/domain-system/) | [🗺️ Roadmap](ROADMAP.md) | [👨‍💻 Developer Guide](DEVELOPER_GUIDE.md) | [🤝 Community](#-i-need-your-help-join-the-project)
+
+---
+
+## 🏛️ The Three Pillars Architecture
+
+To keep this main repository lightweight and fast to clone, we separated the platform into three clean pieces:
+
+1. **The Operating Core (Domain-System Cockpit OS — This Repository):**  
+   The solid foundation. It houses the system kernel, the administration cockpit, the user authentication engine, security defenses, and lightweight starter extensions (`clock_widget`, `radio_online`, and the `flextheme` layout engine).
+2. **The Extensions Repository ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):**  
+   Where standalone business applications live:
+   * **DomainDrop:** AliExpress product discovery, profit margin calculation, and 24-hour order sync.
+   * **DomainCommerce:** Checkout processing with instant Pix, multi-card installments via Mercado Pago, global PayPal payments, and affiliate webhook receivers (Hotmart, Eduzz, Monetizze).
+   * **Academy LMS:** Online school management with a distraction-free student portal and automatic completion certificates.
+3. **The Themes Repository ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):**  
+   Where storefront themes live, such as the official **RachidD Store** dropshipping template.
+
+You pick what your project needs and install it with a single click inside the admin panel.
 
 ---
 
 ## 🤝 I need your help: Join the project!
 
-Because I build mostly on my own, I use modern Artificial Intelligence models as my **daily code audit partners**. I have them comb through the code line by line, hunting down logic errors, concurrency issues, edge cases, and security vulnerabilities. Today, the project has a battle-tested suite of **656 automated tests in PHPUnit with over 3,900 assertions**.
+Because I work on this by myself most days, I use AI tools as assistant auditors to comb through lines of code looking for things human eyes might miss after midnight. Today, the project has a suite of **760 automated tests in PHPUnit with over 4,590 assertions**.
 
-But let's be real: **AI only goes so far. Nothing replaces the sharp eyes, hard-earned experience, and sanity checks of real human developers.**
+Still, let's face facts: **nothing beats the intuition, street smarts, and hands-on experience of real human developers.**
 
-I am opening the doors wide and actively looking for people who want to team up:
-- **Code & Security Auditors:** Come try to break the system! Spot weaknesses, point out flaws, and propose fixes.
-- **Software Architects & PHP Enthusiasts:** Help me keep the architecture clean, simple, and decoupled, without falling into the trap of overengineering what should be straightforward.
-- **Testers:** Spin it up on your local machine or server. Test the dropshipping checkout, create courses, build themes, and tell me what worked and what broke.
-- **Plugin & Theme Developers:** Build new extensions using our lightweight, explicit contracts.
+I would love to collaborate with you:
+* **Security Auditors:** Try to break things! Find edge cases, spot vulnerabilities, and help us fortify the boundaries.
+* **PHP Developers:** Help keep the codebase clean, legible, and maintainable.
+* **Testers & Store Owners:** Run the code locally or on a server, try out checkout flows, and tell me what worked and what felt clunky.
+* **Theme & Plugin Authors:** Build creative extensions using our explicit interfaces.
 
-If you like the idea of bloat-free software built with care and want to create something cool together, your Pull Request, Issue, or honest critique is truly welcome!
+If you appreciate lean software that respects server resources, your Pull Request, Issue, or straightforward feedback is always welcome.
 
-👉 [Read how to get involved in the Developer Guide](DEVELOPER_GUIDE.md)  
-🔍 **For Devs, DevOps & Security Auditors:** [Inside Domain System — Step-by-Step Architecture, Server Startup & Audit Guide](docs/documentacao-sistema/en/README.md) *(also available in [Portuguese](docs/documentacao-sistema/README.md))*
-
----
-
-## 💡 What does the system do out of the box?
-
-Domain System comes with everything you need to launch online businesses:
-
-### 📦 1. Autonomous Dropshipping & E-Commerce (DomainDrop)
-- **AliExpress Open Platform API Integration:** Secure, direct communication to search products, calculate real freight, place orders, and track shipments live.
-- **24-Hour Flash Curadoria:** Prioritizes products already stored in domestic warehouses (for lightning-fast delivery), handles automatic currency conversion (USD to BRL) with custom markup, and rotates daily deals with a 24-hour countdown timer.
-- **Customer Portal (`/minha-conta`):** A clean buyer area with 5-stage shipment tracking (postal services + international tracking) and support ticket creation with photo/PDF uploads.
-- **Admin Dashboard with 1-Click Translation:** Monitor orders, delivery SLAs, and resolve disputes with an automated translation button for international suppliers.
-
-### 🎓 2. Online Course Platform (Academy LMS)
-- **Student Dashboard:** Clean, distraction-free interface with progress bars and lesson tracking.
-- **Video, Text & PDF Lessons:** Embed YouTube, Vimeo, or local videos, alongside an embedded, lightweight PDF lesson reader that doesn't drag the browser down.
-- **Automated Certificates:** Automatic completion certificates in PDF format as soon as a student reaches 100%.
-
-### 💳 3. Frictionless Payments (DomainCommerce)
-- **Mercado Pago (Brazil):**
-  - **Instant Pix on Screen:** Dynamic QR Code and Copy-and-Paste code with background polling every few seconds, releasing orders immediately upon confirmation.
-  - **Credit Cards:** Installments up to 12x (with support for split payments across 2 cards).
-  - **Bank Slips (Boleto).**
-- **PayPal:** For international customers purchasing in foreign currencies.
-- **Affiliate Webhooks:** Automatic sales listener for Hotmart, Eduzz, Monetizze, and ClickBank, creating accounts and enrolling students instantly.
-
-### 🎨 4. Visual Layout Builder (Flex Builder)
-- Design headers, footers, and central sections with a responsive 12-column CSS Grid.
-- Easily choose what shows up on desktops, tablets, or smartphones.
-- Dedicated e-commerce themes (like `rachidd_store`) isolate their custom headers and footers so visual builder edits don't break the bespoke design.
-
-### 🔄 5. 1-Click System Updater & Safety
-- **Direct Updates:** Inspects new releases on GitHub and updates through the admin panel, taking automated backups of both code and database before touching anything.
-- **Failure Isolation (Circuit Breaker):** If an auxiliary plugin throws an unexpected error, the system isolates only that plugin and keeps the rest of the store or school online, logging the details for the admin (instead of showing a fatal 500 white screen to your customers).
-- **Native Security:** Out-of-the-box CSRF defense, PDO prepared statements for SQL injection prevention, and strict HTML sanitization.
+👉 [Learn how to contribute in the Developer Guide](DEVELOPER_GUIDE.md)  
+🔍 [Inside Domain System — Architecture and Server Startup Walkthrough](docs/documentacao-sistema/en/README.md)
 
 ---
 
-## 📊 Tech Stack & Numbers
+## 💡 What the Cockpit gives you out of the box
 
-- **Language:** PHP 8.2 or higher (strict-typed code with zero framework bloat).
-- **Automated Tests:** **656 automated tests** in PHPUnit with **3,922 assertions** covering checkouts, security, orders, payment gateways, and routing.
-- **Databases:** Works seamlessly with both **MySQL/MariaDB** and **SQLite** (switchable with zero code changes).
-- **Zero Heavy Frameworks:** No heavy dependencies in the core. Runs purely on standard PHP extensions: `pdo`, `mbstring`, `zip`, `curl`, and `openssl`.
+* **Notification Bell:**  
+  The top-right bell lights up automatically whenever an official update or plugin release is published on GitHub.
+* **One-Click Plugin Updates (WordPress-Style):**  
+  Click "Update Now" on any extension. The system downloads the signed ZIP from GitHub Releases, checks its cryptographic SHA-256 fingerprint, and extracts it safely.
+* **Safety Circuit Breaker:**  
+  If a third-party plugin encounters an unhandled fatal error, the system does not crash your entire store. It turns off only that broken module, logs the details, and keeps your pages alive.
+* **Visual Flex Builder:**  
+  Construct custom headers, footers, and page sections using a 12-column responsive layout grid, picking what appears on laptops and what appears on mobile screens.
+* **Default Security Protections:**  
+  Built-in defense against CSRF attacks, type-safe SQL queries through PDO, and strict output sanitization against XSS.
 
 ---
 
-## 🚀 Quick Start (Local Setup)
+## 📊 System Requirements & Stats
 
-All you need is PHP 8.2 installed on your machine:
+* **Language:** PHP 8.2 or higher.
+* **Database:** Runs out of the box with **SQLite** (zero installation needed) or connect to **MySQL/MariaDB**.
+* **Test Coverage:** **760 automated tests** covering authentication, routing, and payment lifecycles.
+* **Zero Heavy Framework Dependencies:** Standard PHP extensions only (`pdo`, `mbstring`, `zip`, `curl`, `openssl`).
+
+---
+
+## 🚀 Running locally in 2 minutes
+
+All you need is PHP 8.2+ installed on your computer:
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/hadelrachid/domain-system.git
 cd domain-system
 
-# 2. Start PHP's built-in server
+# 2. Start PHP's built-in web server
 php -S localhost:8000 -t public
 ```
 
-Open your browser and navigate to:  
+Now visit in your browser:  
 👉 `http://localhost:8000`
 
-The setup wizard will walk you through choosing your database and creating your admin account.
+The setup wizard will pop right up so you can configure your database and create your admin account.
 
-To run the automated test suite:
+To run the complete test suite:
 ```bash
 php phpunit.phar
 ```
 
 ---
 
-## 📁 Codebase Layout
+## 📁 Directory Structure
 
-If you want to open the code and explore:
+If you want to explore the source code:
 
-- `public/`: The web entry point (`index.php`) and static assets (CSS, JS, images).
-- `src/Core/`: The kernel (router, container, event dispatcher, and resilience).
-- `src/Plugins/`: Feature modules (`domain_drop` for dropshipping, `academy` for courses, `commerce` for payments, `flextheme` for visual building).
-- `src/SystemApps/`: Internal utilities (admin auth, database doctor, updater).
-- `themes/`: Front-end themes and layouts.
-- `tests/`: Full PHPUnit test suite.
+* `public/`: The web root (`index.php`) and front-end assets (CSS, JavaScript, images).
+* `src/Core/`: The central engine (routing, dependency container, event bus, and update checker).
+* `src/SystemApps/`: Essential internal administrative applications (login, access control, updater).
+* `src/Plugins/`: Directory where installed plugins live.
+* `themes/`: Location of active site themes.
+* `tests/`: Automated PHPUnit test files.
 
 ---
 
 ## 📄 License
 
-Domain System is free open-source software licensed under the [MIT License](LICENSE). You are free to use, modify, learn from, and run your business on it.
+Domain System is free open-source software under the [MIT](LICENSE) license. You are welcome to use it, inspect it, modify it, and run your business on it without surprise restrictions.

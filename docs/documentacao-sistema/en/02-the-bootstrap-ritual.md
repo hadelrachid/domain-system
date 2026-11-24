@@ -44,7 +44,7 @@ The very first duty of the bootstrap is ensuring the application never gets lost
 
 ```php
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
-define('DS_VERSION', '2.7.0');
+define('DS_VERSION', '2.8.3');
 define('DS_OS_VERSION', '2.7');
 ```
 

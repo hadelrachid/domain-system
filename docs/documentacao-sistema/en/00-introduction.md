@@ -71,7 +71,7 @@ SOLID (formalized by Robert C. Martin, "Uncle Bob") is an emergency toolkit desi
 
 ## 4. Domain System: Nature Implemented in Code
 
-**Domain System (v2.7.0)** is built in **pure PHP 8.2+** to serve as a modular **Web Operating System**:
+**Domain System (v2.8.3)** is built in **pure PHP 8.2+** to serve as a modular **Web Operating System**:
 
 ```
 ┌────────────────────────────────────────────────────────┐

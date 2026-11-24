@@ -1,4 +1,4 @@
-# Por Dentro do Domain System (v2.7.0)
+# Por Dentro do Domain System (v2.8.3)
 
 > 🇧🇷 **Português** | [🇺🇸 English version](en/README.md)
 

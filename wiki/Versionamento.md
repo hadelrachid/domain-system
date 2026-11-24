@@ -1,36 +1,43 @@
 # 📐 Política de Versionamento SemVer & Ciclo de Entregas
 
-O **Domain-System OS** segue rigorosamente a especificação internacional **Semantic Versioning 2.0.0 (SemVer)**:
+O ecossistema **Domain System** segue a especificação internacional **Semantic Versioning 2.0.0 (SemVer)**:
 
 $$\text{v} \, \mathbf{X} \, . \, \mathbf{Y} \, . \, \mathbf{Z}$$
 
-Exemplo: **`v2.7.1`**
+Exemplo: **`v2.8.3`**
 
 ---
 
 ## 🧭 Os Três Níveis de Evolução
 
-| Dígito | Classificação | O que representa | Quando é incrementado | Impacto |
+| Dígito | Classificação | O que significa na prática | Quando muda | Risco de quebra |
 | :---: | :---: | :--- | :--- | :---: |
-| **Z** | **PATCH** | **Ciclo de Refinamento** | Correções de bugs, polimento de UI/UX, layouts responsivos, minificação de CSS/JS e ajustes de estabilidade. | **Risco Zero** (Zero quebras) |
-| **Y** | **MINOR** | **Novo Marco Funcional** | Lançamento de novos módulos oficiais (`DomainDrop`, `DomainSEO`), novas rotas, tabelas de banco e novos contratos de arquitetura. | **Retrocompatível** |
-| **X** | **MAJOR** | **Salto de Geração** | Reformulação radical do Kernel (ex: Domain-System OS 2.0), quebra deliberada de contratos ou transição de paradigma de execução. | **Migração Assistida** |
+| **Z** | **PATCH** | **Ajustes e Correções** | Correções de pequenos bugs, melhorias visuais, polimento de telas e ajustes de estabilidade. | **Risco Zero** |
+| **Y** | **MINOR** | **Novos Recursos** | Lançamento de novas telas, novas rotas, tabelas de banco e novos recursos sem quebrar nada do que já existia. | **Compatível** |
+| **X** | **MAJOR** | **Nova Geração** | Mudanças profundas no motor do sistema (Kernel) que exigem atualização planejada. | **Migração Guiada** |
 
 ---
 
-## 🔒 Protocolo de Lançamento de Release
+## 🏛️ Versionamento Independente nos Três Pilares
 
-1. **Consistência de Versão Obrigatória:**
-   - Tag Git: `vX.Y.Z`
-   - `bootstrap.php`: `define('DS_VERSION', 'X.Y.Z');`
-   - `composer.json`: `"version": "X.Y.Z"`
-   - Manifestos: `src/Plugins/*/plugin.json` e `src/SystemApps/*/plugin.json` com `"version": "X.Y.Z"`
-2. **Validação Automatizada:**
-   - Teste de consistência: `php phpunit.phar --filter VersionConsistencyTest`
-   - Suíte geral de testes: 100% de aprovação (zero falhas).
-3. **Build e Distribuição Automática:**
-   - O envio da tag `git push origin vX.Y.Z` dispara o GitHub Actions (`.github/workflows/release.yml`), gerando os pacotes compactados assinados com SHA-256 e publicando a Release oficial.
-4. **Atualização na Hostinger:**
-   - O painel `/admin/settings/updates` identifica a nova release e aplica a atualização com backup e rollback automático.
+Para evitar que uma melhoria em um plugin force uma nova versão do sistema todo, cada pilar tem sua própria vida:
 
-Para a documentação completa e detalhada, consulte: [docs/politica-versionamento-semver.md](../docs/politica-versionamento-semver.md).
+1. **O Núcleo (`domain-system`):**  
+   Controla a versão do sistema operacional (ex: `v2.8.3`). Os módulos vitais do `SystemApps` e os plugins de composição interna (`core: true`) acompanham estritamente essa versão.
+2. **Plugins Agregados (`domain-system-plugins`):**  
+   Módulos externos como `domain_drop`, `commerce` e `academy` têm seu próprio número de versão. Um ajuste na mineração do AliExpress pode subir a versão do `domain_drop` sem precisar alterar a versão do Core.
+3. **Temas Agregados (`domain-system-themes`):**  
+   Temas visuais como o `rachidd_store` possuem versionamento próprio, iniciando na versão estável **`v1.0.0`**.
+
+---
+
+## 🔒 Como uma Nova Versão é Publicada
+
+1. **Conferência de Versão:**  
+   O número da versão é registrado de forma consistente na tag do Git, no `bootstrap.php` e no `composer.json`.
+2. **Testes Automatizados:**  
+   A suíte completa de **760 testes no PHPUnit** precisa passar com 100% de sucesso no GitHub Actions.
+3. **Pacote Automático:**  
+   O envio da tag para o GitHub gera automaticamente o pacote compactado oficial (.zip) assinado com código criptográfico SHA-256 no GitHub Releases.
+4. **Atualização no Painel:**  
+   O painel administrativo identifica a nova versão e permite aplicar a atualização com 1 clique, fazendo backup preventivo de segurança antes de qualquer alteração.

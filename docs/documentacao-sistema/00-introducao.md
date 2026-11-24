@@ -71,7 +71,7 @@ O SOLID (formalizado por Robert C. Martin, o Uncle Bob) não é um mantra acadê
 
 ## 4. O Domain System: A Natureza em Código
 
-O **Domain System (v2.7.0)** é a materialização viva dessa filosofia. Ele foi construído em **PHP 8.2+ puro** para funcionar como um verdadeiro **Sistema Operacional Web**:
+O **Domain System (v2.8.3)** é a materialização viva dessa filosofia. Ele foi construído em **PHP 8.2+ puro** para funcionar como um verdadeiro **Sistema Operacional Web**:
 
 ```
 ┌────────────────────────────────────────────────────────┐

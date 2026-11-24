@@ -1,83 +1,88 @@
-# Roteiro de Desenvolvimento — Domain System (v2.7.0)
+# Roteiro de Desenvolvimento — Domain System (v2.8.3)
 
-Este documento descreve as etapas de evolução do **Domain System**. O objetivo é manter uma base de código modular, previsível e com testes automatizados em PHP 8.2+.
-
----
-
-## 🟢 Etapa 1: Infraestrutura Básica e Resiliência (Concluída)
-
-* [x] **Tratamento de Exceções e Tolerância a Falhas:** Captura centralizada de falhas no ciclo de vida de extensões para manter as rotas principais em operação.
-* [x] **Persistência Atômica de Configurações (`AtomicJsonStore`):** Gravação de arquivos com bloqueio exclusivo (`LOCK_EX`) e gravação atômica temporária com renomeação.
-* [x] **Verificação de Esquema (`SchemaDoctorInterface`):** Verificação de integridade das tabelas de banco de dados em SQLite e MySQL.
-* [x] **Container de Injeção de Dependências:** Resolução de dependências via construtor, eliminando variáveis globais e acoplamento estático.
-* [x] **Controle de Acesso por Capabilities:** Permissões granulares configuráveis no painel administrativo, proteção anti-CSRF e suporte a 2FA.
-* [x] **Assistente de Instalação:** Setup inicial para configuração de banco de dados e usuário administrador.
+Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso objetivo é simples: manter o sistema leve, modular, fácil de entender e coberto por testes automatizados em PHP 8.2+.
 
 ---
 
-## 🟢 Etapa 2: Módulos de Aplicação, Flex Builder e Atualizador (Concluída)
+## 🟢 Etapa 1: Estrutura Base e Segurança (Concluída)
 
-### 2.1. Flex Builder (Full Site Editing)
-- [x] **Estrutura por Contratos (`src/Core/Theme/Parts`):** Composição de cabeçalhos, rodapés e seções centrais em 14 blocos semânticos nativos, com suporte a extensões via `BlockProviderInterface`.
-- [x] **Compilação e Validação Unificada:** Paridade entre visualização no editor e renderização pública via `ThemePartCompilerInterface`, com validação estrutural pré-persistência.
-- [x] **Visibilidade Responsiva (4 Resoluções) e Auto-Reflow:** Configuração de visibilidade por elemento (Desktop, Laptop 1024px, Tablet 768px e Mobile 375px) com reajuste automático das colunas do CSS Grid.
-- [x] **Vinculação de Seções a Templates:** Associação de seções centrais a templates do tema ativo (`home.php`, `sobre.php`, etc.) e shortcode `[section id="..."]`.
-
-### 2.2. Academy (LMS)
-- [x] **Editor em Blocos para Conteúdo:** Editor estruturado com sanitização server-side.
-- [x] **Estruturação de Pastas e Aulas:** Geração de arquivos `.php` de aulas no tema ativo a partir do título cadastrado.
-- [x] **Simulador Multi-Dispositivos:** Visualização prévia em diferentes resoluções de tela e opções de layout mobile (gaveta, barra inferior, cinema).
-
-### 2.3. Sistema de Atualização (`SystemUpdater`)
-- [x] **Atualizações via GitHub Releases:** Verificação de versões, validação de integridade por hash SHA-256 e aplicação atômica de arquivos preservando configurações locais.
-- [x] **Rotinas de Backup e Rollback:** Backup preventivo de código e banco de dados antes da aplicação de atualizações.
+* [x] **Tratamento Seguro de Falhas:** Captura centralizada de erros para que falhas em pequenos módulos nunca derrubem o site inteiro.
+* [x] **Gravação Segura de Configurações (`AtomicJsonStore`):** Gravação com bloqueio de arquivo (`LOCK_EX`) para evitar que dados se corrompam em acessos simultâneos.
+* [x] **Doutor do Banco de Dados (`SchemaDoctorInterface`):** Verificação e autocura de tabelas tanto em SQLite quanto em MySQL.
+* [x] **Injeção de Dependências Descomplicada:** Código limpo e desacoplado, sem variáveis globais escondidas.
+* [x] **Controle de Acessos:** Perfis e permissões ajustáveis pelo painel, com proteção contra CSRF e suporte a dois fatores (2FA).
+* [x] **Instalador Visual:** Assistente passo a passo para criar o primeiro usuário e configurar o banco de dados em segundos.
 
 ---
 
-## 🟢 Etapa 3: Portal do Aluno & DomainCommerce (Concluída na v2.6.0)
+## 🟢 Etapa 2: Construtor Visual e Atualizador do Sistema (Concluída)
+
+### 2.1. Flex Builder (Editor Visual de Páginas)
+- [x] **Montagem por Blocos:** Cabeçalhos, rodapés e seções montados arrastando blocos visuais na tela.
+- [x] **Visualização em Tempo Real:** O que você vê no editor é exatamente o que o visitante vê no navegador.
+- [x] **Design Adaptável (Desktop, Notebook, Tablet e Celular):** Ajuste fino de quais blocos aparecem em cada tamanho de tela.
+- [x] **Seções Vinculadas a Páginas:** Conexão simples entre seções e modelos de página (`home.php`, `sobre.php`).
+
+### 2.2. Sistema de Atualização do Núcleo (`SystemUpdater`)
+- [x] **Atualizações Seguras pelo GitHub:** O sistema localiza novas versões, confere a impressão digital do arquivo (SHA-256) e instala sem perder suas configurações.
+- [x] **Cópia de Segurança Prévia:** Backup automático antes de qualquer atualização.
+
+---
+
+## 🟢 Etapa 3: Escola Online e Pagamentos (Concluída)
 
 ### 3.1. Portal do Aluno (Academy LMS)
-- [x] **Área do Aluno Completa:** Login seguro, recuperação de acesso, painel do estudante e cálculo de progresso em tempo real.
-- [x] **Leitor de PDF Embutido:** Suporte a visualização de apostilas em canvas leve (*PDF.js*) ou leitor nativo, com controle de intervalo de páginas e proteção de download.
-- [x] **Certificados Automáticos:** Emissão automática de certificados de conclusão em PDF quando o aluno atinge 100% das aulas.
+- [x] **Área de Membros Amigável:** Cadastro, login fácil, painel com aulas assistidas e barra de progresso.
+- [x] **Vídeos, Textos e Apostilas em PDF:** Leitor de PDF leve integrado na própria aula, sem travar o celular do aluno.
+- [x] **Certificados Automáticos:** Geração de certificado em PDF quando o aluno conclui o curso.
 
-### 3.2. Motor de Pagamentos (DomainCommerce)
-- [x] **Mercado Pago Oficial:** Pix instantâneo nativo na tela (com QR Code dinâmico e Copia-e-Cola), verificação a cada 3,5s com matrícula imediata, cartão em até 12x (e opção de 2 cartões) e boleto bancário.
-- [x] **PayPal Oficial:** Integração completa com a API REST v2 de Checkout para vendas internacionais com saldo PayPal e cartões globais.
-- [x] **Webhooks de Plataformas de Afiliados:** Auto-provisionamento de alunos via webhooks de venda aprovada da Hotmart, Eduzz, Monetizze e ClickBank.
-- [x] **Injeção de Dependências Condicional:** Apenas gateways com credenciais cadastradas e válidas aparecem no checkout.
-
----
-
-## 🟢 Etapa 4: DomainDrop — Motor de Dropshipping com SDK do AliExpress & Espaço do Cliente (Concluída na v2.7.0)
-
-### 4.1. Integração AliExpress Open Platform SDK & Mineração 24h
-- [x] **SDK Oficial AliExpress (`AliExpressApiClientInterface`):** Assinatura criptográfica `HMAC-SHA256` (protocolo TOP), OAuth 2.0, busca de catálogo (`aliexpress.ds.product.get`), feed recomendado (`aliexpress.ds.recommend.feed.get`), frete (`aliexpress.logistics.buyer.freight.get`), criação de ordens (`aliexpress.trade.buy.placeorder`) e rastreio (`queryTrackingInfo`).
-- [x] **Ciclo Flash de 24 Horas & Anti-Cache:** Curadoria diária priorizando estoque nacional (`BR`), conversão cambial dinâmica (`USD → BRL`), enriquecimento por IA e sincronização do cronômetro regressivo de 24h com cabeçalhos HTTP anti-cache (`CachePolicy`).
-
-### 4.2. Espaço do Cliente, Rastreio Integrado & CRM Administrativo
-- [x] **Espaço do Cliente (`/minha-conta`, `/entrar`, `/cadastro`):** Rastreamento integrado de 5 etapas (Correios + Cainiao + SDK AliExpress) dentro da conta do cliente, abertura de reclamações/observações/dúvidas com upload seguro de fotos/PDF e **vinculação opcional de pedido ou produto da loja**.
-- [x] **Gestão de Clientes & Mediação Bilingue (`/admin/dropship/customers` e `/admin/dropship/orders`):** Submenu administrativo de clientes cadastrados estilo CRM, monitoramento de SLA de entrega e mediação 1-clique com tradução automática para Chinês Simplificado (`zh-CN`) ou Português (`pt-BR`).
-- [x] **Isolamento de Temas Nativos (`"flex_builder": false`):** Isolamento automático do cabeçalho e rodapé de temas dedicados (`rachidd_store`) no Flex Builder.
-- [x] **656 Testes Automatizados:** Suíte completa no PHPUnit com **3.922 asserções** validando segurança, integridade, e-commerce, SLA e persistência.
+### 3.2. Pagamentos sem Complicação (DomainCommerce)
+- [x] **Mercado Pago com Pix na Tela:** QR Code instantâneo com conferência em segundo plano e liberação imediata.
+- [x] **Cartão em até 12x:** Suporte a parcelamento e opção de dividir o valor em 2 cartões diferentes.
+- [x] **PayPal:** Para vender cursos ou produtos para quem mora fora do Brasil.
+- [x] **Integração com Plataformas de Afiliados:** Alunos matriculados na hora via webhooks da Hotmart, Eduzz, Monetizze e ClickBank.
 
 ---
 
-## 🔵 Etapa 5: Expansão, Estabilidade & Chamado à Comunidade (Planejamento v2.8.0)
+## 🟢 Etapa 4: Dropshipping Internacional com AliExpress (Concluída)
 
-> Como desenvolvedor autodidata, sei que o sistema chegou a um estágio em que **a comunidade é indispensável**. O roadmap da v2.8.0 não é apenas sobre adicionar novas funções, mas sobre **refinar, auditar, simplificar e tornar o código cada vez mais robusto**.
-
-- [ ] **Auditoria Aberta com a Comunidade:** Revisão de segurança, concorrência em checkout e simplificação de contratos arquiteturais com programadores reais.
-- [ ] **Estoque Físico Próprio & Logística Nacional Direta:** Suporte híbrido para venda de produtos em estoque físico próprio com cálculo de frete Correios/Melhor Envio e avaliações verificadas de compradores.
-- [ ] **Fórum de Alunos & Comunidade da Academy:** Espaço de discussão por curso com tópicos, respostas formatadas e marcação de dúvidas resolvidas.
-- [ ] **Bloco de Notas Pessoal do Aluno:** Caderno digital com salvamento automático para anotações durante as aulas e exportação de estudos.
-- [ ] **Tutor com Inteligência Artificial Opcional:** Assistente para responder dúvidas frequentes dos alunos com base no conteúdo das aulas.
+- [x] **Conexão Oficial com o AliExpress:** Conexão nativa para consultar produtos, calcular frete internacional e criar pedidos.
+- [x] **Vitrine com Ofertas 24 Horas:** Seleção diária de itens em estoque nacional com frete rápido e conversão automática de dólar para real com sua margem de lucro.
+- [x] **Área do Cliente (`/minha-conta`):** Rastreio de encomendas em 5 etapas e abertura de chamados com envio de fotos.
+- [x] **Painel de Atendimento:** Central com botão de tradução rápida de mensagens para fornecedores internacionais.
 
 ---
 
-## 🤝 Quer sugerir ou ajudar a implementar um item do Roadmap?
+## 🟢 Etapa 5: Alinhamento Oficial AliExpress & Resiliência OAuth (Concluída na v2.8.3)
 
-O roadmap é dinâmico e feito para quem usa o sistema de verdade. Se você acha que uma funcionalidade deve ser priorizada ou se tem uma ideia melhor para simplificar a arquitetura:
-1. Abra uma **Issue** ou discussão no nosso repositório: [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
-2. Envie um e-mail direto para mim: `hadelrachid@gmail.com`
-3. Mande um Pull Request com seu código e testes! Toda ajuda é muito bem-vinda.
+- [x] **Alinhamento com Manuais Oficiais do AliExpress:** Consultas padronizadas seguindo as especificações da plataforma (`dropshiper.pdf` e `categoria-e-atributos.pdf`).
+- [x] **Fotos Corretas e Sem Erros 404:** Fim de imagens trocadas na vitrine e garantia de links sempre válidos.
+- [x] **OAuth 2.0 Estável:** Conexão persistente no painel, inclusive em servidores compartilhados com proxies HTTPS.
+- [x] **Suíte com 760 Testes Automatizados:** Mais de 4.590 asserções validadas pelo PHPUnit no GitHub Actions.
+
+---
+
+## 🟢 Etapa 6: A Arquitetura dos Três Pilares & Atualizador em 1 Clique (Concluída na v2.8.3)
+
+- [x] **Núcleo Super Leve:** O repositório central (`domain-system`) focado apenas no Cockpit OS e infraestrutura vital.
+- [x] **Repositório de Extensões ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):** Módulos de negócio (`domain_drop`, `commerce`, `academy`) com versionamento próprio.
+- [x] **Repositório de Temas ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):** Temas desacoplados, começando pelo `rachidd_store` v1.0.0.
+- [x] **Atualizador Estilo WordPress:** Notificações no sininho e botão "Atualizar Agora" para cada extensão direto pelo painel de controle.
+
+---
+
+## 🔵 Etapa 7: Próximos Passos (Planejamento Futuro)
+
+- [ ] **Filtros Avançados de Atributos no Dropship:** Refinamento de cores, tamanhos e modelos de produtos importados.
+- [ ] **Estoque Próprio Nacional:** Possibilidade de mesclar produtos de estoque físico próprio com cálculo de frete dos Correios e Melhor Envio.
+- [ ] **Espaço de Dúvidas nas Aulas:** Fórum leve por aula para alunos tirarem dúvidas entre si e com o professor.
+- [ ] **Caderno de Anotações do Aluno:** Espaço para o estudante fazer anotações pessoais durante os vídeos.
+
+---
+
+## 🤝 Quer trocar uma ideia sobre o projeto?
+
+O roadmap é aberto e feito para resolver necessidades da vida real. Se você tem sugestões, encontrou algo para melhorar ou quer contribuir com código:
+1. Abra uma **Issue** ou discussão no GitHub: [https://github.com/hadelrachid/domain-system](https://github.com/hadelrachid/domain-system)
+2. Mande um e-mail para mim: `hadelrachid@gmail.com`
+3. Fique à vontade para mandar um Pull Request!

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorial: Criando Plugins - Domain System v2.7.0</title>
+    <title>Tutorial: Criando Plugins - Domain System v2.8.3</title>
     <style>
         :root {
             --bg-main: #0f172a;
@@ -52,9 +52,9 @@
             <a href="https://github.com/hadelrachid/domain-system/wiki/Criando-Plugins" target="_blank" rel="noopener" class="wiki-link">📖 Ver Tutorial na Wiki Oficial ↗</a>
         </div>
 
-        <h1>Construindo Plugins no Domain System (v2.7.0)</h1>
+        <h1>Construindo Plugins no Domain System (v2.8.3)</h1>
         
-        <p>Criar um plugin no <strong>Domain System v2.7.0</strong> é simples, direto e sem mágica escondida. Como desenvolvedor autodidata, projetei o sistema para ser o mais enxuto e transparente possível. Não usamos frameworks gigantescos nem centenas de pacotes de terceiros: tudo roda em PHP limpo, com contratos bem definidos e uma arquitetura orientada a eventos.</p>
+        <p>Criar um plugin no <strong>Domain System v2.8.3</strong> é simples, direto e sem mágica escondida. Como desenvolvedor autodidata, projetei o sistema para ser o mais enxuto e transparente possível. Não usamos frameworks gigantescos nem centenas de pacotes de terceiros: tudo roda em PHP limpo, com contratos bem definidos e uma arquitetura orientada a eventos.</p>
 
         <p>Neste tutorial passo a passo, você vai aprender a construir um plugin do zero, com:</p>
         <ul>
@@ -83,7 +83,7 @@ php os-cli.php make:plugin meu_app
 {
     <span class="string">"name"</span>: <span class="string">"meu_app"</span>,
     <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
-    <span class="string">"description"</span>: <span class="string">"Meu primeiro módulo no Domain System v2.7.0"</span>,
+    <span class="string">"description"</span>: <span class="string">"Meu primeiro módulo no Domain System v2.8.3"</span>,
     <span class="string">"author"</span>: <span class="string">"Seu Nome ou Comunidade"</span>,
     <span class="string">"os_version"</span>: <span class="string">"2.7"</span>
 }
@@ -207,7 +207,7 @@ php os-cli.php make:plugin meu_app
 </pre>
 
         <h2>Passo 4: Auto-Descoberta no Manual de Instruções (manual/module.php)</h2>
-        <p>No <strong>Domain System v2.7.0</strong>, você não precisa editar o core para ter documentação do seu plugin. Basta criar o arquivo <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>:</p>
+        <p>No <strong>Domain System v2.8.3</strong>, você não precisa editar o core para ter documentação do seu plugin. Basta criar o arquivo <code>src/Plugins/meu_app/manual/module.php</code> retornando uma classe que implemente <code>ManualModuleInterface</code>:</p>
 <pre>
 <span class="keyword">&lt;?php</span>
 <span class="comment">// src/Plugins/meu_app/manual/module.php</span>
@@ -226,7 +226,7 @@ php os-cli.php make:plugin meu_app
         </div>
 
         <footer>
-            &copy; 2026 Domain-System v2.7.0 &bull; Software Livre &bull; Criado com simplicidade e paixão por tecnologia aberta.
+            &copy; 2026 Domain-System v2.8.3 &bull; Software Livre &bull; Criado com simplicidade e paixão por tecnologia aberta.
         </footer>
     </div>
 </body>

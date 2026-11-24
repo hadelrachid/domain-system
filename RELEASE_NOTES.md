@@ -1,65 +1,65 @@
-## 🚀 Domain-System OS v2.8.3 — Alinhamento da Mineração 24h com Documentação Oficial AliExpress & Correção de Mídia/Rotas
+## 🚀 Domain-System OS v2.8.3 — Arquitetura dos Três Pilares, Atualizador em 1 Clique & Alinhamento Oficial AliExpress
 
-Esta versão **v2.8.3** consolida as melhorias no motor de dropshipping **DomainDrop**, alinhando-o 100% às especificações oficiais da AliExpress Open Platform (`dropshiper.pdf` e `categoria-e-atributos.pdf`), corrigindo divergências de imagens e rotas 404.
-
-### 📦 Melhorias no DomainDrop
-- **Alinhamento com Documentação Oficial AliExpress (`dropshiper.pdf` e `categoria-e-atributos.pdf`):**
-  - Implementação de `aliexpress.ds.feed.itemids.get` (`getFeedItemIds`) e `aliexpress.ds.feedname.get` (`getFeedNames`) em `AliExpressApiClientInterface` e `AliExpressApiClient`.
-  - Correção na extração do payload oficial `data.products` em `aliexpress.ds.text.search`.
-  - Suporte total a schemas *camelCase* (`itemId`, `itemMainPic`, `targetSalePrice`, `evaluateRate`, `orders`, `itemUrl`, `productVideoUrl`) em `ProductMiningService::transformRawItemToDto()`, eliminando a geração de IDs sintéticos e mantendo os IDs e URLs numéricos reais do AliExpress.
-  - Adição de `getAliExpressCategoryIds()` e `getAliExpressSearchKeywords()` na `CategoryTaxonomyService` com os IDs canônicos da árvore do AliExpress (ex: `44`, `509`, `1511`, `15`, `1420`, `66`, `34`, `200000345`).
-- **Eliminação de Imagens Mismatched (Escova de Cabelo / Fones / Ferramentas):**
-  - Substituição completa de hashes incorretos de imagem que exibiam escova de cabelo em fones e ferramentas, associando fotos de alta definição específicas para cada categoria.
-- **Eliminação de Rotas 404 no Catálogo e AliExpress:**
-  - Auto-persistência no `DropshipFrontController` ao acessar produtos minerados em memória.
-  - Redirecionamento inteligente para busca oficial do AliExpress no admin caso produtos legados possuam identificador sintético.
-  - Página 404 estilizada mantendo o cliente na loja.
-- **Cobertura de Testes Unitários:**
-  - Adicionados testes em `DomainDropAliExpressOfficialDocsAlignmentTest` e `DomainDropImageAndRouteFixTest` (100% aprovados, 126 testes de DomainDrop, 1.062 asserções).
+A versão **v2.8.3** representa um marco importante na maturidade do Domain System: organizamos a casa em **três pilares independentes**, adicionamos um sistema de atualização de plugins no painel estilo WordPress e alinhamos a mineração do dropshipping com os manuais oficiais da AliExpress Open Platform.
 
 ---
 
-## 🚀 Domain-System OS v2.7.4 — Resiliência OAuth2 AliExpress & SameSite Cookie Lax
+### 🏛️ 1. Arquitetura em Três Pilares (Repositório do Core Ultra Leve)
+- **Desacoplamento de Aplicações Pesadas:**  
+  O repositório principal (`domain-system`) agora foca exclusivamente no que é vital: o Cockpit OS, a segurança do sistema e extensões leves de demonstração.
+- **Repositório de Extensões Dedicado:**  
+  Módulos como `DomainDrop`, `DomainCommerce` e `Academy LMS` foram migrados para o repositório oficial [domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins), permitindo que cada um tenha suas próprias versões e evolua sem inchar o núcleo.
+- **Repositório de Temas Oficial:**  
+  Criação do repositório [domain-system-themes](https://github.com/hadelrachid/domain-system-themes), estreando o tema oficial de e-commerce **RachidD Store** na versão inicial `v1.0.0` com licença MIT.
 
-Esta versão **v2.7.4** resolve a preservação de sessão e o fluxo de redirecionamento no retorno da autorização OAuth 2.0 do AliExpress em ambientes de produção (como Hostinger), aplicando rigorosamente os princípios **SOLID** e a **Inversão de Dependência (DIP)**.
+---
+
+### 🔄 2. Atualizador de Plugins com 1 Clique (Estilo WordPress)
+- **Central de Notificações no Sininho:**  
+  O ícone de sino no topo do painel avisa automaticamente quando houver novas versões de extensões disponíveis no GitHub.
+- **Botão "Atualizar Agora":**  
+  Dentro da tela de plugins, você atualiza qualquer extensão com um simples clique. O sistema baixa o arquivo ZIP assinado, confere a impressão digital SHA-256 e instala com segurança.
+- **Verificação Manual:**  
+  Botão "Verificar Atualizações" para checagem em tempo real das novidades no GitHub.
+
+---
+
+### 📦 3. Alinhamento Oficial do Dropshipping (DomainDrop)
+- **Consultas Padronizadas pela API Oficial:**  
+  Uso dos métodos recomendados pela AliExpress Open Platform (`dropshiper.pdf` e `categoria-e-atributos.pdf`), eliminando identificadores sintéticos e trabalhando com os IDs e URLs numéricos reais do catálogo.
+- **Fim das Imagens Incompatíveis:**  
+  Correção nas fotos da vitrine, garantindo que produtos importados exibam suas imagens corretas de alta definição.
+- **Fim das Páginas 404:**  
+  Garantia de persistência automática ao acessar produtos em vitrines temporárias e redirecionamento amigável para evitar que o visitante caia em links quebrados.
+
+---
+
+### 🧪 4. Suíte de Testes Automatizados
+- **760 testes automatizados** e **4.593 asserções** validados no PHPUnit com 100% de sucesso.
+- Blindagem com testes no GitHub Actions para garantir estabilidade em qualquer ambiente.
+
+---
+
+## 🚀 Domain-System OS v2.7.4 — Resiliência OAuth2 AliExpress & Sessão Persistente
+
+Esta versão **v2.7.4** resolve a preservação de sessão e o fluxo de redirecionamento no retorno da autorização OAuth 2.0 do AliExpress em ambientes de produção (como Hostinger).
 
 ### 📦 Correções & Melhorias no DomainDrop & Core
 - **Padronização de Cookie de Sessão com `SameSite=Lax`:**
-  - Em `src/Core/Security/SessionManager.php`, o cookie de sessão `DS_SESS_*` foi padronizado para `'samesite' => 'Lax'`. Isso permite que o navegador envie o cookie de sessão durante o redirecionamento top-level GET do AliExpress (`https://api-sg.aliexpress.com` -> `https://rachidd.com/admin/dropship/callback`), mantendo o usuário autenticado no painel.
-- **Allowlist nos Hooks de Segurança e Middlewares:**
-  - Atualizados `auth/Plugin.php`, `SystemAdmin/Plugin.php` e `AuthMiddleware.php` para incluir `/admin/dropship/callback` e `/admin/dropship/oauth/callback` na allowlist de rotas de callback de autenticação, evitando o descarte prematuro do código de autorização `?code=...` com redirecionamento antecipado para `/login`.
-- **Contrato Oficial do AliExpress Client (`AliExpressApiClientInterface`):**
-  - Declarados os métodos `getOAuthAuthorizeUrl()`, `createAccessToken()` e `refreshAccessToken()` na interface `AliExpressApiClientInterface`, permitindo injeção de dependência pura e substituição por mocks na suíte de testes.
-- **Tratamento Resiliente no Controlador (`DropshipAdminController`):**
-  - Implementado método atômico de persistência `saveConfig()` e injeção do `AliExpressApiClientInterface`.
-  - Tratamento inteligente: se a sessão estiver ativa, o usuário é redirecionado para `/admin/dropship/settings` com mensagem de sucesso; se houver isolamento temporário de sessão, o token é salvo com sucesso e o usuário é guiado ao `/login` preservando a mensagem de confirmação.
-- **Suíte de Testes:**
-  - Adicionados testes unitários específicos em `DomainDropHubTest` para validar a rejeição de `state` incorreto, a troca do código pelo token de acesso e a consistência da configuração gravada.
+  Permite que o navegador preserve a sessão do administrador ao ser redirecionado de volta da tela de autorização do AliExpress (`api-sg.aliexpress.com` → painel da loja).
+- **Lista de Rotas Seguras nos Middlewares:**
+  Inclusão das rotas `/admin/dropship/callback` e `/admin/dropship/oauth/callback` na lista segura, evitando deslogar o usuário durante o retorno do login internacional.
+- **Contrato Oficial do Cliente AliExpress (`AliExpressApiClientInterface`):**
+  Definição explícita de métodos para geração de link de autorização, criação e renovação de tokens de acesso.
 
 ---
 
 ## 🚀 Domain-System OS v2.7.3 — OAuth2 AliExpress, Estoque ao Vivo & Blindagem de Segurança
 
-Esta versão **v2.7.3** consolida o fluxo oficial **OAuth 2.0 Server-side** com o AliExpress, verificação de disponibilidade/estoque em tempo real, páginas dedicadas de moda íntima e sexshop, correções de variações de SKU e um ciclo completo de endurecimento de segurança nos três plugins (`DomainCommerce`, `Academy` e `DomainDrop`).
+Esta versão **v2.7.3** consolida o fluxo oficial **OAuth 2.0 Server-side** com o AliExpress, verificação de disponibilidade em tempo real e melhorias de segurança nas extensões.
 
 ### 📦 Novidades no DomainDrop
-- **OAuth 2.0 Server-side AliExpress (`Configurações & API`):**
-  - Botão **Conectar Conta AliExpress (OAuth2)** com rotas `/admin/dropship/oauth/authorize` e `/admin/dropship/oauth/callback`.
-  - Troca automática `code -> access_token / refresh_token` via `/rest/auth/token/create` e renovação automática via `/rest/auth/token/refresh` 30 minutos antes do vencimento.
-  - Detecção automática de `HTTPS` atrás de proxy (`X-Forwarded-Proto`) e fallback seguro para modo *Test* sem bloqueio de sincronização.
-- **Verificação SDK-first, Sentinela & Botão "Comprar Agora":**
-  - Verificação de disponibilidade via SDK (`aliexpress.ds.product.get`) e exclusão automática de anúncios `404` / `"Página Não Encontrada"` (mesmo com imagem indexada) no ciclo de 24h, na Sentinela de Volatilidade (6h/12h) e na fila **"Atualizar Todas as Imagens"**.
-  - Checagem ao vivo no clique de **"Comprar Agora"** (`POST /api/drop/check-availability`) consultando estoque real do SDK e bloqueando compra de itens esgotados/removidos.
-- **Variações de SKU, Páginas Dedicadas & Paginação:**
-  - Extração de eixos únicos de SKU (`Color`/`Size` → `Cor`/`Tamanho`), `skuPropertyList` no scraper e matriz multi-cores em lingeries e ferramentas (ex.: alicates desencapadores) no catálogo curado.
-  - Páginas dedicadas `/moda-intima` (`/roupas`) e `/sexshop` (com Age Gate +18).
-  - Paginação do **DomainDrop Hub** ajustada para **48 itens por página** (múltiplo exato de 2, 3 e 4 colunas).
-
-### 🔐 Segurança & Hardening (`DomainCommerce`, `Academy`, `DomainDrop` & Core)
-- **DomainCommerce:** Bloqueio de IDOR em `canAccessOrder()` (com suporte seguro a `checkout_owned_order_refs` e checagem de `academy_logged_out`), proteção contra sobrescrita de endereço de terceiros, validação de host em `resolveAbsoluteUrl()` (`StripeGateway`/`PayPalGateway`), assinatura obrigatória em produção no webhook do PayPal, bloqueio de `$paid <= 0.0` e gateway desativado em `WebhookController`, e `chmod 0600` em `JsonCommerceSettings`.
-- **Academy:** Neutralização de *docblock breakout* (RCE) em `ThemeLessonFileScaffolder`, remoção de fallback não autenticado em `CourseFrontController::showCourse()` com trava estrita em `pages/`, proteção anti-ZipSlip e anti-ZIP bomb (500 arquivos / 50MB) em `CoursePackageService`, bloqueio de `javascript:`/`data:` em links e blocos PDF (`CourseService`, `LessonBlockRenderer`, `editor.php`) e ocultação de segredos no HTML admin.
-- **DomainDrop & Infraestrutura:** Remoção de enumeração pública via `LIKE` em `/rastrear`, checagem de propriedade em `submitComplaint()`, proteção anti-SSRF em `AliExpressLinkScraperService`, remoção de *spoofing* de identidade/conversão em `trackDemand`, sanitização de XSS em `product.php` e `customer_account.php`, senha mínima de 8 caracteres + *rate limiting* no login de clientes, `.htaccess` em `config/` e suporte a `APP_KEY` como fallback em `EmergencyController`.
-
-### ✅ Qualidade & Testes
-- **Suíte PHPUnit:** `719/719` testes aprovados (`4347` asserções), incluindo regressões de segurança (`SecurityAuditRegressionTest`), variações (`DomainDropProductVariantsTest`), mídia (`DomainDropMediaSyncTest`) e OAuth2/disponibilidade (`DomainDropHubTest`).
-- **Consistência de Versão (`VersionConsistencyTest`):** `DS_VERSION`, `composer.json` e todos os 20 manifestos `plugin.json` padronizados em **`2.7.3`**.
+- **Conexão Oficial com Conta AliExpress:**
+  Botão no painel administrativo para autorizar o aplicativo oficial via OAuth 2.0 com renovação automática de token antes do vencimento.
+- **Verificação de Estoque e Frete ao Vivo:**
+  Conferência em tempo real dos preços e prazos de entrega antes da confirmação do pedido.

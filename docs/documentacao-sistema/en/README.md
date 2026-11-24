@@ -1,4 +1,4 @@
-# Inside Domain System (v2.7.0)
+# Inside Domain System (v2.8.3)
 
 > 🇺🇸 **English** | [🇧🇷 Versão em Português](../README.md)
 

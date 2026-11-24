@@ -43,7 +43,7 @@ A primeiríssima tarefa do bootstrap é garantir que o sistema nunca se perca, n
 
 ```php
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
-define('DS_VERSION', '2.7.0');
+define('DS_VERSION', '2.8.3');
 define('DS_OS_VERSION', '2.7');
 ```
 
