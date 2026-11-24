@@ -20,6 +20,7 @@ final class ProductVariantDto
      * @param float $costPriceUsd Preço de custo em USD no fornecedor AliExpress
      * @param string|null $imageUrl Foto específica desta variação (ex: foto da capa na cor selecionada)
      * @param int $stock Estoque disponível específico desta variação
+     * @param string $eanCode Código de barras oficial EAN / GTIN específico desta SKU
      */
     public function __construct(
         public readonly string $skuId,
@@ -28,7 +29,8 @@ final class ProductVariantDto
         public readonly float $priceBrl = 0.0,
         public readonly float $costPriceUsd = 0.0,
         public readonly ?string $imageUrl = null,
-        public readonly int $stock = 100
+        public readonly int $stock = 100,
+        public readonly string $eanCode = ''
     ) {
     }
 
@@ -103,6 +105,7 @@ final class ProductVariantDto
             'cost_price_usd' => $this->costPriceUsd,
             'image_url'      => $this->imageUrl,
             'stock'          => $this->stock,
+            'ean_code'       => $this->eanCode,
         ];
     }
 
@@ -127,7 +130,8 @@ final class ProductVariantDto
             priceBrl: (float)($data['price_brl'] ?? ($data['priceBrl'] ?? $fallbackPriceBrl)),
             costPriceUsd: (float)($data['cost_price_usd'] ?? ($data['costPriceUsd'] ?? $fallbackCostUsd)),
             imageUrl: !empty($data['image_url']) ? (string)$data['image_url'] : (!empty($data['imageUrl']) ? (string)$data['imageUrl'] : null),
-            stock: (int)($data['stock'] ?? 100)
+            stock: (int)($data['stock'] ?? 100),
+            eanCode: trim((string)($data['ean_code'] ?? ($data['gtin'] ?? ($data['ean'] ?? ''))))
         );
     }
 }

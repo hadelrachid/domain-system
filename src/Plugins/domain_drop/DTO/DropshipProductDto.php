@@ -65,6 +65,25 @@ final class DropshipProductDto
     }
 
     /**
+     * Retorna o código oficial de barras EAN / GTIN do produto (ou da primeira variação).
+     */
+    public function getEanCode(): string
+    {
+        $direct = trim((string)($this->attributes['ean_code'] ?? ($this->attributes['gtin'] ?? ($this->attributes['ean'] ?? ''))));
+        if ($direct !== '') {
+            return $direct;
+        }
+
+        foreach ($this->getVariants() as $variant) {
+            if ($variant->eanCode !== '') {
+                return $variant->eanCode;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Verifica se o produto possui variações (cores, tamanhos, modelos, etc.).
      */
     public function hasVariants(): bool

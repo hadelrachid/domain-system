@@ -784,6 +784,16 @@ class ProductMiningService implements ProductMiningServiceInterface
                             $propName = 'Cor';
                         } elseif ($lowerProp === 'size') {
                             $propName = 'Tamanho';
+                        } elseif ($lowerProp === 'plug' || $lowerProp === 'plug type') {
+                            $propName = 'Tipo de Tomada';
+                        } elseif ($lowerProp === 'voltage') {
+                            $propName = 'Voltagem';
+                        } elseif ($lowerProp === 'material') {
+                            $propName = 'Material';
+                        } elseif ($lowerProp === 'bundle' || $lowerProp === 'package') {
+                            $propName = 'Pacote';
+                        } elseif ($lowerProp === 'model') {
+                            $propName = 'Modelo';
                         }
                         $propVal = trim((string)($rp['property_value_definition_name'] ?? ($rp['sku_property_value'] ?? ($rp['property_value'] ?? ''))));
                         if ($propName !== '' && $propVal !== '') {
@@ -798,6 +808,8 @@ class ProductMiningService implements ProductMiningServiceInterface
                     }
                 }
 
+                $skuEan = trim((string)($sku['ean_code'] ?? ($sku['barcode'] ?? ($sku['gtin'] ?? ''))));
+
                 if (!empty($options)) {
                     $extractedVariants[] = [
                         'sku_id'         => $skuId,
@@ -807,6 +819,7 @@ class ProductMiningService implements ProductMiningServiceInterface
                         'cost_price_usd' => $skuPriceUsd,
                         'image_url'      => $skuImage,
                         'stock'          => $skuStock,
+                        'ean_code'       => $skuEan,
                     ];
                 }
             }
@@ -817,6 +830,11 @@ class ProductMiningService implements ProductMiningServiceInterface
             if (!empty($variationAxes)) {
                 $props['variation_axes'] = $variationAxes;
             }
+        }
+
+        $productEan = trim((string)($item['ean_code'] ?? ($baseInfo['ean_code'] ?? ($item['gtin'] ?? ''))));
+        if ($productEan !== '') {
+            $props['ean_code'] = $productEan;
         }
 
         $rawDesc = (string)($item['product_description'] ?? ($baseInfo['detail'] ?? ($item['description'] ?? '')));

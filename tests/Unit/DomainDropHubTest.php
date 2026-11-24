@@ -763,6 +763,10 @@ class DomainDropHubTest extends TestCase
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
             public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array { return []; }
+            public function getSkuAttributes(int|string $categoryId): array { return []; }
+            public function getProductEanCode(string $eanCode): array { return []; }
+            public function queryProductInventory(int|string $productId): array { return []; }
+            public function updateBatchProductPrices(array $priceUpdates): array { return []; }
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }
@@ -835,6 +839,10 @@ class DomainDropHubTest extends TestCase
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
             public function generateSignature(string $method, array $params): string { return ''; }
             public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array { return []; }
+            public function getSkuAttributes(int|string $categoryId): array { return []; }
+            public function getProductEanCode(string $eanCode): array { return []; }
+            public function queryProductInventory(int|string $productId): array { return []; }
+            public function updateBatchProductPrices(array $priceUpdates): array { return []; }
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }

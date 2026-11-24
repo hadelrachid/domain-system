@@ -23,7 +23,45 @@ $isAdult = str_contains($product->category, '+18') || stripos($product->category
 $productWeightGrams = method_exists($product, 'getEstimatedWeightInGrams') ? $product->getEstimatedWeightInGrams() : 200;
 $productExpressPrice = method_exists($product, 'calculateExpressShippingPrice') ? $product->calculateExpressShippingPrice(1) : 19.90;
 $productFormattedWeight = method_exists($product, 'getFormattedWeight') ? $product->getFormattedWeight(1) : '200g';
+$eanCode = method_exists($product, 'getEanCode') ? $product->getEanCode() : '';
+
+$schemaOffers = [
+    '@type'           => 'Offer',
+    'url'             => (str_starts_with($baseUrl, 'http') ? $baseUrl : 'https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $baseUrl) . '/produto/' . $product->slug,
+    'priceCurrency'   => 'BRL',
+    'price'           => number_format($product->salePriceBrl, 2, '.', ''),
+    'priceValidUntil' => date('Y-12-31', strtotime('+1 year')),
+    'itemCondition'   => 'https://schema.org/NewCondition',
+    'availability'    => $product->status === 'published' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    'seller'          => [
+        '@type' => 'Organization',
+        'name'  => $sellerInfo['store_name'] ?? 'Loja Oficial',
+    ],
+];
+
+$schemaData = [
+    '@context'    => 'https://schema.org/',
+    '@type'       => 'Product',
+    'name'        => $product->title,
+    'image'       => $allImages,
+    'description' => strip_tags(method_exists($product, 'getEnrichedDescription') ? ($product->getEnrichedDescription() ?: $product->description) : $product->description),
+    'sku'         => (string)($product->id ?? $product->aliexpressId),
+    'brand'       => [
+        '@type' => 'Brand',
+        'name'  => $product->attributes['brand'] ?? ($sellerInfo['store_name'] ?? 'Marca Original'),
+    ],
+    'offers'      => $schemaOffers,
+];
+
+if ($eanCode !== '') {
+    $schemaData['gtin13'] = $eanCode;
+}
 ?>
+<!-- Dados Estruturados Schema.org / Google Shopping & Rich Snippets -->
+<script type="application/ld+json">
+<?= json_encode($schemaData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?>
+</script>
+
 <div class="domain-drop-product-page" style="max-width: 1200px; margin: 0 auto; padding: 24px 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #cbd5e1; box-sizing: border-box;">
 
     <!-- Breadcrumbs -->

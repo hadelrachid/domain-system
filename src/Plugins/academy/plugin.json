@@ -1,6 +1,6 @@
 {
     "name": "academy",
-    "version": "2.8.0",
+    "version": "2.8.1",
     "author": "Rachid",
     "description": "LMS H\u00edbrido (HTML/MD + Editor em Blocos + F\u00e1brica Autom\u00e1tica de P\u00e1ginas PHP + 3 Perfis Mobile) para o Domain-System OS.",
     "core": false,

@@ -364,6 +364,81 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         return [];
     }
 
+    public function getSkuAttributes(int|string $categoryId): array
+    {
+        $params = [
+            'query_sku_attribute_info_request' => json_encode([
+                'aliexpress_category_id' => (string)$categoryId,
+            ], JSON_UNESCAPED_SLASHES),
+        ];
+
+        try {
+            $response = $this->execute('aliexpress.solution.sku.attribute.query', $params, $this->accessToken);
+            $this->lastError = null;
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+            $res = $unwrapped['result'] ?? ($unwrapped['data'] ?? $unwrapped);
+            return is_array($res) ? $res : [];
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] getSkuAttributes falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getProductEanCode(string $eanCode): array
+    {
+        $code = trim($eanCode);
+        if ($code === '') {
+            return [];
+        }
+
+        try {
+            $response = $this->execute('aliexpress.product.eancode.info.query', ['ean_code' => $code], $this->accessToken);
+            $this->lastError = null;
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+            $res = $unwrapped['result'] ?? ($unwrapped['data'] ?? $unwrapped);
+            return is_array($res) ? $res : [];
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] getProductEanCode falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function queryProductInventory(int|string $productId): array
+    {
+        try {
+            $response = $this->execute('aliexpress.solution.product.inventory.query', ['product_id' => (string)$productId], $this->accessToken);
+            $this->lastError = null;
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+            $res = $unwrapped['result'] ?? ($unwrapped['data'] ?? $unwrapped);
+            return is_array($res) ? $res : [];
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] queryProductInventory falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function updateBatchProductPrices(array $priceUpdates): array
+    {
+        if (empty($priceUpdates)) {
+            return [];
+        }
+
+        try {
+            $response = $this->execute('aliexpress.solution.batch.product.price.update', [
+                'mutiple_product_update_list' => json_encode($priceUpdates, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            ], $this->accessToken);
+            $this->lastError = null;
+            return \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] updateBatchProductPrices falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
     /**
      * Algoritmo Oficial de Assinatura IOP da AliExpress Open Platform.
      * 1. Ordena parâmetros alfabeticamente por chave (ksort).

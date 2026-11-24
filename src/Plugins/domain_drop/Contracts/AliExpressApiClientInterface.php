@@ -80,6 +80,42 @@ interface AliExpressApiClientInterface
     public function getOfficialCategories(int|string $categoryId = 0, string $language = 'pt', bool $forceRefresh = false): array;
 
     /**
+     * Consulta atributos de SKU de uma categoria oficial para vendedores e dropshippers internacionais.
+     * Endpoint oficial: aliexpress.solution.sku.attribute.query (categoria-e-atributos.pdf).
+     *
+     * @param int|string $categoryId
+     * @return array<string, mixed>
+     */
+    public function getSkuAttributes(int|string $categoryId): array;
+
+    /**
+     * Consulta dados e validação de código de barras oficial EAN / GTIN de um produto ou variação.
+     * Endpoint oficial: aliexpress.product.eancode.info.query (ae-ean-code.pdf).
+     *
+     * @param string $eanCode
+     * @return array<string, mixed>
+     */
+    public function getProductEanCode(string $eanCode): array;
+
+    /**
+     * Consulta o estoque real por depósito e variações de SKU de um produto.
+     * Endpoint oficial: aliexpress.solution.product.inventory.query (ae-product-management.pdf).
+     *
+     * @param int|string $productId
+     * @return array<string, mixed>
+     */
+    public function queryProductInventory(int|string $productId): array;
+
+    /**
+     * Atualização em lote de preços de produtos e variações de SKU (até 20 itens por requisição).
+     * Endpoint oficial: aliexpress.solution.batch.product.price.update (ae-product-management.pdf).
+     *
+     * @param array<int, array<string, mixed>> $priceUpdates
+     * @return array<string, mixed>
+     */
+    public function updateBatchProductPrices(array $priceUpdates): array;
+
+    /**
      * Gera a URL de autorização OAuth2 oficial do AliExpress.
      */
     public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string;
