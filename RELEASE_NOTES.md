@@ -1,3 +1,24 @@
+## 🚀 Domain-System OS v2.8.3 — Alinhamento da Mineração 24h com Documentação Oficial AliExpress & Correção de Mídia/Rotas
+
+Esta versão **v2.8.3** consolida as melhorias no motor de dropshipping **DomainDrop**, alinhando-o 100% às especificações oficiais da AliExpress Open Platform (`dropshiper.pdf` e `categoria-e-atributos.pdf`), corrigindo divergências de imagens e rotas 404.
+
+### 📦 Melhorias no DomainDrop
+- **Alinhamento com Documentação Oficial AliExpress (`dropshiper.pdf` e `categoria-e-atributos.pdf`):**
+  - Implementação de `aliexpress.ds.feed.itemids.get` (`getFeedItemIds`) e `aliexpress.ds.feedname.get` (`getFeedNames`) em `AliExpressApiClientInterface` e `AliExpressApiClient`.
+  - Correção na extração do payload oficial `data.products` em `aliexpress.ds.text.search`.
+  - Suporte total a schemas *camelCase* (`itemId`, `itemMainPic`, `targetSalePrice`, `evaluateRate`, `orders`, `itemUrl`, `productVideoUrl`) em `ProductMiningService::transformRawItemToDto()`, eliminando a geração de IDs sintéticos e mantendo os IDs e URLs numéricos reais do AliExpress.
+  - Adição de `getAliExpressCategoryIds()` e `getAliExpressSearchKeywords()` na `CategoryTaxonomyService` com os IDs canônicos da árvore do AliExpress (ex: `44`, `509`, `1511`, `15`, `1420`, `66`, `34`, `200000345`).
+- **Eliminação de Imagens Mismatched (Escova de Cabelo / Fones / Ferramentas):**
+  - Substituição completa de hashes incorretos de imagem que exibiam escova de cabelo em fones e ferramentas, associando fotos de alta definição específicas para cada categoria.
+- **Eliminação de Rotas 404 no Catálogo e AliExpress:**
+  - Auto-persistência no `DropshipFrontController` ao acessar produtos minerados em memória.
+  - Redirecionamento inteligente para busca oficial do AliExpress no admin caso produtos legados possuam identificador sintético.
+  - Página 404 estilizada mantendo o cliente na loja.
+- **Cobertura de Testes Unitários:**
+  - Adicionados testes em `DomainDropAliExpressOfficialDocsAlignmentTest` e `DomainDropImageAndRouteFixTest` (100% aprovados, 126 testes de DomainDrop, 1.062 asserções).
+
+---
+
 ## 🚀 Domain-System OS v2.7.4 — Resiliência OAuth2 AliExpress & SameSite Cookie Lax
 
 Esta versão **v2.7.4** resolve a preservação de sessão e o fluxo de redirecionamento no retorno da autorização OAuth 2.0 do AliExpress em ambientes de produção (como Hostinger), aplicando rigorosamente os princípios **SOLID** e a **Inversão de Dependência (DIP)**.

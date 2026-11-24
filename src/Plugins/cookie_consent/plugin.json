@@ -1,8 +1,8 @@
 {
     "name": "cookie_consent",
     "title": "Aviso de Cookies & Google Consent Mode",
-    "version": "2.8.2",
-    "description": "Aviso de consentimento de cookies e privacidade em conformidade com Google Consent Mode v2, LGPD e GDPR, com bot\u00f5es Aceitar, Recusar e links para Pol\u00edticas de Privacidade e Termos de Uso.",
+    "version": "2.8.3",
+    "description": "Aviso de consentimento de cookies e privacidade em conformidade com Google Consent Mode v2, LGPD e GDPR, com botões Aceitar, Recusar e links para Políticas de Privacidade e Termos de Uso.",
     "author": "Antigravity",
     "core": true,
     "os_version": "2.8"

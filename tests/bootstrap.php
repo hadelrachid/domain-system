@@ -15,9 +15,9 @@ define('DOMAIN_SYSTEM_ROOT', dirname(__DIR__));
 
 if (!defined('DS_VERSION')) {
     $composerData = json_decode((string)file_get_contents(dirname(__DIR__) . '/composer.json'), true);
-    define('DS_VERSION', (string)($composerData['version'] ?? '2.8.2'));
+    define('DS_VERSION', (string)($composerData['version'] ?? '2.8.3'));
 }
 if (!defined('DS_OS_VERSION')) {
-    $versionParts = explode('.', (string)($composerData['version'] ?? '2.8.2'));
+    $versionParts = explode('.', (string)($composerData['version'] ?? '2.8.3'));
     define('DS_OS_VERSION', $versionParts[0] . '.' . ($versionParts[1] ?? '0'));
 }
