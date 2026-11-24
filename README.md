@@ -32,7 +32,7 @@ Você escolhe o que precisa e instala com 1 clique direto pelo painel de control
 
 ## 🤝 Preciso da sua ajuda: Junte-se ao projeto!
 
-Como programo sozinho a maior parte do tempo, uso inteligências artificiais como assistentes de bancada para varrer o código atrás de detalhes que os olhos cansam de ver. Hoje o projeto já conta com uma suíte sólida de **766 testes automatizados no PHPUnit e mais de 4.600 asserções**.
+Como programo sozinho a maior parte do tempo, uso inteligências artificiais como assistentes de bancada para varrer o código atrás de detalhes que os olhos cansam de ver. Hoje o projeto já conta com uma suíte sólida de **767 testes automatizados no PHPUnit e mais de 4.600 asserções**.
 
 Mas convenhamos: **código bom de verdade precisa de gente de verdade.** Nada substitui o olhar crítico, a malícia de segurança e a experiência de desenvolvedores humanos.
 
@@ -68,7 +68,7 @@ Se você gosta de software enxuto e quer construir algo bacana em conjunto, seu 
 
 * **Linguagem:** PHP 8.2 ou superior.
 * **Banco de Dados:** Funciona perfeitamente com **SQLite** (já vem pronto de fábrica, sem precisar instalar nada) ou **MySQL/MariaDB**.
-* **Testes Automatizados:** **766 testes** cobrindo segurança, roteamento, pagamentos e lifecycle.
+* **Testes Automatizados:** **767 testes** cobrindo segurança, roteamento, pagamentos e lifecycle.
 * **Zero Frameworks Pesados:** Apenas PHP puro e extensões padrão (`pdo`, `mbstring`, `zip`, `curl`, `openssl`).
 
 ---

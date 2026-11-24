@@ -1,4 +1,4 @@
-# 📚 Wiki Oficial do Domain System (v2.8.5)
+# 📚 Wiki Oficial do Domain System (v2.8.6)
 
 > 🇧🇷 [Ler em Português](#-visão-geral-e-boas-vindas) | 🇺🇸 [Read in English](#-english-overview--welcome)  
 > 🌐 **Documentação Online:** [https://hadelrachid.github.io/domain-system/](https://hadelrachid.github.io/domain-system/)  
@@ -31,7 +31,7 @@ Para manter tudo rápido, fácil de atualizar e sem misturar as coisas, dividimo
 
 ## 🤝 O Papel da I.A. e o Chamado à Comunidade
 
-Como programo sozinho na maior parte do tempo, uso inteligências artificiais como assistentes de bancada para caçar falhas de lógica, riscos de concorrência e brechas de segurança. Hoje o sistema conta com mais de **766 testes automatizados no PHPUnit** e mais de **4.600 asserções**.
+Como programo sozinho na maior parte do tempo, uso inteligências artificiais como assistentes de bancada para caçar falhas de lógica, riscos de concorrência e brechas de segurança. Hoje o sistema conta com mais de **767 testes automatizados no PHPUnit** e mais de **4.600 asserções**.
 
 Ainda assim, **nada substitui o olhar atento, o bom senso e a bagagem de programadores humanos reais**.
 

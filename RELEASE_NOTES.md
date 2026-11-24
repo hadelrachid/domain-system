@@ -1,3 +1,35 @@
+## 🚀 Domain-System OS v2.8.6 — Resiliência do Disjuntor, Normalização de Rotas Seguras & Tolerância a Pastas Duplicadas
+
+A versão **v2.8.6** soluciona cenários reais de transição e ambientes de produção, blindando a inicialização de plugins contra arquivos duplicados e corrigindo o redirecionamento de emergência no navegador.
+
+---
+
+### 🛡️ 1. Proteção de Inicialização Contra Colisão de Classes (`PluginDiscoverer`)
+- **Tolerância a Pastas Duplicadas:**  
+  Quando uma extensão é renomeada ou existem cópias legadas no disco (como `commerce` e `domaincommerce`), o carregador agora verifica se a classe já foi declarada antes de exigir o arquivo. Isso previne o erro fatal de duplicidade de classes no PHP e mantém a cabine operando sem interrupções.
+- **Isolamento de Plugins Desarmados no Boot:**  
+  O rastreador de extensões agora consulta ativamente o registro do Disjuntor antes de incluir qualquer módulo na memória.
+
+---
+
+### 🔄 2. Resolução Confiável do Retorno Seguro (`ErrorRenderer`)
+- **Correção de Redirecionamento em Domínios Raiz:**  
+  O botão *"Recarregar Sistema Seguro"* agora gera caminhos limpos (`/admin`) em servidores que operam na raiz do domínio, eliminando a ocorrência de barras duplas (`//admin`) que faziam os navegadores tentarem conexões externas inexistentes.
+
+---
+
+### ⚡ 3. Desarmamento Abrangente no Disjuntor (`CircuitBreaker`)
+- **Desativação Forçada e Unificada:**  
+  Mesmo que um módulo problemático não esteja explicitamente configurado no arquivo `plugins.json`, o Disjuntor agora desliga o plugin e grava o alerta em `config/disarmed.json` e `temp/disarmed.json`, garantindo visualização imediata no painel administrativo.
+
+---
+
+### 🧪 4. Bateria de Testes do Core
+- **767 testes automatizados** e **4.615 asserções** validados no PHPUnit com 100% de sucesso.
+- Novos testes unitários cobrindo o desarmamento forçado de plugins não mapeados e a tolerância de erros do manipulador global.
+
+---
+
 ## 🚀 Domain-System OS v2.8.5 — Bloqueio Inteligente no Atualizador de Extensões & Refinamento Operacional
 
 A versão **v2.8.5** aprimora o motor nativo de atualizações do Cockpit Administrativo, introduzindo travas visuais e no backend para evitar downloads e execuções desnecessárias quando as extensões instaladas já estão nas versões mais recentes.

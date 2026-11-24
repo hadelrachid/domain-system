@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.8.5)
+# Roteiro de Desenvolvimento — Domain System (v2.8.6)
 
 Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso objetivo é simples: manter o sistema leve, modular, fácil de entender e coberto por testes automatizados em PHP 8.2+.
 
@@ -70,6 +70,7 @@ Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso
 - [x] **Atualizador Estilo WordPress:** Notificações no sininho e botão "Atualizar Agora" para cada extensão direto pelo painel de controle.
 - [x] **Catraca Estrita no Cockpit (v2.8.4):** Bloqueio imediato de contas não-administrativas no login do admin, preservação de rotas e sincronização de permissões em tempo real.
 - [x] **Inteligência no Atualizador de Extensões (v2.8.5):** Botão desabilitado com estado "Atualizado" quando a versão mais recente já estiver instalada e proteção contra chamadas redundantes.
+- [x] **Resiliência do Disjuntor e Tolerância a Duplicatas (v2.8.6):** Proteção contra duplicidade de namespaces no carregador de plugins e normalização de URLs no retorno de emergência.
 
 ---
 
