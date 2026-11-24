@@ -288,6 +288,6 @@ final class PreflightTest extends TestCase
         $plugins = $state->plugins();
         $this->assertArrayHasKey('settings', $plugins);
         $this->assertSame(defined('DS_VERSION') ? DS_VERSION : '2.7.0', $plugins['settings']->version);
-        $this->assertSame(defined('DS_OS_VERSION') ? DS_OS_VERSION : '2.7', $plugins['settings']->osVersion);
+        $this->assertSame(defined('DS_OS_VERSION') ? DS_OS_VERSION : '2.8', $plugins['settings']->osVersion);
     }
 }
