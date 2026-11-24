@@ -107,7 +107,7 @@ use DomainSystem\Core\Events\EventDispatcher;
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
 
 define('DS_VERSION', '2.8.1');
-define('DS_OS_VERSION', '2.7');
+define('DS_OS_VERSION', '2.8');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3️⃣ CARREGAMENTO DE VARIÁVEIS DE AMBIENTE
