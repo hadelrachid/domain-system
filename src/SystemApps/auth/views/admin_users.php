@@ -3,11 +3,6 @@
         <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #f8fafc;">Usuários e Permissões</h1>
         <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 13px;">Gerenciamento de contas, papéis de acesso, segurança e moderação do sistema.</p>
     </div>
-    <div>
-        <a href="<?= BASE_URL ?>/admin/academy/students" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid rgba(56, 189, 248, 0.3);">
-            <span>🎓</span> Cockpit de Alunos da Academia &rarr;
-        </a>
-    </div>
 </div>
 
 <?php if (isset($_SESSION['flash_message'])): ?>

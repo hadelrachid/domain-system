@@ -59,13 +59,33 @@ class IdentityManager
      */
     public function hasRole(int $userId, string $roleSlug): bool
     {
-        $stmt = $this->getDb()->prepare("
-            SELECT 1 FROM user_roles ur 
-            JOIN roles r ON ur.role_id = r.id 
-            WHERE ur.user_id = :user_id AND r.slug = :role
-        ");
-        $stmt->execute([':user_id' => $userId, ':role' => $roleSlug]);
-        return (bool) $stmt->fetch();
+        try {
+            $stmt = $this->getDb()->prepare("
+                SELECT 1 FROM user_roles ur 
+                JOIN roles r ON ur.role_id = r.id 
+                WHERE ur.user_id = :user_id AND r.slug = :role
+            ");
+            $stmt->execute([':user_id' => $userId, ':role' => $roleSlug]);
+            if ((bool) $stmt->fetch()) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Tabela user_roles pode não existir em esquemas simplificados
+        }
+
+        // Fallback para a coluna role na tabela users
+        try {
+            $stmtUser = $this->getDb()->prepare("SELECT role FROM users WHERE id = :user_id LIMIT 1");
+            $stmtUser->execute([':user_id' => $userId]);
+            $directRole = $stmtUser->fetchColumn();
+            if ($directRole && strtolower((string)$directRole) === strtolower($roleSlug)) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Tabela users pode não ter coluna role em ambientes isolados
+        }
+
+        return false;
     }
     
     /**

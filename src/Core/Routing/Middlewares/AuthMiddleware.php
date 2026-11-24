@@ -102,6 +102,15 @@ class AuthMiddleware implements MiddlewareInterface
         // Se estiver logado, valida o papel do usuário
         $userRole = (string)$this->session->get('user_role', '');
 
+        // Sincronização em tempo real: se a sessão estiver marcada com papel restrito,
+        // mas o usuário possui privilégios de administrador/gerente no banco (ACL), atualiza a sessão imediatamente!
+        if (in_array(strtolower($userRole), ['user', 'student', 'subscriber'], true)) {
+            if ($this->identity->hasRole((int)$userId, 'admin') || $this->identity->hasRole((int)$userId, 'manager') || $this->identity->userCan((int)$userId, '*')) {
+                $userRole = 'admin';
+                $this->session->set('user_role', 'admin');
+            }
+        }
+
         // Barreira estrita: Papéis de nível comum (user, student, subscriber)
         // JAMAIS podem acessar qualquer rota administrativa do painel!
         if ($isAdminRoute && in_array(strtolower($userRole), ['user', 'student', 'subscriber'], true)) {
@@ -136,8 +145,9 @@ class AuthMiddleware implements MiddlewareInterface
         $html = '<div style="padding:40px 20px; text-align:center; font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif; max-width:540px; margin:40px auto; background:#0f141c; color:#f8fafc; border:1px solid rgba(239,68,68,0.3); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.5);">'
             . '<h2 style="color:#ef4444; margin-bottom:12px; font-size:1.5rem;">Acesso Negado 🛑</h2>'
             . '<p style="color:#94a3b8; font-size:0.95rem; line-height:1.6; margin-bottom:24px;">' . $msg . '</p>'
-            . '<div style="display:flex; justify-content:center; gap:12px;">'
+            . '<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">'
             . '<a href="' . ($baseUrl !== '' ? $baseUrl : '/') . '" style="display:inline-block; padding:10px 20px; background:#45f3ff; color:#0b0c10; font-weight:700; text-decoration:none; border-radius:6px;">Página Inicial</a>'
+            . '<a href="' . ($baseUrl !== '' ? $baseUrl : '') . '/logout" style="display:inline-block; padding:10px 20px; background:rgba(239,68,68,0.2); color:#fca5a5; text-decoration:none; border-radius:6px; border:1px solid rgba(239,68,68,0.4); font-weight:600;">Sair / Trocar de Conta</a>'
             . '<a href="javascript:history.back()" style="display:inline-block; padding:10px 20px; background:rgba(255,255,255,0.08); color:#cbd5e1; text-decoration:none; border-radius:6px;">Voltar com Segurança</a>'
             . '</div>'
             . '</div>';
