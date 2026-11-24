@@ -32,7 +32,7 @@ You pick what your project needs and install it with a single click inside the a
 
 ## 🤝 I need your help: Join the project!
 
-Because I work on this by myself most days, I use AI tools as assistant auditors to comb through lines of code looking for things human eyes might miss after midnight. Today, the project has a suite of **764 automated tests in PHPUnit with over 4,600 assertions**.
+Because I work on this by myself most days, I use AI tools as assistant auditors to comb through lines of code looking for things human eyes might miss after midnight. Today, the project has a suite of **766 automated tests in PHPUnit with over 4,600 assertions**.
 
 Still, let's face facts: **nothing beats the intuition, street smarts, and hands-on experience of real human developers.**
 
@@ -68,7 +68,7 @@ If you appreciate lean software that respects server resources, your Pull Reques
 
 * **Language:** PHP 8.2 or higher.
 * **Database:** Runs out of the box with **SQLite** (zero installation needed) or connect to **MySQL/MariaDB**.
-* **Test Coverage:** **764 automated tests** covering authentication, routing, and payment lifecycles.
+* **Test Coverage:** **766 automated tests** covering authentication, routing, and payment lifecycles.
 * **Zero Heavy Framework Dependencies:** Standard PHP extensions only (`pdo`, `mbstring`, `zip`, `curl`, `openssl`).
 
 ---

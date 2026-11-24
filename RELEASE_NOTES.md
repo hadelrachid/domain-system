@@ -1,3 +1,31 @@
+## 🚀 Domain-System OS v2.8.5 — Bloqueio Inteligente no Atualizador de Extensões & Refinamento Operacional
+
+A versão **v2.8.5** aprimora o motor nativo de atualizações do Cockpit Administrativo, introduzindo travas visuais e no backend para evitar downloads e execuções desnecessárias quando as extensões instaladas já estão nas versões mais recentes.
+
+---
+
+### 🔄 1. Botão de Atualização Inteligente no Painel de Plugins
+- **Desativação Visual Preventiva:**  
+  Quando um plugin já está atualizado com a versão mais recente do catálogo oficial, o botão de ação fica desabilitado (`disabled`) exibindo o rótulo *"Atualizado"* com um ícone de verificação.
+- **Destaque Dinâmico para Versões Superiores:**  
+  O botão de atualização só fica habilitado quando o repositório remoto declarar uma versão comprovadamente maior (`version_compare($remote, $local, '>')`), destacando a versão de destino: *"Atualizar para vX.Y.Z"*.
+- **Contador Realista de Atualizações:**  
+  O indicador de atualizações pendentes no topo da página e as notificações do sistema agora contabilizam apenas extensões que realmente necessitam de upgrade.
+
+---
+
+### 🛡️ 2. Trava de Segurança no Backend (`PluginUpdateChecker`)
+- **Bloqueio de Requisições Redundantes:**  
+  O manipulador `updatePluginFromRemote` confere a versão local antes de disparar o download. Caso o plugin já esteja na versão mais recente, a requisição é encerrada com mensagem amigável: *"O plugin já está na versão mais recente. Nenhuma atualização disponível."*
+
+---
+
+### 🧪 3. Bateria de Testes do Core
+- **766 testes automatizados** e **4.611 asserções** validados no PHPUnit com 100% de aprovação.
+- Novos testes unitários cobrindo o bloqueio do atualizador e a renderização condicional dos botões no Cockpit.
+
+---
+
 ## 🚀 Domain-System OS v2.8.4 — Catraca de Segurança no Cockpit, Desacoplamento Total do Core & Sincronização em Tempo Real
 
 A versão **v2.8.4** fecha o ciclo de isolamento e blindagem do **Domain-System Core OS**, garantindo que o núcleo seja 100% agnóstico em relação a qualquer plugin de aplicação ou tema visual.

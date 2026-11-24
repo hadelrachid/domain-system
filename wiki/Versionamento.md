@@ -4,7 +4,7 @@ O ecossistema **Domain System** segue a especificação internacional **Semantic
 
 $$\text{v} \, \mathbf{X} \, . \, \mathbf{Y} \, . \, \mathbf{Z}$$
 
-Exemplo: **`v2.8.4`**
+Exemplo: **`v2.8.5`**
 
 ---
 
@@ -23,7 +23,7 @@ Exemplo: **`v2.8.4`**
 Para evitar que uma melhoria em um plugin force uma nova versão do sistema todo, cada pilar tem sua própria vida:
 
 1. **O Núcleo (`domain-system`):**  
-   Controla a versão do sistema operacional (ex: `v2.8.4`). Os módulos vitais do `SystemApps` e os plugins de composição interna (`core: true`) acompanham estritamente essa versão.
+   Controla a versão do sistema operacional (ex: `v2.8.5`). Os módulos vitais do `SystemApps` e os plugins de composição interna (`core: true`) acompanham estritamente essa versão.
 2. **Plugins Agregados (`domain-system-plugins`):**  
    Módulos externos como `domain_drop`, `commerce` e `academy` têm seu próprio número de versão. Um ajuste na mineração do AliExpress pode subir a versão do `domain_drop` sem precisar alterar a versão do Core.
 3. **Temas Agregados (`domain-system-themes`):**  

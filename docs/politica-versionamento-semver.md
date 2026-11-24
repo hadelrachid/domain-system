@@ -23,7 +23,7 @@ Toda versão oficial é identificada pelo formato canônico:
 
 $$\text{v} \, \mathbf{X} \, . \, \mathbf{Y} \, . \, \mathbf{Z}$$
 
-Exemplo atual do Core: **`v2.8.4`**
+Exemplo atual do Core: **`v2.8.5`**
 
 ```mermaid
 flowchart LR

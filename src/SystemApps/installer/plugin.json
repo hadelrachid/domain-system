@@ -1,6 +1,6 @@
 {
     "name": "installer",
-    "version": "2.8.4",
+    "version": "2.8.5",
     "description": "System Setup Wizard for initial Hostinger/VPS configuration.",
     "namespace": "DomainSystem\\Plugins\\installer\\",
     "entrypoint": "Plugin",

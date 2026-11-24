@@ -1,4 +1,4 @@
-# Roteiro de Desenvolvimento — Domain System (v2.8.4)
+# Roteiro de Desenvolvimento — Domain System (v2.8.5)
 
 Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso objetivo é simples: manter o sistema leve, modular, fácil de entender e coberto por testes automatizados em PHP 8.2+.
 
@@ -69,6 +69,7 @@ Este documento acompanha passo a passo o crescimento do **Domain System**. Nosso
 - [x] **Repositório de Temas ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):** Temas desacoplados, começando pelo `rachidd_store` v1.0.0.
 - [x] **Atualizador Estilo WordPress:** Notificações no sininho e botão "Atualizar Agora" para cada extensão direto pelo painel de controle.
 - [x] **Catraca Estrita no Cockpit (v2.8.4):** Bloqueio imediato de contas não-administrativas no login do admin, preservação de rotas e sincronização de permissões em tempo real.
+- [x] **Inteligência no Atualizador de Extensões (v2.8.5):** Botão desabilitado com estado "Atualizado" quando a versão mais recente já estiver instalada e proteção contra chamadas redundantes.
 
 ---
 
