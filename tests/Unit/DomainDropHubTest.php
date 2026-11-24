@@ -758,6 +758,8 @@ class DomainDropHubTest extends TestCase
         $apiClient = new class implements AliExpressApiClientInterface {
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
+            public function getFeedItemIds(string $feedName = 'DS bestseller', ?string $categoryId = null, int $pageSize = 50, ?string $searchId = null): array { return ['total' => 0, 'products' => [], 'search_id' => '']; }
+            public function getFeedNames(): array { return ['DS bestseller']; }
             public function textSearch(array $filters = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }
@@ -834,6 +836,8 @@ class DomainDropHubTest extends TestCase
         $apiClient = new class implements AliExpressApiClientInterface {
             public function execute(string $apiMethod, array $params = [], ?string $accessToken = null): array { return []; }
             public function searchProducts(array $params = []): array { return []; }
+            public function getFeedItemIds(string $feedName = 'DS bestseller', ?string $categoryId = null, int $pageSize = 50, ?string $searchId = null): array { return ['total' => 0, 'products' => [], 'search_id' => '']; }
+            public function getFeedNames(): array { return ['DS bestseller']; }
             public function textSearch(array $filters = []): array { return []; }
             public function getProductDetails(string|int $productId, string $targetLanguage = 'pt', string $targetCurrency = 'USD'): array { return []; }
             public function queryTrackingInfo(string $logisticsNo, string $origin = 'ESCROW', string $outRef = '', string $serviceName = 'CAINIAO', string $toArea = 'BR'): array { return []; }

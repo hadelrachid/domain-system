@@ -43,7 +43,27 @@ interface AliExpressApiClientInterface
     public function searchProducts(array $filters = []): array;
 
     /**
-     * Realiza busca textual dropshipping oficial via aliexpress.ds.text.search (dropshiper.pdf páginas 39-41).
+     * Consulta lista de IDs de produtos mais vendidos no feed oficial de Dropshipping.
+     * Endpoint oficial: aliexpress.ds.feed.itemids.get (dropshiper.pdf páginas 950-1010).
+     *
+     * @param string $feedName Nome do feed (padrão 'DS bestseller')
+     * @param string|null $categoryId ID da categoria de primeiro nível no AliExpress
+     * @param int $pageSize Quantidade de itens por página (máx. 200)
+     * @param string|null $searchId Cursor de paginação retornado na busca anterior
+     * @return array<string, mixed> Estrutura com 'products' (array de IDs), 'total' e 'search_id'
+     */
+    public function getFeedItemIds(string $feedName = 'DS bestseller', ?string $categoryId = null, int $pageSize = 50, ?string $searchId = null): array;
+
+    /**
+     * Consulta os nomes de feeds de recomendação e bestsellers disponíveis no AliExpress.
+     * Endpoint oficial: aliexpress.ds.feedname.get (dropshiper.pdf).
+     *
+     * @return array<int, string> Lista de nomes de feeds oficiais disponíveis
+     */
+    public function getFeedNames(): array;
+
+    /**
+     * Realiza busca textual dropshipping oficial via aliexpress.ds.text.search (dropshiper.pdf páginas 39-41 / 1938-2025).
      * Não exige session token obrigatório.
      *
      * @param array<string, mixed> $filters

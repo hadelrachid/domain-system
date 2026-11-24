@@ -71,12 +71,30 @@ class ProductMiningService implements ProductMiningServiceInterface
         try {
             $pageSize = min(max($limit, 10), 50);
             $pagesNeeded = (int)ceil($limit / $pageSize);
+
+            // Obtém IDs e termos de busca oficiais da taxonomia alinhada ao AliExpress (categoria-e-atributos.pdf e dropshiper.pdf)
+            $catIds = $this->taxonomy->getAliExpressCategoryIds($category);
+            $primaryCatId = !empty($catIds) ? (string)$catIds[0] : null;
+            $searchTerms = $this->taxonomy->getAliExpressSearchKeywords($category);
+            $primaryKeyword = !empty($searchTerms) ? $searchTerms[0] : $category;
+
             for ($page = 1; $page <= $pagesNeeded; $page++) {
                 $batch = $this->apiClient->searchProducts([
-                    'keywords'          => $category,
+                    'keyword'           => $primaryKeyword,
+                    'keyWord'           => $primaryKeyword,
+                    'query'             => $primaryKeyword,
+                    'category_id'       => $primaryCatId,
+                    'categoryId'        => $primaryCatId,
+                    'feed_name'         => 'DS bestseller',
                     'page_size'         => (string)$pageSize,
                     'page_no'           => (string)$page,
+                    'page_index'        => (string)$page,
                     'sort'              => $sort,
+                    'sort_by'           => 'orders,desc',
+                    'local'             => 'pt_BR',
+                    'country_code'      => 'BR',
+                    'country'           => 'BR',
+                    'currency'          => 'USD',
                     'ship_from_country' => 'BR',
                     'ship_to_country'   => 'BR',
                 ]);
@@ -656,9 +674,20 @@ class ProductMiningService implements ProductMiningServiceInterface
         $multiMedia = $item['ae_multimedia_info_dto'] ?? [];
         $skuDtos = $item['ae_item_sku_info_dtos']['ae_item_sku_info_d_t_o'] ?? ($item['ae_item_sku_info_dtos'] ?? []);
 
-        $aeId = (string)($item['product_id'] ?? ($baseInfo['product_id'] ?? ($item['item_id'] ?? uniqid('ae_'))));
-        $rawTitle = (string)($item['product_title'] ?? ($baseInfo['subject'] ?? ($item['title'] ?? 'Produto Internacional')));
-        $rawCat = (string)($item['category_name'] ?? $defaultCategory);
+        $aeId = (string)(
+            $item['itemId']
+            ?? ($item['product_id']
+            ?? ($baseInfo['product_id']
+            ?? ($item['item_id']
+            ?? ($item['productId'] ?? uniqid('ae_')))))
+        );
+        $rawTitle = (string)(
+            $item['title']
+            ?? ($item['product_title']
+            ?? ($baseInfo['subject']
+            ?? 'Produto Internacional'))
+        );
+        $rawCat = (string)($item['category_name'] ?? ($item['cateId'] ?? $defaultCategory));
         $category = self::normalizeCategory($rawCat);
 
         // 1. Higienização por I.A.
@@ -666,7 +695,12 @@ class ProductMiningService implements ProductMiningServiceInterface
         $slug = $this->slugify($polishedTitle . '-' . substr($aeId, -4));
 
         // 2. Extração de Imagens e Galeria Completa (Multi-Image Carousel)
-        $rawMainImage = (string)($item['product_main_image_url'] ?? ($item['image_url'] ?? ''));
+        $rawMainImage = (string)(
+            $item['itemMainPic']
+            ?? ($item['product_main_image_url']
+            ?? ($item['image_url']
+            ?? ($item['pic_url'] ?? '')))
+        );
         $collectedImages = [];
 
         // 2.1 Da galeria oficial do IOP SDK (image_urls delimitado por ponto-e-vírgula ';')
@@ -738,9 +772,17 @@ class ProductMiningService implements ProductMiningServiceInterface
             $mainImage = $images[0];
         }
 
-        // 3. Precificação em Dólar e Conversão em Reais
+        // 3. Precificação em Dólar e Conversão em Reais (suporta camelCase do dropshiper.pdf e snake_case legado)
         $costBrl = (float)($item['cost_price_brl'] ?? 0.0);
-        $costPriceUsd = (float)($item['target_sale_price'] ?? ($item['sale_price'] ?? ($item['original_price'] ?? 10.0)));
+        $costPriceUsd = (float)(
+            $item['targetSalePrice']
+            ?? ($item['salePrice']
+            ?? ($item['target_sale_price']
+            ?? ($item['sale_price']
+            ?? ($item['targetOriginalPrice']
+            ?? ($item['originalPrice']
+            ?? ($item['original_price'] ?? 10.0))))))
+        );
         if ($costBrl > 0.0) {
             $salePriceBrl = $this->currencyConverter->calculateSalePriceFromBrl($costBrl, 100.0);
             $costPriceUsd = round($costBrl / 5.75, 2);
@@ -749,9 +791,13 @@ class ProductMiningService implements ProductMiningServiceInterface
         }
 
         // 4. Métricas e Atributos de Curadoria
-        $rating = (float)($item['evaluate_rate'] ?? ($baseInfo['avg_evaluation_rating'] ?? 4.8));
-        $effectiveRating = $rating > 0 ? $rating : 4.8;
-        $ordersCount = (int)($item['volume'] ?? ($item['orders_count'] ?? 0));
+        $rawRate = $item['evaluateRate'] ?? ($item['evaluate_rate'] ?? ($item['score'] ?? ($baseInfo['avg_evaluation_rating'] ?? 4.8)));
+        $numRate = is_numeric($rawRate) ? (float)$rawRate : (float)str_replace(['%', ','], ['', '.'], (string)$rawRate);
+        if ($numRate > 5.0) {
+            $numRate = round(($numRate / 100.0) * 5.0, 1);
+        }
+        $effectiveRating = $numRate > 0 ? $numRate : 4.8;
+        $ordersCount = (int)($item['orders'] ?? ($item['volume'] ?? ($item['orders_count'] ?? 0)));
         $thermometer = self::calculateThermometerScore($effectiveRating, $ordersCount);
 
         $props = is_array($item['properties'] ?? null) ? $item['properties'] : [];
@@ -760,6 +806,15 @@ class ProductMiningService implements ProductMiningServiceInterface
         if (!isset($props['ship_from'])) {
             $props['ship_from'] = 'BR';
             $props['origem_brasil'] = true;
+        }
+        if (!empty($item['itemUrl'])) {
+            $props['aliexpress_url'] = (string)$item['itemUrl'];
+        }
+        if (!empty($item['productVideoUrl'])) {
+            $props['video_url'] = (string)$item['productVideoUrl'];
+        }
+        if (!empty($item['discount'])) {
+            $props['discount_label'] = (string)$item['discount'];
         }
 
         // 4.1 Extração de Variações e SKUs (Padrão SKU Matrix / AliExpress Open Platform)

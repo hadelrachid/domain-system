@@ -42,6 +42,55 @@ class CategoryTaxonomyService implements CategoryTaxonomyInterface
         ];
     }
 
+    /**
+     * Retorna os IDs numéricos oficiais correspondentes na árvore de categorias da AliExpress Open Platform.
+     * Alinhado a categoria-e-atributos.pdf e dropshiper.pdf.
+     *
+     * @param string $category
+     * @return array<int, int>
+     */
+    public function getAliExpressCategoryIds(string $category): array
+    {
+        $canonical = $this->normalizeCategory($category);
+        return match ($canonical) {
+            self::CAT_TECH       => [44, 509, 7],
+            self::CAT_SMARTWATCH => [1511],
+            self::CAT_HOME       => [15, 39, 6],
+            self::CAT_TOOLS      => [1420, 30],
+            self::CAT_BEAUTY     => [66],
+            self::CAT_PETS       => [100006664, 15],
+            self::CAT_AUTO       => [34],
+            self::CAT_FASHION    => [200000345, 200000343, 1524, 322],
+            self::CAT_LINGERIE   => [200574005],
+            self::CAT_ADULT      => [200000532],
+            default              => [44],
+        };
+    }
+
+    /**
+     * Retorna termos de busca otimizados em português para consulta no AliExpress.
+     *
+     * @param string $category
+     * @return array<int, string>
+     */
+    public function getAliExpressSearchKeywords(string $category): array
+    {
+        $canonical = $this->normalizeCategory($category);
+        return match ($canonical) {
+            self::CAT_TECH       => ['fone bluetooth tws', 'carregador turbo usb c', 'fone sem fio', 'power bank'],
+            self::CAT_SMARTWATCH => ['smartwatch', 'relogio inteligente', 'pulseira smartwatch'],
+            self::CAT_HOME       => ['fita led rgb', 'luminaria tuya inteligente', 'lampada inteligente wifi', 'aspirador portatil'],
+            self::CAT_TOOLS      => ['alicate crimpador decapador', 'jogo chave precisao catraca', 'ferramentas reparo manual'],
+            self::CAT_BEAUTY     => ['escova secadora modeladora', 'maquiagem paleta', 'barbeador eletrico recarregavel'],
+            self::CAT_PETS       => ['coleira led cachorro', 'escova pelos pet gato cão', 'brinquedo interativo pet'],
+            self::CAT_AUTO       => ['suporte celular veicular', 'acessorios carro suporte', 'led veicular automotivo'],
+            self::CAT_FASHION    => ['mochila executiva impermeavel', 'tenis casual confortavel', 'bolsa transversal feminina'],
+            self::CAT_LINGERIE   => ['lingerie renda sexy', 'sutia sem costura push up', 'pijama cetim seda'],
+            self::CAT_ADULT      => ['massageador muscular eletrico', 'rolo massagem relaxamento'],
+            default              => ['eletronicos'],
+        };
+    }
+
     public function normalizeCategory(string $category): string
     {
         $raw = trim($category);

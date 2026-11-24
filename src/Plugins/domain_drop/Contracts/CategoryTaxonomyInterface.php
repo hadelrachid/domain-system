@@ -32,6 +32,23 @@ interface CategoryTaxonomyInterface
     public function classifyFromText(string $title, ?string $rawCategory = null): string;
 
     /**
+     * Retorna os IDs numéricos oficiais correspondentes na árvore de categorias da AliExpress Open Platform.
+     * Alinhado a categoria-e-atributos.pdf e dropshiper.pdf.
+     *
+     * @param string $category
+     * @return array<int, int>
+     */
+    public function getAliExpressCategoryIds(string $category): array;
+
+    /**
+     * Retorna termos de busca otimizados em português para consulta no AliExpress.
+     *
+     * @param string $category
+     * @return array<int, string>
+     */
+    public function getAliExpressSearchKeywords(string $category): array;
+
+    /**
      * Constrói cláusula SQL inteligente para filtragem no catálogo, combinando
      * correspondência exata de categoria, sinônimos e palavras-chave de título.
      * 

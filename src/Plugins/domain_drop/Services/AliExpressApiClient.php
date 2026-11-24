@@ -228,17 +228,133 @@ class AliExpressApiClient implements AliExpressApiClientInterface
         }
     }
 
+    /**
+     * Consulta lista de IDs de produtos mais vendidos no feed oficial de Dropshipping.
+     * Endpoint oficial: aliexpress.ds.feed.itemids.get (dropshiper.pdf páginas 950-1010).
+     *
+     * @param string $feedName Nome do feed (padrão 'DS bestseller')
+     * @param string|null $categoryId ID da categoria de primeiro nível no AliExpress
+     * @param int $pageSize Quantidade de itens por página (máx. 200)
+     * @param string|null $searchId Cursor de paginação retornado na busca anterior
+     * @return array<string, mixed> Estrutura com 'products' (array de IDs), 'total' e 'search_id'
+     */
+    public function getFeedItemIds(string $feedName = 'DS bestseller', ?string $categoryId = null, int $pageSize = 50, ?string $searchId = null): array
+    {
+        $params = [
+            'feed_name' => $feedName !== '' ? $feedName : 'DS bestseller',
+            'page_size' => (string)min(max($pageSize, 1), 200),
+        ];
+
+        if ($categoryId !== null && trim((string)$categoryId) !== '') {
+            $params['category_id'] = trim((string)$categoryId);
+        }
+
+        if ($searchId !== null && trim($searchId) !== '') {
+            $params['search_id'] = trim($searchId);
+        }
+
+        try {
+            $response = $this->execute('aliexpress.ds.feed.itemids.get', $params, $this->accessToken);
+            $this->lastError = null;
+
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+            $result = $unwrapped['result'] ?? ($response['result'] ?? $unwrapped);
+
+            $rawProducts = $result['products'] ?? [];
+            if (is_string($rawProducts)) {
+                $decoded = json_decode($rawProducts, true);
+                if (is_array($decoded)) {
+                    $rawProducts = $decoded;
+                }
+            }
+
+            return [
+                'total'     => (int)($result['total'] ?? (is_array($rawProducts) ? count($rawProducts) : 0)),
+                'products'  => is_array($rawProducts) ? $rawProducts : [],
+                'search_id' => (string)($result['search_id'] ?? ''),
+                'raw'       => $response,
+            ];
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+            error_log("[AliExpressApiClient] getFeedItemIds falhou: " . $e->getMessage());
+            return [
+                'total'     => 0,
+                'products'  => [],
+                'search_id' => '',
+                'raw'       => [],
+            ];
+        }
+    }
+
+    /**
+     * Consulta os nomes de feeds de recomendação e bestsellers disponíveis no AliExpress.
+     * Endpoint oficial: aliexpress.ds.feedname.get (dropshiper.pdf).
+     *
+     * @return array<int, string> Lista de nomes de feeds oficiais disponíveis
+     */
+    public function getFeedNames(): array
+    {
+        try {
+            $response = $this->execute('aliexpress.ds.feedname.get', [], $this->accessToken);
+            $this->lastError = null;
+            $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($response);
+            $result = $unwrapped['result'] ?? ($response['result'] ?? $unwrapped);
+            $feeds = $result['prompts'] ?? ($result['feed_names'] ?? ($result['feeds'] ?? []));
+            if (is_array($feeds) && !empty($feeds)) {
+                return array_values(array_filter(array_map('strval', $feeds)));
+            }
+        } catch (Throwable $e) {
+            $this->lastError = $e->getMessage();
+        }
+
+        return ['DS bestseller', 'Top Ranking', 'Hot Products'];
+    }
+
     public function searchProducts(array $filters = []): array
     {
-        $hasTextQuery = !empty($filters['query']) || !empty($filters['keyword']) || !empty($filters['keyWord']) || !empty($filters['search']);
-        if ($hasTextQuery) {
+        $hasTextQuery = !empty($filters['query']) || !empty($filters['keyword']) || !empty($filters['keyWord']) || !empty($filters['keywords']) || !empty($filters['search']);
+        $hasCategoryId = !empty($filters['category_id']) || !empty($filters['categoryId']) || !empty($filters['cate_id']);
+
+        if ($hasTextQuery || $hasCategoryId) {
             $textRes = $this->textSearch($filters);
             $unwrapped = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($textRes);
-            $products = $unwrapped['products']['traffic_product_d_t_o']
-                ?? ($unwrapped['products']['product']
-                ?? ($unwrapped['products'] ?? []));
+            $data = $unwrapped['data'] ?? ($textRes['data'] ?? ($unwrapped['result'] ?? ($textRes['result'] ?? [])));
+            $rawProducts = $data['products'] ?? ($unwrapped['products'] ?? []);
+            if (isset($rawProducts['traffic_product_d_t_o'])) {
+                $products = $rawProducts['traffic_product_d_t_o'];
+            } elseif (isset($rawProducts['product'])) {
+                $products = $rawProducts['product'];
+            } else {
+                $products = $rawProducts;
+            }
+
             if (is_array($products) && !empty($products)) {
                 return $products;
+            }
+        }
+
+        // Bestseller feed query oficial aliexpress.ds.feed.itemids.get (dropshiper.pdf)
+        $catId = $filters['category_id'] ?? ($filters['categoryId'] ?? ($filters['cate_id'] ?? null));
+        $feedName = (string)($filters['feed_name'] ?? 'DS bestseller');
+        $pageSize = (int)($filters['page_size'] ?? ($filters['pageSize'] ?? 20));
+
+        $feedRes = $this->getFeedItemIds($feedName, $catId ? (string)$catId : null, $pageSize);
+        if (!empty($feedRes['products']) && is_array($feedRes['products'])) {
+            $feedProducts = [];
+            foreach (array_slice($feedRes['products'], 0, $pageSize) as $pId) {
+                try {
+                    $details = $this->getProductDetails((string)$pId, 'pt', 'USD');
+                    $unwrappedDetails = \DomainSystem\Plugins\domain_drop\ValueObjects\AliExpressToken::unwrapPayload($details);
+                    $productData = $unwrappedDetails['result'] ?? ($details['result'] ?? $unwrappedDetails);
+                    if (!empty($productData) && is_array($productData)) {
+                        $feedProducts[] = $productData;
+                    }
+                } catch (Throwable $e) {
+                    // Isolamento gracioso
+                }
+            }
+            if (!empty($feedProducts)) {
+                return $feedProducts;
             }
         }
 
