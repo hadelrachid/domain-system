@@ -68,6 +68,7 @@ class AdminControllerTest extends TestCase
         $pluginManagerMock = $this->createMock(\DomainSystem\Core\Plugin\PluginManager::class);
         $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
         $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $dispatcherMock->method('applyFilters')->willReturnArgument(1);
         $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
 
         $checkerMock = $this->createMock(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
@@ -104,6 +105,7 @@ class AdminControllerTest extends TestCase
         $pluginManagerMock = $this->createMock(\DomainSystem\Core\Plugin\PluginManager::class);
         $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
         $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $dispatcherMock->method('applyFilters')->willReturnArgument(1);
         $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
 
         $checkerMock = $this->createMock(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
@@ -135,6 +137,60 @@ class AdminControllerTest extends TestCase
         $response = $controller->checkPluginUpdates($request);
         $this->assertInstanceOf(\DomainSystem\Core\Http\Response::class, $response);
         $this->assertSame(302, $response->getStatusCode());
+    }
+
+    public function testListPluginsOnlyEnablesHasUpdateWhenNewerVersionExists(): void
+    {
+        $themeManagerMock = $this->createMock(\DomainSystem\Core\Theme\ThemeManager::class);
+        $pluginManagerMock = $this->createMock(\DomainSystem\Core\Plugin\PluginManager::class);
+        $shortcodesMock = $this->createMock(\DomainSystem\Core\Theme\ShortcodeManager::class);
+        $dispatcherMock = $this->createMock(\DomainSystem\Core\Contracts\EventDispatcherInterface::class);
+        $dispatcherMock->method('applyFilters')->willReturnArgument(1);
+        $sessionMock = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $checkerMock = $this->createMock(\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface::class);
+
+        // When a plugin has has_update => false, listPlugins must NOT set has_update = true
+        $checkerMock->method('checkForUpdates')->willReturn([
+            'commerce' => [
+                'has_update' => false,
+                'latest_version' => '2.8.3',
+                'new_version' => '2.8.3',
+                'download_url' => 'https://example.com/commerce.zip'
+            ]
+        ]);
+
+        $themeManagerMock->expects($this->once())
+            ->method('render')
+            ->with(
+                'plugins',
+                $this->callback(function (array $data) {
+                    $plugins = $data['plugins'];
+                    $this->assertSame(0, $data['pendingUpdatesCount']);
+
+                    foreach ($plugins as $p) {
+                        if ($p['folder'] === 'commerce') {
+                            $this->assertFalse($p['has_update'], 'Plugin sem versão superior deve ter has_update = false');
+                        }
+                    }
+                    return true;
+                })
+            )
+            ->willReturn('<html>rendered plugins</html>');
+
+        $controller = new AdminController(
+            $pluginManagerMock,
+            $themeManagerMock,
+            $shortcodesMock,
+            $dispatcherMock,
+            $sessionMock,
+            null,
+            null,
+            $checkerMock
+        );
+
+        $request = new \DomainSystem\Core\Http\Request([], [], ['REQUEST_METHOD' => 'GET']);
+        $html = $controller->listPlugins($request);
+        $this->assertSame('<html>rendered plugins</html>', $html);
     }
 }
 

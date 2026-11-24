@@ -115,7 +115,8 @@ class AdminController
             }
         }
 
-        $allPlugins = $this->dispatcher->applyFilters('admin.plugins.list', $allPlugins);
+        $filteredPlugins = $this->dispatcher->applyFilters('admin.plugins.list', $allPlugins);
+        $allPlugins = is_array($filteredPlugins) ? $filteredPlugins : $allPlugins;
 
         // Check for remote plugin updates (cached for 12 hours)
         $updates = [];
@@ -129,15 +130,15 @@ class AdminController
         $pendingUpdatesCount = 0;
         foreach ($allPlugins as &$plugin) {
             $slug = $plugin['folder'];
-            if (!$plugin['is_core'] && isset($updates[$slug])) {
+            if (!$plugin['is_core'] && isset($updates[$slug]) && !empty($updates[$slug]['has_update'])) {
                 $plugin['has_update'] = true;
                 $plugin['remote_version'] = $updates[$slug]['new_version'] ?? '';
                 $plugin['download_url'] = $updates[$slug]['download_url'] ?? '';
                 $pendingUpdatesCount++;
             } else {
                 $plugin['has_update'] = false;
-                $plugin['remote_version'] = null;
-                $plugin['download_url'] = null;
+                $plugin['remote_version'] = $updates[$slug]['latest_version'] ?? ($updates[$slug]['new_version'] ?? null);
+                $plugin['download_url'] = $updates[$slug]['download_url'] ?? null;
             }
         }
         unset($plugin);
@@ -300,7 +301,8 @@ class AdminController
             // Força a verificação ao vivo (bypass cache)
             $updates = $this->updateChecker->checkForUpdates(true);
             $this->updateChecker->notifyIfUpdatesAvailable(true);
-            $count = count($updates);
+            $pendingUpdates = array_filter($updates, fn($item) => !empty($item['has_update']));
+            $count = count($pendingUpdates);
 
             if ($count > 0) {
                 $this->session->setFlash('success', "🔎 Verificação concluída: {$count} atualização(ões) de plugin disponível(is) no repositório oficial!");

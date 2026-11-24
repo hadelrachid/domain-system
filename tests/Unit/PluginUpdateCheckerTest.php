@@ -224,4 +224,38 @@ class PluginUpdateCheckerTest extends TestCase
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('Falha de integridade: SHA-256', $result['message']);
     }
+
+    public function testUpdatePluginFromRemoteRejectsWhenAlreadyAtLatestVersion(): void
+    {
+        $pluginDir = $this->tempDir . '/src/Plugins/academy';
+        @mkdir($pluginDir, 0777, true);
+        file_put_contents($pluginDir . '/plugin.json', json_encode([
+            'name' => 'academy',
+            'version' => '2.8.3',
+            'core' => false,
+        ]));
+
+        $marketplaceFile = $this->tempDir . '/marketplace.json';
+        file_put_contents($marketplaceFile, json_encode([
+            'version' => '2.8.3',
+            'plugins' => [
+                'academy' => [
+                    'name' => 'academy',
+                    'version' => '2.8.3',
+                    'download_url' => 'https://example.com/academy.zip',
+                    'sha256' => 'somehash',
+                ]
+            ]
+        ]));
+
+        $checker = new PluginUpdateChecker(
+            $this->tempDir,
+            null,
+            $marketplaceFile
+        );
+
+        $result = $checker->updatePluginFromRemote('academy');
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('já está na versão mais recente', $result['message']);
+    }
 }

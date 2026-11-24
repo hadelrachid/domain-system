@@ -164,10 +164,20 @@ class PluginUpdateChecker implements PluginUpdateCheckerInterface
             return ['success' => false, 'message' => "O pacote do plugin '{$slug}' não foi localizado no repositório de plugins do GitHub."];
         }
 
+        $localVersion = (string)($localMeta['version'] ?? '0.0.0');
+        $remoteVersion = (string)($pluginInfo['version'] ?? '0.0.0');
+        $pluginName = (string)($pluginInfo['name'] ?? $slug);
+
+        if (version_compare($remoteVersion, $localVersion, '<=')) {
+            return [
+                'success' => false,
+                'message' => "O plugin '{$pluginName}' já está na versão mais recente (v{$localVersion}). Nenhuma atualização disponível."
+            ];
+        }
+
         $downloadUrl = (string)$pluginInfo['download_url'];
         $expectedSha = (string)($pluginInfo['sha256'] ?? '');
         $newVersion = (string)($pluginInfo['version'] ?? 'N/A');
-        $pluginName = (string)($pluginInfo['name'] ?? $slug);
 
         // Prepara diretório de download
         $downloadDir = $this->basePath . '/temp/downloads';

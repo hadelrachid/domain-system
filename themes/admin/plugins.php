@@ -167,15 +167,22 @@
                         <?php endif; ?>
                     </form>
 
-                    <?php if (!empty($plugin['has_update'])): ?>
-                    <form method="POST" action="admin/plugins/update-remote" style="margin:0;" onsubmit="return confirm('Deseja atualizar o plugin <?= htmlspecialchars($plugin['name']) ?> para a versão <?= htmlspecialchars($plugin['remote_version']) ?> agora? O pacote oficial será baixado e aplicado com segurança.');">
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                        <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                        <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Atualizar Agora
+                    <?php if (!$plugin['is_core']): ?>
+                        <?php if (!empty($plugin['has_update'])): ?>
+                        <form method="POST" action="admin/plugins/update-remote" style="margin:0;" onsubmit="return confirm('Deseja atualizar o plugin <?= htmlspecialchars($plugin['name']) ?> para a versão <?= htmlspecialchars($plugin['remote_version']) ?> agora? O pacote oficial será baixado e aplicado com segurança.');">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                            <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
+                            <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;" title="Nova versão disponível no repositório">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Atualizar para v<?= htmlspecialchars($plugin['remote_version']) ?>
+                            </button>
+                        </form>
+                        <?php else: ?>
+                        <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 5px;" title="O plugin já está na versão mais recente (v<?= htmlspecialchars($plugin['version']) ?>). Nenhuma atualização necessária.">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Atualizado
                         </button>
-                    </form>
+                        <?php endif; ?>
                     <?php endif; ?>
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
