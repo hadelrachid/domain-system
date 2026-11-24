@@ -106,7 +106,7 @@ use DomainSystem\Core\Events\EventDispatcher;
  */
 define('DOMAIN_SYSTEM_ROOT', __DIR__);
 
-define('DS_VERSION', '2.8.1');
+define('DS_VERSION', '2.8.2');
 define('DS_OS_VERSION', '2.8');
 
 // ═══════════════════════════════════════════════════════════════════════════
