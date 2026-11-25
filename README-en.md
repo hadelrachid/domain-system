@@ -1,4 +1,4 @@
-# Domain System (v2.8.4)
+# Domain System (v2.8.6)
 
 > **A lean, fast, and complete web operating platform written in clean modern PHP 8.2 — no bulky frameworks, no endless plugin bloat.**
 
@@ -14,19 +14,20 @@ No bloated vendor folders. No fragile house of cards made of 50 conflicting libr
 
 ## 🏛️ The Three Pillars Architecture
 
-To keep this main repository lightweight and fast to clone, we separated the platform into three clean pieces:
+To keep this main repository lightweight and fast to clone, we separated the platform into three clean, decoupled pillars:
 
 1. **The Operating Core (Domain-System Cockpit OS — This Repository):**  
-   The solid foundation. It houses the system kernel, the administration cockpit, the user authentication engine, security defenses, and lightweight starter extensions (`clock_widget`, `radio_online`, and the `flextheme` layout engine).
-2. **The Extensions Repository ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):**  
-   Where standalone business applications live:
-   * **DomainDrop:** AliExpress product discovery, profit margin calculation, and 24-hour order sync.
-   * **DomainCommerce:** Checkout processing with instant Pix, multi-card installments via Mercado Pago, global PayPal payments, and affiliate webhook receivers (Hotmart, Eduzz, Monetizze).
-   * **Academy LMS:** Online school management with a distraction-free student portal and automatic completion certificates.
-3. **The Themes Repository ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):**  
-   Where storefront themes live, such as the official **RachidD Store** dropshipping template.
+   The solid foundation. It houses the system kernel, the administration cockpit, the user authentication engine, failure isolation (Circuit Breaker), and starter extensions (`clock_widget`, `radio_online`, and the `flextheme` layout engine).
+2. **The Extensions Hub ([domain-system-plugins](https://github.com/hadelrachid/domain-system-plugins)):**  
+   The central directory and catalog router pointing to individual repositories for each business module:
+   * **[DomainDrop](https://github.com/hadelrachid/domain_drop):** AliExpress product discovery, profit margin calculation, and order automation.
+   * **[DomainCommerce](https://github.com/hadelrachid/commerce):** Decoupled checkout with instant Pix, multi-card installments via Mercado Pago, global PayPal payments, and affiliate webhook receivers (Hotmart, Eduzz, Monetizze).
+   * **[Academy LMS](https://github.com/hadelrachid/academy):** Online school management with a distraction-free student portal and automatic completion certificates.
+   * **Other standalone modules:** [SEO & Engine](https://github.com/hadelrachid/seo), [Native Analytics](https://github.com/hadelrachid/analytics), [FlexTheme](https://github.com/hadelrachid/flextheme), etc.
+3. **The Themes Hub ([domain-system-themes](https://github.com/hadelrachid/domain-system-themes)):**  
+   The open themes marketplace and directory, allowing community creators to host themes in their own GitHub repositories, such as the official dropshipping storefront **[RachidD Store](https://github.com/hadelrachid/rachidd_store)**.
 
-You pick what your project needs and install it with a single click inside the admin panel.
+You pick what your project needs and install or update it with a single click inside the admin panel.
 
 ---
 
@@ -52,12 +53,15 @@ If you appreciate lean software that respects server resources, your Pull Reques
 ## 💡 What the Cockpit gives you out of the box
 
 * **Notification Bell:**  
-  The top-right bell lights up automatically whenever an official update or plugin release is published on GitHub.
-* **One-Click Plugin Updates (WordPress-Style):**  
-  Click "Update Now" on any extension. The system downloads the signed ZIP from GitHub Releases, checks its cryptographic SHA-256 fingerprint, and extracts it safely.
+  The top-right bell lights up automatically whenever an official update or plugin/theme release is published on GitHub.
+* **One-Click Plugin & Theme Updates (WordPress-Style):**  
+  Click "Update" on any extension or theme. The system downloads the signed ZIP directly from the dedicated repository, checks its cryptographic SHA-256 fingerprint, and extracts it safely with native dialogs and progress feedback.
 * **Safety Circuit Breaker:**  
   If a third-party plugin encounters an unhandled fatal error, the system does not crash your entire store. It turns off only that broken module, logs the details, and keeps your pages alive.
 * **Visual Flex Builder:**  
+  Assemble headers, footers, and page sections by dragging blocks on a 12-column grid, customizing what displays on desktop vs mobile.
+* **Native Security:**  
+  Built-in CSRF token defenses, typed PDO SQL injection protection, and strict XSS sanitization.
   Construct custom headers, footers, and page sections using a 12-column responsive layout grid, picking what appears on laptops and what appears on mobile screens.
 * **Default Security Protections:**  
   Built-in defense against CSRF attacks, type-safe SQL queries through PDO, and strict output sanitization against XSS.
