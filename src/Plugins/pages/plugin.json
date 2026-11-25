@@ -1,7 +1,7 @@
 {
     "name": "pages",
     "description": "Mini CMS para criação de páginas dinâmicas. O coração do futuro CockPIT Builder.",
-    "version": "2.8.6",
+    "version": "2.8.7",
     "author": "Antigravity",
     "namespace": "DomainSystem\\Plugins\\pages\\",
     "main": "Plugin.php",

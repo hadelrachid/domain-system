@@ -1,4 +1,4 @@
-# Domain System (v2.8.6)
+# Domain System (v2.8.7)
 
 > **A lean, fast, and complete web operating platform written in clean modern PHP 8.2 — no bulky frameworks, no endless plugin bloat.**
 

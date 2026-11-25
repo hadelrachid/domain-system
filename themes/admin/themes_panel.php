@@ -33,7 +33,7 @@
         <?php foreach ($themes as $t): ?>
             <?php if (isset($t['is_add_new']) && $t['is_add_new']): ?>
                 <!-- Card de Adicionar Novo -->
-                <div class="card" style="width: 300px; padding: 20px; border: 2px dashed var(--accent-blue) !important; background: rgba(88,166,255,0.05) !important; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; transition: all 0.3s;" onclick="document.getElementById('createThemeModal').style.display='block'; return false;" onmouseover="this.style.background='rgba(88,166,255,0.1) !important'; this.style.boxShadow='0 0 15px rgba(88,166,255,0.2)';" onmouseout="this.style.background='rgba(88,166,255,0.05) !important'; this.style.boxShadow='none';">
+                <div class="card" style="flex: 1 1 310px; max-width: 380px; min-width: 280px; box-sizing: border-box; padding: 20px; border: 2px dashed var(--accent-blue) !important; background: rgba(88,166,255,0.05) !important; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; transition: all 0.3s;" onclick="document.getElementById('createThemeModal').style.display='block'; return false;" onmouseover="this.style.background='rgba(88,166,255,0.1) !important'; this.style.boxShadow='0 0 15px rgba(88,166,255,0.2)';" onmouseout="this.style.background='rgba(88,166,255,0.05) !important'; this.style.boxShadow='none';">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -48,7 +48,7 @@
                     $baseUrl = defined('BASE_URL') ? BASE_URL : '';
                 ?>
                 <!-- Card de Tema -->
-                <div class="card" style="width: 300px; padding: 20px; display: flex; flex-direction: column; position: relative; <?= $cardBorder ?>">
+                <div class="card" style="flex: 1 1 310px; max-width: 380px; min-width: 280px; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; position: relative; <?= $cardBorder ?>">
                     
                     <?php if ($isActive): ?>
                         <span style="position: absolute; top: 12px; right: 12px; background: #00a32a; color: #fff; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 2;">✓ Ativo</span>
@@ -84,16 +84,19 @@
                     </div>
                     <?php endif; ?>
 
-                    <p style="margin: 0 0 15px; font-size: 11px; color: var(--text-muted) !important;">Pasta: <code style="font-size:10px; padding:2px 4px;"><?= htmlspecialchars($t['folder']) ?></code></p>
-                    
-                    <div style="border-top: 1px solid var(--border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                        <span style="font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: <?= $isActive ? '#00a32a' : ($t['is_core'] ? 'var(--accent-orange)' : ($t['is_bundled'] ? 'var(--accent-green)' : 'var(--accent-blue)')) ?>;">
-                            <?= $isActive ? 'TEMA ATIVO' : ($t['is_core'] ? 'SYSTEM CORE' : ($t['is_bundled'] ? 'PLUGIN BUNDLE' : 'TEMA DISPONÍVEL')) ?>
-                        </span>
+                    <div style="border-top: 1px solid var(--border); padding-top: 14px; margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: <?= $isActive ? '#00a32a' : ($t['is_core'] ? 'var(--accent-orange)' : ($t['is_bundled'] ? 'var(--accent-green)' : 'var(--accent-blue)')) ?>;">
+                                <?= $isActive ? 'TEMA ATIVO' : ($t['is_core'] ? 'SYSTEM CORE' : ($t['is_bundled'] ? 'PLUGIN BUNDLE' : 'TEMA DISPONÍVEL')) ?>
+                            </span>
+                            <span style="font-size: 11px; color: var(--text-muted);">
+                                Pasta: <code style="font-size: 10px; padding: 2px 5px;"><?= htmlspecialchars($t['folder']) ?></code>
+                            </span>
+                        </div>
 
-                        <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; width: 100%;">
                             <?php if ($isActive): ?>
-                                <a href="<?= $baseUrl !== '' ? $baseUrl : '/' ?>" target="_blank" class="btn" style="background: rgba(0,163,42,0.15); border: 1px solid #00a32a; color: #00a32a; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: 4px; font-weight: 600;" title="Ver Site no Navegador">
+                                <a href="<?= $baseUrl !== '' ? $baseUrl : '/' ?>" target="_blank" class="btn" style="background: rgba(0,163,42,0.15); border: 1px solid #00a32a; color: #00a32a; padding: 6px 14px; font-size: 12px; text-decoration: none; border-radius: 4px; font-weight: 600;" title="Ver Site no Navegador">
                                     Ver Site ↗
                                 </a>
                             <?php else: ?>
@@ -101,11 +104,11 @@
                                 <form method="POST" action="<?= $baseUrl ?>/admin/themes/activate" style="margin: 0;">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                    <button type="submit" class="btn button-primary" style="padding: 6px 12px !important; font-size: 12px !important; background: #2271b1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" title="Ativar este tema no site"><?= !empty($is_coming_soon) ? 'Ativar e Publicar' : 'Ativar' ?></button>
+                                    <button type="submit" class="btn button-primary" style="padding: 5px 10px !important; font-size: 11px !important; background: #2271b1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;" title="Ativar este tema no site"><?= !empty($is_coming_soon) ? 'Ativar e Publicar' : 'Ativar' ?></button>
                                 </form>
 
                                 <?php if (!empty($t['preview_url'])): ?>
-                                    <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" class="btn btn-activate" style="padding: 6px 10px; font-size: 12px;" title="Visualizar Tema">
+                                    <a href="<?= htmlspecialchars($t['preview_url']) ?>" target="_blank" class="btn btn-activate" style="padding: 5px 8px; font-size: 11px;" title="Visualizar Tema">
                                         Ver
                                     </a>
                                 <?php endif; ?>
@@ -115,13 +118,13 @@
                                     <form id="form-theme-update-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/update-remote" style="margin:0;">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                        <button type="button" onclick="confirmThemeAction('update', 'form-theme-update-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; padding: 5px 10px;" title="Atualizar tema para a versão mais recente">
+                                        <button type="button" onclick="confirmThemeAction('update', 'form-theme-update-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="Atualizar tema para a versão mais recente">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                             Atualizar v<?= htmlspecialchars($t['remote_version']) ?>
                                         </button>
                                     </form>
                                     <?php else: ?>
-                                    <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 5px 8px;" title="O tema já está na versão mais recente (v<?= htmlspecialchars($t['version']) ?>).">
+                                    <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="O tema já está na versão mais recente (v<?= htmlspecialchars($t['version']) ?>).">
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                         Atualizado
                                     </button>
@@ -132,7 +135,7 @@
                                     <form id="form-theme-delete-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/delete" style="margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                        <button type="button" onclick="confirmThemeAction('delete', 'form-theme-delete-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate" style="padding: 6px 10px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
+                                        <button type="button" onclick="confirmThemeAction('delete', 'form-theme-delete-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate" style="padding: 5px 8px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
                                     </form>
                                 <?php endif; ?>
                             <?php endif; ?>
