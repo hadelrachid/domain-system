@@ -1,6 +1,6 @@
 {
     "name": "auth",
-    "version": "2.8.7",
+    "version": "2.8.8",
     "description": "Sistema central de autenticação, sessões e proteção de rotas (Middlewares).",
     "author": "Antigravity",
     "dependencies": [

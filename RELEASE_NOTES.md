@@ -1,3 +1,22 @@
+## 🚀 Domain-System OS v2.8.8 — Notificações Toast, Modais Nativos e Atualizador Blindado de Plugins
+
+A versão **v2.8.8** traz o refinamento visual do painel administrativo e aprimoramentos no motor de atualização e empacotamento de plugins:
+
+---
+
+### 🎨 1. Notificações Flutuantes (Toast) no Painel de Plugins
+- As mensagens de sucesso, erro ou alerta no painel de plugins agora utilizam exclusivamente a interface flutuante `window.OS.notify(...)` (Cockpit OS).
+- Eliminação de alertas legados e caixas estáticas.
+
+### 🛡️ 2. Submissão Segura com Modais Nativos (`OS.confirm`)
+- Botões de atualização e exclusão utilizam submissão progressiva resiliente: funcionam em qualquer ambiente (inclusive Hostinger/LiteSpeed) preservando o token de gesto do usuário.
+- URLs de ação normalizadas de forma absoluta com suporte agnóstico a domínios raiz e subpastas.
+
+### 📦 3. Sincronização e Reinstalação de Extensões
+- Plugins na versão estável mais recente agora exibem botão interativo que permite reinstalação ou sincronização sob demanda direto do repositório oficial.
+
+---
+
 ## 🚀 Domain-System OS v2.8.6 — Resiliência do Disjuntor, Normalização de Rotas Seguras & Tolerância a Pastas Duplicadas
 
 A versão **v2.8.6** soluciona cenários reais de transição e ambientes de produção, blindando a inicialização de plugins contra arquivos duplicados e corrigindo o redirecionamento de emergência no navegador.

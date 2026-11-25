@@ -10,6 +10,43 @@
     </form>
 </h1>
 
+<script>
+window.confirmPluginAction = function(action, form, name, version) {
+    if (!form) return true;
+    if (form.dataset && form.dataset.confirmed === '1') {
+        return true;
+    }
+
+    var isReinstall = action === 'reinstall';
+    var title = isReinstall ? '🔄 Sincronizar / Reinstalar Plugin' : (action === 'delete' ? '⚠️ Excluir Plugin' : '🚀 Atualizar Plugin');
+    var confirmText = isReinstall ? 'Sincronizar Agora' : (action === 'delete' ? 'Excluir' : 'Atualizar Agora');
+    var confirmBg = action === 'delete' ? '#ef4444' : '#2271b1';
+    
+    var msg = '';
+    if (action === 'delete') {
+        msg = 'Deseja realmente excluir permanentemente o plugin "' + name + '"? Esta ação removerá a pasta do plugin e não poderá ser desfeita.';
+    } else if (isReinstall) {
+        msg = 'O plugin "' + name + '" já está na versão v' + version + '. Deseja baixar novamente o pacote oficial e sincronizar os arquivos?';
+    } else {
+        msg = 'Deseja atualizar o plugin "' + name + '" para a versão v' + version + '? O processo baixará e substituirá os arquivos pelo pacote estável oficial do repositório.';
+    }
+
+    if (window.OS && typeof window.OS.confirm === 'function') {
+        window.OS.confirm(msg, function() {
+            form.dataset.confirmed = '1';
+            form.submit();
+        }, {
+            title: title,
+            confirmText: confirmText,
+            confirmBg: confirmBg
+        });
+        return false;
+    }
+
+    return confirm(msg);
+};
+</script>
+
 <?php if (!empty($crashes)): ?>
     <?php foreach ($crashes as $crash): ?>
         <div class="alert alert-error" style="padding: 15px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #d63638; background: #fff; color: #d63638; font-weight: bold;">
@@ -162,19 +199,19 @@
 
                     <?php if (!$plugin['is_core']): ?>
                         <?php if (!empty($plugin['has_update'])): ?>
-                        <form id="form-update-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0;">
+                        <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0;" onsubmit="return confirmPluginAction('update', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['remote_version'], ENT_QUOTES) ?>')">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                             <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                            <button type="button" onclick="confirmPluginAction('update', 'form-update-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600;" title="Nova versão disponível no repositório">
+                            <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;" title="Nova versão disponível no repositório">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 Atualizar para v<?= htmlspecialchars($plugin['remote_version']) ?>
                             </button>
                         </form>
                         <?php else: ?>
-                        <form id="form-reinstall-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0; display:inline;">
+                        <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0; display:inline;" onsubmit="return confirmPluginAction('reinstall', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['version'], ENT_QUOTES) ?>')">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                             <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                            <button type="button" onclick="confirmPluginAction('reinstall', 'form-reinstall-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['version'], ENT_QUOTES) ?>')" class="btn" style="opacity: 0.85; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="O plugin já está na versão v<?= htmlspecialchars($plugin['version']) ?>. Clique para sincronizar ou reinstalar do repositório oficial.">
+                            <button type="submit" class="btn" style="opacity: 0.85; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="O plugin já está na versão v<?= htmlspecialchars($plugin['version']) ?>. Clique para sincronizar ou reinstalar do repositório oficial.">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 Atualizado (v<?= htmlspecialchars($plugin['version']) ?>)
                             </button>
@@ -183,11 +220,11 @@
                     <?php endif; ?>
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                    <form id="form-delete-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/delete" style="margin:0;">
+                    <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/delete" style="margin:0;" onsubmit="return confirmPluginAction('delete', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                        <button type="button" onclick="confirmPluginAction('delete', 'form-delete-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate">Excluir</button>
+                        <button type="submit" class="btn btn-deactivate" style="cursor: pointer;">Excluir</button>
                     </form>
                     <?php endif; ?>
                     
@@ -300,11 +337,11 @@
 
 
                     <?php if (!$plugin['is_core'] && !$plugin['is_active']): ?>
-                    <form id="form-delete-<?= htmlspecialchars($plugin['folder']) ?>" method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/delete" style="margin:0;">
+                    <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/delete" style="margin:0;" onsubmit="return confirmPluginAction('delete', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                         <input type="hidden" name="plugin_name" value="<?= htmlspecialchars($plugin['name']) ?>">
                         <input type="hidden" name="plugin_folder" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                        <button type="button" onclick="confirmPluginAction('delete', 'form-delete-<?= htmlspecialchars($plugin['folder']) ?>', '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate">Excluir</button>
+                        <button type="submit" class="btn btn-deactivate" style="cursor: pointer;">Excluir</button>
                     </form>
                     <?php endif; ?>
                     
@@ -327,52 +364,6 @@
     </tbody>
 </table>
 </div>
-
-<script>
-function confirmPluginAction(action, formId, name, version) {
-    const form = document.getElementById(formId);
-    if (!form) {
-        console.error('Formulário não encontrado:', formId);
-        return;
-    }
-
-    if (action === 'update' || action === 'reinstall') {
-        const isReinstall = action === 'reinstall';
-        const title = isReinstall ? '🔄 Sincronizar / Reinstalar Plugin' : '🚀 Atualizar Plugin';
-        const confirmText = isReinstall ? 'Sincronizar Agora' : 'Atualizar Agora';
-        const msg = isReinstall 
-            ? `O plugin "${name}" já está na versão v${version}. Deseja baixar novamente o pacote oficial e sincronizar os arquivos?`
-            : `Deseja atualizar o plugin "${name}" para a versão v${version}? O processo baixará e substituirá os arquivos pelo pacote estável oficial do repositório.`;
-
-        if (window.OS && typeof window.OS.confirm === 'function') {
-            window.OS.confirm(msg, () => {
-                form.submit();
-            }, {
-                title: title,
-                confirmText: confirmText,
-                confirmBg: '#2271b1'
-            });
-        } else if (confirm(msg)) {
-            form.submit();
-        }
-    } else if (action === 'delete') {
-        const msg = `Deseja realmente excluir permanentemente o plugin "${name}"? Esta ação removerá a pasta do plugin e não poderá ser desfeita.`;
-        if (window.OS && typeof window.OS.confirm === 'function') {
-            window.OS.confirm(msg, () => {
-                form.submit();
-            }, {
-                title: '⚠️ Excluir Plugin',
-                confirmText: 'Excluir Permanentemente',
-                confirmBg: '#ef4444'
-            });
-        } else if (confirm(msg)) {
-            form.submit();
-        }
-    } else {
-        form.submit();
-    }
-}
-</script>
 
 
 
