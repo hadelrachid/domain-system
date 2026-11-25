@@ -49,7 +49,7 @@ class ThemeUpdateCheckerTest extends TestCase
             'version' => '1.0.0'
         ]));
 
-        // Setup mock marketplace file
+        // Setup mock marketplace file pointing directly to dedicated theme repo
         $marketplaceFile = $this->tempDir . '/marketplace_themes.json';
         file_put_contents($marketplaceFile, json_encode([
             'themes' => [
@@ -57,7 +57,8 @@ class ThemeUpdateCheckerTest extends TestCase
                     'name' => 'rachidd_store',
                     'title' => 'RachidD Store',
                     'version' => '1.0.1',
-                    'download_url' => 'https://example.com/rachidd_store.zip'
+                    'repository' => 'https://github.com/hadelrachid/rachidd_store',
+                    'download_url' => 'https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip'
                 ]
             ]
         ]));
@@ -75,6 +76,24 @@ class ThemeUpdateCheckerTest extends TestCase
         $this->assertTrue($updates['rachidd_store']['has_update']);
         $this->assertSame('1.0.0', $updates['rachidd_store']['installed_version']);
         $this->assertSame('1.0.1', $updates['rachidd_store']['latest_version']);
+        $this->assertSame('https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip', $updates['rachidd_store']['download_url']);
+    }
+
+    public function testResolveDownloadUrlDirectsToDedicatedThemeRepository(): void
+    {
+        $checker = new ThemeUpdateChecker($this->tempDir);
+
+        // Caso 1: repositório dedicado explícito em remoteInfo
+        $url1 = $checker->resolveDownloadUrl('custom_theme', [
+            'repository' => 'https://github.com/outro_autor/custom_theme'
+        ]);
+        $this->assertSame('https://github.com/outro_autor/custom_theme/releases/latest/download/custom_theme.zip', $url1);
+
+        // Caso 2: tema rachidd_store mesmo sem repositório explícito deve apontar para seu próprio repo
+        $url2 = $checker->resolveDownloadUrl('rachidd_store', [
+            'download_url' => 'https://github.com/hadelrachid/domain-system-themes/releases/latest/download/rachidd_store.zip'
+        ]);
+        $this->assertSame('https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip', $url2);
     }
 
     public function testCheckForUpdatesReportsNoUpdateWhenVersionsMatch(): void
@@ -92,7 +111,7 @@ class ThemeUpdateCheckerTest extends TestCase
                 'rachidd_store' => [
                     'name' => 'rachidd_store',
                     'version' => '1.0.0',
-                    'download_url' => 'https://example.com/rachidd_store.zip'
+                    'download_url' => 'https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip'
                 ]
             ]
         ]));
@@ -120,7 +139,7 @@ class ThemeUpdateCheckerTest extends TestCase
                 'rachidd_store' => [
                     'name' => 'rachidd_store',
                     'version' => '1.1.0',
-                    'download_url' => 'https://example.com/rachidd_store.zip'
+                    'download_url' => 'https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip'
                 ]
             ]
         ]));

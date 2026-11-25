@@ -11,9 +11,8 @@ use Throwable;
 
 /**
  * Serviço de Verificação e Atualização Automática de Temas (SRP / DIP).
- * Consulta o catálogo de releases em domain-system-themes no GitHub,
- * notifica o sininho do Cockpit quando há um tema aprimorado disponível
- * e permite a atualização atômica e segura com um clique.
+ * Consulta o catálogo de releases em domain-system-themes e direciona
+ * o download diretamente para o repositório dedicado de cada tema (ex: hadelrachid/rachidd_store).
  */
 class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
 {
@@ -35,31 +34,24 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
             return [];
         }
 
-        $themesPath = $this->basePath . '/themes';
-        if (!is_dir($themesPath)) {
+        $directories = $this->discoverThemeDirectories();
+        if (empty($directories)) {
             return [];
         }
 
         $results = [];
-        $directories = glob($themesPath . '/*', GLOB_ONLYDIR) ?: [];
 
-        foreach ($directories as $dir) {
-            $folder = basename($dir);
-
-            // Ignora temas internos de sistema / cockpits
-            if (in_array($folder, ['admin', 'manager', 'subscriber', 'user'], true)) {
-                continue;
-            }
-
+        foreach ($directories as $folder => $dir) {
             $manifestFile = $dir . '/theme.json';
             $localVersion = '1.0.0';
             $name = ucfirst($folder);
+            $localMeta = null;
 
             if (file_exists($manifestFile)) {
-                $metadata = json_decode((string)file_get_contents($manifestFile), true);
-                if (is_array($metadata)) {
-                    $localVersion = (string)($metadata['version'] ?? '1.0.0');
-                    $name = (string)($metadata['name'] ?? $name);
+                $localMeta = json_decode((string)file_get_contents($manifestFile), true);
+                if (is_array($localMeta)) {
+                    $localVersion = (string)($localMeta['version'] ?? '1.0.0');
+                    $name = (string)($localMeta['name'] ?? $name);
                 }
             }
 
@@ -72,6 +64,7 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
 
             $remoteVersion = (string)($remoteInfo['version'] ?? '1.0.0');
             $hasUpdate = version_compare($remoteVersion, $localVersion, '>');
+            $downloadUrl = $this->resolveDownloadUrl($folder, $remoteInfo, $localMeta);
 
             $results[$folder] = [
                 'folder'            => $folder,
@@ -80,10 +73,11 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
                 'latest_version'    => $remoteVersion,
                 'new_version'       => $remoteVersion,
                 'has_update'        => $hasUpdate,
-                'download_url'      => (string)($remoteInfo['download_url'] ?? ''),
+                'download_url'      => $downloadUrl,
                 'sha256'            => (string)($remoteInfo['sha256'] ?? ''),
                 'size_bytes'        => (int)($remoteInfo['size_bytes'] ?? 0),
                 'description'       => (string)($remoteInfo['description'] ?? ''),
+                'repository'        => (string)($remoteInfo['repository'] ?? ($localMeta['repository'] ?? '')),
             ];
         }
 
@@ -154,27 +148,35 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
         $marketplace = $this->fetchMarketplace(true);
         $themeInfo = $marketplace['themes'][$folder] ?? null;
 
-        if ($themeInfo === null || empty($themeInfo['download_url'])) {
-            return ['success' => false, 'message' => "O tema '{$folder}' não foi localizado no catálogo oficial do GitHub."];
-        }
-
         $localVersion = '1.0.0';
+        $localMeta = null;
         if (file_exists($targetDir . '/theme.json')) {
             $localMeta = json_decode((string)file_get_contents($targetDir . '/theme.json'), true);
             $localVersion = (string)($localMeta['version'] ?? '1.0.0');
+        } elseif (file_exists($this->basePath . '/src/Plugins/flextheme/themes/' . $folder . '/theme.json')) {
+            $localMeta = json_decode((string)file_get_contents($this->basePath . '/src/Plugins/flextheme/themes/' . $folder . '/theme.json'), true);
+            $localVersion = (string)($localMeta['version'] ?? '1.0.0');
+        }
+
+        if ($themeInfo === null && empty($localMeta['repository'])) {
+            return ['success' => false, 'message' => "O tema '{$folder}' não foi localizado no catálogo oficial do GitHub."];
         }
 
         $remoteVersion = (string)($themeInfo['version'] ?? '1.0.0');
         $themeName = (string)($themeInfo['name'] ?? $folder);
 
-        if (version_compare($remoteVersion, $localVersion, '<=')) {
+        if ($themeInfo !== null && version_compare($remoteVersion, $localVersion, '<=')) {
             return [
                 'success' => false,
                 'message' => "O tema '{$themeName}' já está na versão mais recente (v{$localVersion}). Nenhuma atualização necessária."
             ];
         }
 
-        $downloadUrl = (string)$themeInfo['download_url'];
+        $downloadUrl = $this->resolveDownloadUrl($folder, (array)($themeInfo ?? []), $localMeta);
+        if (empty($downloadUrl)) {
+            return ['success' => false, 'message' => "URL de download para o tema '{$folder}' não pôde ser resolvida."];
+        }
+
         $expectedSha = (string)($themeInfo['sha256'] ?? '');
 
         // Prepara diretório de download
@@ -185,14 +187,14 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
         $tmpZip = $downloadDir . '/' . $folder . '-theme-update-' . time() . '.zip';
 
         try {
-            // 1. Download do Pacote ZIP
+            // 1. Download do Pacote ZIP diretamente da Release do GitHub
             $this->downloadFile($downloadUrl, $tmpZip);
 
             if (!file_exists($tmpZip) || filesize($tmpZip) < 100) {
                 throw new \RuntimeException('O download do pacote falhou ou retornou arquivo vazio.');
             }
 
-            // 2. Validação Criptográfica de Integridade (SHA-256)
+            // 2. Validação Criptográfica de Integridade (SHA-256) se informada
             if ($expectedSha !== '') {
                 $actualSha = hash_file('sha256', $tmpZip);
                 if (!hash_equals(strtolower($expectedSha), strtolower((string)$actualSha))) {
@@ -200,11 +202,10 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
                 }
             }
 
-            // 3. Extração Segura em Quarentena
+            // 3. Extração Segura em Quarentena e Normalização na pasta /themes/{folder}
             $extractor = ExtractorFactory::create();
             $extractedFolder = $extractor->extract($tmpZip, $themesPath, 'theme.json');
 
-            // Normalização de Pasta Alvo: garante que o pacote descompactado fique exatamente em $folder
             $extractedPath = $themesPath . '/' . $extractedFolder;
             $targetPath = $themesPath . '/' . $folder;
 
@@ -220,7 +221,7 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
 
             return [
                 'success' => true,
-                'message' => "Tema '{$themeName}' atualizado com sucesso para v{$remoteVersion}!",
+                'message' => "Tema '{$themeName}' atualizado com sucesso para v{$remoteVersion} diretamente do repositório oficial!",
                 'version' => $remoteVersion,
                 'folder'  => $folder
             ];
@@ -234,6 +235,62 @@ class ThemeUpdateChecker implements ThemeUpdateCheckerInterface
                 @unlink($tmpZip);
             }
         }
+    }
+
+    /**
+     * Resolve a URL de download priorizando o repositório dedicado do tema
+     * (ex: hadelrachid/rachidd_store) em vez do intermediário.
+     */
+    public function resolveDownloadUrl(string $folder, array $remoteInfo, ?array $localMeta = null): string
+    {
+        $rawUrl = (string)($remoteInfo['download_url'] ?? '');
+        $repoUrl = (string)($remoteInfo['repository'] ?? ($localMeta['repository'] ?? ''));
+
+        // Se o tema declarar repositório próprio (ex: https://github.com/hadelrachid/rachidd_store)
+        if (!empty($repoUrl)) {
+            return rtrim($repoUrl, '/') . "/releases/latest/download/{$folder}.zip";
+        }
+
+        // Se o tema for rachidd_store e a URL apontar para o antigo agregador, normaliza
+        if ($folder === 'rachidd_store') {
+            return "https://github.com/hadelrachid/rachidd_store/releases/latest/download/rachidd_store.zip";
+        }
+
+        return $rawUrl;
+    }
+
+    /**
+     * Descobre todos os temas instalados, incluindo /themes e temas integrados em plugins.
+     *
+     * @return array<string, string> Mapa [folder => caminho_absoluto]
+     */
+    private function discoverThemeDirectories(): array
+    {
+        $directories = [];
+        $themesPath = $this->basePath . '/themes';
+
+        // 1. Temas em /themes
+        if (is_dir($themesPath)) {
+            foreach (glob($themesPath . '/*', GLOB_ONLYDIR) ?: [] as $d) {
+                $folder = basename($d);
+                if (!in_array($folder, ['admin', 'manager', 'subscriber', 'user'], true)) {
+                    $directories[$folder] = $d;
+                }
+            }
+        }
+
+        // 2. Temas integrados dentro de plugins (ex: src/Plugins/flextheme/themes)
+        $pluginsPath = $this->basePath . '/src/Plugins';
+        if (is_dir($pluginsPath)) {
+            foreach (glob($pluginsPath . '/*/themes/*', GLOB_ONLYDIR) ?: [] as $bd) {
+                $folder = basename($bd);
+                if (!isset($directories[$folder]) && !in_array($folder, ['admin', 'manager', 'subscriber', 'user'], true)) {
+                    $directories[$folder] = $bd;
+                }
+            }
+        }
+
+        return $directories;
     }
 
     private function deleteDirectory(string $dir): bool
