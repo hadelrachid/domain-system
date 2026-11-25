@@ -4,5 +4,5 @@
     "version": "2.8.3",
     "description": "Middleware Global responsável por injetar o Tema Ativo, minificar os assets (HTML/CSS) e gerenciar as Meta Tags em todas as respostas de frontend.",
     "author": "Rachid",
-    "os_version": "2.8"
+    "os_version": "2.9"
 }

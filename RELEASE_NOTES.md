@@ -1,3 +1,23 @@
+## 🚀 Domain-System OS v2.9.0 — Mineração Progressiva em 9 Categorias (Anti 504 Timeout) e URLs Canônicas pt_BR
+
+A versão **v2.9.0** aprimora a robustez do ecossistema de dropshipping e auto-atualização para servidores compartilhados e produção:
+
+---
+
+### ⚡ 1. Mineração Progressiva em Lotes AJAX (Fim do 504 Gateway Time-out)
+- **Eliminação de Timeout de Servidor:** Em vez de processar todas as 9 categorias em uma única requisição HTTP síncrona (que estourava os 30s-60s da Hostinger/Nginx), a mineração agora opera em etapas sequenciais leves de 2 a 4 segundos por categoria via `/admin/dropship/mine-category-step`.
+- **Barra de Progresso Dinâmica (0% a 100%):** O painel do DomainDrop Hub exibe o progresso em tempo real com indicador de categoria ativa, contagem de produtos ingeridos e percentual contínuo.
+- **Unificação dos Gatilhos:** Tanto o gatilho rápido do banner de 24h quanto o modal de aquisição personalizada (com opção de zerar catálogo) utilizam o mesmo motor progressivo seguro.
+
+### 🇧🇷 2. Padronização de Links Oficiais Canônicos com Localização Brasil
+- Todas as URLs do fornecedor agora são geradas no formato canônico brasileiro com parâmetros de país, moeda e idioma (`https://pt.aliexpress.com/item/{ID}.html?country=BR&locale=pt_BR&currency=BRL`).
+- Evita redirecionamentos internacionais errôneos e páginas de "Página não encontrada" causadas por falta de contexto regional.
+
+### 🛡️ 3. Validador de Expiração de Anúncios (`ws_offline_date`)
+- O `ProductExistenceGuard` valida contratualmente a data de desativação do anúncio no AliExpress, bloqueando produtos expirados.
+
+---
+
 ## 🚀 Domain-System OS v2.8.9 — Pipeline de Validação Contratual, Container de Ingestão e Toast de Conformidade CDC/Procon
 
 A versão **v2.8.9** consolida a arquitetura corporativa de resiliência e integridade de dados para dropshipping e comércio eletrônico:

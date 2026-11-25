@@ -4,5 +4,5 @@
     "description": "Um widget de relógio simples para provar a injeção de Capabilities no Web OS.",
     "author": "Antigravity",
     "core": false,
-    "os_version": "2.8"
+    "os_version": "2.9"
 }
