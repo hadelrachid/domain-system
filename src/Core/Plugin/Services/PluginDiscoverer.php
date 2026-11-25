@@ -53,18 +53,50 @@ class PluginDiscoverer
             $jsonPath = $dir . '/plugin.json';
             $folderName = basename($dir);
             $pluginName = $folderName;
+            $canonicalSlug = null;
             if (file_exists($jsonPath)) {
                 $metadata = json_decode(file_get_contents($jsonPath), true);
                 if (isset($metadata['name'])) {
                     $pluginName = $metadata['name'];
                 }
+                if (!empty($metadata['slug']) && is_string($metadata['slug'])) {
+                    $canonicalSlug = trim($metadata['slug']);
+                }
+            }
+
+            // Auto-Healing: se a pasta física tiver nome divergente do slug canônico (ex: 'domaincommerce' vs 'commerce')
+            if ($canonicalSlug !== null && $canonicalSlug !== '' && $canonicalSlug !== $folderName) {
+                $canonicalDir = dirname($dir) . '/' . $canonicalSlug;
+                if (!is_dir($canonicalDir)) {
+                    if (@rename($dir, $canonicalDir)) {
+                        $dir = $canonicalDir;
+                        $folderName = $canonicalSlug;
+                        $jsonPath = $dir . '/plugin.json';
+                    }
+                }
+
+                // Autoloader fallback dinâmico: garante que classes como DomainSystem\Plugins\commerce\...
+                // sejam resolvidas mesmo se o rename não puder ser executado imediatamente
+                $namespacePrefix = "DomainSystem\\Plugins\\{$canonicalSlug}\\";
+                $targetDir = $dir;
+                spl_autoload_register(function ($class) use ($namespacePrefix, $targetDir) {
+                    if (str_starts_with($class, $namespacePrefix)) {
+                        $relative = substr($class, strlen($namespacePrefix));
+                        $file = $targetDir . '/' . str_replace('\\', '/', $relative) . '.php';
+                        if (file_exists($file)) {
+                            require_once $file;
+                        }
+                    }
+                });
             }
 
             $isExplicitlyDisabled = (isset($activeStates[$pluginName]) && $activeStates[$pluginName] === false)
-                || (isset($activeStates[$folderName]) && $activeStates[$folderName] === false);
+                || (isset($activeStates[$folderName]) && $activeStates[$folderName] === false)
+                || ($canonicalSlug !== null && isset($activeStates[$canonicalSlug]) && $activeStates[$canonicalSlug] === false);
             $isActive = (!$isExplicitlyDisabled && $forceActive)
                 || (!empty($activeStates[$pluginName]))
-                || (!empty($activeStates[$folderName]));
+                || (!empty($activeStates[$folderName]))
+                || ($canonicalSlug !== null && !empty($activeStates[$canonicalSlug]));
             $isCore = isset($metadata['core']) && $metadata['core'] === true;
 
             // Checa se o plugin foi desarmado pelo Circuit Breaker
@@ -74,13 +106,13 @@ class PluginDiscoverer
             $isDisarmed = false;
             if (file_exists($disarmedConfig)) {
                 $disarmed = json_decode((string)file_get_contents($disarmedConfig), true) ?: [];
-                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName])) {
+                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName]) || ($canonicalSlug !== null && !empty($disarmed[$canonicalSlug]))) {
                     $isDisarmed = true;
                 }
             }
             if (!$isDisarmed && file_exists($disarmedTemp)) {
                 $disarmed = json_decode((string)file_get_contents($disarmedTemp), true) ?: [];
-                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName])) {
+                if (!empty($disarmed[$pluginName]) || !empty($disarmed[$folderName]) || ($canonicalSlug !== null && !empty($disarmed[$canonicalSlug]))) {
                     $isDisarmed = true;
                 }
             }
@@ -89,7 +121,7 @@ class PluginDiscoverer
             }
 
             if ($isActive || $isCore) {
-                $pluginClass = "DomainSystem\\Plugins\\" . basename($dir) . "\\Plugin";
+                $pluginClass = "DomainSystem\\Plugins\\" . ($canonicalSlug ?: basename($dir)) . "\\Plugin";
 
                 if (!class_exists($pluginClass)) {
                     $pluginFile = $dir . '/Plugin.php';

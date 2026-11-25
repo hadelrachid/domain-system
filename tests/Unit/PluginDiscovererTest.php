@@ -45,7 +45,9 @@ PHP;
         file_put_contents($this->tempConfigPath, $configJson);
         
         // Autoload the temp class for the test
-        require_once $this->tempPluginsPath . '/src/Plugins/TestPlugin/Plugin.php';
+        if (!class_exists('DomainSystem\\Plugins\\TestPlugin\\Plugin', false)) {
+            require_once $this->tempPluginsPath . '/src/Plugins/TestPlugin/Plugin.php';
+        }
         
         $container = new Container();
         $dispatcher = new EventDispatcher();
@@ -76,5 +78,39 @@ PHP;
         $this->assertEquals('test-plugin', $plugin->getName());
         $this->assertEquals('2.0.0', $plugin->getVersion());
         $this->assertTrue($plugin->isActive());
+    }
+
+    public function testPluginDiscoveryAutoHealsMismatchedFolderName()
+    {
+        $mismatchedDir = $this->tempPluginsPath . '/src/Plugins/domaincommerce';
+        mkdir($mismatchedDir, 0777, true);
+
+        $pluginPhp = <<<PHP
+<?php
+namespace DomainSystem\Plugins\commerce_heal_test;
+use DomainSystem\Core\Plugin\AbstractPlugin;
+class Plugin extends AbstractPlugin {
+    public function register(): void {}
+}
+PHP;
+        file_put_contents($mismatchedDir . '/Plugin.php', $pluginPhp);
+        file_put_contents($mismatchedDir . '/plugin.json', json_encode([
+            'name' => 'DomainCommerce',
+            'slug' => 'commerce_heal_test',
+            'version' => '2.8.6'
+        ]));
+
+        $plugins = $this->discoverer->discover($this->tempPluginsPath . '/src/Plugins', true);
+
+        $this->assertArrayHasKey('DomainCommerce', $plugins);
+        $this->assertEquals('2.8.6', $plugins['DomainCommerce']->getVersion());
+        $this->assertTrue($plugins['DomainCommerce']->isActive());
+        // Verify folder auto-healed to 'commerce_heal_test'
+        $this->assertDirectoryExists($this->tempPluginsPath . '/src/Plugins/commerce_heal_test');
+
+        // Cleanup
+        @unlink($this->tempPluginsPath . '/src/Plugins/commerce_heal_test/Plugin.php');
+        @unlink($this->tempPluginsPath . '/src/Plugins/commerce_heal_test/plugin.json');
+        @rmdir($this->tempPluginsPath . '/src/Plugins/commerce_heal_test');
     }
 }

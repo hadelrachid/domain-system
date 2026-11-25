@@ -64,6 +64,24 @@ class PluginInstaller
             // 2. AUDITORIA GATEKEEPER (Privilege Escalation Prevention)
             $this->auditCodeSecurity($installedPath);
 
+            // 3. NORMALIZAÇÃO CANÔNICA DE PASTA (Auto-Healing de Instalação)
+            $manifestPath = $installedPath . '/plugin.json';
+            if (file_exists($manifestPath)) {
+                $manifest = json_decode((string)file_get_contents($manifestPath), true);
+                if (!empty($manifest['slug']) && is_string($manifest['slug'])) {
+                    $canonicalSlug = trim($manifest['slug']);
+                    if ($canonicalSlug !== '' && $canonicalSlug !== $pluginFolder) {
+                        $canonicalPath = $this->getPluginsPath() . '/' . $canonicalSlug;
+                        if (is_dir($canonicalPath)) {
+                            $this->deleteDirectory($canonicalPath);
+                        }
+                        if (@rename($installedPath, $canonicalPath)) {
+                            $pluginFolder = $canonicalSlug;
+                        }
+                    }
+                }
+            }
+
         } catch (Exception $e) {
             // Se falhar na auditoria, aborta e destrói os arquivos instalados
             $this->deleteDirectory($installedPath);
