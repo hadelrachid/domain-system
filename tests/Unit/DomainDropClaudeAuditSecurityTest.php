@@ -424,4 +424,44 @@ final class DomainDropClaudeAuditSecurityTest extends TestCase
         $this->assertContains('https://ae01.alicdn.com/kf/sku_black.jpg', $dto->images);
         $this->assertContains('https://ae01.alicdn.com/kf/sku_white.jpg', $dto->images);
     }
+
+    public function testCuratedCatalogProviderDecoupledSrp(): void
+    {
+        $provider = new \DomainSystem\Plugins\domain_drop\Services\CuratedCatalogProvider();
+        $catalog = $provider->getCatalog();
+
+        $this->assertIsArray($catalog);
+        $this->assertArrayHasKey('Eletrônicos & Gadget', $catalog);
+        $this->assertNotEmpty($catalog['Eletrônicos & Gadget']);
+
+        // Verifica que o primeiro item possui dados estruturados do produto
+        $firstItem = $catalog['Eletrônicos & Gadget'][0];
+        $this->assertArrayHasKey('product_id', $firstItem);
+        $this->assertArrayHasKey('product_title', $firstItem);
+        $this->assertArrayHasKey('images', $firstItem);
+        $this->assertArrayHasKey('target_sale_price', $firstItem);
+
+        // Testa injeção de dependência e desacoplamento no ProductMiningService
+        $mockApi = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $mockCurrency = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $mockAi = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $mockAi->method('polishTitle')->willReturnArgument(0);
+        $mockCurrency = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $mockCurrency->method('calculateSalePrice')->willReturn(149.90);
+        $mockCurrency->method('calculateSalePriceFromBrl')->willReturn(149.90);
+        $mockRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+
+        $mining = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $mockApi,
+            $mockCurrency,
+            $mockAi,
+            $mockRepo,
+            catalogProvider: $provider
+        );
+
+        $fallback = $mining->mineTrendingProducts('Eletrônicos & Gadget', 2, false);
+        $this->assertCount(2, $fallback);
+        $this->assertNotEmpty($fallback[0]->title);
+        $this->assertSame('Eletrônicos & Telefonia', $fallback[0]->category);
+    }
 }
