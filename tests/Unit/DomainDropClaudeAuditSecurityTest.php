@@ -335,4 +335,93 @@ final class DomainDropClaudeAuditSecurityTest extends TestCase
         $this->assertCount(1, $products);
         $this->assertSame('Smartwatch Ultra Pro', $products[0]['product_title']);
     }
+
+    public function testAliExpressContractSellerDetailsImagesAndPricing(): void
+    {
+        $mockApi = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AliExpressApiClientInterface::class);
+        $mockCurrency = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class);
+        $mockCurrency->method('calculateSalePrice')->willReturn(149.90);
+        $mockCurrency->method('calculateSalePriceFromBrl')->willReturn(149.90);
+        $mockAi = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\AiProductEnricherInterface::class);
+        $mockAi->method('polishTitle')->willReturn('Fone de Ouvido Bluetooth Sem Fio TWS Pro');
+        $mockRepo = $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\DropshipCatalogRepositoryInterface::class);
+
+        $miningService = new \DomainSystem\Plugins\domain_drop\Services\ProductMiningService(
+            $mockApi,
+            $mockCurrency,
+            $mockAi,
+            $mockRepo
+        );
+
+        $rawItem = [
+            'ae_item_base_info_dto' => [
+                'product_id' => '1005007891234567',
+                'subject'    => 'Fone de Ouvido Bluetooth Sem Fio TWS Pro',
+            ],
+            'ae_store_info' => [
+                'store_id'           => '8823910',
+                'store_name'         => 'Loja Oficial Tech Sound',
+                'store_country_code' => 'CN',
+            ],
+            'ae_multimedia_info_dto' => [
+                'image_urls' => 'https://ae01.alicdn.com/kf/img1.jpg;https://ae01.alicdn.com/kf/img2.jpg;https://ae01.alicdn.com/kf/img3.jpg',
+            ],
+            'ae_item_sku_info_dtos' => [
+                'ae_item_sku_info_d_t_o' => [
+                    [
+                        'sku_id'           => 'sku_001',
+                        'sku_price'        => '29.90',
+                        'offer_sale_price' => '14.50',
+                        'sku_image'        => 'https://ae01.alicdn.com/kf/sku_black.jpg',
+                        'ae_sku_property_dtos' => [
+                            'ae_sku_property_d_t_o' => [
+                                [
+                                    'sku_property_name'            => 'Color',
+                                    'property_value_definition_name' => 'Preto Fosco',
+                                    'sku_image'                    => 'https://ae01.alicdn.com/kf/sku_black.jpg',
+                                ],
+                            ],
+                        ],
+                    ],
+                    [
+                        'sku_id'           => 'sku_002',
+                        'sku_price'        => '32.90',
+                        'offer_sale_price' => '16.80',
+                        'sku_image'        => 'https://ae01.alicdn.com/kf/sku_white.jpg',
+                        'ae_sku_property_dtos' => [
+                            'ae_sku_property_d_t_o' => [
+                                [
+                                    'sku_property_name'            => 'Color',
+                                    'property_value_definition_name' => 'Branco Neve',
+                                    'sku_image'                    => 'https://ae01.alicdn.com/kf/sku_white.jpg',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $dto = $miningService->transformRawItemToDto($rawItem, 'Eletrônicos');
+
+        // 1. Link direto do vendedor e ID oficial
+        $this->assertSame('1005007891234567', $dto->aliexpressId);
+        $this->assertSame('https://www.aliexpress.com/item/1005007891234567.html', $dto->attributes['aliexpress_url']);
+
+        // 2. Metadados oficiais do vendedor
+        $this->assertSame('Loja Oficial Tech Sound', $dto->attributes['store_name']);
+        $this->assertSame('https://www.aliexpress.com/store/8823910', $dto->attributes['store_url']);
+        $this->assertSame('CN', $dto->attributes['store_country']);
+
+        // 3. Preço real do vendedor (min offer_sale_price = 14.50)
+        $this->assertSame(14.50, $dto->costPriceUsd);
+
+        // 4. Todas as imagens extraídas da galeria e SKUs
+        $this->assertGreaterThanOrEqual(5, count($dto->images));
+        $this->assertContains('https://ae01.alicdn.com/kf/img1.jpg', $dto->images);
+        $this->assertContains('https://ae01.alicdn.com/kf/img2.jpg', $dto->images);
+        $this->assertContains('https://ae01.alicdn.com/kf/img3.jpg', $dto->images);
+        $this->assertContains('https://ae01.alicdn.com/kf/sku_black.jpg', $dto->images);
+        $this->assertContains('https://ae01.alicdn.com/kf/sku_white.jpg', $dto->images);
+    }
 }
