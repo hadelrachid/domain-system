@@ -23,6 +23,7 @@ class AdminController
     private ThemeActivatorInterface $themeActivator;
     private ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor;
     private \DomainSystem\Core\Contracts\PluginUpdateCheckerInterface $updateChecker;
+    private \DomainSystem\Core\Contracts\ThemeUpdateCheckerInterface $themeUpdateChecker;
 
     public function __construct(
         PluginManager $manager,
@@ -32,7 +33,8 @@ class AdminController
         \DomainSystem\Core\Contracts\SessionManagerInterface $session,
         ?ThemeActivatorInterface $themeActivator = null,
         ?\DomainSystem\Core\Contracts\SchemaDoctorInterface $schemaDoctor = null,
-        ?\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface $updateChecker = null
+        ?\DomainSystem\Core\Contracts\PluginUpdateCheckerInterface $updateChecker = null,
+        ?\DomainSystem\Core\Contracts\ThemeUpdateCheckerInterface $themeUpdateChecker = null
     ) {
         $this->manager = $manager;
         $this->theme = $theme;
@@ -43,6 +45,7 @@ class AdminController
         $this->themeActivator = $themeActivator ?? new ThemeActivator($basePath, null, $dispatcher);
         $this->schemaDoctor = $schemaDoctor;
         $this->updateChecker = $updateChecker ?? new \DomainSystem\Core\Plugin\Services\PluginUpdateChecker($basePath);
+        $this->themeUpdateChecker = $themeUpdateChecker ?? new \DomainSystem\Core\Theme\ThemeUpdateChecker($basePath);
     }
 
     public function listPlugins(\DomainSystem\Core\Http\Request $request)
@@ -460,12 +463,38 @@ class AdminController
             'preview_url' => '#'
         ];
         
+        // Checagem de atualizações remotas de temas
+        $themeUpdates = [];
+        try {
+            $themeUpdates = $this->themeUpdateChecker->checkForUpdates(false);
+            $this->themeUpdateChecker->notifyIfUpdatesAvailable(false);
+        } catch (\Throwable $e) {
+            // Silently ignore remote failures
+        }
+
+        $pendingThemeUpdatesCount = 0;
+        foreach ($themes as &$t) {
+            $folder = $t['folder'] ?? '';
+            if (!empty($folder) && isset($themeUpdates[$folder]) && !empty($themeUpdates[$folder]['has_update'])) {
+                $t['has_update'] = true;
+                $t['remote_version'] = $themeUpdates[$folder]['new_version'] ?? '';
+                $t['download_url'] = $themeUpdates[$folder]['download_url'] ?? '';
+                $pendingThemeUpdatesCount++;
+            } else {
+                $t['has_update'] = false;
+                $t['remote_version'] = $themeUpdates[$folder]['latest_version'] ?? ($themeUpdates[$folder]['new_version'] ?? null);
+                $t['download_url'] = $themeUpdates[$folder]['download_url'] ?? null;
+            }
+        }
+        unset($t);
+
         try {
             return $this->theme->render('themes_panel', [
                 'themes' => $themes,
                 'active_theme' => $activeTheme,
                 'configured_theme' => $configuredTheme,
-                'is_coming_soon' => $isComingSoon
+                'is_coming_soon' => $isComingSoon,
+                'pendingThemeUpdatesCount' => $pendingThemeUpdatesCount
             ]);
         } catch (Exception $e) {
             return "Erro ao renderizar painel de temas: " . $e->getMessage();
@@ -712,9 +741,53 @@ class AdminController
             return "Erro ao renderizar manual de instruções: " . $e->getMessage();
         }
     }
+
+    public function updateThemeRemote(\DomainSystem\Core\Http\Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        $folder = $request->input('theme_folder');
+        if (empty($folder) || !is_string($folder)) {
+            $this->session->setFlash('error', '❌ Identificador do tema não informado.');
+            return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/themes");
+        }
+
+        try {
+            $result = $this->themeUpdateChecker->updateThemeFromRemote($folder);
+            if (!empty($result['success'])) {
+                $version = htmlspecialchars($result['version'] ?? '');
+                $this->session->setFlash('success', "🎉 Tema [{$folder}] atualizado com sucesso para a versão {$version} diretamente do repositório oficial!");
+            } else {
+                $msg = htmlspecialchars($result['message'] ?? 'Erro desconhecido');
+                $this->session->setFlash('error', "❌ Falha ao atualizar o tema [{$folder}]: {$msg}");
+            }
+        } catch (\Throwable $e) {
+            if ($e instanceof \PHPUnit\Framework\Throwable) {
+                throw $e;
+            }
+            $this->session->setFlash('error', "❌ Erro durante a atualização do tema: " . $e->getMessage());
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/themes");
+    }
+
+    public function checkThemeUpdates(\DomainSystem\Core\Http\Request $request)
+    {
+        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+        try {
+            $updates = $this->themeUpdateChecker->checkForUpdates(true);
+            $this->themeUpdateChecker->notifyIfUpdatesAvailable(true);
+            $pendingUpdates = array_filter($updates, fn($item) => !empty($item['has_update']));
+            $count = count($pendingUpdates);
+
+            if ($count > 0) {
+                $this->session->setFlash('success', "🔎 Verificação concluída: {$count} atualização(ões) de tema disponível(is) no repositório oficial!");
+            } else {
+                $this->session->setFlash('success', "✅ Todos os temas instalados já estão nas versões mais recentes!");
+            }
+        } catch (\Throwable $e) {
+            $this->session->setFlash('error', "❌ Não foi possível verificar atualizações de temas: " . $e->getMessage());
+        }
+
+        return \DomainSystem\Core\Http\Response::redirect($baseUrl . "/admin/themes");
+    }
 }
-
-
-
-
-

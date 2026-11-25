@@ -2,7 +2,23 @@
     <h1 class="wp-heading-inline">Painel de Temas</h1>
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('createThemeModal').style.display='block'; return false;">Criar Novo Tema</a>
     <a href="#" class="page-title-action btn-activate" onclick="document.getElementById('uploadThemeModal').style.display='block'; return false;">Instalar Tema (.zip)</a>
+    <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/themes/check-updates" style="display: inline-block; margin-left: 10px;">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+        <button type="submit" class="page-title-action" style="background: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            Verificar Atualizações
+        </button>
+    </form>
     <p style="color: var(--text-muted); margin-bottom: 25px;">Gerencie e ative o tema visual do site público. O tema ativo define a identidade visual e os templates do seu domínio.</p>
+
+    <?php if (!empty($pendingThemeUpdatesCount) && $pendingThemeUpdatesCount > 0): ?>
+        <div style="background: rgba(88, 166, 255, 0.08); border-left: 4px solid var(--accent-blue); color: var(--text-main); padding: 14px 18px; border-radius: 6px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span><strong><?= $pendingThemeUpdatesCount ?> atualização(ões) de tema disponível(is)!</strong> Uma versão aprimorada foi encontrada no repositório oficial. Você pode atualizar com segurança com um clique abaixo.</span>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <?php if (!empty($is_coming_soon)): ?>
         <div style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.35); color: #fef08a; padding: 14px 18px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between;">
@@ -62,6 +78,12 @@
                         <div style="flex-grow: 1;"></div>
                     <?php endif; ?>
 
+                    <?php if (!empty($t['has_update'])): ?>
+                    <div style="margin: 0 0 12px; padding: 8px 10px; background: rgba(88, 166, 255, 0.1); border-left: 3px solid var(--accent-blue); border-radius: 0 4px 4px 0; font-size: 12px; color: var(--text-main);">
+                        <strong>🚀 Nova versão disponível:</strong> <span class="badge" style="background: rgba(88,166,255,0.2); border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 2px 6px; font-weight: bold;">v<?= htmlspecialchars($t['remote_version']) ?></span>
+                    </div>
+                    <?php endif; ?>
+
                     <p style="margin: 0 0 15px; font-size: 11px; color: var(--text-muted) !important;">Pasta: <code style="font-size:10px; padding:2px 4px;"><?= htmlspecialchars($t['folder']) ?></code></p>
                     
                     <div style="border-top: 1px solid var(--border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
@@ -88,11 +110,29 @@
                                     </a>
                                 <?php endif; ?>
 
-                                <?php if (!$t['is_core'] && !$t['is_bundled']): ?>
-                                    <form method="POST" action="<?= $baseUrl ?>/admin/themes/delete" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este tema? Esta ação apagará a pasta permanentemente do disco!');" style="margin: 0;">
+                                <?php if (!$t['is_core']): ?>
+                                    <?php if (!empty($t['has_update'])): ?>
+                                    <form id="form-theme-update-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/update-remote" style="margin:0;">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                        <button type="submit" class="btn btn-deactivate" style="padding: 6px 10px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
+                                        <button type="button" onclick="confirmThemeAction('update', 'form-theme-update-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; padding: 5px 10px;" title="Atualizar tema para a versão mais recente">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            Atualizar v<?= htmlspecialchars($t['remote_version']) ?>
+                                        </button>
+                                    </form>
+                                    <?php else: ?>
+                                    <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 5px 8px;" title="O tema já está na versão mais recente (v<?= htmlspecialchars($t['version']) ?>).">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Atualizado
+                                    </button>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+
+                                <?php if (!$t['is_core'] && !$t['is_bundled']): ?>
+                                    <form id="form-theme-delete-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/delete" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
+                                        <button type="button" onclick="confirmThemeAction('delete', 'form-theme-delete-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate" style="padding: 6px 10px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
                                     </form>
                                 <?php endif; ?>
                             <?php endif; ?>

@@ -129,6 +129,8 @@ class Plugin extends AbstractPlugin implements OsExtensionInterface
             $router->addRoute('POST', '/admin/themes/create', [AdminController::class, 'createTheme'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/themes/upload', [AdminController::class, 'uploadTheme'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/themes/delete', [AdminController::class, 'deleteTheme'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/update-remote', [AdminController::class, 'updateThemeRemote'], 'system-admin', ['admin']);
+            $router->addRoute('POST', '/admin/themes/check-updates', [AdminController::class, 'checkThemeUpdates'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/toggle', [AdminController::class, 'togglePlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/upload', [AdminController::class, 'uploadPlugin'], 'system-admin', ['admin']);
             $router->addRoute('POST', '/admin/plugins/delete', [AdminController::class, 'deletePlugin'], 'system-admin', ['admin']);
