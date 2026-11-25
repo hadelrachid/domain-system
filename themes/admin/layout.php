@@ -777,14 +777,16 @@
                 btnCancel.disabled = true;
                 btnConfirm.style.opacity = '0.8';
                 btnConfirm.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">↻</span> Processando...';
+                if (onConfirm) {
+                    try {
+                        onConfirm();
+                    } catch (err) {
+                        console.error('Erro na ação confirmada:', err);
+                    }
+                }
                 setTimeout(() => {
-                    overlay.style.opacity = '0';
-                    box.style.transform = 'scale(0.92)';
-                    setTimeout(() => {
-                        overlay.remove();
-                        if(onConfirm) onConfirm();
-                    }, 200);
-                }, 100);
+                    overlay.remove();
+                }, 300);
             };
             
             btnGroup.appendChild(btnCancel);
