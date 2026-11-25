@@ -10,13 +10,6 @@
     </form>
 </h1>
 
-<?php if (isset($_SESSION['flash_message'])): ?>
-    <div style="padding: 12px; margin-bottom: 20px; border-left: 4px solid <?= $_SESSION['flash_message']['type'] === 'success' ? '#00a32a' : '#d63638' ?>; background: #fff; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-        <strong><?= htmlspecialchars($_SESSION['flash_message']['msg']) ?></strong>
-    </div>
-    <?php unset($_SESSION['flash_message']); ?>
-<?php endif; ?>
-
 <?php if (!empty($crashes)): ?>
     <?php foreach ($crashes as $crash): ?>
         <div class="alert alert-error" style="padding: 15px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #d63638; background: #fff; color: #d63638; font-weight: bold;">
@@ -330,6 +323,39 @@
     </tbody>
 </table>
 </div>
+
+<script>
+function confirmPluginAction(action, formId, name, version) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    if (action === 'update') {
+        const msg = `Deseja atualizar o plugin "${name}" para a versão v${version}? O processo baixará e substituirá os arquivos pelo pacote estável oficial do repositório.`;
+        if (window.OS && typeof window.OS.confirm === 'function') {
+            window.OS.confirm(msg, () => form.submit(), {
+                title: '🚀 Atualizar Plugin',
+                confirmText: 'Atualizar Agora',
+                confirmBg: '#2271b1'
+            });
+        } else if (confirm(msg)) {
+            form.submit();
+        }
+    } else if (action === 'delete') {
+        const msg = `Deseja realmente excluir permanentemente o plugin "${name}"? Esta ação removerá a pasta do plugin e não poderá ser desfeita.`;
+        if (window.OS && typeof window.OS.confirm === 'function') {
+            window.OS.confirm(msg, () => form.submit(), {
+                title: '⚠️ Excluir Plugin',
+                confirmText: 'Excluir Permanentemente',
+                confirmBg: '#ef4444'
+            });
+        } else if (confirm(msg)) {
+            form.submit();
+        }
+    } else {
+        form.submit();
+    }
+}
+</script>
 
 
 

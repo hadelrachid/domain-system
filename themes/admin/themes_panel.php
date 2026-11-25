@@ -192,3 +192,36 @@
         </form>
     </div>
 </div>
+
+<script>
+function confirmThemeAction(action, formId, name, version) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    if (action === 'update') {
+        const msg = `Deseja atualizar o tema "${name}" para a versão v${version}? O processo baixará e substituirá os arquivos pelo pacote estável oficial do repositório.`;
+        if (window.OS && typeof window.OS.confirm === 'function') {
+            window.OS.confirm(msg, () => form.submit(), {
+                title: '🚀 Atualizar Tema',
+                confirmText: 'Atualizar Agora',
+                confirmBg: '#2271b1'
+            });
+        } else if (confirm(msg)) {
+            form.submit();
+        }
+    } else if (action === 'delete') {
+        const msg = `Deseja realmente excluir permanentemente o tema "${name}"? Esta ação removerá a pasta do tema e não poderá ser desfeita.`;
+        if (window.OS && typeof window.OS.confirm === 'function') {
+            window.OS.confirm(msg, () => form.submit(), {
+                title: '⚠️ Excluir Tema',
+                confirmText: 'Excluir Permanentemente',
+                confirmBg: '#ef4444'
+            });
+        } else if (confirm(msg)) {
+            form.submit();
+        }
+    } else {
+        form.submit();
+    }
+}
+</script>
