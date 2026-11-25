@@ -1,6 +1,6 @@
 {
     "name": "system-admin",
-    "version": "2.8.8",
+    "version": "2.8.9",
     "description": "Painel de controle central para gerenciar plugins e configurações do Kernel.",
     "author": "Kernel",
     "core": true,
