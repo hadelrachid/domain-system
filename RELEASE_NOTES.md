@@ -1,3 +1,27 @@
+## 🚀 Domain-System OS v2.8.9 — Pipeline de Validação Contratual, Container de Ingestão e Toast de Conformidade CDC/Procon
+
+A versão **v2.8.9** consolida a arquitetura corporativa de resiliência e integridade de dados para dropshipping e comércio eletrônico:
+
+---
+
+### 🛡️ 1. Pipeline de Validação Contratual e Container de Ingestão
+- **0% de Erros 404:** O `ProductExistenceGuard` inspeciona o status oficial no fornecedor (`onSelling`) e valida o identificador numérico real antes de qualquer persistência no banco.
+- **Elegibilidade Logística para o Brasil:** O `RegionalLogisticsGuard` detecta bloqueios de país (*"Item is not allowed to this country"*), custos abusivos de frete e assegura conformidade com Remessa Conforme e armazéns nacionais.
+- **Reconciliação de Preços (Fim do Preço Isca):** O `PriceIntegrityGuard` valida a matriz de SKUs e impede a inserção de produtos com valores distorcidos ou micro-preços de acessórios (R$ 0,50).
+- **Higienização de Mídia:** O `ContentIntegrityGuard` valida URLs de imagens CDN (`ae-pic-a1.aliexpress-media.com`) e protocolo HTTPS.
+- **Quarentena Diagnóstica:** Produtos rejeitados são isolados em Dead Letter Queue (DLQ) com motivo detalhado e timestamp para auditoria.
+
+### 🔔 2. Toast Notifications Nativas no Clique de Compra (CDC / Procon)
+- Checagem relâmpago de disponibilidade e estoque em tempo real ao clicar em *"Comprar Agora"* ou *"Comprar ➔"*.
+- Notificação flutuante com design moderno em glassmorphism (sem nenhum `window.alert()` intrusivo).
+- Proteção jurídica contra vendas de produtos esgotados (Art. 30 e 35 do CDC).
+
+### 🧪 3. Cobertura de Testes Automatizados
+- Nova suite `DomainDropMiningValidationPipelineTest` com 100% de sucesso.
+- Total de **134 testes e 1.144 asserções aprovadas** no PHPUnit.
+
+---
+
 ## 🚀 Domain-System OS v2.8.8 — Notificações Toast, Modais Nativos e Atualizador Blindado de Plugins
 
 A versão **v2.8.8** traz o refinamento visual do painel administrativo e aprimoramentos no motor de atualização e empacotamento de plugins:
