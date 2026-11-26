@@ -1,6 +1,6 @@
 {
     "name": "SystemMonitor",
-    "version": "2.9.0",
+    "version": "2.9.1",
     "description": "Painel de Supervisão e Rastreamento de Erros. Protegido pelo sistema.",
     "core": true,
     "entrypoint": "Plugin",
