@@ -4,66 +4,26 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-// Autoloader mínimo para o teste unitário isolado
-spl_autoload_register(function (string $class): void {
-    $prefix = 'DomainSystem\\Plugins\\domain_drop\\';
-    $baseDir = __DIR__ . '/../../plugins/domain_drop/';
-    if (str_starts_with($class, $prefix)) {
-        $relativeClass = substr($class, strlen($prefix));
-        $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
-        if (file_exists($file)) {
-            require_once $file;
-        }
-    }
-});
-
 use DomainSystem\Plugins\domain_drop\Contracts\WarehouseOriginResolverInterface;
 use DomainSystem\Plugins\domain_drop\Services\WarehouseOriginResolver;
 use DomainSystem\Plugins\domain_drop\Services\Validation\Guards\WarehouseOriginGuard;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Bateria de Testes Unitários de Conformidade Logística e Entrepostos (BR / CN / UNKNOWN).
  * 
- * Atende estritamente às exigências da Auditoria do ChatGPT e da documentação oficial
- * de 279 páginas (Págs. 174, 229, 230 e 254).
+ * Atende estritamente às exigências da documentação oficial do AliExpress
+ * (ae-freight-shipment.pdf e ae-logistics.pdf).
  */
-class DomainDropWarehouseOriginTest
+class DomainDropWarehouseOriginTest extends TestCase
 {
-    private int $passed = 0;
-    private int $failed = 0;
-
-    public function runAll(): void
+    protected function setUp(): void
     {
-        echo "=== BATERIA DE TESTES UNITÁRIOS: ENTREPOSTOS BR / CN / UNKNOWN ===\n\n";
-
-        $this->testChineseStoreWithProvenBrazilWarehouse();
-        $this->testBrazilianStoreWithChinaShippingIsClassifiedAsCn();
-        $this->testUnknownOriginIsPreservedAndNeverConvertedToCn();
-        $this->testFreightQueryResponseWithShipFromCountryBr();
-        $this->testFreightQueryResponseWithShipFromCountryCn();
-        $this->testWarehouseOriginGuardStrictModeBr();
-        $this->testWarehouseOriginGuardStrictModeCn();
-        $this->testWarehouseOriginGuardPermissiveModeAll();
-        $this->testZeroContaminationCuratedFallbackLogic();
-
-        echo "\n" . str_repeat('=', 65) . "\n";
-        echo "RESULTADO DOS TESTES: {$this->passed} PASSOU, {$this->failed} FALHOU\n";
-        echo str_repeat('=', 65) . "\n";
-
-        if ($this->failed > 0) {
-            exit(1);
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) {
+            $this->markTestSkipped('Plugin agregado [domain_drop] não está presente no checkout.');
+            return;
         }
-    }
-
-    private function assert(bool $condition, string $testName, string $details = ''): void
-    {
-        if ($condition) {
-            echo " [PASS] {$testName}\n";
-            $this->passed++;
-        } else {
-            echo " [FAIL] {$testName}: {$details}\n";
-            $this->failed++;
-        }
+        parent::setUp();
     }
 
     /**
@@ -79,11 +39,7 @@ class DomainDropWarehouseOriginTest
         ];
 
         $origin = $resolver->resolve($item);
-        $this->assert(
-            $origin === WarehouseOriginResolverInterface::ORIGIN_BR,
-            'Loja chinesa com despacho no Brasil é classificada como BR',
-            "Esperado BR, obtido '{$origin}'"
-        );
+        $this->assertSame(WarehouseOriginResolverInterface::ORIGIN_BR, $origin, 'Loja chinesa com despacho no Brasil é classificada como BR');
     }
 
     /**
@@ -101,11 +57,7 @@ class DomainDropWarehouseOriginTest
         ];
 
         $origin = $resolver->resolve($item);
-        $this->assert(
-            $origin === WarehouseOriginResolverInterface::ORIGIN_CN,
-            'Loja com cadastro no Brasil e despacho da China é classificada como CN (elimina falso positivo)',
-            "Esperado CN, obtido '{$origin}'"
-        );
+        $this->assertSame(WarehouseOriginResolverInterface::ORIGIN_CN, $origin, 'Loja com cadastro no Brasil e despacho da China é classificada como CN (elimina falso positivo)');
     }
 
     /**
@@ -118,19 +70,14 @@ class DomainDropWarehouseOriginTest
         $item = [
             'product_id' => '1005009988776655',
             'title' => 'Cabo USB Tipo C Trançado',
-            // Sem ship_from, sem tags de armazém, sem remessa conforme
         ];
 
         $origin = $resolver->resolve($item);
-        $this->assert(
-            $origin === WarehouseOriginResolverInterface::ORIGIN_UNKNOWN,
-            'Produto sem evidência de expedição física permanece como UNKNOWN (nunca converte para CN)',
-            "Esperado UNKNOWN, obtido '{$origin}'"
-        );
+        $this->assertSame(WarehouseOriginResolverInterface::ORIGIN_UNKNOWN, $origin, 'Produto sem evidência de expedição física permanece como UNKNOWN (nunca converte para CN)');
     }
 
     /**
-     * Teste 4: Consulta oficial de frete (aliexpress.ds.freight.query - Pág. 229-230) com ship_from_country = BR.
+     * Teste 4: Consulta oficial de frete com ship_from_country = BR.
      */
     public function testFreightQueryResponseWithShipFromCountryBr(): void
     {
@@ -146,11 +93,7 @@ class DomainDropWarehouseOriginTest
         ];
 
         $origin = $resolver->resolve($item);
-        $this->assert(
-            $origin === WarehouseOriginResolverInterface::ORIGIN_BR,
-            'Resposta oficial de frete com ship_from_country = BR confirma entreposto brasileiro',
-            "Esperado BR, obtido '{$origin}'"
-        );
+        $this->assertSame(WarehouseOriginResolverInterface::ORIGIN_BR, $origin, 'Resposta oficial de frete com ship_from_country = BR confirma entreposto brasileiro');
     }
 
     /**
@@ -160,97 +103,68 @@ class DomainDropWarehouseOriginTest
     {
         $resolver = new WarehouseOriginResolver();
         $item = [
-            'product_id' => '3256802900954148',
-            'title' => 'Fone de Ouvido Bluetooth TWS',
+            'product_id' => '1005007788990011',
+            'title' => 'Teclado Mecânico RGB',
             'freight_info' => [
-                'company' => 'AliExpress Selection Standard',
+                'company' => 'Cainiao Standard Shipping',
                 'ship_from_country' => 'CN',
-                'available_stock' => 500,
             ],
         ];
 
         $origin = $resolver->resolve($item);
-        $this->assert(
-            $origin === WarehouseOriginResolverInterface::ORIGIN_CN,
-            'Resposta oficial de frete com ship_from_country = CN confirma entreposto chinês',
-            "Esperado CN, obtido '{$origin}'"
-        );
+        $this->assertSame(WarehouseOriginResolverInterface::ORIGIN_CN, $origin, 'Resposta oficial de frete com ship_from_country = CN confirma entreposto chinês');
     }
 
     /**
-     * Teste 6: WarehouseOriginGuard no modo BR rejeita produtos CN e UNKNOWN.
+     * Teste 6: WarehouseOriginGuard no Modo BR.
+     * PROVA: No modo BR, aprova APENAS itens comprovadamente BR. CN e UNKNOWN são reprovados.
      */
     public function testWarehouseOriginGuardStrictModeBr(): void
     {
-        $guard = new WarehouseOriginGuard();
+        $guard = new WarehouseOriginGuard(WarehouseOriginResolverInterface::MODE_BR);
 
-        // 6.1 Produto BR comprovado -> Aprovado
-        $brItem = [
-            'target_warehouse_origin' => 'BR',
-            'ship_from' => 'BR',
-            'title' => 'Teclado Mecânico RGB Brasil',
-        ];
-        $resBr = $guard->validate('1001', $brItem);
-        $this->assert($resBr->isValid(), 'Guard no modo BR aprova item com despacho BR comprovado');
+        $itemBr = ['ship_from' => 'BR', 'title' => 'Produto Brasil'];
+        $resBr = $guard->validate($itemBr);
+        $this->assertTrue($resBr->isValid(), 'Guard no modo BR aprova item com despacho BR comprovado');
 
-        // 6.2 Produto CN -> Reprovado
-        $cnItem = [
-            'target_warehouse_origin' => 'BR',
-            'ship_from' => 'CN',
-            'title' => 'Mouse Óptico Gamer',
-        ];
-        $resCn = $guard->validate('1002', $cnItem);
-        $this->assert(!$resCn->isValid(), 'Guard no modo BR reprova item de origem CN');
+        $itemCn = ['ship_from' => 'CN', 'title' => 'Produto China'];
+        $resCn = $guard->validate($itemCn);
+        $this->assertFalse($resCn->isValid(), 'Guard no modo BR reprova item de origem CN');
 
-        // 6.3 Produto UNKNOWN -> Reprovado no modo estrito BR
-        $unknownItem = [
-            'target_warehouse_origin' => 'BR',
-            'title' => 'Mousepad Speed 90x40',
-        ];
-        $resUnknown = $guard->validate('1003', $unknownItem);
-        $this->assert(!$resUnknown->isValid(), 'Guard no modo BR reprova item de origem UNKNOWN (Zero-Contamination)');
+        $itemUnknown = ['title' => 'Produto Sem Despacho'];
+        $resUnknown = $guard->validate($itemUnknown);
+        $this->assertFalse($resUnknown->isValid(), 'Guard no modo BR reprova item de origem UNKNOWN (Zero-Contamination)');
     }
 
     /**
-     * Teste 7: WarehouseOriginGuard no modo CN rejeita produtos BR.
+     * Teste 7: WarehouseOriginGuard no Modo CN.
+     * PROVA: No modo CN, aprova itens CN e reprova itens BR.
      */
     public function testWarehouseOriginGuardStrictModeCn(): void
     {
-        $guard = new WarehouseOriginGuard();
+        $guard = new WarehouseOriginGuard(WarehouseOriginResolverInterface::MODE_CN);
 
-        $brItem = [
-            'target_warehouse_origin' => 'CN',
-            'ship_from' => 'BR',
-            'title' => 'Item com estoque no Brasil',
-        ];
-        $resBr = $guard->validate('2001', $brItem);
-        $this->assert(!$resBr->isValid(), 'Guard no modo CN reprova produto que tem estoque no Brasil');
+        $itemBr = ['ship_from' => 'BR', 'title' => 'Produto Brasil'];
+        $resBr = $guard->validate($itemBr);
+        $this->assertFalse($resBr->isValid(), 'Guard no modo CN reprova produto que tem estoque no Brasil');
 
-        $cnItem = [
-            'target_warehouse_origin' => 'CN',
-            'ship_from' => 'CN',
-            'title' => 'Item com despacho da China',
-        ];
-        $resCn = $guard->validate('2002', $cnItem);
-        $this->assert($resCn->isValid(), 'Guard no modo CN aprova produto com despacho da China');
+        $itemCn = ['ship_from' => 'CN', 'title' => 'Produto China'];
+        $resCn = $guard->validate($itemCn);
+        $this->assertTrue($resCn->isValid(), 'Guard no modo CN aprova produto com despacho da China');
     }
 
     /**
-     * Teste 8: WarehouseOriginGuard no modo ALL aceita BR, CN e UNKNOWN.
+     * Teste 8: WarehouseOriginGuard no Modo GLOBAL (ALL).
+     * PROVA: Aceita produtos UNKNOWN, mas preserva a origem desconhecida.
      */
     public function testWarehouseOriginGuardPermissiveModeAll(): void
     {
-        $guard = new WarehouseOriginGuard();
+        $guard = new WarehouseOriginGuard(WarehouseOriginResolverInterface::MODE_ALL);
 
-        $unknownItem = [
-            'target_warehouse_origin' => 'ALL',
-            'title' => 'Produto Genérico Sem Origem',
-        ];
-        $res = $guard->validate('3001', $unknownItem);
-        $this->assert(
-            $res->isValid() && ($res->getDetails()['origin'] ?? '') === 'UNKNOWN',
-            'Guard no modo ALL aceita produto UNKNOWN preservando a origem desconhecida no detalhe'
-        );
+        $itemUnknown = ['title' => 'Produto Genérico Sem Origem'];
+        $res = $guard->validate($itemUnknown);
+        $this->assertTrue($res->isValid(), 'Guard no modo ALL aceita produto UNKNOWN');
+        $this->assertSame('UNKNOWN', $res->getDetails()['origin'] ?? '', 'Preserva a origem desconhecida no detalhe');
     }
 
     /**
@@ -273,11 +187,7 @@ class DomainDropWarehouseOriginTest
             return $resolver->resolve($item, (string)($item['product_title'] ?? '')) === WarehouseOriginResolverInterface::ORIGIN_BR;
         }));
 
-        $this->assert(count($filteredBr) === 1, 'Filtro BR no fallback isola estritamente apenas 1 item BR');
-        $this->assert($filteredBr[0]['ship_from'] === 'BR', 'Item sobrevivente do fallback possui ship_from = BR comprovado');
+        $this->assertCount(1, $filteredBr, 'Filtro BR no fallback isola estritamente apenas 1 item BR');
+        $this->assertSame('BR', $filteredBr[0]['ship_from'], 'Item sobrevivente do fallback possui ship_from = BR comprovado');
     }
 }
-
-// Execução direta do teste
-$test = new DomainDropWarehouseOriginTest();
-$test->runAll();

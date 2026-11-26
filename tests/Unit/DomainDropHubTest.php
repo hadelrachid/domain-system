@@ -774,6 +774,7 @@ class DomainDropHubTest extends TestCase
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }
+            public function queryFreight(array $deliveryReq): array { return []; }
             public function getLastError(): ?string { return null; }
         };
 
@@ -852,6 +853,7 @@ class DomainDropHubTest extends TestCase
             public function getOAuthAuthorizeUrl(string $redirectUri, string $state = ''): string { return ''; }
             public function createAccessToken(string $code): array { return []; }
             public function refreshAccessToken(string $refreshToken): array { return []; }
+            public function queryFreight(array $deliveryReq): array { return []; }
             public function getLastError(): ?string { return null; }
         };
 
