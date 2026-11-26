@@ -287,6 +287,9 @@ class AdminController
                         $this->schemaDoctor->healAll();
                     } catch (\Throwable $e) {}
                 }
+                try {
+                    $this->updateChecker->checkForUpdates(true);
+                } catch (\Throwable $e) {}
                 $version = htmlspecialchars($result['version'] ?? '');
                 $this->session->setFlash('success', "🎉 Plugin [{$slug}] atualizado com sucesso para a versão {$version} diretamente do repositório oficial!");
             } else {

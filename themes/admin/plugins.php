@@ -202,20 +202,16 @@ window.confirmPluginAction = function(action, form, name, version) {
                         <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0;" onsubmit="return confirmPluginAction('update', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['remote_version'], ENT_QUOTES) ?>')">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                             <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                            <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;" title="Nova versão disponível no repositório">
+                            <button type="submit" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer;" title="Nova versão disponível no repositório (v<?= htmlspecialchars($plugin['remote_version']) ?>)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 Atualizar para v<?= htmlspecialchars($plugin['remote_version']) ?>
                             </button>
                         </form>
                         <?php else: ?>
-                        <form method="POST" action="<?= defined('BASE_URL') ? BASE_URL : '' ?>/admin/plugins/update-remote" style="margin:0; display:inline;" onsubmit="return confirmPluginAction('reinstall', this, '<?= htmlspecialchars($plugin['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($plugin['version'], ENT_QUOTES) ?>')">
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                            <input type="hidden" name="plugin_slug" value="<?= htmlspecialchars($plugin['folder']) ?>">
-                            <button type="submit" class="btn" style="opacity: 0.85; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="O plugin já está na versão v<?= htmlspecialchars($plugin['version']) ?>. Clique para sincronizar ou reinstalar do repositório oficial.">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                Atualizado (v<?= htmlspecialchars($plugin['version']) ?>)
-                            </button>
-                        </form>
+                        <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12); color: var(--text-muted); pointer-events: none;" title="O plugin já está na versão mais recente (v<?= htmlspecialchars($plugin['version']) ?>). Nenhuma atualização necessária.">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Atualizado (v<?= htmlspecialchars($plugin['version']) ?>)
+                        </button>
                         <?php endif; ?>
                     <?php endif; ?>
 
