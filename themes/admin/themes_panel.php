@@ -96,7 +96,7 @@
 
                         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: flex-end; width: 100%;">
                             <?php if ($isActive): ?>
-                                <a href="<?= $baseUrl !== '' ? $baseUrl : '/' ?>" target="_blank" class="btn" style="background: rgba(0,163,42,0.15); border: 1px solid #00a32a; color: #00a32a; padding: 6px 14px; font-size: 12px; text-decoration: none; border-radius: 4px; font-weight: 600;" title="Ver Site no Navegador">
+                                <a href="<?= $baseUrl !== '' ? $baseUrl : '/' ?>" target="_blank" class="btn" style="background: rgba(0,163,42,0.15); border: 1px solid #00a32a; color: #00a32a; padding: 5px 10px; font-size: 11px; text-decoration: none; border-radius: 4px; font-weight: 600;" title="Ver Site no Navegador">
                                     Ver Site ↗
                                 </a>
                             <?php else: ?>
@@ -112,32 +112,32 @@
                                         Ver
                                     </a>
                                 <?php endif; ?>
+                            <?php endif; ?>
 
-                                <?php if (!$t['is_core']): ?>
-                                    <?php if (!empty($t['has_update'])): ?>
-                                    <form id="form-theme-update-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/update-remote" style="margin:0;">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                        <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                        <button type="button" onclick="confirmThemeAction('update', 'form-theme-update-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="Atualizar tema para a versão mais recente">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                            Atualizar v<?= htmlspecialchars($t['remote_version']) ?>
-                                        </button>
-                                    </form>
-                                    <?php else: ?>
-                                    <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="O tema já está na versão mais recente (v<?= htmlspecialchars($t['version']) ?>).">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        Atualizado
+                            <?php if (!$t['is_core']): ?>
+                                <?php if (!empty($t['has_update'])): ?>
+                                <form id="form-theme-update-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/update-remote" style="margin:0;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
+                                    <button type="button" onclick="confirmThemeAction('update', 'form-theme-update-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['remote_version'], ENT_QUOTES) ?>')" class="btn" style="background: #2271b1; color: #fff; border-color: #2271b1; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="Atualizar tema para a versão mais recente">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        Atualizar v<?= htmlspecialchars($t['remote_version']) ?>
                                     </button>
-                                    <?php endif; ?>
+                                </form>
+                                <?php else: ?>
+                                <button type="button" class="btn" disabled style="opacity: 0.45; cursor: not-allowed; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 5px 8px; white-space: nowrap;" title="O tema já está na versão mais recente (v<?= htmlspecialchars($t['version']) ?>).">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    Atualizado
+                                </button>
                                 <?php endif; ?>
+                            <?php endif; ?>
 
-                                <?php if (!$t['is_core'] && !$t['is_bundled']): ?>
-                                    <form id="form-theme-delete-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/delete" style="margin: 0;">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                        <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
-                                        <button type="button" onclick="confirmThemeAction('delete', 'form-theme-delete-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate" style="padding: 5px 8px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
-                                    </form>
-                                <?php endif; ?>
+                            <?php if (!$isActive && !$t['is_core'] && !$t['is_bundled']): ?>
+                                <form id="form-theme-delete-<?= htmlspecialchars($t['folder']) ?>" method="POST" action="<?= $baseUrl ?>/admin/themes/delete" style="margin: 0;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="theme_folder" value="<?= htmlspecialchars($t['folder']) ?>">
+                                    <button type="button" onclick="confirmThemeAction('delete', 'form-theme-delete-<?= htmlspecialchars($t['folder']) ?>', '<?= htmlspecialchars($t['name'], ENT_QUOTES) ?>')" class="btn btn-deactivate" style="padding: 5px 8px !important; font-size: 11px !important;" title="Excluir tema">Excluir</button>
+                                </form>
                             <?php endif; ?>
                         </div>
                     </div>

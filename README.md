@@ -1,4 +1,4 @@
-# Domain System (v2.9.2)
+# Domain System (v2.9.3)
 
 > **Um sistema web completo, ultraleve (~30 MB) e muito rápido feito em PHP 8.2 puro — sem frameworks pesados e sem dependências desnecessárias.**
 
