@@ -1,6 +1,6 @@
 {
     "name": "SystemUpdater",
-    "version": "2.9.2",
+    "version": "2.9.3",
     "description": "Gerenciador de Atualizações do Núcleo por Contrato (Modelo A).",
     "core": true,
     "entrypoint": "Plugin",

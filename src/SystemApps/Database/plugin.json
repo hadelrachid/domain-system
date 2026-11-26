@@ -1,6 +1,6 @@
 {
     "name": "database",
-    "version": "2.9.2",
+    "version": "2.9.3",
     "description": "Fornece a conexão segura (PDO) e o construtor fluente de Queries.",
     "author": "Kernel",
     "core": true,
