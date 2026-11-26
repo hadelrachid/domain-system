@@ -1,4 +1,4 @@
-# Domain System (v2.9.1)
+# Domain System (v2.9.2)
 
 > **A lean, fast, and complete web operating platform written in clean modern PHP 8.2 — no bulky frameworks, no endless plugin bloat.**
 

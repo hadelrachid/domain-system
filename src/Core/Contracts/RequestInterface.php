@@ -13,4 +13,5 @@ interface RequestInterface
     public function uri(): string;
     public function file(string $key);
     public function header(string $name, ?string $default = null): ?string;
+    public function isAjax(): bool;
 }

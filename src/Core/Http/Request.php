@@ -131,4 +131,9 @@ class Request implements RequestInterface
         }
         return $default;
     }
+
+    public function isAjax(): bool
+    {
+        return strtolower((string)$this->header('X-Requested-With', '')) === 'xmlhttprequest';
+    }
 }

@@ -1,7 +1,7 @@
 {
     "name": "dahersistema/domain-system",
     "description": "Kernel base para aplica\u00e7\u00f5es plug\u00e1veis",
-    "version": "2.9.1",
+    "version": "2.9.2",
     "type": "project",
     "require": {
         "php": ">=8.2"
