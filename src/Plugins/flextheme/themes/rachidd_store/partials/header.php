@@ -261,14 +261,5 @@ if ($customerLoggedId <= 0 && isset($_SESSION['customer_id'])) {
             </div>
             <span>➔</span>
         </a>
-
-        <!-- Novidades & Uso Especial -->
-        <a href="<?= $baseUrl ?>/loja?cat=<?= urlencode('Novidades & Uso Especial') ?>#produtos" class="cat-drawer-item <?= (stripos($currentCat, 'novidade') !== false || stripos($currentCat, 'especial') !== false || stripos($currentCat, 'sex shop') !== false || stripos($currentCat, '+18') !== false) ? 'active' : '' ?>" style="border-color: rgba(239,68,68,0.3); color: #fca5a5;">
-            <div style="display: flex; align-items: center;">
-                <span class="item-icon">🔞</span>
-                <span>Novidades & Uso Especial</span>
-            </div>
-            <span>➔</span>
-        </a>
     </div>
 </aside>
