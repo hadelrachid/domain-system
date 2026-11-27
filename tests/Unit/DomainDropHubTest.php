@@ -1270,6 +1270,22 @@ class DomainDropHubTest extends TestCase
         $this->assertContains('Prateado (Prata 925)', $braceletDto->attributes['variation_axes']['Cor']);
         $this->assertContains('Ouro Rosa (Rose Gold)', $braceletDto->attributes['variation_axes']['Cor']);
         $this->assertArrayHasKey('Comprimento da Pulseira', $braceletDto->attributes['variation_axes']);
+
+        // 3. Sutiã / Lingerie / Bralette (Women's Bras And Bralettes, Sutiã Com Bojo, Sutiã Sem Costura)
+        $braPayload = [
+            'itemId' => '1005007766554433',
+            'product_title' => "Women's Bras And Bralettes, Sutiã Com Bojo, Sutiã Sem Costura,",
+            'itemMainPic' => 'https://ae01.alicdn.com/kf/bra.jpg',
+            'target_sale_price' => 12.0,
+        ];
+        $braDto = $mining->transformRawItemToDto($braPayload);
+        $this->assertNotEmpty($braDto->attributes['variants']);
+        $this->assertArrayHasKey('Cor', $braDto->attributes['variation_axes']);
+        $this->assertArrayHasKey('Tamanho', $braDto->attributes['variation_axes']);
+        $this->assertContains('Preto Clássico', $braDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('Nude / Bege', $braDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('P (38/40)', $braDto->attributes['variation_axes']['Tamanho']);
+        $this->assertContains('Médio (M / 42)', $braDto->attributes['variation_axes']['Tamanho']);
     }
 
     public function testTrackOrderAndShippingPolicyPages(): void
