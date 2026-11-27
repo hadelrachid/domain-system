@@ -2195,4 +2195,145 @@ class DomainDropHubTest extends TestCase
         @rmdir($tempDir . '/config');
         @rmdir($tempDir);
     }
+
+    public function testBatchUpdateStatusAndBatchDeleteInRepository(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $p1 = new DropshipProductDto(
+            aliexpressId: '90001001',
+            title: 'Produto Quarentena 1',
+            slug: 'produto-quarentena-1',
+            costPriceUsd: 10.0,
+            salePriceBrl: 100.0,
+            mainImageUrl: 'https://images.unsplash.com/photo-1.jpg',
+            status: 'draft'
+        );
+        $p2 = new DropshipProductDto(
+            aliexpressId: '90001002',
+            title: 'Produto Quarentena 2',
+            slug: 'produto-quarentena-2',
+            costPriceUsd: 15.0,
+            salePriceBrl: 150.0,
+            mainImageUrl: 'https://images.unsplash.com/photo-2.jpg',
+            status: 'draft'
+        );
+        $p3 = new DropshipProductDto(
+            aliexpressId: '90001003',
+            title: 'Produto Quarentena 3',
+            slug: 'produto-quarentena-3',
+            costPriceUsd: 20.0,
+            salePriceBrl: 200.0,
+            mainImageUrl: 'https://images.unsplash.com/photo-3.jpg',
+            status: 'draft'
+        );
+
+        $id1 = $repo->save($p1);
+        $id2 = $repo->save($p2);
+        $id3 = $repo->save($p3);
+
+        // 1. Testa que iniciam em rascunho
+        $this->assertSame('draft', $repo->findById($id1)->status);
+        $this->assertSame('draft', $repo->findById($id2)->status);
+        $this->assertSame('draft', $repo->findById($id3)->status);
+
+        // 2. Publica em lote id1 e id2 (Carregar para Site)
+        $updated = $repo->batchUpdateStatus([$id1, $id2], 'published');
+        $this->assertSame(2, $updated);
+
+        $this->assertSame('published', $repo->findById($id1)->status);
+        $this->assertSame('published', $repo->findById($id2)->status);
+        $this->assertSame('draft', $repo->findById($id3)->status);
+
+        // 3. Testa filtro de contagem por status
+        $publishedCount = $repo->count(['status' => 'published']);
+        $draftCount = $repo->count(['status' => 'draft']);
+        $this->assertGreaterThanOrEqual(2, $publishedCount);
+        $this->assertGreaterThanOrEqual(1, $draftCount);
+
+        // 4. Move id1 de volta para rascunho (Ocultar)
+        $repo->updateStatus($id1, 'draft');
+        $this->assertSame('draft', $repo->findById($id1)->status);
+
+        // 5. Exclui em lote id1 e id3
+        $deleted = $repo->batchDelete([$id1, $id3], preserveOrdered: true);
+        $this->assertSame(2, $deleted);
+
+        $this->assertNull($repo->findById($id1));
+        $this->assertNotNull($repo->findById($id2));
+        $this->assertNull($repo->findById($id3));
+    }
+
+    public function testAdminControllerStatusAndBatchEndpoints(): void
+    {
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+
+        $prod = new DropshipProductDto(
+            aliexpressId: '90002001',
+            title: 'Produto Teste Controller Status',
+            slug: 'produto-teste-controller-status',
+            costPriceUsd: 12.0,
+            salePriceBrl: 120.0,
+            mainImageUrl: 'https://images.unsplash.com/photo-test.jpg',
+            status: 'draft'
+        );
+        $id = $repo->save($prod);
+
+        $session = $this->createMock(\DomainSystem\Core\Contracts\SessionManagerInterface::class);
+        $session->method('getCsrfToken')->willReturn('valid_csrf_token');
+
+        $controller = new \DomainSystem\Plugins\domain_drop\Controllers\DropshipAdminController(
+            catalogRepo: $repo,
+            miningService: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\ProductMiningServiceInterface::class),
+            currencyConverter: $this->createMock(\DomainSystem\Plugins\domain_drop\Contracts\CurrencyConverterInterface::class),
+            session: $session
+        );
+
+        // Teste de 1-Click Status Update via AJAX
+        $req = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: ['csrf_token' => 'valid_csrf_token', 'status' => 'published'],
+            server: ['REQUEST_METHOD' => 'POST', 'HTTP_X_REQUESTED_WITH' => 'xmlhttprequest']
+        );
+        $res = $controller->updateStatus($req, (string)$id);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\JsonResponse::class, $res);
+        $json = json_decode((string)$res->getContent(), true);
+        $this->assertTrue($json['success']);
+        $this->assertTrue($json['is_live']);
+        $this->assertSame('published', $json['status']);
+
+        // Verifica no banco
+        $this->assertSame('published', $repo->findById($id)->status);
+
+        // Teste de Batch Status (Ocultar)
+        $reqBatch = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: ['csrf_token' => 'valid_csrf_token', 'action' => 'unpublish', 'ids' => [$id]],
+            server: ['REQUEST_METHOD' => 'POST', 'HTTP_X_REQUESTED_WITH' => 'xmlhttprequest']
+        );
+        $resBatch = $controller->batchStatus($reqBatch);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\JsonResponse::class, $resBatch);
+        $jsonBatch = json_decode((string)$resBatch->getContent(), true);
+        $this->assertTrue($jsonBatch['success']);
+        $this->assertFalse($jsonBatch['is_live']);
+        $this->assertSame(1, $jsonBatch['updated_count']);
+
+        // Verifica no banco
+        $this->assertSame('draft', $repo->findById($id)->status);
+
+        // Teste de Batch Delete
+        $reqDel = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: ['csrf_token' => 'valid_csrf_token', 'ids' => [$id]],
+            server: ['REQUEST_METHOD' => 'POST', 'HTTP_X_REQUESTED_WITH' => 'xmlhttprequest']
+        );
+        $resDel = $controller->batchDelete($reqDel);
+        $this->assertInstanceOf(\DomainSystem\Core\Http\Responses\JsonResponse::class, $resDel);
+        $jsonDel = json_decode((string)$resDel->getContent(), true);
+        $this->assertTrue($jsonDel['success']);
+        $this->assertSame(1, $jsonDel['deleted_count']);
+
+        // Verifica no banco
+        $this->assertNull($repo->findById($id));
+    }
 }
