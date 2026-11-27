@@ -16,7 +16,16 @@ use DomainSystem\Plugins\domain_drop\DTO\DropshipProductDto;
 
 class DomainDropProductCardTest extends TestCase
 {
-    private function makeDto(array $overrides = []): DropshipProductDto
+    protected function setUp(): void
+    {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop')) {
+            $this->markTestSkipped('Plugin agregado externo [domain_drop] não está presente no checkout.');
+            return;
+        }
+        parent::setUp();
+    }
+
+    private function makeDto(array $overrides = []): object
     {
         return new DropshipProductDto(
             aliexpressId: $overrides['aliexpress_id'] ?? '1005009876543210',
