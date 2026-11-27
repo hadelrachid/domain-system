@@ -190,4 +190,25 @@ class DomainDropWarehouseOriginTest extends TestCase
         $this->assertCount(1, $filteredBr, 'Filtro BR no fallback isola estritamente apenas 1 item BR');
         $this->assertSame('BR', $filteredBr[0]['ship_from'], 'Item sobrevivente do fallback possui ship_from = BR comprovado');
     }
+
+    /**
+     * Teste 10: Array to string conversion resilience (AliExpress frontend payload).
+     */
+    public function testWarehouseOriginGuardHandlesStructuredArrayTitleWithoutArrayToStringConversion(): void
+    {
+        $guard = new WarehouseOriginGuard(WarehouseOriginResolverInterface::MODE_ALL);
+
+        $itemWithArrayTitle = [
+            'id' => 1005009988776655,
+            'title' => [
+                'displayTitle' => 'Vestido Feminino Floral Casual Elegante',
+                'title' => 'Vestido Feminino Floral',
+            ],
+            'ship_from' => 'BR',
+        ];
+
+        $res = $guard->validate($itemWithArrayTitle);
+        $this->assertTrue($res->isValid(), 'Guard processa itens com title em array estruturado sem erro');
+        $this->assertSame('BR', $res->getDetails()['origin'] ?? '');
+    }
 }
