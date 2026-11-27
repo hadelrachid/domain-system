@@ -733,6 +733,70 @@ class DomainDropHubTest extends TestCase
         $reloaded = $repo->findById($savedId);
         $this->assertEqualsWithDelta(79.90, $reloaded->salePriceBrl, 0.01);
 
+        // 3. Testa método do repositório updateCategory diretamente
+        $this->assertTrue($repo->updateCategory($savedId, 'Moda, Roupas & Vestuário'));
+        $catUpdated = $repo->findById($savedId);
+        $this->assertSame('Moda, Roupas & Vestuário', $catUpdated->category);
+
+        // 4. Testa endpoint do Controller updateCategory via AJAX
+        $reqCat = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token' => 'csrf_token_valid',
+                'category'   => 'Casa Inteligente & Organização',
+                'ajax'       => '1',
+            ],
+            server: ['HTTP_ACCEPT' => 'application/json']
+        );
+        $respCat = $controller->updateCategory($reqCat, (string)$savedId);
+        $this->assertSame(200, $respCat->getStatusCode());
+        $payloadCat = json_decode((string)$respCat->getContent(), true);
+        $this->assertTrue($payloadCat['success']);
+        $this->assertSame('Casa Inteligente & Organização', $payloadCat['category']);
+
+        $catReloaded = $repo->findById($savedId);
+        $this->assertSame('Casa Inteligente & Organização', $catReloaded->category);
+
+        // 5. Testa endpoint do Controller toggleDailyCycle via AJAX (pausa e reativa rotação 24h)
+        $reqToggle = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token' => 'csrf_token_valid',
+                'ajax'       => '1',
+            ],
+            server: ['HTTP_ACCEPT' => 'application/json']
+        );
+        $respToggle = $controller->toggleDailyCycle($reqToggle);
+        $this->assertSame(200, $respToggle->getStatusCode());
+        $payloadToggle = json_decode((string)$respToggle->getContent(), true);
+        $this->assertTrue($payloadToggle['success']);
+        $this->assertArrayHasKey('auto_sync_enabled', $payloadToggle);
+
+        // 6. Testa alteração de procedência / entreposto físico (updateOrigin)
+        $this->assertTrue($repo->updateOrigin($savedId, 'BR'));
+        $originReloaded = $repo->findById($savedId);
+        $this->assertSame('BR', $originReloaded->attributes['ship_from']);
+        $this->assertTrue($originReloaded->attributes['origem_brasil']);
+
+        $reqOrigin = new \DomainSystem\Core\Http\Request(
+            query: [],
+            request: [
+                'csrf_token' => 'csrf_token_valid',
+                'origin'     => 'CN',
+                'ajax'       => '1',
+            ],
+            server: ['HTTP_ACCEPT' => 'application/json']
+        );
+        $respOrigin = $controller->updateOrigin($reqOrigin, (string)$savedId);
+        $this->assertSame(200, $respOrigin->getStatusCode());
+        $payloadOrigin = json_decode((string)$respOrigin->getContent(), true);
+        $this->assertTrue($payloadOrigin['success']);
+        $this->assertSame('CN', $payloadOrigin['origin']);
+
+        $originReloaded2 = $repo->findById($savedId);
+        $this->assertSame('CN', $originReloaded2->attributes['ship_from']);
+        $this->assertTrue($originReloaded2->attributes['origem_china']);
+
         @unlink($tmpCache);
         @unlink($tmpDir . '/config/plugins/domain_drop.json');
         @rmdir($tmpDir . '/config/plugins');
@@ -1061,10 +1125,10 @@ class DomainDropHubTest extends TestCase
     public function testSdkCurationFiltersAndRanksByRatingApprovalsAndThermometer(): void
     {
         $candidates = [
-            ['product_id' => 'low_rate', 'evaluate_rate' => '3.2', 'volume' => 5000],
-            ['product_id' => 'good_mid', 'evaluate_rate' => '4.6', 'volume' => 400],
-            ['product_id' => 'top_star', 'evaluate_rate' => '5.0', 'volume' => 900],
-            ['product_id' => 'top_vol',  'evaluate_rate' => '4.8', 'volume' => 4200],
+            ['product_id' => 'low_rate', 'evaluate_rate' => '3.2', 'volume' => 5000, 'product_main_image_url' => 'https://ae01.alicdn.com/kf/low.jpg', 'target_sale_price' => 10.0],
+            ['product_id' => 'good_mid', 'evaluate_rate' => '4.6', 'volume' => 400,  'product_main_image_url' => 'https://ae01.alicdn.com/kf/mid.jpg', 'target_sale_price' => 12.0],
+            ['product_id' => 'top_star', 'evaluate_rate' => '5.0', 'volume' => 900,  'product_main_image_url' => 'https://ae01.alicdn.com/kf/star.jpg', 'target_sale_price' => 15.0],
+            ['product_id' => 'top_vol',  'evaluate_rate' => '4.8', 'volume' => 4200, 'product_main_image_url' => 'https://ae01.alicdn.com/kf/vol.jpg', 'target_sale_price' => 18.0],
         ];
 
         // Filtra nota < 4.5 e ordena por notas
@@ -1101,6 +1165,111 @@ class DomainDropHubTest extends TestCase
         $this->assertArrayHasKey('termometro_demanda', $mined[0]->attributes);
         $this->assertArrayHasKey('curadoria_nota', $mined[0]->attributes);
         $this->assertSame('BR', $mined[0]->attributes['ship_from'] ?? '');
+    }
+
+    public function testImportLinkOrIdClassifiesClothingAndHouseholdAndExtractsSpecsAndStoreInfo(): void
+    {
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService();
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+        $mining = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        // 1. Simula payload de importação do Macacão Feminino (IOP SDK)
+        $jumpsuitPayload = [
+            'itemId' => '1005007788991122',
+            'product_title' => 'Macacão Feminino Canelado Moda Urbana Sem Mangas',
+            'itemMainPic' => 'https://ae01.alicdn.com/kf/jumpsuit.jpg',
+            'target_sale_price' => 15.00,
+            'ae_item_property_dtos' => [
+                'ae_item_property_d_t_o' => [
+                    ['attr_name' => 'Artesanato de Tecelagem', 'attr_value' => 'tricô'],
+                    ['attr_name' => 'Temporada', 'attr_value' => 'Toda a temporada'],
+                    ['attr_name' => 'Tipo de tecido', 'attr_value' => 'Lençóis de algodão'],
+                    ['attr_name' => 'Tipo de Item', 'attr_value' => 'Macacões e Playsuits'],
+                    ['attr_name' => 'Material', 'attr_value' => 'Poliamida'],
+                    ['attr_name' => 'Composição', 'attr_value' => '90%Poliamida 10% Elastano'],
+                    ['attr_name' => 'Gênero', 'attr_value' => 'MULHERES'],
+                ]
+            ],
+            'store_info' => [
+                'store_name' => 'Beleza Store',
+                'store_id' => '1102823656',
+                'store_country_code' => 'Brasil',
+                'opened_date' => 'mai 12, 2023',
+            ],
+            'size_chart' => [
+                'chart_url' => 'https://ae01.alicdn.com/kf/sizechart.jpg',
+            ],
+        ];
+
+        $jumpsuitDto = $mining->transformRawItemToDto($jumpsuitPayload);
+
+        // Categoria NUNCA deve ser Eletrônicos & Gadget, e sim Moda, Roupas & Vestuário
+        $this->assertSame('Moda, Roupas & Vestuário', $jumpsuitDto->category);
+        $this->assertTrue($jumpsuitDto->hasVariants());
+        $this->assertArrayHasKey('Tamanho', $jumpsuitDto->getVariationAxes());
+        $this->assertArrayHasKey('Cor', $jumpsuitDto->getVariationAxes());
+        $this->assertArrayHasKey('especificacoes', $jumpsuitDto->attributes);
+        $this->assertSame('90%Poliamida 10% Elastano', $jumpsuitDto->attributes['especificacoes']['Composição']);
+        $this->assertSame('tricô', $jumpsuitDto->attributes['especificacoes']['Artesanato de Tecelagem']);
+        $this->assertSame('Beleza Store', $jumpsuitDto->attributes['store_name']);
+        $this->assertSame('1102823656', $jumpsuitDto->attributes['store_id']);
+        $this->assertSame('BR', $jumpsuitDto->attributes['ship_from']);
+        $this->assertArrayHasKey('tabela_tamanhos', $jumpsuitDto->attributes);
+
+        // 2. Simula payload de importação de Prateleiras de Banheiro
+        $shelfPayload = [
+            'itemId' => '1005006655443322',
+            'product_title' => 'Kit 2 Prateleiras Suporte Com Alto Adesivos Para Parede Banheiro',
+            'itemMainPic' => 'https://ae01.alicdn.com/kf/prateleira.jpg',
+            'target_sale_price' => 8.50,
+        ];
+
+        $shelfDto = $mining->transformRawItemToDto($shelfPayload);
+
+        // Categoria NUNCA deve ser Veículos, e sim Casa Inteligente & Organização
+        $this->assertSame('Casa Inteligente & Organização', $shelfDto->category);
+        $this->assertNotEmpty($shelfDto->attributes['variants'] ?? []);
+    }
+
+    public function testUniversalAttributesAndColorVariantsForElectronicsAndJewelry(): void
+    {
+        $mockApi = $this->createMock(AliExpressApiClientInterface::class);
+        $converter = new CurrencyConverterService();
+        $enricher = new AiProductEnricherService();
+        $repo = new PdoDropshipCatalogRepository($this->pdo);
+        $mining = new ProductMiningService($mockApi, $converter, $enricher, $repo);
+
+        // 1. Smartphone com cores (Preto, Prata, Rosa) e capacidades
+        $phonePayload = [
+            'itemId' => '1005009988776655',
+            'product_title' => 'Smartphone 5G Pro Tela AMOLED 6.7 Câmera 108MP Bateria 5000mAh',
+            'itemMainPic' => 'https://ae01.alicdn.com/kf/phone.jpg',
+            'target_sale_price' => 120.0,
+        ];
+        $phoneDto = $mining->transformRawItemToDto($phonePayload);
+        $this->assertNotEmpty($phoneDto->attributes['variants']);
+        $this->assertArrayHasKey('Cor', $phoneDto->attributes['variation_axes']);
+        $this->assertContains('Preto Grafite', $phoneDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('Prata Titânio', $phoneDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('Rosa Ouro (Rose Gold)', $phoneDto->attributes['variation_axes']['Cor']);
+        $this->assertNotEmpty($phoneDto->attributes['cores_disponiveis']);
+
+        // 2. Pulseira / Colar com cores metálicas e comprimentos
+        $braceletPayload = [
+            'itemId' => '1005008877665544',
+            'product_title' => 'Pulseira Elegance Bracelete Banhado Ajustável Unissex',
+            'itemMainPic' => 'https://ae01.alicdn.com/kf/bracelet.jpg',
+            'target_sale_price' => 15.0,
+        ];
+        $braceletDto = $mining->transformRawItemToDto($braceletPayload);
+        $this->assertNotEmpty($braceletDto->attributes['variants']);
+        $this->assertArrayHasKey('Cor', $braceletDto->attributes['variation_axes']);
+        $this->assertContains('Dourado (Banhado a Ouro 18K)', $braceletDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('Prateado (Prata 925)', $braceletDto->attributes['variation_axes']['Cor']);
+        $this->assertContains('Ouro Rosa (Rose Gold)', $braceletDto->attributes['variation_axes']['Cor']);
+        $this->assertArrayHasKey('Comprimento da Pulseira', $braceletDto->attributes['variation_axes']);
     }
 
     public function testTrackOrderAndShippingPolicyPages(): void
