@@ -115,4 +115,46 @@ class DomainDropSimilarOffersTest extends TestCase
         $this->assertCount(1, $similar, 'Deve retornar estritamente 1 item e JAMAIS vazar itens de outros nichos para preencher o limite');
         $this->assertSame(11, (int)$similar[0]->id, 'O único item retornado deve ser a Bermuda Jeans da mesma família');
     }
+
+    /**
+     * Teste dos 3 Filtros de Sócrates no caso real relatado pelo usuário:
+     * Produto: "Tops De Academia Feminino, Tecido De Peça Única Sem Costuras"
+     * Contaminantes que NUNCA podem aparecer:
+     * - "Suporte Ajustável Para Notebook – Base Dobrável Em Alumínio Até"
+     * - "Kit 2 Prateleiras Suporte Com Alto Adesivos Para Parede Banheiro"
+     */
+    public function testSocratesThreeFiltersIsolateTopsDeAcademiaFromNotebookAndBathroomSupports(): void
+    {
+        // 1. O produto da página
+        $this->insertProduct(100, 'Tops De Academia Feminino, Tecido De Peça Única Sem Costuras', 'Moda, Roupas & Vestuário', 39.90);
+
+        // 2. Ofertas legítimas do mesmo nicho e tipo
+        $this->insertProduct(101, 'Top Fitness Nadador Feminino Academia Sem Bojo', 'Moda Fitness, Leggings & Academia', 35.00);
+        $this->insertProduct(102, 'Top Cropped Academia Alças Duplas Conforto', 'Moda, Roupas & Vestuário', 42.00);
+        $this->insertProduct(103, 'Calça Legging Fitness Feminina Cintura Alta', 'Moda Fitness, Leggings & Academia', 59.90);
+
+        // 3. Os contaminantes relatados pelo usuário
+        $this->insertProduct(200, 'Suporte Ajustável Para Notebook – Base Dobrável Em Alumínio Até', 'Eletrônicos & Gadget', 49.90);
+        $this->insertProduct(201, 'Kit 2 Prateleiras Suporte Com Alto Adesivos Para Parede Banheiro', 'Casa Inteligente & Organização', 32.50);
+
+        // Aplicação dos 3 Filtros de Sócrates
+        $similar = $this->repo->findSimilarOffers(
+            excludeId: 100,
+            category: 'Moda, Roupas & Vestuário',
+            title: 'Tops De Academia Feminino, Tecido De Peça Única Sem Costuras',
+            limit: 4,
+            targetPrice: 39.90
+        );
+
+        $this->assertNotEmpty($similar);
+        $similarIds = array_map(fn($p) => (int)$p->id, $similar);
+
+        // 1º FILTRO (Categoria): Contaminantes de notebook e banheiro BARRADOS com 100% de eficácia
+        $this->assertNotContains(200, $similarIds, 'Suporte de Notebook é 100% bloqueado pelo 1º Filtro de Sócrates');
+        $this->assertNotContains(201, $similarIds, 'Prateleira de Banheiro é 100% bloqueada pelo 1º Filtro de Sócrates');
+
+        // 2º FILTRO (Semântica): Tops de Academia são priorizados no topo
+        $this->assertSame(101, $similarIds[0], 'O Top Nadador é a oferta mais relevante e acessível (Filtros 2 e 3)');
+        $this->assertContains(102, $similarIds, 'O Top Cropped deve estar entre os recomendados');
+    }
 }
