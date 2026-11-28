@@ -157,4 +157,30 @@ class DomainDropSimilarOffersTest extends TestCase
         $this->assertSame(101, $similarIds[0], 'O Top Nadador é a oferta mais relevante e acessível (Filtros 2 e 3)');
         $this->assertContains(102, $similarIds, 'O Top Cropped deve estar entre os recomendados');
     }
+
+    public function testSocratesRejectsLegacyGeralCategoriesAndZeroSemanticMatches(): void
+    {
+        // Produto alvo
+        $this->insertProduct(300, 'Top Feminino Alcinha Academia', 'Geral', 29.90);
+
+        // Itens no banco com categoria legada 'Geral'
+        $this->insertProduct(301, 'Suporte Dobravel Alumínio Celular', 'Geral', 25.00);
+        $this->insertProduct(302, 'Ração Pet Gatos 1kg', 'Geral', 19.90);
+        $this->insertProduct(303, 'Top Nadador Suplex Feminino', 'Moda, Roupas & Vestuário', 28.00);
+
+        $similar = $this->repo->findSimilarOffers(
+            excludeId: 300,
+            category: 'Geral',
+            title: 'Top Feminino Alcinha Academia',
+            limit: 4,
+            targetPrice: 29.90
+        );
+
+        $similarIds = array_map(fn($p) => (int)$p->id, $similar);
+
+        // Somente o Top Nadador deve passar, jamais Suporte ou Ração mesmo que antigos no banco com 'Geral'
+        $this->assertContains(303, $similarIds, 'Top Nadador deve passar pela semântica');
+        $this->assertNotContains(301, $similarIds, 'Suporte com categoria Geral NUNCA deve passar');
+        $this->assertNotContains(302, $similarIds, 'Ração com categoria Geral NUNCA deve passar');
+    }
 }
