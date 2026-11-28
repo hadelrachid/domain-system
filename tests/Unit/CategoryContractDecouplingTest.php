@@ -15,12 +15,16 @@ use PHPUnit\Framework\TestCase;
 
 class CategoryContractDecouplingTest extends TestCase
 {
-    private PDO $pdo;
-    private CategoryTaxonomyService $taxonomy;
-    private PdoDropshipCatalogRepository $catalogRepo;
+    private ?PDO $pdo = null;
+    private ?CategoryTaxonomyService $taxonomy = null;
+    private ?PdoDropshipCatalogRepository $catalogRepo = null;
 
     protected function setUp(): void
     {
+        if (!is_dir(dirname(__DIR__, 2) . '/src/Plugins/domain_drop') || !class_exists('DomainSystem\Plugins\domain_drop\Repositories\DomainDropSchemaEnsurer')) {
+            $this->markTestSkipped('Plugin agregado [domain_drop] não está presente no checkout do CI.');
+            return;
+        }
         parent::setUp();
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
